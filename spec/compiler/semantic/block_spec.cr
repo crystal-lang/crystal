@@ -1652,4 +1652,63 @@ describe "Block inference" do
       foo { 1 }
     CRYSTAL
   end
+
+  it "multi-dispatches on block return type union (defs without yield)" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      a = 42
+      b : Int32? = nil
+      foo { (a || nil) || (b || "x") }
+    CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union (returns union of overload returns)" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      x = 1 || "x"
+      foo { x }
+    CRYSTAL
+  end
+
+  it "errors when block return union isn't fully covered by overloads" do
+    assert_error <<-CRYSTAL, "expected block to return Int32, not (Int32 | String)"
+      def foo(& : -> Int32)
+        true
+      end
+
+      x = 1 || "x"
+      foo { x }
+      CRYSTAL
+  end
+
+  it "errors when block return union dispatch involves yield" do
+    assert_error <<-CRYSTAL, "multi-dispatch on block return type union is not supported for defs that yield"
+      def foo(& : -> Int32)
+        result = yield
+        result + 1
+      end
+
+      def foo(& : -> String)
+        result = yield
+        result.upcase
+      end
+
+      x = 1 || "x"
+      foo { x }
+      CRYSTAL
+  end
 end
