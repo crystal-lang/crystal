@@ -177,7 +177,10 @@ lib LibCrypto
   fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
-  fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% if compare_versions(OPENSSL_VERSION, "4.0.0") < 0 %}
+    fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% end %}
+  fun asn1_string_get0_data = ASN1_STRING_get0_data(x : ASN1_STRING) : Char*
   fun asn1_string_length = ASN1_STRING_length(x : ASN1_STRING) : Int
   fun asn1_string_print = ASN1_STRING_print(out : Bio*, v : ASN1_STRING) : Int
   fun i2t_asn1_object = i2t_ASN1_OBJECT(buf : Char*, buf_len : Int, a : ASN1_OBJECT) : Int
