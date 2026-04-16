@@ -6,7 +6,7 @@ require "./lib_crypto"
 
 # Supported library versions:
 #
-# * openssl (1.1.0–3.3+)
+# * openssl (1.1.0–4.0+)
 # * libressl (2.0–4.0+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#tls
