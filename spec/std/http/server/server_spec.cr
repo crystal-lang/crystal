@@ -615,6 +615,33 @@ describe HTTP::Server do
     end
   end
 
+  describe "request smuggling/splitting mitigations (RFC 9112, Section 6.1)" do
+    it "rejects when content-length and transfer-encoding are both defined then closes the connection" do
+      channel = Channel({String, String, String?}).new(4)
+      response = nil
+
+      server = HTTP::Server.new do |ctx|
+        channel.send({ctx.request.method, ctx.request.path, ctx.request.body.try(&.gets_to_end)})
+      end
+
+      with_tempfile("socket") do |path|
+        server.bind_unix(path)
+        spawn { server.listen }
+
+        UNIXSocket.open(path) do |socket|
+          socket << "GET /one HTTP/1.1\r\nhost: example.org\r\ncontent-length: 4\r\ntransfer-encoding: chunked\r\n\r\n2a\r\nGET /admin HTTP/1.1\r\nhost: example.org\r\n\r\n\r\n0\r\n\r\nGET /two HTTP/1.1\r\nhost: example.org\r\n\r\n"
+          socket.close_write
+          response = socket.gets_to_end
+        end
+
+        channel.close
+      end
+
+      channel.receive?.should be_nil
+      response.not_nil!.should start_with("HTTP/1.1 400 ")
+    end
+  end
+
   typeof(begin
     # Initialize with custom host
     server = HTTP::Server.new { |ctx| }
