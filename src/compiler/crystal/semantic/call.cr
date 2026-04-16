@@ -372,9 +372,18 @@ class Crystal::Call
 
     typed_defs = Array(Def).new(matches.size)
     last_block_type_mismatch : BlockTypeMismatch? = nil
+    handled_block_receivers = nil
 
     matches.each do |match|
       check_visibility match
+
+      # When there's a block, skip matches for receivers we've already handled
+      # successfully. Matches are sorted by specificity, so the first successful
+      # match for a receiver is the most specific. This handles overload
+      # selection while still allowing multi-dispatch across receiver types.
+      if block && (handled = handled_block_receivers) && handled.includes?(match.context.instantiated_type)
+        next
+      end
 
       begin
         yield_vars, block_arg_type = match_block_arg(match)
@@ -452,6 +461,11 @@ class Crystal::Call
       end
 
       typed_defs << typed_def
+
+      if block
+        handled_block_receivers ||= [] of Type
+        handled_block_receivers << match.context.instantiated_type
+      end
     end
 
     # If no matches succeeded and we had a block type mismatch, re-raise it

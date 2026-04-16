@@ -159,13 +159,12 @@ module Crystal
         end
       end
 
-      # Compare block_arg restrictions
-      self_block_arg = self.def.block_arg
-      other_block_arg = other.def.block_arg
-
-      if self_block_arg && other_block_arg
-        self_block_restriction = self_block_arg.restriction
-        other_block_restriction = other_block_arg.restriction
+      # Compare block_arg restrictions only when positional args haven't already
+      # determined ordering. This prevents incompatible block restrictions from
+      # making otherwise comparable overloads ambiguous.
+      if self_stricter && other_stricter
+        self_block_restriction = self.def.block_arg.try &.restriction
+        other_block_restriction = other.def.block_arg.try &.restriction
 
         case {self_block_restriction, other_block_restriction}
         when {nil, nil}
@@ -376,6 +375,27 @@ module Crystal
     def compare_strictness_old(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
       self_stricter = old_restriction_of?(other, self_owner)
       other_stricter = other.old_restriction_of?(self, other_owner)
+
+      # When the signatures appear equivalent, use block_arg restrictions as a
+      # tiebreaker. Otherwise two defs differing only by block return type would
+      # override each other, losing one overload.
+      if self_stricter && other_stricter
+        self_block_restriction = self.def.block_arg.try &.restriction
+        other_block_restriction = other.def.block_arg.try &.restriction
+
+        case {self_block_restriction, other_block_restriction}
+        when {nil, nil}
+          # No change
+        when {nil, _}
+          self_stricter = false
+        when {_, nil}
+          other_stricter = false
+        else
+          self_stricter = false unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+          other_stricter = false unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+        end
+      end
+
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
@@ -525,21 +545,6 @@ module Crystal
       elsif other_double_splat_restriction
         # If only the other has a restriction, it's stricter than self
         return false
-      end
-
-      # Compare block_arg restrictions
-      self_block_arg = self.def.block_arg
-      other_block_arg = other.def.block_arg
-
-      if self_block_arg && other_block_arg
-        self_block_restriction = self_block_arg.restriction
-        other_block_restriction = other_block_arg.restriction
-
-        return false if self_block_restriction == nil && other_block_restriction != nil
-
-        if self_block_restriction && other_block_restriction
-          return false unless self_block_restriction.restriction_of?(other_block_restriction, owner, self_free_vars, other_free_vars)
-        end
       end
 
       true
