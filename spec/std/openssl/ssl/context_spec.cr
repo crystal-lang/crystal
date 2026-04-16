@@ -15,8 +15,6 @@ describe OpenSSL::SSL::Context do
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
-
-    OpenSSL::SSL::Context::Client.new(LibSSL.tlsv1_method)
   end
 
   it "new for server" do
@@ -28,8 +26,6 @@ describe OpenSSL::SSL::Context do
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
-
-    OpenSSL::SSL::Context::Server.new(LibSSL.tlsv1_method)
   end
 
   it "insecure for client" do
@@ -38,8 +34,6 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-
-    OpenSSL::SSL::Context::Client.insecure(LibSSL.tlsv1_method)
   end
 
   it "insecure for server" do
@@ -48,8 +42,6 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-
-    OpenSSL::SSL::Context::Server.insecure(LibSSL.tlsv1_method)
   end
 
   it "sets certificate chain" do

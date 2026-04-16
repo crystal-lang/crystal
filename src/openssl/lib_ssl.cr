@@ -208,9 +208,11 @@ lib LibSSL
   # TLS alert codes
   SSL_AD_INTERNAL_ERROR = 80
 
-  fun tlsv1_method = TLSv1_method : SSLMethod
-  fun tlsv1_1_method = TLSv1_1_method : SSLMethod
-  fun tlsv1_2_method = TLSv1_2_method : SSLMethod
+  {% if compare_versions(OPENSSL_VERSION, "4.0.0") < 0 %}
+    fun tlsv1_method = TLSv1_method : SSLMethod
+    fun tlsv1_1_method = TLSv1_1_method : SSLMethod
+    fun tlsv1_2_method = TLSv1_2_method : SSLMethod
+  {% end %}
 
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
   fun ssl_get_servername = SSL_get_servername(ssl : SSL, host_type : TLSExt) : UInt8*
