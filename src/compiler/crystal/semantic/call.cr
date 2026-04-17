@@ -1297,8 +1297,6 @@ class Crystal::Call
                   # union, and freeze_type would conflict with that. Each match's
                   # narrowed type lives on the Match object.
                   block_type = matched
-                  # Skip the block.freeze_type assignment below by jumping ahead
-                  next_block_type = block_type
                 else
                   ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output_name}, not #{block_type}")
                 end
