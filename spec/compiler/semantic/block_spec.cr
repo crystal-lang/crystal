@@ -1695,16 +1695,43 @@ describe "Block inference" do
       CRYSTAL
   end
 
-  it "errors when block return union dispatch involves yield" do
-    assert_error <<-CRYSTAL, "multi-dispatch on block return type union is not supported for defs that yield"
+  it "multi-dispatches on block return type union with yielding defs" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      struct Int32
+        def double
+          self
+        end
+      end
+
+      class String
+        def upper
+          self
+        end
+      end
+
       def foo(& : -> Int32)
         result = yield
-        result + 1
+        result.double
       end
 
       def foo(& : -> String)
         result = yield
-        result.upcase
+        result.upper
+      end
+
+      x = 1 || "x"
+      foo { x }
+    CRYSTAL
+  end
+
+  it "errors when block return union dispatch involves captured block" do
+    assert_error <<-CRYSTAL, "expected block to return Int32, not (Int32 | String)"
+      def foo(&block : -> Int32)
+        block.call
+      end
+
+      def foo(&block : -> String)
+        block.call
       end
 
       x = 1 || "x"

@@ -534,15 +534,10 @@ class Crystal::Call
     narrowable_matches.each do |match|
       narrowed_type = match.narrowed_block_return_type.not_nil!
 
-      # Multi-dispatch on block return type with yielding or captured-block
-      # defs is not yet supported - both require additional codegen work.
-      # Yielding defs need yield to return the narrowed type (requires block
-      # cloning). Captured-block defs need the proc to be re-typed per match.
+      # Captured-block defs in multi-dispatch need additional codegen
+      # (per-match proc re-typing). Not yet supported.
       if match.def.uses_block_arg?
         raise "multi-dispatch on block return type union is not supported for defs that capture the block (matched #{match.def.short_reference}). Block return must be a single concrete type."
-      end
-      if contains_yield?(match.def.body)
-        raise "multi-dispatch on block return type union is not supported for defs that yield (matched #{match.def.short_reference}). Block return must be a single concrete type."
       end
 
       # Reset block state and re-match with narrowing applied for this overload.
@@ -605,6 +600,7 @@ class Crystal::Call
         check_recursive_splat_call match.def, typed_def_args do
           visitor = MainVisitor.new(program, typed_def_args, typed_def)
           visitor.yield_vars = yield_vars
+          visitor.narrowed_yield_return_type = match.narrowed_block_return_type
           visitor.match_context = match.context
           visitor.untyped_def = match.def
           visitor.call = self
@@ -1315,35 +1311,6 @@ class Crystal::Call
 
   private def cant_infer_block_return_type
     raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
-  end
-
-  # Detects whether an AST node tree contains a Yield expression.
-  # Used to detect yielding defs in multi-dispatch (currently unsupported).
-  private def contains_yield?(node : ASTNode?) : Bool
-    return false unless node
-    case node
-    when Yield then true
-    when Expressions then node.expressions.any? { |e| contains_yield?(e) }
-    else
-      result = false
-      node.accept_children(YieldFinder.new { result = true })
-      result
-    end
-  end
-
-  # Visitor that detects yield in a node tree.
-  private class YieldFinder < Visitor
-    def initialize(&@on_yield : ->)
-    end
-
-    def visit(node : Yield)
-      @on_yield.call
-      false
-    end
-
-    def visit(node)
-      true
-    end
   end
 
   # Reset block state so it can be typed again for a different overload.

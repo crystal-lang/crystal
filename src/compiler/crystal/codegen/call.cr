@@ -339,12 +339,12 @@ class Crystal::CodeGenVisitor
   # Multi-dispatch on block return type. The block returns a union; each
   # target_def handles a subset of the union members. We evaluate the block
   # once at the call site, then dispatch based on the actual result type.
+  # Each typed_def's body sees yield as returning the narrowed cached value.
   def codegen_call_with_block_result_dispatch(node, target_defs)
     block = node.block.not_nil!
     old_needs_value = @needs_value
 
     # Evaluate the block body once and capture the result.
-    # The result has a union type; we dispatch on its concrete runtime type.
     @needs_value = true
     request_value(block.body)
     block_result = @last
@@ -365,15 +365,23 @@ class Crystal::CodeGenVisitor
 
         position_at_end current_def_label
 
-        # Build a sub-call that targets only this typed_def. Reuse node's obj/args
-        # but no block (the block was already evaluated).
-        sub_call = Call.new(node.obj, node.name, node.args, nil).at(node)
+        # Build a sub-call targeting only this typed_def.
+        # Pass the block so codegen sets up block_context for yield.
+        # cached_block_result tells visit(Yield) to use the cached value
+        # instead of re-evaluating the block body.
+        sub_call = Call.new(node.obj, node.name, node.args, block).at(node)
         sub_call.scope = node.scope
         sub_call.with_scope = node.with_scope
         sub_call.uses_with_scope = node.uses_with_scope?
         sub_call.target_defs = [a_def] of Def
         sub_call.set_type(a_def.type)
-        accept sub_call
+
+        # Wrap the call's codegen in a context with cached_block_result set.
+        # Tying it to the specific block scopes it to OUR yield only.
+        with_cloned_context do
+          context.cached_block_result = {block, block_result, block_result_type}
+          accept sub_call
+        end
 
         phi.add @last, a_def.type
         position_at_end next_def_label
