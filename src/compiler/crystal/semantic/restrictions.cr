@@ -174,8 +174,15 @@ module Crystal
         when {_, nil}
           other_is_not_stricter
         else
-          self_is_not_stricter unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
-          other_is_not_stricter unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          # Use try/rescue to gracefully handle cases where restriction comparison
+          # triggers type lookup that fails (e.g., for forward-declared types not
+          # yet fully defined when defs are being added).
+          begin
+            self_is_not_stricter unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+            other_is_not_stricter unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          rescue Crystal::CodeError
+            # Treat as not comparable; falls back to other ordering criteria.
+          end
         end
       end
 
@@ -391,8 +398,15 @@ module Crystal
         when {_, nil}
           other_stricter = false
         else
-          self_stricter = false unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
-          other_stricter = false unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          # Use try/rescue to gracefully handle cases where restriction comparison
+          # triggers type lookup that fails (e.g., for forward-declared types not
+          # yet fully defined when defs are being added).
+          begin
+            self_stricter = false unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+            other_stricter = false unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          rescue Crystal::CodeError
+            # Treat as not comparable; falls back to other ordering criteria.
+          end
         end
       end
 
