@@ -399,11 +399,13 @@ class Crystal::Call
     matches.each do |match|
       check_visibility match
 
-      # When there's a block, skip matches for receivers we've already handled
-      # successfully. Matches are sorted by specificity, so the first successful
-      # match for a receiver is the most specific. This handles overload
-      # selection while still allowing multi-dispatch across receiver types.
-      if block && (handled = handled_block_receivers) && handled.includes?(match.context.instantiated_type)
+      # When there's a block, skip matches for receiver+arg_types we've
+      # already handled successfully. This handles overload selection
+      # (most specific wins among matches with the same receiver and args)
+      # while still allowing:
+      # - Multi-dispatch across receiver types
+      # - Multi-dispatch across arg type unions (different arg_types per match)
+      if block && (handled = handled_block_receivers) && handled.includes?({match.context.instantiated_type, match.arg_types})
         next
       end
 
@@ -494,8 +496,8 @@ class Crystal::Call
       typed_defs << typed_def
 
       if block
-        handled_block_receivers ||= [] of Type
-        handled_block_receivers << match.context.instantiated_type
+        handled_block_receivers ||= [] of {Type, Array(Type)}
+        handled_block_receivers << {match.context.instantiated_type, match.arg_types}
       end
     end
 
