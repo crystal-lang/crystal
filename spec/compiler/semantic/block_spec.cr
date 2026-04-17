@@ -1738,4 +1738,18 @@ describe "Block inference" do
       foo { x }
     CRYSTAL
   end
+
+  it "multi-dispatches on block return type union when overload restriction is itself a union" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32 | Bool)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      foo { 1 || "" }
+    CRYSTAL
+  end
 end

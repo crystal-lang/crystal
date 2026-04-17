@@ -344,6 +344,12 @@ class Crystal::CodeGenVisitor
     block = node.block.not_nil!
     old_needs_value = @needs_value
 
+    # Allocate block vars (e.g. temp vars from cleanup_transformer's expansion
+    # of operators like `||` and `&&`) before evaluating the block body.
+    # Without this, codegen for the expanded body would fail to find the temp vars.
+    undef_vars block.vars, block
+    alloca_non_closured_vars block.vars, block
+
     # Evaluate the block body once and capture the result.
     @needs_value = true
     request_value(block.body)
