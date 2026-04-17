@@ -1,5 +1,6 @@
 require "levenshtein"
 require "../syntax/ast"
+require "../syntax/transformer"
 require "../types"
 require "./type_lookup"
 
@@ -534,10 +535,12 @@ class Crystal::Call
     narrowable_matches.each do |match|
       narrowed_type = match.narrowed_block_return_type.not_nil!
 
-      # Captured-block defs in multi-dispatch need additional codegen
-      # (per-match proc synthesis with captured cached value). Not yet supported.
+      # Captured-block defs in multi-dispatch: transform block.call to yield
+      # in the def body. This converts the def to an inlinable yield-style def
+      # so the existing yield-based dispatch (with cached_block_result codegen)
+      # handles it without needing per-branch synthesized procs.
       if match.def.uses_block_arg?
-        raise "multi-dispatch on block return type union is not supported for defs that capture the block (matched #{match.def.short_reference}). Block return must be a single concrete type."
+        match = transform_captured_block_to_yield(match)
       end
 
       # Reset block state and re-match with narrowing applied for this overload.
@@ -1346,6 +1349,51 @@ class Crystal::Call
 
   private def cant_infer_block_return_type
     raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
+  end
+
+  # Transforms a captured-block match into a yield-style match for use in
+  # multi-dispatch on block return type. Clones the def with:
+  # - uses_block_arg = false (so codegen takes the inline path)
+  # - block.call(args) replaced with yield args
+  # The cloned def can then be processed by the same yield-based dispatch path.
+  private def transform_captured_block_to_yield(match : Match) : Match
+    original_def = match.def
+    block_arg_name = original_def.block_arg.try(&.name) || ""
+
+    cloned_def = original_def.clone
+    cloned_def.owner = original_def.owner
+    cloned_def.original_owner = original_def.original_owner if original_def.original_owner?
+    cloned_def.uses_block_arg = false
+    if cloned_body = cloned_def.body
+      cloned_def.body = transform_block_call_to_yield(cloned_body, block_arg_name)
+    end
+
+    Match.new(cloned_def, match.arg_types, match.context, match.named_arg_types).tap do |new_match|
+      new_match.narrowed_block_return_type = match.narrowed_block_return_type
+    end
+  end
+
+  # Recursively transform `block_arg.call(args)` into `yield args` in the AST.
+  private def transform_block_call_to_yield(node : ASTNode, block_arg_name : String) : ASTNode
+    transformer = BlockCallToYieldTransformer.new(block_arg_name)
+    node.transform(transformer)
+  end
+
+  # Transformer that converts `block_arg.call(args)` to `yield args`.
+  private class BlockCallToYieldTransformer < Crystal::Transformer
+    def initialize(@block_arg_name : String)
+    end
+
+    def transform(node : Call)
+      # Recursively transform args/obj first.
+      node = super
+      # Check if this is `block_arg_name.call(...)`
+      if node.is_a?(Call) && node.name == "call" && (obj = node.obj).is_a?(Var) && obj.name == @block_arg_name
+        Yield.new(node.args).at(node)
+      else
+        node
+      end
+    end
   end
 
   # Reset block state so it can be typed again for a different overload.

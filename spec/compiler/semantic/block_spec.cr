@@ -1724,8 +1724,8 @@ describe "Block inference" do
     CRYSTAL
   end
 
-  it "errors when block return union dispatch involves captured block" do
-    assert_error <<-CRYSTAL, "multi-dispatch on block return type union is not supported for defs that capture the block"
+  it "multi-dispatches on block return type union with captured-block defs" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
       def foo(&block : -> Int32)
         block.call
       end
@@ -1736,6 +1736,6 @@ describe "Block inference" do
 
       x = 1 || "x"
       foo { x }
-      CRYSTAL
+    CRYSTAL
   end
 end
