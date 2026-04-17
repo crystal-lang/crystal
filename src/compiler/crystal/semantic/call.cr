@@ -535,7 +535,7 @@ class Crystal::Call
       narrowed_type = match.narrowed_block_return_type.not_nil!
 
       # Captured-block defs in multi-dispatch need additional codegen
-      # (per-match proc re-typing). Not yet supported.
+      # (per-match proc re-typing + cached value via block.call). Not yet supported.
       if match.def.uses_block_arg?
         raise "multi-dispatch on block return type union is not supported for defs that capture the block (matched #{match.def.short_reference}). Block return must be a single concrete type."
       end
@@ -1148,10 +1148,37 @@ class Crystal::Call
           end
 
           fun_literal = ProcLiteral.new(a_def).at(self)
-          fun_literal.expected_return_type = output_type if output_type
+          # Skip expected_return_type if narrowing: the body returns a union
+          # wider than the narrowed type, which would fail the constraint check.
+          # We narrow the proc's return type after binding.
+          fun_literal.expected_return_type = output_type if output_type && !narrowed_block_return_type
           fun_literal.from_block = true
           fun_literal.force_nil = true unless output
-          fun_literal.accept parent_visitor
+          begin
+            fun_literal.accept parent_visitor
+          rescue ex : Crystal::CodeError
+            # The proc body's return type doesn't match expected_return_type.
+            # Detect the case and convert to a proper exception so instantiate
+            # can handle multi-dispatch or try other overloads.
+            if !narrowed_block_return_type && output_type
+              body_type = a_def.body.type?
+              if body_type
+                if body_type.is_a?(UnionType)
+                  if matched = body_type.restrict(output_type, match.context)
+                    if matched != body_type
+                      # Body returns a union and matches a subset -
+                      # multi-dispatch case
+                      ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output}, not #{body_type}")
+                    end
+                  end
+                end
+                # Body type doesn't match this overload - convert to
+                # BlockTypeMismatch so instantiate can try other overloads.
+                ::raise BlockTypeMismatch.new("expected block to return #{output}, not #{body_type}")
+              end
+            end
+            ::raise ex
+          end
         end
         block.fun_literal = fun_literal
       end
@@ -1174,6 +1201,14 @@ class Crystal::Call
             else
               ::raise BlockTypeMismatch.new("expected block to return #{output}, not #{block_type}")
             end
+          elsif narrowed_block_return_type && matched && block_type.is_a?(UnionType) && !block_type.implements?(matched)
+            # Multi-dispatch on block return: narrow the proc's return type for
+            # this overload. The proc body returns the union, but this typed_def
+            # only handles the narrowed subset (runtime dispatch ensures that).
+            block_arg_type = program.proc_of(fun_args, matched)
+          elsif !narrowed_block_return_type && matched && block_type.is_a?(UnionType) && !block_type.implements?(matched)
+            # Block returns a union and this overload covers a subset.
+            ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output}, not #{block_type}")
           elsif output_type
             block.bind_to(block)
             block.type = output_type

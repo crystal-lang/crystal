@@ -1725,7 +1725,7 @@ describe "Block inference" do
   end
 
   it "errors when block return union dispatch involves captured block" do
-    assert_error <<-CRYSTAL, "expected block to return Int32, not (Int32 | String)"
+    assert_error <<-CRYSTAL, "multi-dispatch on block return type union is not supported for defs that capture the block"
       def foo(&block : -> Int32)
         block.call
       end
