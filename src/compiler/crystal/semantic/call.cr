@@ -535,7 +535,7 @@ class Crystal::Call
       narrowed_type = match.narrowed_block_return_type.not_nil!
 
       # Captured-block defs in multi-dispatch need additional codegen
-      # (per-match proc re-typing + cached value via block.call). Not yet supported.
+      # (per-match proc synthesis with captured cached value). Not yet supported.
       if match.def.uses_block_arg?
         raise "multi-dispatch on block return type union is not supported for defs that capture the block (matched #{match.def.short_reference}). Block return must be a single concrete type."
       end
