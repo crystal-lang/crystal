@@ -39,6 +39,10 @@ describe "String" do
       "há日本語"[1..nil].should eq("á日本語")
     end
 
+    it "gets with exclusive range without end" do
+      "há日本語"[1...nil].should eq("á日本語")
+    end
+
     it "gets with range without beginning" do
       "há日本語"[nil..2].should eq("há日")
     end
