@@ -328,6 +328,15 @@ describe IO::Memory do
 
   it "creates from slice, non-writable" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice, writable: false
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
+  it "creates from slice, non-writable (deprecated)" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 
     expect_raises(IO::Error, "Read-only stream") do

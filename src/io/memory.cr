@@ -40,18 +40,24 @@ class IO::Memory < IO
   #
   # ```
   # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
-  # io = IO::Memory.new slice, writeable: false
+  # io = IO::Memory.new slice, writable: false
   # io.pos            # => 0
   # io.read(slice)    # => 6
   # String.new(slice) # => "abcdef"
   # ```
-  def initialize(slice : Bytes, writeable = true)
+  def initialize(slice : Bytes, writable = true)
     @buffer = slice.to_unsafe
     @bytesize = @capacity = slice.size.to_i
     @pos = 0
     @closed = false
     @resizeable = false
-    @writeable = !slice.read_only? && writeable
+    @writeable = !slice.read_only? && writable
+  end
+
+  # :ditto:
+  @[Deprecated("Use `IO::Memory.new(Bytes, writable)` instead")]
+  def self.new(slice : Bytes, writeable writable) : self
+    new slice, writable: writable
   end
 
   # Creates an `IO::Memory` whose contents are the exact contents of *string*.
@@ -66,7 +72,7 @@ class IO::Memory < IO
   # io.print "hi" # raises IO::Error
   # ```
   def self.new(string : String) : self
-    new string.to_slice, writeable: false
+    new string.to_slice, writable: false
   end
 
   # See `IO#read(slice)`.
@@ -353,7 +359,7 @@ class IO::Memory < IO
 
     old_writeable = @writeable
     old_resizeable = @resizeable
-    io = IO::Memory.new(to_slice[offset, bytesize], writeable: false)
+    io = IO::Memory.new(to_slice[offset, bytesize], writable: false)
     begin
       @writeable = false
       @resizeable = false
