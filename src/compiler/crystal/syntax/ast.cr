@@ -1860,7 +1860,7 @@ module Crystal
     def initialize(@types, @parens = false)
     end
 
-    # A union with only one element represents parenthesis in the type grammar: `(A)`
+    # A union with only one element typically represents parenthesis in the type grammar: `(A)`
     def singleton?
       types.size == 1
     end
