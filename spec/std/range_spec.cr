@@ -239,11 +239,11 @@ describe "Range" do
       expect_raises(ArgumentError, "Can't each beginless range") do
         (..4).each { }
       end
-      typeof((..4).begin).should eq(Nil)
+      typeof((..4).each { |x| break x }).should eq Nil
       expect_raises(ArgumentError, "Can't each beginless range") do
         (nil.as(Int32?)..4).each { }
       end
-      typeof((nil.as(Int32?)..4).begin).should eq(Int32?)
+      typeof((nil.as(Int32?)..4).each { |x| break x }).should eq Int32?
     end
 
     it "doesn't have Nil as a type for endless each" do
