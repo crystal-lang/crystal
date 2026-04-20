@@ -455,12 +455,23 @@ describe "Range" do
       (1..3).sample(0).empty?.should be_true
     end
 
-    it "doesn't lose randomness (#16480)" do
-      results = Array(Array(Int32)).new
-      100.times { results << (0..10).sample(10) }
+    describe "doesn't lose randomness (#16480)" do
+      it do
+        results = Array(Int32).new(100) { (0..9.0).sample }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
 
-      # the last N results should be different
-      results[-10..].uniq!.size.should eq(10)
+      it do
+        results = Array(Array(Int32)).new
+        100.times { results << (0..9).sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
+
+      it do
+        results = Array(Array(Int32)).new
+        100.times { results << (0..9.0).sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
     end
 
     context "for an integer range" do
