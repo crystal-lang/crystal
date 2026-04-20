@@ -461,21 +461,61 @@ class Crystal::Call
   # Verify that any `break value` inside the block produces a value compatible
   # with the def's declared return type. Without this check, `break` can return
   # a value that violates a `def foo : T`-style return type restriction.
+  #
+  # Bare `break` (no explicit value) is allowed unconditionally — it is
+  # conventionally used as flow control to exit the block. `break nil` is
+  # checked because nil is an explicit return value the user opted into.
   private def check_break_against_def_freeze_type
     block = @block
     return unless block
     target_defs = @target_defs
     return unless target_defs
 
-    break_type = block.break.type?
-    return unless break_type
+    finder = ExplicitBreakFinder.new(block)
+    block.body.accept finder
+    explicit_breaks = finder.explicit_breaks
+    return if explicit_breaks.empty?
 
     target_defs.each do |target_def|
       freeze_type = target_def.freeze_type
       next unless freeze_type
-      next if break_type.implements?(freeze_type)
 
-      block.break.raise "method #{target_def.short_reference} must return #{freeze_type} but `break` is returning #{break_type}"
+      explicit_breaks.each do |break_node|
+        break_exp = break_node.exp.not_nil!
+        break_value_type = break_exp.type?
+        next unless break_value_type
+        next if break_value_type.implements?(freeze_type)
+
+        break_node.raise "method #{target_def.short_reference} must return #{freeze_type} but `break` is returning #{break_value_type}"
+      end
+    end
+  end
+
+  # Visitor that collects `Break` nodes with an explicit value within a block,
+  # excluding nested blocks (which break to their own enclosing call).
+  private class ExplicitBreakFinder < Visitor
+    getter explicit_breaks : Array(Break) = [] of Break
+
+    def initialize(@block : Block)
+    end
+
+    def visit(node : Break)
+      explicit_breaks << node if node.exp
+      true
+    end
+
+    def visit(node : Block)
+      # Don't descend into nested blocks - they break to their own call.
+      node.same?(@block)
+    end
+
+    def visit(node : ProcLiteral)
+      # Don't descend into proc literals - they have their own control flow.
+      false
+    end
+
+    def visit(node)
+      true
     end
   end
 

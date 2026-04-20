@@ -1660,4 +1660,26 @@ describe "Block inference" do
       foo { break "hello" }
       CRYSTAL
   end
+
+  it "allows bare break when def has explicit return type" do
+    assert_type(<<-CRYSTAL) { nilable(int32) }
+      def foo : Int32
+        yield
+        42
+      end
+
+      foo { break }
+      CRYSTAL
+  end
+
+  it "errors if break nil violates def's declared return type" do
+    assert_error(<<-CRYSTAL, "must return Int32 but `break` is returning Nil")
+      def foo : Int32
+        yield
+        0
+      end
+
+      foo { break nil }
+      CRYSTAL
+  end
 end
