@@ -455,6 +455,14 @@ describe "Range" do
       (1..3).sample(0).empty?.should be_true
     end
 
+    it "doesn't lose randomness (#16480)" do
+      results = Array(Array(Int32)).new
+      100.times { results << (0..10).sample(10) }
+
+      # the last N results should be different
+      results[-10..].uniq!.size.should eq(10)
+    end
+
     context "for an integer range" do
       it "samples an inclusive range without n" do
         value = (1..3).sample
