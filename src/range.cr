@@ -129,8 +129,8 @@ struct Range(B, E)
         current = current.succ
       end
       {{ "yield current".id }} if !@exclusive && current == end_value
+      nil
     {% end %}
-    nil
   end
 
   # Returns an `Iterator` over the elements of this range.
