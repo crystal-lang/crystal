@@ -1409,7 +1409,7 @@ class Hash(K, V)
   # ```
   #
   # The enumeration follows the order the keys were inserted.
-  def each(& : {K, V} ->) : Nil
+  def each(& : {K, V} ->)
     each_entry_with_index do |entry, i|
       yield({entry.key, entry.value})
     end

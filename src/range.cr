@@ -108,7 +108,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each(&) : Nil
+  def each(&)
     current = @begin
     if current.nil?
       raise ArgumentError.new("Can't each beginless range")
@@ -130,6 +130,7 @@ struct Range(B, E)
       end
       {{ "yield current".id }} if !@exclusive && current == end_value
     {% end %}
+    nil
   end
 
   # Returns an `Iterator` over the elements of this range.

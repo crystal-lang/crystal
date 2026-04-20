@@ -438,7 +438,7 @@ describe "Code gen: block" do
   it "break from block with value" do
     run(<<-CRYSTAL).to_i.should eq(20)
       require "prelude"
-      (0..10).each { break 20 }
+      10.times { break 20 }
       CRYSTAL
   end
 

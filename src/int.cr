@@ -597,12 +597,13 @@ struct Int
     self - 1
   end
 
-  def times(&block : self ->) : Nil
+  def times(&block : self ->)
     i = self ^ self
     while i < self
       yield i
       i &+= 1
     end
+    nil
   end
 
   def times
