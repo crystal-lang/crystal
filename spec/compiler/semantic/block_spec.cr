@@ -1604,4 +1604,60 @@ describe "Block inference" do
       Foo.new.bar(1_i64) { "hi" }
       CRYSTAL
   end
+
+  it "errors if break value violates def's declared return type" do
+    assert_error(<<-CRYSTAL, "must return Int32 but `break` is returning String")
+      def twice : Int32
+        yield 1
+        yield 2
+        0
+      end
+
+      twice { |i| break "hello" }
+      CRYSTAL
+  end
+
+  it "errors if break value type is not a subtype of declared return type" do
+    assert_error(<<-CRYSTAL, "must return Int32 but `break` is returning Char")
+      def foo : Int32
+        yield
+        0
+      end
+
+      foo { break 'a' }
+      CRYSTAL
+  end
+
+  it "allows break with compatible type when def has explicit return type" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo : Int32
+        yield
+        99
+      end
+
+      foo { break 42 }
+      CRYSTAL
+  end
+
+  it "allows break value compatible with union return type" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      def foo : Int32 | String
+        yield
+        0
+      end
+
+      foo { break "hello" }
+      CRYSTAL
+  end
+
+  it "allows any break value when def has no explicit return type" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      def foo
+        yield
+        0
+      end
+
+      foo { break "hello" }
+      CRYSTAL
+  end
 end

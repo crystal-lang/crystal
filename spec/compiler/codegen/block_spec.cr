@@ -436,9 +436,18 @@ describe "Code gen: block" do
   end
 
   it "break from block with value" do
+    # Use a method without an explicit return type so break can introduce a value
+    # (methods declared `: Nil` enforce that break values match the return type)
     run(<<-CRYSTAL).to_i.should eq(20)
       require "prelude"
-      10.times { break 20 }
+      def loop_n(n)
+        i = 0
+        while i < n
+          yield i
+          i += 1
+        end
+      end
+      loop_n(10) { break 20 }
       CRYSTAL
   end
 

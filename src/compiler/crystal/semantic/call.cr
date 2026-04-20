@@ -102,6 +102,8 @@ class Crystal::Call
     bind_to matches if matches
     bind_to block.break if block
 
+    check_break_against_def_freeze_type if block && matches
+
     if (parent_visitor = @parent_visitor) && matches
       matches.each do |match|
         match.special_vars.try &.each do |special_var_name|
@@ -454,6 +456,27 @@ class Crystal::Call
     return_type = program.nil if return_type.void?
     typed_def.freeze_type = return_type
     typed_def.type = return_type if return_type.no_return? || return_type.nil_type?
+  end
+
+  # Verify that any `break value` inside the block produces a value compatible
+  # with the def's declared return type. Without this check, `break` can return
+  # a value that violates a `def foo : T`-style return type restriction.
+  private def check_break_against_def_freeze_type
+    block = @block
+    return unless block
+    target_defs = @target_defs
+    return unless target_defs
+
+    break_type = block.break.type?
+    return unless break_type
+
+    target_defs.each do |target_def|
+      freeze_type = target_def.freeze_type
+      next unless freeze_type
+      next if break_type.implements?(freeze_type)
+
+      block.break.raise "method #{target_def.short_reference} must return #{freeze_type} but `break` is returning #{break_type}"
+    end
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)
