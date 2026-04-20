@@ -157,7 +157,7 @@ describe "ASTNode#inspect" do
     CRYSTAL
   expect_inspect %({% foo %}), %(MacroExpression[Var["foo"], output: false])
   expect_inspect %({{ foo }}), %(MacroExpression[Var["foo"]])
-  expect_inspect %({% if foo %}\n  foo_then\n{% end %}), %(MacroIf[Var["foo"], MacroLiteral["\\n" + "  foo_then\\n"], Nop.new])
+  expect_inspect %({% if foo %}\n  foo_then\n{% end %}), %(MacroIf[Var["foo"], MacroLiteral["\\n" + "  foo_then\\n"]])
   expect_inspect %({% if foo %}\n  foo_then\n{% else %}\n  foo_else\n{% end %}), <<-CRYSTAL
     MacroIf[
       Var["foo"],
