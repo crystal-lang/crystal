@@ -189,6 +189,15 @@ describe "JSON serialization" do
       elements.should eq([1, 2, 3])
     end
 
+    it "does for Deque(Int32) with block" do
+      elements = [] of Int32
+      ret = Deque(Int32).from_json("[1, 2, 3]") do |element|
+        elements << element
+      end
+      ret.should be_nil
+      elements.should eq([1, 2, 3])
+    end
+
     it "does for tuple" do
       tuple = Tuple(Int32, String).from_json(%([1, "hello"]))
       tuple.should eq({1, "hello"})
