@@ -357,6 +357,6 @@ class Crystal::CodeGenVisitor
       local_to_unit: @single_module
     )
 
-    global.add_debug_info(gv_expr)
+    global.global_set_metadata("dbg", gv_expr)
   end
 end
