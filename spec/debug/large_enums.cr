@@ -9,7 +9,7 @@ end
 x = SignedEnum::X
 y = UnsignedEnum::Y
 # print: x
-# lldb-check: (SignedEnum) $0 = X
+# lldb-check: (SignedEnum) {{(\$0 = )?}}X
 # print: y
-# lldb-check: (UnsignedEnum) $1 = Y
+# lldb-check: (UnsignedEnum) {{(\$1 = )?}}Y
 debugger
