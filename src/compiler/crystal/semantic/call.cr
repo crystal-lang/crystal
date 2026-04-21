@@ -284,6 +284,12 @@ class Crystal::Call
       end
     end
 
+    # Reject partial matches.  # Lookup in this method is intentionally
+    # restricted to a single owner, so it requires full type coverage.
+    unless matches.cover_all?
+      raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
+    end
+
     if matches.empty?
       # If the owner is abstract type without subclasses,
       # or if the owner is an abstract generic instance type,
