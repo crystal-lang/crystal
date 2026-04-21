@@ -455,7 +455,7 @@ describe "Range" do
       (1..3).sample(0).empty?.should be_true
     end
 
-    describe "doesn't lose randomness (#16480)" do
+    describe "doesn't lose randomness when delegating to Enumerable#sample (#16480)" do
       it do
         results = Array(Int32).new(100) { (0..9.0).sample }
         results[-10..].uniq!.size.should_not eq(1)
@@ -468,8 +468,8 @@ describe "Range" do
       end
 
       it do
-        results = Array(Array(Int32)).new
-        100.times { results << (0..9.0).sample(10) }
+        results = Array(Array(Char)).new
+        100.times { results << ('0'..'9').sample(10) }
         results[-10..].uniq!.size.should_not eq(1)
       end
     end
