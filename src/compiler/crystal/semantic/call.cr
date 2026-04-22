@@ -286,7 +286,7 @@ class Crystal::Call
 
     # Reject partial matches. Lookup in this method is intentionally
     # restricted to a single owner, so it requires full type coverage.
-    unless matches.cover_all?
+    unless matches.cover_all? || owner.abstract_leaf?
       raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
     end
 
