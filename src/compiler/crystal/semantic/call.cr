@@ -294,7 +294,7 @@ class Crystal::Call
     # without giving compile errors, which will anyway appear once you add
     # concrete subclasses and instances.
     empty_match = matches.empty? &&
-                  (def_name == "new" || (owner.metaclass? && !owner.abstract_leaf?))
+                  (def_name == "new" || owner.metaclass? || !owner.abstract_leaf?)
 
     if partial_match || empty_match
       raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
