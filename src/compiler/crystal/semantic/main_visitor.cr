@@ -3448,14 +3448,6 @@ module Crystal
       meta_var
     end
 
-    def bind_meta_var(var : InstanceVar)
-      # Nothing to do
-    end
-
-    def bind_meta_var(var)
-      raise "BUG: trying to bind var or instance var but got #{var}"
-    end
-
     def bind_initialize_instance_vars(owner)
       names_to_remove = [] of String
 
