@@ -120,7 +120,9 @@ class Crystal::Call
             var = parent_visitor.lookup_var_or_instance_var(call_arg.exp)
             var.bind_to Var.new("out", arg_type.element_type)
             call_arg.exp.bind_to var
-            parent_visitor.bind_meta_var(call_arg.exp)
+            if meta_var = parent_visitor.bind_meta_var(call_arg.exp)
+              meta_var.freeze_type = arg_type.element_type
+            end
           end
         else
           call_arg.raise "parameter #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
