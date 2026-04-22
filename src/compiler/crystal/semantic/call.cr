@@ -286,19 +286,18 @@ class Crystal::Call
 
     # Reject partial matches. Lookup in this method is intentionally
     # restricted to a single owner, so it requires full type coverage.
-    unless matches.cover_all? || owner.abstract_leaf?
-      raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
-    end
+    partial_match = !matches.cover_all? && !owner.abstract_leaf?
 
-    if matches.empty?
-      # If the owner is abstract type without subclasses,
-      # or if the owner is an abstract generic instance type,
-      # don't give error. This is to allow small code comments without giving
-      # compile errors, which will anyway appear once you add concrete
-      # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
-        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
-      end
+    # If the owner is abstract type without subclasses,
+    # or if the owner is an abstract generic instance type,
+    # don't give error on empty matches. This is to allow small code comments
+    # without giving compile errors, which will anyway appear once you add
+    # concrete subclasses and instances.
+    empty_match = matches.empty? &&
+                  (def_name == "new" || (owner.metaclass? && !owner.abstract_leaf?))
+
+    if partial_match || empty_match
+      raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
     end
 
     # If this call is an implicit call to self
