@@ -118,7 +118,7 @@ describe File do
       file.try &.delete
     end
 
-    it "fails in nonwriteable folder" do
+    it "fails in non-writable folder" do
       err_directory = (datapath("non-existing-folder") + Path::SEPARATORS[0]).inspect_unquoted
       expect_raises(File::NotFoundError, "Error creating temporary file: '#{err_directory}") do
         File.tempfile dir: datapath("non-existing-folder")

@@ -248,6 +248,86 @@ describe "OptionParser" do
     expect_doesnt_capture_option [] of String, "-f FLAG"
   end
 
+  describe "bundling" do
+    it "parses bundled boolean short options" do
+      args = %w(-rf)
+      called = [] of String
+      OptionParser.parse(args) do |opts|
+        opts.on("-r", "") { called << "-r" }
+        opts.on("-f", "") { called << "-f" }
+      end
+      called.should eq(%w(-r -f))
+      args.size.should eq(0)
+    end
+
+    it "re-triggers handlers for repeated short flags" do
+      args = %w(-vvv)
+      verbosity = 0
+      OptionParser.parse(args) do |opts|
+        opts.on("-v", "") { verbosity += 1 }
+      end
+      verbosity.should eq(3)
+      args.size.should eq(0)
+    end
+
+    it "uses rest of bundle as value for required option" do
+      value = nil
+      a = false
+      parser = OptionParser.new do |opts|
+        opts.on("-a", "") { a = true }
+        opts.on("-o VALUE", "") { |v| value = v }
+      end
+
+      args = %w(-ovalue -a)
+      parser.parse(args)
+      value.should eq("value")
+      a.should be_true
+      args.size.should eq(0)
+
+      value = nil
+      a = false
+      args = %w(-ao123)
+      parser.parse(args)
+      a.should be_true
+      value.should eq("123")
+      args.size.should eq(0)
+    end
+
+    it "does not bundle when some options are unknown" do
+      n = false
+      parser = OptionParser.new do |opts|
+        opts.on("-n", "") { n = true }
+      end
+
+      expect_raises OptionParser::InvalidOption, "Invalid option: -nc" do
+        parser.parse(["-nc"])
+      end
+      n.should be_false
+
+      args = %w(-nc)
+      parser.invalid_option { }
+      parser.parse(args)
+      n.should be_false
+      args.should eq(%w(-nc))
+    end
+
+    it "consumes rest of bundle as argument value when middle option requires argument" do
+      args = %w(-aeb)
+      a = false
+      b = false
+      e = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("-a", "") { a = true }
+        opts.on("-b", "") { b = true }
+        opts.on("-e VALUE", "") { |v| e = v }
+      end
+      a.should be_true
+      b.should be_false
+      e.should eq("b")
+      args.size.should eq(0)
+    end
+  end
+
   describe "gnu_optional_args" do
     it "doesn't get optional argument for short flag after space" do
       flag = nil

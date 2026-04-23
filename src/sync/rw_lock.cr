@@ -32,6 +32,10 @@ module Sync
     #
     # Multiple fibers can acquire the shared (read) lock at the same time. The
     # block will never run concurrently to an exclusive (write) lock.
+    #
+    # WARNING: the shared lock is technically reentrant but any attempt to
+    # relock read can result in a deadlock if another fiber is trying to lock
+    # write!
     def read(& : -> U) : U forall U
       lock_read
       begin
@@ -49,9 +53,12 @@ module Sync
 
     # Acquires the shared (read) lock.
     #
-    # The shared lock is always reentrant, multiple fibers can lock it multiple
-    # times each, and never checked. Blocks the calling fiber while the
-    # exclusive (write) lock is held.
+    # Multiple fibers can acquire the shared (read) lock at the same time.
+    # Blocks the calling fiber if the exclusive (write) lock is held.
+    #
+    # WARNING: the shared lock is technically reentrant but any attempt to
+    # relock read can result in a deadlock if another fiber is trying to lock
+    # write!
     def lock_read : Nil
       @mu.rlock
     end

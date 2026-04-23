@@ -280,6 +280,11 @@ record PullRequest,
   def backport?
     title.includes?("[Backport ")
   end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
+  end
 end
 
 def query_milestone(api_token, repository, number)
@@ -325,8 +330,11 @@ class ChangelogEntry
   getter pull_requests : Array(PullRequest)
   property backported_from : PullRequest?
 
-  def initialize(pr : PullRequest)
-    @pull_requests = [pr]
+  def self.new(pr : PullRequest)
+    new [pr]
+  end
+
+  def initialize(@pull_requests : Array(PullRequest))
   end
 
   def pr
@@ -392,21 +400,11 @@ class ChangelogEntry
 
     authors
   end
-
-  def print_ref_labels(io)
-    pull_requests.each { |pr| print_ref_label(io, pr) }
-    backported_from.try { |pr| print_ref_label(io, pr) }
-  end
-
-  def print_ref_label(io, pr)
-    pr.link_ref(io)
-    io << ": " << pr.permalink
-    io.puts
-  end
 end
 
-entries = milestone.pull_requests.compact_map do |pr|
-  ChangelogEntry.new(pr) unless pr.fixup? || pr.backported?
+entries = milestone.pull_requests.group_by(&.clean_title).compact_map do |_, prs|
+  next if prs.all? { |pr| pr.fixup? || pr.backported? }
+  ChangelogEntry.new(prs)
 end
 
 milestone.pull_requests.each do |pr|
@@ -455,7 +453,6 @@ if description = milestone.description.presence
 end
 puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
-puts
 
 def print_entries(entries)
   entries.each do |entry|
@@ -463,11 +460,15 @@ def print_entries(entries)
   end
   puts
 
-  entries.each(&.print_ref_labels(STDOUT))
+  all_prs = entries.flat_map(&.pull_requests) + entries.compact_map(&.backported_from)
+  all_prs.sort_by!(&.number)
+  all_prs.join(STDOUT, "\n", &.print_ref_label(STDOUT))
+  STDOUT.puts
 end
 
 SECTION_TITLES.each do |id, title|
   entries = sections[id]? || next
+  puts
   puts "### #{title}"
   puts
 
@@ -479,9 +480,12 @@ SECTION_TITLES.each do |id, title|
 
     topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
+    first = true
     topic_titles.each do |topic_title|
       topic_entries = topics[topic_title]? || next
 
+      puts unless first
+      first = false
       puts "#### #{topic_title}"
       puts
 
