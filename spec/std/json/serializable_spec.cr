@@ -5,6 +5,7 @@ require "big"
 require "big/json"
 require "uuid"
 require "uuid/json"
+require "uri/params/serializable"
 
 enum JSONSerializableEnum
   Zero
@@ -372,9 +373,10 @@ struct JSONAttrPersonWithYAML
   end
 end
 
-struct JSONAttrPersonWithYAMLInitializeHook
+struct JSONAttrPersonWithYAMLandURIParamsInitializeHook
   include JSON::Serializable
   include YAML::Serializable
+  include URI::Params::Serializable
 
   property name : String
   property age : Int32?
@@ -385,6 +387,7 @@ struct JSONAttrPersonWithYAMLInitializeHook
 
   @[JSON::Field(ignore: true)]
   @[YAML::Field(ignore: true)]
+  @[URI::Params::Field(ignore: true)]
   property msg : String?
 
   def after_initialize
@@ -1190,15 +1193,17 @@ describe "JSON::Serializable" do
     JSONAttrPersonWithYAML.from_yaml(person.to_yaml).should eq person
   end
 
-  it "yaml and json with after_initialize hook" do
-    person = JSONAttrPersonWithYAMLInitializeHook.new("Vasya", 30)
+  it "yaml, json and uri params with after_initialize hook" do
+    person = JSONAttrPersonWithYAMLandURIParamsInitializeHook.new("Vasya", 30)
     person.msg.should eq "Hello Vasya"
 
     person.to_json.should eq "{\"name\":\"Vasya\",\"age\":30}"
     person.to_yaml.should eq "---\nname: Vasya\nage: 30\n"
+    person.to_www_form.should eq "name=Vasya&Age=30"
 
-    JSONAttrPersonWithYAMLInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
-    JSONAttrPersonWithYAMLInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+    JSONAttrPersonWithYAMLandURIParamsInitializeHook.from_json(person.to_json).msg.should eq "Hello Vasya"
+    JSONAttrPersonWithYAMLandURIParamsInitializeHook.from_yaml(person.to_yaml).msg.should eq "Hello Vasya"
+    JSONAttrPersonWithYAMLandURIParamsInitializeHook.from_www_form(person.to_www_form).msg.should eq "Hello Vasya"
   end
 
   it "json with selective serialization" do
