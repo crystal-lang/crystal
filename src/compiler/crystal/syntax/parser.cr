@@ -3326,15 +3326,12 @@ module Crystal
       next_token
 
       exps = [] of ASTNode
-      while true
+      while !@token.type.op_rcurly?
         exps << parse_expression_inside_macro
         skip_space
         case @token.type
         when .op_comma?
           next_token_skip_space
-          if @token.type.op_rcurly?
-            break
-          end
         when .op_rcurly?
           break
         else

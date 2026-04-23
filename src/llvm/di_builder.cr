@@ -91,6 +91,15 @@ struct LLVM::DIBuilder
     LibLLVM.di_builder_create_parameter_variable(self, scope, name, name.bytesize, argno, file, line, type, 1, flags)
   end
 
+  def create_global_variable_expression(scope, name, linkage_name, file, line, type, local_to_unit, expr = nil, decl = nil, align_in_bits = 0_u32)
+    expr ||= create_expression(nil, 0)
+    LibLLVM.di_builder_create_global_variable_expression(
+      self, scope, name, name.bytesize,
+      linkage_name, linkage_name.bytesize, file, line,
+      type, local_to_unit, expr, decl, align_in_bits
+    )
+  end
+
   def create_expression(addr, length)
     LibLLVM.di_builder_create_expression(self, addr, length)
   end

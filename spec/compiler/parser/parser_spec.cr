@@ -146,7 +146,7 @@ module Crystal
     it_parses %(macro foo\n%q(%t{)\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %(macro foo\n%(%t{)\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
 
-    assert_syntax_error %({% begin %}\n%q(%t{})\n{% end %}), %(unexpected token: "}") # #16772
+    it_parses %({% begin %}\n%q(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(".macro_literal, MacroVar.new("t", exps: [] of ASTNode), ")\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
     assert_syntax_error %({% begin %}\n%q(%t{)\n{% end %}), %{unexpected token: ")"}
     it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
@@ -1484,6 +1484,7 @@ module Crystal
 
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+    it_parses "macro foo;%var{}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [] of ASTNode)] of ASTNode))
 
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do
