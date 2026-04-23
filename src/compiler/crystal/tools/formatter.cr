@@ -2329,7 +2329,8 @@ module Crystal
     def visit(node : ProcNotation)
       inputs = node.inputs
 
-      has_input_parens = @token.type.op_lparen? && !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
+      has_input_parens = @token.type.op_lparen? &&
+        !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
 
       write_token :op_lparen if has_input_parens
 
