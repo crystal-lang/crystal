@@ -7,7 +7,7 @@ describe Sync::RWLock do
 
     lock = Sync::RWLock.new
     lock.lock_read
-    lock.lock_read
+    lock.lock_read # <= safe because no attempt to lock write (yet)
 
     spawn do
       lock.lock_write
@@ -127,7 +127,7 @@ describe Sync::RWLock do
   end
 
   describe "checked" do
-    it "raises on re-kock write" do
+    it "raises on re-lock write" do
       lock = Sync::RWLock.new(:checked)
       lock.lock_write
       expect_raises(Sync::Error::Deadlock) { lock.lock_write }

@@ -2519,12 +2519,13 @@ module Crystal
         else
           if @token.type.op_star?
             first_is_splat = true
+            first_splat_location = @token.location
             next_token_skip_space_or_newline
           end
 
           key_location = @token.location
           first_key = parse_op_assign_no_control
-          first_key = Splat.new(first_key).at(location) if first_is_splat
+          first_key = Splat.new(first_key).at(first_splat_location) if first_is_splat
           case @token.type
           when .op_colon?
             unexpected_token if first_is_splat
