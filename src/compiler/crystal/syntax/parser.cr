@@ -3848,6 +3848,12 @@ module Crystal
 
     def compute_block_arg_yields(block_arg)
       block_arg_restriction = block_arg.restriction
+
+      # Unwrap parens unions
+      while block_arg_restriction.is_a?(Union) && block_arg_restriction.singleton?
+        block_arg_restriction = block_arg_restriction.types.first
+      end
+
       if block_arg_restriction.is_a?(ProcNotation)
         @block_arity = block_arg_restriction.inputs.try(&.size) || 0
       else
