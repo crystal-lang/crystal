@@ -344,6 +344,11 @@ describe Indexable do
     Indexable.range_to_index_and_count((Int32::MAX - 4)..-2, Int32::MAX).should eq({Int32::MAX - 4, 3})
   end
 
+  it "open ended exclusive range includes last element" do
+    Indexable.range_to_index_and_count(0..., 10).should eq({0, 10})
+    Indexable.range_to_index_and_count(0.., 10).should eq({0, 10})
+  end
+
   it "errors on start indices that are off the end" do
     expect_raises IndexError, "Index out of bounds" do
       "foobar"[100..1000]

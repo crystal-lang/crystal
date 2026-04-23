@@ -224,6 +224,8 @@ module Crystal
               {{ parts.map { |ch| operator1[ch] || "" }.join("") }}
             {% elsif member.starts_with?("MAGIC_") %}
               {{ "__#{member[6..-1].id}__" }}
+            {% elsif member == "UNDERSCORE" %}
+              "_"
             {% else %}
               {{ member.stringify }}
             {% end %}
@@ -329,14 +331,6 @@ module Crystal
 
       def self.new(kind : DelimiterKind, nest, the_end, open_count : Int32)
         new kind, nest, the_end, open_count, 0, true
-      end
-
-      # Creates a DelimiterState for percent literals in macros.
-      # For symmetric delimiters (||), uses open_count = 0 (no nesting).
-      # For paired delimiters (()), uses open_count = 1 (enables nesting).
-      def self.percent_literal(kind : DelimiterKind, nest, the_end, *, allow_escapes : Bool = true)
-        open_count = nest == the_end ? 0 : 1
-        new kind, nest, the_end, open_count, 0, allow_escapes
       end
 
       def with_open_count_delta(delta)

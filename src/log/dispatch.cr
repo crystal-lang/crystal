@@ -83,7 +83,7 @@ class Log
     include Dispatcher
 
     def initialize
-      @mutex = Mutex.new(:unchecked)
+      @mutex = Sync::Mutex.new(:unchecked)
     end
 
     def dispatch(entry : Entry, backend : Backend)

@@ -78,16 +78,24 @@ struct Crystal::System::Process
   end
 
   def wait
+    @completion_key.fiber = ::Fiber.current
+
     if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
-    return exit_code unless exit_code == LibC::STILL_ACTIVE
+
+    unless exit_code == LibC::STILL_ACTIVE
+      # MT race? another thread received the completion event and will resume
+      # the fiber, we must suspend the current fiber before we can return
+      ::Fiber.suspend unless @completion_key.reset_fiber?
+
+      return exit_code
+    end
 
     # let `@job_object` do its job
     # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
     # stuck forever in that case?
     # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
-    @completion_key.fiber = ::Fiber.current
     ::Fiber.suspend
 
     # If the IOCP notification is delivered before the process fully exits,
@@ -286,7 +294,7 @@ struct Crystal::System::Process
     {new_handle, dup_handle}
   end
 
-  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir, &)
     startup_info = LibC::STARTUPINFOW.new
     startup_info.cb = sizeof(LibC::STARTUPINFOW)
     startup_info.dwFlags = LibC::STARTF_USESTDHANDLES
@@ -305,8 +313,8 @@ struct Crystal::System::Process
          pointerof(startup_info), pointerof(process_info)
        ) == 0
       error = WinError.value
-      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error == WinError::ERROR_BAD_EXE_FORMAT
-        raise ::File::Error.from_os_error("Error executing process", error, file: prepared_args)
+      if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error.in?(WinError::ERROR_BAD_EXE_FORMAT, WinError::ERROR_INVALID_PARAMETER)
+        yield error, prepared_args
       else
         raise IO::Error.from_os_error("Error executing process: '#{prepared_args}'", error)
       end

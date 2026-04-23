@@ -141,6 +141,16 @@ module Crystal
     it_parses %(%q{hello \\n world}), "hello \\n world".string
     it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
 
+    it_parses %(macro foo\n%q(%t{})\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%(%t{})\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%q(%t{)\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%(%t{)\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+
+    it_parses %({% begin %}\n%q(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(".macro_literal, MacroVar.new("t", exps: [] of ASTNode), ")\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    assert_syntax_error %({% begin %}\n%q(%t{)\n{% end %}), %{unexpected token: ")"}
+    it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+
     it_parses ":foo", "foo".symbol
     it_parses ":foo!", "foo!".symbol
     it_parses ":foo?", "foo?".symbol
@@ -488,6 +498,7 @@ module Crystal
     it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
     it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
     it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
+    it_parses "def foo(var : () -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new([] of ASTNode, "Double".path))])
     it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
     it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
     it_parses "def foo(var : Int32 = 1); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)])
@@ -1473,6 +1484,7 @@ module Crystal
 
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+    it_parses "macro foo;%var{}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [] of ASTNode)] of ASTNode))
 
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do

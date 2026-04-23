@@ -2549,12 +2549,13 @@ module Crystal
         else
           if @token.type.op_star?
             first_is_splat = true
+            first_splat_location = @token.location
             next_token_skip_space_or_newline
           end
 
           key_location = @token.location
           first_key = parse_op_assign_no_control
-          first_key = Splat.new(first_key).at(location) if first_is_splat
+          first_key = Splat.new(first_key).at(first_splat_location) if first_is_splat
           case @token.type
           when .op_colon?
             unexpected_token if first_is_splat
@@ -3355,15 +3356,12 @@ module Crystal
       next_token
 
       exps = [] of ASTNode
-      while true
+      while !@token.type.op_rcurly?
         exps << parse_expression_inside_macro
         skip_space
         case @token.type
         when .op_comma?
           next_token_skip_space
-          if @token.type.op_rcurly?
-            break
-          end
         when .op_rcurly?
           break
         else
@@ -5134,6 +5132,13 @@ module Crystal
         parse_proc_type_output(nil, location)
       when .op_lparen?
         next_token_skip_space_or_newline
+        if @token.type.op_rparen?
+          # ProcNotation without argument types: `() ->`
+          next_token_skip_space
+          check :OP_MINUS_GT
+          return parse_proc_type_output([] of ASTNode, location)
+        end
+
         type = parse_type_splat { parse_union_type }
         if type.is_a?(Union)
           type.at(location).at_end(@token.location)

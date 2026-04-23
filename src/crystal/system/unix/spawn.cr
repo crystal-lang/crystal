@@ -2,7 +2,7 @@ require "c/signal"
 require "c/unistd"
 
 struct Crystal::System::Process
-  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir)
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir, &)
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
@@ -45,7 +45,9 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32))) do |errno, command|
+          yield errno, command
+        end
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end

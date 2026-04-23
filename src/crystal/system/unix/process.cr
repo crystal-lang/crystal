@@ -310,8 +310,12 @@ struct Crystal::System::Process
 
   def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
     pathname = args.first
-    argv = args.map(&.check_no_null_byte.to_unsafe)
-    {pathname, argv.to_unsafe}
+    argv = Pointer(Pointer(UInt8)).malloc(args.size)
+    args.each_with_index do |arg, i|
+      argv[i] = arg.check_no_null_byte.to_unsafe
+    end
+
+    {pathname, argv}
   end
 
   private def self.execvpe(file, argv, envp)
@@ -442,11 +446,17 @@ struct Crystal::System::Process
     raise_exception_from_errno(command)
   end
 
-  private def self.raise_exception_from_errno(command, errno = Errno.value)
+  private def self.raise_exception_from_errno(command, errno = Errno.value, &)
     if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno) || errno == Errno::ENOEXEC
-      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+      yield errno, command
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    raise_exception_from_errno(command, errno) do |errno, command|
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     end
   end
 

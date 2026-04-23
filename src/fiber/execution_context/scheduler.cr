@@ -113,6 +113,10 @@ module Fiber::ExecutionContext
       ret
     end
 
+    protected def syscall_flag? : Bool
+      @syscall.lazy_get.bits_set?(SYSCALL_FLAG)
+    end
+
     protected def enter_syscall : UInt32
       old_value = @syscall.add(SYSCALL_FLAG | SYSCALL_INCREMENT, :acquire_release)
       old_value + SYSCALL_FLAG | SYSCALL_INCREMENT

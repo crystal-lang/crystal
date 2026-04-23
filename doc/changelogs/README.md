@@ -23,3 +23,4 @@
 - [1.17 series](v1.17.md)
 - [1.18 series](v1.18.md)
 - [1.19 series](v1.19.md)
+- [1.20 series](v1.20.md)
