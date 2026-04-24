@@ -5,7 +5,7 @@ require "crystal/elf"
 
 struct Exception::CallStack
   DEBUG_LINE_STR = ".debug_line_str"
-  DEBUG_STR      = ".debug_line_str"
+  DEBUG_STR      = ".debug_str"
   DEBUG_LINE     = ".debug_line"
   DEBUG_ABBREV   = ".debug_abbrev"
   DEBUG_INFO     = ".debug_info"

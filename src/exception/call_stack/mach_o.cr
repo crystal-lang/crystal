@@ -8,7 +8,7 @@ end
 
 struct Exception::CallStack
   DEBUG_LINE_STR = "__debug_line_str"
-  DEBUG_STR      = "__debug_line_str"
+  DEBUG_STR      = "__debug_str"
   DEBUG_LINE     = "__debug_line"
   DEBUG_ABBREV   = "__debug_abbrev"
   DEBUG_INFO     = "__debug_info"
