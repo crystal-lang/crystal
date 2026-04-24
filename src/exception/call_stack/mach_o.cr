@@ -17,7 +17,7 @@ struct Exception::CallStack
 
   protected def self.load_debug_info_impl : Nil
     locate_dsym_bundle do |image|
-      read_dwarf_sections(image, base_address: 0)
+      read_dwarf_sections(image)
     end
   rescue ex
     @@dwarf_line_numbers = nil

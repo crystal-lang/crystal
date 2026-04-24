@@ -21,7 +21,7 @@ struct Exception::CallStack
     end
   end
 
-  protected def self.read_dwarf_sections(image, base_address) : Nil
+  protected def self.read_dwarf_sections(image, base_address = 0_u64) : Nil
     line_strings = image.read_section?(DEBUG_LINE_STR) do |sh, io|
       Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
     end
