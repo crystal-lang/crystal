@@ -184,6 +184,9 @@ describe Crystal::Formatter do
 
   assert_format "1 ? 2 : 3"
   assert_format "1 ?\n  2    :   \n 3", "1 ? 2 : 3"
+  assert_format "1  ?  # b\n  2    :   # c\n 3", "1 ? # b\n2 : # c\n3"
+  assert_format "1  ?  # b\n  2       # c\n : 3", "1 ? # b\n2   # c\n: 3"
+  assert_format "1  ?# b\n  2 :# c\n3", "1 ? # b\n2 : # c\n3"
 
   assert_format "1   if   2", "1 if 2"
   assert_format "1   unless   2", "1 unless 2"

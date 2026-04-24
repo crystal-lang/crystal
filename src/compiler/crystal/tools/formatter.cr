@@ -1283,13 +1283,13 @@ module Crystal
     def visit(node : If)
       if node.ternary?
         accept node.cond
-        skip_space_or_newline
-        write_token " ", :OP_QUESTION, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_QUESTION
+        skip_space_or_newline || write " "
         accept node.then
-        skip_space_or_newline
-        write_token " ", :OP_COLON, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_COLON
+        skip_space_or_newline || write " "
         accept node.else
         return false
       end
