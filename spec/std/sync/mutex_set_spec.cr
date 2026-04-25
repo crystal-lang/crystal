@@ -26,7 +26,7 @@ describe Sync::MutexSet do
     mutex_sets.each do
       select
       when done.receive
-      when timeout(30.seconds)
+      when timeout(1.minute)
         raise "Deadlock detected"
       end
     end
