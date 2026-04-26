@@ -99,7 +99,10 @@ class OpenSSL::BIO
               when LibCrypto::CTRL_SET_KTLS
                 socket = bio.socket
                 is_tx = num != 0
-                if KTLS.enable(socket) && KTLS.start(socket, ptr, is_tx)
+
+                KTLS.enable(socket)
+
+                if KTLS.start(socket, ptr, is_tx)
                   LibCrypto.BIO_set_flags(b, is_tx ? LibCrypto::BIO_FLAGS_KTLS_TX : LibCrypto::BIO_FLAGS_KTLS_RX)
                   1
                 else
