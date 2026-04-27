@@ -3288,11 +3288,14 @@ module Crystal
           if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
             warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
           end
-          macro_var_exps = if lookahead { next_token.type.op_lcurly? }
-                             parse_macro_var_exps
-                           end
-          if macro_var_exps && macro_var_name.size == 1
-            warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
+
+          if lookahead { next_token.type.op_lcurly? }
+            if macro_var_name.size == 1
+              warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
+            end
+            macro_var_exps = parse_macro_var_exps
+          else
+            macro_var_exps = nil
           end
           pieces << MacroVar.new(macro_var_name, macro_var_exps).at(location).at_end(token_end_location)
         when .macro_end?
