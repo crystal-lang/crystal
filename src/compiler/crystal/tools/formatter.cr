@@ -3225,35 +3225,18 @@ module Crystal
     end
 
     def visit(node : Or)
-      format_binary node, :OP_BAR_BAR, :OP_BAR_BAR_EQ
+      format_binary node, :OP_BAR_BAR
     end
 
     def visit(node : And)
-      format_binary node, :OP_AMP_AMP, :OP_AMP_AMP_EQ
+      format_binary node, :OP_AMP_AMP
     end
 
-    def format_binary(node, token : Token::Kind, alternative : Token::Kind)
+    def format_binary(node, token : Token::Kind)
       column = @column
 
       accept node.left
       skip_space_or_newline
-
-      # This is the case of `left ||= right`
-      if @token.type == alternative
-        write " "
-        write alternative
-        write " "
-        next_token_skip_space
-        case right = node.right
-        when Assign
-          accept_assign_value(right.value)
-        when Call
-          accept_assign_value(right.args.last)
-        else
-          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
-        end
-        return false
-      end
 
       write_token " ", token
       found_comment = skip_space
