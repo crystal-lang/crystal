@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.19.2] (2026-04-27)
+
+[1.19.2]: https://github.com/crystal-lang/crystal/releases/1.19.2
+
+### Infrastructure
+
+- _(ci)_ Drop `update: true` from `msys2/setup-msys` ([#16868], thanks @straight-shoota)
+
+[#16868]: https://github.com/crystal-lang/crystal/pull/16868
+
 ## [1.19.1] (2026-01-20)
 
 [1.19.1]: https://github.com/crystal-lang/crystal/releases/1.19.1
