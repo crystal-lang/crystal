@@ -2,6 +2,7 @@ require "spec"
 require "http/headers"
 require "json"
 require "yaml"
+require "../../support/wasm32"
 
 describe HTTP::Headers do
   it "is empty" do
@@ -164,7 +165,7 @@ describe HTTP::Headers do
       JSON
     end
 
-    it "#to_yaml" do
+    pending_wasm32 "#to_yaml" do
       HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}.to_yaml.should eq <<-YAML
       ---
       Foo_quux: bar
