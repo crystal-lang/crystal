@@ -16,7 +16,7 @@
 
 #### stdlib
 
-- **[regression]** `Range#sample` eventually loses randomness ([#16866], thanks @straight-shoota)
+- **[regression]** `Range#sample` eventually loses randomness ([#16866], thanks @straight-shoota, @ysbaddaden)
 
 [#16866]: https://github.com/crystal-lang/crystal/pull/16866
 
