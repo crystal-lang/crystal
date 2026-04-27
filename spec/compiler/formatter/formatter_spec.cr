@@ -1852,6 +1852,7 @@ describe Crystal::Formatter do
   assert_format "foo.bar += \n1", "foo.bar +=\n  1"
   assert_format "->{}", "-> { }"
   assert_format "foo &.[a] = 1"
+  assert_format "x(&.y = (a.b))" # 16875
   assert_format "[\n  # foo\n  1,\n\n  # bar\n  2,\n]"
   assert_format "[c.x]\n  .foo"
   assert_format "foo([\n  1,\n  2,\n  3,\n])"

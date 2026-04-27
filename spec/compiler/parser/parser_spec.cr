@@ -667,6 +667,7 @@ module Crystal
     it_parses "foo &.block[]", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]")))
     it_parses "foo &.block[0]", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]", 0.int32)))
     it_parses "foo &.block=(0)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
+    it_parses "foo &.block = (0)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", Expressions.new([0.int32] of ASTNode).tap(&.keyword = :paren)))) # 16875
     it_parses "foo &.block = 0", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
     it_parses "foo &.block[] = 1", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 1.int32)))
     it_parses "foo &.block[0] = 1", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 0.int32, 1.int32)))
