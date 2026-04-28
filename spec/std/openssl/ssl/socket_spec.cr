@@ -181,7 +181,7 @@ describe OpenSSL::SSL::Socket do
       Fiber.yield
     {% end %}
 
-    socket.close_write # close underlying socket without gracefully shutting down SSL at all
+    socket.close # close underlying socket without gracefully shutting down SSL at all
     server_received = server_finished_reading.receive
     if server_received.is_a?(Exception)
       raise server_received
