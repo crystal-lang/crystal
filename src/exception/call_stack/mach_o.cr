@@ -15,6 +15,11 @@ struct Exception::CallStack
 
   @@image_slide : LibC::Long?
 
+  def self.load_debug_info : Nil
+    # FIXME: Crystal::Mach-O depends on the event loop (it shouldn't)
+    previous_def if Crystal::EventLoop.current?
+  end
+
   protected def self.load_debug_info_impl : Nil
     locate_dsym_bundle do |image|
       read_dwarf_sections(image)

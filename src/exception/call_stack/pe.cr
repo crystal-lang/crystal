@@ -9,6 +9,11 @@ struct Exception::CallStack
 
   @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
 
+  def self.load_debug_info : Nil
+    # FIXME: Crystal::PE depends on the event loop (it shouldn't)
+    previous_def if Crystal::EventLoop.current?
+  end
+
   protected def self.load_debug_info_impl : Nil
     program = Process.executable_path
     return unless program && File::Info.readable? program
