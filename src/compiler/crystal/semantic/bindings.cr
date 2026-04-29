@@ -648,7 +648,7 @@ module Crystal
 
           node_type = node_type.virtual_type
 
-          entries << NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type, named_arg.location)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)

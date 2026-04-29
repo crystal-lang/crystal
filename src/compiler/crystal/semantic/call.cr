@@ -187,7 +187,7 @@ class Crystal::Call
 
             named_args_types ||= [] of NamedArgumentType
             raise "duplicate key: #{name}" if named_args_types.any? &.name.==(name)
-            named_args_types << NamedArgumentType.new(name, type)
+            named_args_types << NamedArgumentType.new(name, type, entry.loc)
           end
         when UnionType
           arg.raise "double splatting a union #{arg_type} is not yet supported"
@@ -208,6 +208,7 @@ class Crystal::Call
         named_args_types << NamedArgumentType.new(
           named_arg.name,
           named_arg.value.type(with_autocast: with_autocast),
+          named_arg.location,
         )
       end
     end

@@ -91,7 +91,7 @@ describe Socket, tags: "network" do
     server.listen
     address = Socket::IPAddress.new("127.0.0.1", port)
     spawn do
-      client = server.not_nil!.accept
+      client = server.accept
       client.gets.should eq "foo"
       client.puts "bar"
     ensure
@@ -199,7 +199,7 @@ describe Socket, tags: "network" do
       server.listen
 
       spawn do
-        client = server.not_nil!.accept
+        client = server.accept
         client.sync = false
         client << "foo"
         client.flush

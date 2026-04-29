@@ -59,8 +59,8 @@ describe "Semantic: exception" do
       CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
-    def_instance.not_nil!.raises?.should be_true
+    def_instance = mod.lookup_def_instance(DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)).should_not be_nil
+    def_instance.raises?.should be_true
   end
 
   it "marks method calling lib fun that raises as raises" do
@@ -76,8 +76,8 @@ describe "Semantic: exception" do
       CRYSTAL
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    def_instance = mod.lookup_def_instance DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)
-    def_instance.not_nil!.raises?.should be_true
+    def_instance = mod.lookup_def_instance(DefInstanceKey.new(a_def.object_id, [] of Type, nil, nil)).should_not be_nil
+    def_instance.raises?.should be_true
   end
 
   it "types exception var with no types" do
@@ -226,7 +226,7 @@ describe "Semantic: exception" do
       CRYSTAL
     mod = result.program
     eh = result.node.as(Expressions).expressions[-2]
-    call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
+    call_p_n = eh.as(ExceptionHandler).ensure.should be_a(Call)
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
@@ -244,7 +244,7 @@ describe "Semantic: exception" do
       CRYSTAL
     mod = result.program
     eh = result.node.as(Expressions).expressions[-2]
-    call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
+    call_p_n = eh.as(ExceptionHandler).ensure.should be_a(Call)
     call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
@@ -255,8 +255,8 @@ describe "Semantic: exception" do
       foo
       CRYSTAL
     mod = result.program
-    a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises?.should be_true
+    a_def = mod.lookup_first_def("foo", false).should_not be_nil
+    a_def.raises?.should be_true
   end
 
   it "marks def as raises" do
@@ -269,8 +269,8 @@ describe "Semantic: exception" do
       foo
       CRYSTAL
     mod = result.program
-    a_def = mod.lookup_first_def("foo", false)
-    a_def.not_nil!.raises?.should be_true
+    a_def = mod.lookup_first_def("foo", false).should_not be_nil
+    a_def.raises?.should be_true
   end
 
   it "marks method that calls another method that raises as raises, recursively" do
