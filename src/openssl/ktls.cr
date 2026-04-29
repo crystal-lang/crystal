@@ -45,7 +45,7 @@ module OpenSSL
     # enable ktls will return EEXIST
     def self.enable(socket : Socket) : Bool
       {% if flag?(:linux) %}
-        LibC.setsockopt(socket.fd, LibC::SOL_TCP, LibC::TCP_ULP, "tls", 4) == 0
+        LibC.setsockopt(socket.fd, LibC::SOL_TCP, LibC::TCP_ULP, "tls", "tls".bytesize + 1) == 0
       {% elsif flag?(:freebsd) %}
         true
       {% end %}
