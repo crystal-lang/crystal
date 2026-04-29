@@ -3802,9 +3802,15 @@ module Crystal
         separator = @token.to_s
         slash_is_regex!
         if @token.type.op_semicolon?
-          skip_semicolon_or_space
+          skip_semicolon
         else
-          next_token_skip_space
+          next_token
+        end
+
+        # Don't use `skip_space` here because that would consume trailing comment
+        # and newline when `node.body` is a `Nop`.
+        while @token.type.space?
+          next_token
         end
         if @token.type.newline?
           format_nested(node.body, @indent)

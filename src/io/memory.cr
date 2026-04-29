@@ -56,7 +56,7 @@ class IO::Memory < IO
 
   # :ditto:
   @[Deprecated("Use `IO::Memory.new(Bytes, writable)` instead")]
-  def self.new(slice : Bytes, writeable writable) : self
+  def self.new(slice : Bytes, *, writeable writable) : self
     new slice, writable: writable
   end
 
