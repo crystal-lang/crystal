@@ -1215,37 +1215,21 @@ module Crystal
           break
         end
 
-        accept type
-
-        last = last?(i, node.types)
-        if last
-          skip_space
-        else
+        unless i == 0
           skip_space_or_newline
-        end
+          write_token " ", :op_bar, " "
+          skip_space
 
-        while true
-          case @token.type
-          when .op_bar?
-            write " | "
-            next_token_skip_space
-            if @token.type.newline?
-              write_line
-              write_indent(column)
-              next_token_skip_space_or_newline
-            end
-          when .op_rparen?
-            if @paren_count > 0
-              @paren_count -= 1
-              write ")"
-              next_token_skip_space
-            else
-              break
-            end
-          else
-            break
+          if @token.type.newline?
+            write_line
+            write_indent(column)
+            next_token_skip_space_or_newline
           end
         end
+
+        accept type
+
+        skip_space
       end
 
       write_token :OP_RPAREN if node.parens?
