@@ -304,67 +304,25 @@ module Crystal
         if @wants_def_or_macro_name
           next_char :OP_PERCENT
         else
-          case next_char
-          when '='
-            next_char :OP_PERCENT_EQ
-          when '(', '[', '{', '<', '|'
-            delimited_pair :string, current_char, closing_char, start
-          when 'i'
-            case peek_next_char
-            when '(', '{', '[', '<', '|'
-              start_char = next_char
-              next_char :SYMBOL_ARRAY_START
-              @token.raw = "%i#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
-            else
-              @token.type = :OP_PERCENT
-            end
-          when 'q'
-            case peek_next_char
-            when '(', '{', '[', '<', '|'
-              next_char
-              delimited_pair :string, current_char, closing_char, start, allow_escapes: false
-            else
-              @token.type = :OP_PERCENT
-            end
-          when 'Q'
-            case peek_next_char
-            when '(', '{', '[', '<', '|'
-              next_char
-              delimited_pair :string, current_char, closing_char, start
-            else
-              @token.type = :OP_PERCENT
-            end
-          when 'r'
-            case peek_next_char
-            when '(', '[', '{', '<', '|'
-              next_char
-              delimited_pair :regex, current_char, closing_char, start
-            else
-              @token.type = :OP_PERCENT
-            end
-          when 'x'
-            case peek_next_char
-            when '(', '[', '{', '<', '|'
-              next_char
-              delimited_pair :command, current_char, closing_char, start
-            else
-              @token.type = :OP_PERCENT
-            end
-          when 'w'
-            case peek_next_char
-            when '(', '{', '[', '<', '|'
-              start_char = next_char
-              next_char :STRING_ARRAY_START
-              @token.raw = "%w#{start_char}" if @wants_raw
-              @token.delimiter_state = Token::DelimiterState.new(:string_array, start_char, closing_char(start_char))
-            else
-              @token.type = :OP_PERCENT
-            end
-          when '}'
-            next_char :OP_PERCENT_RCURLY
+          if delimiter_state = lookahead { delimiter_state_for_percent_literal }
+            @token.delimiter_state = delimiter_state
+            @token.type = case delimiter_state.kind
+                          when .symbol_array? then Token::Kind::SYMBOL_ARRAY_START
+                          when .string_array? then Token::Kind::STRING_ARRAY_START
+                          else                     Token::Kind::DELIMITER_START
+                          end
+
+            next_char
+            set_token_raw_from_start(start)
           else
-            @token.type = :OP_PERCENT
+            case next_char
+            when '='
+              next_char :OP_PERCENT_EQ
+            when '}'
+              next_char :OP_PERCENT_RCURLY
+            else
+              @token.type = :OP_PERCENT
+            end
           end
         end
       when '(' then next_char :OP_LPAREN
@@ -1784,43 +1742,17 @@ module Crystal
         return @token
       end
 
-      if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
+      if !delimiter_state && current_char == '%' && ident_start?(peek_next_char) && !peek_ahead { delimiter_state_for_percent_literal }
         char = next_char
-        if char == 'q' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
-          next_char
-        elsif char == 'Q' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string, current_char, closing_char)
-          next_char
-        elsif char == 'i' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:symbol_array, current_char, closing_char)
-          next_char
-        elsif char == 'w' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:string_array, current_char, closing_char)
-          next_char
-        elsif char == 'x' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:command, current_char, closing_char)
-          next_char
-        elsif char == 'r' && peek_next_char.in?('(', '<', '[', '{', '|')
-          next_char
-          delimiter_state = Token::DelimiterState.new(:regex, current_char, closing_char)
-          next_char
-        else
-          start = current_pos
-          while ident_part?(char)
-            char = next_char
-          end
-          beginning_of_line = false
-          @token.type = :MACRO_VAR
-          @token.value = string_range_from_pool(start)
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
-          return @token
+        start = current_pos
+        while ident_part?(char)
+          char = next_char
         end
+        beginning_of_line = false
+        @token.type = :MACRO_VAR
+        @token.value = string_range_from_pool(start)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        return @token
       end
 
       if !delimiter_state && current_char == 'e'
@@ -1898,19 +1830,13 @@ module Crystal
           end
           whitespace = false
         when '%'
-          case char = peek_next_char
-          when '(', '[', '<', '{', '|'
-            next_char
-            delimiter_state = Token::DelimiterState.new(:string, char, closing_char)
-          else
-            whitespace = false
-            # Don't break if this looks like a prefixed percent literal that will
-            # be handled before the main loop (e.g., %Q|...|, %w|...|, etc.)
-            if !delimiter_state && ident_start?(char)
-              is_percent_literal =
-                char.in?('q', 'Q', 'w', 'i', 'r', 'x') &&
-                  lookahead { next_char; peek_next_char.in?('(', '<', '[', '{', '|') }
-              break unless is_percent_literal
+          whitespace = false
+
+          if !delimiter_state
+            delimiter_state = lookahead { delimiter_state_for_percent_literal }
+            if !delimiter_state && ident_start?(peek_next_char)
+              # Start of a macro var
+              break
             end
           end
         when '#'
@@ -2002,6 +1928,23 @@ module Crystal
       set_token_raw_from_start(start)
 
       @token
+    end
+
+    def delimiter_state_for_percent_literal
+      char = next_char
+      delimiter_kind = case char
+                       when 'i'                     then Token::DelimiterKind::SYMBOL_ARRAY
+                       when 'r'                     then Token::DelimiterKind::REGEX
+                       when 'w'                     then Token::DelimiterKind::STRING_ARRAY
+                       when 'x'                     then Token::DelimiterKind::COMMAND
+                       when 'q', 'Q'                then Token::DelimiterKind::STRING
+                       when '(', '[', '{', '<', '|' then Token::DelimiterKind::STRING
+                       else                              return
+                       end
+
+      return unless char.in?('(', '<', '[', '{', '|') || next_char.in?('(', '<', '[', '{', '|')
+
+      Token::DelimiterState.new(delimiter_kind, current_char, closing_char, allow_escapes: !char.in?('q', 'w'))
     end
 
     def lookahead(preserve_token_on_fail = false, &)

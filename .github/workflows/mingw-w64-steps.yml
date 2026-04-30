@@ -27,7 +27,6 @@ jobs:
         uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         with:
           msystem: ${{ inputs.msystem }}
-          update: true
           install: >-
             git
             make
@@ -87,7 +86,6 @@ jobs:
         uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         with:
           msystem: ${{ inputs.msystem }}
-          update: true
           install: >-
             git
             make
@@ -119,7 +117,6 @@ jobs:
         uses: msys2/setup-msys2@cafece8e6baf9247cf9b1bf95097b0b983cc558d # v2.31.0
         with:
           msystem: ${{ inputs.msystem }}
-          update: true
           install: >-
             git
             make

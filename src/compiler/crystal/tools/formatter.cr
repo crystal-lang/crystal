@@ -129,13 +129,6 @@ module Crystal
       @exp_needs_indent = true
       @inside_def = 0
 
-      # When we parse a type, parentheses information is not stored in ASTs, unlike
-      # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
-      # we increment this when we find a '(', and decrement it when we find ')', but
-      # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
-      # want to print that last ')' when printing the type A.
-      @paren_count = 0
-
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
@@ -1058,29 +1051,7 @@ module Crystal
       false
     end
 
-    def check_open_paren
-      if @token.type.op_lparen?
-        while @token.type.op_lparen?
-          write "("
-          next_token_skip_space
-          @paren_count += 1
-        end
-        true
-      else
-        false
-      end
-    end
-
-    def check_close_paren
-      while @token.type.op_rparen? && @paren_count > 0
-        @paren_count -= 1
-        write_token :OP_RPAREN
-      end
-    end
-
     def visit(node : Path)
-      check_open_paren
-
       # Sometimes the :: is not present because the parser generates ::Nil, for example
       if node.global? && @token.type.op_colon_colon?
         write "::"
@@ -1099,14 +1070,10 @@ module Crystal
         end
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Generic)
-      check_open_paren
-
       name = node.name.as(Path)
       if name.global? && @token.type.op_colon_colon?
         write "::"
@@ -1207,17 +1174,12 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      # Given that generic type arguments are always inside parentheses
-      # we can start counting them from 0 inside them.
-      old_paren_count = @paren_count
-      @paren_count = 0
-
       if named_args = node.named_args
         write_token :OP_LPAREN
         skip_space
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == 0 && @token.type.op_comma?
+        if @token.type.op_comma?
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1225,28 +1187,23 @@ module Crystal
             write_indent
           end
         end
-        skip_space_or_newline if @paren_count == 0
+        skip_space_or_newline
         write_token :OP_RPAREN
       else
         format_literal_elements(node.type_vars, :OP_LPAREN, :OP_RPAREN)
       end
 
-      # Restore the old parentheses count
-      @paren_count = old_paren_count
-
       false
-    ensure
-      check_close_paren
     end
 
     def visit(node : Union)
-      check_open_paren
+      write_token :OP_LPAREN if node.parens?
 
       if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
          node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
-        check_close_paren
+        write_token :OP_RPAREN if node.parens?
         return false
       end
 
@@ -1258,24 +1215,40 @@ module Crystal
           break
         end
 
-        unless i == 0
-          skip_space_or_newline
-          write_token " ", :op_bar, " "
-          skip_space
-
-          if @token.type.newline?
-            write_line
-            write_indent(column)
-            next_token_skip_space_or_newline
-          end
-        end
-
         accept type
 
-        skip_space
+        last = last?(i, node.types)
+        if last
+          skip_space
+        else
+          skip_space_or_newline
+        end
+
+        while true
+          case @token.type
+          when .op_bar?
+            write " | "
+            next_token_skip_space
+            if @token.type.newline?
+              write_line
+              write_indent(column)
+              next_token_skip_space_or_newline
+            end
+          when .op_rparen?
+            if @paren_count > 0
+              @paren_count -= 1
+              write ")"
+              next_token_skip_space
+            else
+              break
+            end
+          else
+            break
+          end
+        end
       end
 
-      check_close_paren
+      write_token :OP_RPAREN if node.parens?
 
       false
     end
@@ -2370,18 +2343,14 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
-      check_open_paren
+      inputs = node.inputs
 
-      paren_count = @paren_count
+      has_input_parens = @token.type.op_lparen? &&
+                         !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
 
-      if inputs = node.inputs
-        # Check if it's ((X, Y) -> Z)
-        #                ^    ^
-        sub_paren_count = @paren_count
-        if check_open_paren
-          sub_paren_count = @paren_count
-        end
+      write_token :op_lparen if has_input_parens
 
+      if inputs
         inputs.each_with_index do |input, i|
           accept input
 
@@ -2392,14 +2361,10 @@ module Crystal
           end
         end
 
-        if sub_paren_count != paren_count
-          check_close_paren
-        end
+        write_token :OP_RPAREN if has_input_parens
       end
 
-      skip_space_or_newline if paren_count == @paren_count
-      check_close_paren
-      skip_space
+      skip_space_or_newline
 
       write " " if inputs
       write_token :OP_MINUS_GT
@@ -2412,15 +2377,11 @@ module Crystal
         skip_space
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Self)
-      check_open_paren
       write_keyword :self
-      check_close_paren
       false
     end
 
@@ -3802,9 +3763,15 @@ module Crystal
         separator = @token.to_s
         slash_is_regex!
         if @token.type.op_semicolon?
-          skip_semicolon_or_space
+          skip_semicolon
         else
-          next_token_skip_space
+          next_token
+        end
+
+        # Don't use `skip_space` here because that would consume trailing comment
+        # and newline when `node.body` is a `Nop`.
+        while @token.type.space?
+          next_token
         end
         if @token.type.newline?
           format_nested(node.body, @indent)
@@ -4876,8 +4843,6 @@ module Crystal
     end
 
     def finish
-      raise "BUG: unclosed parenthesis" if @paren_count > 0
-
       skip_space
       write_line
       skip_space_or_newline last: true

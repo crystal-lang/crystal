@@ -146,10 +146,11 @@ module Crystal
     it_parses %(macro foo\n%q(%t{)\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %(macro foo\n%(%t{)\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
 
-    assert_syntax_error %({% begin %}\n%q(%t{})\n{% end %}), %(unexpected token: "}") # #16772
+    it_parses %({% begin %}\n%q(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
-    assert_syntax_error %({% begin %}\n%q(%t{)\n{% end %}), %{unexpected token: ")"}
+    it_parses %({% begin %}\n%q(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%(\#{%foo})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(\#{".macro_literal, MacroVar.new("foo"), "})\n".macro_literal] of ASTNode))
 
     it_parses ":foo", "foo".symbol
     it_parses ":foo!", "foo!".symbol
@@ -491,14 +492,19 @@ module Crystal
     it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", restriction: Metaclass.new(Self.new))])
     it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", restriction: Self.new.pointer_of)])
     it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Double".path] of ASTNode))])
+    it_parses "def foo(var : (Int | Double)); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.parens(Crystal::Union.new(["Int".path, "Double".path] of ASTNode)))])
     it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Nil".path(true)] of ASTNode))])
     it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of)])
     it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of.pointer_of)])
     it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path))])
     it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
-    it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
+    it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.parens(ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path)))])
     it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
     it_parses "def foo(var : () -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new([] of ASTNode, "Double".path))])
+    it_parses "x : (A -> B)", TypeDeclaration.new("x".var, declared_type: Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path)))
+    it_parses "x : (A -> B).class", TypeDeclaration.new("x".var, declared_type: Metaclass.new(Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path))))
+    it_parses "alias T = (A*) -> R", Alias.new("T".path, ProcNotation.new([Generic.new(Path.global("Pointer"), ["A".path] of ASTNode, suffix: :asterisk)] of ASTNode, "R".path))
+    it_parses "alias T = (A -> ) ->", Alias.new("T".path, ProcNotation.new([ProcNotation.new(["A".path] of ASTNode)] of ASTNode))
     it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
     it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
     it_parses "def foo(var : Int32 = 1); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)])
@@ -513,6 +519,7 @@ module Crystal
     it_parses "def foo(&\n); end", Def.new("foo", block_arg: Arg.new(""), block_arity: 0)
     it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block"), block_arity: 0)
     it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), block_arity: 1)
+    it_parses "def foo(a, &block : ((Int -> Double))); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: Union.parens(Union.parens(ProcNotation.new(["Int".path] of ASTNode, "Double".path)))), block_arity: 1)
     it_parses "def foo(a, & : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), block_arity: 1)
     it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path)), block_arity: 2)
     it_parses "def foo(a, &block : Int, self -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, Self.new] of ASTNode, "Double".path)), block_arity: 2)
@@ -1254,7 +1261,8 @@ module Crystal
     it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC".path, [FunDef.new("getchar")] of ASTNode)
     it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", varargs: true)] of ASTNode)
     it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([Crystal::Union.parens(ProcNotation.new), "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : ((->))?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([Crystal::Union.parens(Crystal::Union.parens(ProcNotation.new)), "Nil".path(true)] of ASTNode))] of ASTNode)
     it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)
@@ -1484,6 +1492,7 @@ module Crystal
 
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+    it_parses "macro foo;%var{}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [] of ASTNode)] of ASTNode))
 
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do
@@ -2243,6 +2252,8 @@ module Crystal
       it_parses "{% begin %}%x#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%x#{open} %s #{close}"))
       it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
     end
+
+    it_parses "{% begin %}%-{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%-"))
 
     it_parses %(foo(bar:"a", baz:"b")), Call.new("foo", named_args: [NamedArgument.new("bar", "a".string), NamedArgument.new("baz", "b".string)])
     it_parses %(foo(bar:a, baz:b)), Call.new("foo", named_args: [NamedArgument.new("bar", "a".call), NamedArgument.new("baz", "b".call)])
@@ -3930,6 +3941,24 @@ module Crystal
       source = "@[::Foo]"
       node = Parser.parse(source).as(Annotation).path
       node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = ((A), (B)) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should(be_a(Union)).types.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, inputs[1]).should eq "(B)"
+    end
+
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = (A) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, proc_notation).should eq "(A) -> R"
     end
 
     it "sets args_in_brackets to false for `a.b`" do

@@ -73,7 +73,7 @@ jobs:
             workers: 4
           - flags: "-Devloop=io_uring"
             workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt -Dio_uring"
+          - flags: "-Dexecution_context -Dpreview_mt -Devloop=io_uring"
             workers: 4
         include:
           - arch: x86_64

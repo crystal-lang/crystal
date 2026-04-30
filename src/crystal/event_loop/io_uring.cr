@@ -837,6 +837,57 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     res
   end
 
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
+    link_timeout = socket.@write_timeout
+    len = count > Int32::MAX ? Int32::MAX : count.to_i32!
+
+    sqes = uninitialized Pointer(LibC::IoUringSqe)[3]
+    pipe = System::FileDescriptor.system_pipe
+
+    begin
+      res = async_impl do |event|
+        count = link_timeout ? 3 : 2
+
+        ring.submit(sqes.to_slice[0, count]) do
+          # file -> pipe
+          sqes[0].value.opcode = LibC::IORING_OP_SPLICE | LibC::IOSQE_IO_LINK
+          sqes[0].value.splice_fd_in = fd
+          sqes[0].value.fd = pipe[1]
+          sqes[0].value.splice_off_in = offset
+          sqes[0].value.off = -1
+          sqes[0].value.len = len
+
+          # pipe -> socket
+          sqes[1].value.opcode = LibC::IORING_OP_SPLICE | (link_timeout ? LibC::IOSQE_IO_LINK : 0_u32)
+          sqes[1].value.splice_fd_in = pipe[0]
+          sqes[1].value.fd = socket.fd
+          sqes[1].value.splice_off_in = -1
+          sqes[1].value.off = -1
+          sqes[1].value.len = len
+          sqes[1].value.user_data = event.address.to_u64!
+
+          if link_timeout
+            event.value.timeout = link_timeout
+
+            sqes[2].value.opcode = LibC::IORING_OP_LINK_TIMEOUT
+            sqes[2].value.addr = event.value.timespec.address.to_u64!
+            sqes[2].value.len = 1
+          end
+        end
+      end
+      res < 0 ? Errno.new(-res) : res.to_i64
+    ensure
+      # async close (single submit, no wait)
+      ring.submit(sqes.to_slice[0, 2]) do
+        sqes[0].value.opcode = LibC::IORING_OP_CLOSE
+        sqes[0].value.fd = pipe[0]
+
+        sqes[1].value.opcode = LibC::IORING_OP_CLOSE
+        sqes[1].value.fd = pipe[1]
+      end
+    end
+  end
+
   def shutdown(socket : ::Socket) : Nil
     # unlike IO::FileDescriptor, we can merely shut down the socket to interrupt
     # pending operations (read, write, accept, ...)

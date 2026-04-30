@@ -126,8 +126,7 @@ describe UNIXServer do
       with_tempfile("unix_server-accept_.sock") do |path|
         UNIXServer.open(path) do |server|
           UNIXSocket.open(path) do |_|
-            client = server.accept?.not_nil!
-            client.should be_a(UNIXSocket)
+            client = server.accept?.should be_a(UNIXSocket)
             client.close
           end
         end

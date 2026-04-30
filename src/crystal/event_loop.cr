@@ -56,7 +56,7 @@ abstract class Crystal::EventLoop
   @[AlwaysInline]
   def self.current? : self | Nil
     {% if flag?(:execution_context) %}
-      Fiber::ExecutionContext.current.event_loop
+      Fiber::ExecutionContext.current?.try(&.event_loop)
     {% else %}
       Crystal::Scheduler.event_loop?
     {% end %}

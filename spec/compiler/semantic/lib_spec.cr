@@ -740,6 +740,17 @@ describe "Semantic: lib" do
       CRYSTAL
   end
 
+  it "freezes type of out variable (#16645)" do
+    assert_error <<-CRYSTAL, "must be Int32, not (Char | Int32)"
+    lib LibFoo
+      fun foo(x : Int32*)
+    end
+
+    LibFoo.foo(out x)
+    x = 'a'
+    CRYSTAL
+  end
+
   it "errors if redefining fun with different signature (#2468)" do
     assert_error <<-CRYSTAL, "fun redefinition with different signature"
       fun foo

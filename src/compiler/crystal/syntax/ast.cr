@@ -1,3 +1,39 @@
+# Helper for `#pretty_print` implementation. It describes the type.
+private def pp_type(pp, left, right, &) : Nil
+  pp.text left
+  pp.group_sub do
+    pp.nest(2) do
+      pp.breakable ""
+      yield
+    end
+    pp.breakable ""
+  end
+  pp.text right
+end
+
+# Helper for `#pretty_print` to emit optional properties.
+private macro pp_option(pp, name, comma = true, default = nil)
+  %value = {{ name.id }}
+  if %value {% if default %}!= {{ default }}{% end %}
+    {{ pp }}.comma if {{ comma }}
+    {{ pp }}.group do
+      {{ pp }}.text "#{{{name.id.stringify}}.rchop('?').lchop("self.")}: "
+      %value.pretty_print({{ pp }})
+    end
+    true
+  else
+    false
+  end
+end
+
+# Helper for joining elements with commas in `#pretty_print`.
+private def pp_join(pp, ary)
+  ary.each_with_index do |elem, i|
+    pp.comma if i > 0
+    elem.pretty_print(pp)
+  end
+end
+
 module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
@@ -110,6 +146,10 @@ module Crystal
     def single_expression?
       nil
     end
+
+    def inspect(io : IO) : Nil
+      PrettyPrint.format(self, io, 79)
+    end
   end
 
   class Nop < ASTNode
@@ -118,6 +158,10 @@ module Crystal
     end
 
     def_equals_and_hash
+
+    def pretty_print(pp) : Nil
+      pp.text "Nop.new"
+    end
   end
 
   # A container for one or many expressions.
@@ -213,6 +257,17 @@ module Crystal
     end
 
     def_equals_and_hash expressions
+
+    def pretty_print(pp) : Nil
+      if keyword.none?
+        before, after = "Expressions[", "]"
+      else
+        before, after = "Expressions.#{keyword.to_s.downcase}(", ")"
+      end
+      pp_type(pp, before, after) do
+        pp_join(pp, expressions)
+      end
+    end
   end
 
   # The nil literal.
@@ -225,6 +280,10 @@ module Crystal
     end
 
     def_equals_and_hash
+
+    def pretty_print(pp) : Nil
+      pp.text "NilLiteral.new"
+    end
   end
 
   # A bool literal.
@@ -242,6 +301,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "BoolLiteral[", "]") do
+        value.pretty_print(pp)
+      end
+    end
   end
 
   # The kind of primitive numbers.
@@ -377,6 +442,14 @@ module Crystal
 
     def_equals value.to_f64, kind
     def_hash value, kind
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "NumberLiteral[", "]") do
+        value.pretty_print(pp)
+        pp.comma
+        pp.text ":#{kind}"
+      end
+    end
   end
 
   # A char literal.
@@ -394,6 +467,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "CharLiteral[", "]") do
+        value.pretty_print(pp)
+      end
+    end
   end
 
   class StringLiteral < ASTNode
@@ -407,6 +486,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "StringLiteral[", "]") do
+        value.pretty_print(pp)
+      end
+    end
   end
 
   class StringInterpolation < ASTNode
@@ -428,6 +513,14 @@ module Crystal
     end
 
     def_equals_and_hash expressions
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "StringInterpolation[", "]") do
+        pp.group do
+          pp_join(pp, expressions)
+        end
+      end
+    end
   end
 
   class SymbolLiteral < ASTNode
@@ -441,6 +534,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "SymbolLiteral[", "]") do
+        value.pretty_print(pp)
+      end
+    end
   end
 
   # An array literal.
@@ -474,6 +573,17 @@ module Crystal
     end
 
     def_equals_and_hash @elements, @of, @name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ArrayLiteral[", "]") do
+        pp.group do
+          pp_join(pp, elements)
+        end
+
+        pp_option pp, of, comma: !elements.empty?
+        pp_option pp, name, comma: !elements.empty? || of
+      end
+    end
   end
 
   class HashLiteral < ASTNode
@@ -502,7 +612,25 @@ module Crystal
 
     def_equals_and_hash @entries, @of, @name
 
-    record Entry, key : ASTNode, value : ASTNode
+    record Entry, key : ASTNode, value : ASTNode do
+      def pretty_print(pp) : Nil
+        pp_type(pp, "HashLiteral::Entry[", "]") do
+          key.pretty_print pp
+          pp.comma
+          value.pretty_print pp
+        end
+      end
+    end
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "HashLiteral[", "]") do
+        pp.group do
+          pp_join(pp, entries)
+        end
+        pp_option pp, of, comma: !entries.empty?
+        pp_option pp, name, comma: !entries.empty? || of
+      end
+    end
   end
 
   class NamedTupleLiteral < ASTNode
@@ -524,6 +652,17 @@ module Crystal
     def_equals_and_hash @entries
 
     record Entry, key : String, value : ASTNode
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "NamedTupleLiteral[", "]") do
+        entries.each_with_index do |entry, i|
+          pp.comma if i > 0
+          entry.key.pretty_print pp
+          pp.text ": "
+          entry.value.pretty_print pp
+        end
+      end
+    end
   end
 
   class RangeLiteral < ASTNode
@@ -544,6 +683,15 @@ module Crystal
     end
 
     def_equals_and_hash @from, @to, @exclusive
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "RangeLiteral[", "]") do
+        from.pretty_print(pp)
+        pp.comma
+        to.pretty_print(pp)
+        pp_option pp, exclusive?
+      end
+    end
   end
 
   class RegexLiteral < ASTNode
@@ -562,6 +710,13 @@ module Crystal
     end
 
     def_equals_and_hash @value, @options
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "RegexLiteral[", "]") do
+        value.pretty_print(pp)
+        pp_option(pp, options, default: Regex::CompileOptions::None)
+      end
+    end
   end
 
   class TupleLiteral < ASTNode
@@ -587,6 +742,12 @@ module Crystal
     end
 
     def_equals_and_hash elements
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "TupleLiteral[", "]") do
+        pp_join(pp, elements)
+      end
+    end
   end
 
   module SpecialVar
@@ -613,8 +774,13 @@ module Crystal
       Var.new(@name)
     end
 
-    def_equals name
-    def_hash name
+    def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Var[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   # A code block.
@@ -655,6 +821,16 @@ module Crystal
     end
 
     def_equals_and_hash args, body, splat_index, unpacks
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Block[", "]") do
+        pp.group do
+          pp_join(pp, args)
+        end
+        pp_option(pp, body, comma: !args.empty?)
+        pp_option(pp, splat_index)
+      end
+    end
   end
 
   # A method call.
@@ -754,6 +930,24 @@ module Crystal
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global?
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Call[", "]") do
+        if obj = @obj
+          obj.pretty_print(pp)
+          pp.comma
+        end
+        name.pretty_print(pp)
+        unless args.empty?
+          pp.comma
+          args.pretty_print(pp)
+        end
+        pp_option(pp, block)
+        pp_option(pp, block_arg)
+        pp_option(pp, named_args)
+        pp_option(pp, global?)
+      end
+    end
   end
 
   class NamedArgument < ASTNode
@@ -776,6 +970,14 @@ module Crystal
     end
 
     def_equals_and_hash name, value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "NamedArgument[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        value.pretty_print(pp)
+      end
+    end
   end
 
   # An if expression.
@@ -815,6 +1017,21 @@ module Crystal
     end
 
     def_equals_and_hash @cond, @then, @else
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "If[", "]") do
+        cond.pretty_print(pp)
+        if a_then = @then
+          pp.comma
+          a_then.pretty_print(pp)
+        end
+        if a_else = @else
+          pp.comma
+          a_else.pretty_print(pp)
+        end
+        pp_option(pp, ternary?)
+      end
+    end
   end
 
   class Unless < ASTNode
@@ -841,6 +1058,20 @@ module Crystal
     end
 
     def_equals_and_hash @cond, @then, @else
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Unless[", "]") do
+        cond.pretty_print(pp)
+        if a_then = @then
+          pp.comma
+          a_then.pretty_print(pp)
+        end
+        if a_else = @else
+          pp.comma
+          a_else.pretty_print(pp)
+        end
+      end
+    end
   end
 
   # Assign expression.
@@ -873,6 +1104,14 @@ module Crystal
     end
 
     def_equals_and_hash @target, @value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Assign[", "]") do
+        target.pretty_print(pp)
+        pp.comma
+        value.pretty_print(pp)
+      end
+    end
   end
 
   # Operator assign expression.
@@ -905,6 +1144,16 @@ module Crystal
     end
 
     def_equals_and_hash @target, @op, @value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "OpAssign[", "]") do
+        target.pretty_print(pp)
+        pp.comma
+        op.pretty_print(pp)
+        pp.comma
+        value.pretty_print(pp)
+      end
+    end
   end
 
   # Assign expression.
@@ -932,6 +1181,14 @@ module Crystal
     end
 
     def_equals_and_hash @targets, @values
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MultiAssign[", "]") do
+        targets.pretty_print(pp)
+        pp.comma
+        values.pretty_print(pp)
+      end
+    end
   end
 
   # An instance variable.
@@ -950,6 +1207,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "InstanceVar[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class ReadInstanceVar < ASTNode
@@ -968,6 +1231,14 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ReadInstanceVar[", "]") do
+        obj.pretty_print(pp)
+        pp.comma
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class ClassVar < ASTNode
@@ -981,6 +1252,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ClassVar[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   # A global variable.
@@ -999,6 +1276,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Global[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   abstract class BinaryOp < ASTNode
@@ -1018,6 +1301,15 @@ module Crystal
     end
 
     def_equals_and_hash left, right
+
+    def pretty_print(pp) : Nil
+      _, _, name = self.class.name.rpartition("::")
+      pp_type(pp, "#{name}[", "]") do
+        left.pretty_print(pp)
+        pp.comma
+        right.pretty_print(pp)
+      end
+    end
   end
 
   # Expressions and.
@@ -1070,6 +1362,17 @@ module Crystal
     end
 
     def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Arg[", "]") do
+        name.pretty_print(pp)
+        pp_option(pp, default_value)
+        pp_option(pp, restriction)
+        if @external_name != @name
+          pp_option(pp, external_name)
+        end
+      end
+    end
   end
 
   # The Proc notation in the type grammar:
@@ -1092,6 +1395,18 @@ module Crystal
     end
 
     def_equals_and_hash inputs, output
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ProcNotation[", "]") do
+        if inputs = @inputs
+          pp_join(pp, inputs)
+        end
+        if output = @output
+          pp.comma if @inputs
+          output.pretty_print(pp)
+        end
+      end
+    end
   end
 
   # A method definition.
@@ -1167,6 +1482,25 @@ module Crystal
     def has_any_args?
       args.present? || !block_arity.nil?
     end
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Def[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        args.pretty_print(pp)
+        pp.comma
+        body.pretty_print(pp)
+
+        pp_option(pp, receiver)
+        pp_option(pp, block_arg)
+        pp_option(pp, return_type)
+        pp_option(pp, macro_def?)
+        pp_option(pp, block_arity)
+        pp_option(pp, abstract?)
+        pp_option(pp, splat_index)
+        pp_option(pp, double_splat)
+      end
+    end
   end
 
   class Macro < ASTNode
@@ -1205,6 +1539,19 @@ module Crystal
     end
 
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Macro[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        args.pretty_print(pp)
+        pp.comma
+        body.pretty_print(pp)
+        pp_option(pp, block_arg)
+        pp_option(pp, splat_index)
+        pp_option(pp, double_splat)
+      end
+    end
   end
 
   abstract class UnaryExpression < ASTNode
@@ -1222,6 +1569,13 @@ module Crystal
     end
 
     def_equals_and_hash exp
+
+    def pretty_print(pp) : Nil
+      _, _, name = self.class.name.rpartition("::")
+      pp_type(pp, "#{name}[", "]") do
+        exp.pretty_print(pp)
+      end
+    end
   end
 
   # Used only for flags
@@ -1284,6 +1638,14 @@ module Crystal
     end
 
     def_equals_and_hash @offsetof_type, @offset
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "OffsetOf[", "]") do
+        offsetof_type.pretty_print(pp)
+        pp.comma
+        offset.pretty_print(pp)
+      end
+    end
   end
 
   class VisibilityModifier < ASTNode
@@ -1307,6 +1669,14 @@ module Crystal
     end
 
     def_equals_and_hash modifier, exp
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "VisibilityModifier[", "]") do
+        modifier.pretty_print(pp)
+        pp.comma
+        exp.pretty_print(pp)
+      end
+    end
   end
 
   class IsA < ASTNode
@@ -1327,6 +1697,15 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @const, @nil_check
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "IsA[", "]") do
+        obj.pretty_print(pp)
+        pp.comma
+        const.pretty_print(pp)
+        pp_option(pp, nil_check?)
+      end
+    end
   end
 
   class RespondsTo < ASTNode
@@ -1345,6 +1724,14 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "RespondsTo[", "]") do
+        obj.pretty_print(pp)
+        pp.comma
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class Require < ASTNode
@@ -1358,6 +1745,12 @@ module Crystal
     end
 
     def_equals_and_hash string
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Require[", "]") do
+        string.pretty_print(pp)
+      end
+    end
   end
 
   class When < ASTNode
@@ -1383,6 +1776,17 @@ module Crystal
     end
 
     def_equals_and_hash @conds, @body, @exhaustive
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "When[", "]") do
+        pp.group do
+          pp_join(pp, conds)
+        end
+        pp.comma
+        body.pretty_print(pp)
+        pp_option(pp, exhaustive?)
+      end
+    end
   end
 
   class Case < ASTNode
@@ -1408,6 +1812,17 @@ module Crystal
     end
 
     def_equals_and_hash @exhaustive, @cond, @whens, @else
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Case[", "]") do
+        pp.group do
+          pp_join(pp, whens)
+        end
+        pp_option(pp, :else)
+        pp_option(pp, cond)
+        pp_option(pp, exhaustive?)
+      end
+    end
   end
 
   class Select < ASTNode
@@ -1427,6 +1842,15 @@ module Crystal
     end
 
     def_equals_and_hash @whens, @else
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Select[", "]") do
+        pp.group do
+          pp_join(pp, whens)
+        end
+        pp_option(pp, :else)
+      end
+    end
   end
 
   # Node that represents an implicit obj in:
@@ -1444,6 +1868,10 @@ module Crystal
     end
 
     def_hash
+
+    def pretty_print(pp) : Nil
+      pp.text "ImplicitObj.new"
+    end
   end
 
   # A qualified identifier.
@@ -1491,6 +1919,17 @@ module Crystal
     end
 
     def_equals_and_hash @names, @global
+
+    def pretty_print(pp) : Nil
+      if global?
+        before, after = "Path.global(", ")"
+      else
+        before, after = "Path[", "]"
+      end
+      pp_type(pp, before, after) do
+        pp_join(pp, names)
+      end
+    end
   end
 
   # Class definition:
@@ -1527,6 +1966,17 @@ module Crystal
     end
 
     def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ClassDef[", "]") do
+        name.pretty_print(pp)
+        pp_option(pp, superclass)
+        pp_option(pp, type_vars)
+        pp_option(pp, abstract?)
+        pp_option(pp, struct?)
+        pp_option(pp, body)
+      end
+    end
   end
 
   # Module definition:
@@ -1558,7 +2008,15 @@ module Crystal
       clone
     end
 
-    def_equals_and_hash @name, @body, @type_vars, @splat_index
+    def_equals_and_hash @name, @body, @type_vars
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ModuleDef[", "]") do
+        name.pretty_print(pp)
+        pp_option(pp, type_vars)
+        pp_option(pp, body)
+      end
+    end
   end
 
   # Annotation definition:
@@ -1584,6 +2042,12 @@ module Crystal
     end
 
     def_equals_and_hash @name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "AnnotationDef[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   # While expression.
@@ -1610,6 +2074,13 @@ module Crystal
     end
 
     def_equals_and_hash @cond, @body
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "While[", "]") do
+        cond.pretty_print(pp)
+        pp_option(pp, body) unless body.is_a?(Nop)
+      end
+    end
   end
 
   # Until expression.
@@ -1636,6 +2107,13 @@ module Crystal
     end
 
     def_equals_and_hash @cond, @body
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Until[", "]") do
+        cond.pretty_print(pp)
+        pp_option(pp, body) unless body.is_a?(Nop)
+      end
+    end
   end
 
   class Generic < ASTNode
@@ -1673,6 +2151,20 @@ module Crystal
     end
 
     def_equals_and_hash @name, @type_vars, @named_args
+
+    def pretty_print(pp) : Nil
+      if suffix.none?
+        before, after = "Generic[", "]"
+      else
+        before, after = "Generic.#{suffix.to_s.downcase}(", ")"
+      end
+      pp_type(pp, before, after) do
+        name.pretty_print(pp)
+        pp.comma
+        type_vars.pretty_print(pp)
+        pp_option(pp, named_args)
+      end
+    end
   end
 
   class TypeDeclaration < ASTNode
@@ -1711,6 +2203,15 @@ module Crystal
     end
 
     def_equals_and_hash @var, @declared_type, @value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "TypeDeclaration[", "]") do
+        var.pretty_print(pp)
+        pp.comma
+        declared_type.pretty_print(pp)
+        pp_option(pp, value)
+      end
+    end
   end
 
   class UninitializedVar < ASTNode
@@ -1744,6 +2245,14 @@ module Crystal
     end
 
     def_equals_and_hash @var, @declared_type
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "UninitializedVar[", "]") do
+        var.pretty_print(pp)
+        pp.comma
+        declared_type.pretty_print(pp)
+      end
+    end
   end
 
   class Rescue < ASTNode
@@ -1765,6 +2274,19 @@ module Crystal
     end
 
     def_equals_and_hash @body, @types, @name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Rescue[", "]") do
+        comma = false
+        unless body.is_a?(Nop)
+          body.pretty_print(pp)
+          comma = true
+        end
+        c = pp_option(pp, types, comma: comma)
+        comma ||= c
+        pp_option(pp, name, comma: comma)
+      end
+    end
   end
 
   class ExceptionHandler < ASTNode
@@ -1800,6 +2322,23 @@ module Crystal
     end
 
     def_equals_and_hash @body, @rescues, @else, @ensure
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ExceptionHandler[", "]") do
+        comma = false
+        c = pp_option(pp, rescues, comma: comma)
+        comma ||= c
+        c = pp_option(pp, self.else, comma: comma)
+        comma ||= c
+        c = pp_option(pp, self.ensure, comma: comma)
+        comma ||= c
+        c = pp_option(pp, implicit, comma: comma)
+        comma ||= c
+        c = pp_option(pp, suffix, comma: comma)
+        comma ||= c
+        pp_option(pp, body, comma: comma) unless body.is_a?(Nop)
+      end
+    end
   end
 
   class ProcLiteral < ASTNode
@@ -1817,6 +2356,12 @@ module Crystal
     end
 
     def_equals_and_hash @def
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ProcLiteral[", "]") do
+        @def.pretty_print(pp)
+      end
+    end
   end
 
   class ProcPointer < ASTNode
@@ -1839,6 +2384,21 @@ module Crystal
 
     def_equals_and_hash @obj, @name, @args, @global
 
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ProcPointer[", "]") do
+        if obj = @obj
+          obj.pretty_print(pp)
+          pp.comma
+        end
+        name.pretty_print(pp)
+        unless args.empty?
+          pp.comma
+          args.pretty_print(pp)
+        end
+        pp_option(pp, global?)
+      end
+    end
+
     def has_any_args?
       args.present?
     end
@@ -1846,8 +2406,23 @@ module Crystal
 
   class Union < ASTNode
     property types : Array(ASTNode)
+    property? parens : Bool
 
-    def initialize(@types)
+    def self.parens(type : ASTNode)
+      # Wrap existing union in parens if it doesn't already have parens
+      if type.is_a?(Union) && !type.parens?
+        return type.tap { |t| t.parens = true }
+      end
+
+      new [type] of ASTNode, parens: true
+    end
+
+    def initialize(@types, @parens = false)
+    end
+
+    # A union with only one element typically represents parenthesis in the type grammar: `(A)`
+    def singleton?
+      types.size == 1
     end
 
     def accept_children(visitor)
@@ -1855,10 +2430,21 @@ module Crystal
     end
 
     def clone_without_location
-      Union.new(@types.clone)
+      Union.new(@types.clone, @parens)
     end
 
-    def_equals_and_hash types
+    def_equals_and_hash types, parens?
+
+    def pretty_print(pp) : Nil
+      if parens?
+        before, after = "Union.parens(", ")"
+      else
+        before, after = "Union[", "]"
+      end
+      pp_type(pp, before, after) do
+        pp_join(pp, types)
+      end
+    end
   end
 
   class Self < ASTNode
@@ -1871,6 +2457,10 @@ module Crystal
     end
 
     def_hash
+
+    def pretty_print(pp) : Nil
+      pp.text "Self.new"
+    end
   end
 
   abstract class ControlExpression < ASTNode
@@ -1888,6 +2478,13 @@ module Crystal
     end
 
     def_equals_and_hash exp
+
+    def pretty_print(pp) : Nil
+      _, _, name = self.class.name.rpartition("::")
+      pp_type(pp, "#{name}[", "]") do
+        exp.pretty_print(pp)
+      end
+    end
   end
 
   class Return < ControlExpression
@@ -1930,6 +2527,16 @@ module Crystal
     end
 
     def_equals_and_hash @exps, @scope, @has_parentheses
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Yield[", "]") do
+        pp.group do
+          pp_join(pp, exps)
+        end
+        pp_option(pp, scope, comma: !@exps.empty?)
+        pp_option(pp, has_parentheses?)
+      end
+    end
   end
 
   class Include < ASTNode
@@ -1951,6 +2558,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Include[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class Extend < ASTNode
@@ -1972,6 +2585,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Extend[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class LibDef < ASTNode
@@ -1996,6 +2615,14 @@ module Crystal
     end
 
     def_equals_and_hash @name, @body
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "LibDef[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        body.pretty_print(pp)
+      end
+    end
   end
 
   class FunDef < ASTNode
@@ -2032,6 +2659,20 @@ module Crystal
     end
 
     def_equals_and_hash @name, @args, @return_type, @varargs, @body, @real_name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "FunDef[", "]") do
+        name.pretty_print(pp)
+        pp.comma if args.present?
+        pp.group do
+          pp_join(pp, args)
+        end
+        pp_option(pp, return_type)
+        pp_option(pp, varargs?)
+        pp_option(pp, real_name)
+        pp_option(pp, body)
+      end
+    end
   end
 
   class TypeDef < ASTNode
@@ -2054,6 +2695,14 @@ module Crystal
     end
 
     def_equals_and_hash @name, @type_spec
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "TypeDef[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        type_spec.pretty_print(pp)
+      end
+    end
   end
 
   # A c struct/union definition inside a lib declaration
@@ -2076,6 +2725,15 @@ module Crystal
     end
 
     def_equals_and_hash @name, @union, @body
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "CStructOrUnionDef[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        body.pretty_print(pp)
+        pp_option(pp, union?)
+      end
+    end
   end
 
   class EnumDef < ASTNode
@@ -2098,6 +2756,17 @@ module Crystal
     end
 
     def_equals_and_hash @name, @members, @base_type
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "EnumDef[", "]") do
+        name.pretty_print(pp)
+        pp.comma if members.present?
+        pp.group do
+          pp_join(pp, members)
+        end
+        pp_option(pp, base_type)
+      end
+    end
   end
 
   class ExternalVar < ASTNode
@@ -2118,6 +2787,15 @@ module Crystal
     end
 
     def_equals_and_hash @name, @type_spec, @real_name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "ExternalVar[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        type_spec.pretty_print(pp)
+        pp_option(pp, real_name)
+      end
+    end
   end
 
   class Alias < ASTNode
@@ -2138,6 +2816,14 @@ module Crystal
     end
 
     def_equals_and_hash @name, @value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Alias[", "]") do
+        name.pretty_print(pp)
+        pp.comma
+        value.pretty_print(pp)
+      end
+    end
   end
 
   class Metaclass < ASTNode
@@ -2155,6 +2841,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Metaclass[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   # obj as to
@@ -2179,6 +2871,14 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @to
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Cast[", "]") do
+        obj.pretty_print(pp)
+        pp.comma
+        to.pretty_print(pp)
+      end
+    end
   end
 
   # obj.as?(to)
@@ -2203,6 +2903,14 @@ module Crystal
     end
 
     def_equals_and_hash @obj, @to
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "NilableCast[", "]") do
+        obj.pretty_print(pp)
+        pp.comma
+        to.pretty_print(pp)
+      end
+    end
   end
 
   # typeof(exp, exp, ...)
@@ -2221,6 +2929,14 @@ module Crystal
     end
 
     def_equals_and_hash expressions
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "TypeOf[", "]") do
+        pp.group do
+          pp_join(pp, expressions)
+        end
+      end
+    end
   end
 
   class Annotation < ASTNode
@@ -2247,6 +2963,17 @@ module Crystal
     end
 
     def_equals_and_hash path, args, named_args
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Annotation[", "]") do
+        path.pretty_print(pp)
+        unless !@args.empty?
+          pp.comma
+          args.pretty_print(pp)
+        end
+        pp_option(pp, named_args)
+      end
+    end
   end
 
   # A macro expression,
@@ -2268,6 +2995,13 @@ module Crystal
     end
 
     def_equals_and_hash exp, output?
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MacroExpression[", "]") do
+        exp.pretty_print(pp)
+        pp_option(pp, output?, default: true)
+      end
+    end
   end
 
   # Free text that is part of a macro
@@ -2282,6 +3016,12 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MacroLiteral[", "]") do
+        value.pretty_print(pp)
+      end
+    end
   end
 
   class MacroVerbatim < UnaryExpression
@@ -2319,6 +3059,19 @@ module Crystal
     end
 
     def_equals_and_hash @cond, @then, @else, @is_unless
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MacroIf[", "]") do
+        cond.pretty_print(pp)
+        pp.comma
+        @then.pretty_print(pp)
+        unless @else.is_a?(Nop)
+          pp.comma
+          @else.pretty_print(pp)
+          pp_option(pp, is_unless?)
+        end
+      end
+    end
   end
 
   # for inside a macro:
@@ -2345,6 +3098,16 @@ module Crystal
     end
 
     def_equals_and_hash @vars, @exp, @body
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MacroFor[", "]") do
+        vars.pretty_print(pp)
+        pp.comma
+        exp.pretty_print(pp)
+        pp.comma
+        body.pretty_print(pp)
+      end
+    end
   end
 
   # A uniquely named variable inside a macro (like %var)
@@ -2364,6 +3127,13 @@ module Crystal
     end
 
     def_equals_and_hash @name, @exps
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MacroVar[", "]") do
+        name.pretty_print(pp)
+        pp_option(pp, exps)
+      end
+    end
   end
 
   # An underscore matches against any type
@@ -2377,6 +3147,10 @@ module Crystal
     end
 
     def_hash
+
+    def pretty_print(pp) : Nil
+      pp.text "Underscore.new"
+    end
   end
 
   class Splat < UnaryExpression
@@ -2441,6 +3215,12 @@ module Crystal
     end
 
     def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "MagicConstant[", "]") do
+        name.pretty_print(pp)
+      end
+    end
   end
 
   class Asm < ASTNode
@@ -2466,6 +3246,19 @@ module Crystal
     end
 
     def_equals_and_hash text, outputs, inputs, clobbers, volatile?, alignstack?, intel?, can_throw?
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Asm[", "]") do
+        text.pretty_print(pp)
+        pp_option(pp, outputs)
+        pp_option(pp, inputs)
+        pp_option(pp, clobbers)
+        pp_option(pp, :volatile?)
+        pp_option(pp, :alignstack?)
+        pp_option(pp, :intel?)
+        pp_option(pp, :can_throw?)
+      end
+    end
   end
 
   class AsmOperand < ASTNode
@@ -2484,6 +3277,14 @@ module Crystal
     end
 
     def_equals_and_hash constraint, exp
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "AsmOperand[", "]") do
+        constraint.pretty_print(pp)
+        pp.comma
+        exp.pretty_print(pp)
+      end
+    end
   end
 
   enum Visibility : Int8

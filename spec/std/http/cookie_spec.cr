@@ -10,9 +10,7 @@ private def parse_first_cookie(header)
 end
 
 private def parse_set_cookie(header)
-  cookie = HTTP::Cookie::Parser.parse_set_cookie(header)
-  cookie.should_not be_nil
-  cookie.not_nil!
+  HTTP::Cookie::Parser.parse_set_cookie(header).should_not be_nil
 end
 
 # invalid printable ascii characters, non-printable ascii characters and control characters
