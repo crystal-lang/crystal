@@ -5,7 +5,7 @@ module Sync
     @mutexes : Array(Sync::Mutex)
 
     def initialize(mutexes : Enumerable(Sync::Mutex))
-      @mutexes = mutexes.sort_by(&.object_id).uniq!
+      @mutexes = mutexes.sort_by(&.lock_id).uniq!
     end
 
     # Locks all mutexes in this `MutexSet` in a deterministic order for the duration of the block.

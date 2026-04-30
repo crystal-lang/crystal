@@ -17,6 +17,9 @@ module Sync
   class Mutex
     include Lockable
 
+    # :nodoc:
+    getter lock_id : UInt128 = rand(UInt128)
+
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
