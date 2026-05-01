@@ -2359,7 +2359,7 @@ in_parens ||
   #
   #   `T -> U`
   (inputs.size < 2 && !inputs.first?.is_a?(Union))
-        )
+        ) && flag?("proc_notation_parens")
 
       if has_input_parens
         write_token :op_lparen
