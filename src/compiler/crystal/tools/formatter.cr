@@ -2342,23 +2342,23 @@ module Crystal
 
       has_input_parens = @token.type.op_lparen? &&
                          !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
-      needs_input_parens = !(
-          # The proc notation is the only type in a union with parens
-          #
-          #   `(T -> U)`
-          in_parens ||
-          # No inputs
-          #
-          #   `-> T`
-          inputs.nil? ||
-          # The first input is parenthesized
-          #
-          #   `(T), U -> V`
-          inputs.first?.as?(Union).try(&.parens?) ||
-          # Only one input and it's not a union
-          #
-          #   `T -> U`
-          (inputs.size < 2 && !inputs.first?.is_a?(Union))
+      needs_input_parens = !( # The proc notation is the only type in a union with parens
+      #
+      #   `(T -> U)`
+
+in_parens ||
+  # No inputs
+  #
+  #   `-> T`
+  inputs.nil? ||
+  # The first input is parenthesized
+  #
+  #   `(T), U -> V`
+  inputs.first?.as?(Union).try(&.parens?) ||
+  # Only one input and it's not a union
+  #
+  #   `T -> U`
+  (inputs.size < 2 && !inputs.first?.is_a?(Union))
         )
 
       if has_input_parens
