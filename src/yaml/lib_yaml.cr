@@ -118,7 +118,7 @@ lib LibYAML
     end_mark : Mark
   end
 
-  alias ReadHandler = Void*, LibC::UChar*, LibC::SizeT, LibC::SizeT* -> Int
+  alias ReadHandler = (Void*, LibC::UChar*, LibC::SizeT, LibC::SizeT*) -> Int
 
   struct Emitter
     error : Int

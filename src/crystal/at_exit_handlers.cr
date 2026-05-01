@@ -4,7 +4,7 @@ module Crystal::AtExitHandlers
 
   def self.add(handler)
     @@mutex.synchronize do
-      handlers = @@handlers ||= [] of Int32, ::Exception? ->
+      handlers = @@handlers ||= [] of (Int32, ::Exception?) ->
       handlers << handler
     end
   end

@@ -14,7 +14,7 @@ private def abi
   Crystal::ABI::AVR.new(machine)
 end
 
-private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
+private def test(msg, &block : (Crystal::ABI, LLVM::Context) ->)
   it msg do
     abi = abi()
     ctx = LLVM::Context.new

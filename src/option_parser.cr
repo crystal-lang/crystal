@@ -274,7 +274,7 @@ class OptionParser
   # that your program expects (for example, filenames). The default behaviour
   # is to do nothing. The arguments can also be extracted from the *args* array
   # passed to `#parse` after parsing.
-  def unknown_args(&@unknown_args : Array(String), Array(String) ->)
+  def unknown_args(&@unknown_args : (Array(String), Array(String)) ->)
   end
 
   # Sets a handler for when a option that expects an argument wasn't given any.

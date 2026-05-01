@@ -279,7 +279,7 @@ lib LibGMP
 
   # # Memory
 
-  fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : Void*, SizeT, SizeT -> Void*, free : Void*, SizeT ->)
+  fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : (Void*, SizeT, SizeT) -> Void*, free : (Void*, SizeT) ->)
 end
 
 LibGMP.set_memory_functions(

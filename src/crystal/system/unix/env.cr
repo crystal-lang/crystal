@@ -42,7 +42,7 @@ module Crystal::System::Env
   end
 
   # Iterates all environment variables.
-  def self.each(&block : String, String ->)
+  def self.each(&block : (String, String) ->)
     # Collect variables while holding the lock because we can't trust
     # LibC.environ to be stable and don't control what &block does: it might
     # yield the current fiber while holding the lock, deadlock if it calls

@@ -145,7 +145,7 @@ module Crystal
       SIZEOF_CLOSURE = 40
     {% end %}
 
-    alias ClosureFun = Cif*, Void*, Void**, Void* -> Void
+    alias ClosureFun = (Cif*, Void*, Void**, Void*) -> Void
 
     fun prep_cif = ffi_prep_cif(
       cif : Cif*,
