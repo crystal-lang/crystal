@@ -1147,7 +1147,7 @@ module Crystal
     def visit(node : Union)
       @str << "(" if node.parens?
 
-      if node.parens? && node.types.size == 1 && (proc_notation = node.types.first.as?(ProcNotation))
+      if node.parens? && node.singleton? && (proc_notation = node.types.first.as?(ProcNotation))
         drop_parens_for_proc_notation(proc_notation, &.accept(self))
       else
         node.types.join(@str, " | ", &.accept self)

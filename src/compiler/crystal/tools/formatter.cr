@@ -1197,7 +1197,7 @@ module Crystal
     end
 
     def visit(node : Union)
-      if node.parens? && node.types.size == 1 && (proc_notation = node.types.first.as?(ProcNotation))
+      if node.parens? && node.singleton? && (proc_notation = node.types.first.as?(ProcNotation))
         # Singleton union with parenthesis means a proc notation doesn't need
         # parenthesis around input parameters: `(A -> B)`
         write_token :OP_LPAREN
