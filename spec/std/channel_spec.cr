@@ -874,7 +874,11 @@ describe "buffered" do
       ch.close
     end
 
-    ch.to_a.should eq [1, 2, 3]
+    iterator = ch.each
+    iterator.next.should eq 1
+    iterator.next.should eq 2
+    iterator.next.should eq 3
+    iterator.next.should be_a Iterator::Stop
   end
 
   it "does inspect on unbuffered channel" do
