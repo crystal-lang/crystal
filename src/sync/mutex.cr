@@ -16,7 +16,7 @@ module Sync
   # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
-    @@lock_ids = Atomic(UInt128).new(0)
+    @@lock_ids = Atomic(UInt64).new(0)
 
     # :nodoc:
     getter lock_id : UInt64
