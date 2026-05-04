@@ -16,9 +16,10 @@ module Sync
   # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
+    @@lock_ids = Atomic(UInt128).new(0)
 
     # :nodoc:
-    getter lock_id : UInt128 = rand(UInt128)
+    getter lock_id : UInt128 = @@lock_ids.add(1)
 
     def initialize(@type : Type = :checked)
       @counter = 0
