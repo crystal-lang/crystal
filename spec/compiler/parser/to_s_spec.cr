@@ -124,9 +124,9 @@ describe "ASTNode#to_s" do
 
   # 14216
   expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
   expect_to_s "def foo(& : ->)\nend"
-  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend"
   expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
   expect_to_s "foo(x : (T -> U) -> V, W)"
   expect_to_s "foo[x : (T -> U) -> V, W]"

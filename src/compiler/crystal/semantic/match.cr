@@ -125,7 +125,7 @@ module Crystal
 
     def remove_literals
       @arg_types.map!(&.remove_literal)
-      @named_arg_types.try &.map! { |arg| NamedArgumentType.new(arg.name, arg.type.remove_literal) }
+      @named_arg_types.try &.map! { |arg| NamedArgumentType.new(arg.name, arg.type.remove_literal, arg.loc) }
     end
   end
 

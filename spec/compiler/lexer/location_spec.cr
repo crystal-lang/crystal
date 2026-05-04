@@ -142,7 +142,7 @@ describe "Lexer: location" do
   it "assigns correct loc location to node" do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]).as(Expressions)
     node = exps.expressions.first
-    location = node.location.not_nil!
+    location = node.location.should_not(be_nil)
     location.line_number.should eq(2)
     location.column_number.should eq(3)
     location.filename.should eq("foo.txt")

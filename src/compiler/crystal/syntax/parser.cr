@@ -1660,8 +1660,10 @@ module Crystal
         if @token.type.op_eq?
           unexpected_token unless can_be_assigned?(call)
 
-          next_token_skip_space
+          next_token
+
           if @token.type.op_lparen?
+            skip_space
             next_token_skip_space
             exp = parse_op_assign
             check :OP_RPAREN
@@ -1670,6 +1672,7 @@ module Crystal
             call.args = [exp] of ASTNode
             call = parse_atomic_method_suffix call, location
           else
+            skip_space
             exp = parse_op_assign
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
@@ -3318,7 +3321,8 @@ module Crystal
           if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
             warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
           end
-          if current_char == '{'
+
+          if lookahead { next_token.type.op_lcurly? }
             if macro_var_name.size == 1
               warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
             end
@@ -3352,7 +3356,6 @@ module Crystal
     end
 
     def parse_macro_var_exps
-      next_token # '{'
       next_token
 
       exps = [] of ASTNode
@@ -3875,6 +3878,12 @@ module Crystal
 
     def compute_block_arg_yields(block_arg)
       block_arg_restriction = block_arg.restriction
+
+      # Unwrap parens unions
+      while block_arg_restriction.is_a?(Union) && block_arg_restriction.singleton?
+        block_arg_restriction = block_arg_restriction.types.first
+      end
+
       if block_arg_restriction.is_a?(ProcNotation)
         @block_arity = block_arg_restriction.inputs.try(&.size) || 0
       else
@@ -5140,15 +5149,15 @@ module Crystal
         end
 
         type = parse_type_splat { parse_union_type }
-        if type.is_a?(Union)
-          type.at(location).at_end(@token.location)
-        end
         if @token.type.op_rparen?
+          end_location = @token.location
           next_token_skip_space
           if @token.type.op_minus_gt? # `(A) -> B` case
-            type = parse_proc_type_output([type], location)
+            type = parse_proc_type_output([type] of ASTNode, location)
           elsif type.is_a?(Splat)
             raise "invalid type splat", type.location.not_nil!
+          else
+            type = Union.parens(type).at(location).at_end(end_location)
           end
         else
           input_types = [type]
@@ -5161,6 +5170,11 @@ module Crystal
             type = parse_proc_type_output(input_types, input_types.first.location)
             check :OP_RPAREN
             next_token_skip_space
+            unless @token.type.op_minus_gt?
+              # Usually the parenthesis is encoded in a Union instance.
+              # But not when nesting proc notations like `(->) ->`.
+              type = Union.parens(type).at(type)
+            end
           else # `(A, B, C) -> D` case
             check :OP_RPAREN
             next_token_skip_space

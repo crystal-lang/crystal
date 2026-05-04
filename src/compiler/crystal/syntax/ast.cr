@@ -2406,8 +2406,23 @@ module Crystal
 
   class Union < ASTNode
     property types : Array(ASTNode)
+    property? parens : Bool
 
-    def initialize(@types)
+    def self.parens(type : ASTNode)
+      # Wrap existing union in parens if it doesn't already have parens
+      if type.is_a?(Union) && !type.parens?
+        return type.tap { |t| t.parens = true }
+      end
+
+      new [type] of ASTNode, parens: true
+    end
+
+    def initialize(@types, @parens = false)
+    end
+
+    # A union with only one element typically represents parenthesis in the type grammar: `(A)`
+    def singleton?
+      types.size == 1
     end
 
     def accept_children(visitor)
@@ -2415,13 +2430,18 @@ module Crystal
     end
 
     def clone_without_location
-      Union.new(@types.clone)
+      Union.new(@types.clone, @parens)
     end
 
-    def_equals_and_hash types
+    def_equals_and_hash types, parens?
 
     def pretty_print(pp) : Nil
-      pp_type(pp, "Union[", "]") do
+      if parens?
+        before, after = "Union.parens(", ")"
+      else
+        before, after = "Union[", "]"
+      end
+      pp_type(pp, before, after) do
         pp_join(pp, types)
       end
     end

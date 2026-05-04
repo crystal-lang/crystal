@@ -1145,15 +1145,20 @@ module Crystal
     end
 
     def visit(node : Union)
-      node.types.join(@str, " | ", &.accept self)
+      @str << "(" if node.parens?
+
+      if node.singleton?
+        drop_parens_for_proc_notation(node.types.first, &.accept(self))
+      else
+        node.types.join(@str, " | ", &.accept self)
+      end
+
+      @str << ")" if node.parens?
       false
     end
 
     def visit(node : Metaclass)
-      needs_parens = node.name.is_a?(Union)
-      @str << '(' if needs_parens
       node.name.accept self
-      @str << ')' if needs_parens
       @str << ".class"
       false
     end
@@ -1867,7 +1872,7 @@ module Crystal
           # call arguments
           node.declared_type.is_a?(ProcNotation)
         else
-          false
+          node.is_a?(ProcNotation)
         end
 
       drop_parens_for_proc_notation(outermost_type_is_proc_notation) { yield node }

@@ -105,9 +105,7 @@ describe "Normalize: op assign" do
 end
 
 private def assert_name_location(node, line_number, column_number, spec_file = __FILE__, spec_line = __LINE__)
-  node.name_location.should_not be_nil, file: spec_file, line: spec_line
-
-  name_location = node.name_location.not_nil!
+  name_location = node.name_location.should_not be_nil, file: spec_file, line: spec_line
   name_location.line_number.should eq(line_number), file: spec_file, line: spec_line
   name_location.column_number.should eq(column_number), file: spec_file, line: spec_line
 end

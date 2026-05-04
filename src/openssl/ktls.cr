@@ -45,7 +45,7 @@ module OpenSSL
     # enable ktls will return EEXIST
     def self.enable(socket : Socket) : Bool
       {% if flag?(:linux) %}
-        LibC.setsockopt(socket.fd, LibC::SOL_TCP, LibC::TCP_ULP, "tls", "tls".bytesize) == 0
+        LibC.setsockopt(socket.fd, LibC::SOL_TCP, LibC::TCP_ULP, "tls", "tls".bytesize + 1) == 0
       {% elsif flag?(:freebsd) %}
         true
       {% end %}
@@ -163,17 +163,13 @@ module OpenSSL
           sizeof(LibC::Tls_get_record)
         {% end %}
 
-      cmsg = buf.to_unsafe.as(LibC::Cmsghdr*)
-      cmsg.value.cmsg_level = CMSG_LEVEL
-      cmsg.value.cmsg_len = sizeof(LibC::Cmsghdr) + cdata_len # CMSGLEN(cdata_len)
-
       msg_iov = LibC::Iovec.new
       msg_iov.iov_base = (p + LibCrypto::SSL3_RT_HEADER_LENGTH).as(Void*)
       msg_iov.iov_len = iov_len(length - prepend_length)
 
       msg = LibC::Msghdr.new
       msg.msg_control = buf.to_unsafe.as(Void*)
-      msg.msg_controllen = cmsg.value.cmsg_len
+      msg.msg_controllen = buf.size
       msg.msg_iov = pointerof(msg_iov)
       msg.msg_iovlen = 1
 
