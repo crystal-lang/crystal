@@ -868,7 +868,7 @@ describe "buffered" do
 
   it "can be used as an iterator" do
     ch = Channel(Int32).new
-    Sync::CONCURRENT.spawn do
+    spawn do
       ch.send(1).send(2).send(3)
     ensure
       ch.close
