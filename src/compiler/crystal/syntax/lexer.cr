@@ -1973,7 +1973,7 @@ module Crystal
 
       return unless char.in?('(', '<', '[', '{', '|') || next_char.in?('(', '<', '[', '{', '|')
 
-      Token::DelimiterState.new(delimiter_kind, current_char, closing_char, allow_escapes: !char.in?('q', 'w', 'i', 'r'))
+      Token::DelimiterState.new(delimiter_kind, current_char, closing_char, allow_escapes: !char.in?('q', 'w', 'i'))
     end
 
     def lookahead(preserve_token_on_fail = false, &)
