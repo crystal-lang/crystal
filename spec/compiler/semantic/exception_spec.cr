@@ -293,7 +293,7 @@ describe "Semantic: exception" do
       baz
       CRYSTAL
     call = result.node.as(Expressions).expressions.last.as(Call)
-    call.target_defs.not_nil!.first.raises?.should be_true
+    call.target_defs.should_not(be_nil).first.raises?.should be_true
   end
 
   it "marks proc literal as raises" do

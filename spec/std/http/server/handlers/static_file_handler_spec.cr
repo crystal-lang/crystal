@@ -63,7 +63,7 @@ describe HTTP::StaticFileHandler do
 
     it "returns 304 Not Modified for younger than Last-Modified" do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
-      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).should_not(be_nil)
 
       headers = HTTP::Headers.new
       headers["If-Modified-Since"] = HTTP.format_time(last_modified + 1.hour)
@@ -76,7 +76,7 @@ describe HTTP::StaticFileHandler do
 
     it "serves content for older than Last-Modified" do
       initial_response = handle HTTP::Request.new("GET", "/test.txt")
-      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).not_nil!
+      last_modified = HTTP.parse_time(initial_response.headers["Last-Modified"]).should_not(be_nil)
 
       headers = HTTP::Headers.new
       headers["If-Modified-Since"] = HTTP.format_time(last_modified - 1.hour)

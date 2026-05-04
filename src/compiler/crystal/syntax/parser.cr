@@ -1660,8 +1660,10 @@ module Crystal
         if @token.type.op_eq?
           unexpected_token unless can_be_assigned?(call)
 
-          next_token_skip_space
+          next_token
+
           if @token.type.op_lparen?
+            skip_space
             next_token_skip_space
             exp = parse_op_assign
             check :OP_RPAREN
@@ -1670,6 +1672,7 @@ module Crystal
             call.args = [exp] of ASTNode
             call = parse_atomic_method_suffix call, location
           else
+            skip_space
             exp = parse_op_assign
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
@@ -3288,7 +3291,8 @@ module Crystal
           if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
             warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
           end
-          if current_char == '{'
+
+          if lookahead { next_token.type.op_lcurly? }
             if macro_var_name.size == 1
               warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
             end
@@ -3322,7 +3326,6 @@ module Crystal
     end
 
     def parse_macro_var_exps
-      next_token # '{'
       next_token
 
       exps = [] of ASTNode
