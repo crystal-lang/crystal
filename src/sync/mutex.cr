@@ -19,11 +19,12 @@ module Sync
     @@lock_ids = Atomic(UInt128).new(0)
 
     # :nodoc:
-    getter lock_id : UInt128 = @@lock_ids.add(1)
+    getter lock_id : UInt64
 
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
+      @lock_id = @@lock_ids.add(1)
     end
 
     # Acquires the exclusive lock for the duration of the block. The lock will
