@@ -1140,6 +1140,18 @@ abstract class IO
     raise Error.new "Unable to seek"
   end
 
+  # Same as `seek` but yields to the block after seeking and eventually seeks
+  # back to the original position when the block returns.
+  def seek(offset, whence : Seek = Seek::Set, &)
+    original_pos = tell
+    begin
+      seek(offset, whence)
+      yield
+    ensure
+      seek(original_pos)
+    end
+  end
+
   # Returns the current position (in bytes) in this `IO`.
   #
   # The `IO` class raises on this method, but some subclasses, notable
