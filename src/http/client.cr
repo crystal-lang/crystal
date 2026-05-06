@@ -769,7 +769,7 @@ class HTTP::Client
     HTTP::Request.new(method, path, headers, body)
   end
 
-  private def ensure_io
+  private def ensure_io : IO
     io = @io
     if io
       if io.closed?
