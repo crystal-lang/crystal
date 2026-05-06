@@ -774,7 +774,7 @@ class HTTP::Client
     if io
       if io.closed?
         @io = nil
-        io
+        ensure_io
       else
         return io
       end
