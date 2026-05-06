@@ -478,7 +478,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_annotations.not_nil!
+    attrs = sdl.link_annotations.should_not(be_nil)
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
@@ -538,7 +538,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_annotations.not_nil!
+    attrs = sdl.link_annotations.should_not(be_nil)
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
@@ -558,7 +558,7 @@ describe "Semantic: lib" do
       LibSDL.init(0_u32)
       CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_annotations.not_nil!
+    attrs = sdl.link_annotations.should_not(be_nil)
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
@@ -575,7 +575,7 @@ describe "Semantic: lib" do
       LibSDL.init
       CRYSTAL
     sdl = result.program.types["LibSDL"].as(LibType)
-    attrs = sdl.link_annotations.not_nil!
+    attrs = sdl.link_annotations.should_not(be_nil)
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end

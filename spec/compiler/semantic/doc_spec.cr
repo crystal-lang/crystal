@@ -10,7 +10,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for abstract class" do
@@ -33,7 +33,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for module" do
@@ -45,7 +45,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for def" do
@@ -293,7 +293,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for flags enum with base type" do
@@ -309,7 +309,7 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     foo.annotation(ann).should_not be_nil
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for enum and doesn't mix with value" do
@@ -323,7 +323,7 @@ describe "Semantic: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for enum with @[Flags]" do
@@ -350,7 +350,7 @@ describe "Semantic: doc" do
     foo = program.types["Foo"]
     a = foo.types["A"]
     a.doc.should eq("Hello")
-    a.locations.not_nil!.size.should eq(1)
+    a.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores location for implicit flag enum members" do
@@ -379,7 +379,7 @@ describe "Semantic: doc" do
     program = result.program
     a = program.types["CONST"]
     a.doc.should eq("Hello")
-    a.locations.not_nil!.size.should eq(1)
+    a.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for alias" do
@@ -390,7 +390,7 @@ describe "Semantic: doc" do
     program = result.program
     a = program.types["Alias"]
     a.doc.should eq("Hello")
-    a.locations.not_nil!.size.should eq(1)
+    a.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "stores doc for nodes defined in macro call" do
@@ -447,7 +447,7 @@ describe "Semantic: doc" do
       def_foo
       CRYSTAL
     program = result.program
-    foo = program.macros.not_nil!["foo"].first
+    foo = program.macros.should_not(be_nil)["foo"].first
     foo.doc.should eq("Hello")
   end
 
@@ -465,7 +465,7 @@ describe "Semantic: doc" do
       program = result.program
       foo = program.types["Foo"]
       foo.doc.should eq("Hello")
-      foo.locations.not_nil!.size.should eq(2)
+      foo.locations.should_not(be_nil).size.should eq(2)
     end
 
     it "overwrites doc for {{module_type}} when reopening" do
@@ -495,7 +495,7 @@ describe "Semantic: doc" do
       CRYSTAL
     program = result.program
     foo = program.types["Foo"]
-    foo.locations.not_nil!.size.should eq(1)
+    foo.locations.should_not(be_nil).size.should eq(1)
   end
 
   it "attaches doc in double macro expansion (#8463)" do

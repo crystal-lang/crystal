@@ -239,8 +239,11 @@ describe "ASTNode#inspect" do
   expect_inspect %(foo : A | (B -> C)), <<-CRYSTAL
       TypeDeclaration[
         Var["foo"],
-        Union[Path["A"], ProcNotation[Path["B"], Path["C"]]]
+        Union[Path["A"], Union.parens(ProcNotation[Path["B"], Path["C"]])]
       ]
+      CRYSTAL
+  expect_inspect %(x : (A | B)), <<-CRYSTAL
+      TypeDeclaration[Var["x"], Union.parens(Path["A"], Path["B"])]
       CRYSTAL
   expect_inspect %(foo : Int32 = 1), <<-CRYSTAL
       TypeDeclaration[Var["foo"], Path["Int32"], value: NumberLiteral["1", :i32]]
@@ -340,7 +343,7 @@ describe "ASTNode#inspect" do
       Nop.new,
       block_arg: Arg[
         "block",
-        restriction: ProcNotation[Underscore.new, Underscore.new]
+        restriction: Union.parens(ProcNotation[Underscore.new, Underscore.new])
       ],
       block_arity: 1,
       double_splat: Arg["args"]
@@ -351,7 +354,7 @@ describe "ASTNode#inspect" do
       "foo",
       [],
       Nop.new,
-      block_arg: Arg["", restriction: ProcNotation[]],
+      block_arg: Arg["", restriction: Union.parens(ProcNotation[])],
       block_arity: 0
     ]
     CRYSTAL
