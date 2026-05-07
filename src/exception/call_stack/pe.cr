@@ -1,4 +1,4 @@
-require "crystal/pe"
+require "crystal/system/unix/pe"
 
 struct Exception::CallStack
   DEBUG_LINE_STR = ".debug_line_str"
@@ -7,7 +7,7 @@ struct Exception::CallStack
   DEBUG_ABBREV   = ".debug_abbrev"
   DEBUG_INFO     = ".debug_info"
 
-  @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
+  @@coff_symbols : Hash(Int32, Array(Crystal::System::PE::COFFSymbol))?
 
   def self.load_debug_info : Nil
     # FIXME: Crystal::PE depends on the event loop (it shouldn't)
@@ -21,8 +21,8 @@ struct Exception::CallStack
     ret = LibC.GetModuleHandleExW(LibC::GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nil, out hmodule)
     return if ret == 0
 
-    Crystal::PE.open(program) do |image|
-      @@coff_symbols = image.coff_symbols
+    Crystal::System::PE.open(program) do |image|
+      @@coff_symbols = image.read_coff_symbols
       read_dwarf_sections(image, hmodule.address - image.original_image_base)
     end
   rescue ex

@@ -1,4 +1,4 @@
-require "crystal/mach_o"
+require "crystal/system/unix/mach_o"
 
 lib LibC
   fun _dyld_image_count : UInt32
@@ -55,8 +55,8 @@ struct Exception::CallStack
     files.each do |dwarf|
       next unless File.exists?(dwarf)
 
-      Crystal::MachO.open(program) do |mach_o|
-        Crystal::MachO.open(dwarf) do |dsym|
+      Crystal::System::MachO.open(program) do |mach_o|
+        Crystal::System::MachO.open(dwarf) do |dsym|
           if dsym.uuid == mach_o.uuid
             return yield dsym
           end

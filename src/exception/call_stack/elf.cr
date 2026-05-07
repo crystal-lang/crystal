@@ -1,4 +1,4 @@
-require "crystal/elf"
+require "crystal/system/unix/elf"
 {% unless flag?(:wasm32) %}
   require "c/link"
 {% end %}
@@ -49,7 +49,7 @@ struct Exception::CallStack
 
     LibC.dl_iterate_phdr(phdr_callback, pointerof(data))
 
-    Crystal::ELF.open(data.program) do |image|
+    Crystal::System::ELF.open(data.program) do |image|
       read_dwarf_sections(image, data.base_address)
     end
   rescue ex
