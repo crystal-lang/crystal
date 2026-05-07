@@ -15,16 +15,7 @@ module Crystal::System::File
   getter? system_append = false
 
   def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
-    perm = ::File::Permissions.new(perm) if perm.is_a? Int32
-    # Only the owner writable bit is used, since windows only supports
-    # the read only attribute.
-    if perm.owner_write?
-      perm = LibC::S_IREAD | LibC::S_IWRITE
-    else
-      perm = LibC::S_IREAD
-    end
-
-    case result = EventLoop.current.open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
+    case result = EventLoop.current.open(filename, open_flag(mode), posix_perms(perm), blocking != false)
     in Tuple(FileDescriptor::Handle, Bool)
       result
     in WinError
@@ -32,7 +23,39 @@ module Crystal::System::File
     end
   end
 
-  def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
+  def self.system_open(path : String, mode : Int, perm : ::File::Permissions, blocking : Bool = true) : FileDescriptor::Handle | WinError
+    access, disposition, attributes = posix_to_open_opts(mode, posix_perms(perm), blocking)
+    handle = LibC.CreateFileW(
+      System.to_wstr(path),
+      access,
+      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
+      nil,
+      disposition,
+      attributes,
+      LibC::HANDLE.null
+    )
+    handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : handle
+  end
+
+  def self.system_close(fd : FileDescriptor::Handle) : Nil | WinError
+    if LibC.CloseHandle(handle) == 0
+      WinError.value
+    end
+  end
+
+  def self.posix_perms(perm)
+    perm = ::File::Permissions.new(perm) if perm.is_a? Int32
+
+    # Only the owner writable bit is used, since windows only supports
+    # the read only attribute.
+    if perm.owner_write?
+      ::File::Permissions.new(LibC::S_IREAD | LibC::S_IWRITE)
+    else
+      ::File::Permissions.new(LibC::S_IREAD)
+    end
+  end
+
+  def self.posix_to_open_opts(flags : Int32, perm : Int32, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR

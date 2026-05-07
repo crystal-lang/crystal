@@ -284,23 +284,12 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | WinError
-    access, disposition, attributes = System::File.posix_to_open_opts(flags, permissions, !!blocking)
-
-    handle = LibC.CreateFileW(
-      System.to_wstr(path),
-      access,
-      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
-      nil,
-      disposition,
-      attributes,
-      LibC::HANDLE.null
-    )
-
-    if handle == LibC::INVALID_HANDLE_VALUE
-      WinError.value
-    else
+    case handle = System::File.system_open(path, flags, permissions, !!blocking)
+    when System::FileDescriptor::Handle
       create_completion_port(handle) unless blocking
       {handle.address, !!blocking}
+    when WinError
+      handle
     end
   end
 

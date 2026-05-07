@@ -14,6 +14,25 @@ module Crystal::System::File
     end
   end
 
+  def self.system_open(path : String, mode : Int, perm : ::File::Permissions, blocking : Bool = true) : FileDescriptor::Handle | Errno
+    fd = LibC.open(path.check_no_null_byte, mode | LibC::O_CLOEXEC, perm)
+    return Errno.value if fd == -1
+
+    FileDescriptor.set_blocking(fd, false) unless blocking
+    fd
+  end
+
+  def self.system_close(fd : FileDescriptor::Handle) : Nil | Errno
+    return if LibC.close(fd) == 0
+
+    case errno = Errno.value
+    when Errno::EINTR, Errno::EINPROGRESS
+      # ignore
+    else
+      errno
+    end
+  end
+
   protected def system_init(mode : String, blocking : Bool) : Nil
   end
 
