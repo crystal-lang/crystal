@@ -157,8 +157,8 @@ module Crystal
 
       @offset : Int64
 
-      def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
-        @offset = @io.tell
+      def initialize(@io : IO::Memory, size, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
+        @offset = @io.tell.to_i64
         @matrix = Array(Array(Row)).new
         decode_sequences(size)
 
@@ -177,7 +177,7 @@ module Crystal
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
         while true
-          pos = @io.tell
+          pos = @io.tell.to_i64
           offset = pos - @offset
           break unless offset < size
 
@@ -237,7 +237,7 @@ module Crystal
             file_names = Array.new(count) { read_lnct(include_directories, file_format) }
           end
 
-          if @io.tell - @offset < offset + total_length
+          if @io.tell.to_i64 - @offset < offset + total_length
             sequence = Sequence.new(
               offset,
               unit_length,
@@ -417,7 +417,7 @@ module Crystal
             when LNE::EndSequence
               registers.end_sequence = true
               register_to_matrix(sequence, registers)
-              if (@io.tell - @offset - sequence.offset) < sequence.total_length
+              if (@io.tell.to_i64 - @offset - sequence.offset) < sequence.total_length
                 registers = Register.new(sequence.default_is_stmt)
               else
                 break

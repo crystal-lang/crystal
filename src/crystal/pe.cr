@@ -1,3 +1,5 @@
+require "crystal/system/memory_map"
+
 module Crystal
   # :nodoc:
   #
@@ -25,13 +27,28 @@ module Crystal
     # offsets within that section
     getter coff_symbols = Hash(Int32, Array(COFFSymbol)).new
 
-    def self.open(path : String | ::Path, &)
-      File.open(path, "r") do |file|
-        yield new(file)
+    def self.open(path, &)
+      fd = System::File.system_open(path, LibC::O_RDONLY, ::File::DEFAULT_CREATE_PERMISSIONS)
+      return unless fd.is_a?(System::FileDescriptor::Handle)
+
+      begin
+        info = System::FileDescriptor.system_info(fd)
+        return unless info.is_a?(File::Info)
+
+        memory_map = System.memory_map(fd, offset: 0, size: info.size)
+        return unless memory_map.is_a?(System::MemoryMap)
+
+        begin
+          yield new(IO::Memory.new(memory_map.to_slice))
+        ensure
+          memory_map.unmap
+        end
+      ensure
+        System::File.system_close(fd)
       end
     end
 
-    def initialize(@io : IO::FileDescriptor)
+    def initialize(@io : IO::Memory)
       dos_header = uninitialized LibC::IMAGE_DOS_HEADER
       io.read_fully(pointerof(dos_header).to_slice(1).to_unsafe_bytes)
       raise Error.new("Invalid DOS header") unless dos_header.e_magic == 0x5A4D # MZ

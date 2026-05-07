@@ -15,7 +15,7 @@ module Crystal
       @offset : Int64
       @ref_offset : Int64
 
-      def initialize(@io : IO::FileDescriptor, @offset)
+      def initialize(@io : IO::Memory, @offset)
         @ref_offset = offset
 
         @unit_length = @io.read_bytes(UInt32)
@@ -26,7 +26,7 @@ module Crystal
           @dwarf64 = false
         end
 
-        @offset = @io.tell
+        @offset = @io.tell.to_i64
         @version = @io.read_bytes(UInt16)
 
         if @version < 2 || @version > 5
@@ -54,7 +54,7 @@ module Crystal
         end_offset = @offset + @unit_length
         attributes = [] of {AT, FORM, Value}
 
-        while @io.tell < end_offset
+        while @io.tell.to_i64 < end_offset
           code = DWARF.read_unsigned_leb128(@io)
           attributes.clear
 
