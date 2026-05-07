@@ -771,6 +771,13 @@ class File < IO::FileDescriptor
     io << '>'
   end
 
+  # :inherit:
+  def info : File::Info
+    result = @fd_lock.reference { system_info }
+    raise File::Error.from_os_error("Unable to get file info", result, file: path) unless result.is_a?(File::Info)
+    result
+  end
+
   # Changes the owner of the specified file.
   #
   # ```

@@ -66,7 +66,7 @@ module Crystal::System::Dir
     close(dir)
   end
 
-  def self.info(dir : DirHandle, path) : ::File::Info
+  def self.info(dir : DirHandle, path) : ::File::Info | WinError
     if dir.file_handle == LibC::INVALID_HANDLE_VALUE
       handle = LibC.CreateFileW(
         System.to_wstr(path),
@@ -79,13 +79,13 @@ module Crystal::System::Dir
       )
 
       if handle == LibC::INVALID_HANDLE_VALUE
-        raise ::File::Error.from_winerror("Unable to get directory info", file: path)
+        return WinError.value
       end
 
       dir.file_handle = handle
     end
 
-    Crystal::System::FileDescriptor.system_info dir.file_handle, LibC::FILE_TYPE_DISK
+    FileDescriptor.system_info(dir.file_handle, LibC::FILE_TYPE_DISK)
   end
 
   def self.close(dir : DirHandle, path : String) : Nil

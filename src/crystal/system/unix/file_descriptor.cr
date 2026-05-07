@@ -44,15 +44,17 @@ module Crystal::System::FileDescriptor
 
   protected def system_blocking_init(blocking : Bool?)
     if blocking.nil?
-      blocking = EventLoop.default_file_blocking? ||
-                 case system_info.type
-                 when .pipe?, .socket?, .character_device?
-                   false
-                 else
-                   true
-                 end
+      blocking = EventLoop.default_file_blocking? || !FileDescriptor.special_type?(fd)
     end
     self.system_blocking = blocking
+  end
+
+  protected def self.special_type?(fd)
+    if type = system_info(fd).as?(::File::Info).try(&.type)
+      type.pipe? || type.socket? || type.character_device?
+    else
+      false
+    end
   end
 
   private def system_close_on_exec?
@@ -79,18 +81,16 @@ module Crystal::System::FileDescriptor
     FileDescriptor.fcntl(fd, cmd, arg)
   end
 
-  def self.system_info(fd)
+  def self.system_info(fd) : ::File::Info | Errno
     stat = uninitialized LibC::Stat
-    ret = File.fstat(fd, pointerof(stat))
-
-    if ret != 0
-      raise IO::Error.from_errno("Unable to get info")
+    if File.fstat(fd, pointerof(stat)) == 0
+      ::File::Info.new(stat)
+    else
+      Errno.value
     end
-
-    ::File::Info.new(stat)
   end
 
-  private def system_info
+  private def system_info : ::File::Info | Errno
     FileDescriptor.system_info(fd)
   end
 

@@ -41,13 +41,13 @@ module Crystal::System::Dir
     LibC.rewinddir(dir)
   end
 
-  def self.info(dir, path) : ::File::Info
+  def self.info(dir, path) : ::File::Info | Errno
     fd = {% if flag?(:netbsd) %}
            dir.value.dd_fd
          {% else %}
            LibC.dirfd(dir)
          {% end %}
-    Crystal::System::FileDescriptor.system_info(fd)
+    FileDescriptor.system_info(fd)
   end
 
   def self.close(dir, path) : Nil

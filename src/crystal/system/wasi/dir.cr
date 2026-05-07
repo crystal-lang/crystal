@@ -64,8 +64,8 @@ module Crystal::System::Dir
     dir.end_pos = dir.pos = dir.buf.size.to_u32
   end
 
-  def self.info(dir, path) : ::File::Info
-    Crystal::System::FileDescriptor.system_info dir.fd
+  def self.info(dir, path) : ::File::Info | WasiError
+    FileDescriptor.system_info(dir.fd)
   end
 
   def self.close(dir, path) : Nil

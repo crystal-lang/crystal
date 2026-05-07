@@ -157,7 +157,9 @@ class IO::FileDescriptor < IO
   #
   # Use `File.info` if the file is not open and a path to the file is available.
   def info : File::Info
-    @fd_lock.reference { system_info }
+    result = @fd_lock.reference { system_info }
+    raise IO::Error.from_os_error("Unable to get file info", result) unless result.is_a?(File::Info)
+    result
   end
 
   # Seeks to a given *offset* (in bytes) according to the *whence* argument.

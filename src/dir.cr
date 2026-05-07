@@ -166,7 +166,9 @@ class Dir
 
   # This method is faster than `.info` and avoids race conditions if a `Dir` is already open on POSIX systems, but not necessarily on windows.
   def info : File::Info
-    Crystal::System::Dir.info(@dir, path)
+    result = Crystal::System::Dir.info(@dir, path).as?(File::Info)
+    raise ::File::Error.from_os_error("Unable to get directory info", result, file: path) unless result.is_a?(File::Info)
+    result
   end
 
   # Closes the directory stream.
