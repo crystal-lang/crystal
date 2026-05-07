@@ -18,11 +18,6 @@ struct Exception::CallStack
     end
   end
 
-  def self.load_debug_info : Nil
-    # FIXME: Crystal::ELF depends on the event loop (it shouldn't)
-    previous_def if Crystal::EventLoop.current?
-  end
-
   protected def self.load_debug_info_impl : Nil
     program = Process.executable_path
     return unless program && File::Info.readable? program
