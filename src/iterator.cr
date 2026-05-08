@@ -401,6 +401,12 @@ module Iterator(T)
     include Iterator(U)
     include IteratorWrapper
 
+    # If `func` outputs a non-nilable type, we can skip compaction and return the
+    # original iterator directly.
+    def self.new(iterator, func : T -> U)
+      iterator
+    end
+
     def initialize(@iterator : I, @func : T -> U?)
     end
 

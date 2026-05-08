@@ -160,6 +160,10 @@ describe Iterator do
     it "sums after compact_map to_a" do
       (1..3).each.compact_map { |e| e.odd? ? e : nil }.to_a.sum.should eq(4)
     end
+
+    it "returns self if block output is non-nilable" do
+      assert_iterates_iterator [1, 2, 3], (1..3).each.compact_map(&.itself)
+    end
   end
 
   describe "chain" do
