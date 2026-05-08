@@ -32,7 +32,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@51f3067b56fe8ae331890c77d4e454f6d60615ff # v31
+      - uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
         with:
           extra_nix_config: |
             experimental-features = nix-command
@@ -70,7 +70,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@51f3067b56fe8ae331890c77d4e454f6d60615ff # v31
+      - uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
         with:
           extra_nix_config: |
             experimental-features = nix-command

@@ -194,6 +194,7 @@ class Process
   # io.to_s # => "hello\n"
   # status  # => Process::Status[0]
   # ```
+  @[Experimental]
   def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
@@ -240,6 +241,7 @@ class Process
   # Process.run?(["true"])        # => Process::Status[0]
   # Process.run?(["nonexistent"]) # => nil
   # ```
+  @[Experimental]
   def self.run?(args : Enumerable(String), *,
                 env : Env = nil, clear_env : Bool = false,
                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
@@ -269,6 +271,7 @@ class Process
   # status # => Process::Status[0]
   # result # => "hello\n"
   # ```
+  @[Experimental]
   def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
     process = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
@@ -412,6 +415,7 @@ class Process
   # * `Process.run` is a convenient short cut if you just want to run a command
   #    and wait for it to finish.
   # * `Process.exec` replaces the current process.
+  @[Experimental]
   def self.new(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |error, command|

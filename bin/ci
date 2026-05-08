@@ -135,8 +135,8 @@ format() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.19.1/crystal-1.19.1-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.19.1-1 crystal;popd'
+  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.20.1/crystal-1.20.1-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
+  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.20.1-1 crystal;popd'
 
   # These commands may take a few minutes to run due to the large size of the repositories.
   # This restriction has been made on GitHub's request because updating shallow
@@ -189,7 +189,7 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION:-1.19.1}"}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION:-1.20.0}"}"
 
   case $ARCH in
     aarch64|x86_64)
@@ -203,6 +203,7 @@ with_build_env() {
       ;;
   esac
 
+  # NOTE: disabling seccomp because the default profile disables io_uring syscalls
   on_linux docker run \
     --rm -t \
     -u "$(id -u)" \
@@ -213,6 +214,7 @@ with_build_env() {
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
     -e USE_PCRE1 \
+    --security-opt seccomp=unconfined \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 

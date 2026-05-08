@@ -525,8 +525,13 @@ class Object
 
   # Delegate *methods* to *to*.
   #
-  # Note that due to current language limitations this is only useful
-  # when no captured blocks are involved.
+  # This macro defines methods with the given names which capture and forward all
+  # parameters to the same method on *to*.
+  #
+  # There is no introspection into the target def, which brings a few limitations:
+  # - *to* might not even respond to the method.
+  # - Forwarding procs (e.g. captured blocks) is not supported.
+  # - Parameter have no type restrictions, so autocasting does not work.
   #
   # ```
   # class StringWrapper

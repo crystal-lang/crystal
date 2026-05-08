@@ -17,6 +17,7 @@ jobs:
       ARCH: x86_64
       ARCH_CMD: linux64
     runs-on: ubuntu-latest
+    environment: deploy_api_docs
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v6
@@ -36,9 +37,9 @@ jobs:
         run: echo "$GITHUB_SHA" > ./docs/revision.txt
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ vars.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 

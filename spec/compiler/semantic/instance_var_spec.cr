@@ -4061,6 +4061,49 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  # These cover the current behavior. They may stop producing errors
+  # if type notation accepts expressions like sizeof and offsetof (#5427).
+  it "doesn't crash on sizeof in inferred ivar type (#14731)" do
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Bar(T)"
+      class Foo(N)
+      end
+
+      class Bar(T)
+        @x = Foo(sizeof(T)).new
+      end
+      CRYSTAL
+  end
+
+  it "doesn't crash on offsetof in inferred ivar type (#14731)" do
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Bar(T)"
+      class Foo(N)
+      end
+
+      struct SomeStruct
+        @field : Int32 = 0
+      end
+
+      class Bar(T)
+        @x = Foo(offsetof(SomeStruct, @field)).new
+      end
+      CRYSTAL
+  end
+
+  it "doesn't crash on sizeof in initialize ivar assignment (#14731)" do
+    assert_error <<-CRYSTAL, "can't infer the type of instance variable '@x' of Bar(Int32)"
+      class Foo(N)
+      end
+
+      class Bar(T)
+        def initialize
+          @x = Foo(sizeof(T)).new
+        end
+      end
+
+      Bar(Int32).new
+      CRYSTAL
+  end
+
   it "infers type from self (#2575)" do
     assert_type(<<-CRYSTAL) { types["Foo"] }
       class Foo

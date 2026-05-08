@@ -32,7 +32,7 @@ end
 
 private def stdin_to_stderr_command(status = 0)
   {% if flag?(:win32) %}
-    {"powershell.exe", {"-C", "while ($line = [Console]::In.ReadLine()) { [Console]::Error.WriteLine($line) }; exit #{status}"}}
+    {"powershell.exe", {"-C", "[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError()); exit #{status}"}}
   {% else %}
     {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
   {% end %}
@@ -848,7 +848,7 @@ describe Process do
       result.error?.should be_nil
     end
 
-    pending "truncates error output", tags: %w[slow] do
+    it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
       result = Process.capture_result(to_ary(stdin_to_stderr_command), input: input)
@@ -942,7 +942,7 @@ describe Process do
       result.error?.should be_nil
     end
 
-    pending "truncates error output", tags: %w[slow] do
+    it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
       result = Process.capture_result?(to_ary(stdin_to_stderr_command), input: input).should be_a(Process::Result)
