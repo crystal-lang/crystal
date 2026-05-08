@@ -161,8 +161,8 @@ describe Iterator do
       (1..3).each.compact_map { |e| e.odd? ? e : nil }.to_a.sum.should eq(4)
     end
 
-    it "returns self if block output is non-nilable" do
-      assert_iterates_iterator [1, 2, 3], (1..3).each.compact_map(&.itself)
+    it "works with non-nilable block output" do
+      assert_iterates_iterator ["1", "2", "3"], (1..3).each.compact_map(&.to_s)
     end
   end
 

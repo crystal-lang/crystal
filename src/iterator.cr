@@ -404,7 +404,7 @@ module Iterator(T)
     # If `func` outputs a non-nilable type, we can skip compaction and return the
     # original iterator directly.
     def self.new(iterator, func : T -> U)
-      iterator
+      MapIterator(I, T, U).new(iterator, func)
     end
 
     def initialize(@iterator : I, @func : T -> U?)
