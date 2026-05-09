@@ -966,6 +966,12 @@ describe "String" do
     it { "".empty?.should be_true }
   end
 
+  describe "present?" do
+    it { "a".present?.should be_true }
+    it { "".present?.should be_false }
+    it { " \t\n".present?.should be_false }
+  end
+
   describe "blank?" do
     it { " \t\n".blank?.should be_true }
     it { "\u{1680}\u{2029}".blank?.should be_true }

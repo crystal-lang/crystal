@@ -3014,6 +3014,11 @@ class String
     bytesize == 0
   end
 
+  # Returns `true` if this string is not `#blank?`.
+  def present? : Bool
+    !blank?
+  end
+
   # Returns `true` if this string consists exclusively of unicode whitespace.
   #
   # ```
