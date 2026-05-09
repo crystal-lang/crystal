@@ -772,12 +772,8 @@ class HTTP::Client
   private def ensure_io : IO
     io = @io
     if io
-      if io.closed?
-        @io = nil
-        ensure_io
-      else
-        return io
-      end
+      return io unless io.closed?
+      @io = nil
     end
 
     unless @reconnect
