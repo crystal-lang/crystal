@@ -25,7 +25,7 @@ module Sync
     # Acquires the exclusive lock for the duration of the block. The lock will
     # be released automatically before returning, or if the block raises an
     # exception.
-    def synchronize(& : -> U) : U forall U
+    def synchronize(& : -> _)
       lock
       begin
         yield

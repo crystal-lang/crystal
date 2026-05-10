@@ -301,8 +301,56 @@ module Crystal
       debug_type
     end
 
+    def create_debug_type(type : ProcInstanceType, original_type : Type)
+      # `Proc` is lowered as `{pointer, closure_data}`. Exposing that shape in
+      # DWARF lets debuggers inspect proc values instead of treating them as an
+      # opaque unsupported type.
+      element_types = [] of LibLLVM::MetadataRef
+      struct_type = llvm_typer.proc_type
+      size_ptr = 8u64 * llvm_typer.pointer_size
+      di_builder = di_builder()
+
+      arg_types = type.arg_types.compact_map { |arg_type| get_debug_type(arg_type).as(LibLLVM::MetadataRef?) }
+      return_type = get_debug_type(type.return_type)
+
+      func_ptr_type =
+        if arg_types.size == type.arg_types.size && return_type
+          subroutine_type = di_builder.create_subroutine_type(nil, [return_type] + arg_types)
+          di_builder.create_pointer_type(subroutine_type, size_ptr, size_ptr, "#{original_type}*")
+        else
+          di_builder.create_basic_type("Void", size_ptr, size_ptr, LLVM::DwarfTypeEncoding::Address)
+        end
+
+      offset_func = @program.target_machine.data_layout.offset_of_element(struct_type, 0)
+      element_types << di_builder.create_member_type(
+        nil, "func", nil, 1,
+        size_ptr, size_ptr, 8u64 * offset_func,
+        LLVM::DIFlags::Zero, func_ptr_type
+      )
+
+      void_type = di_builder.create_basic_type("Void", 8, 8, LLVM::DwarfTypeEncoding::Address)
+      ctx_ptr_type = di_builder.create_pointer_type(void_type, size_ptr, size_ptr, "Void*")
+      offset_ctx = @program.target_machine.data_layout.offset_of_element(struct_type, 1)
+      element_types << di_builder.create_member_type(
+        nil, "closure_data", nil, 1,
+        size_ptr, size_ptr, 8u64 * offset_ctx,
+        LLVM::DIFlags::Zero, ctx_ptr_type
+      )
+
+      total_size = @program.target_machine.data_layout.size_in_bits(struct_type)
+      di_builder.create_struct_type(
+        nil, original_type.to_s, nil, 1,
+        total_size, total_size,
+        LLVM::DIFlags::Zero, nil, element_types
+      )
+    end
+
+    def create_debug_type(type : NilableProcType, original_type : Type)
+      get_debug_type(type.proc_type, original_type)
+    end
+
     # This is a sinkhole for debug types that most likely does not need to be implemented
-    def create_debug_type(type : NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType, original_type : Type)
+    def create_debug_type(type : NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | VirtualMetaclassType, original_type : Type)
     end
 
     def create_debug_type(type, original_type : Type)

@@ -78,16 +78,24 @@ struct Crystal::System::Process
   end
 
   def wait
+    @completion_key.fiber = ::Fiber.current
+
     if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
       raise RuntimeError.from_winerror("GetExitCodeProcess")
     end
-    return exit_code unless exit_code == LibC::STILL_ACTIVE
+
+    unless exit_code == LibC::STILL_ACTIVE
+      # MT race? another thread received the completion event and will resume
+      # the fiber, we must suspend the current fiber before we can return
+      ::Fiber.suspend unless @completion_key.reset_fiber?
+
+      return exit_code
+    end
 
     # let `@job_object` do its job
     # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
     # stuck forever in that case?
     # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
-    @completion_key.fiber = ::Fiber.current
     ::Fiber.suspend
 
     # If the IOCP notification is delivered before the process fully exits,

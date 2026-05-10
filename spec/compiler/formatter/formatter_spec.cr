@@ -184,6 +184,9 @@ describe Crystal::Formatter do
 
   assert_format "1 ? 2 : 3"
   assert_format "1 ?\n  2    :   \n 3", "1 ? 2 : 3"
+  assert_format "1  ?  # b\n  2    :   # c\n 3", "1 ? # b\n2 : # c\n3"
+  assert_format "1  ?  # b\n  2       # c\n : 3", "1 ? # b\n2   # c\n: 3"
+  assert_format "1  ?# b\n  2 :# c\n3", "1 ? # b\n2 : # c\n3"
 
   assert_format "1   if   2", "1 if 2"
   assert_format "1   unless   2", "1 unless 2"
@@ -1161,6 +1164,9 @@ describe Crystal::Formatter do
   assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
   assert_format "%i{one(   two(  three)}", "%i{one( two( three)}"
 
+  assert_format "%w(\n\n)\n# ```\n# 1\n# ```\n", "%w()\n# ```\n# 1\n# ```"
+  assert_format "%w(a\\ b)"
+
   assert_format "/foo/"
   assert_format "/foo/imx"
   assert_format "/foo \#{ bar }/", "/foo \#{bar}/"
@@ -1241,6 +1247,7 @@ describe Crystal::Formatter do
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
   assert_format "x  =   uninitialized   Int32", "x = uninitialized Int32"
   assert_format "x  :   Int32  =   1", "x : Int32 = 1"
+  assert_format "x : (Foo.class)?"
 
   assert_format "def foo\n@x  :  Int32\nend", "def foo\n  @x : Int32\nend"
   assert_format "def foo\n@x   =  uninitialized   Int32\nend", "def foo\n  @x = uninitialized Int32\nend"
@@ -1264,6 +1271,7 @@ describe Crystal::Formatter do
   assert_format "case  1 \n when 2 ; 3 \n when 4 ; 5\nend", "case 1\nwhen 2; 3\nwhen 4; 5\nend"
   assert_format "case  1 \n when 2 then 3 \n end", "case 1\nwhen 2 then 3\nend"
   assert_format "case  1 \n when 2 then \n 3 \n end", "case 1\nwhen 2\n  3\nend"
+  assert_format "case  1 \n when 2 then # comment\n end", "case 1\nwhen 2 then # comment\nend"
   assert_format "case  1 \n when 2 \n 3 \n when 4 \n 5 \n end", "case 1\nwhen 2\n  3\nwhen 4\n  5\nend"
   assert_format "if 1\ncase 1\nwhen 2\n3\nend\nend", "if 1\n  case 1\n  when 2\n    3\n  end\nend"
   assert_format "case  1 \n when  .foo? \n 3 \n end", "case 1\nwhen .foo?\n  3\nend"
@@ -1387,6 +1395,7 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  %foo\nend"
   assert_format "macro foo\n  %foo{x.id+2}\nend", "macro foo\n  %foo{x.id + 2}\nend"
   assert_format "macro foo\n  %foo{x,y}\nend", "macro foo\n  %foo{x, y}\nend"
+  assert_format "macro foo;%var{}end", "macro foo\n%var{}end"
   assert_format "def foo : Int32\n  1\nend"
   assert_format "class Foo\n  macro foo\n    1\n  end\nend"
   assert_format "   {{ 1 + 2 }}", "{{ 1 + 2 }}"
@@ -1851,6 +1860,7 @@ describe Crystal::Formatter do
   assert_format "foo.bar += \n1", "foo.bar +=\n  1"
   assert_format "->{}", "-> { }"
   assert_format "foo &.[a] = 1"
+  assert_format "x(&.y = (a.b))" # 16875
   assert_format "[\n  # foo\n  1,\n\n  # bar\n  2,\n]"
   assert_format "[c.x]\n  .foo"
   assert_format "foo([\n  1,\n  2,\n  3,\n])"
@@ -1866,6 +1876,7 @@ describe Crystal::Formatter do
   assert_format "1 #=> 2", "1 # => 2"
   assert_format "1 #=>2", "1 # => 2"
   assert_format "foo(\n  [\n    1,\n    2,\n  ],\n  [\n    3,\n    4,\n  ]\n)"
+  assert_format "begin\n  %w(\n    one two\n    three four\n  )\nend"
   assert_format "%w(\n  one two\n  three four\n)"
   assert_format "a = %w(\n  one two\n  three four\n)"
   assert_format "foo &.bar do\n  1 + 2\nend"
@@ -1966,7 +1977,7 @@ describe Crystal::Formatter do
 
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
-  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "  <<-HTML   \n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
 
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
@@ -2094,10 +2105,10 @@ describe Crystal::Formatter do
     assert_format "G_(A, (B -> R))"
     assert_format "G_(A, ->)"
     assert_format "G_(A, (->))"
-    pending { assert_format "G_(A, () ->)" } # #16741
+    assert_format "G_(A, () ->)"
     assert_format "G_(A, -> R)"
     assert_format "G_(-> R)"
-    pending { assert_format "G_(() -> R)" } # #16741
+    assert_format "G_(() -> R)"
 
     assert_format "G_(A -> R | S)"
     assert_format "G_((A -> R | S))"
@@ -2108,6 +2119,15 @@ describe Crystal::Formatter do
     assert_format "G_(A | B -> R)"
     assert_format "G_((A | B) -> C)"
     assert_format "G_(A | (B -> C))"
+
+    assert_format "G_((A*) -> R)"
+
+    assert_format "G_(((A) ->) ->)"
+    assert_format "G_((A ->) ->)"
+    assert_format "G_(A -> ->)"
+    assert_format "G_((A -> ->))"
+    assert_format "G_(((A) ->, B) ->)"
+    assert_format "G_((A) | B ->)"
   end
 
   assert_format "foo &.bar.is_a?(Baz)"

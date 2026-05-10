@@ -28,7 +28,7 @@ describe "Semantic: closure" do
     node = result.node.as(Expressions)
     call = node.expressions.last.as(Call)
     target_def = call.target_def
-    var = target_def.vars.not_nil!["x"]
+    var = target_def.vars.should_not(be_nil)["x"]
     var.closured?.should be_true
   end
 
@@ -46,8 +46,8 @@ describe "Semantic: closure" do
       CRYSTAL
     node = result.node.as(Expressions)
     call = node.expressions.last.as(Call)
-    block = call.block.not_nil!
-    var = block.vars.not_nil!["x"]
+    block = call.block.should_not(be_nil)
+    var = block.vars.should_not(be_nil)["x"]
     var.closured?.should be_true
   end
 
@@ -80,7 +80,7 @@ describe "Semantic: closure" do
       a
       CRYSTAL
     program = result.program
-    var = program.vars.not_nil!["a"]
+    var = program.vars.should_not(be_nil)["a"]
     var.closured?.should be_true
   end
 
@@ -114,8 +114,8 @@ describe "Semantic: closure" do
       CRYSTAL
     node = result.node.as(Expressions)
     call = node[1].as(Call)
-    block = call.block.not_nil!
-    var = block.vars.not_nil!["x"]
+    block = call.block.should_not(be_nil)
+    var = block.vars.should_not(be_nil)["x"]
     var.closured?.should be_false
   end
 
@@ -133,7 +133,7 @@ describe "Semantic: closure" do
     node = result.node.as(Expressions)
     call = node.expressions[-2].as(Call)
     target_def = call.target_def
-    var = target_def.vars.not_nil!["self"]
+    var = target_def.vars.should_not(be_nil)["self"]
     var.closured?.should be_false
     target_def.self_closured?.should be_true
   end

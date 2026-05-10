@@ -3096,13 +3096,7 @@ module Crystal
       node.program = @program
       node.update
 
-      node.elements.each do |element|
-        if element.is_a?(Splat) && (type = element.type?)
-          unless type.is_a?(TupleInstanceType)
-            node.raise "argument to splat must be a tuple, not #{type}"
-          end
-        end
-      end
+      node.validate_splats!
 
       false
     end
@@ -3449,15 +3443,9 @@ module Crystal
     end
 
     def bind_meta_var(var : Var)
-      @meta_vars[var.name].bind_to(var)
-    end
-
-    def bind_meta_var(var : InstanceVar)
-      # Nothing to do
-    end
-
-    def bind_meta_var(var)
-      raise "BUG: trying to bind var or instance var but got #{var}"
+      meta_var = @meta_vars[var.name]
+      meta_var.bind_to(var)
+      meta_var
     end
 
     def bind_initialize_instance_vars(owner)

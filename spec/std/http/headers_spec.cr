@@ -1,5 +1,8 @@
 require "spec"
 require "http/headers"
+require "json"
+require "yaml"
+require "../../support/wasm32"
 
 describe HTTP::Headers do
   it "is empty" do
@@ -153,6 +156,24 @@ describe HTTP::Headers do
   it "#serialize" do
     headers = HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}
     headers.serialize.should eq("Foo_quux: bar\r\nBaz-Quux: a\r\nBaz-Quux: b\r\n")
+  end
+
+  describe "serializes" do
+    it "#to_json" do
+      HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}.to_json.should eq <<-JSON
+      {"Foo_quux":"bar","Baz-Quux":["a","b"]}
+      JSON
+    end
+
+    pending_wasm32 "#to_yaml" do
+      HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}.to_yaml.should eq <<-YAML
+      ---
+      Foo_quux: bar
+      Baz-Quux:
+      - a
+      - b\n
+      YAML
+    end
   end
 
   describe "#merge!" do
