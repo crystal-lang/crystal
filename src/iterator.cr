@@ -394,7 +394,7 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   def compact_map(&func : T -> _)
-    CompactMapIterator(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
+    CompactMapIterator(typeof(self), T, typeof(func.call(_x = uninitialized T).not_nil!)).new(self, func)
   end
 
   private struct CompactMapIterator(I, T, U)
