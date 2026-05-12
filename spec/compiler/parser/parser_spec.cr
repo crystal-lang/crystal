@@ -1589,6 +1589,9 @@ module Crystal
     it_parses "/=/", regex("=")
     it_parses "/ hi /", regex(" hi ")
     it_parses "self / number", Call.new("self".var, "/", "number".call)
+    it_parses "self/1", Call.new("self".var, "/", 1.int32)
+    it_parses "foo/1", Call.new("foo".call, "/", 1.int32)
+    it_parses "super/1", Call.new("super".var, "/", 1.int32)
     it_parses "a == / /", Call.new("a".call, "==", regex(" "))
     it_parses "/ /", regex(" ")
     it_parses "/ /; / /", [regex(" "), regex(" ")] of ASTNode

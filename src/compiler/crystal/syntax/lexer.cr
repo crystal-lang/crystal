@@ -1130,6 +1130,11 @@ module Crystal
       else
         next_char :IDENT
         @token.value = keyword
+        case keyword
+        when .self?, .super?
+          @wants_regex = true
+          @slash_is_regex = false
+        end
       end
       @token
     end

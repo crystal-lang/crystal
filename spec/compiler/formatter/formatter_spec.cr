@@ -257,6 +257,7 @@ describe Crystal::Formatter do
   assert_format "def foo(x)\n  case self // x\n  when 2\n    3\n  end\nend"
   assert_format "def foo(x)\n  case 1\n  when self // 2\n    3\n  end\nend"
   assert_format "def foo(x)\n  case //\n  when //\n    3\n  end\nend"
+  assert_format "self/1"
   assert_format "foo self // 1"
   assert_format "foo(self // 1)"
   assert_format "foo x, self // 1"
