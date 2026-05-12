@@ -144,7 +144,7 @@ class Crystal::System::PE
     String.new(pointer)
   end
 
-  def image_base : UInt64
+  def original_image_base : UInt64
     nt_header.value.optionalHeader.imageBase
   end
 
