@@ -39,6 +39,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   @method_added_running = false
 
+  # Set while expanding an `inherited` macro hook. Used by `visit(Def)` to
+  # avoid having the macro-generated method override one already provided by
+  # an included module or a direct definition in the inheriting class.
+  @in_inherited_hook = false
+
   @last_doc : String?
 
   # special types recognized for `@[Primitive]`
@@ -238,8 +243,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attach_doc type, node, annotations
 
     pushing_type(type) do
-      run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
       node.body.accept self
+      run_hooks(hook_type(superclass), type, :inherited, node) if created_new_type
     rescue ex : MacroRaiseException
       # Make the inner most exception to be the inherited node so that it's the last frame in the trace.
       # This will make the location show on that node instead of the `raise` call.
@@ -489,6 +494,16 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
     if target_type.is_a?(EnumType) && node.name == "initialize"
       node.raise "enums can't define an `initialize` method, try using `def self.new`"
+    end
+
+    # When expanding an `inherited` macro hook, skip defining the method if
+    # the inheriting class already provides one with a matching signature
+    # (directly or through an included module). This lets `inherited` supply
+    # defaults that user code can override with a simple `include`, while
+    # still allowing the hook to register new overloads.
+    if @in_inherited_hook && type_already_defines_signature?(target_type, node)
+      node.set_type @program.nil
+      return false
     end
 
     target_type.add_def node
@@ -1157,16 +1172,59 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     !hooks.nil? && !hooks.empty?
   end
 
+  # Returns `true` if *type* (or any of its ancestors) already has a def with
+  # the same name and an equivalent signature to *node*, meaning a fresh
+  # `add_def` would override an existing definition. Used to keep `inherited`
+  # macro defs from shadowing methods provided by the inheriting class.
+  #
+  # `new` and `initialize` are not inherited like other methods (Crystal
+  # stops searching ancestors as soon as one is found), so the `inherited`
+  # hook is the very mechanism that propagates them to subclasses; for these
+  # we only consider the type itself, never its ancestors.
+  private def type_already_defines_signature?(type, node : Def)
+    item = DefWithMetadata.new(node)
+
+    if node.name == "new" || node.name == "initialize"
+      return type_defines_signature_in_self?(type, node.name, item)
+    end
+
+    type_defines_signature?(type, node.name, item)
+  end
+
+  private def type_defines_signature_in_self?(type, name : String, item : DefWithMetadata)
+    type.defs.try &.[name]?.try &.each do |ex_item|
+      return true if item.compare_strictness(ex_item, type) == 0
+    end
+    false
+  end
+
+  private def type_defines_signature?(type, name : String, item : DefWithMetadata)
+    return true if type_defines_signature_in_self?(type, name, item)
+
+    type.parents.try &.each do |parent|
+      return true if type_defines_signature?(parent, name, item)
+    end
+
+    false
+  end
+
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
     type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
       next if hook.kind != kind
 
-      expansion = expand_macro(hook.macro, node, visibility: :public) do
-        if call
-          @program.expand_macro hook.macro, call, current_type.instance_type
-        else
-          @program.expand_macro hook.macro.body, current_type.instance_type
+      previous_in_inherited_hook = @in_inherited_hook
+      @in_inherited_hook = true if kind.inherited?
+
+      begin
+        expansion = expand_macro(hook.macro, node, visibility: :public) do
+          if call
+            @program.expand_macro hook.macro, call, current_type.instance_type
+          else
+            @program.expand_macro hook.macro.body, current_type.instance_type
+          end
         end
+      ensure
+        @in_inherited_hook = previous_in_inherited_hook
       end
 
       node.add_hook_expansion(expansion)

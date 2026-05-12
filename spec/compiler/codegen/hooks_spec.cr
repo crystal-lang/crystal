@@ -147,6 +147,36 @@ describe "Code gen: hooks" do
       CRYSTAL
   end
 
+  it "lets included module override methods defined by inherited macro" do
+    run(<<-CRYSTAL).to_string.should eq("module on_update")
+      require "prelude"
+
+      abstract class Base
+        macro inherited
+          def on_update
+            "base on_update"
+          end
+        end
+
+        def value
+          on_update
+        end
+      end
+
+      module Test
+        def on_update
+          "module on_update"
+        end
+      end
+
+      class Solid < Base
+        include Test
+      end
+
+      Solid.new.value
+      CRYSTAL
+  end
+
   it "does finished" do
     run(<<-CRYSTAL).to_i.should eq(4)
       class Foo
