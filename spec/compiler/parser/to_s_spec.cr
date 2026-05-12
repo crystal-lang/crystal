@@ -59,6 +59,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(macro foo\n  %bar = 1\nend)
   expect_to_s %(macro foo\n  %bar = 1; end)
   expect_to_s %(macro foo\n  %bar{1, x} = 1\nend)
+  expect_to_s %(macro foo\n  %bar{}\nend)
   expect_to_s %({% foo %})
   expect_to_s %({{ foo }})
   expect_to_s %({% if foo %}\n  foo_then\n{% end %})
@@ -123,9 +124,9 @@ describe "ASTNode#to_s" do
 
   # 14216
   expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
   expect_to_s "def foo(& : ->)\nend"
-  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend"
   expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
   expect_to_s "foo(x : (T -> U) -> V, W)"
   expect_to_s "foo[x : (T -> U) -> V, W]"

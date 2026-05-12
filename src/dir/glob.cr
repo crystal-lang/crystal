@@ -134,7 +134,7 @@ class Dir
   end
 
   # :nodoc:
-  module Globber
+  struct Globber
     record DirectoriesOnly
     record ConstantEntry, path : String, merged : Bool
     record EntryMatch, pattern : String do
@@ -152,20 +152,27 @@ class Dir
     end
     alias PatternType = DirectoriesOnly | ConstantEntry | EntryMatch | RecursiveDirectories | ConstantDirectory | RootDirectory | DirectoryMatch
 
+    getter match : File::MatchOptions
+    getter? follow_symlinks : Bool
+
+    def initialize(@match : File::MatchOptions, @follow_symlinks : Bool)
+    end
+
     def self.glob(patterns : Enumerable, *, match, follow_symlinks, &block : String -> _)
+      globber = new(match, follow_symlinks)
       patterns.each do |pattern|
         if pattern.is_a?(Path)
           pattern = pattern.to_posix.to_s
         end
-        sequences = compile(pattern)
+        sequences = globber.compile(pattern)
 
         sequences.each do |sequence|
           if sequence.count(&.is_a?(RecursiveDirectories)) > 1
-            run_tracking(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
+            globber.run_tracking(sequence) do |match|
               yield match
             end
           else
-            run(sequence, match: match, follow_symlinks: follow_symlinks) do |match|
+            globber.run(sequence) do |match|
               yield match
             end
           end
@@ -173,7 +180,7 @@ class Dir
       end
     end
 
-    private def self.compile(pattern)
+    def compile(pattern)
       expanded_patterns = [] of String
       expand_brace_pattern(pattern, expanded_patterns)
 
@@ -182,7 +189,7 @@ class Dir
       end
     end
 
-    private def self.single_compile(glob)
+    private def single_compile(glob)
       list = [] of PatternType
       return list if glob.empty?
 
@@ -225,7 +232,7 @@ class Dir
       list
     end
 
-    private def self.constant_entry?(file)
+    private def constant_entry?(file)
       file.each_char do |char|
         return false if char.in?('*', '?', '[', '\\')
       end
@@ -233,17 +240,17 @@ class Dir
       true
     end
 
-    private def self.run_tracking(sequence, match, follow_symlinks, &block : String -> _)
+    def run_tracking(sequence, &block : String -> _)
       result_tracker = Set(String).new
 
-      run(sequence, match, follow_symlinks) do |result|
+      run(sequence) do |result|
         if result_tracker.add?(result)
           yield result
         end
       end
     end
 
-    private def self.run(sequence, match, follow_symlinks, &block : String -> _)
+    def run(sequence, &block : String -> _)
       return if sequence.empty?
 
       path_stack = [] of Tuple(Int32, String?, Crystal::System::Dir::Entry?)
@@ -269,25 +276,25 @@ class Dir
 
           if dir_entry && !dir_entry.dir?.nil?
             yield fullpath
-          elsif dir?(fullpath, follow_symlinks)
+          elsif dir?(fullpath)
             yield fullpath
           end
         in EntryMatch
           next if sequence[pos + 1]?.is_a?(RecursiveDirectories)
           each_child(path) do |entry|
-            next unless matches_file?(entry, match)
+            next unless matches_file?(entry)
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         in DirectoryMatch
           next_cmd = sequence[next_pos]?
 
           each_child(path) do |entry|
-            next unless matches_file?(entry, match)
+            next unless matches_file?(entry)
             if cmd.matches?(entry.name)
               is_dir = entry.dir?
               fullpath = join(path, entry.name)
               if is_dir.nil?
-                is_dir = dir?(fullpath, follow_symlinks)
+                is_dir = dir?(fullpath)
               end
               if is_dir
                 path_stack << {next_pos, fullpath, entry}
@@ -336,7 +343,7 @@ class Dir
 
             if entry = read_entry(dir)
               next if entry.name.in?(".", "..")
-              next unless matches_file?(entry, match)
+              next unless matches_file?(entry)
 
               if dir_path.bytesize == 0
                 fullpath = entry.name
@@ -355,7 +362,7 @@ class Dir
 
               is_dir = entry.dir?
               if is_dir.nil?
-                is_dir = dir?(fullpath, follow_symlinks)
+                is_dir = dir?(fullpath)
               end
 
               if is_dir
@@ -379,26 +386,26 @@ class Dir
       end
     end
 
-    private def self.root
+    def root
       Path[Dir.current].anchor.not_nil!.to_s
     end
 
-    private def self.dir?(path, follow_symlinks)
-      if info = File.info?(path, follow_symlinks: follow_symlinks)
+    private def dir?(path)
+      if info = File.info?(path, follow_symlinks: follow_symlinks?)
         info.type.directory?
       else
         false
       end
     end
 
-    private def self.join(path, entry)
+    private def join(path, entry)
       return entry unless path
       return "#{root}#{entry}" if path == File::SEPARATOR_STRING
 
       File.join(path, entry)
     end
 
-    private def self.each_child(path, &)
+    private def each_child(path, &)
       Dir.open(path || Dir.current) do |dir|
         while entry = read_entry(dir)
           next if entry.name.in?(".", "..")
@@ -408,7 +415,7 @@ class Dir
     rescue exc : File::NotFoundError
     end
 
-    private def self.read_entry(dir)
+    private def read_entry(dir)
       return unless dir
 
       # By doing this we get an Entry struct which already tells us
@@ -417,7 +424,7 @@ class Dir
       Crystal::System::Dir.next_entry(dir.@dir, dir.path)
     end
 
-    private def self.matches_file?(entry, match)
+    private def matches_file?(entry)
       return false if entry.name.starts_with?('.') && !match.dot_files?
       return false if entry.native_hidden? && !match.native_hidden?
       return false if entry.os_hidden? && !match.os_hidden?
@@ -426,7 +433,7 @@ class Dir
 
     # :nodoc:
     # FIXME: The expansion mechanism does not work for complex brace patterns.
-    private def self.expand_brace_pattern(pattern : String, expanded) : Array(String)?
+    private def expand_brace_pattern(pattern : String, expanded) : Array(String)?
       reader = Char::Reader.new(pattern)
 
       lbrace = nil

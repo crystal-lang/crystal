@@ -1660,8 +1660,10 @@ module Crystal
         if @token.type.op_eq?
           unexpected_token unless can_be_assigned?(call)
 
-          next_token_skip_space
+          next_token
+
           if @token.type.op_lparen?
+            skip_space
             next_token_skip_space
             exp = parse_op_assign
             check :OP_RPAREN
@@ -1670,6 +1672,7 @@ module Crystal
             call.args = [exp] of ASTNode
             call = parse_atomic_method_suffix call, location
           else
+            skip_space
             exp = parse_op_assign
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
@@ -2406,32 +2409,62 @@ module Crystal
     end
 
     def parse_string_array
-      parse_string_or_symbol_array StringLiteral, "String"
+      strings, end_location = parse_string_or_symbol_array_strings do |pieces|
+        combine_pieces(pieces, @token.delimiter_state)
+      end
+
+      ArrayLiteral.new(strings, Path.global("String")).at_end(end_location)
     end
 
     def parse_symbol_array
-      parse_string_or_symbol_array SymbolLiteral, "Symbol"
+      strings, end_location = parse_string_or_symbol_array_strings do |pieces|
+        string = combine_stringliteral_pieces(pieces, @token.delimiter_state)
+        SymbolLiteral.new(string)
+      end
+
+      ArrayLiteral.new(strings, Path.global("Symbol")).at_end(end_location)
     end
 
-    def parse_string_or_symbol_array(klass, elements_type)
+    def parse_string_or_symbol_array_strings(&)
       strings = [] of ASTNode
-      end_location = nil
 
-      while true
-        next_string_array_token
-        case @token.type
-        when .string?
-          strings << klass.new(@token.value.to_s).at(@token.location).at_end(token_end_location)
-        when .string_array_end?
-          end_location = token_end_location
-          next_token
-          break
-        else
-          raise "Unterminated #{elements_type.downcase} array literal"
+      while !@token.type.string_array_end?
+        if element = parse_percent_array_element { |pieces| yield pieces }
+          strings << element
         end
       end
 
-      ArrayLiteral.new(strings, Path.global(elements_type)).at_end(end_location)
+      check :STRING_ARRAY_END
+
+      end_location = @token.location
+
+      next_token
+
+      {strings, end_location}
+    end
+
+    def parse_percent_array_element(&)
+      pieces = [] of Piece
+      start_location = nil
+      end_location = nil
+      delimiter_state = @token.delimiter_state
+
+      while true
+        end_location = token_end_location
+        next_string_token(delimiter_state)
+        start_location ||= @token.location
+        delimiter_state = @token.delimiter_state
+        case @token.type
+        when .string?
+          pieces << Piece.new(@token.value.to_s, @token.line_number)
+        else
+          break
+        end
+      end
+
+      return if pieces.empty?
+
+      (yield pieces).at(start_location).at_end(end_location)
     end
 
     def parse_empty_array_literal
@@ -3288,7 +3321,8 @@ module Crystal
           if macro_var_name[0].uppercase? || macro_var_name[0].titlecase?
             warnings.add_warning_at @token.location, "macro fresh variables with constant names are deprecated"
           end
-          if current_char == '{'
+
+          if lookahead { next_token.type.op_lcurly? }
             if macro_var_name.size == 1
               warnings.add_warning_at @token.location, "single-letter macro fresh variables with indices are deprecated"
             end
@@ -3322,19 +3356,15 @@ module Crystal
     end
 
     def parse_macro_var_exps
-      next_token # '{'
       next_token
 
       exps = [] of ASTNode
-      while true
+      while !@token.type.op_rcurly?
         exps << parse_expression_inside_macro
         skip_space
         case @token.type
         when .op_comma?
           next_token_skip_space
-          if @token.type.op_rcurly?
-            break
-          end
         when .op_rcurly?
           break
         else
@@ -3848,6 +3878,12 @@ module Crystal
 
     def compute_block_arg_yields(block_arg)
       block_arg_restriction = block_arg.restriction
+
+      # Unwrap parens unions
+      while block_arg_restriction.is_a?(Union) && block_arg_restriction.singleton?
+        block_arg_restriction = block_arg_restriction.types.first
+      end
+
       if block_arg_restriction.is_a?(ProcNotation)
         @block_arity = block_arg_restriction.inputs.try(&.size) || 0
       else
@@ -5113,15 +5149,15 @@ module Crystal
         end
 
         type = parse_type_splat { parse_union_type }
-        if type.is_a?(Union)
-          type.at(location).at_end(@token.location)
-        end
         if @token.type.op_rparen?
+          end_location = @token.location
           next_token_skip_space
           if @token.type.op_minus_gt? # `(A) -> B` case
-            type = parse_proc_type_output([type], location)
+            type = parse_proc_type_output([type] of ASTNode, location)
           elsif type.is_a?(Splat)
             raise "invalid type splat", type.location.not_nil!
+          else
+            type = Union.parens(type).at(location).at_end(end_location)
           end
         else
           input_types = [type]
@@ -5134,6 +5170,11 @@ module Crystal
             type = parse_proc_type_output(input_types, input_types.first.location)
             check :OP_RPAREN
             next_token_skip_space
+            unless @token.type.op_minus_gt?
+              # Usually the parenthesis is encoded in a Union instance.
+              # But not when nesting proc notations like `(->) ->`.
+              type = Union.parens(type).at(type)
+            end
           else # `(A, B, C) -> D` case
             check :OP_RPAREN
             next_token_skip_space

@@ -25,7 +25,7 @@ class OAuth::RequestToken
       raise Error.new("Missing #{values.join(" and ")}")
     end
 
-    new token.not_nil!, secret.not_nil!
+    new token, secret
   end
 
   def_equals_and_hash @token, @secret

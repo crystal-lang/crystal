@@ -24,6 +24,8 @@ require "channel/select"
 # will be indistinguishable from a closed channel.
 #
 class Channel(T)
+  include Iterator(T)
+
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
@@ -284,6 +286,10 @@ class Channel(T)
     end
 
     sender_ptr
+  end
+
+  def next : T | Stop
+    receive_impl { stop }
   end
 
   def inspect(io : IO) : Nil

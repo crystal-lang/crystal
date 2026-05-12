@@ -10,7 +10,11 @@ describe OpenSSL::SSL::Context do
   it "new for client" do
     context = OpenSSL::SSL::Context::Client.new
 
-    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL & ~OpenSSL::SSL::Options::ENABLE_KTLS)
+    {% else %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% end %}
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
@@ -22,7 +26,11 @@ describe OpenSSL::SSL::Context do
   it "new for server" do
     context = OpenSSL::SSL::Context::Server.new
 
-    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL & ~OpenSSL::SSL::Options::ENABLE_KTLS)
+    {% else %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% end %}
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
     (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
 

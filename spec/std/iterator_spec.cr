@@ -160,6 +160,10 @@ describe Iterator do
     it "sums after compact_map to_a" do
       (1..3).each.compact_map { |e| e.odd? ? e : nil }.to_a.sum.should eq(4)
     end
+
+    it "works with empty iterator (#16922)" do
+      assert_iterates_iterator ([] of Int32), Iterator(Int32).empty.compact_map { |e| e.odd? ? e : nil }
+    end
   end
 
   describe "chain" do

@@ -7,57 +7,26 @@ lib LibC
 end
 
 struct Exception::CallStack
+  DEBUG_LINE_STR = "__debug_line_str"
+  DEBUG_STR      = "__debug_str"
+  DEBUG_LINE     = "__debug_line"
+  DEBUG_ABBREV   = "__debug_abbrev"
+  DEBUG_INFO     = "__debug_info"
+
   @@image_slide : LibC::Long?
 
+  def self.load_debug_info : Nil
+    # FIXME: Crystal::Mach-O depends on the event loop (it shouldn't)
+    previous_def if Crystal::EventLoop.current?
+  end
+
   protected def self.load_debug_info_impl : Nil
-    read_dwarf_sections
+    locate_dsym_bundle do |image|
+      read_dwarf_sections(image)
+    end
   rescue ex
     @@dwarf_line_numbers = nil
     @@dwarf_function_names = nil
-  end
-
-  protected def self.read_dwarf_sections : Nil
-    locate_dsym_bundle do |mach_o|
-      line_strings = mach_o.read_section?("__debug_line_str") do |sh, io|
-        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
-      end
-
-      strings = mach_o.read_section?("__debug_str") do |sh, io|
-        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
-      end
-
-      mach_o.read_section?("__debug_line") do |sh, io|
-        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, strings: strings, line_strings: line_strings)
-      end
-
-      abbrevs_tables = mach_o.read_section?("__debug_abbrev") do |sh, io|
-        all = {} of Int64 => Array(Crystal::DWARF::Abbrev)
-        while (offset = io.pos - sh.offset) < sh.size
-          all[offset] = Crystal::DWARF::Abbrev.read(io)
-        end
-        all
-      end
-
-      mach_o.read_section?("__debug_info") do |sh, io|
-        names = [] of {LibC::SizeT, LibC::SizeT, String}
-
-        while (offset = io.pos - sh.offset) < sh.size
-          info = Crystal::DWARF::Info.new(io, offset)
-
-          if abbrevs_tables
-            if abbreviations = abbrevs_tables[info.debug_abbrev_offset]?
-              info.abbreviations = abbreviations
-            end
-          end
-
-          parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
-            names << {low_pc, high_pc, name}
-          end
-        end
-
-        @@dwarf_function_names = names
-      end
-    end
   end
 
   # DWARF uses fixed addresses but Darwin loads executables at a random
