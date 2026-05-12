@@ -2018,8 +2018,8 @@ module Crystal
       when "stringify", "class_name", "symbolize"
         super
       else
-        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter, location)
-        value = MacroId.new(value.value) if value.is_a?(StringLiteral)
+        value = StringLiteral.new(@value).at(self).interpret(method, args, named_args, block, interpreter, location)
+        value = MacroId.new(value.value).at(self) if value.is_a?(StringLiteral)
         value
       end
     rescue UndefinedMacroMethodError
@@ -2142,7 +2142,7 @@ module Crystal
         interpret_check_args do
           type = self.type.instance_type
           if type.is_a?(NamedTupleInstanceType)
-            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name) }
+            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name).at(entry.loc) }
           else
             raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
           end

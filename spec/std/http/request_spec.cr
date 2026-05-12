@@ -189,7 +189,7 @@ module HTTP
 
       it "headers are case insensitive" do
         request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).as(Request)
-        headers = request.headers.not_nil!
+        headers = request.headers.should_not(be_nil)
         headers["HOST"].should eq("host.example.org")
         headers["host"].should eq("host.example.org")
         headers["Host"].should eq("host.example.org")
@@ -200,7 +200,7 @@ module HTTP
         request.method.should eq("POST")
         request.path.should eq("/foo")
         request.headers.should eq(HTTP::Headers{"Content-Length" => "13"})
-        request.body.not_nil!.gets_to_end.should eq("thisisthebody")
+        request.body.should_not(be_nil).gets_to_end.should eq("thisisthebody")
       end
 
       it "handles malformed request" do

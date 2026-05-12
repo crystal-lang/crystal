@@ -866,6 +866,21 @@ describe "buffered" do
     state.should eq(:done)
   end
 
+  it "can be used as an iterator" do
+    ch = Channel(Int32).new
+    spawn do
+      ch.send(1).send(2).send(3)
+    ensure
+      ch.close
+    end
+
+    iterator = ch.each
+    iterator.next.should eq 1
+    iterator.next.should eq 2
+    iterator.next.should eq 3
+    iterator.next.should be_a Iterator::Stop
+  end
+
   it "does inspect on unbuffered channel" do
     ch = Channel(Int32).new
     ch.inspect.should eq("#<Channel(Int32):0x#{ch.object_id.to_s(16)}>")

@@ -60,9 +60,7 @@ describe OpenSSL::SSL::Server do
 
       OpenSSL::SSL::Server.open tcp_server, server_context do |server|
         spawn do
-          client = server.accept?
-          client.should be_a(OpenSSL::SSL::Socket::Server)
-          client = client.not_nil!
+          client = server.accept?.should be_a(OpenSSL::SSL::Socket::Server)
           client.gets.should eq "Hello, SSL!"
           client.puts "Hello back, SSL!"
           client.close
