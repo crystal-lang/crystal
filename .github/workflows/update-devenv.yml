@@ -10,9 +10,7 @@ on:
       - '.github/workflows/update-devenv.yml'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   update-devenv:
