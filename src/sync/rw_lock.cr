@@ -36,7 +36,7 @@ module Sync
     # WARNING: the shared lock is technically reentrant but any attempt to
     # relock read can result in a deadlock if another fiber is trying to lock
     # write!
-    def read(& : -> U) : U forall U
+    def read(& : -> _)
       lock_read
       begin
         yield
@@ -77,7 +77,7 @@ module Sync
     # Only one fiber can acquire the exclusive (write) lock at the same time.
     # The block will never run concurrently to a shared (read) lock or another
     # exclusive (write) lock.
-    def write(& : -> U) : U forall U
+    def write(& : -> _)
       lock_write
       begin
         yield
