@@ -152,7 +152,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Foo"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should be_nil
     end
@@ -164,7 +164,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program).lookup_class_method("foo").not_nil!
+      method = generator.type(program).lookup_class_method("foo").should_not(be_nil)
       method.doc.should be_nil
     end
 
@@ -176,7 +176,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program).lookup_class_method("foo").not_nil!
+      method = generator.type(program).lookup_class_method("foo").should_not(be_nil)
       method.doc.should eq("doc comment")
     end
 
@@ -195,7 +195,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Bar"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should eq(generator.type(program.types["Foo"]))
     end
@@ -213,7 +213,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Foo"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should be_nil
     end
@@ -237,7 +237,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Bar"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should eq(generator.type(program.types["Foo"]))
     end
@@ -258,7 +258,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Bar"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should be_nil
     end
@@ -283,7 +283,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Bar"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Bar"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Before\n\nSome docs\n\nAfter")
       method.doc_copied_from.should be_nil
     end
@@ -311,7 +311,7 @@ describe Doc::Method do
         end
         CRYSTAL
       generator = Doc::Generator.new program, [""]
-      method = generator.type(program.types["Baz"]).lookup_method("foo").not_nil!
+      method = generator.type(program.types["Baz"]).lookup_method("foo").should_not(be_nil)
       method.doc.should eq("Some docs")
       method.doc_copied_from.should be_nil
     end

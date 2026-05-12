@@ -444,7 +444,7 @@ describe "Dir" do
     it "root pattern" do
       {% if flag?(:windows) %}
         Dir["C:/"].should eq ["C:\\"]
-        Dir["/"].should eq [Path[Dir.current].anchor.not_nil!.to_s]
+        Dir["/"].should eq [Path[Dir.current].anchor.should_not(be_nil).to_s]
       {% else %}
         Dir["/"].should eq ["/"]
       {% end %}

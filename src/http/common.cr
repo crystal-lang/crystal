@@ -35,12 +35,16 @@ module HTTP
       when EndOfRequest
         body = nil
 
+        # RFC 9112, Section 6.1: Transfer-Encoding is defined as overriding the
+        # Content-Length header that must be ignored.
+        transfer_encoding = headers["Transfer-Encoding"]?
+
         if body_type.prohibited?
           body = nil
-        elsif content_length = content_length(headers)
-          body = FixedLengthContent.new(io, content_length)
-        elsif headers["Transfer-Encoding"]? == "chunked"
+        elsif transfer_encoding == "chunked"
           body = ChunkedContent.new(io)
+        elsif !transfer_encoding && (content_length = content_length(headers))
+          body = FixedLengthContent.new(io, content_length)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
         end

@@ -46,6 +46,14 @@ struct HTTP::Headers
 
       byte
     end
+
+    def to_json_object_key
+      name
+    end
+
+    def to_yaml(builder : YAML::Nodes::Builder)
+      name.to_yaml(builder)
+    end
   end
 
   def initialize
@@ -340,6 +348,14 @@ struct HTTP::Headers
         io << name << ": " << value << "\r\n"
       end
     end
+  end
+
+  def to_json(builder : JSON::Builder) : Nil
+    @hash.to_json(builder)
+  end
+
+  def to_yaml(builder : YAML::Nodes::Builder) : Nil
+    @hash.to_yaml(builder)
   end
 
   def valid_value?(value : String) : Bool

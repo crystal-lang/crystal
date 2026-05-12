@@ -147,10 +147,10 @@ describe Crystal::PointerLinkedList do
 
       typeof(obj).should eq(Pointer(TestedObject)?)
 
-      obj.should_not be_nil
+      obj = obj.should_not be_nil
       obj.should eq(pointerof(x))
-      obj.not_nil!.value.next.should eq(Pointer(TestedObject).null)
-      obj.not_nil!.value.previous.should eq(Pointer(TestedObject).null)
+      obj.value.next.should eq(Pointer(TestedObject).null)
+      obj.value.previous.should eq(Pointer(TestedObject).null)
 
       ExpectOrderHelper.by_next(y, z, w, y)
       ExpectOrderHelper.by_previous(y, w, z, y)
@@ -183,10 +183,10 @@ describe Crystal::PointerLinkedList do
 
       typeof(obj).should eq(Pointer(TestedObject)?)
 
-      obj.should_not be_nil
+      obj = obj.should_not be_nil
       obj.should eq(pointerof(w))
-      obj.not_nil!.value.next.should eq(Pointer(TestedObject).null)
-      obj.not_nil!.value.previous.should eq(Pointer(TestedObject).null)
+      obj.value.next.should eq(Pointer(TestedObject).null)
+      obj.value.previous.should eq(Pointer(TestedObject).null)
 
       ExpectOrderHelper.by_next(x, y, z, x)
       ExpectOrderHelper.by_previous(x, z, y, x)
