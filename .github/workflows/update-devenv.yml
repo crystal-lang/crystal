@@ -18,6 +18,7 @@ jobs:
   update-devenv:
     if: github.repository == 'crystal-lang/crystal'
     runs-on: ubuntu-latest
+    environment: github-write
 
     steps:
       - name: Download source
@@ -58,3 +59,4 @@ jobs:
           labels: "topic:infrastructure"
           branch: infra/update-devenv
           delete-branch: true
+          token: ${{ secrets.CRYSBOT_WRITE_PAT }}
