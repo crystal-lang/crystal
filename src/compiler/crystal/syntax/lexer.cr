@@ -1908,43 +1908,41 @@ module Crystal
             next
           end
         else
-          if !delimiter_state && whitespace && lookahead { char == 'y' && char_sequence?('i', 'e', 'l', 'd') && !ident_part_or_end?(peek_next_char) }
-            yields = true
-            char = current_char
-            whitespace = true
-            beginning_of_line = false
-          elsif !delimiter_state && whitespace && (keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) })
-            char = current_char
-
-            nest += 1 unless keyword.abstract_def?
-            whitespace = true
-            beginning_of_line = false
-            next
-          else
-            char = current_char
-
-            if delimiter_state
-              case char
-              when delimiter_state.end
-                if delimiter_state.open_count == 0
-                  delimiter_state = nil
-                else
-                  delimiter_state = delimiter_state.with_open_count_delta(-1)
-                end
-              when delimiter_state.nest
-                delimiter_state = delimiter_state.with_open_count_delta(+1)
+          if delimiter_state
+            case char
+            when delimiter_state.end
+              if delimiter_state.open_count == 0
+                delimiter_state = nil
+              else
+                delimiter_state = delimiter_state.with_open_count_delta(-1)
               end
+            when delimiter_state.nest
+              delimiter_state = delimiter_state.with_open_count_delta(+1)
             end
+          elsif whitespace
+            if lookahead { char == 'y' && char_sequence?('i', 'e', 'l', 'd') && !ident_part_or_end?(peek_next_char) }
+              yields = true
+              char = current_char
+              whitespace = true
+              beginning_of_line = false
+            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) }
+              char = current_char
 
-            # If an assignment comes, we accept if/unless/while/until as nesting
-            if char == '=' && peek_next_char.ascii_whitespace?
-              whitespace = false
-              beginning_of_line = true
-            else
-              whitespace = char.ascii_whitespace? || char.in?(';', '(', '[', '{')
-              if beginning_of_line && !whitespace
-                beginning_of_line = false
-              end
+              nest += 1 unless keyword.abstract_def?
+              whitespace = true
+              beginning_of_line = false
+              next
+            end
+          end
+
+          # If an assignment comes, we accept if/unless/while/until as nesting
+          if char == '=' && peek_next_char.ascii_whitespace?
+            whitespace = false
+            beginning_of_line = true
+          else
+            whitespace = char.ascii_whitespace? || char.in?(';', '(', '[', '{')
+            if beginning_of_line && !whitespace
+              beginning_of_line = false
             end
           end
         end

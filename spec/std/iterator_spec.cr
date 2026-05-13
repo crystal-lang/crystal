@@ -164,6 +164,10 @@ describe Iterator do
     it "works with empty iterator (#16922)" do
       assert_iterates_iterator ([] of Int32), Iterator(Int32).empty.compact_map { |e| e.odd? ? e : nil }
     end
+
+    it "works with non-nilable block output" do
+      assert_iterates_iterator ["1", "2", "3"], (1..3).each.compact_map(&.to_s)
+    end
   end
 
   describe "chain" do
