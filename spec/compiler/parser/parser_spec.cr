@@ -244,6 +244,8 @@ module Crystal
     it_parses "nil/2", Call.new(NilLiteral.new, "/", 2.int32)
     it_parses "true/2", Call.new(true.bool, "/", 2.int32)
     it_parses "false/2", Call.new(false.bool, "/", 2.int32)
+    it_parses "super/2", Call.new("super".call, "/", 2.int32)
+    it_parses "previous_def/2", Call.new("previous_def".call, "/", 2.int32)
     it_parses "1+2*3", Call.new(1.int32, "+", Call.new(2.int32, "*", 3.int32))
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)

@@ -4401,10 +4401,12 @@ module Crystal
       end
 
       @wants_regex = false
-      # Some keyword tokens (notably `self`) early-return from the lexer
-      # without resetting `@slash_is_regex`, so it can persist from an
-      # earlier `slash_is_regex!` and make `self/2` lex as a regex.
-      slash_is_not_regex! if is_var
+      # Some keyword tokens (e.g. `self`, `super`) early-return from the
+      # lexer without resetting `@slash_is_regex`, so it can persist from
+      # an earlier `slash_is_regex!` and make `self/2` or `super/2` lex
+      # as a regex. The atomic we've just parsed is a value, so the next
+      # `/` is always division.
+      slash_is_not_regex!
       next_token
 
       name_followed_by_space = @token.type.space?
