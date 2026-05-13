@@ -74,10 +74,10 @@ class HTTP::WebSocket
   end
 
   protected def check_open
-    handle_closed if closed?
+    raise_closed if closed?
   end
 
-  protected def handle_closed
+  protected def raise_closed
     raise IO::Error.new "Closed socket"
   end
 
@@ -149,7 +149,7 @@ class HTTP::WebSocket
   # end
   # ```
   def receive_string : String
-    receive_string? || handle_closed
+    receive_string? || raise_closed
   end
 
   # Receives and returns a single binary WebSocket message as a `Bytes`, or
@@ -165,7 +165,7 @@ class HTTP::WebSocket
   # end
   # ```
   def receive_bytes : Bytes
-    receive_bytes? || handle_closed
+    receive_bytes? || raise_closed
   end
 
   # Receives and returns a single WebSocket message as a `String` or `nil`
@@ -217,7 +217,7 @@ class HTTP::WebSocket
   # end
   # ```
   def receive : String | Bytes
-    receive? || handle_closed
+    receive? || raise_closed
   end
 
   # Receives and returns a single WebSocket message as a `String` for text
