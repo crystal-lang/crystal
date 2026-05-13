@@ -136,68 +136,6 @@ class HTTP::WebSocket
     @ws.close(code, message)
   end
 
-  # Receives and returns a single WebSocket message as a `String` or
-  # raises `IO::Error` if the `WebSocket` has been closed.
-  #
-  # ```
-  # # Open websocket connection
-  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
-  #
-  # loop do
-  #   msg = ws.receive_string
-  #   handle(msg)
-  # end
-  # ```
-  def receive_string : String
-    receive_string? || raise_closed
-  end
-
-  # Receives and returns a single binary WebSocket message as a `Bytes`, or
-  # raises `IO::Error` if the `WebSocket` has been closed.
-  #
-  # ```
-  # # Open websocket connection
-  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
-  #
-  # loop do
-  #   msg = ws.receive_bytes
-  #   handle(msg)
-  # end
-  # ```
-  def receive_bytes : Bytes
-    receive_bytes? || raise_closed
-  end
-
-  # Receives and returns a single WebSocket message as a `String` or `nil`
-  # if the `WebSocket` has been closed.
-  #
-  # ```
-  # # Open websocket connection
-  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
-  #
-  # while msg = ws.receive_string?
-  #   handle(msg)
-  # end
-  # ```
-  def receive_string? : String?
-    receive?.as(String?)
-  end
-
-  # Receives and returns a single binary WebSocket message as a `Bytes` or `nil`
-  # if the `WebSocket` has been closed.
-  #
-  # ```
-  # # Open websocket connection
-  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
-  #
-  # while msg = ws.receive_bytes?
-  #   handle(msg)
-  # end
-  # ```
-  def receive_bytes? : Bytes?
-    receive?.as(Bytes?)
-  end
-
   # Receives and returns a single WebSocket message as a `String` for text
   # messages, `Bytes` for binary messages, or raises `IO::Error` if the
   # `WebSocket` has been closed.
