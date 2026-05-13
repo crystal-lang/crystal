@@ -367,6 +367,40 @@ module HTTP
       end
     end
 
+    it "no retry when error is not econnreset" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/")
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "no retry when error is not econnreset" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 2
+      end
+    end
+
     it "will not retry if IO::Error in request handling" do
       requests = 0
       server = HTTP::Server.new do |context|

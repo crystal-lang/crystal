@@ -654,13 +654,20 @@ class HTTP::Client
 
   # Determine whether we should retry a request after an IO error happened,
   # which might've been caused by a stale connection broken down.
-  private def should_retry_request?(request, reusing_connection) : Bool
+  #
+  # The conditions are inspired from the implementation in Go's net/http library:
+  # https://github.com/golang/go/blob/608e9fac9055aa188c513f4dd53f12e692bc3c0c/src/net/http/transport.go#L808
+  private def should_retry_request?(request, exc, reusing_connection) : Bool
     # The client was closed explicitly
     return false if @io.nil?
 
     # If the connection is fresh, the server should not have hung up on us and
     # there's no reason to retry.
     return false unless reusing_connection
+
+    # Only retry if the error connection was reset by the peer, which is a
+    # strong indicator of a stale connection.
+    return false unless exc && exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET)
 
     # Do not retry requests if they are not replayable
     return false unless request.replayable?
@@ -674,7 +681,7 @@ class HTTP::Client
     begin
       return yield
     rescue exc : IO::Error
-      unless should_retry_request?(request, reusing_connection)
+      unless should_retry_request?(request, exc, reusing_connection)
         raise exc
       end
     end
