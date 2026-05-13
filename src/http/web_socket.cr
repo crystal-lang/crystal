@@ -241,15 +241,6 @@ class HTTP::WebSocket
   # end
   # ```
   def receive? : String | Bytes | Nil
-    case message = receive_impl
-    in String, Bytes
-      message
-    in Tuple(CloseCode, String)
-      nil
-    end
-  end
-
-  private def receive_impl : String | Bytes | {CloseCode, String}
     loop do
       begin
         info = @ws.receive(@buffer)
@@ -306,7 +297,7 @@ class HTTP::WebSocket
           do_close(code, message)
 
           @current_message.clear
-          return {code, message}
+          return nil
         end
       in .continuation?
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
@@ -331,7 +322,7 @@ class HTTP::WebSocket
   # ```
   def run : Nil
     loop do
-      receive_impl
+      receive?
     rescue
       break
     end
