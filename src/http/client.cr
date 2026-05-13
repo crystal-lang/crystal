@@ -584,21 +584,23 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    begin
-      response = exec_internal_single(request, implicit_compression: implicit_compression)
+    response = begin
+      exec_internal_single(request, implicit_compression: implicit_compression)
     rescue exc : IO::Error
-      raise exc if @io.nil? # do not retry if client was closed
-      response = nil
+      if @io.nil?
+        # do not retry if client was closed
+        raise exc
+      end
+
+      # Server probably closed the connection, so retry once
+      close
+      request.body.try &.rewind
+      exec_internal_single(request, implicit_compression: implicit_compression)
     end
-    return handle_response(response) if response
 
-    # Server probably closed the connection, so retry once
-    close
-    request.body.try &.rewind
-    response = exec_internal_single(request, implicit_compression: implicit_compression)
-    return handle_response(response) if response
+    raise IO::EOFError.new("Unexpected end of http response") unless response
 
-    raise IO::EOFError.new("Unexpected end of http response")
+    handle_response(response)
   end
 
   private def exec_internal_single(request, implicit_compression = false)
