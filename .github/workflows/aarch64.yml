@@ -18,7 +18,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build Crystal
-        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-alpine-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
@@ -44,7 +44,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
-        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-alpine-84codes-build
         with:
           args: make std_spec
   aarch64-musl-test-compiler:
@@ -63,7 +63,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
-        uses: docker://crystallang/crystal:1.13.2-alpine-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-alpine-84codes-build
         with:
           args: make primitives_spec compiler_spec FLAGS=-Dwithout_ffi
   aarch64-gnu-build:
@@ -75,7 +75,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Build Crystal
-        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-ubuntu-84codes-build
         with:
           args: make crystal
       - name: Upload Crystal executable
@@ -101,7 +101,7 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run stdlib specs
-        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-ubuntu-84codes-build
         with:
           args: make std_spec
   aarch64-gnu-test-compiler:
@@ -120,6 +120,6 @@ jobs:
       - name: Mark downloaded compiler as executable
         run: chmod +x .build/crystal
       - name: Run compiler specs
-        uses: docker://crystallang/crystal:1.13.2-ubuntu-84codes-build
+        uses: docker://crystallang/crystal:1.20.2-ubuntu-84codes-build
         with:
           args: make primitives_spec compiler_spec
