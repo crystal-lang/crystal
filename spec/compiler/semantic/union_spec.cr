@@ -142,7 +142,7 @@ describe "Semantic: union" do
     # included by two or more sibling classes (or modules) must collapse to
     # the module regardless of input order.
     it "module and two sibling including classes (3-type union)" do
-      assert_all_permutations_merge_to(<<-CRYSTAL) { { [types["A"], types["B"], types["C"]] of Type, types["A"].virtual_type! } }
+      assert_all_permutations_merge_to(<<-CRYSTAL) { {[types["A"], types["B"], types["C"]] of Type, types["A"].virtual_type!} }
         module A
         end
 
@@ -157,7 +157,7 @@ describe "Semantic: union" do
     end
 
     it "module and three sibling including classes (4-type union)" do
-      assert_all_permutations_merge_to(<<-CRYSTAL) { { [types["Foo"], types["Bar0"], types["Bar1"], types["Bar2"]] of Type, types["Foo"].virtual_type! } }
+      assert_all_permutations_merge_to(<<-CRYSTAL) { {[types["Foo"], types["Bar0"], types["Bar1"], types["Bar2"]] of Type, types["Foo"].virtual_type!} }
         module Foo
         end
 
