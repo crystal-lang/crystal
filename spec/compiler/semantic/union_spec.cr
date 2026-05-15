@@ -10,6 +10,18 @@ private def assert_commutes(str, *, file = __FILE__, line = __LINE__, &)
   union2.should eq(expected), file: file, line: line
 end
 
+private def assert_all_permutations_merge_to(str, *, file = __FILE__, line = __LINE__, &)
+  result = semantic(str)
+  program = result.program
+  tuple = with program yield program
+  types = tuple[0]
+  expected = tuple[1]
+  types.each_permutation do |perm|
+    merged = program.type_merge(perm.dup)
+    merged.should eq(expected), file: file, line: line
+  end
+end
+
 describe "Semantic: union" do
   context "commutativity" do
     it "module v.s. including module" do
@@ -122,6 +134,43 @@ describe "Semantic: union" do
         end
 
         class B(T) < A(T)
+        end
+        CRYSTAL
+    end
+
+    # Regression for #10788 and #15752: unions of 3+ types where a module is
+    # included by two or more sibling classes (or modules) must collapse to
+    # the module regardless of input order.
+    it "module and two sibling including classes (3-type union)" do
+      assert_all_permutations_merge_to(<<-CRYSTAL) { { [types["A"], types["B"], types["C"]] of Type, types["A"].virtual_type! } }
+        module A
+        end
+
+        class B
+          include A
+        end
+
+        class C
+          include A
+        end
+        CRYSTAL
+    end
+
+    it "module and three sibling including classes (4-type union)" do
+      assert_all_permutations_merge_to(<<-CRYSTAL) { { [types["Foo"], types["Bar0"], types["Bar1"], types["Bar2"]] of Type, types["Foo"].virtual_type! } }
+        module Foo
+        end
+
+        class Bar0
+          include Foo
+        end
+
+        class Bar1
+          include Foo
+        end
+
+        class Bar2
+          include Foo
         end
         CRYSTAL
     end
