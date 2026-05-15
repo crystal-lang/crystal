@@ -883,6 +883,9 @@ module Crystal
     it_parses "extend Foo", Extend.new("Foo".path)
     it_parses "extend Foo\nif true; end", [Extend.new("Foo".path), If.new(true.bool)]
     it_parses "extend self", Extend.new(Self.new)
+    it_parses "prepend Foo", Prepend.new("Foo".path)
+    it_parses "prepend Foo\nif true; end", [Prepend.new("Foo".path), If.new(true.bool)]
+    it_parses "class Foo prepend Bar end", ClassDef.new("Foo".path, [Prepend.new("Bar".path)] of ASTNode)
 
     it_parses "unless foo; 1; end", Unless.new("foo".call, 1.int32)
     it_parses "unless foo; 1; else; 2; end", Unless.new("foo".call, 1.int32, 2.int32)

@@ -157,6 +157,13 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     false
   end
 
+  def visit(node : Prepend)
+    check_outside_exp node, "prepend"
+    node.hook_expansions.try &.each &.accept self
+    node.set_type(@program.nil)
+    false
+  end
+
   def visit(node : Alias)
     check_outside_exp node, "declare alias"
     node.set_type(@program.nil)
@@ -257,7 +264,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def nesting_exp?(node)
     case node
     when Expressions, LibDef, CStructOrUnionDef, ClassDef, ModuleDef, FunDef, Def, Macro,
-         Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
+         Alias, Include, Extend, Prepend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
          FileNode, TypeDeclaration, Require, AnnotationDef
       false
     else
