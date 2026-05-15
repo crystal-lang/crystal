@@ -2851,7 +2851,6 @@ module Crystal
       resolved
     end
 
-
     def includes_type?(other)
       remove_indirection.includes_type?(other)
     end
