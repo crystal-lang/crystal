@@ -11,6 +11,35 @@ describe "Semantic: const" do
     assert_type("CONST = 1; CONST") { int32 }
   end
 
+  it "types a constant with explicit type declaration" do
+    assert_type("FOO : Int64 = 123; FOO") { int64 }
+  end
+
+  it "autocasts the initializer of a typed constant" do
+    assert_type(<<-CRYSTAL) { int64 }
+      FOO : Int64 = 123
+      FOO
+      CRYSTAL
+  end
+
+  it "types a typed constant on a path target" do
+    assert_type(<<-CRYSTAL) { int64 }
+      module Foo
+      end
+
+      Foo::BAR : Int64 = 123
+
+      Foo::BAR
+      CRYSTAL
+  end
+
+  it "errors when typed constant initializer doesn't match declared type" do
+    assert_error <<-CRYSTAL, "type must be Int64"
+      FOO : Int64 = "hello"
+      FOO
+      CRYSTAL
+  end
+
   it "types a nested constant" do
     assert_type("class Foo; A = 1; end; Foo::A") { int32 }
   end

@@ -878,7 +878,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def type_assign(target : Path, value, node)
+  def type_assign(target : Path, value, node, declared_type : ASTNode? = nil)
     # We are inside the assign, so we go outside it to check if we are inside an outer expression
     @exp_nest -= 1
     check_outside_exp node, "declare constant"
@@ -894,6 +894,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     const = Const.new(@program, scope, name, value)
+    const.declared_type = declared_type
     const.private = true if target.visibility.private?
 
     process_annotations(annotations) do |annotation_type, ann|
@@ -1031,8 +1032,14 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDeclaration)
-    if (var = node.var).is_a?(Var)
+    var = node.var
+    if var.is_a?(Var)
       @vars[var.name] = MetaVar.new(var.name)
+    elsif var.is_a?(Path)
+      value = node.value
+      node.raise "constant type declaration requires an initializer" unless value
+      type_assign(var, value, node, declared_type: node.declared_type)
+      return false
     end
 
     # Because the value could be using macro expansions
@@ -1225,7 +1232,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
+  def check_ditto(node : Def | Assign | FunDef | Const | Macro | TypeDeclaration, location : Location?) : Nil
     return if !@program.wants_doc?
 
     if stripped_doc = node.doc.try &.strip

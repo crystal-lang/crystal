@@ -1786,6 +1786,11 @@ module Crystal
     it_parses "@a : Foo = 1", TypeDeclaration.new("@a".instance_var, "Foo".path, 1.int32)
     it_parses "@@a : Foo = 1", TypeDeclaration.new("@@a".class_var, "Foo".path, 1.int32)
 
+    it_parses "FOO : Int64 = 1", TypeDeclaration.new("FOO".path, "Int64".path, 1.int32)
+    it_parses "FOO : Foo::Bar = 1", TypeDeclaration.new("FOO".path, Path.new(["Foo", "Bar"]), 1.int32)
+    it_parses "Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"]), "Int64".path, 1.int32)
+    assert_syntax_error "FOO : Int64", "expected '=' for constant type declaration"
+
     it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)
     it_parses "a : Foo*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), ["Foo".path] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), ["Foo".path, 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))

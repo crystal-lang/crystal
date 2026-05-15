@@ -1229,7 +1229,7 @@ module Crystal
           set_visibility parse_var_or_call
         end
       when .const?
-        parse_generic_or_custom_literal
+        parse_const_or_type_declaration
       when .instance_var?
         if @in_macro_expression && @token.value == "@type"
           @is_macro_def = true
@@ -1311,6 +1311,29 @@ module Crystal
       type = parse_generic(expression: true)
       skip_space
       parse_custom_literal type
+    end
+
+    # Parses a constant path that might be the target of a typed-constant
+    # declaration (e.g. `FOO : Int64 = 1` or `Foo::BAR : Int64 = 1`). When the
+    # path is followed by `: Type = value` we produce a `TypeDeclaration`;
+    # otherwise we fall back to the normal path/custom-literal parsing.
+    def parse_const_or_type_declaration
+      type = parse_generic(expression: true)
+      skip_space
+
+      if @no_type_declaration == 0 && @token.type.op_colon? && type.is_a?(Path)
+        next_token_skip_space_or_newline
+        var_type = parse_bare_proc_type
+        skip_space
+        unless @token.type.op_eq?
+          raise "expected '=' for constant type declaration"
+        end
+        next_token_skip_space_or_newline
+        value = parse_op_assign_no_control
+        TypeDeclaration.new(type, var_type, value).at(type).at_end(value)
+      else
+        parse_custom_literal type
+      end
     end
 
     def parse_custom_literal(type)
