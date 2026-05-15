@@ -86,8 +86,12 @@ class HTTP::Request
   # is not present or the body is `nil`.
   def form_params? : HTTP::Params?
     @form_params ||= begin
-      if headers["Content-Type"]? == "application/x-www-form-urlencoded"
-        if body = self.body
+      if (body = self.body) && (ct = headers["Content-Type"]?)
+        mt = MIME::MediaType.parse(ct)
+        if mt.media_type == "application/x-www-form-urlencoded"
+          if charset = mt["charset"]?
+            body.set_encoding(charset)
+          end
           HTTP::Params.parse(body.gets_to_end)
         end
       end
