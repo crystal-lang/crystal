@@ -2749,7 +2749,20 @@ module Crystal
     property! aliased_type : Type
     getter? simple
 
-    def initialize(program, namespace, name, @value : ASTNode)
+    # The body AST for this alias (right-hand side of `alias Foo = ...`).
+    getter value : ASTNode
+
+    # Type-parameter names for a generic alias (e.g. `alias Pair(K, V) = ...`).
+    # `nil` for a regular non-generic alias.
+    getter type_vars : Array(String)?
+
+    # Cache of instantiated generic-alias bodies keyed by the array of
+    # supplied type arguments (`[Int32, String]`). The value is the type the
+    # body resolves to with those substitutions applied. Only used when
+    # `type_vars` is non-nil.
+    private getter(generic_instances) { {} of Array(TypeVar) => Type }
+
+    def initialize(program, namespace, name, @value : ASTNode, @type_vars : Array(String)? = nil)
       super(program, namespace, name)
       @simple = true
     end
@@ -2798,18 +2811,53 @@ module Crystal
 
     def process_value
       return if @value_processed
+      # A generic alias's body cannot be resolved without knowing the
+      # actual type arguments; it is resolved on demand via `#instantiate`.
+      return if @type_vars
       @value_processed = true
       @aliased_type = namespace.lookup_type(@value,
         allow_typeof: false,
         find_root_generic_type_parameters: false)
     end
 
+    # Resolves the alias body with the given type arguments substituted for
+    # this alias's type parameters. Results are cached per argument tuple
+    # so each `alias Foo(T) = Bar(T)` instantiation site builds at most one
+    # resolved type.
+    def instantiate(type_args : Array(TypeVar)) : Type
+      tv_names = @type_vars
+      unless tv_names
+        raise TypeException.new "can't instantiate non-generic alias #{self}"
+      end
+      if type_args.size != tv_names.size
+        raise TypeException.new "wrong number of type vars for #{self} (given #{type_args.size}, expected #{tv_names.size})"
+      end
+
+      if cached = generic_instances[type_args]?
+        return cached
+      end
+
+      free_vars = {} of String => TypeVar
+      tv_names.each_with_index do |name, i|
+        free_vars[name] = type_args[i]
+      end
+
+      resolved = namespace.lookup_type(@value,
+        allow_typeof: false,
+        free_vars: free_vars,
+        find_root_generic_type_parameters: false)
+
+      generic_instances[type_args] = resolved
+      resolved
+    end
+
+
     def includes_type?(other)
       remove_indirection.includes_type?(other)
     end
 
     def type_desc
-      "alias"
+      @type_vars ? "generic alias" : "alias"
     end
   end
 
