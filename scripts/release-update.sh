@@ -11,6 +11,14 @@ set -eu
 
 CRYSTAL_VERSION=$1
 
+##
+## 1. Update development branch to track next version
+##    and remove release artifacts (`src/SOURCE_DATE_EPOCH`)
+##
+## This should only be needed after minor releases, but it's idempotent for
+## patch releases, so we can run it always.
+##
+
 # Write dev version for next minor release into src/VERSION
 minor_branch="${CRYSTAL_VERSION%.*}"
 next_minor="$((${minor_branch#*.} + 1))"
@@ -22,24 +30,25 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 # Remove SOURCE_DATE_EPOCH (only used in source tree of a release)
 rm -f src/SOURCE_DATE_EPOCH
 
+##
+## 2. Add previous release to forward compatibility tests (if new minor branch)
+##
+
+previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' bin/ci)
+if [ "${minor_branch}" != "${previous_release%.*}" ]; then
+  sed -i -E "/crystal_bootstrap_version:/ s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/" .github/workflows/forward-compatibility.yml
+fi
+
+##
+## 3. Update CI and build scripts to use latest release as bootstrap version
+##
+
 # Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
 # Edit DOCKER_TEST_PREFIX in bin/ci
-sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|" bin/ci
-
-# Edit prepare_build on_osx download package and folder
-sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" bin/ci
-sed -i -E "s|crystal-[0-9.]+-[0-9]|crystal-$CRYSTAL_VERSION-1|g" bin/ci
-
-# Edit .github/workflows/*.yml to point to docker image
-# Update the patch version of the latest entry if same minor version to have only one item per minor version
-previous_release=$(grep -o -P '(?<=crystal_bootstrap_version: ).*(?= # LATEST RELEASE)' .github/workflows/linux.yml)
-sed -i -E "s/crystal_bootstrap_version: .+ # LATEST RELEASE/crystal_bootstrap_version: $CRYSTAL_VERSION # LATEST RELEASE/" .github/workflows/linux.yml
-
-if [ "${minor_branch}" != "${previous_release%.*}" ]; then
-  sed -i -E "/crystal_bootstrap_version:/ s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/" .github/workflows/forward-compatibility.yml
-fi
+# shellcheck disable=SC2016
+sed -i -E 's|\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\${CRYSTAL_BOOTSTRAP_VERSION:='"$CRYSTAL_VERSION"'}|' bin/ci
 
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
