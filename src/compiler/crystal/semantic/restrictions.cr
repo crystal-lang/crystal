@@ -15,10 +15,8 @@ module Crystal
     end
 
     def transform(node : Path) : ASTNode
-      if !node.global? && node.names.size == 1
-        if replacement = @substitutions[node.names.first]?
-          return replacement.clone.at(node.location)
-        end
+      if (name = node.single_name?) && (replacement = @substitutions[name]?)
+        return replacement.clone.at(node.location)
       end
       node
     end
