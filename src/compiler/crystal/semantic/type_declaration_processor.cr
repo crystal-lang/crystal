@@ -531,8 +531,8 @@ struct Crystal::TypeDeclarationProcessor
     end
 
     # Get all instance vars assigned in all the initialize methods, plus
-    # any that the type itself explicitly declared (e.g. `getter type :
-    # String`). Declared-but-never-assigned ivars must still be checked so
+    # any that the type itself explicitly declared (`@x : Int32`).
+    # Declared-but-never-assigned ivars must still be checked so
     # subclasses that override `initialize` are required to initialize
     # them — without this they could silently leave the ivar uninitialized
     # and segfault at access time (#16729).
