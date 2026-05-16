@@ -323,6 +323,11 @@ module Crystal
 
     assert_syntax_error "b? = 1", %(unexpected token: "=")
     assert_syntax_error "b! = 1", %(unexpected token: "=")
+
+    # #16713
+    assert_syntax_error "x &(a) = 1", %(unexpected token: "=")
+    assert_syntax_error "y &[b] = 2", %(unexpected token: "=")
+    assert_syntax_error "z &{c} = 3", %(unexpected token: "=")
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"

@@ -6340,7 +6340,7 @@ module Crystal
         true
       when Call
         return false if node.has_parentheses?
-        no_args = node.args.empty? && node.named_args.nil? && node.block.nil?
+        no_args = node.args.empty? && node.named_args.nil? && node.block.nil? && node.block_arg.nil?
         return true if Lexer.ident?(node.name) && no_args
         node.name == "[]" && (node.args_in_brackets? || no_args)
       else
