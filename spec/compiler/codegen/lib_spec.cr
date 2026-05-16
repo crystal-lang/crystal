@@ -161,6 +161,21 @@ describe "Code gen: lib" do
       CRYSTAL
   end
 
+  it "distinguishes lib `type` aliases of the same underlying type in codegen (#16695)" do
+    run(<<-CRYSTAL).to_string.should eq("LibFoo::A,LibFoo::B")
+      require "prelude"
+
+      lib LibFoo
+        type A = Void
+        type B = Void
+      end
+
+      String.build do |io|
+        io << LibFoo::A << ',' << LibFoo::B
+      end
+      CRYSTAL
+  end
+
   it "allows invoking out with underscore " do
     codegen(<<-CRYSTAL)
       lib Lib
