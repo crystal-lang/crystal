@@ -584,17 +584,7 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    response = begin
-      exec_internal_single(request, implicit_compression: implicit_compression)
-    rescue exc : IO::Error
-      if @io.nil?
-        # do not retry if client was closed
-        raise exc
-      end
-
-      # Server probably closed the connection, so retry once
-      close
-      request.body.try &.rewind
+    response = retry_once(request) do
       exec_internal_single(request, implicit_compression: implicit_compression)
     end
 
@@ -639,7 +629,7 @@ class HTTP::Client
     run_before_request_callbacks(request)
 
     user_exception = nil
-    exec_internal_helper do
+    retry_once(request) do
       exec_internal_single(request, implicit_compression: implicit_compression) do |response|
         if response
           handle_response(response) do
@@ -659,23 +649,24 @@ class HTTP::Client
 
     raise user_exception if user_exception
 
-    # Server probably closed the connection, so retry once
-    close
-    request.body.try &.rewind
-    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
-      if response
-        return handle_response(response) { yield response }
-      end
-    end
-
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  # FIXME: This helper is only needed when compiling against Crystal 1.3 or earlier, due to #9769.
-  private def exec_internal_helper(&)
+  private def retry_once(request, &)
+    begin
+      return yield
+    rescue exc : IO::Error
+      if @io.nil?
+        # do not retry if client was closed
+        raise exc
+      end
+    end
+
+    # Server probably closed the connection, so retry once
+    close
+    request.body.try &.rewind
+
     yield
-  rescue exc : IO::Error
-    raise exc if @io.nil? # do not retry if client was closed
   end
 
   private def exec_internal_single(request, implicit_compression = false, &)
