@@ -652,12 +652,20 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
+  # Determine whether we should retry a request after an IO error happened,
+  # which might've been caused by a stale connection broken down.
+  private def should_retry_request? : Bool
+    # The client was closed explicitly
+    return false if @io.nil?
+
+    true
+  end
+
   private def retry_once(request, &)
     begin
       return yield
     rescue exc : IO::Error
-      if @io.nil?
-        # do not retry if client was closed
+      unless should_retry_request?
         raise exc
       end
     end
