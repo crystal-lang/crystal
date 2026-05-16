@@ -1014,7 +1014,7 @@ class Crystal::Call
         block.try &.set_enclosing_call(self)
       end
     else
-      # Skip the eager block visit only when we know it would mis-type things.
+      # Skip the eager block visit only when we know it would mistype things.
       # When the called def assigns special vars (e.g. `$~ = match`), those
       # assignments propagate to `parent_visitor` via
       # `MainVisitor#visit(Assign)` at the assignment site — which runs while
