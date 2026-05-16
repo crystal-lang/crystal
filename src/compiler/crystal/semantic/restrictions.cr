@@ -1889,5 +1889,7 @@ private def expand_generic_alias_restriction(alias_type, alias_type_vars, generi
     substitutions[name] = generic_node.type_vars[i]
   end
 
-  Crystal::AliasGenericArgSubstituter.new(substitutions).substitute(alias_type.value.clone)
+  Crystal::AliasGenericArgSubstituter
+    .new(substitutions)
+    .substitute(alias_type.value.clone)
 end
