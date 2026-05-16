@@ -2161,6 +2161,7 @@ module Crystal
 
       # `node.body` may reset this status, so we capture them in a set
       # (we don't need the full MetaVars at the moment).
+      #
       # We capture *before* `filter_vars` because filtering may replace a var
       # with a fresh MetaVar that drops the `nil_if_read?` flag, even though
       # the variable could still legitimately be nil on loop exit (#16483).
