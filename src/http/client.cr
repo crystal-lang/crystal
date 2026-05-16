@@ -654,18 +654,24 @@ class HTTP::Client
 
   # Determine whether we should retry a request after an IO error happened,
   # which might've been caused by a stale connection broken down.
-  private def should_retry_request? : Bool
+  private def should_retry_request?(reusing_connection) : Bool
     # The client was closed explicitly
     return false if @io.nil?
+
+    # If the connection is fresh, the server should not have hung up on us and
+    # there's no reason to retry.
+    return false unless reusing_connection
 
     true
   end
 
   private def retry_once(request, &)
+    reusing_connection = !@io.nil?
+
     begin
       return yield
     rescue exc : IO::Error
-      unless should_retry_request?
+      unless should_retry_request?(reusing_connection)
         raise exc
       end
     end

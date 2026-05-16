@@ -243,7 +243,67 @@ module HTTP
         expect_raises(IO::Error) do
           client.get(path: "/")
         end
-        requests.should eq 2
+        requests.should eq 1
+      end
+    end
+
+    it "retries when re-using connection with error" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/")
+        requests.should eq 3
+      end
+    end
+
+    it "retries when re-using connection with error" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/") { }
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 3
       end
     end
 
