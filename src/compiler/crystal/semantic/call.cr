@@ -1014,7 +1014,17 @@ class Crystal::Call
         block.try &.set_enclosing_call(self)
       end
     else
-      block.accept parent_visitor
+      # If the called def assigns special vars (e.g. `$~ = match`), eager-typing
+      # the block here would happen before those assignments propagate to
+      # `parent_visitor` via `MainVisitor` at the assignment site (which
+      # forwards to `call.parent_visitor.define_special_var`). The block would
+      # then see `$~` as Nil and any `$1` access in the block would compile to
+      # `Nil#not_nil!` (#16391). Defer the visit to `MainVisitor#visit(Yield)`
+      # in that case; return-type checking below falls through the
+      # `if !block.type?` branch and uses the annotation's `output` type.
+      unless match.def.assigns_special_var?
+        block.accept parent_visitor
+      end
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.

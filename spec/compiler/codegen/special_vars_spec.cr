@@ -120,6 +120,45 @@ describe "Codegen: special vars" do
       CRYSTAL
   end
 
+  it "codegens in block when def has typed block annotation (#16391)" do
+    run(<<-CRYSTAL).to_string.should eq("hey")
+      require "prelude"
+
+      class Object; def not_nil!; self; end; end
+
+      def foo(& : String -> _)
+        $~ = "hey"
+        yield "x"
+      end
+
+      a = nil
+      foo do
+        a = $~
+      end
+      a.not_nil!
+      CRYSTAL
+  end
+
+  it "codegens in block when def has typed block annotation with concrete output (#16391)" do
+    run(<<-CRYSTAL).to_string.should eq("hey")
+      require "prelude"
+
+      class Object; def not_nil!; self; end; end
+
+      def foo(& : String -> String)
+        $~ = "hey"
+        yield "x"
+      end
+
+      a = ""
+      foo do |s|
+        a = $~.not_nil!
+        s
+      end
+      a
+      CRYSTAL
+  end
+
   it "codegens in block with nested block" do
     run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"
