@@ -2159,14 +2159,17 @@ module Crystal
       after_cond_vars = @vars.dup
       @while_vars = after_cond_vars
 
-      filter_vars cond_type_filters
-
       # `node.body` may reset this status, so we capture them in a set
-      # (we don't need the full MetaVars at the moment)
+      # (we don't need the full MetaVars at the moment).
+      # We capture *before* `filter_vars` because filtering may replace a var
+      # with a fresh MetaVar that drops the `nil_if_read?` flag, even though
+      # the variable could still legitimately be nil on loop exit (#16483).
       after_cond_vars_nil_if_read = Set(String).new
       @vars.each do |name, var|
         after_cond_vars_nil_if_read << name if var.nil_if_read?
       end
+
+      filter_vars cond_type_filters
 
       @type_filters = nil
       @block, old_block = nil, @block
