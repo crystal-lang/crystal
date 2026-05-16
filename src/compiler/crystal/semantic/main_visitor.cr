@@ -256,8 +256,7 @@ module Crystal
       # Generic node's type follows the usual rule: when used inside a
       # type-args position (restrictions, type declarations) it is the
       # instance type; outside (value position) it is the metaclass.
-      if instance_type.is_a?(AliasType) && instance_type.type_vars
-        alias_tv_names = instance_type.type_vars.not_nil!
+      if instance_type.is_a?(AliasType) && (alias_tv_names = instance_type.type_vars)
         if alias_tv_names.size != node.type_vars.size
           node.wrong_number_of "type vars", instance_type, node.type_vars.size, alias_tv_names.size
         end
