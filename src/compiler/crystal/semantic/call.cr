@@ -1020,7 +1020,8 @@ class Crystal::Call
       # `MainVisitor#visit(Assign)` at the assignment site — which runs while
       # the def's body is analyzed, *after* this point. Typing the block here
       # would therefore see an empty parent `@meta_vars`, type `$~` as Nil,
-      # and compile `$1` to `Nil#not_nil!` (#16391). Defer to
+      # and compile any `$~` access in the block (including `$1`, which
+      # desugars to `$~[1]`) to `Nil#not_nil!` (#16391). Defer to
       # `MainVisitor#visit(Yield)`, where the propagation has happened.
       #
       # We can't just always defer: some methods need the block typed eagerly
