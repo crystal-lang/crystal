@@ -1014,14 +1014,20 @@ class Crystal::Call
         block.try &.set_enclosing_call(self)
       end
     else
-      # If the called def assigns special vars (e.g. `$~ = match`), eager-typing
-      # the block here would happen before those assignments propagate to
-      # `parent_visitor` via `MainVisitor` at the assignment site (which
-      # forwards to `call.parent_visitor.define_special_var`). The block would
-      # then see `$~` as Nil and any `$1` access in the block would compile to
-      # `Nil#not_nil!` (#16391). Defer the visit to `MainVisitor#visit(Yield)`
-      # in that case; return-type checking below falls through the
-      # `if !block.type?` branch and uses the annotation's `output` type.
+      # Skip the eager block visit only when we know it would mis-type things.
+      # When the called def assigns special vars (e.g. `$~ = match`), those
+      # assignments propagate to `parent_visitor` via
+      # `MainVisitor#visit(Assign)` at the assignment site — which runs while
+      # the def's body is analyzed, *after* this point. Typing the block here
+      # would therefore see an empty parent `@meta_vars`, type `$~` as Nil,
+      # and compile `$1` to `Nil#not_nil!` (#16391). Defer to
+      # `MainVisitor#visit(Yield)`, where the propagation has happened.
+      #
+      # We can't just always defer: some methods need the block typed eagerly
+      # so a free variable in the return type (e.g. `&block : T -> U forall U`,
+      # or a generic class param like `Pointer(T)#malloc(&: Int32 -> T)`) can
+      # be inferred from the block's actual return type — the `!block.type?`
+      # fallback below can't handle that.
       unless match.def.assigns_special_var?
         block.accept parent_visitor
       end
