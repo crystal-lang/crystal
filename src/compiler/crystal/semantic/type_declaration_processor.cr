@@ -701,17 +701,14 @@ struct Crystal::TypeDeclarationProcessor
     # at runtime they share storage. Pick up the ancestor's initializer
     # so a subclass that only writes to `@@x` in a method doesn't error
     # when the superclass already provides the initial value (#5161).
-    unless class_var.initializer
-      if owner.is_a?(ClassVarContainer)
-        owner.ancestors.each do |ancestor|
-          next unless ancestor.is_a?(ClassVarContainer)
-          ancestor_class_var = ancestor.class_vars[name]?
-          next unless ancestor_class_var
-          if init = ancestor_class_var.initializer
-            class_var.initializer = init
-            break
-          end
-        end
+    if !class_var.initializer && owner.is_a?(ClassVarContainer)
+      owner.ancestors.each do |ancestor|
+        next unless ancestor.is_a?(ClassVarContainer)
+        next unless ancestor_class_var = ancestor.class_vars[name]?
+        next unless init = ancestor_class_var.initializer
+
+        class_var.initializer = init
+        break
       end
     end
 
