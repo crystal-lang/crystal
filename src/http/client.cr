@@ -636,7 +636,7 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
+    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
       if response
         return handle_response(response) { yield response }
       end
@@ -653,11 +653,11 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false, &)
+  private def exec_internal_single(request, implicit_compression = false, &)
     begin
       send_request(request)
     rescue ex : IO::Error
-      return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
+      return yield nil if !@io.nil? # ignore_io_error only if client was not closed
       raise ex
     end
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression) do |response|
