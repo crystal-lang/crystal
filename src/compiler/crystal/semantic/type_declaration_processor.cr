@@ -697,6 +697,24 @@ struct Crystal::TypeDeclarationProcessor
     var_type = class_var.type?
     return unless var_type
 
+    # A class var inherits from any ancestor that defines the same name —
+    # at runtime they share storage. Pick up the ancestor's initializer
+    # so a subclass that only writes to `@@x` in a method doesn't error
+    # when the superclass already provides the initial value (#5161).
+    unless class_var.initializer
+      if owner.is_a?(ClassVarContainer)
+        owner.ancestors.each do |ancestor|
+          next unless ancestor.is_a?(ClassVarContainer)
+          ancestor_class_var = ancestor.class_vars[name]?
+          next unless ancestor_class_var
+          if init = ancestor_class_var.initializer
+            class_var.initializer = init
+            break
+          end
+        end
+      end
+    end
+
     if !class_var.initializer && !var_type.includes_type?(@program.nil_type)
       class_var.raise "class variable '#{name}' of #{owner} is not nilable (it's #{var_type}) so it must have an initializer"
     end
@@ -736,7 +754,17 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
+            # Subclass-level class vars share storage with the ancestor's,
+            # so their types must unify. If the owner's inferred type is a
+            # supertype of the ancestor's, we narrow it to match the
+            # ancestor — typically because the ancestor's class-body
+            # initializer pins the type, and the subclass's
+            # read-before-write inference reports a spurious `(T | Nil)`
+            # (issue #5161). We also inherit the ancestor's initializer so
+            # the later "non-nilable without initializer" check sees it.
             if owner_class_var.type.implements?(ancestor_class_var.type)
+              owner_class_var.type = ancestor_class_var.type
+            elsif ancestor_class_var.type.implements?(owner_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             end
 
