@@ -2814,6 +2814,7 @@ module Crystal
       # A generic alias's body cannot be resolved without knowing the
       # actual type arguments; it is resolved on demand via `#instantiate`.
       return if @type_vars
+
       @value_processed = true
       @aliased_type = namespace.lookup_type(@value,
         allow_typeof: false,
