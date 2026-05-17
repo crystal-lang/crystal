@@ -598,5 +598,31 @@ module HTTP
         HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567" , "12345678")}).if_match.should eq [%(W/"1234567"), %("12345678")]
       end
     end
+
+    describe "#replayable?" do
+      it "GET is replayable" do
+        HTTP::Request.new("GET", "/").replayable?.should be_true
+      end
+
+      it "GET with body is not replayable" do
+        HTTP::Request.new("GET", "/", body: "body").replayable?.should be_false
+      end
+
+      it "POST is not replayable" do
+        HTTP::Request.new("POST", "/").replayable?.should be_false
+      end
+
+      it "POST with Idempotency-Key header is replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"Idempotency-Key" => "key"}).replayable?.should be_true
+      end
+
+      it "POST with X-Idempotency-Key header is replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"X-Idempotency-Key" => "key"}).replayable?.should be_true
+      end
+
+      it "POST with body and Idempotency-Key header is not replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"Idempotency-Key" => "key"}, "body").replayable?.should be_false
+      end
+    end
   end
 end
