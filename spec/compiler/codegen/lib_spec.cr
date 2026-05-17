@@ -168,7 +168,13 @@ describe "Code gen: lib" do
         type B = Void
       end
 
-      LibFoo::A.crystal_type_id &- LibFoo::B.crystal_type_id
+      class Object
+        def id
+          crystal_type_id # this call creates a dispatch
+        end
+      end
+      
+      LibFoo::A.id &- LibFoo::B.id
       CRYSTAL
   end
 
