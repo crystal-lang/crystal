@@ -31,6 +31,21 @@ private class TestClient < HTTP::Client
   end
 end
 
+private def close_connection(context)
+  io = context.response.@io.as(Socket)
+  io.linger = 0 # with linger 0 the socket will be RST on close
+
+  {% if flag?(:win32) %}
+    # FIXME: calling #close will shutdown the socket before closing it,
+    # which results in WSARecv to raise an IO::Error in HTTP::Client and
+    # fail the spec; for the time being we bypass the shutdown by closing
+    # the socket only
+    io.socket_close
+  {% else %}
+    io.close
+  {% end %}
+end
+
 module HTTP
   describe Client do
     typeof(Client.new("host"))
@@ -204,18 +219,7 @@ module HTTP
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-
-        {% if flag?(:win32) %}
-          # FIXME: calling #close will shutdown the socket before closing it,
-          # which results in WSARecv to raise an IO::Error in HTTP::Client and
-          # fail the spec; for the time being we bypass the shutdown by closing
-          # the socket only
-          io.socket_close
-        {% else %}
-          io.close
-        {% end %}
+        close_connection(context)
       end
       address = server.bind_unused_port "127.0.0.1"
 
@@ -233,9 +237,7 @@ module HTTP
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+        close_connection(context)
       end
       address = server.bind_unused_port "127.0.0.1"
 
@@ -302,9 +304,7 @@ module HTTP
         context.response.headers["Content-Encoding"] = "gzip"
         context.response.output.print "\u001F\x8B\b\u0000\u0000\u0000\u0000\u0000\u0004\u0003+\xCFH,I-K-\u0002\u0000\xB3C\u0011N\b\u0000\u0000\u0000"
         context.response.output.close
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+        close_connection(context)
       end
       address = server.bind_unused_port "127.0.0.1"
 
@@ -322,9 +322,7 @@ module HTTP
 
     it "retry does not call before_request callback again" do
       server = HTTP::Server.new do |context|
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+        close_connection(context)
       end
       address = server.bind_unused_port "127.0.0.1"
 
