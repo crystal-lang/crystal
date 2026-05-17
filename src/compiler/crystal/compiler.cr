@@ -718,7 +718,7 @@ module Crystal
           input.close
           output.close
 
-          Process.new(pid).wait
+          Process.new(Crystal::System::Process.new(pid)).wait
           completed.send(nil)
         end
       end

@@ -140,7 +140,7 @@ class Process
   # Available only on Unix-like operating systems.
   @[Deprecated("Fork is no longer supported.")]
   def self.fork(&) : Process
-    new Crystal::System::Process.fork { yield }
+    new Crystal::System::Process.new(Crystal::System::Process.fork { yield })
   end
 
   # :nodoc:
@@ -155,7 +155,7 @@ class Process
     {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
 
     if pid = Crystal::System::Process.fork
-      new pid
+      new Crystal::System::Process.new(pid)
     end
   end
 
@@ -596,12 +596,9 @@ class Process
     fork_io
   end
 
-  {% unless flag?(:interpreted) %}
-    # :nodoc:
-    def initialize(pid : LibC::PidT)
-      @process_info = Crystal::System::Process.new(pid)
-    end
-  {% end %}
+  # :nodoc
+  def initialize(@process_info : Crystal::System::Process)
+  end
 
   # Sends *signal* to this process.
   #

@@ -2903,6 +2903,10 @@ module Crystal::Macros
     def methods : ArrayLiteral(Def)
     end
 
+    # Returns the instance methods defined by this type, including those inherited from ancestors and base types (`Reference`, `Value`, and `Object`).
+    def all_methods : ArrayLiteral(Def)
+    end
+
     # Returns `true` if this type has a method. For example `default_options`
     # (the name you pass to this method is `"default_options"` or `:default_options`
     # in this cases).
