@@ -46,6 +46,14 @@ private def close_connection(context)
   {% end %}
 end
 
+private def client_for(server, &)
+  address = server.bind_unused_port "127.0.0.1"
+  run_server(server) do
+    client = HTTP::Client.new("127.0.0.1", address.port)
+    yield client
+  end
+end
+
 module HTTP
   describe Client do
     typeof(Client.new("host"))
@@ -197,10 +205,8 @@ module HTTP
 
     it "ensures closing the response when breaking out of block" do
       server = HTTP::Server.new { }
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
-        client = HTTP::Client.new(address.address, address.port)
+      client_for(server) do |client|
         response = nil
 
         exc = Exception.new("")
@@ -221,10 +227,7 @@ module HTTP
         context.response.output.close
         close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         client.get(path: "/").body.should eq "foo"
         client.get(path: "/").body.should eq "foo"
         client.get(path: "/") do |resp|
@@ -239,10 +242,7 @@ module HTTP
         requests += 1
         close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         expect_raises(IO::Error) do
           client.get(path: "/")
         end
@@ -256,10 +256,8 @@ module HTTP
         requests += 1
         context.response.puts "foo"
       end
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         expect_raises(IO::Error) do
           client.get(path: "/") do
             raise IO::Error.new
@@ -306,10 +304,7 @@ module HTTP
         context.response.output.close
         close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         # First request establishes the server connection, but the server
         # immediately closes it after sending the response.
         client.get(path: "/")
@@ -324,11 +319,9 @@ module HTTP
       server = HTTP::Server.new do |context|
         close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
+      client_for(server) do |client|
         callback_counts = 0
-        client = HTTP::Client.new("127.0.0.1", address.port)
         client.before_request do
           callback_counts += 1
         end
