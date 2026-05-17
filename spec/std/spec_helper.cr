@@ -82,7 +82,8 @@ def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), fil
   pending_interpreted! "Unable to compile Crystal code in interpreted code"
 
   {% if flag?(:use_pcre) %}
-    # Forward flag to sub-compiler in order to use correct library (https://github.com/crystal-lang/crystal/pull/16924#issuecomment-4400308196)
+    # Forward flag to sub-compiler to use correct library:
+    # https://github.com/crystal-lang/crystal/pull/16924#issuecomment-4400308196
     flags << "-Duse_pcre"
   {% end %}
 
