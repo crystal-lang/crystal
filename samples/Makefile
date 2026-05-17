@@ -7,6 +7,8 @@ NONLINK_SOURCES := $(wildcard sdl/*.cr)
 BUILDABLE_BINARIES := $(patsubst %.cr,$(O)/%,$(BUILDABLE_SOURCES))
 NONLINK_BINARIES := $(patsubst %.cr,$(O)/%.o,$(NONLINK_SOURCES))
 
+override FLAGS += $(if $(USE_PCRE1),-Duse_pcre )
+
 .PHONY: all
 all: build
 
@@ -15,11 +17,11 @@ build: $(BUILDABLE_BINARIES) $(NONLINK_BINARIES) ## Build sample binaries
 
 $(O)/%: %.cr
 	mkdir -p $(shell dirname $@)
-	$(CRYSTAL) build $< -o $@
+	$(CRYSTAL) build $(FLAGS) $< -o $@
 
 $(O)/%.o: %.cr
 	mkdir -p $(shell dirname $@)
-	$(CRYSTAL) build --cross-compile $< -o $(patsubst %.o,%,$@)
+	$(CRYSTAL) build --cross-compile $(FLAGS) $< -o $(patsubst %.o,%,$@)
 
 .PHONY: clean
 clean: ## Remove build artifacts
