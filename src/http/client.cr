@@ -637,7 +637,7 @@ class HTTP::Client
     run_before_request_callbacks(request)
 
     user_exception = nil
-    begin
+    exec_internal_helper do
       exec_internal_single(request, implicit_compression: implicit_compression) do |response|
         if response
           handle_response(response) do
@@ -653,8 +653,6 @@ class HTTP::Client
           end
         end
       end
-    rescue exc : IO::Error
-      raise exc if @io.nil? # do not retry if client was closed
     end
 
     raise user_exception if user_exception
@@ -669,6 +667,13 @@ class HTTP::Client
     end
 
     raise IO::EOFError.new("Unexpected end of http response")
+  end
+
+  # FIXME: This helper is only needed when compiling against Crystal 1.3 or earlier, due to #9769.
+  private def exec_internal_helper(&)
+    yield
+  rescue exc : IO::Error
+    raise exc if @io.nil? # do not retry if client was closed
   end
 
   private def exec_internal_single(request, implicit_compression = false, &)
