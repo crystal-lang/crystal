@@ -312,6 +312,13 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     code = %(require "primitives"\n#{code})
   end
 
+  flags ||= %w()
+  {% if flag?(:use_pcre) %}
+    # Forward flag to sub-compiler to use correct library:
+    # https://github.com/crystal-lang/crystal/pull/16924#issuecomment-4400308196
+    flags << "use_pcre"
+  {% end %}
+
   # Code that requires the prelude doesn't run in LLVM's MCJIT
   # because of missing linked functions (which are available
   # in the current executable!), so instead we compile
@@ -328,7 +335,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
 
     compiler = create_spec_compiler
     compiler.debug = debug
-    compiler.flags.concat flags if flags
+    compiler.flags.concat flags
     apply_program_flags(compiler.flags)
 
     with_temp_executable("crystal-spec-output", file: file) do |output_filename|
@@ -339,7 +346,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     end
   else
     program = new_program
-    program.flags.concat(flags) if flags
+    program.flags.concat(flags)
     program.run(code, filename: filename, debug: debug)
   end
 end
@@ -349,11 +356,18 @@ def run(code, return_type : T.class, filename : String? = nil, inject_primitives
     code = %(require "primitives"\n#{code})
   end
 
+  flags ||= %w()
+  {% if flag?(:use_pcre) %}
+    # Forward flag to sub-compiler to use correct library:
+    # https://github.com/crystal-lang/crystal/pull/16924#issuecomment-4400308196
+    flags << "use_pcre"
+  {% end %}
+
   if code.includes?(%(require "prelude"))
     fail "TODO: support the prelude in typed codegen specs", file: file
   else
     program = new_program
-    program.flags.concat(flags) if flags
+    program.flags.concat(flags)
     program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
