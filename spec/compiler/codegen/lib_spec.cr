@@ -162,17 +162,13 @@ describe "Code gen: lib" do
   end
 
   it "distinguishes lib `type` aliases of the same underlying type in codegen (#16695)" do
-    run(<<-CRYSTAL).to_string.should eq("LibFoo::A,LibFoo::B")
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i.should_not eq(0)
       lib LibFoo
         type A = Void
         type B = Void
       end
 
-      String.build do |io|
-        io << LibFoo::A << ',' << LibFoo::B
-      end
+      LibFoo::A.crystal_type_id &- LibFoo::B.crystal_type_id
       CRYSTAL
   end
 
