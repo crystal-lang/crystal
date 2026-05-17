@@ -307,6 +307,66 @@ module HTTP
       end
     end
 
+    it "no retry unless request is replayable" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/")
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "no retry unless request is replayable" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/") { }
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "retry if request is replayable" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"}) { }
+        requests.should eq 3
+      end
+    end
+
+    it "retry if request is replayable" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"})
+        requests.should eq 3
+      end
+    end
+
     it "will not retry if IO::Error in request handling" do
       requests = 0
       server = HTTP::Server.new do |context|
