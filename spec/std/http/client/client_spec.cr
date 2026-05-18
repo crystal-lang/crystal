@@ -31,11 +31,15 @@ private class TestClient < HTTP::Client
   end
 end
 
-private def close_connection(context)
+private def close_connection(context, bypass_shutdown = false)
   io = context.response.@io.as(Socket)
   io.linger = 0 # with linger 0 the socket will be RST on close
 
-  io.close
+  if bypass_shutdown
+    io.socket_close
+  else
+    io.close
+  end
 end
 
 private def client_for(server, &)
@@ -217,17 +221,8 @@ module HTTP
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
-        {% if flag?(:win32) %}
-          io = context.response.@io.as(Socket)
-          io.linger = 0 # with linger 0 the socket will be RST on close
-          # FIXME: calling #close will shutdown the socket before closing it,
-          # which results in WSARecv to raise an IO::Error in HTTP::Client and
-          # fail the spec; for the time being we bypass the shutdown by closing
-          # the socket only
-          io.socket_close
-        {% else %}
-          close_connection(context)
-        {% end %}
+
+        close_connection(context, bypass_shutdown: {{ flag?(:win32) }})
       end
       client_for(server) do |client|
         client.get(path: "/").body.should eq "foo"
