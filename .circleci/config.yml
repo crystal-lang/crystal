@@ -359,14 +359,14 @@ jobs:
             source build.env
             cd docker
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION} PUSH=1
+            make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION} PUSH=1 TAG=crystallang/crystal:${DOCKER_TAG}
       - run:
           name: Smoke tests
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd docker
-            make smoke-all VERSION=${CRYSTAL_VERSION}
+            make smoke-all VERSION=${CRYSTAL_VERSION} TAG=crystallang/crystal:${DOCKER_TAG}
 
   dist_snap:
     machine:
