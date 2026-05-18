@@ -173,7 +173,6 @@ describe "Code gen: lib" do
           crystal_type_id # this call creates a dispatch
         end
       end
-      
       LibFoo::A.id &- LibFoo::B.id
       CRYSTAL
   end
