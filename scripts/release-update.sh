@@ -56,20 +56,15 @@ sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g"
 sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
 
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
-darwin_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-darwin-universal.tar.gz"
-darwin_sha=$(nix-prefetch-url --unpack "$darwin_url")
+update_shell_nix_release() {
+  target="$1"
+  release_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-$target.tar.gz"
+  release_sha=$(nix-prefetch-url --unpack "$release_url")
 
-sed -i -E "s|https://github.com/crystal-lang/crystal/releases/download/[0-9.]+/crystal-[0-9.]+-[0-9]-darwin-universal.tar.gz|$darwin_url|" shell.nix
-sed -i -E "/darwin-universal\.tar\.gz/ {n;s|sha256:[^\"]+|sha256:$darwin_sha|}" shell.nix
+  sed -i -E "s|https://github.com/crystal-lang/crystal/releases/download/[0-9.]+/crystal-[0-9.]+-[0-9]-$target.tar.gz|$release_url|" shell.nix
+  sed -i -E "/${target}\.tar\.gz/ {n;s|sha256:[^\"]+|sha256:$release_sha|}" shell.nix
+}
 
-linux_x86_64_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-linux-x86_64.tar.gz"
-linux_x86_64_sha=$(nix-prefetch-url --unpack "$linux_x86_64_url")
-
-sed -i -E "s|https://github.com/crystal-lang/crystal/releases/download/[0-9.]+/crystal-[0-9.]+-[0-9]-linux-x86_64.tar.gz|$linux_x86_64_url|" shell.nix
-sed -i -E "/linux-x86_64\.tar\.gz/ {n;s|sha256:[^\"]+|sha256:$linux_x86_64_sha|}" shell.nix
-
-linux_aarch64_url="https://github.com/crystal-lang/crystal/releases/download/$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1-linux-aarch64.tar.gz"
-linux_aarch64_sha=$(nix-prefetch-url --unpack "$linux_aarch64_url")
-
-sed -i -E "s|https://github.com/crystal-lang/crystal/releases/download/[0-9.]+/crystal-[0-9.]+-[0-9]-linux-aarch64.tar.gz|$linux_aarch64_url|" shell.nix
-sed -i -E "/linux-aarch64\.tar\.gz/ {n;s|sha256:[^\"]+|sha256:$linux_aarch64_sha|}" shell.nix
+update_shell_nix_release "darwin-universal"
+update_shell_nix_release "linux-x86_64"
+update_shell_nix_release "linux-aarch64"
