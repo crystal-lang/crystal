@@ -73,8 +73,8 @@ let
     };
 
     aarch64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.0/crystal-1.20.0-1-linux-aarch64.tar.gz";
-      sha256 = "sha256:16lamdv2dc61fh1a0r5m2y8ylp40dlm49gm2f9gj6qnz9pry4s7v";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1-linux-aarch64.tar.gz";
+      sha256 = "sha256:0cxzd2dwargh5l3pldlm4i5qhyyzajr9yycb249zrfadr8rqafh3";
     };
   }.${pkgs.stdenv.system});
 
