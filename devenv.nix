@@ -1,6 +1,10 @@
 { pkgs, lib, config, inputs, ... }:
 
 {
+  packages = [
+    pkgs.asciidoctor
+  ];
+
   dotenv.enable = true;
 
   git-hooks.hooks = {
