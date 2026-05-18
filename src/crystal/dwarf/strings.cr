@@ -5,10 +5,7 @@ module Crystal
       end
 
       def decode(index : Int)
-        if offset = @buffer.index(0, offset: index)
-          size = offset - index
-          String.new(@buffer.to_unsafe + index, size)
-        end
+        String.new(@buffer + index, truncate_at_null: true)
       end
     end
   end
