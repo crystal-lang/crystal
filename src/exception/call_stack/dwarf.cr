@@ -38,7 +38,7 @@ struct Exception::CallStack
     abbrev_tables = {} of Int64 => Array(Crystal::DWARF::Abbrev)
     image.section?(DEBUG_ABBREV) do |bytes, _|
       io = IO::Memory.new(bytes)
-      while (offset = io.pos) < bytes.size
+      while (offset = io.pos.to_i64) < bytes.size
         abbrev_tables[offset] = Crystal::DWARF::Abbrev.read(io)
       end
     end
