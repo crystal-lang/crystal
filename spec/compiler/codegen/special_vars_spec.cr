@@ -121,38 +121,39 @@ describe "Codegen: special vars" do
   end
 
   it "codegens in block when def has typed block annotation (#16391)" do
-    run(<<-CRYSTAL).to_string.should eq("hey")
-      require "prelude"
-
+    # `Nil#not_nil!` returns a sentinel (0) instead of raising so that if
+    # this regression is reintroduced the test fails cleanly on the value
+    # comparison rather than aborting the spec run with a NilAssertionError.
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Object; def not_nil!; self; end; end
+      struct Nil; def not_nil!; 0; end; end
 
-      def foo(& : String -> _)
-        $~ = "hey"
-        yield "x"
+      def foo(& : Int32 -> _)
+        $~ = 42
+        yield 0
       end
 
-      a = nil
+      a = 0
       foo do
         a = $~
       end
-      a.not_nil!
+      a
       CRYSTAL
   end
 
   it "codegens in block when def has typed block annotation with concrete output (#16391)" do
-    run(<<-CRYSTAL).to_string.should eq("hey")
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i.should eq(42)
       class Object; def not_nil!; self; end; end
+      struct Nil; def not_nil!; 0; end; end
 
-      def foo(& : String -> String)
-        $~ = "hey"
-        yield "x"
+      def foo(& : Int32 -> Int32)
+        $~ = 42
+        yield 0
       end
 
-      a = ""
+      a = 0
       foo do |s|
-        a = $~.not_nil!
+        a = $~
         s
       end
       a
