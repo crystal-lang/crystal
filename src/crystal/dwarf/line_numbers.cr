@@ -233,7 +233,7 @@ module Crystal
             file_names = Array.new(count) { read_lnct(include_directories, file_format) }
           end
 
-          if @io.tell.to_i64 < offset + total_length
+          if @io.tell < offset + total_length
             sequence = Sequence.new(
               offset,
               unit_length,

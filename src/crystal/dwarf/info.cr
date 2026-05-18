@@ -52,7 +52,7 @@ module Crystal
         end_offset = @offset + @unit_length
         attributes = [] of {AT, FORM, Value}
 
-        while @io.tell.to_i64 < end_offset
+        while @io.tell < end_offset
           code = DWARF.read_unsigned_leb128(@io)
           attributes.clear
 
