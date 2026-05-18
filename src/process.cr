@@ -195,9 +195,16 @@ class Process
   # status  # => Process::Status[0]
   # ```
   @[Experimental]
-  def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  def self.run(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a child process and waits for it to complete, returning its status.
@@ -243,11 +250,19 @@ class Process
   # ```
   @[Experimental]
   def self.run?(args : Enumerable(String), *,
-                env : Env = nil, clear_env : Bool = false,
+                env : Env? = nil, clear_env : Bool = false,
                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
                 chdir : Path | String? = nil) : Process::Status?
     status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }.wait
     status
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    run?(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a child process, yields the block, and then waits for it to finish.
@@ -284,6 +299,15 @@ class Process
     rescue ex
       process.terminate
       raise ex
+    end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |process|
+      yield process
     end
   end
 
@@ -417,10 +441,17 @@ class Process
   # * `Process.exec` replaces the current process.
   @[Experimental]
   def self.new(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
-               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |error, command|
       raise ::File::Error.from_os_error("Error executing process", error, file: command)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.new(*args : String, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # :nodoc:

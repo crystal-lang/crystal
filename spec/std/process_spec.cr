@@ -75,6 +75,10 @@ private def to_ary(tuple)
   [tuple[0]].concat(tuple[1])
 end
 
+private def to_splat(cmd)
+  {cmd[0], *cmd[1]}
+end
+
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
 {% if flag?(:interpreted) && !flag?(:win32) %}
   pending Process
@@ -154,6 +158,12 @@ describe Process do
 
     it "accepts tuple args" do
       Process.new({path_search_command[0]}).wait.success?.should be_true
+    end
+  end
+
+  describe ".new (splat)" do
+    it "works" do
+      Process.new(*to_splat(exit_code_command(0))).wait.success?.should be_true
     end
   end
 
@@ -278,9 +288,22 @@ describe Process do
     end
   end
 
+  describe ".run? (splat)" do
+    it "works" do
+      status = Process.run?(*to_splat(exit_code_command(0))).should be_a(Process::Status)
+      status.exit_code.should eq(0)
+    end
+  end
+
   describe ".run" do
     it "waits for the process" do
       Process.run(to_ary(exit_code_command(0))).exit_code.should eq(0)
+    end
+  end
+
+  describe ".run (splat)" do
+    it "works" do
+      status = Process.run(*to_splat(exit_code_command(0))).exit_code.should eq(0)
     end
   end
 
@@ -778,6 +801,13 @@ describe Process do
   end
 
   describe ".capture_result" do
+    it "splat overload" do
+      result = Process.capture_result(*to_splat(shell_command("echo hello")))
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
     it "captures stdout" do
       result = Process.capture_result(to_ary(shell_command("echo hello")))
       result.status.success?.should be_true
@@ -872,6 +902,13 @@ describe Process do
   end
 
   describe ".capture_result?" do
+    it "splat overload" do
+      result = Process.capture_result?(*to_splat(shell_command("echo hello"))).should be_a(Process::Result)
+      result.status.success?.should be_true
+      result.output?.should eq "hello#{newline}"
+      result.error?.should eq ""
+    end
+
     it "captures stdout" do
       result = Process.capture_result?(to_ary(shell_command("echo hello"))).should be_a(Process::Result)
       result.status.success?.should be_true
@@ -966,6 +1003,10 @@ describe Process do
   end
 
   describe ".capture" do
+    it "splat overload" do
+      Process.capture(*to_splat(shell_command("echo hello"))).should eq "hello#{newline}"
+    end
+
     it "captures stdout" do
       Process.capture(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
     end
@@ -996,6 +1037,10 @@ describe Process do
   end
 
   describe ".capture?" do
+    it "splat overload" do
+      Process.capture?(*to_splat(shell_command("echo hello"))).should eq "hello#{newline}"
+    end
+
     it "captures stdout" do
       Process.capture?(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
     end
@@ -1006,6 +1051,10 @@ describe Process do
 
     it "returns nil on unsuccessful exit" do
       Process.capture?(to_ary(exit_code_command(1))).should be_nil
+    end
+
+    it "returns nil on unsuccessful exit (splat)" do
+      Process.capture?(*to_splat(exit_code_command(1))).should be_nil
     end
 
     it "raises if process cannot execute" do
