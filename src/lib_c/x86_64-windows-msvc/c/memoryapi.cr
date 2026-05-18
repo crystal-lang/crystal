@@ -16,7 +16,7 @@ lib LibC
   FILE_MAP_WRITE = 2
   FILE_MAP_READ  = 4
 
-  fun CreateFileMappingA(hFile : HANDLE, lpFileMappingAttributes : SECURITY_ATTRIBUTES, flProtect : DWORD, dwMaximumSizeHigh : DWORD, dwMaximumSizeLow : DWORD, lpName : LPSTR) : HANDLE
+  fun CreateFileMappingA(hFile : HANDLE, lpFileMappingAttributes : SECURITY_ATTRIBUTES*, flProtect : DWORD, dwMaximumSizeHigh : DWORD, dwMaximumSizeLow : DWORD, lpName : LPSTR) : HANDLE
   fun MapViewOfFile(hFileMappingObject : HANDLE, dwDesiredAccess : DWORD, dwFileOffsetHigh : DWORD, dwFileOffsetLow : DWORD, dwNumberOfBytesToMap : SizeT) : Void*
   fun UnmapViewOfFile(lpBaseAddress : Void*) : Bool
 end

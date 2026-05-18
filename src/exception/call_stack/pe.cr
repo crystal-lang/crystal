@@ -1,4 +1,4 @@
-require "crystal/system/unix/pe"
+require "crystal/system/win32/pe"
 
 struct Exception::CallStack
   DEBUG_LINE_STR = ".debug_line_str"
