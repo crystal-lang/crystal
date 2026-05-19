@@ -274,7 +274,8 @@ record PullRequest,
   end
 
   def backported?
-    labels.any?(&.starts_with?("backport"))
+    # Labels like `backport release/1.20`
+    labels.any?(&.starts_with?("backport "))
   end
 
   def backport?
