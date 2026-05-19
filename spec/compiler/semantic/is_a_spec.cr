@@ -258,4 +258,16 @@ describe "Semantic: is_a?" do
       end
       CRYSTAL
   end
+
+  it "preserves type info across `is_a?(GenericA) && is_a?(GenericB)` when GenericB <= GenericA (#10831)" do
+    assert_type(<<-CRYSTAL) { bool }
+      class A; end
+      class B(T) < A; end
+      class C(T) < B(T); end
+
+      x = C(Int32).new.as(A)
+      # If the chain still produced NoReturn, the call would fail to type.
+      (x.is_a?(B) && x.is_a?(C)) ? true : false
+      CRYSTAL
+  end
 end
