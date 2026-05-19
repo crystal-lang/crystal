@@ -667,7 +667,7 @@ class HTTP::Client
 
     # Only retry if the error connection was reset by the peer, which is a
     # strong indicator of a stale connection.
-    return false unless exc && exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET)
+    return false unless exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET, Errno::EPIPE)
 
     # Do not retry requests if they are not replayable
     return false unless request.replayable?
