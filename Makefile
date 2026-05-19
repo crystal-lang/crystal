@@ -198,14 +198,14 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 
 .PHONY: install
 install: ## Install the crystal compiler package at DESTDIR
-install: install_crystal install_man install_completions
+install: install_compiler install_man install_completions
 
 .PHONY: uninstall
 uninstall: ## Uninstall the Crystal compiler package from DESTDIR
 uninstall: uninstall_compiler uninstall_man uninstall_completions
 
-.PHONY: install_crystal
-install_crystal: $(O)/$(CRYSTAL_BIN)
+.PHONY: install_compiler
+install_compiler: $(O)/$(CRYSTAL_BIN)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 

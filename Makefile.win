@@ -165,10 +165,10 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 
 .PHONY: install
 install: ## Install the crystal compiler package at prefix
-install: install_crystal
+install: install_compiler
 
-.PHONY: install_crystal
-install_crystal: $(O)\crystal.exe
+.PHONY: install_compiler
+install_compiler: $(O)\crystal.exe
 	$(call MKDIR,"$(BINDIR)")
 	$(call INSTALL,"$(O)\crystal.exe","$(BINDIR)\crystal.exe")
 	$(call INSTALL,"$(O)\crystal.pdb","$(BINDIR)\crystal.pdb")
@@ -180,10 +180,10 @@ install_crystal: $(O)\crystal.exe
 	$(call INSTALL,LICENSE,"$(DATADIR)\LICENSE.txt")
 
 .PHONY: uninstall ## Uninstall the Crystal compiler package from prefix
-uninstall: uninstall_crystal
+uninstall: uninstall_compiler
 
-.PHONY: uninstall_crystal
-uninstall_crystal:
+.PHONY: uninstall_compiler
+uninstall_compiler:
 	$(call RM,"$(DATADIR)\LICENSE.txt")
 
 	$(call RMDIR,"$(DATADIR)\src")
