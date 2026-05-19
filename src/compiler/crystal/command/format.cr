@@ -170,7 +170,7 @@ class Crystal::Command
     end
 
     private def error(msg)
-      Crystal.error msg, @color, exit_code: nil, stderr: @stderr, leading_error: false
+      Crystal.print_error msg, @color, stderr: @stderr, leading_error: false
     end
   end
 end

@@ -163,7 +163,7 @@ class Crystal::Command
     # errors in order to trace the require path. The causes are listed similarly
     # to `#inspect_with_backtrace` but without the backtrace.
     while cause = ex.cause
-      error ex.message, exit_code: nil
+      print_error ex.message
       ex = cause
     end
 
@@ -770,9 +770,18 @@ class Crystal::Command
   end
 
   private def error(msg, exit_code = 1)
+    set_color
+    Crystal.error msg, @color, exit_code
+  end
+
+  private def print_error(msg)
+    set_color
+    Crystal.print_error(msg, @color)
+  end
+
+  private def set_color
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
-    Crystal.error msg, @color, exit_code: exit_code
   end
 
   private def self.crystal_opts
