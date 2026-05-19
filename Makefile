@@ -200,6 +200,10 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 install: ## Install the crystal compiler package at DESTDIR
 install: install_crystal install_man install_completions
 
+.PHONY: uninstall
+uninstall: ## Uninstall the Crystal compiler package from DESTDIR
+uninstall: uninstall_compiler uninstall_man uninstall_completions
+
 .PHONY: install_crystal
 install_crystal: $(O)/$(CRYSTAL_BIN)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
@@ -212,10 +216,21 @@ install_crystal: $(O)/$(CRYSTAL_BIN)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
+.PHONY: uninstall_compiler
+uninstall_compiler:
+	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
+
+	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
+	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
+
 .PHONY: install_man
 install_man: man/crystal.1.gz
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
 	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+
+.PHONY: uninstall_man
+uninstall_man:
+	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 
 .PHONY: install_completions
 install_completions:
@@ -226,33 +241,18 @@ install_completions:
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/"
 	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
 
+.PHONY: uninstall_completions
+uninstall_completions:
+	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
+	rm -f "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
+	rm -f "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
+
 ifeq ($(WINDOWS),1)
 .PHONY: install_dlls
 install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(DESTDIR)$(BINDIR)/"
 endif
-
-.PHONY: uninstall
-uninstall: ## Uninstall the Crystal compiler package from DESTDIR
-uninstall: uninstall_compiler uninstall_man uninstall_completions
-
-.PHONY: uninstall_compiler
-uninstall_compiler:
-	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
-
-	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
-	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
-
-.PHONY: uninstall_man
-uninstall_man:
-	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
-
-.PHONY: uninstall_completions
-uninstall_completions:
-	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
-	rm -f "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
-	rm -f "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
