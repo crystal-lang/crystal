@@ -1424,6 +1424,13 @@ module Crystal
     end
 
     def end_visit(node : ReadInstanceVar)
+      # Reading a `NoReturn`-typed ivar (e.g. `@x : NoReturn`) is statically
+      # unreachable. Emit `unreachable` and stop, so any following code is
+      # treated as dead — otherwise codegen would emit a wrong-shape load
+      # whose value flows into the enclosing function's `ret`, producing an
+      # LLVM module-validation error (#12733).
+      return unreachable if node.type.no_return?
+
       obj_type = node.obj.type
       if obj_type.is_a?(UnionType)
         union_ptr = @last
