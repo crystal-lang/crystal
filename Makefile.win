@@ -164,7 +164,11 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)\crystal.exe ## Install the compiler at prefix
+install: ## Install the crystal compiler package at prefix
+install: install_crystal
+
+.PHONY: install_crystal
+install_crystal: $(O)\crystal.exe
 	$(call MKDIR,"$(BINDIR)")
 	$(call INSTALL,"$(O)\crystal.exe","$(BINDIR)\crystal.exe")
 	$(call INSTALL,"$(O)\crystal.pdb","$(BINDIR)\crystal.pdb")
@@ -175,8 +179,11 @@ install: $(O)\crystal.exe ## Install the compiler at prefix
 
 	$(call INSTALL,LICENSE,"$(DATADIR)\LICENSE.txt")
 
-.PHONY: uninstall
-uninstall: ## Uninstall the compiler from prefix
+.PHONY: uninstall ## Uninstall the Crystal compiler package from prefix
+uninstall: uninstall_crystal
+
+.PHONY: uninstall_crystal
+uninstall_crystal:
 	$(call RM,"$(DATADIR)\LICENSE.txt")
 
 	$(call RMDIR,"$(DATADIR)\src")

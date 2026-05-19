@@ -197,7 +197,11 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
+install: ## Install the crystal compiler package at DESTDIR
+install: install_crystal install_man install_completions
+
+.PHONY: install_crystal
+install_crystal: $(O)/$(CRYSTAL_BIN)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
@@ -205,11 +209,16 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DESTDIR)$(DATADIR)/crystal/src"
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
-	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
-	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
+.PHONY: install_man
+install_man: man/crystal.1.gz
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
+	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+
+.PHONY: install_completions
+install_completions:
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/bash-completion/completions/"
 	$(INSTALL) -m 644 etc/completion.bash "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/zsh/site-functions/"
@@ -225,14 +234,22 @@ install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DE
 endif
 
 .PHONY: uninstall
-uninstall: ## Uninstall the compiler from DESTDIR
+uninstall: ## Uninstall the Crystal compiler package from DESTDIR
+uninstall: uninstall_compiler uninstall_man uninstall_completions
+
+.PHONY: uninstall_compiler
+uninstall_compiler:
 	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
-
-	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
+.PHONY: uninstall_man
+uninstall_man:
+	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
+
+.PHONY: uninstall_completions
+uninstall_completions:
 	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
 	rm -f "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
 	rm -f "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
@@ -296,7 +313,6 @@ man/%.1: doc/man/%.adoc
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
