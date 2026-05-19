@@ -11,4 +11,4 @@
 
 set -eu
 
-find src/lib_c/ -mindepth 1  -maxdepth 1 -type d -printf '%f\0' | xargs --verbose -0 -I{} bin/crystal build --target={} --cross-compile "$@"
+find src/lib_c/ -mindepth 1  -maxdepth 1 -type d -not -name linux -printf '%f\0' | xargs --verbose -0 -I{} bin/crystal build --target={} --cross-compile "$@"
