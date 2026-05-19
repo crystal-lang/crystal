@@ -1401,8 +1401,8 @@ module Crystal
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
-      node, end_location = parse_exception_handler exps, begin_location: begin_location
-      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
+      node, end_location, found_handler = parse_exception_handler exps, begin_location: begin_location
+      if !found_handler && (!node.is_a?(Expressions) || !node.keyword.none?)
         node = Expressions.new([node])
       end
       node.at(begin_location).at_end(end_location)
@@ -1470,9 +1470,9 @@ module Crystal
         ex.implicit = true if implicit
         ex.else_location = else_location
         ex.ensure_location = ensure_location
-        {ex, end_location}
+        {ex, end_location, true}
       else
-        {exp, end_location}
+        {exp, end_location, false}
       end
     end
 
@@ -1944,7 +1944,7 @@ module Crystal
           next_token_skip_statement_end
           check_not_pipe_before_proc_literal_body
           body = parse_expressions
-          body, end_location = parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
         elsif @token.type.op_lcurly?
           next_token_skip_statement_end
           check_not_pipe_before_proc_literal_body
@@ -3831,7 +3831,7 @@ module Crystal
             end
             body = Expressions.from(exps).at(body)
           end
-          body, end_location = parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
         end
       end
 
@@ -4531,7 +4531,8 @@ module Crystal
 
         raise "block already specified with &" if block
         parse_block2 do |body|
-          parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
+          {body, end_location}
         end
       else
         parse_curly_block(block)
@@ -5969,7 +5970,7 @@ module Crystal
             next_token
           else
             body = parse_expressions
-            body, end_location = parse_exception_handler body, implicit: true
+            body, end_location, _ = parse_exception_handler body, implicit: true
           end
 
           @fun_nest -= 1

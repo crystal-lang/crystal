@@ -1364,6 +1364,11 @@ describe Crystal::Formatter do
   assert_format "1 rescue 2"
   assert_format "1 ensure 2"
   assert_format "begin\n  call\n  # comment\nrescue\n  call\n  # comment\nelse\n  call\n  # comment\nensure\n  call\n  # comment\nend"
+  assert_format "begin\nbegin\nend\nend", "begin\n  begin\n\n  end\nend"
+  assert_format "begin\nbegin\nensure\nend\nend", "begin\n  begin\n  ensure\n  end\nend"
+  assert_format "begin\nbegin\nrescue\nend\nend", "begin\n  begin\n  rescue\n  end\nend"
+  assert_format "begin\nbegin\n1\nensure\nend\nend", "begin\n  begin\n    1\n  ensure\n  end\nend"
+  assert_format "begin\nbegin\n1\nrescue\nend\nend", "begin\n  begin\n    1\n  rescue\n  end\nend"
 
   assert_format "def foo\n1\nrescue\n2\nend", "def foo\n  1\nrescue\n  2\nend"
   assert_format "def foo\n1\nensure\n2\nend", "def foo\n  1\nensure\n  2\nend"
@@ -2343,8 +2348,8 @@ describe Crystal::Formatter do
   assert_format "{\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}", "{\n  query => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
   assert_format "begin\n  query = <<-HEREDOC\n    foo\n  HEREDOC\nend"
 
-  assert_format "begin 0[1] rescue 2 end"
-  assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
+  assert_format "begin 0[1] rescue 2 end", "begin\n  0[1] rescue 2\nend"
+  assert_format "begin\n 0[1] rescue 2 end", "begin\n  0[1] rescue 2\nend"
 
   assert_format "{%\n  if 1\n    2\n  end\n%}"
 
