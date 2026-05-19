@@ -667,7 +667,7 @@ class HTTP::Client
 
     # Only retry if the error connection was reset by the peer, which is a
     # strong indicator of a stale connection.
-    return false unless exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET, Errno::EPIPE)
+    return false unless exc.nil? || exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET, Errno::EPIPE)
 
     # Do not retry requests if they are not replayable
     return false unless request.replayable?
@@ -679,11 +679,16 @@ class HTTP::Client
     reusing_connection = !@io.nil?
 
     begin
-      return yield
+      result = yield
     rescue exc : IO::Error
       unless should_retry_request?(request, exc, reusing_connection)
         raise exc
       end
+    else
+      return result if result
+
+      # Reading resulted in EOF which might be caused by a stale connection
+      return unless should_retry_request?(request, nil, reusing_connection)
     end
 
     # Server probably closed the connection, so retry once
