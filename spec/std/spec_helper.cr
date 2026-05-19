@@ -81,12 +81,6 @@ def compile_file(source_file, *, bin_name = "executable_file", flags = %w(), fil
   # can't use backtick in interpreted code (#12241)
   pending_interpreted! "Unable to compile Crystal code in interpreted code"
 
-  {% if flag?(:use_pcre) %}
-    # Forward flag to sub-compiler to use correct library:
-    # https://github.com/crystal-lang/crystal/pull/16924#issuecomment-4400308196
-    flags << "-Duse_pcre"
-  {% end %}
-
   with_temp_executable(bin_name, file: file) do |executable_file|
     compiler = ENV["CRYSTAL_SPEC_COMPILER_BIN"]? || "bin/crystal"
     args = ["build"] + flags + ["-o", executable_file, source_file]
