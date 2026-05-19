@@ -89,4 +89,17 @@ describe "Code gen: no return" do
       typeof(raise("").foo)
       CRYSTAL
   end
+
+  it "doesn't ICE when reading a NoReturn-typed instance var (#12733)" do
+    codegen(<<-CRYSTAL)
+      struct Entry
+        def initialize(@key : NoReturn)
+        end
+      end
+
+      entry = uninitialized Entry
+      entry.@key
+      0
+      CRYSTAL
+  end
 end
