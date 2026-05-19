@@ -103,4 +103,22 @@ describe "Code gen: return" do
       v[3] &- v[2]
       CRYSTAL
   end
+
+  it "doesn't ICE when body is a wider union than the declared return type (#14596)" do
+    codegen(<<-CRYSTAL)
+      class Foo
+        @x = uninitialized -> Bool
+      end
+
+      def foo(cond) : -> Bool
+        if cond.is_a?(Foo)
+          -> { foo(cond.@x).call }
+        else
+          cond
+        end
+      end
+
+      foo(Foo.new)
+      CRYSTAL
+  end
 end

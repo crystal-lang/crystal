@@ -889,7 +889,17 @@ module Crystal
       elsif method_type.no_return?
         unreachable
       else
-        value = upcast(@last, method_type, type)
+        # When a typed def's `freeze_type` restricts a wider body type
+        # (e.g. body is `Proc(Bool) | Proc(NoReturn)` and freeze_type narrowed
+        # the def's type to `Proc(Bool)`), the body's `@last` value is in the
+        # wider type's representation. Extract via `downcast` instead of
+        # `upcast`, which would either no-op the wrong shape or hit the
+        # generic `cast_to` and produce an LLVM type mismatch (#14596).
+        if type.is_a?(UnionType) && !method_type.is_a?(UnionType)
+          value = downcast(@last, method_type, type, already_loaded: true)
+        else
+          value = upcast(@last, method_type, type)
+        end
         ret to_rhs(value, method_type)
       end
     end
