@@ -15,9 +15,9 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code : Int = 1, stderr = STDERR, leading_error = true) : NoReturn
+  def self.abort(msg, color, exit_code : Int = 1, stderr = STDERR, leading_error = true) : NoReturn
     print_error(msg, color, stderr, leading_error)
-    exit(exit_code)
+    ::abort(exit_code)
   end
 
   def self.print_error(msg, color, stderr = STDERR, leading_error = true)

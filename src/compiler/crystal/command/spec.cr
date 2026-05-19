@@ -54,7 +54,7 @@ class Crystal::Command
         if filename =~ /\A(.+?)\:(\d+)\Z/
           file, line = $1, $2
           unless File.file?(file)
-            error "'#{file}' is not a file"
+            abort "'#{file}' is not a file"
           end
           target_filenames << file
           locations << {file, line}
@@ -65,7 +65,7 @@ class Crystal::Command
           elsif File.file?(filename)
             target_filenames << filename
           else
-            error "'#{filename}' is not a file"
+            abort "'#{filename}' is not a file"
           end
         end
       end

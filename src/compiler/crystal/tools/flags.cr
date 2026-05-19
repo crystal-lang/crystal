@@ -44,7 +44,7 @@ class Crystal::Command
           end
         end
       else
-        Crystal.error "file or directory does not exist: #{path}", @color, leading_error: false
+        Crystal.abort "file or directory does not exist: #{path}", @color, leading_error: false
       end
     end
   end
