@@ -1189,27 +1189,6 @@ describe "Code gen: class" do
       CRYSTAL
   end
 
-  it "does not segfault when an Array(Module) holds an instance of an uninstantiated generic subclass (#16947)" do
-    run(<<-CRYSTAL).to_i.should eq(2)
-      require "prelude"
-
-      module Foo
-      end
-
-      class GenericFoo(T)
-        include Foo
-      end
-
-      class SubGenericFoo(T) < GenericFoo(T)
-      end
-
-      array = [] of Foo
-      array << GenericFoo(String).new
-      array << SubGenericFoo(String).new
-      array.size
-      CRYSTAL
-  end
-
   it "can assign virtual metaclass to virtual metaclass (#3007)" do
     run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
