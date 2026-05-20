@@ -182,10 +182,10 @@ class HTTP::WebSocket
     loop do
       begin
         info = @ws.receive(@buffer)
-      rescue ex : IO::Error
+      rescue
         @on_close.try &.call(CloseCode::AbnormalClosure, "")
         @closed = true
-        raise ex
+        break
       end
 
       case info.opcode
