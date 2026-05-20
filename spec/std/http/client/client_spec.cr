@@ -367,7 +367,7 @@ module HTTP
       end
     end
 
-    it "no retry when error is not econnreset" do
+    it "retries when error is not econnreset" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -380,11 +380,11 @@ module HTTP
         expect_raises(IO::EOFError) do
           client.get(path: "/")
         end
-        requests.should eq 2
+        requests.should eq 3
       end
     end
 
-    it "no retry when error is not econnreset" do
+    it "retries when error is not econnreset" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -397,7 +397,7 @@ module HTTP
         expect_raises(IO::EOFError) do
           client.get(path: "/") { }
         end
-        requests.should eq 2
+        requests.should eq 3
       end
     end
 
