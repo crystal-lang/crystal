@@ -76,7 +76,12 @@ private def to_ary(tuple)
 end
 
 private def to_splat(cmd)
-  {cmd[0], *cmd[1]}
+  {% if compare_versions(Crystal::VERSION, "1.1.0") >= 0 %}
+    {cmd[0], *cmd[1]}
+  {% else %}
+    args = cmd[1]
+    {cmd[0], args[0], args[1]}
+  {% end %}
 end
 
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
