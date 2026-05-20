@@ -260,9 +260,7 @@ class HTTP::WebSocket
   # ```
   def run : Nil
     loop do
-      receive?
-    rescue
-      break
+      break unless receive?
     end
   end
 
