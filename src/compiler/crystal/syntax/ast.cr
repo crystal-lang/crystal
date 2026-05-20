@@ -2193,6 +2193,11 @@ module Crystal
         var.name.size
       when Global
         var.name.size
+      when Path
+        # `FOO : Type = value` or `Foo::BAR : Type = value` (#13443).
+        size = var.names.sum(&.size) + (var.names.size - 1) * 2
+        size += 2 if var.global?
+        size
       else
         raise "can't happen"
       end
