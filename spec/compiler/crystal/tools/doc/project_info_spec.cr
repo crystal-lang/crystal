@@ -207,7 +207,6 @@ describe Crystal::Doc::ProjectInfo do
       run_git "remote add bar https://example.com/bar.git"
       run_git "remote add origin https://example.com/foo.git"
       run_git "remote add baz https://example.com/baz.git"
-      `git remote -v`
       ProjectInfo.git_remote.should eq "https://example.com/foo.git"
     end
 
@@ -215,7 +214,6 @@ describe Crystal::Doc::ProjectInfo do
       run_git "init"
       run_git "remote add bar https://example.com/bar.git"
       run_git "remote add baz https://example.com/baz.git"
-      `git remote -v`
       ProjectInfo.git_remote.should eq "https://example.com/bar.git"
     end
   end
