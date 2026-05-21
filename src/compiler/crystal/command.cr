@@ -772,18 +772,14 @@ class Crystal::Command
   end
 
   private def abort(msg, exit_code = 1)
-    set_color
-    Crystal.abort msg, @color, exit_code
+    print_error(msg)
+    exit exit_code
   end
 
   private def print_error(msg)
-    set_color
-    Crystal.print_error(msg, @color)
-  end
-
-  private def set_color
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
+    Crystal.print_error(msg, @color)
   end
 
   private def self.crystal_opts
