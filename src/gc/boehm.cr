@@ -451,6 +451,18 @@ module GC
   {% end %}
 
   # :nodoc:
+  #
+  # Called in the child process immediately after `fork(2)` to reset the
+  # RWLock whose reader count may have been > 0 in the parent (workers hold
+  # `lock_read` across `swapcontext`). The child has no workers, so a fresh
+  # lock with zero readers is correct.
+  def self.reinit_child : Nil
+    {% if flag?(:preview_mt) %}
+      @@lock = Crystal::RWLock.new
+    {% end %}
+  end
+
+  # :nodoc:
   def self.lock_read
     {% if flag?(:preview_mt) %}
       @@lock.read_lock

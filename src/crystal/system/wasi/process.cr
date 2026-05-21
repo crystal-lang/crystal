@@ -23,6 +23,13 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process#terminate")
   end
 
+  def self.quiesce(& : -> T) : T forall T
+    ::Process.before_quiesce_callbacks.each(&.call)
+    result = yield
+    ::Process.after_quiesce_callbacks.each(&.call)
+    result
+  end
+
   def self.exit(status)
     LibC.exit(status)
   end
@@ -32,20 +39,8 @@ struct Crystal::System::Process
     1
   end
 
-  def self.pgid
-    raise NotImplementedError.new("Process.pgid")
-  end
-
-  def self.pgid(pid)
-    raise NotImplementedError.new("Process.pgid")
-  end
-
   def self.ppid
     raise NotImplementedError.new("Process.ppid")
-  end
-
-  def self.signal(pid, signal)
-    raise NotImplementedError.new("Process.signal")
   end
 
   @[Deprecated("Use `#on_terminate` instead")]
@@ -80,14 +75,6 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.times")
   end
 
-  def self.fork
-    raise NotImplementedError.new("Process.fork")
-  end
-
-  def self.fork(&)
-    raise NotImplementedError.new("Process.fork")
-  end
-
   def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.spawn")
   end
@@ -96,7 +83,4 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.replace")
   end
 
-  def self.chroot(path)
-    raise NotImplementedError.new("Process.chroot")
-  end
 end

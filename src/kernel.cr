@@ -577,15 +577,18 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if !flag?(:preview_mt) && flag?(:unix) %}
+{% if flag?(:unix) %}
   class Process
     # :nodoc:
     #
     # Hooks are defined here due to load order problems.
     def self.after_fork_child_callbacks
       @@after_fork_child_callbacks ||= [
-        # reinit event loop first:
-        -> { Crystal::EventLoop.current.after_fork },
+        {% unless flag?(:preview_mt) %}
+          # reinit event loop first:
+          # (Crystal::EventLoop::Polling#after_fork is only defined without preview_mt)
+          -> { Crystal::EventLoop.current.after_fork },
+        {% end %}
 
         # reinit signal handling:
         ->Crystal::System::Signal.after_fork,

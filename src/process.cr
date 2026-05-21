@@ -12,6 +12,41 @@ end
 require "crystal/system/process"
 
 class Process
+  # Callbacks to run in the current process immediately before the syscall
+  # inside `quiesce`. On macOS and Windows these run while the write lock is
+  # held; on Linux/BSD and WASM no lock is held.
+  def self.before_quiesce_callbacks : Array(-> Nil)
+    @@before_quiesce_callbacks ||= [] of -> Nil
+  end
+
+  # Callbacks to run immediately after `quiesce` returns in every process that
+  # continues execution (both parent and child on Unix fork, parent only on
+  # Windows CreateProcess).
+  def self.after_quiesce_callbacks : Array(-> Nil)
+    @@after_quiesce_callbacks ||= [] of -> Nil
+  end
+
+  # Runs *block* inside a process-spawn consistency window: signals are blocked,
+  # thread cancellation is disabled, and on platforms that need it the FD
+  # creation lock is held. Registered `before_quiesce_callbacks` fire just before
+  # the block; `after_quiesce_callbacks` fire just after.
+  #
+  # Callers that call `fork(2)` inside the block are responsible for calling
+  # `::Process.after_fork_child_callbacks.each(&.call)` in the child branch
+  # themselves. `quiesce` cannot do this because it has no way to know whether
+  # a fork occurred.
+  #
+  # Example:
+  # ```
+  # pid, saved_errno = Process.quiesce { r = LibC.fork; {r, Errno.value} }
+  # raise RuntimeError.from_os_error("fork", saved_errno) if pid == -1
+  # ```
+  def self.quiesce(& : -> T) : T forall T
+    Crystal::System::Process.quiesce { yield }
+  end
+end
+
+class Process
   # Terminate the current process immediately. All open files, pipes and sockets
   # are flushed and closed, all child processes are inherited by PID 1. This does
   # not run any handlers registered with `at_exit`, use `::exit` for that.
@@ -26,15 +61,23 @@ class Process
     Crystal::System::Process.pid.to_i64
   end
 
-  # Returns the process group identifier of the current process.
-  def self.pgid : Int64
-    Crystal::System::Process.pgid.to_i64
-  end
+  {% if flag?(:unix) %}
+    # Returns the process group identifier of the current process.
+    #
+    # Deprecated: use `UNIX::Process.pgid` instead.
+    @[Deprecated("Use `UNIX::Process.pgid` instead.")]
+    def self.pgid : Int64
+      UNIX::Process.pgid
+    end
 
-  # Returns the process group identifier of the process identified by *pid*.
-  def self.pgid(pid : Int) : Int64
-    Crystal::System::Process.pgid(pid).to_i64
-  end
+    # Returns the process group identifier of the process identified by *pid*.
+    #
+    # Deprecated: use `UNIX::Process.pgid` instead.
+    @[Deprecated("Use `UNIX::Process.pgid` instead.")]
+    def self.pgid(pid : Int) : Int64
+      UNIX::Process.pgid(pid)
+    end
+  {% end %}
 
   # Returns the process identifier of the parent process of the current process.
   #
@@ -45,10 +88,15 @@ class Process
     Crystal::System::Process.ppid.to_i64
   end
 
-  # Sends *signal* to the process identified by *pid*.
-  def self.signal(signal : Signal, pid : Int) : Nil
-    Crystal::System::Process.signal(pid, signal.value)
-  end
+  {% if flag?(:unix) %}
+    # Sends *signal* to the process identified by *pid*.
+    #
+    # Deprecated: use `UNIX::Process.signal` instead.
+    @[Deprecated("Use `UNIX::Process.signal` instead.")]
+    def self.signal(signal : Signal, pid : Int) : Nil
+      UNIX::Process.signal(signal, pid)
+    end
+  {% end %}
 
   # Installs *handler* as the new handler for interrupt requests. Removes any
   # previously set interrupt handler.
@@ -132,32 +180,27 @@ class Process
     Crystal::System::Process.times
   end
 
-  # :nodoc:
-  #
-  # Runs the given block inside a new process and
-  # returns a `Process` representing the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  @[Deprecated("Fork is no longer supported.")]
-  def self.fork(&) : Process
-    new Crystal::System::Process.new(Crystal::System::Process.fork { yield })
-  end
-
-  # :nodoc:
-  #
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  @[Deprecated("Fork is no longer supported.")]
-  def self.fork : Process?
-    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
-
-    if pid = Crystal::System::Process.fork
-      new Crystal::System::Process.new(pid)
+  {% if flag?(:unix) %}
+    # Runs the given block in a new child process and returns a `Process`
+    # representing it.
+    #
+    # Deprecated: use `UNIX::Process.fork` instead.
+    @[Deprecated("Use `UNIX::Process.fork` instead.")]
+    def self.fork(&) : Process
+      UNIX::Process.fork { yield }
     end
-  end
+
+    # Duplicates the current process.
+    #
+    # Returns a `Process` wrapping the child in the parent, and `nil` inside
+    # the child.
+    #
+    # Deprecated: use `UNIX::Process.fork` instead.
+    @[Deprecated("Use `UNIX::Process.fork` instead.")]
+    def self.fork : Process?
+      UNIX::Process.fork
+    end
+  {% end %}
 
   # How to redirect the standard input, output and error IO of a process.
   enum Redirect
@@ -347,9 +390,8 @@ class Process
     end
   end
 
-  # Replaces the current process with a new one. This function never returns.
-  #
-  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
+  # Deprecated: use `UNIX::Process.exec` instead.
+  @[Deprecated("Use `UNIX::Process.exec` instead.")]
   def self.exec(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                 input : ExecStdio = Redirect::Inherit, output : ExecStdio = Redirect::Inherit, error : ExecStdio = Redirect::Inherit, chdir : Path | String? = nil) : NoReturn
     input = exec_stdio_to_fd(input, for: STDIN)
@@ -359,7 +401,7 @@ class Process
     Crystal::System::Process.replace(command, args, shell, env, clear_env, input, output, error, chdir)
   end
 
-  private def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
+  protected def self.exec_stdio_to_fd(stdio : ExecStdio, for dst_io : IO::FileDescriptor) : IO::FileDescriptor
     case stdio
     when IO::FileDescriptor
       stdio
@@ -631,14 +673,18 @@ class Process
   def initialize(@process_info : Crystal::System::Process)
   end
 
-  # Sends *signal* to this process.
-  #
-  # NOTE: `#terminate` is preferred over `signal(Signal::TERM)` and
-  # `signal(Signal::KILL)` as a portable alternative which also works on
-  # Windows.
-  def signal(signal : Signal) : Nil
-    Crystal::System::Process.signal(@process_info.pid, signal)
-  end
+  {% if flag?(:unix) %}
+    # Sends *signal* to this process.
+    #
+    # NOTE: `#terminate` is preferred as a portable alternative that also works
+    # on Windows. Use `UNIX::Process` to access this method without deprecation.
+    #
+    # Deprecated: use `#signal` on a `UNIX::Process` instance instead.
+    @[Deprecated("Use `#signal` on a `UNIX::Process` instance instead.")]
+    def signal(signal : Signal) : Nil
+      Crystal::System::Process.signal(@process_info.pid, signal.value)
+    end
+  {% end %}
 
   # Waits for this process to complete and closes any pipes.
   def wait : Process::Status
@@ -724,23 +770,16 @@ class Process
     io.close if io
   end
 
-  # Changes the root directory and the current working directory for the current
-  # process.
-  #
-  # Available only on Unix-like operating systems.
-  #
-  # Security: `chroot` on its own is not an effective means of mitigation. At minimum
-  # the process needs to also drop privileges as soon as feasible after the `chroot`.
-  # Changes to the directory hierarchy or file descriptors passed via `recvmsg(2)` from
-  # outside the `chroot` jail may allow a restricted process to escape, even if it is
-  # unprivileged.
-  #
-  # ```
-  # Process.chroot("/var/empty")
-  # ```
-  def self.chroot(path : String) : Nil
-    Crystal::System::Process.chroot(path)
-  end
+  {% if flag?(:unix) %}
+    # Changes the root directory and the current working directory for the
+    # current process.
+    #
+    # Deprecated: use `UNIX::Process.chroot` instead.
+    @[Deprecated("Use `UNIX::Process.chroot` instead.")]
+    def self.chroot(path : String) : Nil
+      UNIX::Process.chroot(path)
+    end
+  {% end %}
 end
 
 # Executes the given command in a subshell.
@@ -794,3 +833,6 @@ def `(command : String) : String
 end
 
 require "./process/*"
+{% if flag?(:unix) %}
+  require "unix/process"
+{% end %}

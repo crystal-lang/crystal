@@ -121,6 +121,9 @@ module Crystal::System::Signal
       Crystal::EventLoop.remove(pipe_io)
       pipe_io.file_descriptor_close { }
     end
+    # Reset the mutex: a parent worker may have held it (e.g. inside trap)
+    # at fork time, leaving the child with an unreleasable inherited lock.
+    @@mutex = Sync::Mutex.new(:unchecked)
   ensure
     @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
   end
@@ -333,5 +336,8 @@ module Crystal::System::SignalChildHandler
     @@pending.clear
     @@waiting.each_value(&.close)
     @@waiting.clear
+    # Reset the mutex: a parent worker may have held it (inside the SIGCHLD
+    # handler) at fork time, leaving the child with an unreleasable lock.
+    @@mutex = Sync::Mutex.new(:unchecked)
   end
 end

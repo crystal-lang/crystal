@@ -287,6 +287,13 @@ class Thread
   def self.start_world : Nil
     GC.start_world
   end
+
+  def self.reinit_child : Nil
+    @@threads = Thread::LinkedList(Thread).new
+    Thread.current.previous = nil
+    Thread.current.next = nil
+    @@threads.push(Thread.current)
+  end
 end
 
 require "./thread_linked_list"

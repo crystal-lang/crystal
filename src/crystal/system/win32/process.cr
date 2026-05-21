@@ -127,6 +127,13 @@ struct Crystal::System::Process
     LibC.TerminateProcess(@process_handle, 1)
   end
 
+  def self.quiesce(& : -> T) : T forall T
+    ::Process.before_quiesce_callbacks.each(&.call)
+    result = yield
+    ::Process.after_quiesce_callbacks.each(&.call)
+    result
+  end
+
   def self.exit(status : Int32)
     LibC.exit(status)
   end
@@ -137,14 +144,6 @@ struct Crystal::System::Process
 
   def self.pid
     LibC.GetCurrentProcessId
-  end
-
-  def self.pgid
-    raise NotImplementedError.new("Process.pgid")
-  end
-
-  def self.pgid(pid)
-    raise NotImplementedError.new("Process.pgid")
   end
 
   def self.ppid
@@ -170,10 +169,6 @@ struct Crystal::System::Process
     ensure
       LibC.CloseHandle(h)
     end
-  end
-
-  def self.signal(pid, signal)
-    raise NotImplementedError.new("Process.signal")
   end
 
   @[Deprecated("Use `#on_terminate` instead")]
@@ -268,14 +263,6 @@ struct Crystal::System::Process
       Crystal::System::Time.filetime_to_f64secs(kernel),
       0,
       0)
-  end
-
-  def self.fork
-    raise NotImplementedError.new("Process.fork")
-  end
-
-  def self.fork(&)
-    raise NotImplementedError.new("Process.fork")
   end
 
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
@@ -466,9 +453,6 @@ struct Crystal::System::Process
     handle
   end
 
-  def self.chroot(path)
-    raise NotImplementedError.new("Process.chroot")
-  end
 end
 
 private def close_handle(handle)

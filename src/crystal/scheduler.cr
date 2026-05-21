@@ -93,6 +93,10 @@ class Crystal::Scheduler
   protected def each_scheduler(& : Scheduler ->) : Nil
   end
 
+  protected def clear_runnables : Nil
+    @lock.sync { @runnables.clear }
+  end
+
   protected def enqueue(fiber : Fiber) : Nil
     @lock.sync { @runnables << fiber }
   end
@@ -151,6 +155,8 @@ class Crystal::Scheduler
   end
 
   {% if flag?(:preview_mt) %}
+    @@workers : Array(Thread)?
+
     private getter! worker_fiber : Fiber
     @rr_target = 0
 
@@ -237,6 +243,21 @@ class Crystal::Scheduler
         # In the future we could use the number of cores or something associated to it.
         4
       end
+    end
+
+    def self.reinit_child : Nil
+      @@workers = nil
+      # Reset the GC RWLock before any GC operation: parent workers may have
+      # held lock_read across swapcontext, leaving @readers > 0 in the child.
+      GC.reinit_child
+      Thread.reinit_child
+      Thread.current.scheduler.reinit_child
+    end
+
+    protected def reinit_child : Nil
+      # Reset the SpinLock in case a parent worker held it at fork time.
+      @lock = Crystal::SpinLock.new
+      @runnables.clear
     end
   {% else %}
     def self.init : Nil

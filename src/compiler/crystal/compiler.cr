@@ -683,7 +683,7 @@ module Crystal
       channel = Channel(String).new(n_threads)
       completed = Channel(Nil).new(n_threads)
 
-      workers.each do |pid, input, output|
+      workers.each do |child, input, output|
         spawn do
           overqueued = 0
 
@@ -718,7 +718,7 @@ module Crystal
           input.close
           output.close
 
-          Process.new(Crystal::System::Process.new(pid)).wait
+          child.wait
           completed.send(nil)
         end
       end
@@ -749,7 +749,7 @@ module Crystal
     end
 
     private def fork_workers(n_threads, &)
-      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
+      workers = [] of {UNIX::Process, IO::FileDescriptor, IO::FileDescriptor}
 
       n_threads.times do
         iread, iwrite = IO.pipe
@@ -758,7 +758,7 @@ module Crystal
         iwrite.flush_on_newline = true
         owrite.flush_on_newline = true
 
-        pid = Crystal::System::Process.fork do
+        child = UNIX::Process.fork do
           iwrite.close
           oread.close
 
@@ -772,7 +772,7 @@ module Crystal
         iread.close
         owrite.close
 
-        workers << {pid, iwrite, oread}
+        workers << {child, iwrite, oread}
       end
 
       workers

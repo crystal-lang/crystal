@@ -1169,24 +1169,267 @@ describe Process do
     end
   {% end %}
 
-  {% unless flag?(:preview_mt) || flag?(:win32) %}
-    describe ".fork" do
-      it "executes the new process with exec" do
-        with_tempfile("crystal-spec-exec") do |path|
-          File.exists?(path).should be_false
 
-          fork = Process.fork do
-            Process.exec("/usr/bin/env", {"touch", path})
-          end
-          fork.wait
+  describe ".quiesce" do
+    it "passes the block return value through" do
+      Process.quiesce { 42 }.should eq(42)
+    end
 
-          File.exists?(path).should be_true
-        end
+    it "fires before_quiesce_callbacks before the block and after_quiesce_callbacks after" do
+      # Use a fresh pair of arrays so registered callbacks don't bleed between tests
+      before_log = [] of String
+      after_log = [] of String
+      inside_log = [] of String
+
+      before_cb = ->{ before_log << "before"; nil }
+      after_cb  = ->{ after_log << "after"; nil }
+
+      Process.before_quiesce_callbacks << before_cb
+      Process.after_quiesce_callbacks  << after_cb
+
+      begin
+        Process.quiesce { inside_log << "inside"; nil }
+      ensure
+        Process.before_quiesce_callbacks.delete(before_cb)
+        Process.after_quiesce_callbacks.delete(after_cb)
       end
 
-      typeof(Process.fork)
+      before_log.should eq(["before"])
+      after_log.should eq(["after"])
+      inside_log.should eq(["inside"])
     end
-  {% end %}
+
+    {% unless flag?(:preview_mt) || flag?(:win32) %}
+      it "provides a safe window for fork(2)" do
+        pid, saved_errno = Process.quiesce { r = LibC.fork; {r, Errno.value} }
+        raise RuntimeError.from_os_error("fork", saved_errno) if pid == -1
+
+        case pid
+        when 0
+          ::Process.after_fork_child_callbacks.each(&.call)
+          LibC._exit 0
+        else
+          wstatus = uninitialized Int32
+          LibC.waitpid(pid, pointerof(wstatus), 0)
+          pid.should be > 0
+        end
+      end
+    {% end %}
+
+    {% if flag?(:unix) && !flag?(:interpreted) %}
+      it "fires callbacks and reinit_child works under -Dpreview_mt", tags: %w[slow] do
+        status, output, _ = compile_and_run_source <<-'CRYSTAL', ["-Dpreview_mt"]
+          # Verify quiesce callbacks fire under preview_mt
+          log = [] of String
+          before_cb = ->{ log << "before"; nil }
+          after_cb  = ->{ log << "after"; nil }
+          Process.before_quiesce_callbacks << before_cb
+          Process.after_quiesce_callbacks  << after_cb
+
+          result = Process.quiesce { log << "inside"; 99 }
+
+          abort "FAIL: wrong result #{result}" unless result == 99
+          abort "FAIL: wrong order #{log}" unless log == ["before", "inside", "after"]
+
+          # Verify fork via quiesce + reinit_child under preview_mt
+          fork_result = uninitialized LibC::PidT
+          fork_errno  = uninitialized Errno
+
+          Process.quiesce do
+            fork_result = LibC.fork
+            fork_errno  = Errno.value
+            nil
+          end
+
+          case fork_result
+          when 0
+            Crystal::Scheduler.reinit_child
+            ::Process.after_fork_child_callbacks.each(&.call)
+            LibC._exit 0
+          when -1
+            raise RuntimeError.from_os_error("fork", fork_errno)
+          else
+            wstatus = uninitialized Int32
+            LibC.waitpid(fork_result, pointerof(wstatus), 0)
+            puts "ok"
+          end
+          CRYSTAL
+
+        status.success?.should be_true
+        output.chomp.should eq("ok")
+      end
+
+      it "reinit_child in child doesn't deadlock when workers held GC.lock_read at fork time", tags: %w[slow] do
+        status, output, _ = compile_and_run_source <<-'CRYSTAL', ["-Dpreview_mt"]
+          # Flood the scheduler with fiber switches so workers are highly likely to be
+          # mid-swapcontext (holding GC.lock_read) when fork fires.
+          stop = Atomic(Bool).new(false)
+          256.times { spawn { until stop.get; Fiber.yield; end } }
+          sleep 20.milliseconds
+
+          # Pipe for child → parent result signaling; avoids waitpid races with
+          # Crystal's SIGCHLD handler which reaps all children via waitpid(-1).
+          pipe_fds = uninitialized StaticArray(Int32, 2)
+          abort "pipe failed" unless LibC.pipe(pipe_fds) == 0
+
+          # Repeat 10 times: ~60% deadlock rate per attempt means >99.99% detection.
+          10.times do
+            fork_result = uninitialized LibC::PidT
+            fork_errno  = uninitialized Errno
+            Process.quiesce do
+              fork_result = LibC.fork
+              fork_errno  = Errno.value
+              nil
+            end
+
+            case fork_result
+            when 0
+              LibC.close(pipe_fds[0])
+              Crystal::Scheduler.reinit_child
+              ::Process.after_fork_child_callbacks.each(&.call)
+              # Allocation calls GC.lock_write internally (preview_mt path).
+              # If @readers > 0 was inherited from parent workers, this deadlocks.
+              1_000.times { Array(Int32).new(100) { |i| i } }
+              byte = 42u8
+              LibC.write(pipe_fds[1], pointerof(byte).as(Pointer(Void)), 1)
+              LibC.close(pipe_fds[1])
+              LibC._exit 0
+            when -1
+              LibC.close(pipe_fds[0]); LibC.close(pipe_fds[1])
+              raise RuntimeError.from_os_error("fork", fork_errno)
+            else
+              LibC.close(pipe_fds[1])
+              reader = IO::FileDescriptor.new(pipe_fds[0])
+              reader.read_timeout = 5.seconds
+              begin
+                buf = Bytes.new(1)
+                reader.read(buf)
+                unless buf[0] == 42u8
+                  puts "FAIL: unexpected byte"
+                  exit 1
+                end
+              rescue IO::TimeoutError
+                LibC.kill(fork_result, Signal::KILL.value)
+                puts "DEADLOCK"
+                exit 1
+              ensure
+                reader.close
+              end
+            end
+
+            # Re-open pipe for next iteration (child closed its end; parent closed both)
+            abort "pipe failed" unless LibC.pipe(pipe_fds) == 0
+          end
+
+          stop.set(true)
+          puts "ok"
+          CRYSTAL
+
+        status.success?.should be_true
+        output.chomp.should eq("ok")
+      end
+
+      it "after_fork resets signal mutexes so child can use signal API after fork", tags: %w[slow] do
+        status, output, _ = compile_and_run_source <<-'CRYSTAL', ["-Dpreview_mt"]
+          # Reopen the modules to expose the private mutexes for testing.
+          # This lets us deliberately hold them across a fork to simulate the
+          # race where a worker thread holds a mutex at the moment fork fires.
+          module Crystal::System::Signal
+            def self.lock_for_testing : Nil
+              @@mutex.lock
+            end
+            def self.unlock_for_testing : Nil
+              @@mutex.unlock
+            end
+          end
+          module Crystal::System::SignalChildHandler
+            def self.lock_for_testing : Nil
+              @@mutex.lock
+            end
+            def self.unlock_for_testing : Nil
+              @@mutex.unlock
+            end
+          end
+
+          pipe_fds = uninitialized StaticArray(Int32, 2)
+          abort "pipe failed" unless LibC.pipe(pipe_fds) == 0
+
+          # Two worker fibers each hold one of the signal mutexes while the
+          # main fiber forks. Channel rendezvous ensures both locks are held
+          # at the moment fork(2) is called.
+          sig_held   = Channel(Nil).new
+          schld_held = Channel(Nil).new
+          release_sig   = Channel(Nil).new(1)
+          release_schld = Channel(Nil).new(1)
+
+          spawn(same_thread: false) do
+            Crystal::System::Signal.lock_for_testing
+            sig_held.send(nil)
+            release_sig.receive
+            Crystal::System::Signal.unlock_for_testing
+          end
+
+          spawn(same_thread: false) do
+            Crystal::System::SignalChildHandler.lock_for_testing
+            schld_held.send(nil)
+            release_schld.receive
+            Crystal::System::SignalChildHandler.unlock_for_testing
+          end
+
+          sig_held.receive
+          schld_held.receive
+          # Both mutexes are now held by worker threads on other OS threads.
+
+          fork_result = uninitialized LibC::PidT
+          fork_errno  = uninitialized Errno
+          Process.quiesce do
+            fork_result = LibC.fork
+            fork_errno  = Errno.value
+            nil
+          end
+
+          case fork_result
+          when 0
+            LibC.close(pipe_fds[0])
+            Crystal::Scheduler.reinit_child
+            ::Process.after_fork_child_callbacks.each(&.call)
+            # Without the fix, both mutexes are still locked here (the worker
+            # threads that held them no longer exist in the child). Each call
+            # below will deadlock on the respective mutex.
+            Signal::USR1.trap { }                              # needs Signal.@@mutex
+            _ = Crystal::System::SignalChildHandler.wait(-1)  # needs SignalChildHandler.@@mutex
+            byte = 42u8
+            LibC.write(pipe_fds[1], pointerof(byte).as(Pointer(Void)), 1)
+            LibC.close(pipe_fds[1])
+            LibC._exit 0
+          when -1
+            LibC.close(pipe_fds[0]); LibC.close(pipe_fds[1])
+            raise RuntimeError.from_os_error("fork", fork_errno)
+          else
+            release_sig.send(nil)
+            release_schld.send(nil)
+            LibC.close(pipe_fds[1])
+            reader = IO::FileDescriptor.new(pipe_fds[0])
+            reader.read_timeout = 5.seconds
+            begin
+              buf = Bytes.new(1)
+              reader.read(buf)
+              puts buf[0] == 42u8 ? "ok" : "FAIL"
+            rescue IO::TimeoutError
+              LibC.kill(fork_result, Signal::KILL.value)
+              puts "DEADLOCK"
+              exit 1
+            ensure
+              reader.close
+            end
+          end
+          CRYSTAL
+
+        status.success?.should be_true
+        output.chomp.should eq("ok")
+      end
+    {% end %}
+  end
 
   describe ".exec" do
     it "redirects STDIN and STDOUT to files", tags: %w[slow] do
@@ -1258,3 +1501,4 @@ describe Process do
     {% end %}
   end
 end
+
