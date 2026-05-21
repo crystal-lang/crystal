@@ -2130,7 +2130,15 @@ module Crystal
     def after_initialize
       superclass.not_nil!.add_subclass(self)
       ancestors.each do |ancestor|
-        ancestor.add_including_type(self) if ancestor.is_a?(GenericModuleInstanceType)
+        # Notify module ancestors (both non-generic and generic-instance forms)
+        # that this instantiation includes them. Without the `NonGenericModuleType`
+        # case, a virtual dispatch built from `Foo.including_types` may miss
+        # this instantiation as a possible runtime element type, producing an
+        # `unreachable` branch in codegen (#16947).
+        case ancestor
+        when GenericModuleInstanceType, NonGenericModuleType
+          ancestor.add_including_type(self)
+        end
       end
     end
 
@@ -2194,7 +2202,10 @@ module Crystal
 
     def after_initialize
       ancestors.each do |ancestor|
-        ancestor.add_including_type(self) if ancestor.is_a?(GenericModuleInstanceType)
+        case ancestor
+        when GenericModuleInstanceType, NonGenericModuleType
+          ancestor.add_including_type(self)
+        end
       end
     end
 

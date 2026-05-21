@@ -622,4 +622,66 @@ describe "Code gen: module" do
       foo(a)
       CRYSTAL
   end
+
+  it "registers generic instantiations as including types of non-generic module ancestors (#16947)" do
+    # Before the fix, `GenericClassInstanceType#after_initialize` only notified
+    # `GenericModuleInstanceType` ancestors. A non-generic module like `Foo`
+    # never learned about the generic-class instantiation, so the virtual
+    # dispatch table for `Foo+#inspect` (built from `Foo.including_types`) was
+    # missing the `GenericFoo(String)` branch. At runtime, the dispatch hit an
+    # `unreachable` and produced wrong output — `[#<GenericFoo...>, ]` here.
+    run(<<-CRYSTAL).to_b.should be_true
+      require "prelude"
+
+      module Foo
+        def method
+        end
+      end
+
+      module CompoundFoo
+        include Foo
+        abstract def foos : Enumerable(Foo)
+      end
+
+      class GenericFoo(T)
+        include Foo
+        getter value : T
+        def initialize(@value : T); end
+      end
+
+      class SubGenericFoo(T) < GenericFoo(T)
+      end
+
+      class SingletonFoo
+        include CompoundFoo
+        def foos : Array(Foo)
+          singleton = [] of Foo
+          singleton << GenericFoo(String).new("singleton")
+          String.build { |io| singleton.to_s(io) }
+          singleton
+        end
+        def method
+          foos
+        end
+      end
+
+      class ArrayFoo
+        include CompoundFoo
+        getter foos : Array(Foo)
+        def initialize(@foos : Array(Foo)); end
+      end
+
+      class SubArrayFoo < ArrayFoo
+      end
+
+      SingletonFoo.new.foos
+      [GenericFoo(String).new("x")].select(Foo).each(&.method)
+
+      array = [] of Foo
+      array << GenericFoo(String).new("first")
+      array << SubGenericFoo(String).new("sub")
+      out = String.build { |io| array.to_s(io) }
+      out.includes?("GenericFoo(String)") && out.includes?("SubGenericFoo(String)")
+      CRYSTAL
+  end
 end

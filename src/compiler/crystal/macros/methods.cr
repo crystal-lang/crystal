@@ -2256,7 +2256,21 @@ module Crystal
 
     def self.includers(type)
       case type
-      when NonGenericModuleType, GenericModuleType, GenericModuleInstanceType
+      when NonGenericModuleType
+        types = type.raw_including_types
+        return empty_no_return_array unless types
+        # For non-generic modules, `includers` reports types `self` is
+        # *directly* included in. Generic instantiations are also recorded in
+        # `@including_types` (so virtual dispatch can find them — see #16947)
+        # but they aren't direct includers and shouldn't appear here.
+        direct = types.reject do |t|
+          t.is_a?(GenericClassInstanceType) || t.is_a?(GenericModuleInstanceType)
+        end
+        return empty_no_return_array if direct.empty?
+        ArrayLiteral.map(direct) do |including_type|
+          TypeNode.new including_type
+        end
+      when GenericModuleType, GenericModuleInstanceType
         types = type.raw_including_types
         return empty_no_return_array unless types
         ArrayLiteral.map(types) do |including_type|
