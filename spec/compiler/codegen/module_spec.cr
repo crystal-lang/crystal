@@ -624,15 +624,6 @@ describe "Code gen: module" do
   end
 
   it "rebuilds dispatch when new generic instantiation flows through Array(Module) element (#16947)" do
-    # `Call#attach_subclass_observer` used to remove the existing observer
-    # before adding the new one. When a call narrowed from `Foo+` to
-    # `ArrayFoo+` during re-lookup, the observer migrated away from `Foo`,
-    # so subsequent `GenericFoo(String)` instantiations never woke the call.
-    # The dispatch table for `Foo+#inspect` was then frozen without a
-    # `GenericFoo(String)` branch and execution hit an `unreachable` at
-    # runtime — segfaulting on some setups, printing wrong output on others.
-    # The bug only reproduces with `puts` (IO::FileDescriptor), so the
-    # regression test runs the program and asserts the captured stdout.
     output = run(<<-CRYSTAL).to_string
       require "prelude"
 
