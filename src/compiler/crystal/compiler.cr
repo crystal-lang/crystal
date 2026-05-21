@@ -10,6 +10,16 @@ require "crystal/digest/md5"
 {% end %}
 
 module Crystal
+  # This exception describes an error in the compiler.
+  # It usually leads to an unsuccessful process exit.
+  class CompilerError < Exception
+    getter status
+
+    def initialize(message, @status : Int32 = 1)
+      super message
+    end
+  end
+
   @[Flags]
   enum Debug
     LineNumbers
@@ -467,7 +477,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              abort "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}")
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -570,11 +580,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            abort "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}")
           end
           output.chomp
         rescue exc
-          abort "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}")
         end
       end
     end
@@ -600,7 +610,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        abort "can't use `#{output_filename}` as output filename because it's a directory"
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory")
       end
 
       output_filename = File.expand_path(output_filename)
@@ -927,7 +937,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        abort "execution of command failed with exit status #{status}: #{command}", status: exit_code
+        raise CompilerError.new("execution of command failed with exit status #{status}: #{command}", status: exit_code)
       end
     end
 
@@ -935,14 +945,10 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        abort "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}")
       else
-        abort "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}")
       end
-    end
-
-    private def abort(msg, exit_code = 1)
-      Crystal.abort msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)

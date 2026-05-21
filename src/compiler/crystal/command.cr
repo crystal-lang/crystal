@@ -170,6 +170,8 @@ class Crystal::Command
     abort ex.message
   rescue ex : OptionParser::Exception
     abort ex.message
+  rescue ex : CompilerError
+    abort ex.message, ex.status
   rescue ex
     report_warnings
 
