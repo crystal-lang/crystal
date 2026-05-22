@@ -84,7 +84,7 @@ require "./timers"
   end
 {% end %}
 
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   # We must cancel pending R/W operations before we close the fd:
   #
   # 1. Closing a fd doesn't interrupt pending reads and writes in the linux
@@ -214,7 +214,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @mutex = Thread::Mutex.new
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
     end
   {% end %}
@@ -601,7 +601,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     before_suspend =
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         file_descriptor.__evloop_reader = ring
         -> {
           if file_descriptor.closed? && file_descriptor.__evloop_reader?
@@ -623,7 +623,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       end
     end
   ensure
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       file_descriptor.__evloop_reader = nil
     {% end %}
   end
@@ -634,7 +634,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     before_suspend =
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         file_descriptor.__evloop_writer = ring
         -> {
           if file_descriptor.closed? && file_descriptor.__evloop_writer?
@@ -656,7 +656,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       end
     end
   ensure
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       file_descriptor.__evloop_writer = nil
     {% end %}
   end
@@ -670,7 +670,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def shutdown(file_descriptor : System::FileDescriptor) : Nil
-    {% if flag?(:preview_mt) %}
+    {% if !flag?(:without_mt) %}
       if reader_ring = file_descriptor.__evloop_reader?
         cancel(file_descriptor.fd, ring: reader_ring)
       end

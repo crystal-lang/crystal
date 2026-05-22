@@ -108,7 +108,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
       @timers_lock = SpinLock.new

@@ -36,7 +36,7 @@ class Crystal::Scheduler
       thread = Thread.current
       scheduler = thread.scheduler
 
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         th = fiber.get_current_thread
         th ||= fiber.set_current_thread(scheduler.find_target_thread)
 
@@ -68,7 +68,7 @@ class Crystal::Scheduler
   end
 
   private def self.validate_running_thread(fiber : Fiber) : Nil
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       if th = fiber.get_current_thread
         unless th == Thread.current
           raise "BUG: tried to manually resume #{fiber} on #{Thread.current} instead of #{th}"
@@ -86,7 +86,7 @@ class Crystal::Scheduler
   # :nodoc:
   def initialize(@thread : Thread)
     @main = thread.main_fiber
-    {% if flag?(:preview_mt) %} @main.set_current_thread(thread) {% end %}
+    {% unless flag?(:without_mt) %} @main.set_current_thread(thread) {% end %}
     @runnables = Deque(Fiber).new
   end
 
@@ -105,7 +105,7 @@ class Crystal::Scheduler
     Crystal.trace :sched, "resume", fiber: fiber
     validate_resumable(fiber)
 
-    {% if flag?(:preview_mt) %}
+    {% if !flag?(:without_mt) %}
       GC.lock_read
     {% elsif flag?(:interpreted) %}
       # No need to change the stack bottom!
@@ -116,7 +116,7 @@ class Crystal::Scheduler
     current, @thread.current_fiber = @thread.current_fiber, fiber
     Fiber.swapcontext(pointerof(current.@context), pointerof(fiber.@context))
 
-    {% if flag?(:preview_mt) %}
+    {% if !flag?(:without_mt) %}
       GC.unlock_read
     {% end %}
   end
@@ -150,7 +150,7 @@ class Crystal::Scheduler
     end
   end
 
-  {% if flag?(:preview_mt) %}
+  {% if !flag?(:without_mt) %}
     private getter! worker_fiber : Fiber
     @rr_target = 0
 
@@ -249,7 +249,7 @@ class Crystal::Scheduler
   # Background loop to cleanup unused fiber stacks.
   def spawn_stack_pool_collector
     fiber = Fiber.new(name: "stack-pool-collector", &->@stack_pool.collect_loop)
-    {% if flag?(:preview_mt) %} fiber.set_current_thread {% end %}
+    {% unless flag?(:without_mt) %} fiber.set_current_thread {% end %}
     enqueue(fiber)
   end
 end

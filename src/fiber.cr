@@ -68,7 +68,7 @@ class Fiber
 
   @alive = true
 
-  {% if flag?(:preview_mt) && !flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:execution_context) %}
     @current_thread = Atomic(Thread?).new(nil)
   {% end %}
 
@@ -152,7 +152,7 @@ class Fiber
 
     @name = "main"
 
-    {% if flag?(:preview_mt) && !flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:execution_context) %}
       @current_thread.set(thread)
     {% end %}
 
@@ -388,7 +388,7 @@ class Fiber
     GC.push_stack @context.stack_top, @stack.bottom
   end
 
-  {% if flag?(:preview_mt) && !flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:execution_context) %}
     # :nodoc:
     def set_current_thread(thread = Thread.current) : Thread
       @current_thread.set(thread)

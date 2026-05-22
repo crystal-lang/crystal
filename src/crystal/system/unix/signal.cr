@@ -148,7 +148,7 @@ module Crystal::System::Signal
       {% end %}
     end
   ensure
-    {% unless flag?(:preview_mt) %}
+    {% if flag?(:without_mt) %}
       @@pipe.each(&.file_descriptor_close)
     {% end %}
   end
