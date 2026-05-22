@@ -39,11 +39,11 @@ class IO
       while inbytesleft > 0
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
-        result = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
-        io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
-        if result == Crystal::Iconv::ERROR && Errno.value == Errno::EINVAL
+        err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
+        if err == Crystal::Iconv::ERROR
           @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
         end
+        io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
     end
 
@@ -97,7 +97,11 @@ class IO
 
         # Check for errors
         if result == Crystal::Iconv::ERROR
-          if Errno.value == Errno::EINVAL
+          case Errno.value
+          when Errno::EILSEQ
+            # For an illegal sequence we just skip one byte and we'll continue next
+            @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+          when Errno::EINVAL
             # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
             old_in_buffer_left = @in_buffer_left
 
