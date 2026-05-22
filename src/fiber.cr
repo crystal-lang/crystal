@@ -68,10 +68,6 @@ class Fiber
 
   @alive = true
 
-  {% if !flag?(:without_mt) && !flag?(:execution_context) %}
-    @current_thread = Atomic(Thread?).new(nil)
-  {% end %}
-
   # :nodoc:
   property next : Fiber?
 
@@ -151,10 +147,6 @@ class Fiber
     @stack = Stack.new(stack, stack_bottom)
 
     @name = "main"
-
-    {% if !flag?(:without_mt) && !flag?(:execution_context) %}
-      @current_thread.set(thread)
-    {% end %}
 
     Fiber.fibers.push(self)
 
@@ -387,18 +379,6 @@ class Fiber
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack.bottom
   end
-
-  {% if !flag?(:without_mt) && !flag?(:execution_context) %}
-    # :nodoc:
-    def set_current_thread(thread = Thread.current) : Thread
-      @current_thread.set(thread)
-    end
-
-    # :nodoc:
-    def get_current_thread : Thread?
-      @current_thread.lazy_get
-    end
-  {% end %}
 
   # :nodoc:
   #
