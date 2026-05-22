@@ -5,7 +5,7 @@ private SPEC_TIMEOUT = 15.seconds
 Spec.around_each do |example|
   done = Channel(Exception?).new
 
-  spawn(same_thread: !{{flag?(:execution_context)}}) do
+  spawn do
     example.run
   rescue e
     done.send(e)

@@ -1,4 +1,4 @@
-{% skip_file if flag?(:execution_context) %}
+{% skip_file unless flag?(:without_mt) %}
 
 require "crystal/event_loop"
 require "crystal/system/print_error"

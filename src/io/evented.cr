@@ -20,7 +20,7 @@ module IO::Evented
     @read_timed_out = timed_out
 
     if reader = @readers.get?.try &.shift?
-      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+      {% if !flag?(:without_mt) && Crystal::EventLoop.has_constant?(:LibEvent) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(reader)
       {% else %}
@@ -34,7 +34,7 @@ module IO::Evented
     @write_timed_out = timed_out
 
     if writer = @writers.get?.try &.shift?
-      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:LibEvent) %}
+      {% if !flag?(:without_mt) && Crystal::EventLoop.has_constant?(:LibEvent) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(writer)
       {% else %}
@@ -89,7 +89,7 @@ module IO::Evented
     @write_event.consume_each &.free
 
     @readers.consume_each do |readers|
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         readers.each { |fiber| fiber.execution_context.enqueue fiber }
       {% else %}
         Crystal::Scheduler.enqueue readers
@@ -97,7 +97,7 @@ module IO::Evented
     end
 
     @writers.consume_each do |writers|
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         writers.each { |fiber| fiber.execution_context.enqueue fiber }
       {% else %}
         Crystal::Scheduler.enqueue writers

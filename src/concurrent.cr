@@ -2,7 +2,7 @@ require "fiber"
 require "channel"
 require "crystal/tracing"
 
-{% if flag?(:execution_context) %}
+{% if !flag?(:without_mt) %}
   require "fiber/execution_context"
 {% else %}
   require "crystal/scheduler"
@@ -73,7 +73,7 @@ end
 # wg.wait
 # ```
 def spawn(*, name : String? = nil, same_thread = false, &block)
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     Fiber::ExecutionContext::Scheduler.current.spawn(name: name, same_thread: same_thread, &block)
   {% else %}
     fiber = Fiber.new(name, &block)

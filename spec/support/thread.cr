@@ -1,6 +1,6 @@
 {% begin %}
   def new_thread(name = nil, &block)
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext::Isolated.new(name: name || "SPEC") { block.call }
     {% else %}
       Thread.new(name) { block.call }

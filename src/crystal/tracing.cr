@@ -90,7 +90,7 @@ module Crystal
           {% end %}
         end
 
-        {% if flag?(:execution_context) %}
+        {% unless flag?(:without_mt) %}
           def write(value : Fiber::ExecutionContext) : Nil
             write value.name
           end

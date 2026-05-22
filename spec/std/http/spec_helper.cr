@@ -85,7 +85,7 @@ def run_handler(handler, &)
     ensure
       processor.close
 
-      {% if flag?(:execution_context) && Crystal::EventLoop.has_constant?(:IoUring) %}
+      {% if !flag?(:without_mt) && Crystal::EventLoop.has_constant?(:IoUring) %}
         # FIXME: flaky workaround to avoid OAuth2::Client specs to fail:
         #
         # Error while flushing data to the client (HTTP::Server::ClientError)

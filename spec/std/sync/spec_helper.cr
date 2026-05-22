@@ -44,7 +44,7 @@ module Sync
   end
 
   CONCURRENT =
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       ctx = Fiber::ExecutionContext.current
       if ctx.is_a?(Fiber::ExecutionContext::Parallel) && ctx.capacity > 1
         ctx = Fiber::ExecutionContext::Concurrent.new("CONCURRENT")
