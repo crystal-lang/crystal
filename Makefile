@@ -147,6 +147,10 @@ compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
 primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
 	$(O)/primitives_spec$(EXE) $(SPEC_FLAGS)
 
+.PHONY: cli_spec
+cli_spec: $(O)/cli_spec$(EXE) ## Run compiler CLI specs
+	$(O)/cli_spec$(EXE) $(SPEC_FLAGS)
+
 .PHONY: interpreter_spec
 interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
 	$(O)/interpreter_spec$(EXE) $(SPEC_FLAGS)
@@ -282,6 +286,10 @@ $(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
+
+$(O)/cli_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/cli_spec.cr
 
 $(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
