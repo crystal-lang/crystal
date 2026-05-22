@@ -67,6 +67,9 @@ class Crystal::Repl::Context
   def initialize(@program : Program)
     @program.flags << "interpreted"
 
+    # TODO: interpreter should be capable to start threads (eventually)
+    @program.flags << "without_mt"
+
     @gc_references = [] of Void*
 
     @defs = {} of Def => CompiledDef

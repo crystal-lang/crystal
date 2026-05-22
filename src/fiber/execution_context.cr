@@ -5,6 +5,8 @@ require "../fiber"
 require "./stack_pool"
 require "./execution_context/*"
 
+{% raise "ERROR: the interpreter cannot start threads (yet)" if flag?(:interpreted) %}
+
 # An execution context creates and manages a dedicated pool of one or more
 # schedulers where fibers will be running in. Each context manages the rules to
 # run, suspend and swap fibers internally.
