@@ -111,7 +111,7 @@ describe HTTP::Server do
 
   it "handles Expect: 100-continue correctly when body is read" do
     server = HTTP::Server.new do |context|
-      context.response << context.request.body.not_nil!.gets_to_end
+      context.response << context.request.body.should_not(be_nil).gets_to_end
     end
 
     address = server.bind_unused_port
@@ -617,6 +617,33 @@ describe HTTP::Server do
       server.@processor.process(io, io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+    end
+  end
+
+  describe "request smuggling/splitting mitigations (RFC 9112, Section 6.1)" do
+    it "rejects when content-length and transfer-encoding are both defined then closes the connection" do
+      channel = Channel({String, String, String?}).new(4)
+      response = nil
+
+      server = HTTP::Server.new do |ctx|
+        channel.send({ctx.request.method, ctx.request.path, ctx.request.body.try(&.gets_to_end)})
+      end
+
+      with_tempfile("socket") do |path|
+        server.bind_unix(path)
+        spawn { server.listen }
+
+        UNIXSocket.open(path) do |socket|
+          socket << "GET /one HTTP/1.1\r\nhost: example.org\r\ncontent-length: 4\r\ntransfer-encoding: chunked\r\n\r\n2a\r\nGET /admin HTTP/1.1\r\nhost: example.org\r\n\r\n\r\n0\r\n\r\nGET /two HTTP/1.1\r\nhost: example.org\r\n\r\n"
+          socket.close_write
+          response = socket.gets_to_end
+        end
+
+        channel.close
+      end
+
+      channel.receive?.should be_nil
+      response.not_nil!.should start_with("HTTP/1.1 400 ")
     end
   end
 

@@ -42,22 +42,50 @@ class Crystal::CodeGenVisitor
 
   def declare_const(const)
     global_name = const.llvm_name
-    global = @main_mod.globals[global_name]? ||
-             @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
+    global = @main_mod.globals[global_name]?
+    unless global
+      global = @main_mod.globals.add(@main_llvm_typer.llvm_type(const.value.type), global_name)
 
-    type = const.value.type
-    # TODO: LLVM < 9.0.0 has a bug that prevents us from having internal globals of type i128 or u128:
-    # https://bugs.llvm.org/show_bug.cgi?id=42932
-    # so we just use global in that case.
-    {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") < 0 %}
-      if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
-        global.linkage = LLVM::Linkage::Internal
-      end
-    {% else %}
-      global.linkage = LLVM::Linkage::Internal if @single_module
-    {% end %}
+      type = const.value.type
+      # TODO: LLVM < 9.0.0 has a bug that prevents us from having internal globals of type i128 or u128:
+      # https://bugs.llvm.org/show_bug.cgi?id=42932
+      # so we just use global in that case.
+      {% if compare_versions(Crystal::LLVM_VERSION, "9.0.0") < 0 %}
+        if @single_module && !(type.is_a?(IntegerType) && (type.kind.i128? || type.kind.u128?))
+          global.linkage = LLVM::Linkage::Internal
+        end
+      {% else %}
+        global.linkage = LLVM::Linkage::Internal if @single_module
+      {% end %}
+
+      declare_const_debug_info(global, const) if @debug.variables?
+    end
 
     global
+  end
+
+  private def declare_const_debug_info(global, const)
+    location = const.locations.try(&.first?).try(&.expanded_location)
+    return unless location
+
+    debug_type = in_main { get_debug_type(const.value.type) }
+    return unless debug_type
+
+    file, dir = file_and_dir(location.filename)
+    builder = di_builder(@main_mod)
+    file_metadata = builder.create_file(file, dir)
+
+    gv_expr = builder.create_global_variable_expression(
+      scope: file_metadata,
+      name: const.llvm_name,
+      linkage_name: const.llvm_name,
+      file: file_metadata,
+      line: location.line_number,
+      type: debug_type,
+      local_to_unit: @single_module
+    )
+
+    global.global_set_metadata("dbg", gv_expr)
   end
 
   def declare_const_initialized_flag(const)
@@ -189,7 +217,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const(const, node)
-    # We inline constants. Otherwise we use an LLVM const global.
+    # We inline literal constants. Otherwise we use an LLVM const global.
     @last =
       case value = const.compile_time_value
       when Bool    then int1(value ? 1 : 0)

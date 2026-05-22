@@ -53,6 +53,9 @@ extend-ignore-re = [
   " ([a-zA-Z.]{8} ){4}->", # src/bit_array.cr
   "[A-z]+[0-9]+", # words including a number are likely some kind of identifier
   "sha256[:-][0-9A-z=]+", # shell.nix
+  "writeable writable", # in src/io/memory.cr
+  "writeable:", # in spec/std/io/memory_spec.cr
+  "File.writeable", # in docs/changelogs/pre-1.0.md
 ]
 
 [files]

@@ -1,4 +1,5 @@
 class Process
+  @[Experimental]
   class ExitError < Exception
     getter args : Enumerable(String)
     getter result : Result
@@ -13,6 +14,7 @@ class Process
     end
   end
 
+  @[Experimental]
   struct Process::Result
     def initialize(@status : Status, @output : String?, @error : String?)
     end
@@ -35,7 +37,8 @@ class Process
     #
     # If `error` was not captured, returns the empty string.
     #
-    # The captured error stream might be truncated.
+    # The captured error stream might be truncated. If the total output is larger
+    # than 64kB, only the first 32kB and the last 32kB are preserved.
     def error : String
       @error || ""
     end
@@ -44,7 +47,8 @@ class Process
     #
     # If `error` was not captured, returns `nil`.
     #
-    # The captured error stream might be truncated.
+    # The captured error stream might be truncated. If the total output is larger
+    # than 64kB, only the first 32kB and the last 32kB are preserved.
     def error? : String?
       @error
     end
@@ -66,11 +70,19 @@ class Process
   # Process.capture_result(%w[echo foo]).output # => "foo\n"
   # Process.capture_result(%w[nonexist])        # raises Process::ExitError
   # ```
-  def self.capture_result(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  @[Experimental]
+  def self.capture_result(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result
     capture_result_impl(output, error) do |error|
       Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture_result(*args : String, env : Env? = nil, clear_env : Bool = false,
+                          input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result
+    capture_result(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a process and returns its result.
@@ -84,16 +96,24 @@ class Process
   # Process.capture_result?(%w[echo foo]).try(&.output) # => "foo\n"
   # Process.capture_result?(%w[nonexist])               # => nil
   # ```
-  def self.capture_result?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  @[Experimental]
+  def self.capture_result?(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                            input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result?
     capture_result_impl(output, error) do |error|
       Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }
     end
   end
 
+  # :ditto:
+  @[Experimental]
+  def self.capture_result?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result?
+    capture_result?(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+  end
+
   private def self.capture_result_impl(output, error, & : -> Process)
     if error == Redirect::Pipe
-      error = captured_error = IO::Memory.new
+      error = captured_error = IO::PrefixSuffixBuffer.new(32 << 10)
     end
 
     process = yield error
@@ -120,7 +140,8 @@ class Process
   # Process.capture(%w[echo foo]) # => "foo\n"
   # Process.capture(%w[nonexist]) # raises Process::ExitError
   # ```
-  def self.capture(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  @[Experimental]
+  def self.capture(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : String
     result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
     if result.status.success?
@@ -128,6 +149,13 @@ class Process
     else
       raise Process::ExitError.new(args, result)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture(*args : String, env : Env? = nil, clear_env : Bool = false,
+                   input : Stdio = Redirect::Close, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : String
+    capture(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
   end
 
   # Executes a process and returns its captured standard output or `nil` on failure.
@@ -142,12 +170,20 @@ class Process
   # Process.capture(%w[echo foo]) # => "foo\n"
   # Process.capture(%w[nonexist]) # => nil
   # ```
-  def self.capture?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  @[Experimental]
+  def self.capture?(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                     input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String?
     result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
 
     if result.status.success?
       result.output
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String?
+    capture?(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
   end
 end

@@ -305,6 +305,8 @@ describe Socket::IPAddress do
     it { Socket::IPAddress.parse_v6_fields?("c0a8").should be_nil }
     it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0, 0, 0xa, 0xb) }
     it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4, 0) }
+
+    it { Socket::IPAddress.parse_v6_fields?("fe80::192.168.0.1%eth0").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0, 0, 0xc0a8, 0x0001) }
   end
 
   describe ".v4" do

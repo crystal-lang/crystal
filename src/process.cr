@@ -140,7 +140,7 @@ class Process
   # Available only on Unix-like operating systems.
   @[Deprecated("Fork is no longer supported.")]
   def self.fork(&) : Process
-    new Crystal::System::Process.fork { yield }
+    new Crystal::System::Process.new(Crystal::System::Process.fork { yield })
   end
 
   # :nodoc:
@@ -155,7 +155,7 @@ class Process
     {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
 
     if pid = Crystal::System::Process.fork
-      new pid
+      new Crystal::System::Process.new(pid)
     end
   end
 
@@ -194,9 +194,17 @@ class Process
   # io.to_s # => "hello\n"
   # status  # => Process::Status[0]
   # ```
-  def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  @[Experimental]
+  def self.run(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a child process and waits for it to complete, returning its status.
@@ -240,12 +248,21 @@ class Process
   # Process.run?(["true"])        # => Process::Status[0]
   # Process.run?(["nonexistent"]) # => nil
   # ```
+  @[Experimental]
   def self.run?(args : Enumerable(String), *,
-                env : Env = nil, clear_env : Bool = false,
+                env : Env? = nil, clear_env : Bool = false,
                 input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
                 chdir : Path | String? = nil) : Process::Status?
     status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }.wait
     status
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    run?(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a child process, yields the block, and then waits for it to finish.
@@ -269,6 +286,7 @@ class Process
   # status # => Process::Status[0]
   # result # => "hello\n"
   # ```
+  @[Experimental]
   def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
     process = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
@@ -281,6 +299,15 @@ class Process
     rescue ex
       process.terminate
       raise ex
+    end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |process|
+      yield process
     end
   end
 
@@ -412,11 +439,19 @@ class Process
   # * `Process.run` is a convenient short cut if you just want to run a command
   #    and wait for it to finish.
   # * `Process.exec` replaces the current process.
+  @[Experimental]
   def self.new(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
-               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
     new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |error, command|
       raise ::File::Error.from_os_error("Error executing process", error, file: command)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.new(*args : String, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # :nodoc:
@@ -592,12 +627,9 @@ class Process
     fork_io
   end
 
-  {% unless flag?(:interpreted) %}
-    # :nodoc:
-    def initialize(pid : LibC::PidT)
-      @process_info = Crystal::System::Process.new(pid)
-    end
-  {% end %}
+  # :nodoc
+  def initialize(@process_info : Crystal::System::Process)
+  end
 
   # Sends *signal* to this process.
   #

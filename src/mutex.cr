@@ -21,3 +21,10 @@ alias Mutex = Sync::Mutex
 
 # WARNING: `Mutex::Protection` is deprecated as of Crystal 1.20. Use `Sync::Type` instead.
 alias Mutex::Protection = Sync::Type
+
+class Sync::Mutex
+  # :nodoc:
+  def self.new(*, protection : ::Mutex::Protection)
+    new(type: protection)
+  end
+end

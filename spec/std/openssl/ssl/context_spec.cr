@@ -10,26 +10,30 @@ describe OpenSSL::SSL::Context do
   it "new for client" do
     context = OpenSSL::SSL::Context::Client.new
 
-    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL & ~OpenSSL::SSL::Options::ENABLE_KTLS)
+    {% else %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% end %}
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
-
-    OpenSSL::SSL::Context::Client.new(LibSSL.tlsv1_method)
   end
 
   it "new for server" do
     context = OpenSSL::SSL::Context::Server.new
 
-    (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL & ~OpenSSL::SSL::Options::ENABLE_KTLS)
+    {% else %}
+      (context.options & OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    {% end %}
     (context.options & OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
     (context.options & OpenSSL::SSL::Options::NO_RENEGOTIATION).should eq(OpenSSL::SSL::Options::NO_RENEGOTIATION)
 
     context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
-
-    OpenSSL::SSL::Context::Server.new(LibSSL.tlsv1_method)
   end
 
   it "insecure for client" do
@@ -38,8 +42,6 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-
-    OpenSSL::SSL::Context::Client.insecure(LibSSL.tlsv1_method)
   end
 
   it "insecure for server" do
@@ -48,8 +50,6 @@ describe OpenSSL::SSL::Context do
     context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
     context.options.no_ssl_v3?.should_not be_true
     context.modes.should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
-
-    OpenSSL::SSL::Context::Server.insecure(LibSSL.tlsv1_method)
   end
 
   it "sets certificate chain" do

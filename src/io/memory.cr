@@ -1,6 +1,6 @@
 # An `IO` that reads and writes from a buffer in memory.
 #
-# The internal buffer can be resizeable and/or writeable depending
+# The internal buffer can be resizeable and/or writable depending
 # on how an `IO::Memory` is constructed.
 class IO::Memory < IO
   # Returns the internal buffer as a `Pointer(UInt8)`.
@@ -11,7 +11,7 @@ class IO::Memory < IO
 
   @capacity : Int32
 
-  # Creates an empty, resizeable and writeable `IO::Memory` with the given
+  # Creates an empty, resizeable and writable `IO::Memory` with the given
   # initial *capacity* for the internal buffer.
   #
   # ```
@@ -30,7 +30,7 @@ class IO::Memory < IO
     @pos = 0
     @closed = false
     @resizeable = true
-    @writeable = true
+    @writable = true
   end
 
   # Creates an `IO::Memory` that will read, and optionally write, from/to
@@ -40,22 +40,28 @@ class IO::Memory < IO
   #
   # ```
   # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
-  # io = IO::Memory.new slice, writeable: false
+  # io = IO::Memory.new slice, writable: false
   # io.pos            # => 0
   # io.read(slice)    # => 6
   # String.new(slice) # => "abcdef"
   # ```
-  def initialize(slice : Bytes, writeable = true)
+  def initialize(slice : Bytes, writable = true)
     @buffer = slice.to_unsafe
     @bytesize = @capacity = slice.size.to_i
     @pos = 0
     @closed = false
     @resizeable = false
-    @writeable = !slice.read_only? && writeable
+    @writable = !slice.read_only? && writable
+  end
+
+  # :ditto:
+  @[Deprecated("Use `IO::Memory.new(Bytes, writable)` instead")]
+  def self.new(slice : Bytes, *, writeable writable) : self
+    new slice, writable: writable
   end
 
   # Creates an `IO::Memory` whose contents are the exact contents of *string*.
-  # The created `IO::Memory` is non-resizeable and non-writeable.
+  # The created `IO::Memory` is non-resizeable and non-writable.
   #
   # The `IO` starts at position zero for reading.
   #
@@ -66,7 +72,7 @@ class IO::Memory < IO
   # io.print "hi" # raises IO::Error
   # ```
   def self.new(string : String) : self
-    new string.to_slice, writeable: false
+    new string.to_slice, writable: false
   end
 
   # See `IO#read(slice)`.
@@ -80,10 +86,10 @@ class IO::Memory < IO
     count
   end
 
-  # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writeable,
+  # See `IO#write(slice)`. Raises if this `IO::Memory` is non-writable,
   # or if it's non-resizeable and a resize is needed.
   def write(slice : Bytes) : Nil
-    check_writeable
+    check_writable
     check_open
 
     count = slice.size
@@ -102,10 +108,10 @@ class IO::Memory < IO
     @bytesize = @pos if @pos > @bytesize
   end
 
-  # See `IO#write_byte`. Raises if this `IO::Memory` is non-writeable,
+  # See `IO#write_byte`. Raises if this `IO::Memory` is non-writable,
   # or if it's non-resizeable and a resize is needed.
   def write_byte(byte : UInt8) : Nil
-    check_writeable
+    check_writable
     check_open
 
     increase_capacity_by(1)
@@ -178,7 +184,7 @@ class IO::Memory < IO
   def peek : Bytes
     check_open
 
-    Slice.new(@buffer + @pos, @bytesize - @pos, read_only: !@writeable)
+    Slice.new(@buffer + @pos, @bytesize - @pos, read_only: !@writable)
   end
 
   # :nodoc:
@@ -351,16 +357,16 @@ class IO::Memory < IO
       raise ArgumentError.new("Bytesize out of bounds")
     end
 
-    old_writeable = @writeable
+    old_writable = @writable
     old_resizeable = @resizeable
-    io = IO::Memory.new(to_slice[offset, bytesize], writeable: false)
+    io = IO::Memory.new(to_slice[offset, bytesize], writable: false)
     begin
-      @writeable = false
+      @writable = false
       @resizeable = false
       yield io
     ensure
       io.close
-      @writeable = old_writeable
+      @writable = old_writable
       @resizeable = old_resizeable
     end
   end
@@ -416,7 +422,7 @@ class IO::Memory < IO
   # io.to_slice # => Bytes[104, 101, 108, 108, 111]
   # ```
   def to_slice : Bytes
-    Slice.new(@buffer, @bytesize, read_only: !@writeable)
+    Slice.new(@buffer, @bytesize, read_only: !@writable)
   end
 
   # Appends this internal buffer to the given `IO`.
@@ -438,8 +444,8 @@ class IO::Memory < IO
     end
   end
 
-  private def check_writeable
-    unless @writeable
+  private def check_writable
+    unless @writable
       raise IO::Error.new "Read-only stream"
     end
   end

@@ -42,7 +42,7 @@ describe Crystal::Doc::Generator do
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      a_def = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      a_def = generator.type(program.types["Foo"]).lookup_method("foo").should_not(be_nil)
       a_def.doc.should eq("Some docs")
       a_def.visibility.should eq("private")
     end
@@ -59,7 +59,7 @@ describe Crystal::Doc::Generator do
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      a_macro = generator.type(program.types["Foo"]).lookup_macro("foo").not_nil!
+      a_macro = generator.type(program.types["Foo"]).lookup_macro("foo").should_not(be_nil)
       a_macro.doc.should eq("Some docs")
       a_macro.visibility.should eq("private")
     end

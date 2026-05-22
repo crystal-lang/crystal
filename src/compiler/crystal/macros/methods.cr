@@ -2018,8 +2018,8 @@ module Crystal
       when "stringify", "class_name", "symbolize"
         super
       else
-        value = StringLiteral.new(@value).interpret(method, args, named_args, block, interpreter, location)
-        value = MacroId.new(value.value) if value.is_a?(StringLiteral)
+        value = StringLiteral.new(@value).at(self).interpret(method, args, named_args, block, interpreter, location)
+        value = MacroId.new(value.value).at(self) if value.is_a?(StringLiteral)
         value
       end
     rescue UndefinedMacroMethodError
@@ -2111,6 +2111,8 @@ module Crystal
         end
       when "methods"
         interpret_check_args { TypeNode.methods(type) }
+      when "all_methods"
+        interpret_check_args { TypeNode.all_methods(type) }
       when "has_method?"
         interpret_check_args do |arg|
           value = arg.to_string("argument to 'TypeNode#has_method?'")
@@ -2142,7 +2144,7 @@ module Crystal
         interpret_check_args do
           type = self.type.instance_type
           if type.is_a?(NamedTupleInstanceType)
-            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name) }
+            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name).at(entry.loc) }
           else
             raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
           end
@@ -2420,12 +2422,25 @@ module Crystal
 
     def self.methods(type)
       defs = [] of ASTNode
-      type.defs.try &.each do |name, metadatas|
+      collect_methods(defs, type)
+      ArrayLiteral.new(defs)
+    end
+
+    def self.all_methods(type)
+      defs = [] of ASTNode
+      collect_methods(defs, type)
+      type.ancestors.each do |ancestor|
+        collect_methods(defs, ancestor)
+      end
+      ArrayLiteral.new(defs)
+    end
+
+    private def self.collect_methods(defs, type)
+      type.defs.try &.each_value do |metadatas|
         metadatas.each do |metadata|
           defs << metadata.def
         end
       end
-      ArrayLiteral.new(defs)
     end
 
     def self.has_method?(type, name)

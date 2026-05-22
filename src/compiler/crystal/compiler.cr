@@ -467,7 +467,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              abort "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -570,11 +570,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            abort "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
           end
           output.chomp
         rescue exc
-          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          abort "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
         end
       end
     end
@@ -600,7 +600,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        error "can't use `#{output_filename}` as output filename because it's a directory"
+        abort "can't use `#{output_filename}` as output filename because it's a directory"
       end
 
       output_filename = File.expand_path(output_filename)
@@ -718,7 +718,7 @@ module Crystal
           input.close
           output.close
 
-          Process.new(pid).wait
+          Process.new(Crystal::System::Process.new(pid)).wait
           completed.send(nil)
         end
       end
@@ -927,7 +927,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        error "execution of command failed with exit status #{status}: #{command}", exit_code: exit_code
+        abort "execution of command failed with exit status #{status}: #{command}", status: exit_code
       end
     end
 
@@ -935,14 +935,14 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        abort "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
       else
-        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        abort "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
       end
     end
 
-    private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code, stderr: stderr
+    private def abort(msg, exit_code = 1)
+      Crystal.abort msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)

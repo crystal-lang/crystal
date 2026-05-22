@@ -2159,14 +2159,18 @@ module Crystal
       after_cond_vars = @vars.dup
       @while_vars = after_cond_vars
 
-      filter_vars cond_type_filters
-
       # `node.body` may reset this status, so we capture them in a set
-      # (we don't need the full MetaVars at the moment)
+      # (we don't need the full MetaVars at the moment).
+      #
+      # We capture *before* `filter_vars` because filtering may replace a var
+      # with a fresh MetaVar that drops the `nil_if_read?` flag, even though
+      # the variable could still legitimately be nil on loop exit (#16483).
       after_cond_vars_nil_if_read = Set(String).new
       @vars.each do |name, var|
         after_cond_vars_nil_if_read << name if var.nil_if_read?
       end
+
+      filter_vars cond_type_filters
 
       @type_filters = nil
       @block, old_block = nil, @block
@@ -3443,15 +3447,9 @@ module Crystal
     end
 
     def bind_meta_var(var : Var)
-      @meta_vars[var.name].bind_to(var)
-    end
-
-    def bind_meta_var(var : InstanceVar)
-      # Nothing to do
-    end
-
-    def bind_meta_var(var)
-      raise "BUG: trying to bind var or instance var but got #{var}"
+      meta_var = @meta_vars[var.name]
+      meta_var.bind_to(var)
+      meta_var
     end
 
     def bind_initialize_instance_vars(owner)

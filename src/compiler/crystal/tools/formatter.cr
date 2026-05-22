@@ -129,13 +129,6 @@ module Crystal
       @exp_needs_indent = true
       @inside_def = 0
 
-      # When we parse a type, parentheses information is not stored in ASTs, unlike
-      # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
-      # we increment this when we find a '(', and decrement it when we find ')', but
-      # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
-      # want to print that last ')' when printing the type A.
-      @paren_count = 0
-
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
@@ -491,15 +484,21 @@ module Crystal
       format_regex_modifiers if is_regex
 
       if space_slash_newline?
-        old_indent = @indent
-        @indent = column if @string_continuation == 0
         @string_continuation += 1
-        write " \\"
-        write_line
-        write_indent
-        next_token_skip_space_or_newline
-        visit(node)
-        @indent = old_indent
+        @indent = column
+
+        @passed_backslash_newline = true
+        next_token_skip_space
+
+        write_line if @token.type.newline?
+        skip_space_or_newline
+
+        if @token.type.delimiter_start?
+          visit(node)
+        else
+          # empty continuation
+        end
+
         @string_continuation -= 1
       else
         next_token
@@ -529,10 +528,10 @@ module Crystal
       end
     end
 
-    private def write_sanitized_string_body(escape)
+    private def write_sanitized_string_body(escape, no_rstrip = false)
       body = @token.invalid_escape ? @token.value.as(String) : @token.raw
       body = Lexer.escape_forbidden_characters(body) if escape
-      write body
+      write body, no_rstrip: no_rstrip
     end
 
     def visit(node : StringInterpolation)
@@ -569,14 +568,12 @@ module Crystal
       if is_heredoc && @token.type.string?
         token_is_indent = @token.raw.bytesize == node.heredoc_indent && @token.raw.each_char.all? &.ascii_whitespace?
         if token_is_indent
-          write @token.raw
+          write @token.raw, no_rstrip: true
           next_string_token
         end
       end
 
       visit_string_interpolation_body(node, delimiter_state, column, is_regex: is_regex, is_heredoc: is_heredoc)
-
-      heredoc_end = @line
 
       check :DELIMITER_END
       write @token.raw
@@ -584,9 +581,6 @@ module Crystal
       if is_heredoc
         if indent_difference > 0
           @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
-        (heredoc_line...heredoc_end).each do |line|
-          @no_rstrip_lines.add line
         end
         write_line
       end
@@ -637,7 +631,7 @@ module Crystal
           else
             loop do
               check :STRING
-              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex)
+              write_sanitized_string_body(delimiter_state.allow_escapes && !is_regex, no_rstrip: is_heredoc)
               next_string_token
 
               # On heredoc, pieces of contents are combined due to removing indentation.
@@ -746,26 +740,6 @@ module Crystal
       false
     end
 
-    def space_newline?
-      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
-        char = @lexer.current_char
-        case char
-        when ' ', '\t'
-          @lexer.next_char
-        when '\n'
-          @lexer.current_pos = pos
-          return true
-        else
-          break
-        end
-      end
-      @lexer.current_pos = pos
-      @lexer.line_number = line
-      @lexer.column_number = col
-      false
-    end
-
     def visit(node : ArrayLiteral)
       case @token.type
       when .op_lsquare?
@@ -774,34 +748,34 @@ module Crystal
         write "[]"
         next_token
       when .string_array_start?, .symbol_array_start?
-        first = true
         write @token.raw
-        count = 0
-        while true
-          has_space_newline = space_newline?
-          if has_space_newline
+
+        @lexer.next_string_token(@token.delimiter_state)
+
+        node.elements.each_with_index do |elem, index|
+          if skip_space_in_percent_array_literal
             write_line
-            if count == node.elements.size
-              write_indent
-            else
-              write_indent(@indent + 2)
-            end
+            write_indent(@indent + 2)
+          elsif index != 0
+            write " "
           end
-          next_string_array_token
-          case @token.type
-          when .string?
-            write " " unless first || has_space_newline
-            write @token.raw
-            first = false
-          when .string_array_end?
-            write @token.raw
-            next_token
-            break
-          else
-            raise "Bug: unexpected token #{@token.type}"
+
+          while @token.type.string?
+            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+            @lexer.next_string_token(@token.delimiter_state)
           end
-          count += 1
         end
+
+        # skip trailing space
+        if skip_space_in_percent_array_literal && node.elements.present?
+          write_line
+          write_indent(@indent)
+        end
+
+        check :STRING_ARRAY_END
+        write @token.raw
+        next_token
+
         return false
       else
         name = node.name.not_nil!
@@ -816,6 +790,16 @@ module Crystal
       end
 
       false
+    end
+
+    def skip_space_in_percent_array_literal
+      found_newline = false
+      while @token.type.space?
+        found_newline ||= @token.raw.includes?("\n")
+        @lexer.next_string_token(@token.delimiter_state)
+      end
+
+      found_newline
     end
 
     def visit(node : TupleLiteral)
@@ -1063,29 +1047,7 @@ module Crystal
       false
     end
 
-    def check_open_paren
-      if @token.type.op_lparen?
-        while @token.type.op_lparen?
-          write "("
-          next_token_skip_space
-          @paren_count += 1
-        end
-        true
-      else
-        false
-      end
-    end
-
-    def check_close_paren
-      while @token.type.op_rparen? && @paren_count > 0
-        @paren_count -= 1
-        write_token :OP_RPAREN
-      end
-    end
-
     def visit(node : Path)
-      check_open_paren
-
       # Sometimes the :: is not present because the parser generates ::Nil, for example
       if node.global? && @token.type.op_colon_colon?
         write "::"
@@ -1104,14 +1066,10 @@ module Crystal
         end
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Generic)
-      check_open_paren
-
       name = node.name.as(Path)
       if name.global? && @token.type.op_colon_colon?
         write "::"
@@ -1212,17 +1170,12 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      # Given that generic type arguments are always inside parentheses
-      # we can start counting them from 0 inside them.
-      old_paren_count = @paren_count
-      @paren_count = 0
-
       if named_args = node.named_args
         write_token :OP_LPAREN
         skip_space
         has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
-        if @paren_count == 0 && @token.type.op_comma?
+        if @token.type.op_comma?
           next_token_skip_space_or_newline
           if has_newlines
             write ","
@@ -1230,28 +1183,23 @@ module Crystal
             write_indent
           end
         end
-        skip_space_or_newline if @paren_count == 0
+        skip_space_or_newline
         write_token :OP_RPAREN
       else
         format_literal_elements(node.type_vars, :OP_LPAREN, :OP_RPAREN)
       end
 
-      # Restore the old parentheses count
-      @paren_count = old_paren_count
-
       false
-    ensure
-      check_close_paren
     end
 
     def visit(node : Union)
-      check_open_paren
+      write_token :OP_LPAREN if node.parens?
 
       if @token.type.ident? && @token.value == "self?" && node.types.size == 2 &&
          node.types[0].is_a?(Self) && node.types[1].to_s == "::Nil"
         write "self?"
         next_token
-        check_close_paren
+        write_token :OP_RPAREN if node.parens?
         return false
       end
 
@@ -1280,7 +1228,7 @@ module Crystal
         skip_space
       end
 
-      check_close_paren
+      write_token :OP_RPAREN if node.parens?
 
       false
     end
@@ -1288,13 +1236,13 @@ module Crystal
     def visit(node : If)
       if node.ternary?
         accept node.cond
-        skip_space_or_newline
-        write_token " ", :OP_QUESTION, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_QUESTION
+        skip_space_or_newline || write " "
         accept node.then
-        skip_space_or_newline
-        write_token " ", :OP_COLON, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_COLON
+        skip_space_or_newline || write " "
         accept node.else
         return false
       end
@@ -1756,20 +1704,10 @@ module Crystal
       write_line
       write value
 
-      # `write` doesn't update `@line` for embedded newlines.
-      # Track the output lines from the formatted macro body explicitly,
-      # then ignore line mutations while consuming original macro tokens.
-      increment_lines(value.count('\n'))
-      line = @line
-
       next_macro_token
 
       until @token.type.macro_end?
         next_macro_token
-      end
-
-      if @line != line
-        increment_lines(line - @line)
       end
 
       skip_space_or_newline
@@ -1821,12 +1759,6 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
-      line = @line
-      @token.raw.scan("\n") do
-        line -= 1
-        @no_rstrip_lines.add line
-      end
-
       raw = @token.raw
 
       # If the macro literal has a backlash, but we are subformatting
@@ -1836,7 +1768,7 @@ module Crystal
         raw = raw.gsub("\\", "\\" * (@subformat_nesting + 1))
       end
 
-      write raw
+      write raw, no_rstrip: true
       next_macro_token
       false
     end
@@ -2217,20 +2149,9 @@ module Crystal
         # will already have it.
         write_indent
 
-        increment_lines(macro_node_line + value.lines.size + 1 - @line)
-
-        line = @line
-
         # We have to potentially skip multiple macro literal tokens
         while @token.type.macro_literal?
           next_macro_token
-        end
-
-        # Skipping the macro literal tokens might have altered `@line`:
-        # restore it to what it was before the macro tokens (we are
-        # already accounting for the lines in a different way).
-        if @line != line
-          increment_lines(line - @line)
         end
       else
         inside_macro { no_indent node }
@@ -2402,18 +2323,14 @@ module Crystal
     end
 
     def visit(node : ProcNotation)
-      check_open_paren
+      inputs = node.inputs
 
-      paren_count = @paren_count
+      has_input_parens = @token.type.op_lparen? &&
+                         !inputs.try(&.first?).try(&.location).try(&.equals?(@token.location))
 
-      if inputs = node.inputs
-        # Check if it's ((X, Y) -> Z)
-        #                ^    ^
-        sub_paren_count = @paren_count
-        if check_open_paren
-          sub_paren_count = @paren_count
-        end
+      write_token :op_lparen if has_input_parens
 
+      if inputs
         inputs.each_with_index do |input, i|
           accept input
 
@@ -2424,14 +2341,10 @@ module Crystal
           end
         end
 
-        if sub_paren_count != paren_count
-          check_close_paren
-        end
+        write_token :OP_RPAREN if has_input_parens
       end
 
-      skip_space_or_newline if paren_count == @paren_count
-      check_close_paren
-      skip_space
+      skip_space_or_newline
 
       write " " if inputs
       write_token :OP_MINUS_GT
@@ -2444,15 +2357,11 @@ module Crystal
         skip_space
       end
 
-      check_close_paren
-
       false
     end
 
     def visit(node : Self)
-      check_open_paren
       write_keyword :self
-      check_close_paren
       false
     end
 
@@ -3312,35 +3221,18 @@ module Crystal
     end
 
     def visit(node : Or)
-      format_binary node, :OP_BAR_BAR, :OP_BAR_BAR_EQ
+      format_binary node, :OP_BAR_BAR
     end
 
     def visit(node : And)
-      format_binary node, :OP_AMP_AMP, :OP_AMP_AMP_EQ
+      format_binary node, :OP_AMP_AMP
     end
 
-    def format_binary(node, token : Token::Kind, alternative : Token::Kind)
+    def format_binary(node, token : Token::Kind)
       column = @column
 
       accept node.left
       skip_space_or_newline
-
-      # This is the case of `left ||= right`
-      if @token.type == alternative
-        write " "
-        write alternative
-        write " "
-        next_token_skip_space
-        case right = node.right
-        when Assign
-          accept_assign_value(right.value)
-        when Call
-          accept_assign_value(right.args.last)
-        else
-          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
-        end
-        return false
-      end
 
       write_token " ", token
       found_comment = skip_space
@@ -3834,9 +3726,15 @@ module Crystal
         separator = @token.to_s
         slash_is_regex!
         if @token.type.op_semicolon?
-          skip_semicolon_or_space
+          skip_semicolon
         else
-          next_token_skip_space
+          next_token
+        end
+
+        # Don't use `skip_space` here because that would consume trailing comment
+        # and newline when `node.body` is a `Nop`.
+        while @token.type.space?
+          next_token
         end
         if @token.type.newline?
           format_nested(node.body, @indent)
@@ -4538,11 +4436,8 @@ module Crystal
     end
 
     def next_token
-      current_line_number = @lexer.line_number
       @token = @lexer.next_token
-      if @token.type.delimiter_start?
-        increment_lines(@lexer.line_number - current_line_number)
-      elsif @token.type.newline?
+      if @token.type.newline?
         if !@lexer.heredocs.empty? && !@consuming_heredocs
           write_line
           consume_heredocs
@@ -4552,24 +4447,14 @@ module Crystal
     end
 
     def next_string_token
-      current_line_number = @lexer.line_number
       @token = @lexer.next_string_token(@token.delimiter_state)
-      increment_lines(@lexer.line_number - current_line_number)
       @token
     end
 
-    def next_string_array_token
-      @token = @lexer.next_string_array_token
-    end
-
     def next_macro_token
-      current_line_number = @lexer.line_number
-
       char = @lexer.current_char
       @token = @lexer.next_macro_token(@macro_state, false)
       @macro_state = @token.macro_state
-
-      increment_lines(@lexer.line_number - current_line_number)
 
       # Unescape
       if char == '\\' && !@token.raw.starts_with?(char)
@@ -4863,7 +4748,7 @@ module Crystal
       indent(indent) { yield }
     end
 
-    def write(string : String)
+    def write(string : String, no_rstrip : Bool = false)
       @output << string
       @line_output << string
       last_newline = string.rindex('\n')
@@ -4871,6 +4756,13 @@ module Crystal
         @column = string.size - last_newline - 1
       else
         @column += string.size
+      end
+      lines_count = string.count('\n')
+
+      @no_rstrip_lines.add @line if no_rstrip
+      lines_count.times do
+        increment_line
+        @no_rstrip_lines.add @line if no_rstrip
       end
 
       @wrote_newline = false
@@ -4909,17 +4801,7 @@ module Crystal
       @comment_columns.pop
     end
 
-    def increment_lines(count)
-      if count < 0
-        (-count).times { decrement_line }
-      else
-        count.times { increment_line }
-      end
-    end
-
     def finish
-      raise "BUG: unclosed parenthesis" if @paren_count > 0
-
       skip_space
       write_line
       skip_space_or_newline last: true
@@ -5218,7 +5100,6 @@ module Crystal
         write "\\"
         write @lexer.skip_macro_whitespace
         @macro_state.whitespace = true
-        increment_line
         true
       else
         false

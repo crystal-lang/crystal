@@ -2626,7 +2626,7 @@ module Crystal
 
     def replace_type_parameters(instance)
       new_entries = entries.map do |entry|
-        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance))
+        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance), entry.loc)
       end
       program.named_tuple_of(new_entries)
     end
