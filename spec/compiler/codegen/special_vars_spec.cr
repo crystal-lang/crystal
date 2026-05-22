@@ -160,6 +160,24 @@ describe "Codegen: special vars" do
       CRYSTAL
   end
 
+  it "codegens when def assigns special vars and block return type uses a free variable (#16391)" do
+    # Free variable in the block output requires eager block typing — the
+    # block's actual return type fixes `U`. The previous deferral-only fix
+    # for `assigns_special_var?` couldn't compile this combination at all
+    # ("can't infer block return type"). The block here doesn't reference
+    # `$~` itself, so eager typing produces correct types.
+    run(<<-CRYSTAL).to_i.should eq(20)
+      def foo(& : Int32 -> U) forall U
+        $~ = "hey"
+        yield 1
+      end
+
+      foo do |i|
+        i &* 20
+      end
+      CRYSTAL
+  end
+
   it "codegens in block with nested block" do
     run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"

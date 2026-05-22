@@ -1014,22 +1014,26 @@ class Crystal::Call
         block.try &.set_enclosing_call(self)
       end
     else
-      # Skip the eager block visit only when we know it would mistype things.
-      # When the called def assigns special vars (e.g. `$~ = match`), those
-      # assignments propagate to `parent_visitor` via
-      # `MainVisitor#visit(Assign)` at the assignment site — which runs while
-      # the def's body is analyzed, *after* this point. Typing the block here
-      # would therefore see an empty parent `@meta_vars`, type `$~` as Nil,
-      # and compile any `$~` access in the block (including `$1`, which
-      # desugars to `$~[1]`) to `Nil#not_nil!` (#16391). Defer to
-      # `MainVisitor#visit(Yield)`, where the propagation has happened.
+      # Defer the block visit when both conditions hold:
+      #   1. The called def assigns special vars (e.g. `$~ = match`). Those
+      #      assignments propagate to `parent_visitor` via
+      #      `MainVisitor#visit(Assign)` at the assignment site, which runs
+      #      while the def body is analyzed — *after* this point. Typing the
+      #      block now would see an empty parent `@meta_vars`, type `$~` as
+      #      Nil, and compile any `$~` access (including `$1`, which desugars
+      #      to `$~[1]`) to `Nil#not_nil!` (#16391).
+      #   2. We don't *need* eager typing to bind a free variable in the
+      #      block's return type. When the output is a free var (e.g.
+      #      `&block : T -> U forall U`), the block's actual return type is
+      #      what fixes U, so we must visit it now — the `!block.type?`
+      #      fallback below can't infer free vars.
       #
-      # We can't just always defer: some methods need the block typed eagerly
-      # so a free variable in the return type (e.g. `&block : T -> U forall U`,
-      # or a generic class param like `Pointer(T)#malloc(&: Int32 -> T)`) can
-      # be inferred from the block's actual return type — the `!block.type?`
-      # fallback below can't handle that.
-      unless match.def.assigns_special_var?
+      # In the rare overlap (free-var output *and* special vars assigned), we
+      # err on the side of compiling: eager visit produces wrong types for
+      # `$~` *only if the block actually references it in the return value*;
+      # deferring would refuse to compile the call entirely.
+      output_needs_eager_typing = output && match.def.free_var?(output)
+      unless match.def.assigns_special_var? && !output_needs_eager_typing
         block.accept parent_visitor
       end
 
