@@ -577,7 +577,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if !flag?(:preview_mt) && flag?(:unix) %}
+{% if flag?(:without_mt) && flag?(:unix) %}
   class Process
     # :nodoc:
     #
@@ -600,7 +600,7 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     Fiber::ExecutionContext.init_default_context
   {% else %}
     Crystal::Scheduler.init

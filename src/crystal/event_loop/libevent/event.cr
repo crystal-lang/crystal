@@ -1,6 +1,6 @@
 require "./lib_event2"
 
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   LibEvent2.evthread_use_pthreads
 {% end %}
 

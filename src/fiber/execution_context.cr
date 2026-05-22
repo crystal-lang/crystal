@@ -5,16 +5,11 @@ require "../fiber"
 require "./stack_pool"
 require "./execution_context/*"
 
-{% raise "ERROR: execution contexts require the `preview_mt` compilation flag" unless flag?(:preview_mt) || flag?(:docs) %}
-{% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) || flag?(:docs) %}
+{% raise "ERROR: the interpreter cannot start threads (yet)" if flag?(:interpreted) %}
 
 # An execution context creates and manages a dedicated pool of one or more
 # schedulers where fibers will be running in. Each context manages the rules to
 # run, suspend and swap fibers internally.
-#
-# EXPERIMENTAL: Execution contexts are an experimental feature, implementing
-# [RFC 2](https://github.com/crystal-lang/rfcs/pull/2). It's opt-in and requires
-# the compiler flags `-Dpreview_mt -Dexecution_context`.
 #
 # An execution context groups fibers together. Instead of associating a fiber to
 # a specific system thread, we associate a fiber to an execution context,
@@ -102,7 +97,6 @@ require "./execution_context/*"
 # detached from any context at any time. Threads can be detached from a context
 # and reattached to the same execution context or to another one (`Concurrent`,
 # `Parallel` or `Isolated`).
-@[Experimental]
 module Fiber::ExecutionContext
   @@thread_pool : ThreadPool?
   @@default : ExecutionContext::Parallel?
@@ -126,7 +120,14 @@ module Fiber::ExecutionContext
   # :nodoc:
   def self.init_default_context : Nil
     @@thread_pool = ThreadPool.new
-    @@default = Parallel.default(1)
+    size =
+      {% if flag?(:preview_mt) %}
+        {% nil.warning "Warning: the 'preview_mt' compilation flag is deprecated. Resize the default execution context or start additional contexts instead." %}
+        ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+      {% else %}
+        1
+      {% end %}
+    @@default = Parallel.default(size)
     @@monitor = Monitor.new
   end
 

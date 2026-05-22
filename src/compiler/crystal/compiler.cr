@@ -5,7 +5,7 @@ require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
 {% end %}
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   require "wait_group"
 {% end %}
 
@@ -97,10 +97,8 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:execution_context) %}
+    property n_threads : Int32 = {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext.default_workers_count
-    {% elsif flag?(:preview_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
     {% elsif flag?(:win32) %}
       1
     {% else %}
@@ -635,7 +633,7 @@ module Crystal
     end
 
     private def parallel_codegen(units, n_threads)
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
       {% elsif LibC.has_method?("fork") %}

@@ -191,7 +191,7 @@ class Crystal::System::IoUring
       raise RuntimeError.from_os_error("mmap", errno)
     end
 
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       # don't bother inheriting mmap on fork: we don't support fork, only
       # fork/exec and we musn't use the evloop after fork before exec
       LibC.madvise(ptr, size, LibC::MADV_DONTFORK)

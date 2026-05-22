@@ -1169,7 +1169,7 @@ describe Process do
     end
   {% end %}
 
-  {% unless flag?(:preview_mt) || flag?(:win32) %}
+  {% if flag?(:without_mt) && !flag?(:win32) %}
     describe ".fork" do
       it "executes the new process with exec" do
         with_tempfile("crystal-spec-exec") do |path|
