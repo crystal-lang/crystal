@@ -149,11 +149,11 @@ class Process::Status
 
   {% if flag?(:win32) %}
     # :nodoc:
-    def initialize(@exit_status : UInt32)
+    def initialize(*, system_exit_status @exit_status : UInt32)
     end
   {% else %}
     # :nodoc:
-    def initialize(@exit_status : Int32)
+    def initialize(*, system_exit_status @exit_status : Int32)
     end
   {% end %}
 
@@ -406,7 +406,7 @@ class Process::Status
   # Returns a textual description of this process status.
   #
   # ```
-  # Process::Status.new(0).description # => "Process exited normally"
+  # Process.run("true").description # => "Process exited normally"
   # process = Process.new("sleep", ["10"])
   # process.terminate
   # process.wait.description # => "Process received and didn't handle signal TERM (15)"
