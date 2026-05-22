@@ -290,6 +290,7 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
+      program.optimization_mode = @optimization_mode
       program
     end
 
@@ -884,15 +885,11 @@ module Crystal
       {% if LibLLVM::IS_LT_130 %}
         optimize_with_pass_manager(llvm_mod)
       {% else %}
-        {% if LibLLVM::IS_LT_170 %}
-          # PassBuilder doesn't support Os and Oz before LLVM 17
-          if @optimization_mode.os? || @optimization_mode.oz?
-            return optimize_with_pass_manager(llvm_mod)
-          end
-        {% end %}
+        optimization_mode = @optimization_mode
+        optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
     end
