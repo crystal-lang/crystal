@@ -6,6 +6,10 @@ require "fiber"
 require "fiber/stack_pool"
 require "crystal/system/thread"
 
+{% if flag?(:without_mt) && flag?(:preview_mt) %}
+  {% raise "The 'without_mt' and 'preview_mt' flags are incompatible." %}
+{% end %}
+
 # :nodoc:
 #
 # Schedulers are tied to a thread, and must only ever be accessed from within

@@ -17,7 +17,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def initialize(parallelism : Int32)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
       event_base.reinit

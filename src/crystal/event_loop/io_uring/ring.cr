@@ -6,7 +6,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   class Ring < System::IoUring
     getter? waiting : Bool = false
 
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @sq_lock : Thread::Mutex?
     {% end %}
 
@@ -19,7 +19,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     def initialize(*args, **kwargs)
       super(*args, **kwargs)
 
-      {% if flag?(:preview_mt) %}
+      {% unless flag?(:without_mt) %}
         # unless IORING_REGISTER_SYNC_CANCEL (Linux 6.0) and
         # IORING_REGISTER_SEND_MSG_RING (Linux 6.13) are supported we may have
         # multiple threads trying to submit to the ring (on evloop interrupt and
@@ -43,7 +43,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
     # Acquires the SQ lock for the duration of the block if required.
     def sq_lock(&)
-      {% if flag?(:preview_mt) %}
+      {% unless flag?(:without_mt) %}
         if sq_lock = @sq_lock
           return sq_lock.synchronize { yield }
         end

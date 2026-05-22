@@ -46,7 +46,7 @@ def run_server(server, &)
     wait_for { server.listening? }
     wait_until_blocked f
 
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       # avoids fiber synchronization issues in specs, like closing the server
       # before we properly listen, ...
       sleep 1.millisecond

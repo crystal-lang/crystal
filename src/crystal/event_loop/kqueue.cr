@@ -28,7 +28,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     {% end %}
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
       super
 

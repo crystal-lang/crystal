@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:preview_mt) %}
+{% skip_file if flag?(:without_mt) %}
 
 private SPEC_TIMEOUT = 15.seconds
 
