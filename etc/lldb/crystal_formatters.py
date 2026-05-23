@@ -2,6 +2,15 @@ import lldb
 import os
 
 
+# Keep the formatter defensive. lldb-dap eagerly expands locals, including
+# inactive union fields and values that are technically in scope but backed by
+# bogus layout data. In those cases we prefer returning `None` (or exposing raw
+# children) over forcing a synthetic summary that can hang the client.
+#
+# For mixed unions we resolve the active member via Crystal's runtime
+# `<TypeName>:type_id` globals instead of hard-coding numeric ids. This keeps
+# the formatter aligned with the current program image and allows nil to render
+# as `Nil` instead of a zeroed inactive payload field.
 def _env_int(name, default):
     try:
         value = int(os.environ.get(name, default))
