@@ -154,4 +154,23 @@ describe "Semantic: uninitialized" do
       u
       CRYSTAL
   end
+
+  it "errors when uninitialized type has a NoReturn instance variable (#12733)" do
+    assert_error <<-CRYSTAL, "can't use 'uninitialized Entry' because instance variable '@key' has type NoReturn"
+      struct Entry
+        def initialize(@key : NoReturn)
+        end
+      end
+
+      entry = uninitialized Entry
+      entry.@key
+      CRYSTAL
+  end
+
+  it "allows uninitialized StaticArray(NoReturn, 0) (#12733)" do
+    assert_type(<<-CRYSTAL) { static_array_of(no_return, 0) }
+      ary = uninitialized StaticArray(NoReturn, 0)
+      ary
+      CRYSTAL
+  end
 end

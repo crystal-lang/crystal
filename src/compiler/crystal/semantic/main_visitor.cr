@@ -474,6 +474,7 @@ module Crystal
         # TODO: should we be using a binding here to recompute the type?
         if declared_type = node.declared_type.type?
           var_type = check_declare_var_type node, declared_type, "a variable"
+          check_uninitialized_no_return_ivars(node, var_type.instance_type)
           var_type = var_type.virtual_type
           var.type = var_type
         else
@@ -542,6 +543,34 @@ module Crystal
     def check_not_a_constant(node)
       if node.is_a?(Path) && node.target_const
         node.raise "#{node.target_const} is not a type, it's a constant"
+      end
+    end
+
+    # `uninitialized X` bypasses the constructor, so the resulting value has
+    # ivars in whatever state malloc/stack left them in. That's fine for any
+    # ivar type that has runtime values — the read produces undefined bytes,
+    # interpreted as that type. For a `NoReturn`-typed ivar the type system
+    # says no value of the ivar's type can exist; reading one would type the
+    # result as `NoReturn` and the codegen later produces an ill-typed return
+    # instruction (#12733). The declaration itself is legal (a class with a
+    # `NoReturn` ivar can never be properly constructed, so the lookup paths
+    # that need the read never run), but `uninitialized` is the loophole that
+    # produces an instance without going through `initialize`. Reject it.
+    def check_uninitialized_no_return_ivars(node, type)
+      return unless type.is_a?(InstanceVarContainer)
+
+      # `StaticArray(T, 0)` has a `@buffer` ivar of type `T`, but a size of 0:
+      # there's no actual storage and no possible read. `T = NoReturn` is fine
+      # here (e.g. `StaticArray(Union(*T), 0)` for an empty splat in tuple.cr).
+      if type.is_a?(StaticArrayInstanceType)
+        size = type.size
+        return if size.is_a?(NumberLiteral) && size.value == "0"
+      end
+
+      type.all_instance_vars.each do |name, ivar|
+        if ivar.type?.try &.no_return?
+          node.raise "can't use 'uninitialized #{type}' because instance variable '#{name}' has type NoReturn, which has no values"
+        end
       end
     end
 
