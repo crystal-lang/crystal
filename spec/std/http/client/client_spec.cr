@@ -233,7 +233,7 @@ module HTTP
       end
     end
 
-    it "will retry once on connection error" do
+    it "does not retry on initial connection error" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -247,7 +247,7 @@ module HTTP
       end
     end
 
-    it "retries when re-using connection with error" do
+    it "retries when re-using connection with error (non-yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -261,7 +261,7 @@ module HTTP
       end
     end
 
-    it "retries when re-using connection with error" do
+    it "retries when re-using connection with error (yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -275,7 +275,7 @@ module HTTP
       end
     end
 
-    it "retries only once when re-using connection with error" do
+    it "retries only once when re-using connection with error (non-yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -291,7 +291,7 @@ module HTTP
       end
     end
 
-    it "retries only once when re-using connection with error" do
+    it "retries only once when re-using connection with error (yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -307,7 +307,7 @@ module HTTP
       end
     end
 
-    it "no retry unless request is replayable" do
+    it "no retry unless request is replayable (non-yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -323,7 +323,7 @@ module HTTP
       end
     end
 
-    it "no retry unless request is replayable" do
+    it "no retry unless request is replayable (yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -339,7 +339,7 @@ module HTTP
       end
     end
 
-    it "retry if request is replayable" do
+    it "retry if request is replayable (yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -353,7 +353,7 @@ module HTTP
       end
     end
 
-    it "retry if request is replayable" do
+    it "retry if request is replayable (non-yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -367,7 +367,7 @@ module HTTP
       end
     end
 
-    it "retries when error is not econnreset" do
+    it "retries on unexpected EOF when re-using connection (non-yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -384,7 +384,7 @@ module HTTP
       end
     end
 
-    it "retries when error is not econnreset" do
+    it "retries on unexpected EOF when re-using connection (yielding)" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
