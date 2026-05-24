@@ -350,12 +350,12 @@ class HTTP::Request
   # single request.
   #
   # This is only an expectation based on request properties. The actual server
-  # maybe behave differently, and even a `GET` request might cause side effects.
+  # may behave differently, and even a `GET` request might cause side effects.
   #
-  # Closely related to [idempotency] in the HTTP spec, but potentially unsafe
-  # methods `PATCH` and `DELETE` are excluded, unless there is an explicit
-  # idempotency header.  Requests with a body or form params are never
-  # replayable.
+  # Closely related to [idempotency] in the HTTP spec, but only the “safe”
+  # methods `GET`, `HEAD`, `OPTIONS`, and `TRACE` are considered replayable unless
+  # there is an explicit idempotency header. Requests with a body (including form
+  # params) are never replayable.
   #
   # [idempotency]: https://httpwg.org/specs/rfc9110.html#idempotent.methods
   def replayable? : Bool
