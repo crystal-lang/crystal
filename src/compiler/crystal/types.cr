@@ -3464,15 +3464,7 @@ module Crystal
     end
 
     def collect_subtypes_including_generic(type, subtypes)
-      if type.is_a?(GenericType)
-        # Only include the uninstantiated generic if it has no instantiations:
-        # those carry the dispatch otherwise. Including the uninstantiated form
-        # when instantiations exist can fail later if a class method on it
-        # references the type parameter (e.g. `def self.x; T.foo; end`).
-        subtypes << type if type.instantiated_types.empty? && !type.unbound?
-      elsif !type.unbound?
-        subtypes << type
-      end
+      subtypes << type unless type.unbound? || (type.is_a?(GenericType) && !type.instantiated_types.empty?)
       type.subclasses.each do |subclass|
         collect_subtypes_including_generic subclass, subtypes
       end
