@@ -1261,6 +1261,11 @@ class Crystal::Call
 
   def attach_subclass_observer(type : Type)
     if subclass_notifier = @subclass_notifier
+      # If the new notifier is a subtype of (or equal to) the current one,
+      # keep observing the wider type. Migrating to the narrower type would
+      # stop us from being woken when sibling subtypes are later added to
+      # the wider one — leaving the dispatch table stale (#16947).
+      return if type.implements?(subclass_notifier)
       subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 
