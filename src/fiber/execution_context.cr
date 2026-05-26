@@ -11,10 +11,6 @@ require "./execution_context/*"
 # schedulers where fibers will be running in. Each context manages the rules to
 # run, suspend and swap fibers internally.
 #
-# EXPERIMENTAL: Execution contexts are an experimental feature, implementing
-# [RFC 2](https://github.com/crystal-lang/rfcs/pull/2). It's opt-in and requires
-# the compiler flags `-Dpreview_mt -Dexecution_context`.
-#
 # An execution context groups fibers together. Instead of associating a fiber to
 # a specific system thread, we associate a fiber to an execution context,
 # abstracting which system thread(s) the fibers will run on.
@@ -101,7 +97,6 @@ require "./execution_context/*"
 # detached from any context at any time. Threads can be detached from a context
 # and reattached to the same execution context or to another one (`Concurrent`,
 # `Parallel` or `Isolated`).
-@[Experimental]
 module Fiber::ExecutionContext
   @@thread_pool : ThreadPool?
   @@default : ExecutionContext::Parallel?
