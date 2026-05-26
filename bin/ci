@@ -136,6 +136,9 @@ build() {
     osx)
       with_build_env "./spec/debug/test.sh lldb"
       ;;
+    *)
+      echo "Skipping debug tests on $TRAVIS_OS_NAME"
+      ;;
   esac
 }
 
