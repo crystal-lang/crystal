@@ -129,17 +129,9 @@ build() {
   with_build_env 'make samples'
   with_build_env 'CRYSTAL_OPTS=--debug make samples'
 
-  case $TRAVIS_OS_NAME in
-    linux)
-      with_build_env "./spec/debug/test.sh gdb"
-      ;;
-    osx)
-      with_build_env "./spec/debug/test.sh lldb"
-      ;;
-    *)
-      echo "Skipping debug tests on $TRAVIS_OS_NAME"
-      ;;
-  esac
+  # linux build docker images ship with gdb, but not lldb
+  on_linux with_build_env './spec/debug/test.sh gdb'
+  on_osx with_build_env './spec/debug/test.sh lldb'
 }
 
 format() {
