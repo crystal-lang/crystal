@@ -125,7 +125,14 @@ module Fiber::ExecutionContext
   # :nodoc:
   def self.init_default_context : Nil
     @@thread_pool = ThreadPool.new
-    @@default = Parallel.default(1)
+    size =
+      {% if flag?(:preview_mt) %}
+        {% puts "WARNING: the 'preview_mt' compilation flag is deprecated. Resize the default execution context or start additional contexts instead." %}
+        ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+      {% else %}
+        1
+      {% end %}
+    @@default = Parallel.default(size)
     @@monitor = Monitor.new
   end
 
