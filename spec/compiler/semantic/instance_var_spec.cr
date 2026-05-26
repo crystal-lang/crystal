@@ -4782,7 +4782,7 @@ describe "Semantic: instance var" do
   end
 
   it "errors with macro def but another def doesn't initialize all" do
-    assert_error <<-CRYSTAL, "instance variable '@y' of Foo was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@y' of Foo"
       class Foo
         @x : Int32
         @y : Int32
@@ -5856,6 +5856,29 @@ describe "Semantic: instance var" do
           end
           CRYSTAL
       end
+    end
+
+    it "errors when a subclass init does not initialize a non-nilable declared ivar even if the only inherited init is a macro_def that does not assign it (#16729)" do
+      assert_error <<-CRYSTAL, "doesn't initialize instance variable '@type' of Element"
+        module Serializable
+          def initialize(never_called)
+            {% @type.instance_vars %}
+          end
+        end
+
+        class Element
+          include Serializable
+
+          @type : String
+        end
+
+        class Text < Element
+          def initialize
+          end
+        end
+
+        Text.new
+        CRYSTAL
     end
   end
 end

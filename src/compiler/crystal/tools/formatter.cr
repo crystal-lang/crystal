@@ -1489,13 +1489,13 @@ module Crystal
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
         wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
+          format_parameter_annotations(arg)
+
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
             next if arg.external_name.empty? # skip empty splat argument.
           end
-
-          format_parameter_annotations(arg)
 
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
@@ -1504,6 +1504,8 @@ module Crystal
 
       if double_splat
         wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
+          format_parameter_annotations(double_splat)
+
           write_token :OP_STAR_STAR
           skip_space_or_newline
 

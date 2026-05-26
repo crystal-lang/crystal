@@ -239,6 +239,13 @@ module Crystal
     it_parses "_ = 1", Assign.new(Underscore.new, 1.int32)
     it_parses "@foo/2", Call.new("@foo".instance_var, "/", 2.int32)
     it_parses "@@foo/2", Call.new("@@foo".class_var, "/", 2.int32)
+    it_parses "self/2", Call.new("self".var, "/", 2.int32)
+    it_parses "self//2", Call.new("self".var, "//", 2.int32)
+    it_parses "nil/2", Call.new(NilLiteral.new, "/", 2.int32)
+    it_parses "true/2", Call.new(true.bool, "/", 2.int32)
+    it_parses "false/2", Call.new(false.bool, "/", 2.int32)
+    it_parses "super/2", Call.new("super".call, "/", 2.int32)
+    it_parses "previous_def/2", Call.new("previous_def".call, "/", 2.int32)
     it_parses "1+2*3", Call.new(1.int32, "+", Call.new(2.int32, "*", 3.int32))
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
@@ -323,6 +330,11 @@ module Crystal
 
     assert_syntax_error "b? = 1", %(unexpected token: "=")
     assert_syntax_error "b! = 1", %(unexpected token: "=")
+
+    # #16713
+    assert_syntax_error "x &(a) = 1", %(unexpected token: "=")
+    assert_syntax_error "y &[b] = 2", %(unexpected token: "=")
+    assert_syntax_error "z &{c} = 3", %(unexpected token: "=")
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -1814,6 +1826,8 @@ module Crystal
     it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
     it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
     it_parses "begin; 1; rescue ex; 2; end; ex", [ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")]), "ex".var]
+    it_parses "begin; begin; ensure; end; end", [Expressions.new([ExceptionHandler.new(Nop.new, ensure: Nop.new)] of ASTNode)]
+    it_parses "begin; begin; ensure; end; rescue; end", [ExceptionHandler.new(ExceptionHandler.new(Nop.new, ensure: Nop.new), rescues: [Rescue.new])]
 
     it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 

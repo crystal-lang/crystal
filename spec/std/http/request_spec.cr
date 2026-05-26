@@ -465,6 +465,29 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
+      it "accepts media type parameters" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; charset=UTF-8"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not be_nil
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
+      {% unless flag?(:without_iconv) %}
+        it "accepts non-UTF8 media type parameters" do
+          request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; charset=UCS-2LE"}, HTTP::Params.encode({"test" => "foobar"}).encode("UCS-2LE"))
+          request.form_params?.should_not be_nil
+          request.form_params.size.should eq(1)
+          request.form_params["test"].should eq("foobar")
+        end
+      {% end %}
+
+      it "accepts arbitrary media type parameters" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; baz=qux"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not be_nil
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
       it "ignores invalid content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should be_nil

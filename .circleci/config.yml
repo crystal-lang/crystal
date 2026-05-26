@@ -12,7 +12,7 @@ parameters:
   previous_crystal_base_url:
     description: "Prefix for URLs to Crystal bootstrap compiler"
     type: string
-    default: "https://github.com/crystal-lang/crystal/releases/download/1.20.1/crystal-1.20.1-1"
+    default: "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1"
 
 defaults:
   environment: &env
@@ -359,14 +359,14 @@ jobs:
             source build.env
             cd docker
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION} PUSH=1
+            make all TARBALLS=/tmp/workspace/build/ VERSION=${CRYSTAL_VERSION} PUSH=1 TAG=crystallang/crystal:${DOCKER_TAG}
       - run:
           name: Smoke tests
           command: |
             cd /tmp/workspace/distribution-scripts
             source build.env
             cd docker
-            make smoke-all VERSION=${CRYSTAL_VERSION}
+            make smoke-all VERSION=${CRYSTAL_VERSION} TAG=crystallang/crystal:${DOCKER_TAG}
 
   dist_snap:
     machine:
