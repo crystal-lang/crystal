@@ -7,7 +7,7 @@ module Fiber::ExecutionContext
 
     @thread : Thread?
 
-    {% if compare_versions(CrystaL::VERSION, "1.4.0") < 0 %}
+    {% if compare_versions(Crystal::VERSION, "1.4.0") < 0 %}
       @every : Time::Span
       @collect_stacks_next : Time::Instant
       @increase_parallelism_next : Time::Instant
