@@ -147,7 +147,7 @@ class Process::Status
     @system_exit_status.to_u32!
   end
 
-  def self.[](code : Int32)
+  def self.[](code : Int)
     new(system_exit_status: {% if flag?(:unix) %}
       code << 8
     {% else %}
