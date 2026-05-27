@@ -2476,6 +2476,19 @@ describe Crystal::Formatter do
   assert_format "foo\n  .bar\n  .baz(\n    1\n  )", "foo\n  .bar\n  .baz(\n    1,\n  )"
   assert_format "foo.bar\n  .baz(\n    1\n  )", "foo.bar\n  .baz(\n    1,\n  )"
 
+  # #17018
+  assert_format "foo(\n  1,\n  bar: 2\n)", "foo(\n  1,\n  bar: 2,\n)"
+  assert_format "foo(\n  bar: 1\n)", "foo(\n  bar: 1,\n)"
+  assert_format "foo(\n  bar: 1 # fox\n)", "foo(\n  bar: 1, # fox\n)"
+  assert_format "foo(\n  1 # fox\n)", "foo(\n  1, # fox\n)"
+  assert_format "foo(\n  1\n)", "foo(\n  1,\n)"
+  assert_format "foo(\n  1,\n  &block\n)"
+  assert_format "foo \\\n  1,\n  bar: 2"
+  assert_format "foo \\\n  1"
+  assert_format "foo(\n  1,\n  bar: <<-HEREDOC\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  bar: <<-HEREDOC\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  <<-HEREDOC\n  foo\n  HEREDOC\n)"
+
   assert_format <<-CRYSTAL,
     def foo
       {% if flag?(:foo) %}
