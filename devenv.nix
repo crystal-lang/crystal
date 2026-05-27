@@ -3,8 +3,19 @@
 {
   dotenv.enable = true;
 
+  scripts = {
+    "asciidoc-linter".exec = "${pkgs.uv}/bin/uv tool run --from git+https://github.com/docToolchain/asciidoc-linter/@52e7fa5982d980eefd5b548f68ff6f58767fe772 asciidoc-linter $@";
+  };
+
   git-hooks.hooks = {
     actionlint.enable = true;
+    asciidoc-linter = {
+      enable = true;
+      name = "Asciidoc Linter";
+      entry = "asciidoc-linter --format plain";
+      files = "\\.adoc$";
+      #pass_filenames = true;
+    };
     ameba = {
       enable = true;
       name = "Ameba";

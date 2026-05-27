@@ -277,6 +277,8 @@ describe Crystal::Formatter do
   assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\nrescue\nend"
 
   assert_format "def foo(@[MyAnn] v); end"
+  assert_format "def foo(@[MyAnn] *v); end"
+  assert_format "def foo(@[MyAnn] **v); end"
   assert_format "def foo(@[MyAnn] &); end"
   assert_format "def foo(@[MyAnn] &block); end"
   assert_format "def foo(@[MyAnn] & : String -> Nil); end"
