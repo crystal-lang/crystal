@@ -271,6 +271,38 @@ describe "UUID" do
     end
   end
 
+  describe "v6" do
+    it "generates a v6 UUID" do
+      uuid = UUID.v6
+      uuid.v6?.should be_true
+      uuid.version.should eq UUID::Version::V6
+      uuid.variant.should eq UUID::Variant::RFC4122
+    end
+
+    it "accepts a custom node_id" do
+      uuid = UUID.v6(node_id: StaticArray(UInt8, 6).new { |i| (i * 10).to_u8 })
+      uuid.v6?.should be_true
+      uuid.to_s[24..36].should eq("000a141e2832")
+    end
+
+    it "accepts a custom clock_seq" do
+      uuid = UUID.v6(clock_seq: 0x1234_u16)
+      uuid.v6?.should be_true
+      # clock_seq occupies the low 14 bits of bytes 8-9 after the 2 variant bits
+      clock_seq = ((uuid.bytes[8].to_u16 & 0x3f) << 8) | uuid.bytes[9].to_u16
+      clock_seq.should eq 0x1234_u16
+    end
+
+    pending_wasm32 "generates UUIDs that are sortable" do
+      uuids = Array.new(10) do
+        sleep 1.millisecond
+        UUID.v6
+      end
+
+      uuids.should eq uuids.sort
+    end
+  end
+
   describe "v7" do
     it "generates a v7 UUID" do
       uuid = UUID.v7
@@ -285,6 +317,42 @@ describe "UUID" do
       end
 
       uuids.should eq uuids.sort
+    end
+  end
+
+  describe "v8" do
+    it "generates a v8 UUID from a StaticArray" do
+      custom = StaticArray(UInt8, 16).new { |i| i.to_u8 }
+      uuid = UUID.v8(custom)
+      uuid.v8?.should be_true
+      uuid.version.should eq UUID::Version::V8
+      uuid.variant.should eq UUID::Variant::RFC4122
+    end
+
+    it "generates a v8 UUID from a Slice" do
+      custom = Bytes.new(16) { |i| i.to_u8 }
+      uuid = UUID.v8(custom)
+      uuid.v8?.should be_true
+      uuid.version.should eq UUID::Version::V8
+      uuid.variant.should eq UUID::Variant::RFC4122
+    end
+
+    it "preserves user payload except version and variant bits" do
+      custom = StaticArray(UInt8, 16).new(0xff_u8)
+      uuid = UUID.v8(custom)
+      bytes = uuid.bytes
+      # All bytes except 6 (version nibble) and 8 (variant bits) should be 0xFF
+      (0..5).each { |i| bytes[i].should eq 0xff_u8 }
+      # byte 6: high nibble = 8 (version), low nibble = 0xf (preserved)
+      bytes[6].should eq 0x8f_u8
+      bytes[7].should eq 0xff_u8
+      # byte 8: high 2 bits = 10 (variant), low 6 bits = 0x3f (preserved)
+      bytes[8].should eq 0xbf_u8
+      (9..15).each { |i| bytes[i].should eq 0xff_u8 }
+    end
+
+    it "raises on a Slice with wrong size" do
+      expect_raises(ArgumentError) { UUID.v8(Bytes.new(10)) }
     end
   end
 end
