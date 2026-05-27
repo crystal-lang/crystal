@@ -431,8 +431,8 @@ class Crystal::Repl::Context
   getter? loader : Loader?
 
   def shell_command(cmd)
-    {% if flag?(:windows) %}
-      [cmd]
+    {% if flag?(:win32) %}
+      ["cmd.exe", "/c", cmd]
     {% else %}
       ["/bin/sh", "-c", cmd, "sh"]
     {% end %}
