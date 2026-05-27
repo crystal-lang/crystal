@@ -17,7 +17,7 @@ jobs:
     uses: ./.github/workflows/mingw-w64-steps.yml
     with:
       arch: x86_64
-      runs-on: windows-2025
+      runs-on: windows-2025-vs2026
       msystem: UCRT64
       mingw-package-prefix: mingw-w64-ucrt-x86_64
 
