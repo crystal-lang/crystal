@@ -94,7 +94,7 @@ describe Crystal::Doc::ProjectInfo do
         run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        commit_sha = `git rev-parse HEAD`.chomp
+        commit_sha = Process.capture("git", "rev-parse", "HEAD").chomp
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: commit_sha))

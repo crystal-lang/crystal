@@ -433,7 +433,7 @@ class Crystal::Repl::Context
   getter(loader : Loader) {
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
-    lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
+    lib_flags = lib_flags.gsub(/`(.*?)`/) { |_, match| Process.capture(match[1]).chomp }
 
     args = Process.parse_arguments(lib_flags)
     # FIXME: Part 1: This is a workaround for initial integration of the interpreter:

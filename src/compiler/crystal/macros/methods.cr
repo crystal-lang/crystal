@@ -245,6 +245,14 @@ module Crystal
       raise SkipMacroException.new(@str.to_s, macro_expansion_pragmas)
     end
 
+    def shell_command(cmd)
+      {% if flag?(:windows) %}
+        [cmd]
+      {% else %}
+        ["/bin/sh", "-c", cmd, "sh"]
+      {% end %}
+    end
+
     def interpret_system(node)
       cmd = node.args.map do |arg|
         arg.accept self
@@ -253,7 +261,7 @@ module Crystal
       cmd = cmd.join " "
 
       begin
-        result = `#{cmd}`
+        result = Process.capture_result(shell_command(cmd))
       rescue exc : File::Error | IO::Error
         # Taking the os_error message to avoid duplicating the "error executing process: "
         # prefix of the error message and ensure uniqueness between all error messages.
@@ -262,12 +270,12 @@ module Crystal
         node.raise "error executing command: #{cmd}: #{exc.message}"
       end
 
-      if $?.success?
-        @last = MacroId.new(result)
-      elsif result.empty?
-        node.raise "error executing command: #{cmd}, got exit status #{$?}"
+      if result.status.success?
+        @last = MacroId.new(result.output)
+      elsif result.error.empty?
+        node.raise "error executing command: #{cmd}, got exit status #{result.status}"
       else
-        node.raise "error executing command: #{cmd}, got exit status #{$?}:\n\n#{result}\n"
+        node.raise "error executing command: #{cmd}, got exit status #{result.status}:\n\n#{result.error}\n"
       end
     end
 
