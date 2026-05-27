@@ -165,7 +165,7 @@ class Process::Status
 
   {% if flag?(:win32) %}
     # :nodoc:
-    @[Deprecated("`Process::Status` does not provide a portable constructor.")]
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
     def self.new(exit_status : UInt32)
       new(system_exit_status: exit_status)
     end
@@ -175,7 +175,7 @@ class Process::Status
     end
   {% else %}
     # :nodoc:
-    @[Deprecated("`Process::Status` does not provide a portable constructor.")]
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
     def self.new(exit_status : Int32)
       new(system_exit_status: exit_status)
     end
