@@ -628,12 +628,13 @@ describe "Dir" do
   describe ".current" do
     # can't use backtick in interpreted code (#12241)
     pending_interpreted "matches shell" do
-      pwd =
+      pwd = Process.capture(
         {% if flag?(:win32) %}
-          Process.capture("cmd", "/c", "cd").chomp
+          ["cmd", "/c", "cd"]
         {% else %}
-          Process.capture("pwd").chomp
+          "pwd"
         {% end %}
+      ).chomp
       Dir.current.should eq(pwd)
     end
 
