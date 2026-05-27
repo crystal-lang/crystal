@@ -340,15 +340,15 @@ describe "UUID" do
     it "preserves user payload except version and variant bits" do
       custom = StaticArray(UInt8, 16).new(0xff_u8)
       uuid = UUID.v8(custom)
-      bytes = uuid.bytes
       # All bytes except 6 (version nibble) and 8 (variant bits) should be 0xFF
-      (0..5).each { |i| bytes[i].should eq 0xff_u8 }
       # byte 6: high nibble = 8 (version), low nibble = 0xf (preserved)
-      bytes[6].should eq 0x8f_u8
-      bytes[7].should eq 0xff_u8
       # byte 8: high 2 bits = 10 (variant), low 6 bits = 0x3f (preserved)
-      bytes[8].should eq 0xbf_u8
-      (9..15).each { |i| bytes[i].should eq 0xff_u8 }
+      uuid.bytes.should eq UInt8.static_array(
+        0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0x8f, 0xff,
+        0xbf, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff,
+      )
     end
 
     it "raises on a Slice with wrong size" do
