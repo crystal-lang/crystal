@@ -216,10 +216,10 @@ class Crystal::Loader
   end
 
   def self.cc_each_library_path(& : String ->) : Nil
-    search_dirs = Process.capture?(Crystal::Compiler::DEFAULT_LINKER, "-print-search-dirs")
+    search_dirs = Process.capture_result?(Crystal::Compiler::DEFAULT_LINKER, "-print-search-dirs")
     return unless search_dirs
 
-    search_dirs.each_line do |line|
+    search_dirs.output.each_line do |line|
       if libraries = line.lchop?("libraries: =")
         libraries.split(Process::PATH_DELIMITER) do |path|
           yield File.expand_path(path)

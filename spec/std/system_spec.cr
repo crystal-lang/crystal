@@ -25,7 +25,7 @@ describe System do
             ["grep", "-sc", "^processor", "/proc/cpuinfo"],
             ["sysctl", "-n", "hw.cpu"],
           ].find_value(0) do |args|
-            Process.capture?(args).try(&.to_i)
+            Process.capture_result?(args).try(&.output.to_i)
           end
         {% end %}
       cpu_count = System.cpu_count
