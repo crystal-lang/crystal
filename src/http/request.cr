@@ -342,6 +342,29 @@ class HTTP::Request
     uri.query = query_params.to_s
   end
 
+  # :nodoc:
+  #
+  # This method is used by `HTTP::Client` to determine whether it can safely retry a request.
+  # Returns `true` if this request is expected to be replayable, i.e. if making
+  # multiple identical requests has the same effect on the server as making a
+  # single request.
+  #
+  # This is only an expectation based on request properties. The actual server
+  # may behave differently, and even a `GET` request might cause side effects.
+  #
+  # Closely related to [idempotency] in the HTTP spec, but only the “safe”
+  # methods `GET`, `HEAD`, `OPTIONS`, and `TRACE` are considered replayable unless
+  # there is an explicit idempotency header. Requests with a body (including form
+  # params) are never replayable.
+  #
+  # [idempotency]: https://httpwg.org/specs/rfc9110.html#idempotent.methods
+  def replayable? : Bool
+    @body.nil? && @form_params.nil? && (
+      @method.in?("GET", "HEAD", "OPTIONS", "TRACE") ||
+        headers.has_key?("Idempotency-Key") || headers.has_key?("X-Idempotency-Key")
+    )
+  end
+
   def if_match : Array(String)?
     parse_etags("If-Match")
   end
