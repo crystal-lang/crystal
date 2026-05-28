@@ -1923,13 +1923,11 @@ module Crystal
             if lookahead { char == 'y' && char_sequence?('i', 'e', 'l', 'd') && !ident_part_or_end?(peek_next_char) }
               yields = true
               char = current_char
-              whitespace = true
               beginning_of_line = false
             elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) }
               char = current_char
 
               nest += 1 unless keyword.abstract_def?
-              whitespace = true
               beginning_of_line = false
               next
             end

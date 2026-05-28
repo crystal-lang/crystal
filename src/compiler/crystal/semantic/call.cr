@@ -1023,8 +1023,7 @@ class Crystal::Call
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
-              block_type = lookup_node_type(match.context, output).virtual_type
-              block_type = program.nil if block_type.void?
+              lookup_node_type(match.context, output).virtual_type
             rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
