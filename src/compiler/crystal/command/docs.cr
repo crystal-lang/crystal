@@ -124,7 +124,7 @@ class Crystal::Command
     end
 
     if Crystal::Doc::MarkdDocRenderer::SANITIZER.nil?
-      STDERR.puts "Crystal built without LibXML2 support, documentation sanitization disabled"
+      STDERR.puts "Crystal built without LibXML2 support, HTML sanitization will be skipped"
     end
 
     unless project_info.name? && project_info.version?

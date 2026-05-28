@@ -1,6 +1,6 @@
 # Supported library versions:
 #
-# * openssl (1.1.0–3.3+)
+# * openssl (1.1.0–4.0+)
 # * libressl (2.0–4.0+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#tls
@@ -24,7 +24,7 @@
       {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
                          (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false'` != "false") &&
                          (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "").gsub(/\.0(\d)/, ".\\1") %}
     {% end %}
 
     {% if from_libressl %}
@@ -177,7 +177,10 @@ lib LibCrypto
   fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
-  fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% if compare_versions(OPENSSL_VERSION, "4.0.0") < 0 %}
+    fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% end %}
+  fun asn1_string_get0_data = ASN1_STRING_get0_data(x : ASN1_STRING) : Char*
   fun asn1_string_length = ASN1_STRING_length(x : ASN1_STRING) : Int
   fun asn1_string_print = ASN1_STRING_print(out : Bio*, v : ASN1_STRING) : Int
   fun i2t_asn1_object = i2t_ASN1_OBJECT(buf : Char*, buf_len : Int, a : ASN1_OBJECT) : Int

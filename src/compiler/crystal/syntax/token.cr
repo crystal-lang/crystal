@@ -301,6 +301,10 @@ module Crystal
       SYMBOL_ARRAY
       COMMAND
       HEREDOC
+
+      def array?
+        string_array? || symbol_array?
+      end
     end
 
     record DelimiterState,

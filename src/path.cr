@@ -164,6 +164,8 @@ struct Path
     windows("").join(parts)
   end
 
+  getter kind : Kind
+
   # :nodoc:
   protected def initialize(@name : String, @kind : Kind)
   end

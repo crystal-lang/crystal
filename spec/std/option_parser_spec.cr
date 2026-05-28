@@ -956,6 +956,30 @@ describe "OptionParser with summary_width and summary_indent" do
     output.should eq(expected_output)
   end
 
+  it "formats summary_width boundary cases" do
+    parser = OptionParser.new
+    parser.summary_width = 20
+    parser.summary_indent = " " * 4
+
+    parser.on("-c", "--complex-option", "desc") { }
+    parser.on("-d", "--extended-option", "desc") { }
+    parser.on("-e", "--val-option VAL", "desc") { }
+    parser.on("-f", "--value-opt VALUE", "desc") { }
+
+    output = parser.to_s
+
+    expected_output = <<-USAGE
+        -c, --complex-option desc
+        -d, --extended-option
+                             desc
+        -e, --val-option VAL desc
+        -f, --value-opt VALUE
+                             desc
+    USAGE
+
+    output.should eq(expected_output)
+  end
+
   it "handles extreme summary_width values (e.g., 0)" do
     parser = OptionParser.new
     parser.summary_width = 0

@@ -435,5 +435,45 @@ describe Crystal::Repl::Interpreter do
         foo("b" || nil)
       CRYSTAL
     end
+
+    it "doesn't reuse a cached dispatch chain when a later call site sees a wider target_defs set (#16810)" do
+      # Two call sites against the same union type. The second site
+      # instantiates `G(C)`, which adds an extra `target_def` to the
+      # multidispatch. With the old cache key (`obj_type` + `signature`
+      # only) both sites would share a dispatch chain built for the
+      # first one, and the new type would fall through into the
+      # `unreachable` else branch.
+      interpret(<<-CRYSTAL).should eq(42 * 1000 + 42)
+        module M1; end
+        module M2; end
+
+        class G(T)
+          include M1
+          def my_check
+            42
+          end
+        end
+
+        alias V = Int32 | M1 | M2 | Nil
+
+        class C
+          include M2
+        end
+
+        class Object
+          def my_check
+            0
+          end
+        end
+
+        v1 = G(M2 | C).new.as(V)
+        res1 = v1.my_check
+
+        v2 = G(C).new.as(V)
+        res2 = v2.my_check
+
+        res1 &* 1000 &+ res2
+      CRYSTAL
+    end
   end
 end

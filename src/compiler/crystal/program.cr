@@ -155,6 +155,8 @@ module Crystal
 
     property compiler : Compiler?
 
+    property optimization_mode = Compiler::OptimizationMode::O0
+
     def initialize
       super(self, self, "main")
 

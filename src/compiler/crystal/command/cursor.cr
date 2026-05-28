@@ -34,7 +34,7 @@ class Crystal::Command
     begin
       loc = Location.parse(config.cursor_location.not_nil!, expand: true)
     rescue ex : ArgumentError
-      error ex.message
+      abort ex.message
     end
 
     result = @progress_tracker.stage("Tool (#{command.split(' ')[1]})") do

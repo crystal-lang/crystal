@@ -43,6 +43,7 @@ lib LibC
   IO_REPARSE_TAG_AF_UNIX = 0x80000023_u32
 
   # Memory protection constants
+  PAGE_READONLY  =  0x02
   PAGE_READWRITE =  0x04
   PAGE_GUARD     = 0x100
 

@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-env - Print environment variables for the Crystal compiler
 
 == Synopsis
+
 *crystal env* [variables]
 
 == Description

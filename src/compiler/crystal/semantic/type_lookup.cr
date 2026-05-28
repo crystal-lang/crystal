@@ -253,7 +253,7 @@ class Crystal::Type
           end
           next
         when SizeOf, InstanceSizeOf, AlignOf, InstanceAlignOf, OffsetOf
-          next unless @raise
+          return unless @raise
 
           type_var.raise "can't use #{type_var} as a generic type argument"
         end

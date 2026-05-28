@@ -484,15 +484,21 @@ module Crystal
       format_regex_modifiers if is_regex
 
       if space_slash_newline?
-        old_indent = @indent
-        @indent = column if @string_continuation == 0
         @string_continuation += 1
-        write " \\"
-        write_line
-        write_indent
-        next_token_skip_space_or_newline
-        visit(node)
-        @indent = old_indent
+        @indent = column
+
+        @passed_backslash_newline = true
+        next_token_skip_space
+
+        write_line if @token.type.newline?
+        skip_space_or_newline
+
+        if @token.type.delimiter_start?
+          visit(node)
+        else
+          # empty continuation
+        end
+
         @string_continuation -= 1
       else
         next_token
@@ -734,26 +740,6 @@ module Crystal
       false
     end
 
-    def space_newline?
-      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
-        char = @lexer.current_char
-        case char
-        when ' ', '\t'
-          @lexer.next_char
-        when '\n'
-          @lexer.current_pos = pos
-          return true
-        else
-          break
-        end
-      end
-      @lexer.current_pos = pos
-      @lexer.line_number = line
-      @lexer.column_number = col
-      false
-    end
-
     def visit(node : ArrayLiteral)
       case @token.type
       when .op_lsquare?
@@ -762,34 +748,34 @@ module Crystal
         write "[]"
         next_token
       when .string_array_start?, .symbol_array_start?
-        first = true
         write @token.raw
-        count = 0
-        while true
-          has_space_newline = space_newline?
-          if has_space_newline
+
+        @lexer.next_string_token(@token.delimiter_state)
+
+        node.elements.each_with_index do |elem, index|
+          if skip_space_in_percent_array_literal
             write_line
-            if count == node.elements.size
-              write_indent
-            else
-              write_indent(@indent + 2)
-            end
+            write_indent(@indent + 2)
+          elsif index != 0
+            write " "
           end
-          next_string_array_token
-          case @token.type
-          when .string?
-            write " " unless first || has_space_newline
-            write @token.raw
-            first = false
-          when .string_array_end?
-            write @token.raw
-            next_token
-            break
-          else
-            raise "Bug: unexpected token #{@token.type}"
+
+          while @token.type.string?
+            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+            @lexer.next_string_token(@token.delimiter_state)
           end
-          count += 1
         end
+
+        # skip trailing space
+        if skip_space_in_percent_array_literal && node.elements.present?
+          write_line
+          write_indent(@indent)
+        end
+
+        check :STRING_ARRAY_END
+        write @token.raw
+        next_token
+
         return false
       else
         name = node.name.not_nil!
@@ -804,6 +790,16 @@ module Crystal
       end
 
       false
+    end
+
+    def skip_space_in_percent_array_literal
+      found_newline = false
+      while @token.type.space?
+        found_newline ||= @token.raw.includes?("\n")
+        @lexer.next_string_token(@token.delimiter_state)
+      end
+
+      found_newline
     end
 
     def visit(node : TupleLiteral)
@@ -1240,13 +1236,13 @@ module Crystal
     def visit(node : If)
       if node.ternary?
         accept node.cond
-        skip_space_or_newline
-        write_token " ", :OP_QUESTION, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_QUESTION
+        skip_space_or_newline || write " "
         accept node.then
-        skip_space_or_newline
-        write_token " ", :OP_COLON, " "
-        skip_space_or_newline
+        skip_space_or_newline || write " "
+        write_token :OP_COLON
+        skip_space_or_newline || write " "
         accept node.else
         return false
       end
@@ -1493,13 +1489,13 @@ module Crystal
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
         wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
+          format_parameter_annotations(arg)
+
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
             next if arg.external_name.empty? # skip empty splat argument.
           end
-
-          format_parameter_annotations(arg)
 
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
@@ -1508,6 +1504,8 @@ module Crystal
 
       if double_splat
         wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
+          format_parameter_annotations(double_splat)
+
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -3225,35 +3223,18 @@ module Crystal
     end
 
     def visit(node : Or)
-      format_binary node, :OP_BAR_BAR, :OP_BAR_BAR_EQ
+      format_binary node, :OP_BAR_BAR
     end
 
     def visit(node : And)
-      format_binary node, :OP_AMP_AMP, :OP_AMP_AMP_EQ
+      format_binary node, :OP_AMP_AMP
     end
 
-    def format_binary(node, token : Token::Kind, alternative : Token::Kind)
+    def format_binary(node, token : Token::Kind)
       column = @column
 
       accept node.left
       skip_space_or_newline
-
-      # This is the case of `left ||= right`
-      if @token.type == alternative
-        write " "
-        write alternative
-        write " "
-        next_token_skip_space
-        case right = node.right
-        when Assign
-          accept_assign_value(right.value)
-        when Call
-          accept_assign_value(right.args.last)
-        else
-          raise "BUG: expected Assign or Call after op assign, at #{node.location}"
-        end
-        return false
-      end
 
       write_token " ", token
       found_comment = skip_space
@@ -4470,10 +4451,6 @@ module Crystal
     def next_string_token
       @token = @lexer.next_string_token(@token.delimiter_state)
       @token
-    end
-
-    def next_string_array_token
-      @token = @lexer.next_string_array_token
     end
 
     def next_macro_token

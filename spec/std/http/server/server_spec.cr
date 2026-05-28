@@ -111,7 +111,7 @@ describe HTTP::Server do
 
   it "handles Expect: 100-continue correctly when body is read" do
     server = HTTP::Server.new do |context|
-      context.response << context.request.body.not_nil!.gets_to_end
+      context.response << context.request.body.should_not(be_nil).gets_to_end
     end
 
     address = server.bind_unused_port

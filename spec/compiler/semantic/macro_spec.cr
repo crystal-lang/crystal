@@ -1306,6 +1306,28 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "reports wrong number of arguments for module macro call with path receiver (#5479)" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 2, expected 1)")
+      module Mod
+        macro foo(foo)
+        end
+      end
+
+      Mod.foo(String, String)
+      CRYSTAL
+  end
+
+  it "reports named argument errors for module macro call with path receiver" do
+    assert_error(<<-CRYSTAL, "no parameter named 'y'")
+      module Mod
+        macro foo(x = 1)
+        end
+      end
+
+      Mod.foo(y: String)
+      CRYSTAL
+  end
+
   it "uses bare *, doesn't let more args" do
     assert_error(<<-CRYSTAL, "no overload matches")
       def foo(x, *, y)
@@ -1799,8 +1821,8 @@ describe "Semantic: macro" do
       end
       CRYSTAL
 
-    method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
-    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
+    method = result.program.types["Foo"].lookup_first_def("bar", false).should_not(be_nil)
+    method.location.should_not(be_nil).expanded_location.should_not(be_nil).line_number.should eq(9)
   end
 
   it "assigns to underscore" do

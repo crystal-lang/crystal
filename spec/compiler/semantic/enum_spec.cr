@@ -494,7 +494,7 @@ describe "Semantic: enum" do
       end
       CRYSTAL
 
-    method = result.program.types["Foo"].lookup_first_def("bar", block: false).not_nil!
+    method = result.program.types["Foo"].lookup_first_def("bar", block: false).should_not(be_nil)
     method.always_inline?.should be_true
   end
 
