@@ -1037,7 +1037,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       @vars[var.name] = MetaVar.new(var.name)
     elsif var.is_a?(Path)
       value = node.value
-      node.raise "constant type declaration requires an initializer" unless value
+      node.raise "constant type declaration requires a value" unless value
       type_assign(var, value, node, declared_type: node.declared_type)
       return false
     end
