@@ -22,36 +22,36 @@ struct Exception::CallStack
   end
 
   protected def self.read_dwarf_sections(image, base_address = 0_u64) : Nil
-    line_strings = image.read_section?(DEBUG_LINE_STR) do |sh, io|
-      Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
+    line_strings = image.section?(DEBUG_LINE_STR) do |bytes, _|
+      Crystal::DWARF::Strings.new(bytes)
     end
 
-    strings = image.read_section?(DEBUG_STR) do |sh, io|
-      Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
+    strings = image.section?(DEBUG_STR) do |bytes, _|
+      Crystal::DWARF::Strings.new(bytes)
     end
 
-    image.read_section?(DEBUG_LINE) do |sh, io|
-      @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, base_address, strings, line_strings)
+    image.section?(DEBUG_LINE) do |bytes, _|
+      io = IO::Memory.new(bytes)
+      @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, base_address, strings, line_strings)
     end
 
-    abbrevs_tables = image.read_section?(DEBUG_ABBREV) do |sh, io|
-      all = {} of Int64 => Array(Crystal::DWARF::Abbrev)
-      while (offset = io.pos - sh.offset) < sh.size
-        all[offset] = Crystal::DWARF::Abbrev.read(io)
+    abbrev_tables = {} of Int64 => Array(Crystal::DWARF::Abbrev)
+    image.section?(DEBUG_ABBREV) do |bytes, _|
+      io = IO::Memory.new(bytes)
+      while (offset = io.pos.to_i64) < bytes.size
+        abbrev_tables[offset] = Crystal::DWARF::Abbrev.read(io)
       end
-      all
     end
 
-    image.read_section?(DEBUG_INFO) do |sh, io|
+    image.section?(DEBUG_INFO) do |bytes, offset|
+      io = IO::Memory.new(bytes)
       names = [] of {LibC::SizeT, LibC::SizeT, String}
 
-      while (offset = io.pos - sh.offset) < sh.size
+      while io.pos < bytes.size
         info = Crystal::DWARF::Info.new(io, offset)
 
-        if abbrevs_tables
-          if abbreviations = abbrevs_tables[info.debug_abbrev_offset]?
-            info.abbreviations = abbreviations
-          end
+        if abbrev = abbrev_tables[info.debug_abbrev_offset]?
+          info.abbreviations = abbrev
         end
 
         parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|

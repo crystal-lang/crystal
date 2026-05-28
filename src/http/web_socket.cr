@@ -74,7 +74,11 @@ class HTTP::WebSocket
   end
 
   protected def check_open
-    raise IO::Error.new "Closed socket" if closed?
+    raise_closed if closed?
+  end
+
+  protected def raise_closed
+    raise IO::Error.new "Closed socket"
   end
 
   # Sends a message payload (message).
@@ -132,22 +136,49 @@ class HTTP::WebSocket
     @ws.close(code, message)
   end
 
-  # Continuously receives messages and calls previously set callbacks until the websocket is closed.
-  # Ping and pong messages are automatically handled.
+  # Receives and returns a single WebSocket message as a `String` for text
+  # messages, `Bytes` for binary messages, or raises `IO::Error` if the
+  # `WebSocket` has been closed.
   #
   # ```
   # # Open websocket connection
   # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
   #
-  # # Set callback
-  # ws.on_message do |msg|
-  #   ws.send "response"
+  # loop do
+  #   case msg = ws.receive
+  #   in String # text
+  #     ws.send "response"
+  #     puts msg
+  #   in Bytes # binary
+  #     ws.send "response".to_slice
+  #   end
   # end
-  #
-  # # Start infinite loop
-  # ws.run
   # ```
-  def run : Nil
+  def receive : String | Bytes
+    receive? || raise_closed
+  end
+
+  # Receives and returns a single WebSocket message as a `String` for text
+  # messages, `Bytes` for binary messages, or `nil` if the `WebSocket` has been
+  # closed.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # loop do
+  #   case msg = ws.receive?
+  #   in String # text
+  #     ws.send "response"
+  #     puts msg
+  #   in Bytes # binary
+  #     ws.send "response".to_slice
+  #   in Nil
+  #     break
+  #   end
+  # end
+  # ```
+  def receive? : String | Bytes | Nil
     loop do
       begin
         info = @ws.receive(@buffer)
@@ -168,20 +199,25 @@ class HTTP::WebSocket
       in .pong?
         @current_message.write @buffer[0, info.size]
         if info.final
-          @on_pong.try &.call(@current_message.to_s)
+          message = @current_message.to_s
+          @on_pong.try &.call(message)
           @current_message.clear
         end
       in .text?
         @current_message.write @buffer[0, info.size]
         if info.final
-          @on_message.try &.call(@current_message.to_s)
+          message = @current_message.to_s
+          @on_message.try &.call(message)
           @current_message.clear
+          return message
         end
       in .binary?
         @current_message.write @buffer[0, info.size]
         if info.final
-          @on_binary.try &.call(@current_message.to_slice)
+          slice = @current_message.to_slice.clone
+          @on_binary.try &.call(slice)
           @current_message.clear
+          return slice
         end
       in .close?
         @current_message.write @buffer[0, info.size]
@@ -199,11 +235,32 @@ class HTTP::WebSocket
           do_close(code, message)
 
           @current_message.clear
-          break
+          return nil
         end
       in .continuation?
         # TODO: (asterite) I think this is good, but this case wasn't originally handled
       end
+    end
+  end
+
+  # Continuously receives messages and calls previously set callbacks until the websocket is closed.
+  # Ping and pong messages are automatically handled.
+  #
+  # ```
+  # # Open websocket connection
+  # ws = HTTP::WebSocket.new("websocket.example.com", "/chat")
+  #
+  # # Set callback
+  # ws.on_message do |msg|
+  #   ws.send "response"
+  # end
+  #
+  # # Start infinite loop
+  # ws.run
+  # ```
+  def run : Nil
+    loop do
+      break unless receive?
     end
   end
 
