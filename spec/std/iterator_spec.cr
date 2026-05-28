@@ -155,7 +155,7 @@ describe Iterator do
         iter.next.should be_a(Iterator::Stop)
       end
 
-      it "works with empty iteratotor" do
+      it "works with empty iterator" do
         iter = Iterator(Int32).empty.accumulate(7) { |x, y| x * y }
         iter.next.should eq(7)
         iter.next.should be_a(Iterator::Stop)
