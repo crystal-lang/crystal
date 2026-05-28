@@ -30,7 +30,7 @@ module Crystal::System::Socket
       sizeof(Pointer(Void)),
       out bytes,
       nil,
-      nil
+      nil,
     )
     if result == LibC::SOCKET_ERROR
       raise ::Socket::Error.from_wsa_error("WSAIoctl")

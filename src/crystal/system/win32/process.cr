@@ -310,7 +310,7 @@ struct Crystal::System::Process
     if LibC.CreateProcessW(
          nil, System.to_wstr(prepared_args), nil, nil, true, LibC::CREATE_SUSPENDED | LibC::CREATE_UNICODE_ENVIRONMENT,
          Env.make_env_block(env, clear_env), chdir.try { |str| System.to_wstr(str) } || Pointer(UInt16).null,
-         pointerof(startup_info), pointerof(process_info)
+         pointerof(startup_info), pointerof(process_info),
        ) == 0
       error = WinError.value
       if ::File::NotFoundError.os_error?(error) || ::File::AccessDeniedError.os_error?(error) || error.in?(WinError::ERROR_BAD_EXE_FORMAT, WinError::ERROR_INVALID_PARAMETER)

@@ -57,7 +57,7 @@ module Crystal
         Path.global("Tuple"),
         type.tuple_types.map do |tuple_type|
           convert(tuple_type) || Underscore.new
-        end
+        end,
       )
     end
 
@@ -70,7 +70,7 @@ module Crystal
             entry.name,
             convert(entry.type) || Underscore.new,
           )
-        end
+        end,
       )
     end
 

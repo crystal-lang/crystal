@@ -79,7 +79,7 @@ def query_prs(api_token, repository, milestone : String, cursor : String?)
     body: {query: query, variables: variables}.to_json,
     headers: HTTP::Headers{
       "Authorization" => "bearer #{api_token}",
-    }
+    },
   )
   unless response.success?
     abort "GitHub API response: #{response.status}\n#{response.body}"

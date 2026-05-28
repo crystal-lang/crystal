@@ -481,7 +481,7 @@ module Float::Printer::Dragonbox
         {% else %}
           # F == Float64
           (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
-        {% end %}
+        {% end %},
       )
     end
 
@@ -494,7 +494,7 @@ module Float::Printer::Dragonbox
         {% else %}
           # F == Float64
           (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
-        {% end %}
+        {% end %},
       )
     end
 

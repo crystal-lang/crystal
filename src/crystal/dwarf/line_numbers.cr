@@ -273,7 +273,7 @@ module Crystal
         Array(LNCTFormat).new(count) do
           LNCTFormat.new(
             lnct: LNCT.new(DWARF.read_unsigned_leb128(@io)),
-            format: FORM.new(DWARF.read_unsigned_leb128(@io))
+            format: FORM.new(DWARF.read_unsigned_leb128(@io)),
           )
         end
       end

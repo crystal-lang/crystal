@@ -55,7 +55,7 @@ class LLVM::Module
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.value_as_metadata(val.to_unsafe)
+      LibLLVM.value_as_metadata(val.to_unsafe),
     )
   end
 

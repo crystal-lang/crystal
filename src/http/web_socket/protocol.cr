@@ -84,7 +84,7 @@ class HTTP::WebSocket::Protocol
         @buffer[0...@pos],
         @opcode,
         flags: final ? Flags::FINAL : Flags::None,
-        flush: final
+        flush: final,
       )
       @opcode = Opcode::CONTINUATION
       @pos = 0

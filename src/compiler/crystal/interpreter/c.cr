@@ -73,7 +73,7 @@ module Crystal
     getter(ffi_call_interface : FFI::CallInterface) do
       FFI::CallInterface.new(
         return_type.ffi_type,
-        arg_types.map(&.ffi_arg_type)
+        arg_types.map(&.ffi_arg_type),
       )
     end
   end
@@ -109,7 +109,7 @@ module Crystal
     def ffi_type : FFI::Type
       element_ffi_type = element_type.ffi_type
       FFI::Type.struct(
-        Array.new(size.as(NumberLiteral).value.to_i, element_ffi_type)
+        Array.new(size.as(NumberLiteral).value.to_i, element_ffi_type),
       )
     end
 

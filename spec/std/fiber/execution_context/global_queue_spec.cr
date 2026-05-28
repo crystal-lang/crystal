@@ -192,7 +192,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
             queue.bulk_push(pointerof(list))
             Thread.sleep(10.nanoseconds) if i % 4 == 3
           end
-        }
+        },
       )
 
       # must have dequeued each fiber exactly X times (no less, no more)

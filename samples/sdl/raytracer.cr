@@ -214,7 +214,7 @@ scene = Scene.new(
   ],
   [
     Light.new(Vec3.new(-10.0, 20.0, 30.0), Vec3.new(2.0, 2.0, 2.0)),
-  ]
+  ],
 )
 
 SDL.init

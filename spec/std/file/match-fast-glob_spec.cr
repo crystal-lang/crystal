@@ -255,15 +255,15 @@ describe "File .match? bash tests" do
     refute_file_matches "*.txt", "some/big/path/to/the/needle.txt"
     assert_file_matches(
       "some/**/needle.{js,tsx,mdx,ts,jsx,txt}",
-      "some/a/bigger/path/to/the/crazy/needle.txt"
+      "some/a/bigger/path/to/the/crazy/needle.txt",
     )
     assert_file_matches(
       "some/**/{a,b,c}/**/needle.txt",
-      "some/foo/a/bigger/path/to/the/crazy/needle.txt"
+      "some/foo/a/bigger/path/to/the/crazy/needle.txt",
     )
     refute_file_matches(
       "some/**/{a,b,c}/**/needle.txt",
-      "some/foo/d/bigger/path/to/the/crazy/needle.txt"
+      "some/foo/d/bigger/path/to/the/crazy/needle.txt",
     )
 
     assert_file_matches "a/{a{a,b},b}", "a/aa"

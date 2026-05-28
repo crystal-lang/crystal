@@ -48,7 +48,7 @@ module Crystal
       mod.add_flag(
         LibLLVM::ModuleFlagBehavior::Warning,
         "Debug Info Version",
-        LLVM::DEBUG_METADATA_VERSION
+        LLVM::DEBUG_METADATA_VERSION,
       )
     end
 
@@ -325,7 +325,7 @@ module Crystal
       element_types << di_builder.create_member_type(
         nil, "func", nil, 1,
         size_ptr, size_ptr, 8u64 * offset_func,
-        LLVM::DIFlags::Zero, func_ptr_type
+        LLVM::DIFlags::Zero, func_ptr_type,
       )
 
       void_type = di_builder.create_basic_type("Void", 8, 8, LLVM::DwarfTypeEncoding::Address)
@@ -334,14 +334,14 @@ module Crystal
       element_types << di_builder.create_member_type(
         nil, "closure_data", nil, 1,
         size_ptr, size_ptr, 8u64 * offset_ctx,
-        LLVM::DIFlags::Zero, ctx_ptr_type
+        LLVM::DIFlags::Zero, ctx_ptr_type,
       )
 
       total_size = @program.target_machine.data_layout.size_in_bits(struct_type)
       di_builder.create_struct_type(
         nil, original_type.to_s, nil, 1,
         total_size, total_size,
-        LLVM::DIFlags::Zero, nil, element_types
+        LLVM::DIFlags::Zero, nil, element_types,
       )
     end
 
