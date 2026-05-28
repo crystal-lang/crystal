@@ -54,20 +54,18 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
   end
 
   spawn do
-    begin
-      # Wait until the "before" fiber starts
-      while x.get == 0
-        Fiber.yield
-      end
-
-      # Now wait until the "before" fiber is blocked
-      wait_until_blocked before_fiber
-      block.call w
-
-      done.send nil
-    rescue e
-      done.send e
+    # Wait until the "before" fiber starts
+    while x.get == 0
+      Fiber.yield
     end
+
+    # Now wait until the "before" fiber is blocked
+    wait_until_blocked before_fiber
+    block.call w
+
+    done.send nil
+  rescue e
+    done.send e
   end
 
   ex = done.receive
