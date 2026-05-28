@@ -72,7 +72,7 @@ jobs:
         run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir
       - name: Build libyaml
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 893682bb98d5ed663a3e314c46dceaf9b1c8802f # master@{2026-05-13}
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.8
@@ -157,7 +157,7 @@ jobs:
         run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir -Dynamic
       - name: Build libyaml
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5 -Dynamic
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 893682bb98d5ed663a3e314c46dceaf9b1c8802f -Dynamic # master@{2026-05-13}
       - name: Build libxml2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.6 -Dynamic
