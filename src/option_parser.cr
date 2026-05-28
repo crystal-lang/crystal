@@ -331,7 +331,7 @@ class OptionParser
     description_indent = "#{summary_indent}#{" " * summary_width} "
     description = description.gsub("\n", "\n#{description_indent}")
 
-    if flag.size >= summary_width
+    if flag.size > summary_width
       @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
       @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
