@@ -335,9 +335,9 @@ struct UUID
   # reordered to be most-significant-first, making the UUID lexicographically
   # sortable by creation time.
   #
-  # The sequence number `clock_seq` should be monotonically increasing across
+  # The sequence number *clock_seq* should be monotonically increasing across
   # invocations; only 14 bits are used. If not provided, the current
-  # millisecond sub-second value is used. If `node_id` is not provided, a
+  # millisecond sub-second value is used. If *node_id* is not provided, a
   # pseudo-random node ID is generated with the multicast bit set as
   # recommended by RFC 4122 section 4.5.
   def self.v6(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
