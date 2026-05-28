@@ -1173,7 +1173,7 @@ module Crystal
       if named_args = node.named_args
         write_token :OP_LPAREN
         skip_space
-        has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
+        has_newlines, _, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
         if @token.type.op_comma?
           next_token_skip_space_or_newline
@@ -2483,10 +2483,12 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
+            has_newlines, found_comment, _, trailing_comma_written =
+              format_args args, true, node.named_args
+
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
-                write ","
+                write "," unless trailing_comma_written
                 found_comment = next_token_skip_space
                 write_line unless found_comment
                 write_indent
@@ -2706,7 +2708,7 @@ module Crystal
 
         write "("
         has_parentheses = true
-        has_newlines, found_comment, _ = format_call_args(node, true, base_indent)
+        has_newlines, found_comment, _, _ = format_call_args(node, true, base_indent)
         found_comment ||= skip_space
         if @token.type.newline?
           ends_with_newline = true
@@ -2715,7 +2717,7 @@ module Crystal
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
-        has_newlines, found_comment, _ = format_call_args(node, false, base_indent)
+        has_newlines, found_comment, _, _ = format_call_args(node, false, base_indent)
       end
 
       if block = node.block
@@ -2775,6 +2777,7 @@ module Crystal
     def format_args(args : Array, has_parentheses, named_args = nil, block_arg = nil, needed_indent = @indent + 2, do_consume_newlines = false)
       has_newlines = false
       found_comment = false
+      trailing_comma_written = false
       @inside_call_or_assign += 1
 
       unless args.empty?
@@ -2782,17 +2785,36 @@ module Crystal
       end
 
       if named_args
-        has_newlines, named_args_found_comment, needed_indent = format_named_args(args, named_args, needed_indent)
+        has_newlines, named_args_found_comment, needed_indent, _ = format_named_args(args, named_args, needed_indent)
         found_comment = true if args.empty? && named_args_found_comment
       end
 
       if block_arg
         has_newlines = format_block_arg(block_arg, needed_indent)
+      elsif has_parentheses && has_newlines
+        # Don't use `skip_space` here because that would consume
+        # trailing comment and newline
+        while @token.type.space?
+          next_token
+        end
+
+        case @token.type
+        when .op_comma?, .op_rparen?, .op_rsquare?, .op_rcurly?
+          # ignore
+        else
+          is_heredoc = @token.delimiter_state.kind.heredoc? ||
+                       (@last_is_heredoc && @token.type.newline?)
+
+          unless is_heredoc
+            trailing_comma_written = true
+            write ","
+          end
+        end
       end
 
       @inside_call_or_assign -= 1
 
-      {has_newlines, found_comment, needed_indent}
+      {has_newlines, found_comment, needed_indent, trailing_comma_written}
     end
 
     def format_args_simple(args, needed_indent, do_consume_newlines)
@@ -2931,7 +2953,7 @@ module Crystal
     def format_parenthesized_args(args, named_args = nil)
       write "("
       next_token_skip_space
-      has_newlines, found_comment, _ = format_args args, true, named_args: named_args
+      has_newlines, found_comment, _, _ = format_args args, true, named_args: named_args
       skip_space
       ends_with_newline = false
       if @token.type.newline?
