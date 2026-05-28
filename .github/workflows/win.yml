@@ -75,7 +75,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 893682bb98d5ed663a3e314c46dceaf9b1c8802f # master@{2026-05-13}
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.8
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.15.3
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -160,7 +160,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 893682bb98d5ed663a3e314c46dceaf9b1c8802f -Dynamic # master@{2026-05-13}
       - name: Build libxml2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.6 -Dynamic
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.15.3 -Dynamic
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
