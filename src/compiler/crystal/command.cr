@@ -731,7 +731,6 @@ class Crystal::Command
                          when "large"   then LLVM::CodeModel::Large
                          else
                            abort "--mcmodel should be one of: default, kernel, tiny, small, medium, large"
-                           raise "unreachable"
                          end
     end
   end
@@ -745,7 +744,6 @@ class Crystal::Command
                                   Crystal::WarningLevel::None
                                 else
                                   abort "--warnings should be all, or none"
-                                  raise "unreachable"
                                 end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
