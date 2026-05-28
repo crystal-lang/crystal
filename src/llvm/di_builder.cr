@@ -96,7 +96,7 @@ struct LLVM::DIBuilder
     LibLLVM.di_builder_create_global_variable_expression(
       self, scope, name, name.bytesize,
       linkage_name, linkage_name.bytesize, file, line,
-      type, local_to_unit, expr, decl, align_in_bits
+      type, local_to_unit, expr, decl, align_in_bits,
     )
   end
 

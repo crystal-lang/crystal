@@ -1168,7 +1168,7 @@ module Crystal
         node,
         self_type: self_type || root.instance_type,
         allow_typeof: false,
-        find_root_generic_type_parameters: find_root_generic_type_parameters
+        find_root_generic_type_parameters: find_root_generic_type_parameters,
       )
       check_can_be_stored(node, type)
     end

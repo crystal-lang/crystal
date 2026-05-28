@@ -274,7 +274,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       node,
       free_vars: free_vars,
       allow_typeof: false,
-      find_root_generic_type_parameters: find_root_generic_type_parameters
+      find_root_generic_type_parameters: find_root_generic_type_parameters,
     )
   end
 
