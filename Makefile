@@ -1,4 +1,4 @@
-all:
+all: ##
 
 -include Makefile.local # for optional local options e.g. threads
 
@@ -34,7 +34,7 @@ static ?=         ## Enable static linking
 target ?=         ## Cross-compilation target
 interpreter ?=    ## Enable interpreter feature
 check ?=          ## Enable only check when running format
-order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
+order ?=random## Enable order for spec execution (values: "default" | "random" | seed number)
 deref_symlinks ?= ## Dereference symbolic links for `make install`
 docs_sanitizer ?= ## Enable sanitization for documentation generation
 sequential_codegen ?=$(if $(filter 0,$(supports_preview_mt)),true,)## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt -Dexecution_context`

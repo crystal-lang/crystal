@@ -1,4 +1,4 @@
-all:
+all: ##
 
 -include Makefile.win.local # for optional local options e.g. threads
 

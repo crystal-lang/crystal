@@ -1,4 +1,4 @@
-all:
+all: ##
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
