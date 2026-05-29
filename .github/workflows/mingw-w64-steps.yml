@@ -30,6 +30,7 @@ jobs:
           install: >-
             git
             make
+            ${{ inputs.mingw-package-prefix }}-asciidoctor
             ${{ inputs.mingw-package-prefix }}-pkgconf
             ${{ inputs.mingw-package-prefix }}-llvm
             ${{ inputs.mingw-package-prefix }}-crystal

@@ -59,9 +59,7 @@ O := .build
 SOURCES := $(call GLOB,src\\*.cr)
 SPEC_SOURCES := $(call GLOB,spec\\*.cr)
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
-# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context) $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context )
 SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives --exclude-warnings src\float\printer
 SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
@@ -164,7 +162,11 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)\crystal.exe ## Install the compiler at prefix
+install: ## Install the crystal compiler package at prefix
+install: install_compiler
+
+.PHONY: install_compiler
+install_compiler: $(O)\crystal.exe
 	$(call MKDIR,"$(BINDIR)")
 	$(call INSTALL,"$(O)\crystal.exe","$(BINDIR)\crystal.exe")
 	$(call INSTALL,"$(O)\crystal.pdb","$(BINDIR)\crystal.pdb")
@@ -175,8 +177,11 @@ install: $(O)\crystal.exe ## Install the compiler at prefix
 
 	$(call INSTALL,LICENSE,"$(DATADIR)\LICENSE.txt")
 
-.PHONY: uninstall
-uninstall: ## Uninstall the compiler from prefix
+.PHONY: uninstall ## Uninstall the Crystal compiler package from prefix
+uninstall: uninstall_compiler
+
+.PHONY: uninstall_compiler
+uninstall_compiler:
 	$(call RM,"$(DATADIR)\LICENSE.txt")
 
 	$(call RMDIR,"$(DATADIR)\src")

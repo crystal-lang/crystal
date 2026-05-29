@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-run - Compile and run a Crystal program
 
 == Synopsis
+
 *crystal run* [options] [programfile] [--] [arguments]
 
 == Description

@@ -124,7 +124,7 @@ class Crystal::Command
         filenames = Dir["#{filename}/**/*.cr"]
         format_many filenames
       else
-        error "file or directory does not exist: #{filename}"
+        print_error "file or directory does not exist: #{filename}"
       end
     end
 
@@ -139,7 +139,7 @@ class Crystal::Command
       return if result == source
 
       if @check
-        error "formatting '#{filename}' produced changes"
+        print_error "formatting '#{filename}' produced changes"
         @status_code = 1
       else
         unless @format_stdin
@@ -148,18 +148,18 @@ class Crystal::Command
         end
       end
     rescue ex : InvalidByteSequenceError
-      error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
+      print_error "file '#{filename}' is not a valid Crystal source file: #{ex.message}"
       @status_code = 1
     rescue ex : Crystal::SyntaxException
-      error "syntax error in '#{filename}:#{ex.line_number}:#{ex.column_number}': #{ex.message}"
+      print_error "syntax error in '#{filename}:#{ex.line_number}:#{ex.column_number}': #{ex.message}"
       @status_code = 1
     rescue ex
       if @show_backtrace
         ex.inspect_with_backtrace @stderr
         @stderr.puts
-        error "couldn't format '#{filename}', please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
+        print_error "couldn't format '#{filename}', please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
       else
-        error "there's a bug formatting '#{filename}', to show more information, please run:\n\n  $ crystal tool format --show-backtrace #{@format_stdin ? "-" : "'#{filename}'"}\n"
+        print_error "there's a bug formatting '#{filename}', to show more information, please run:\n\n  $ crystal tool format --show-backtrace #{@format_stdin ? "-" : "'#{filename}'"}\n"
       end
       @status_code = 1
     end
@@ -169,8 +169,8 @@ class Crystal::Command
       Crystal.format(source, filename: filename, report_warnings: STDERR)
     end
 
-    private def error(msg)
-      Crystal.error msg, @color, exit_code: nil, stderr: @stderr, leading_error: false
+    private def print_error(msg)
+      Crystal.print_error msg, @color, stderr: @stderr, leading_error: false
     end
   end
 end
