@@ -36,6 +36,13 @@
       pass_filenames = true;
     };
     markdownlint.enable = true;
+    mbake = {
+      enable = true;
+      name = "Mbake";
+      entry = "${pkgs.mbake}/bin/mbake format --config .mbake.toml";
+      files = "Makefile|.*\\.Makefile|Makefile\\..*|.*\\.mk";
+      pass_filenames = true;
+    };
     shellcheck = {
       enable = true;
       excludes = [
