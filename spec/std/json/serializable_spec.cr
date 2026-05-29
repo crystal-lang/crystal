@@ -263,6 +263,7 @@ class JSONAttrWithNestedRoot
   @[JSON::Field(root: {"data", "score"})]
   property bar : Int32
 end
+
 class JSONAttrWithRoot
   include JSON::Serializable
 
@@ -1013,7 +1014,7 @@ describe "JSON::Serializable" do
     json.to_json.should eq(string)
   end
 
-    it "parses nested root properties" do
+  it "parses nested root properties" do
     obj = JSONAttrWithNestedRoot.from_json(%({"foo": {"data": {"value": "bar"}}, "bar": {"data": {"score": 42}}}))
     obj.foo.should eq("bar")
     obj.bar.should eq(42)
