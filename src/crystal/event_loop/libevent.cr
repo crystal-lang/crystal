@@ -1,4 +1,5 @@
 require "./libevent/event"
+require "./libevent/evented"
 require "./lock"
 
 # :nodoc:
@@ -92,7 +93,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -107,7 +108,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_read_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -359,8 +360,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         raise IO::Error.from_errno(errno_msg, target: target)
       end
     end
-  ensure
-    target.evented_resume_pending_readers
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
@@ -378,7 +377,5 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         raise IO::Error.from_errno(errno_msg, target: target)
       end
     end
-  ensure
-    target.evented_resume_pending_writers
   end
 end

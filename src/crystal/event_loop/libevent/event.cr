@@ -6,7 +6,7 @@ require "./lib_event2"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
-  struct Event
+  class Event
     include Crystal::EventLoop::Event
 
     VERSION = String.new(LibEvent2.event_get_version)
