@@ -57,7 +57,7 @@ jobs:
         run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.12 -AtomicOpsVersion 7.10.0
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.47
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18
@@ -142,7 +142,7 @@ jobs:
         run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.12 -AtomicOpsVersion 7.10.0 -Dynamic
       - name: Build libpcre2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45 -Dynamic
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.47 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Dynamic
