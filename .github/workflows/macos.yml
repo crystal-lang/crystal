@@ -20,13 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - runs-on: macos-15-intel
-          arch: x86_64-darwin
         - runs-on: macos-26-intel
           arch: x86_64-darwin
         - runs-on: macos-14
-          arch: aarch64-darwin
-        - runs-on: macos-15
           arch: aarch64-darwin
         - runs-on: macos-26
           arch: aarch64-darwin
