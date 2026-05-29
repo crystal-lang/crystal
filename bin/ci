@@ -130,8 +130,8 @@ build() {
   with_build_env 'CRYSTAL_OPTS=--debug make samples'
 
   # linux build docker images ship with gdb, but not lldb
-  on_linux with_build_env './spec/debug/test.sh gdb'
-  on_nix_shell with_build_env './spec/debug/test.sh lldb'
+  on_linux "with_build_env './spec/debug/test.sh gdb'"
+  on_nix_shell "with_build_env './spec/debug/test.sh lldb'"
 }
 
 format() {
