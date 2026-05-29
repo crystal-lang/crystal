@@ -204,7 +204,7 @@ struct LLVM::Type
           (has_side_effects ? 1 : 0),
           (is_align_stack ? 1 : 0),
           dialect,
-          (can_throw ? 1 : 0)
+          (can_throw ? 1 : 0),
         )
       {% end %}
     Value.new value

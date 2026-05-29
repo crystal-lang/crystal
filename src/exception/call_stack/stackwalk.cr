@@ -92,7 +92,7 @@ struct Exception::CallStack
         nil,
         nil, # ->LibC.SymFunctionTableAccess64,
         nil, # ->LibC.SymGetModuleBase64,
-        nil
+        nil,
       )
       break if ret == 0
 

@@ -188,7 +188,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       sq_entries: DEFAULT_SQ_ENTRIES,
       cq_entries: DEFAULT_CQ_ENTRIES,
       sq_thread_idle: (DEFAULT_SQ_THREAD_IDLE if System::IoUring.supports_feature?(LibC::IORING_FEAT_SQPOLL_NONFIXED)),
-      wq_fd: ring.try(&.fd)
+      wq_fd: ring.try(&.fd),
     )
   end
 

@@ -188,7 +188,7 @@ class File < IO::FileDescriptor
 
       branch_state = self.copy_with(
         glob_index: branch_index.to_u64,
-        brace_depth: brace_stack.size.to_u64
+        brace_depth: brace_stack.size.to_u64,
       )
 
       matched = branch_state.match_from(glob, path, branch_index, brace_stack)
@@ -250,7 +250,7 @@ class File < IO::FileDescriptor
             @wildcard = Wildcard.new(
               @glob_index.to_u32!,
               @path_index.to_u32! + 1,
-              @brace_depth.to_u32!
+              @brace_depth.to_u32!,
             )
 
             in_globstar = false

@@ -23,7 +23,7 @@ describe "Crystal::Command" do
       process = Process.new(compiler_path,
         ["external", "foo", "bar"],
         output: :pipe, error: :pipe,
-        env: {"PATH" => {ENV["PATH"], File.dirname(command_path)}.join(Process::PATH_DELIMITER)}
+        env: {"PATH" => {ENV["PATH"], File.dirname(command_path)}.join(Process::PATH_DELIMITER)},
       )
 
       output = process.output.gets_to_end

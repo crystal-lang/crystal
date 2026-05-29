@@ -776,11 +776,11 @@ module Crystal
             Call.new("c",
               Call.new("d",
                 Call.new("e"),
-                block: Block.new(body: 1.int32)
+                block: Block.new(body: 1.int32),
               ),
-              block: Block.new(body: 2.int32)
+              block: Block.new(body: 2.int32),
             ),
-            block: Block.new(body: 3.int32)
+            block: Block.new(body: 3.int32),
           ),
           block: Block.new(body: 4.int32))
         it_parses "a b c d e { 1 } { 2 } do 3 end { 4 }", Call.new("a",
@@ -788,13 +788,13 @@ module Crystal
             Call.new("c",
               Call.new("d",
                 Call.new("e",
-                  block: Block.new(body: 1.int32)
+                  block: Block.new(body: 1.int32),
                 ),
-                block: Block.new(body: 2.int32)
+                block: Block.new(body: 2.int32),
               ),
-              block: Block.new(body: 3.int32)
+              block: Block.new(body: 3.int32),
             ),
-            block: Block.new(body: 4.int32))
+            block: Block.new(body: 4.int32)),
         )
       end
 
@@ -1062,14 +1062,14 @@ module Crystal
       block: Block.new(["".var],
         "c".var,
         unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
-      )
+      ),
     )
 
     it_parses "foo { |(_, c, )| c }", Call.new("foo",
       block: Block.new(["".var],
         "c".var,
         unpacks: {0 => Expressions.new([Underscore.new, "c".var] of ASTNode)},
-      )
+      ),
     )
 
     it_parses "foo { |(a, (b, (c, d)))| }", Call.new("foo",
@@ -1558,8 +1558,8 @@ module Crystal
     it_parses "foo &.nil?", Call.new("foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
     it_parses "foo &.baz.qux do\nend", Call.new("foo",
       block: Block.new(["__arg0".var],
-        Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
-      )
+        Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new),
+      ),
     )
 
     it_parses "{{ foo.nil? }}", MacroExpression.new(Call.new(Var.new("foo"), "nil?"))

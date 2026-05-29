@@ -22,7 +22,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     def add(timeout : Time::Span) : Nil
       timeval = LibC::Timeval.new(
         tv_sec: LibC::TimeT.new(timeout.total_seconds),
-        tv_usec: timeout.nanoseconds // 1_000
+        tv_usec: timeout.nanoseconds // 1_000,
       )
       LibEvent2.event_add(@event, pointerof(timeval))
     end

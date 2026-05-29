@@ -819,8 +819,8 @@ module Crystal
               [
                 Union.new([Path.global("Int32"), Path.global("String")] of ASTNode),
                 Union.new([Path.global("String"), Path.global("Nil")] of ASTNode),
-              ] of ASTNode
-            )
+              ] of ASTNode,
+            ),
           )
 
           @value.scan(regex) do |match_data|
@@ -3496,7 +3496,7 @@ private def regex_captures_hash(match_data : Regex::MatchData)
     of: Crystal::HashLiteral::Entry.new(
       Crystal::Union.new([Crystal::Path.global("Int32"), Crystal::Path.global("String")] of Crystal::ASTNode),
       Crystal::Union.new([Crystal::Path.global("String"), Crystal::Path.global("Nil")] of Crystal::ASTNode),
-    )
+    ),
   )
 
   match_data.to_h.each do |capture, substr|

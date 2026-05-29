@@ -815,7 +815,7 @@ module Crystal
           obj_type.program.type_merge(
             obj_type.union_types.map do |union_type|
               lookup_instance_var(union_type).type
-            end
+            end,
           )
         else
           lookup_instance_var(obj_type).type

@@ -368,7 +368,7 @@ module GC
       free_bytes: free_bytes.to_u64!,
       unmapped_bytes: unmapped_bytes.to_u64!,
       bytes_since_gc: bytes_since_gc.to_u64!,
-      total_bytes: total_bytes.to_u64!
+      total_bytes: total_bytes.to_u64!,
     )
   end
 
