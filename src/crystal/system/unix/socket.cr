@@ -6,6 +6,10 @@ require "c/sys/socket"
 {% end %}
 
 module Crystal::System::Socket
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
+
   alias Handle = Int32
 
   def self.socket(family, type, protocol, blocking) : Handle

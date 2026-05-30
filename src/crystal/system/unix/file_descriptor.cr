@@ -6,6 +6,10 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
+  {% if IO.has_constant?(:Evented) %}
+    include IO::Evented
+  {% end %}
+
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   alias Handle = Int32
