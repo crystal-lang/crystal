@@ -681,6 +681,13 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   def check_non_nilable_class_vars_without_initializers
+    # A subclass shares class-var storage with the ancestor that declares
+    # the variable, so it inherits that ancestor's initializer. Adopt it
+    # here — after `visit_class_vars_initializers` has populated the
+    # ancestors' initializers — so the check below treats an inherited
+    # initializer as present (#5161).
+    adopt_inherited_class_var_initializers
+
     type_decl_visitor.class_vars.each do |owner, vars|
       vars.each_key do |name|
         check_non_nilable_class_var_without_initializers(owner, name)
@@ -694,6 +701,27 @@ struct Crystal::TypeDeclarationProcessor
     end
   end
 
+  private def adopt_inherited_class_var_initializers
+    {type_decl_visitor.class_vars, type_guess_visitor.class_vars}.each do |all_vars|
+      all_vars.each do |owner, vars|
+        vars.each_key do |name|
+          class_var = owner.class_vars[name]?
+          next unless class_var
+          next if class_var.initializer
+
+          owner.ancestors.each do |ancestor|
+            next unless ancestor.is_a?(ClassVarContainer)
+            next unless ancestor_class_var = ancestor.class_vars[name]?
+            next unless initializer = ancestor_class_var.initializer
+
+            class_var.initializer = initializer
+            break
+          end
+        end
+      end
+    end
+  end
+
   private def check_non_nilable_class_var_without_initializers(owner, name)
     class_var = owner.class_vars[name]?
     return unless class_var
@@ -702,21 +730,6 @@ struct Crystal::TypeDeclarationProcessor
 
     var_type = class_var.type?
     return unless var_type
-
-    # A class var inherits from any ancestor that defines the same name —
-    # at runtime they share storage. Pick up the ancestor's initializer
-    # so a subclass that only writes to `@@x` in a method doesn't error
-    # when the superclass already provides the initial value (#5161).
-    if !class_var.initializer && owner.is_a?(ClassVarContainer)
-      owner.ancestors.each do |ancestor|
-        next unless ancestor.is_a?(ClassVarContainer)
-        next unless ancestor_class_var = ancestor.class_vars[name]?
-        next unless init = ancestor_class_var.initializer
-
-        class_var.initializer = init
-        break
-      end
-    end
 
     if !class_var.initializer && !var_type.includes_type?(@program.nil_type)
       class_var.raise "class variable '#{name}' of #{owner} is not nilable (it's #{var_type}) so it must have an initializer"
@@ -763,8 +776,7 @@ struct Crystal::TypeDeclarationProcessor
             # ancestor — typically because the ancestor's class-body
             # initializer pins the type, and the subclass's
             # read-before-write inference reports a spurious `(T | Nil)`
-            # (issue #5161). We also inherit the ancestor's initializer so
-            # the later "non-nilable without initializer" check sees it.
+            # (issue #5161).
             if owner_class_var.type.implements?(ancestor_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             elsif ancestor_class_var.type.implements?(owner_class_var.type)
