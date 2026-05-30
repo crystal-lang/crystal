@@ -705,8 +705,7 @@ struct Crystal::TypeDeclarationProcessor
     {type_decl_visitor.class_vars, type_guess_visitor.class_vars}.each do |all_vars|
       all_vars.each do |owner, vars|
         vars.each_key do |name|
-          class_var = owner.class_vars[name]?
-          next unless class_var
+          next unless class_var = owner.class_vars[name]?
           next if class_var.initializer
 
           owner.ancestors.each do |ancestor|
