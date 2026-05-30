@@ -29,16 +29,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_timeout_event")
   end
 
-  # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_write_event")
-  end
-
-  # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_fd_read_event")
-  end
-
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
   end
