@@ -147,9 +147,25 @@ class Process::Status
     @system_exit_status.to_u32!
   end
 
+  def self.[](code : Int)
+    new(system_exit_status: {% if flag?(:unix) %}
+      code << 8
+    {% else %}
+      code.to_u32!
+    {% end %})
+  end
+
+  def self.[](signal : Signal)
+    {% if flag?(:unix) %}
+      new(system_exit_status: signal.value)
+    {% else %}
+      raise NotImplementedError.new("Process::Status[] with Signal is not supported on Windows")
+    {% end %}
+  end
+
   {% if flag?(:win32) %}
     # :nodoc:
-    @[Deprecated("`Process::Status` does not provide a portable constructor.")]
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
     def self.new(exit_status : UInt32)
       new(system_exit_status: exit_status)
     end
@@ -159,7 +175,7 @@ class Process::Status
     end
   {% else %}
     # :nodoc:
-    @[Deprecated("`Process::Status` does not provide a portable constructor.")]
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
     def self.new(exit_status : Int32)
       new(system_exit_status: exit_status)
     end
