@@ -16,7 +16,6 @@ require "float/fast_float"
 #
 # See [`String` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/string.html) in the language reference.
 #
-#
 # A backslash can be used to denote some characters inside the string:
 #
 # ```
