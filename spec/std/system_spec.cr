@@ -5,8 +5,7 @@ describe System do
   describe "hostname" do
     # can't use backtick in interpreted code (#12241)
     pending_interpreted "returns current hostname" do
-      shell_hostname = `hostname`.strip
-      pending! "`hostname` command was unsuccessful" unless $?.success?
+      shell_hostname = Process.capture("hostname").strip
 
       hostname = System.hostname
       hostname.should eq(shell_hostname)
@@ -20,7 +19,14 @@ describe System do
         {% if flag?(:win32) %}
           ENV["NUMBER_OF_PROCESSORS"].to_i
         {% elsif flag?(:unix) %}
-          `getconf _NPROCESSORS_ONLN 2>/dev/null || nproc --all 2>/dev/null || grep -sc '^processor' /proc/cpuinfo || sysctl -n hw.ncpu 2>/dev/null`.to_i
+          [
+            ["getconf", "_NPROCESSORS_ONLN"],
+            ["nproc", "--all"],
+            ["grep", "-sc", "^processor", "/proc/cpuinfo"],
+            ["sysctl", "-n", "hw.cpu"],
+          ].find_value(0) do |args|
+            Process.capture_result?(args).try(&.output.to_i)
+          end
         {% end %}
       cpu_count = System.cpu_count
       cpu_count.should be_a(Int32)
