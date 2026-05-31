@@ -16,7 +16,6 @@ require "float/fast_float"
 #
 # See [`String` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/string.html) in the language reference.
 #
-# NOTE: This type cannot be inherited due to its special memory representation.
 #
 # A backslash can be used to denote some characters inside the string:
 #
@@ -144,6 +143,8 @@ require "float/fast_float"
 # engine may reject strings that are not valid UTF-8, or it may invoke undefined
 # behavior on invalid strings. If this is undesired, `#scrub` could be used to
 # remove the offending byte sequences first.
+#
+# NOTE: This type cannot be inherited due to its special memory representation.
 class String
   # :nodoc:
   #
