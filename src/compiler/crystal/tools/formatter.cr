@@ -264,7 +264,7 @@ module Crystal
           indent(@indent, exp)
         end
 
-        found_comment = skip_space(consume_newline: false)
+        skip_space(consume_newline: false)
 
         next_needs_indent = true
         if @token.type.op_semicolon?
@@ -2483,7 +2483,7 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
+            has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
                 write ","

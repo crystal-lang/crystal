@@ -94,7 +94,7 @@ describe Crystal::Doc::ProjectInfo do
         run_git "checkout -B master"
         run_git "add shard.yml"
         run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        commit_sha = `git rev-parse HEAD`.chomp
+        commit_sha = Process.capture("git", "rev-parse", "HEAD").chomp
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: commit_sha))
@@ -207,7 +207,6 @@ describe Crystal::Doc::ProjectInfo do
       run_git "remote add bar https://example.com/bar.git"
       run_git "remote add origin https://example.com/foo.git"
       run_git "remote add baz https://example.com/baz.git"
-      `git remote -v`
       ProjectInfo.git_remote.should eq "https://example.com/foo.git"
     end
 
@@ -215,7 +214,6 @@ describe Crystal::Doc::ProjectInfo do
       run_git "init"
       run_git "remote add bar https://example.com/bar.git"
       run_git "remote add baz https://example.com/baz.git"
-      `git remote -v`
       ProjectInfo.git_remote.should eq "https://example.com/bar.git"
     end
   end
