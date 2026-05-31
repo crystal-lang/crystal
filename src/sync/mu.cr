@@ -141,7 +141,7 @@ module Sync
 
         if (word & zero_to_acquire) == 0
           # unlocked, no long waiter, try to lock
-          word, success = @word.compare_and_set(word, (word + add_on_acquire) & ~(long_wait | clear | clear_on_acquire), :acquire, :relaxed)
+          _, success = @word.compare_and_set(word, (word + add_on_acquire) & ~(long_wait | clear | clear_on_acquire), :acquire, :relaxed)
           return if success
         elsif (word & SPINLOCK) == 0
           # locked by another fiber or there is a long waiter, spinlock is
@@ -243,7 +243,7 @@ module Sync
         if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
           # no waiters, there is a designated waker (no need to wake another
           # one), or there are still readers, try release lock
-          word, success = @word.compare_and_set(word, word - sub_on_release, :release, :relaxed)
+          _, success = @word.compare_and_set(word, word - sub_on_release, :release, :relaxed)
           return if success
         elsif (word & SPINLOCK) == 0
           # there might be a waiter, and no designated waker, try to acquire
