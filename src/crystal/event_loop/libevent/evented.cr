@@ -14,7 +14,7 @@ module Crystal::EventLoop::LibEvent::Evented
     @read_timed_out.set(timed_out, :relaxed)
 
     if reader = @reader.swap(nil, :relaxed)
-      {% if !flag?(:without_mt) && EventLoop.has_constant?(:LibEvent) %}
+      {% if flag?(:execution_context) %}
         event_loop = EventLoop.current.as(LibEvent)
         event_loop.callback_enqueue(reader)
       {% else %}
@@ -28,7 +28,7 @@ module Crystal::EventLoop::LibEvent::Evented
     @write_timed_out.set(timed_out, :relaxed)
 
     if writer = @writer.swap(nil, :relaxed)
-      {% if !flag?(:without_mt) && EventLoop.has_constant?(:LibEvent) %}
+      {% if flag?(:execution_context) %}
         event_loop = EventLoop.current.as(LibEvent)
         event_loop.callback_enqueue(writer)
       {% else %}
