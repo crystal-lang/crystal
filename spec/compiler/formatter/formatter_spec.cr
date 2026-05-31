@@ -1989,10 +1989,10 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
   assert_format "  <<-HTML   \n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
-  assert_format "<<-HTML\n  hello\n  \n  HTML"
+  assert_format "<<-HTML\n  hello\n  \n  HTML", "<<-HTML\n  hello\n\n  HTML"
   assert_format "<<-HTML\n  hello\n   \n  HTML"
-  assert_format "<<-HTML\n   hello\n  \n   HTML"
-  assert_format "<<-HTML\n   hello\n   \n   HTML"
+  assert_format "<<-HTML\n   hello\n  \n   HTML", "<<-HTML\n   hello\n\n   HTML"
+  assert_format "<<-HTML\n   hello\n   \n   HTML", "<<-HTML\n   hello\n\n   HTML"
   assert_format "<<-HTML\n   hello\n    \n   HTML"
   assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
 
