@@ -42,6 +42,15 @@
         ".*\.zsh$"
       ];
     };
+    shfmt = {
+      enable = true;
+      settings = {
+        indent = 2;
+        case-indent = true;
+        simplify = false;
+      };
+      excludes = ["^lib/"];
+    };
     typos.enable = true;
     zizmor.enable = true;
   };
