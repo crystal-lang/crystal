@@ -57,6 +57,27 @@ private record GenericConverterType(T), value : Int32 do
   @value : Int32
 end
 
+private record IgnoreType, name : String, token : String = "generated" do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore: true)]
+  @token : String = "generated"
+end
+
+private record IgnoreDeserializeType, name : String, token : String = "generated" do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_deserialize: true)]
+  @token : String = "generated"
+end
+
+private record IgnoreSerializeType, name : String, token : String do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_serialize: true)]
+  @token : String
+end
+
 class ParentType
   include URI::Params::Serializable
 
@@ -102,6 +123,14 @@ describe URI::Params::Serializable do
       ConverterType.from_www_form("value=10").should eq ConverterType.new(100)
     end
 
+    it "ignores fields with ignore" do
+      IgnoreType.from_www_form("name=John&token=from_params").should eq IgnoreType.new("John")
+    end
+
+    it "ignores fields with ignore_deserialize" do
+      IgnoreDeserializeType.from_www_form("name=John&token=from_params").should eq IgnoreDeserializeType.new("John")
+    end
+
     it "child type" do
       ChildType.from_www_form("name=Fred").name.should eq "Fred"
     end
@@ -143,6 +172,14 @@ describe URI::Params::Serializable do
     it "doubly nested" do
       Parent.new(Child.new("active", GrandChild.new("Fred"))).to_www_form
         .should eq "child%5Bstatus%5D=active&child%5Bgrand_child%5D%5Bname%5D=Fred"
+    end
+
+    it "ignores fields with ignore" do
+      IgnoreType.new("John").to_www_form.should eq "name=John"
+    end
+
+    it "ignores fields with ignore_serialize" do
+      IgnoreSerializeType.new("John", "secret").to_www_form.should eq "name=John"
     end
   end
 
