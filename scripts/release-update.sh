@@ -22,7 +22,7 @@ CRYSTAL_VERSION=$1
 # Write dev version for next minor release into src/VERSION
 minor_branch="${CRYSTAL_VERSION%.*}"
 next_minor="$((${minor_branch#*.} + 1))"
-echo "${CRYSTAL_VERSION%%.*}.${next_minor}.0-dev" > src/VERSION
+echo "${CRYSTAL_VERSION%%.*}.${next_minor}.0-dev" >src/VERSION
 
 # Update shard.yml
 sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml

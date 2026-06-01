@@ -648,7 +648,7 @@ class Process
     end
     @wait_count = 0
 
-    Process::Status.new(@process_info.wait)
+    Process::Status.new(system_exit_status: @process_info.wait)
   ensure
     close
     @process_info.release

@@ -23,6 +23,16 @@ private class ExceptionWithOverriddenToS < Exception
 end
 
 describe "expectations" do
+  describe "chaining" do
+    it "#should returns self" do
+      1.should(be < 3).should(be > 0)
+    end
+
+    it "#should_not returns self" do
+      1.should_not(be > 3).should_not(be < 0)
+    end
+  end
+
   describe "accept a custom failure message" do
     it { 1.should be < 3, "custom message!" }
     it do

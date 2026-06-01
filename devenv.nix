@@ -36,11 +36,27 @@
       pass_filenames = true;
     };
     markdownlint.enable = true;
+    mbake = {
+      enable = true;
+      name = "Mbake";
+      entry = "${pkgs.mbake}/bin/mbake format --config .mbake.toml";
+      files = "Makefile|.*\\.Makefile|Makefile\\..*|.*\\.mk";
+      pass_filenames = true;
+    };
     shellcheck = {
       enable = true;
       excludes = [
         ".*\.zsh$"
       ];
+    };
+    shfmt = {
+      enable = true;
+      settings = {
+        indent = 2;
+        case-indent = true;
+        simplify = false;
+      };
+      excludes = ["^lib/"];
     };
     typos.enable = true;
     zizmor.enable = true;

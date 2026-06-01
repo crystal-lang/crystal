@@ -3696,7 +3696,7 @@ class String
     pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case pos
     when .nil?
@@ -3725,7 +3725,7 @@ class String
       pos -= 1
     end
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case
     when match_result.nil?
