@@ -114,7 +114,7 @@ struct URI::Params
                     raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
                   {% end %}
                 end
-              end
+              {% end %}
             {% end %}
           {% end %}
         {% end %}
