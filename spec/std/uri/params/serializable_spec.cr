@@ -78,6 +78,13 @@ private record IgnoreSerializeType, name : String, token : String do
   @token : String
 end
 
+private record IgnoreSerializeIfType, name : String, token : String, internal : Bool = false do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_serialize: internal)]
+  @token : String
+end
+
 class ParentType
   include URI::Params::Serializable
 
@@ -180,6 +187,11 @@ describe URI::Params::Serializable do
 
     it "ignores fields with ignore_serialize" do
       IgnoreSerializeType.new("John", "secret").to_www_form.should eq "name=John"
+    end
+
+    it "evaluates ignore_serialize expression at runtime" do
+      IgnoreSerializeIfType.new("John", "secret", internal: true).to_www_form.should eq "name=John&internal=true"
+      IgnoreSerializeIfType.new("John", "secret", internal: false).to_www_form.should eq "name=John&token=secret&internal=false"
     end
   end
 
