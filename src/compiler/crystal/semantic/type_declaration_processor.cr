@@ -702,8 +702,8 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   private def adopt_inherited_class_var_initializers
-    {type_decl_visitor.class_vars, type_guess_visitor.class_vars}.each do |all_vars|
-      all_vars.each do |owner, vars|
+    {type_decl_visitor, type_guess_visitor}.each do |visitor|
+      visitor.class_vars.each do |owner, vars|
         vars.each_key do |name|
           next unless class_var = owner.class_vars[name]?
           next if class_var.initializer
