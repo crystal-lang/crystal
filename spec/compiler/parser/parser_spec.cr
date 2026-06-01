@@ -2790,6 +2790,8 @@ module Crystal
       assert_end_location %("hello "\\\n"world"), line_number: 2, column_number: 7
       assert_end_location "foo(&.bar)"
       assert_end_location "foo &.bar"
+      assert_end_location("foo &.bar = baz")
+      assert_end_location("foo &.[bar] = baz")
       assert_end_location "foo(&bar)"
       assert_end_location "foo &bar"
     end
