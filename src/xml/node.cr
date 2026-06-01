@@ -453,7 +453,7 @@ class XML::Node
         ns += 1
       end
     ensure
-      LibXML.xmlFree.call(ns_list.as(Void*))
+      XML.free(ns_list.as(Void*))
     end
   end
 
