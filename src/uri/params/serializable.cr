@@ -103,9 +103,13 @@ struct URI::Params
           {% begin %}
             {% for ivar, idx in @type.instance_vars %}
               {% ann = ivar.annotation(URI::Params::Field) %}
-              {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
+              {% if ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
+                {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
+                  {% raise "Can't ignore property @#{ivar.name} of #{@type} that is neither nilable nor has a default value" %}
+                {% end %}
+              {% else %}
                 %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
-                %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_www_form params, %name{idx}
+                %value{idx} = {{ann && ann["converter"] || ivar.type}}.from_www_form params, %name{idx}
 
                 unless %value{idx}.nil?
                   @{{ivar.name.id}} = %value{idx}
