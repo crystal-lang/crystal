@@ -579,9 +579,7 @@ module Crystal
       write @token.raw
 
       if is_heredoc
-        if indent_difference > 0
-          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
         write_line
       end
 
@@ -4844,9 +4842,16 @@ module Crystal
         indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
         min_difference = Math.max(min_difference - indent_before_start, 0)
 
+        heredoc_indent = leading_space_count(lines[fix.end_line], Int32::MAX)
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          lines[line_number] = line[min_difference..]
+          if line.size <= heredoc_indent
+            # If the line is shorter than the heredoc indent it contains only
+            # whitespace and can be trimmed entirely.
+            lines[line_number] = ""
+          else
+            lines[line_number] = line[min_difference..]
+          end
         end
       end
     end
