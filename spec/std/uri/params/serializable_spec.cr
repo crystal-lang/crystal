@@ -66,54 +66,32 @@ end
 class ChildType < ParentType
 end
 
-private struct IgnoreField
+private record IgnoreField, name : String, age : Int32? = nil, computed : String? = nil do
   include URI::Params::Serializable
-
-  property name : String
-  property age : Int32?
 
   @[URI::Params::Field(ignore: true)]
-  property computed : String?
-
-  def initialize(@name : String, @age : Int32? = nil, @computed : String? = nil)
-  end
+  @computed : String?
 end
 
-private struct IgnoreSerializeField
+private record IgnoreSerializeField, name : String, secret : String? = nil do
   include URI::Params::Serializable
-
-  property name : String
 
   @[URI::Params::Field(ignore_serialize: true)]
-  property secret : String?
-
-  def initialize(@name : String, @secret : String? = nil)
-  end
+  @secret : String?
 end
 
-private struct IgnoreDeserializeField
+private record IgnoreDeserializeField, name : String, derived : String? = nil do
   include URI::Params::Serializable
-
-  property name : String
 
   @[URI::Params::Field(ignore_deserialize: true)]
-  property derived : String?
-
-  def initialize(@name : String, @derived : String? = nil)
-  end
+  @derived : String?
 end
 
-private struct IgnoreSerializeConditional
+private record IgnoreSerializeConditional, name : String, internal : Bool, extra : String? = nil do
   include URI::Params::Serializable
 
-  property name : String
-  property internal : Bool
-
   @[URI::Params::Field(ignore_serialize: internal)]
-  property extra : String?
-
-  def initialize(@name : String, @internal : Bool, @extra : String? = nil)
-  end
+  @extra : String?
 end
 
 private record SimpleTypeInitializeOpts, value : Int32 do
