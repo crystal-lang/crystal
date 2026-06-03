@@ -27,10 +27,6 @@ ol-prefix:
 ul-style:
   style: "dash"
 
-# MD007 - Keep list indentation consistent
-ul-indent:
-  indent: 2
-
 ## Whitespace Rules
 
 # MD013 - Line length
@@ -78,9 +74,3 @@ no-bare-urls: false
 # MD045 - Add Descriptive Text to Images
 # FIXME: Deferred
 no-alt-text: false
-
-## Table Rules
-
-# MD060 - Table column style
-# FIXME: Deferred
-table-column-style: false
