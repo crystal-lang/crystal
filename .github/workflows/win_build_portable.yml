@@ -33,7 +33,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.20.1"
+          crystal: "1.20.2"
 
       - name: Download Crystal source
         uses: actions/checkout@v6
@@ -44,7 +44,6 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: |
-            libs/pcre.lib
             libs/pcre2-8.lib
             libs/iconv.lib
             libs/gc.lib
@@ -69,7 +68,6 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: |
-            libs/pcre-dynamic.lib
             libs/pcre2-8-dynamic.lib
             libs/iconv-dynamic.lib
             libs/gc-dynamic.lib
@@ -78,7 +76,6 @@ jobs:
             libs/mpir-dynamic.lib
             libs/yaml-dynamic.lib
             libs/xml2-dynamic.lib
-            dlls/pcre.dll
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll

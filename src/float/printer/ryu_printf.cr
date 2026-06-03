@@ -529,21 +529,21 @@ module Float::Printer::RyuPrintf
     end
 
     # 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
-    round_up = 0
-    if last_digit != 5
-      round_up = last_digit > 5 ? 1 : 0
-    else
-      # Is m * 2^e2 * 10^(precision + 1 - exp) integer?
-      # precision was already increased by 1, so we don't need to write + 1 here.
-      rexp = precision.to_i32! &- exp
-      required_twos = 0 &- e2 &- rexp
-      trailing_zeros = required_twos <= 0 || (required_twos < 60 && multiple_of_power_of_2?(m2, required_twos.to_u32!))
-      if rexp < 0
-        required_fives = 0 &- rexp
-        trailing_zeros = trailing_zeros && multiple_of_power_of_5?(m2, required_fives.to_u32!)
+    round_up =
+      if last_digit != 5
+        last_digit > 5 ? 1 : 0
+      else
+        # Is m * 2^e2 * 10^(precision + 1 - exp) integer?
+        # precision was already increased by 1, so we don't need to write + 1 here.
+        rexp = precision.to_i32! &- exp
+        required_twos = 0 &- e2 &- rexp
+        trailing_zeros = required_twos <= 0 || (required_twos < 60 && multiple_of_power_of_2?(m2, required_twos.to_u32!))
+        if rexp < 0
+          required_fives = 0 &- rexp
+          trailing_zeros = trailing_zeros && multiple_of_power_of_5?(m2, required_fives.to_u32!)
+        end
+        trailing_zeros ? 2 : 1
       end
-      round_up = trailing_zeros ? 2 : 1
-    end
 
     if printed_digits != 0
       if digits == 0
@@ -645,13 +645,12 @@ module Float::Printer::RyuPrintf
     sci_exp_x = index &- 5
     use_fixed_notation = precision > sci_exp_x && sci_exp_x >= -4
 
-    significand_last = exponent_first = exponent_last = Pointer(UInt8).null
-
     # Write into the local buffer.
     if use_fixed_notation
       effective_precision = precision &- 1 &- sci_exp_x
       max_precision = MAX_FIXED_PRECISION
       len = d2fixed_buffered_n(d, {effective_precision, max_precision}.min, result)
+      exponent_first = exponent_last = Pointer(UInt8).null
       significand_last = result + len
     else
       effective_precision = precision &- 1

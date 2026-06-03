@@ -681,12 +681,10 @@ describe "unbuffered" do
     state = :none
 
     Sync::CONCURRENT.spawn do
-      begin
-        state = :ready
-        ch.send(nil)
-      rescue Channel::ClosedError
-        state = :closed
-      end
+      state = :ready
+      ch.send(nil)
+    rescue Channel::ClosedError
+      state = :closed
     end
 
     Sync::CONCURRENT.spawn do

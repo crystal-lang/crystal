@@ -3696,7 +3696,7 @@ class String
     pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case pos
     when .nil?
@@ -3725,7 +3725,7 @@ class String
       pos -= 1
     end
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case
     when match_result.nil?
@@ -5607,6 +5607,12 @@ class String
   #
   # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
   # obtain a `String` that is guaranteed to be valid UTF-8.
+  #
+  # The byte sequence at the pointer is always null-terminated
+  # (`string.to_unsafe[string.bytesize] == 0u8`), so it can be passed to C APIs
+  # that expects a NUL-terminated string. The string itself may also contain `\0`
+  # bytes in the middle; the terminator is not a reliable end-of-string marker for
+  # strings that may embed '\0' bytes (see `#check_no_null_byte` for testing that).
   def to_unsafe : UInt8*
     pointerof(@c)
   end

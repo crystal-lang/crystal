@@ -204,6 +204,11 @@ class Crystal::Repl::Compiler
     # Nothing
   end
 
+  private def upcast_distinct(node : ASTNode, from : PointerInstanceType, to : PointerInstanceType)
+    # The stack representation of any pointer is the same, so no transformation
+    # is needed (e.g. autocasting `Pointer(UInt8)` to `Pointer(Void)`, #16649).
+  end
+
   # TODO: remove these two because they are probably not needed
   private def upcast_distinct(node : ASTNode, from : NoReturnType, to : Type)
     # Nothing

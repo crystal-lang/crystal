@@ -161,6 +161,22 @@ describe "Code gen: lib" do
       CRYSTAL
   end
 
+  it "distinguishes lib `type` aliases of the same underlying type in codegen (#16695)" do
+    run(<<-CRYSTAL).to_i.should_not eq(0)
+      lib LibFoo
+        type A = Void
+        type B = Void
+      end
+
+      class Object
+        def id
+          crystal_type_id # this call creates a dispatch
+        end
+      end
+      LibFoo::A.id &- LibFoo::B.id
+      CRYSTAL
+  end
+
   it "allows invoking out with underscore " do
     codegen(<<-CRYSTAL)
       lib Lib

@@ -264,7 +264,7 @@ module Crystal
           indent(@indent, exp)
         end
 
-        found_comment = skip_space(consume_newline: false)
+        skip_space(consume_newline: false)
 
         next_needs_indent = true
         if @token.type.op_semicolon?
@@ -579,9 +579,7 @@ module Crystal
       write @token.raw
 
       if is_heredoc
-        if indent_difference > 0
-          @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
-        end
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
         write_line
       end
 
@@ -760,9 +758,18 @@ module Crystal
             write " "
           end
 
-          while @token.type.string?
-            write_sanitized_string_body(@token.delimiter_state.allow_escapes)
-            @lexer.next_string_token(@token.delimiter_state)
+          case elem
+          when StringLiteral, SymbolLiteral
+            while @token.type.string?
+              write_sanitized_string_body(@token.delimiter_state.allow_escapes)
+              @lexer.next_string_token(@token.delimiter_state)
+            end
+          when StringInterpolation
+            visit_string_interpolation_body(elem, @token.delimiter_state, @column)
+          when Splat
+            visit_interpolation(elem)
+          else
+            raise "Bug: unexpected element in string array: #{elem.class}"
           end
         end
 
@@ -1489,13 +1496,13 @@ module Crystal
       args.each_with_index do |arg, i|
         has_more = !last?(i, args) || double_splat || block_arg || yields || variadic
         wrote_newline = format_def_arg(wrote_newline, has_more, found_first_newline && !has_more) do
+          format_parameter_annotations(arg)
+
           if i == splat_index
             write_token :OP_STAR
             skip_space_or_newline
             next if arg.external_name.empty? # skip empty splat argument.
           end
-
-          format_parameter_annotations(arg)
 
           arg.accept self
           to_skip += 1 if @last_arg_is_skip
@@ -1504,6 +1511,8 @@ module Crystal
 
       if double_splat
         wrote_newline = format_def_arg(wrote_newline, block_arg || yields, found_first_newline) do
+          format_parameter_annotations(double_splat)
+
           write_token :OP_STAR_STAR
           skip_space_or_newline
 
@@ -2481,7 +2490,7 @@ module Crystal
               last_arg = args.pop
             end
 
-            has_newlines, found_comment, _ = format_args args, true, node.named_args
+            has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
                 write ","
@@ -4842,9 +4851,16 @@ module Crystal
         indent_before_start = leading_space_count(lines[fix.start_line - 1], fix.difference)
         min_difference = Math.max(min_difference - indent_before_start, 0)
 
+        heredoc_indent = leading_space_count(lines[fix.end_line], Int32::MAX)
         fix.start_line.upto(fix.end_line) do |line_number|
           line = lines[line_number]
-          lines[line_number] = line[min_difference..]
+          if line.size <= heredoc_indent
+            # If the line is shorter than the heredoc indent it contains only
+            # whitespace and can be trimmed entirely.
+            lines[line_number] = ""
+          else
+            lines[line_number] = line[min_difference..]
+          end
         end
       end
     end

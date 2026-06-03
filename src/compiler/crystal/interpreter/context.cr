@@ -4,7 +4,14 @@ require "./repl"
 # program. For example, it includes the memory region to store constants
 # and class variables, what are all the know symbols, and a few more things.
 class Crystal::Repl::Context
-  record MultidispatchKey, obj_type : Type, call_signature : CallSignature
+  # The cache key for synthetic dispatch methods. `target_def_ids` must be
+  # part of the key because two call sites with the same `obj_type` and
+  # signature can resolve to different `target_defs` when intervening code
+  # instantiates new types that fall under the union — without it, the
+  # second site reuses the first's dispatch chain and any newly resolved
+  # type falls through the `else` branch into "Reached the unreachable"
+  # (#16810).
+  record MultidispatchKey, obj_type : Type, call_signature : CallSignature, target_def_ids : Array(UInt64)
 
   getter program : Program
 

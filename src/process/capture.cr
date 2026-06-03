@@ -71,11 +71,18 @@ class Process
   # Process.capture_result(%w[nonexist])        # raises Process::ExitError
   # ```
   @[Experimental]
-  def self.capture_result(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  def self.capture_result(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result
     capture_result_impl(output, error) do |error|
       Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture_result(*args : String, env : Env? = nil, clear_env : Bool = false,
+                          input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result
+    capture_result(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   # Executes a process and returns its result.
@@ -90,11 +97,18 @@ class Process
   # Process.capture_result?(%w[nonexist])               # => nil
   # ```
   @[Experimental]
-  def self.capture_result?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  def self.capture_result?(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                            input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result?
     capture_result_impl(output, error) do |error|
       Process.new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture_result?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : Result?
+    capture_result?(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
   end
 
   private def self.capture_result_impl(output, error, & : -> Process)
@@ -127,7 +141,7 @@ class Process
   # Process.capture(%w[nonexist]) # raises Process::ExitError
   # ```
   @[Experimental]
-  def self.capture(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  def self.capture(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : String
     result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
     if result.status.success?
@@ -135,6 +149,13 @@ class Process
     else
       raise Process::ExitError.new(args, result)
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture(*args : String, env : Env? = nil, clear_env : Bool = false,
+                   input : Stdio = Redirect::Close, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil) : String
+    capture(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
   end
 
   # Executes a process and returns its captured standard output or `nil` on failure.
@@ -150,12 +171,19 @@ class Process
   # Process.capture(%w[nonexist]) # => nil
   # ```
   @[Experimental]
-  def self.capture?(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+  def self.capture?(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
                     input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String?
     result = capture_result(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
 
     if result.status.success?
       result.output
     end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.capture?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                    input : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : String?
+    capture?(args, env: env, clear_env: clear_env, input: input, error: error, chdir: chdir)
   end
 end

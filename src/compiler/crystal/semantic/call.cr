@@ -1023,8 +1023,7 @@ class Crystal::Call
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
-              block_type = lookup_node_type(match.context, output).virtual_type
-              block_type = program.nil if block_type.void?
+              lookup_node_type(match.context, output).virtual_type
             rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
@@ -1261,6 +1260,11 @@ class Crystal::Call
 
   def attach_subclass_observer(type : Type)
     if subclass_notifier = @subclass_notifier
+      # If the new notifier is a subtype of (or equal to) the current one,
+      # keep observing the wider type. Migrating to the narrower type would
+      # stop us from being woken when sibling subtypes are later added to
+      # the wider one — leaving the dispatch table stale (#16947).
+      return if type.implements?(subclass_notifier)
       subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 

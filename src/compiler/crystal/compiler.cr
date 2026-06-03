@@ -10,6 +10,20 @@ require "crystal/digest/md5"
 {% end %}
 
 module Crystal
+  # This exception describes an error in the compiler.
+  # It usually leads to an unsuccessful process exit.
+  class CompilerError < Exception
+    getter status
+
+    def self.new(message, exit : Command::Exit)
+      new message, status: exit.to_i
+    end
+
+    def initialize(message, *, @status : Int32 = 1)
+      super message
+    end
+  end
+
   @[Flags]
   enum Debug
     LineNumbers
@@ -290,6 +304,7 @@ module Crystal
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
+      program.optimization_mode = @optimization_mode
       program
     end
 
@@ -467,7 +482,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}", :FAILURE)
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -570,11 +585,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}", :FAILURE)
           end
           output.chomp
         rescue exc
-          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}", :FAILURE)
         end
       end
     end
@@ -600,7 +615,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        error "can't use `#{output_filename}` as output filename because it's a directory"
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR)
       end
 
       output_filename = File.expand_path(output_filename)
@@ -884,15 +899,11 @@ module Crystal
       {% if LibLLVM::IS_LT_130 %}
         optimize_with_pass_manager(llvm_mod)
       {% else %}
-        {% if LibLLVM::IS_LT_170 %}
-          # PassBuilder doesn't support Os and Oz before LLVM 17
-          if @optimization_mode.os? || @optimization_mode.oz?
-            return optimize_with_pass_manager(llvm_mod)
-          end
-        {% end %}
+        optimization_mode = @optimization_mode
+        optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
     end
@@ -927,7 +938,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        error "execution of command failed with exit status #{status}: #{command}", exit_code: exit_code
+        raise CompilerError.new("execution of command failed with exit status #{status}: #{command}", status: exit_code)
       end
     end
 
@@ -935,14 +946,10 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}", :FAILURE)
       else
-        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}", :FAILURE)
       end
-    end
-
-    private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)
