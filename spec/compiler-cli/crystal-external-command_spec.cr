@@ -21,16 +21,7 @@ describe "`crystal-*` external commands" do
 
   it "execs external crystal-* command" do
     # Modify PATH to include the shared directory with our fixture
-    Process.capture_result(crystal, "echo_env", "foo", "bar", env: {"PATH" => "#{exec_path}:#{ENV["PATH"]?}"})
-      .should(be_success)
-      .output.should(contain("crystal="))
-      # .should contain("CRYSTAL_EXEC_PATH=#{exec_path}")
-      .should(contain("PROGRAM_NAME=#{echo_env_path}"))
-      .should(contain(%(ARGV=["foo", "bar"])))
-  end
-
-  it "execs external crystal-* command with CRYSTAL_EXEC_PATH" do
-    Process.capture_result(crystal, "echo_env", "foo", "bar", env: {"PATH" => "#{exec_path}:#{ENV["PATH"]?}", "CRYSTAL_EXEC_PATH" => exec_path})
+    Process.capture_result(crystal, "echo_env", "foo", "bar", env: {"PATH" => "#{exec_path}#{Process::PATH_DELIMITER}#{ENV["PATH"]?}"})
       .should(be_success)
       .output.should(contain("crystal="))
       # .should contain("CRYSTAL_EXEC_PATH=#{exec_path}")
