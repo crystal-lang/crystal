@@ -1501,7 +1501,10 @@ module Crystal
             else
               @token.type = :STRING
               @token.value = current_char.to_s
-              @token.invalid_escape = true
+              unless delimiter_state.kind.array? && char.ascii_whitespace?
+                @token.invalid_escape = true
+              end
+
               next_char
             end
           end
@@ -1561,6 +1564,8 @@ module Crystal
               char = next_char
             end
 
+            @token.line_number = @line_number
+            @token.column_number = @column_number
             @token.type = :SPACE
           else
             next_string_array_token_noescape delimiter_state
@@ -1962,7 +1967,7 @@ module Crystal
       delimiter_kind = case char
                        when 'i'                     then Token::DelimiterKind::SYMBOL_ARRAY
                        when 'r'                     then Token::DelimiterKind::REGEX
-                       when 'w'                     then Token::DelimiterKind::STRING_ARRAY
+                       when 'w', 'W'                then Token::DelimiterKind::STRING_ARRAY
                        when 'x'                     then Token::DelimiterKind::COMMAND
                        when 'q', 'Q'                then Token::DelimiterKind::STRING
                        when '(', '[', '{', '<', '|' then Token::DelimiterKind::STRING
