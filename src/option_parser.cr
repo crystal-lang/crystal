@@ -223,6 +223,7 @@ class OptionParser
     check_starts_with_dash long_flag, "long_flag"
 
     if short_flag.empty?
+      # Long-only option.
       append_flag long_flag, description
     else
       append_flag "#{short_flag}, #{long_flag}", description
