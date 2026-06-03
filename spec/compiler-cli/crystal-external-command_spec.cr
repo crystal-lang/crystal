@@ -1,8 +1,10 @@
 require "./spec_helper"
 
+exe = {{ flag?(:windows) ? ".exe" : nil }}
+
 describe "`crystal-*` external commands" do
   exec_path = File.tempname
-  echo_env_path = File.join(exec_path, "crystal-echo_env")
+  echo_env_path = File.join(exec_path, "crystal-echo_env#{exe}")
 
   before_all do
     # Build the fixture program that will be invoked as an external command
@@ -10,6 +12,7 @@ describe "`crystal-*` external commands" do
 
     Process.capture_result(crystal, "build", "-o", echo_env_path, fixture_path("crystal-echo_env.cr"))
       .should(be_success)
+    File::Info.executable?(echo_env_path).should be_true
   end
 
   after_all do

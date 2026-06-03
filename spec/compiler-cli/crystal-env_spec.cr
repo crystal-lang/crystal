@@ -26,6 +26,6 @@ describe "`crystal env`" do
   it "prints multiple vars" do
     Process.capture_result(crystal, "env", "CRYSTAL_VERSION", "CRYSTAL_PATH")
       .should(be_success)
-      .output.should(match(/^\d+\.\d+\.\d+(-dev)?\n(\.\/)?lib:.*$/))
+      .output.should(match(/^\d+\.\d+\.\d+(-dev)?\n(\.\/|\.\\)?lib[:;].*$/))
   end
 end

@@ -2,7 +2,7 @@ require "spec"
 require "./support/expectations"
 require "../support/tempfile"
 
-CRYSTAL_BIN = ENV.fetch("CRYSTAL_SPEC_COMPILER_BIN") { "#{Dir.current}/bin/crystal" }
+CRYSTAL_BIN = ENV.fetch("CRYSTAL_SPEC_COMPILER_BIN") { Path[Dir.current, ".build", "crystal"].to_s }
 
 def crystal
   CRYSTAL_BIN
