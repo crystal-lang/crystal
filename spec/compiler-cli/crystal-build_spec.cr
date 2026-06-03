@@ -2,7 +2,7 @@ require "./spec_helper"
 
 describe "`crystal build`" do
   it "builds hello world with empty prelude" do
-    with_tempfile "hello-world" do |output_path|
+    with_temp_executable "hello-world" do |output_path|
       fixture = fixture_path("empty-hello-world.cr")
 
       # Build the program
@@ -19,7 +19,7 @@ describe "`crystal build`" do
   end
 
   it "builds hello world in release mode" do
-    with_tempfile "hello-world-release" do |output_path|
+    with_temp_executable "hello-world-release" do |output_path|
       fixture = fixture_path("hello-world.cr")
 
       Process.capture_result(crystal, "build", "--release", "-o", output_path, fixture)
