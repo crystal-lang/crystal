@@ -35,7 +35,6 @@ jobs:
         uses: actions/cache@v5
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
-            libs/pcre.lib
             libs/pcre2-8.lib
             libs/iconv.lib
             libs/gc.lib
@@ -55,16 +54,13 @@ jobs:
           add-to-path: false
       - name: Build libgc
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2
-      - name: Build libpcre
-        if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.12 -AtomicOpsVersion 7.10.0
       - name: Build libpcre2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.47
       - name: Build libiconv
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.19
       - name: Build libffi
         if: steps.cache-libs.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.5.1
@@ -79,7 +75,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5
       - name: Build libxml2
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.8
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.15.3
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -117,7 +113,6 @@ jobs:
         uses: actions/cache@v5
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
-            libs/pcre-dynamic.lib
             libs/pcre2-8-dynamic.lib
             libs/iconv-dynamic.lib
             libs/gc-dynamic.lib
@@ -126,7 +121,6 @@ jobs:
             libs/mpir-dynamic.lib
             libs/yaml-dynamic.lib
             libs/xml2-dynamic.lib
-            dlls/pcre.dll
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll
@@ -145,16 +139,13 @@ jobs:
           add-to-path: false
       - name: Build libgc
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.8 -AtomicOpsVersion 7.8.2 -Dynamic
-      - name: Build libpcre
-        if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre.ps1 -BuildTree deps\pcre -Version 8.45 -Dynamic
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version 8.2.12 -AtomicOpsVersion 7.10.0 -Dynamic
       - name: Build libpcre2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.45 -Dynamic
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version 10.47 -Dynamic
       - name: Build libiconv
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.18 -Dynamic
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version 1.19 -Dynamic
       - name: Build libffi
         if: steps.cache-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version 3.4.7 -Dynamic
@@ -169,7 +160,7 @@ jobs:
         run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version 0.2.5 -Dynamic
       - name: Build libxml2
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.13.6 -Dynamic
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version 2.15.3 -Dynamic
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
