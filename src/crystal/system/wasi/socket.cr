@@ -4,8 +4,6 @@ require "c/sys/socket"
 require "io/evented"
 
 module Crystal::System::Socket
-  include IO::Evented
-
   alias Handle = Int32
 
   private def initialize_handle(fd, blocking = nil)

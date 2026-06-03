@@ -595,7 +595,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     return Errno.new(-fd) if fd < 0
 
     blocking = true if blocking.nil?
-    System::FileDescriptor.set_blocking(fd, false) if blocking
+    System::FileDescriptor.set_blocking(fd, false) if blocking == false
     {fd, blocking}
   end
 
