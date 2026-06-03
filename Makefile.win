@@ -24,7 +24,7 @@ all: ##
 CRYSTAL ?= crystal ## which previous crystal compiler use
 
 release            ?= ## Compile in release mode
-stats              ?= ## Enable statistics output
+stats              ?= ## Enable statistics outputq
 progress           ?= ## Enable progress output
 threads            ?= ## Maximum number of threads to use
 debug              ?= ## Add symbolic debug info
@@ -125,6 +125,10 @@ compiler_spec: $(O)\compiler_spec.exe ## Run compiler specs
 primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
 	$(O)\primitives_spec $(SPEC_FLAGS)
 
+.PHONY: cli_spec
+cli_spec: $(O)/cli_spec.exe ## Run compiler CLI specs
+	$(O)/cli_spec $(SPEC_FLAGS)
+
 .PHONY: interpreter_spec
 interpreter_spec: $(O)\interpreter_spec ## Run interpreter specs
 	$(O)\interpreter_spec $(SPEC_FLAGS)
@@ -220,6 +224,10 @@ $(O)\compiler_spec.exe: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
+
+$(O)/cli_spec.exe: $(O)/crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@$(call MKDIR,"$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\cli_spec.cr
 
 $(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
