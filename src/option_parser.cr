@@ -563,8 +563,8 @@ class OptionParser
   end
 
   private def summary_flag?(entry : String) : Bool
-    return false unless entry.starts_with?(summary_indent)
-
-    entry[summary_indent.size..].lstrip.starts_with?('-')
+    # Long-only options have extra spaces after summary_indent.
+    entry.starts_with?(summary_indent) &&
+      entry[summary_indent.size..].lstrip.starts_with?('-')
   end
 end
