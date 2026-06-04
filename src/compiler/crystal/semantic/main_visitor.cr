@@ -204,7 +204,7 @@ module Crystal
           # inferred type conforms to T.
           if declared_type_node = type.declared_type
             declared_type = type_visitor.lookup_type(declared_type_node)
-            MainVisitor.check_automatic_cast(@program, type.value, declared_type)
+            check_automatic_cast(type.value, declared_type)
             value_type = type.value.type
             unless value_type.implements?(declared_type)
               declared_type_node.raise "constant #{type} type must be #{declared_type}, not #{value_type}"
