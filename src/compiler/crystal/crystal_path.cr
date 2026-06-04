@@ -21,6 +21,8 @@ module Crystal
     def self.default_paths : Array(String)
       if path = ENV["CRYSTAL_PATH"]?
         path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
+      elsif dev_path = dev_path?
+        path_array = [DEFAULT_LIB_PATH, dev_path]
       elsif path = Crystal::Config.path.presence
         path_array = path.split(Process::PATH_DELIMITER, remove_empty: true)
         unless path_array.includes?(DEFAULT_LIB_PATH)
@@ -33,6 +35,16 @@ module Crystal
       expand_paths(path_array)
 
       path_array
+    end
+
+    def self.dev_path? : String?
+      exe_path = Process.executable_path || return
+      dir_path = ::Path[exe_path].parent
+      return unless dir_path.basename == ".build"
+
+      src_path = dir_path.parent.join("src").to_s
+      return unless Dir.exists?(src_path)
+      src_path
     end
 
     def self.default_path : String
