@@ -3,10 +3,16 @@ require "../../../../support/tempfile"
 
 private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
-private def run_git(command)
-  Process.run(%(git -c user.email="" -c user.name="spec" #{command}), shell: true)
-rescue IO::Error
-  pending! "Git is not available"
+private def run_git(*args : String)
+  result = Process.capture_result?(["git", "-c", %(user.email=""), "-c", %(user.name="spec"), *args])
+
+  pending! "Git is not available" unless result
+
+  if result.status.success?
+    result.output
+  else
+    fail Process::ExitError.new(args, result).to_s
+  end
 end
 
 private def assert_with_defaults(initial, expected, *, file = __FILE__, line = __LINE__)
@@ -58,9 +64,9 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git tagged version" do
         run_git "init"
-        run_git "add shard.yml"
-        run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        run_git "tag v3.0"
+        run_git "add", "shard.yml"
+        run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
+        run_git "tag", "v3.0"
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0", refname: "v3.0"))
         assert_with_defaults(ProjectInfo.new("bar", "2.0"), ProjectInfo.new("bar", "2.0", refname: "v3.0"))
@@ -69,9 +75,9 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git tagged version dirty" do
         run_git "init"
-        run_git "add shard.yml"
-        run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        run_git "tag v3.0"
+        run_git "add", "shard.yml"
+        run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
+        run_git "tag", "v3.0"
         File.write("shard.yml", "\n", mode: "a")
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0-dev", refname: nil))
@@ -81,9 +87,9 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git untracked file doesn't prevent detection" do
         run_git "init"
-        run_git "add shard.yml"
-        run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        run_git "tag v3.0"
+        run_git "add", "shard.yml"
+        run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
+        run_git "tag", "v3.0"
         File.write("foo.txt", "bar")
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "3.0", refname: "v3.0"))
@@ -91,10 +97,10 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit" do
         run_git "init"
-        run_git "checkout -B master"
-        run_git "add shard.yml"
-        run_git "commit -m \"Initial commit\" --no-gpg-sign"
-        commit_sha = Process.capture("git", "rev-parse", "HEAD").chomp
+        run_git "checkout", "-B", "master"
+        run_git "add", "shard.yml"
+        run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
+        commit_sha = run_git("rev-parse", "HEAD").chomp
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master", refname: commit_sha))
         assert_with_defaults(ProjectInfo.new(nil, "1.1"), ProjectInfo.new("foo", "1.1", refname: commit_sha))
@@ -104,9 +110,9 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git non-tagged commit dirty" do
         run_git "init"
-        run_git "checkout -B master"
-        run_git "add shard.yml"
-        run_git "commit -m \"Initial commit\" --no-gpg-sign"
+        run_git "checkout", "-B", "master"
+        run_git "add", "shard.yml"
+        run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
         File.write("shard.yml", "\n", mode: "a")
 
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "master-dev", refname: nil))
@@ -116,7 +122,7 @@ describe Crystal::Doc::ProjectInfo do
 
       it "git with remote" do
         run_git "init"
-        run_git "remote add origin git@github.com:foo/bar"
+        run_git "remote", "add", "origin", "git@github.com:foo/bar"
 
         url_pattern = "https://github.com/foo/bar/blob/%{refname}/%{path}#L%{line}"
         assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new("foo", "1.0", refname: nil, source_url_pattern: url_pattern))
@@ -129,9 +135,9 @@ describe Crystal::Doc::ProjectInfo do
     it "no shard.yml, but git tagged version" do
       File.write("foo.txt", "bar")
       run_git "init"
-      run_git "add foo.txt"
-      run_git "commit -m \"Remove shard.yml\" --no-gpg-sign"
-      run_git "tag v4.0"
+      run_git "add", "foo.txt"
+      run_git "commit", "-m", "Remove shard.yml", "--no-gpg-sign"
+      run_git "tag", "v4.0"
 
       assert_with_defaults(ProjectInfo.new(nil, nil), ProjectInfo.new(nil, "4.0", refname: "v4.0"))
       assert_with_defaults(ProjectInfo.new("foo", nil), ProjectInfo.new("foo", "4.0", refname: "v4.0"))
@@ -146,28 +152,28 @@ describe Crystal::Doc::ProjectInfo do
 
     # Empty git directory
     run_git "init"
-    run_git "checkout -B master"
+    run_git "checkout", "-B", "master"
     ProjectInfo.find_git_version.should be_nil
 
     # Non-tagged commit
     File.write("file.txt", "foo")
-    run_git "add file.txt"
-    run_git "commit -m \"Initial commit\" --no-gpg-sign"
+    run_git "add", "file.txt"
+    run_git "commit", "-m", "Initial commit", "--no-gpg-sign"
     ProjectInfo.find_git_version.should eq "master"
 
     # Other branch
-    run_git "checkout -b foo"
+    run_git "checkout", "-b", "foo"
     ProjectInfo.find_git_version.should eq "foo"
 
     # Non-tagged commit, dirty workdir
-    run_git "checkout master"
+    run_git "checkout", "master"
     File.write("file.txt", "bar")
     ProjectInfo.find_git_version.should eq "master-dev"
 
-    run_git "checkout -- ."
+    run_git "checkout", "--", "."
 
     # Tagged commit
-    run_git "tag v0.1.0"
+    run_git "tag", "v0.1.0"
     ProjectInfo.find_git_version.should eq "0.1.0"
 
     # Tagged commit, dirty workdir
@@ -175,14 +181,14 @@ describe Crystal::Doc::ProjectInfo do
     ProjectInfo.find_git_version.should eq "0.1.0-dev"
 
     # Tagged commit, dirty index
-    run_git "add file.txt"
+    run_git "add", "file.txt"
     ProjectInfo.find_git_version.should eq "0.1.0-dev"
 
-    run_git "reset --hard v0.1.0"
+    run_git "reset", "--hard", "v0.1.0"
     ProjectInfo.find_git_version.should eq "0.1.0"
 
     # Multiple tags
-    run_git "tag v0.2.0"
+    run_git "tag", "v0.2.0"
     ProjectInfo.find_git_version.should eq "0.1.0"
   end
 
@@ -198,22 +204,22 @@ describe Crystal::Doc::ProjectInfo do
 
     it "simple origin" do
       run_git "init"
-      run_git "remote add origin https://example.com/foo.git"
+      run_git "remote", "add", "origin", "https://example.com/foo.git"
       ProjectInfo.git_remote.should eq "https://example.com/foo.git"
     end
 
     it "origin plus other" do
       run_git "init"
-      run_git "remote add bar https://example.com/bar.git"
-      run_git "remote add origin https://example.com/foo.git"
-      run_git "remote add baz https://example.com/baz.git"
+      run_git "remote", "add", "bar", "https://example.com/bar.git"
+      run_git "remote", "add", "origin", "https://example.com/foo.git"
+      run_git "remote", "add", "baz", "https://example.com/baz.git"
       ProjectInfo.git_remote.should eq "https://example.com/foo.git"
     end
 
     it "no origin remote" do
       run_git "init"
-      run_git "remote add bar https://example.com/bar.git"
-      run_git "remote add baz https://example.com/baz.git"
+      run_git "remote", "add", "bar", "https://example.com/bar.git"
+      run_git "remote", "add", "baz", "https://example.com/baz.git"
       ProjectInfo.git_remote.should eq "https://example.com/bar.git"
     end
   end
