@@ -21,7 +21,7 @@ private def shell_command(command)
   {% end %}
 end
 
-private def print_env_command
+private def print_env_shell_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
     shell_command("set COMSPEC=& set PATHEXT=& set PROMPT=& set PROCESSOR_ARCHITECTURE=& set")
@@ -498,28 +498,28 @@ describe Process do
 
     describe "environ" do
       it "clears the environment" do
-        value = Process.run(*print_env_command, clear_env: true) do |proc|
+        value = Process.run(exe, ["pu", "env"], clear_env: true) do |proc|
           proc.output.gets_to_end
         end
         value.should eq("")
       end
 
       it "clears and sets an environment variable" do
-        value = Process.run(*print_env_command, clear_env: true, env: {"FOO" => "bar"}) do |proc|
+        value = Process.run(exe, ["pu", "env"], clear_env: true, env: {"FOO" => "bar"}) do |proc|
           proc.output.gets_to_end
         end
-        value.should eq("FOO=bar#{newline}")
+        value.should eq("FOO=bar\n")
       end
 
       it "sets an environment variable" do
-        value = Process.run(*print_env_command, env: {"FOO" => "bar"}) do |proc|
+        value = Process.run(exe, ["pu", "env"], env: {"FOO" => "bar"}) do |proc|
           proc.output.gets_to_end
         end
         value.should match /(*ANYCRLF)^FOO=bar$/m
       end
 
       it "sets an empty environment variable" do
-        value = Process.run(*print_env_command, env: {"FOO" => ""}) do |proc|
+        value = Process.run(exe, ["pu", "env"], env: {"FOO" => ""}) do |proc|
           proc.output.gets_to_end
         end
         value.should match /(*ANYCRLF)^FOO=$/m
@@ -527,7 +527,7 @@ describe Process do
 
       it "deletes existing environment variable" do
         with_env("FOO": "bar") do
-          value = Process.run(*print_env_command, env: {"FOO" => nil}) do |proc|
+          value = Process.run(exe, ["pu", "env"], env: {"FOO" => nil}) do |proc|
             proc.output.gets_to_end
           end
           value.should_not match /(*ANYCRLF)^FOO=/m
@@ -537,7 +537,7 @@ describe Process do
       {% if flag?(:win32) %}
         it "deletes existing environment variable case-insensitive" do
           with_env("FOO": "bar") do
-            value = Process.run(*print_env_command, env: {"foo" => nil}) do |proc|
+            value = Process.run(exe, ["pu", "env"], env: {"foo" => nil}) do |proc|
               proc.output.gets_to_end
             end
             value.should_not match /(*ANYCRLF)^FOO=/mi
@@ -547,7 +547,7 @@ describe Process do
 
       it "preserves existing environment variable" do
         with_env("FOO": "bar") do
-          value = Process.run(*print_env_command) do |proc|
+          value = Process.run(exe, ["pu", "env"]) do |proc|
             proc.output.gets_to_end
           end
           value.should match /(*ANYCRLF)^FOO=bar$/m
@@ -556,7 +556,7 @@ describe Process do
 
       it "preserves and sets an environment variable" do
         with_env("FOO": "bar") do
-          value = Process.run(*print_env_command, env: {"FOO2" => "bar2"}) do |proc|
+          value = Process.run(exe, ["pu", "env"], env: {"FOO2" => "bar2"}) do |proc|
             proc.output.gets_to_end
           end
           value.should match /(*ANYCRLF)^FOO=bar$/m
@@ -566,7 +566,7 @@ describe Process do
 
       it "overrides existing environment variable" do
         with_env("FOO": "bar") do
-          value = Process.run(*print_env_command, env: {"FOO" => "different"}) do |proc|
+          value = Process.run(exe, ["pu", "env"], env: {"FOO" => "different"}) do |proc|
             proc.output.gets_to_end
           end
           value.should match /(*ANYCRLF)^FOO=different$/m
@@ -576,7 +576,7 @@ describe Process do
       {% if flag?(:win32) %}
         it "overrides existing environment variable case-insensitive" do
           with_env("FOO": "bar") do
-            value = Process.run(*print_env_command, env: {"fOo" => "different"}) do |proc|
+            value = Process.run(exe, ["pu", "env"], env: {"fOo" => "different"}) do |proc|
               proc.output.gets_to_end
             end
             value.should_not match /(*ANYCRLF)^FOO=/m
@@ -586,27 +586,27 @@ describe Process do
       {% end %}
 
       it "finds binary in parent `$PATH`, not `env`" do
-        Process.run(*print_env_command, env: {"PATH" => ""})
+        Process.run(exe, ["pu", "env"], env: {"PATH" => ""})
       end
 
       it "errors on invalid key" do
         expect_raises(ArgumentError, %(Invalid env key "")) do
-          Process.run(*print_env_command, env: {"" => "baz"})
+          Process.run(exe, ["pu", "env"], env: {"" => "baz"})
         end
         expect_raises(ArgumentError, %(Invalid env key "foo=bar")) do
-          Process.run(*print_env_command, env: {"foo=bar" => "baz"})
+          Process.run(exe, ["pu", "env"], env: {"foo=bar" => "baz"})
         end
       end
 
       it "errors on zero char in key" do
         expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `key` contains null byte") do
-          Process.run(*print_env_command, env: {"foo\0" => "baz"})
+          Process.run(exe, ["pu", "env"], env: {"foo\0" => "baz"})
         end
       end
 
       it "errors on zero char in value" do
         expect_raises({{ flag?(:win32) }} ? ArgumentError : RuntimeError, "String `value` contains null byte") do
-          Process.run(*print_env_command, env: {"foo" => "baz\0"})
+          Process.run(exe, ["pu", "env"], env: {"foo" => "baz\0"})
         end
       end
     end
@@ -737,7 +737,7 @@ describe Process do
       context "with shell: true" do
         it "errors with nonexist $PATH" do
           pending! unless {{ flag?(:unix) }}
-          Process.run(*print_env_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
+          Process.run(*print_env_shell_command, shell: true, env: {"PATH" => "/does/not/exist"}).success?.should be_false
         end
 
         it "empty path entry means current directory" do
