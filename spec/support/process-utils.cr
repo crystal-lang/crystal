@@ -19,7 +19,8 @@ class Spec::CLI
     end
 
     case command = args.shift?
-    when Nil
+    when "exit"
+      exit args[0].to_i
     else
       ::abort "Unknown process util command: #{command}"
     end

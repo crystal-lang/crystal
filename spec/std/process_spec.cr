@@ -13,14 +13,6 @@ private def exe
   PROCESS_UTILS_PATH
 end
 
-private def exit_code_command(code)
-  {% if flag?(:win32) %}
-    {"cmd.exe", {"/c", "exit #{code}"}}
-  {% else %}
-    {"/bin/sh", {"-c", "exit #{code}"}}
-  {% end %}
-end
-
 private def shell_command(command)
   {% if flag?(:win32) %}
     {"cmd.exe", {"/c", command}}
@@ -160,14 +152,14 @@ describe Process do
     end
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
-      200.times { Process.new(to_ary(exit_code_command(0))) }
+      200.times { Process.new([exe, "pu", "exit", "0"]) }
 
       # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
 
       # the processes above have now been queued after completion; if this last
       # one finishes at all, nothing was broken by the GC
-      Process.run(*exit_code_command(0))
+      Process.run(exe, ["pu", "exit", "0"])
     end
 
     it "accepts tuple args" do
@@ -177,7 +169,7 @@ describe Process do
 
   describe ".new (splat)" do
     it "works" do
-      Process.new(*to_splat(exit_code_command(0))).wait.success?.should be_true
+      Process.new(exe, "pu", "exit", "0").wait.success?.should be_true
     end
   end
 
@@ -229,37 +221,37 @@ describe Process do
     end
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
-      200.times { Process.new(*exit_code_command(0)) }
+      200.times { Process.new(exe, ["pu", "exit", "0"]) }
 
       # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
 
       # the processes above have now been queued after completion; if this last
       # one finishes at all, nothing was broken by the GC
-      Process.run(*exit_code_command(0))
+      Process.run(exe, ["pu", "exit", "0"])
     end
   end
 
   describe "#wait" do
     it "successful exit code" do
-      process = Process.new(*exit_code_command(0))
+      process = Process.new(exe, ["pu", "exit", "0"])
       process.wait.exit_code.should eq(0)
     end
 
     it "unsuccessful exit code" do
-      process = Process.new(*exit_code_command(1))
+      process = Process.new(exe, ["pu", "exit", "1"])
       process.wait.exit_code.should eq(1)
     end
   end
 
   describe ".run?(args)" do
     it "waits for successful process" do
-      status = Process.run?(to_ary(exit_code_command(0))).should be_a(Process::Status)
+      status = Process.run?([exe, "pu", "exit", "0"]).should be_a(Process::Status)
       status.exit_code.should eq(0)
     end
 
     it "waits for unsuccessful process" do
-      status = Process.run?(to_ary(exit_code_command(1))).should be_a(Process::Status)
+      status = Process.run?([exe, "pu", "exit", "1"]).should be_a(Process::Status)
       status.exit_code.should eq(1)
     end
 
@@ -304,51 +296,49 @@ describe Process do
 
   describe ".run? (splat)" do
     it "works" do
-      status = Process.run?(*to_splat(exit_code_command(0))).should be_a(Process::Status)
+      status = Process.run?(exe, "pu", "exit", "0").should be_a(Process::Status)
       status.exit_code.should eq(0)
     end
   end
 
   describe ".run" do
     it "waits for the process" do
-      Process.run(to_ary(exit_code_command(0))).exit_code.should eq(0)
+      Process.run([exe, "pu", "exit", "0"]).exit_code.should eq(0)
     end
   end
 
   describe ".run (splat)" do
     it "works" do
-      status = Process.run(*to_splat(exit_code_command(0))).exit_code.should eq(0)
+      status = Process.run(exe, "pu", "exit", "0").exit_code.should eq(0)
     end
   end
 
   describe ".run(args, &)" do
     it "waits for the process" do
-      Process.run(to_ary(exit_code_command(0))) { }[0].exit_code.should eq(0)
+      Process.run([exe, "pu", "exit", "0"]) { }[0].exit_code.should eq(0)
     end
 
     it "returns block result" do
-      Process.run(to_ary(exit_code_command(0))) { 42 }[1].should eq 42
+      Process.run([exe, "pu", "exit", "0"]) { 42 }[1].should eq 42
     end
   end
 
   describe ".run(command, args)" do
     it "waits for the process" do
-      Process.run(*exit_code_command(0)).exit_code.should eq(0)
+      Process.run(exe, ["pu", "exit", "0"]).exit_code.should eq(0)
     end
 
     it "runs true in block" do
-      Process.run(*exit_code_command(0)) { }
+      Process.run(exe, ["pu", "exit", "0"]) { }
       $?.exit_code.should eq(0)
     end
 
     it "receives arguments in array" do
-      command, args = exit_code_command(123)
-      Process.run(command, args.to_a).exit_code.should eq(123)
+      Process.run(exe, ["pu", "exit", "123"]).exit_code.should eq(123)
     end
 
     it "receives arguments in tuple" do
-      command, args = exit_code_command(123)
-      Process.run(command, args.as(Tuple)).exit_code.should eq(123)
+      Process.run(exe, {"pu", "exit", "123"}).exit_code.should eq(123)
     end
 
     it "redirects output to /dev/null" do
@@ -491,7 +481,7 @@ describe Process do
     end
 
     pending_win32 "looks up programs in the $PATH with a shell" do
-      proc = Process.run(*exit_code_command(0), shell: true, output: Process::Redirect::Close)
+      proc = Process.run(exe, ["pu", "exit", "0"], shell: true, output: Process::Redirect::Close)
       proc.exit_code.should eq(0)
     end
 
@@ -904,8 +894,8 @@ describe Process do
     end
 
     it "reports status" do
-      Process.capture_result(to_ary(exit_code_command(0))).status.exit_code.should eq(0)
-      Process.capture_result(to_ary(exit_code_command(123))).status.exit_code.should eq(123)
+      Process.capture_result([exe, "pu", "exit", "0"]).status.exit_code.should eq(0)
+      Process.capture_result([exe, "pu", "exit", "123"]).status.exit_code.should eq(123)
     end
 
     it "raises if process cannot execute" do
@@ -1005,9 +995,9 @@ describe Process do
     end
 
     it "reports status" do
-      result = Process.capture_result?(to_ary(exit_code_command(0))).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "exit", "0"]).should be_a(Process::Result)
       result.status.exit_code.should eq(0)
-      result = Process.capture_result?(to_ary(exit_code_command(123))).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "exit", "123"]).should be_a(Process::Result)
       result.status.exit_code.should eq(123)
     end
 
@@ -1030,8 +1020,8 @@ describe Process do
     end
 
     it "raises on non-zero exit status" do
-      error = expect_raises(Process::ExitError, /^Command \[.*exit 1.*\] failed: Process exited with status 1$/) do
-        Process.capture(to_ary(exit_code_command(1)))
+      error = expect_raises(Process::ExitError, /^Command \[.*"exit", "1"\] failed: Process exited with status 1$/) do
+        Process.capture([exe, "pu", "exit", "1"])
       end
       error.result.status.exit_code.should eq 1
     end
@@ -1064,11 +1054,11 @@ describe Process do
     end
 
     it "returns nil on unsuccessful exit" do
-      Process.capture?(to_ary(exit_code_command(1))).should be_nil
+      Process.capture?([exe, "pu", "exit", "1"]).should be_nil
     end
 
     it "returns nil on unsuccessful exit (splat)" do
-      Process.capture?(*to_splat(exit_code_command(1))).should be_nil
+      Process.capture?(exe, "pu", "exit", "1").should be_nil
     end
 
     it "raises if process cannot execute" do
@@ -1225,7 +1215,7 @@ describe Process do
 
     it "raises if chdir doesn't exist" do
       expect_raises(File::NotFoundError, "Error while changing directory: 'doesnotexist'") do
-        Process.exec(*exit_code_command(1), chdir: "doesnotexist")
+        Process.exec(exe, ["pu", "exit", "1"], chdir: "doesnotexist")
       end
     end
 
