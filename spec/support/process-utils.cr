@@ -33,6 +33,8 @@ class Spec::CLI
       exit args[0].to_i
     when "long-output"
       output.puts "." * 8000
+    when "pwd"
+      output.puts Dir.current
     when "sleep"
       sleep
     else
