@@ -16,7 +16,7 @@ env:
 
 jobs:
   x86_64-windows-libs:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -94,7 +94,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0
 
   x86_64-windows-dlls:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -180,7 +180,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1 -Dynamic
 
   x86_64-windows-llvm-dlls:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -217,7 +217,7 @@ jobs:
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
   x86_64-windows-test:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -262,7 +262,7 @@ jobs:
         run: make -f Makefile.win samples
 
   test-std:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     strategy:
       fail-fast: false
@@ -304,7 +304,7 @@ jobs:
           CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}
 
   x86_64-windows-test-interpreter:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -338,7 +338,7 @@ jobs:
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
