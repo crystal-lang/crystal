@@ -357,8 +357,8 @@ describe Process do
     it "sends long output and error to IO" do
       output = IO::Memory.new
       error = IO::Memory.new
-      Process.run(*shell_command("echo #{"." * 8000}"), output: output, error: error)
-      output.to_s.should eq("." * 8000 + newline)
+      Process.run(exe, ["pu", "long-output"], output: output, error: error)
+      output.to_s.should eq("." * 8000 + "\n")
       error.to_s.should be_empty
     end
 

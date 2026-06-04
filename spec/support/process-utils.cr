@@ -31,6 +31,8 @@ class Spec::CLI
       end
     when "exit"
       exit args[0].to_i
+    when "long-output"
+      output.puts "." * 8000
     when "sleep"
       sleep
     else
