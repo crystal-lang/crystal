@@ -38,29 +38,6 @@ private def path_search_command
   {% end %}
 end
 
-private def newline
-  {% if flag?(:win32) %}
-    "\r\n"
-  {% else %}
-    "\n"
-  {% end %}
-end
-
-private def to_ary(tuple)
-  [tuple[0]].concat(tuple[1])
-end
-
-private def to_splat(cmd)
-  # Splatting in literals was only introduced in Crystal 1.1
-  # FIXME: The interpreter still doesn't support it (#13183).
-  {% if compare_versions(Crystal::VERSION, "1.1.0") >= 0 && !flag?(:interpreted) %}
-    {cmd[0], *cmd[1]}
-  {% else %}
-    args = cmd[1]
-    {cmd[0], args[0], args[1]}
-  {% end %}
-end
-
 # interpreted code doesn't receive SIGCHLD for `#wait` to work (#12241)
 {% if flag?(:interpreted) && !flag?(:win32) %}
   pending Process
