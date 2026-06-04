@@ -16,7 +16,7 @@ describe "`crystal run`" do
   it "passes arguments to the target program after --" do
     Process.capture_result(crystal, "run", fixture_path("empty-echo.cr"), "--prelude=empty", "--", "foo", "bar", "--help")
       .should(be_success)
-      .output.should(eq("foo bar --help"))
+      .output.should(eq("foo\nbar\n--help\n"))
   end
 
   it "exits with process exit status" do

@@ -1,18 +1,18 @@
 lib LibC
-  fun printf(format : UInt8*, ...) : Int32
+  fun puts(str : UInt8*) : Int32
   fun exit(code : Int32) : NoReturn
+  {% if flag?(:win32) %}
+    fun _setmode(fd : Int32, mode : Int32) : Int32
+  {% end %}
 end
 
-class String
-  def to_unsafe
-    pointerof(@c)
-  end
-end
+{% if flag?(:win32) %}
+  LibC._setmode(1, 0x8000) # _O_BINARY
+{% end %}
 
 i = 1
 while i < ARGC_UNSAFE
-  LibC.printf(" ") unless i == 1
-  LibC.printf("%s", (ARGV_UNSAFE + i).value)
+  LibC.puts((ARGV_UNSAFE + i).value)
   i &+= 1
 end
 
