@@ -5,6 +5,13 @@ require "process"
 require "./spec_helper"
 require "../support/env"
 require "../support/wait_for"
+require "../support/process-utils"
+
+PROCESS_UTILS_PATH = Process.executable_path.not_nil!
+
+private def exe
+  PROCESS_UTILS_PATH
+end
 
 private def exit_code_command(code)
   {% if flag?(:win32) %}
