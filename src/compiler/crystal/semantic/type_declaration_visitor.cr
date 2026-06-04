@@ -171,8 +171,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     when ClassVar
       declare_class_var(node, var, false)
     when Path
-      # Typed-constant declarations (`FOO : Int64 = 123`) are processed by
-      # `TopLevelVisitor#visit(TypeDeclaration)`; nothing to do here.
+      # nothing to do
     else
       raise "Unexpected TypeDeclaration var type: #{var.class}"
     end
