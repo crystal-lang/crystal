@@ -21,22 +21,6 @@ private def shell_command(command)
   {% end %}
 end
 
-private def stdin_to_stdout_command
-  {% if flag?(:win32) %}
-    {"powershell.exe", {"-C", "$Input"}}
-  {% else %}
-    {"/bin/cat", [] of String}
-  {% end %}
-end
-
-private def stdin_to_stderr_command(status = 0)
-  {% if flag?(:win32) %}
-    {"powershell.exe", {"-C", "[Console]::OpenStandardInput().CopyTo([Console]::OpenStandardError()); exit #{status}"}}
-  {% else %}
-    {"/bin/sh", {"-c", "cat 1>&2; exit #{status}"}}
-  {% end %}
-end
-
 private def print_env_command
   {% if flag?(:win32) %}
     # cmd adds these by itself, clear them out before printing.
@@ -359,7 +343,7 @@ describe Process do
     end
 
     it "sends input in IO" do
-      value = Process.run(*stdin_to_stdout_command, input: IO::Memory.new("hello")) do |proc|
+      value = Process.run(exe, ["pu", "cat"], input: IO::Memory.new("hello")) do |proc|
         proc.input?.should be_nil
         proc.output.gets_to_end
       end
@@ -387,16 +371,16 @@ describe Process do
     end
 
     it "controls process in block" do
-      value = Process.run(*stdin_to_stdout_command, error: :inherit) do |proc|
+      value = Process.run(exe, ["pu", "cat"], error: :inherit) do |proc|
         proc.input.puts "hello"
         proc.input.close
         proc.output.gets_to_end
       end
-      value.should eq("hello#{newline}")
+      value.should eq("hello\n")
     end
 
     it "closes input after block" do
-      Process.run(*stdin_to_stdout_command) { }
+      Process.run(exe, ["pu", "cat"]) { }
       $?.exit_code.should eq(0)
     end
 
@@ -405,7 +389,7 @@ describe Process do
       channel = Channel(Process).new
 
       spawn do
-        Process.run(*stdin_to_stdout_command, input: reader, output: :pipe, error: :pipe) do |process|
+        Process.run(exe, ["pu", "cat"], input: reader, output: :pipe, error: :pipe) do |process|
           channel.send process
           channel.receive
         end
@@ -429,9 +413,9 @@ describe Process do
     it "forwards closed io" do
       closed_io = IO::Memory.new
       closed_io.close
-      Process.run(*stdin_to_stdout_command, input: closed_io)
-      Process.run(*stdin_to_stdout_command, output: closed_io)
-      Process.run(*stdin_to_stdout_command, error: closed_io)
+      Process.run(exe, ["pu", "cat"], input: closed_io)
+      Process.run(exe, ["pu", "cat"], output: closed_io)
+      Process.run(exe, ["pu", "cat"], error: closed_io)
     end
 
     it "forwards non-blocking file" do
@@ -440,7 +424,7 @@ describe Process do
           File.open(out_path, "w+", blocking: false) do |output|
             input.puts "hello"
             input.rewind
-            Process.run(*stdin_to_stdout_command, input: input, output: output)
+            Process.run(exe, ["pu", "cat"], input: input, output: output)
             output.rewind
             output.gets_to_end.chomp.should eq("hello")
           end
@@ -794,8 +778,8 @@ describe Process do
 
     it "can link processes together" do
       buffer = IO::Memory.new
-      Process.run(*stdin_to_stdout_command) do |cat|
-        Process.run(*stdin_to_stdout_command, input: cat.output, output: buffer) do
+      Process.run(exe, ["pu", "cat"]) do |cat|
+        Process.run(exe, ["pu", "cat"], input: cat.output, output: buffer) do
           1000.times { cat.input.puts "line" }
           cat.close
         end
@@ -820,14 +804,14 @@ describe Process do
     end
 
     it "captures stdout from stdin" do
-      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"))
+      result = Process.capture_result([exe, "pu", "cat"], input: IO::Memory.new("hello"))
       result.status.success?.should be_true
       result.output.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is IO" do
       io = IO::Memory.new
-      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io)
+      result = Process.capture_result([exe, "pu", "cat"], input: IO::Memory.new("hello"), output: io)
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
@@ -836,7 +820,7 @@ describe Process do
 
     it "ignores stdout if output is FileDescriptor" do
       reader, writer = IO.pipe
-      result = Process.capture_result(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer)
+      result = Process.capture_result([exe, "pu", "cat"], input: IO::Memory.new("hello\n"), output: writer)
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
@@ -885,7 +869,7 @@ describe Process do
     it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
-      result = Process.capture_result(to_ary(stdin_to_stderr_command), input: input)
+      result = Process.capture_result([exe, "pu", "cat", "--stderr"], input: input)
       result.status.success?.should be_true
       result.output?.should eq ""
       error = result.error.should be_a(String)
@@ -921,14 +905,14 @@ describe Process do
     end
 
     it "captures stdout from stdin" do
-      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "cat"], input: IO::Memory.new("hello")).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output.chomp.should eq "hello"
     end
 
     it "ignores stdout if output is IO" do
       io = IO::Memory.new
-      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello"), output: io).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "cat"], input: IO::Memory.new("hello"), output: io).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
@@ -937,7 +921,7 @@ describe Process do
 
     it "ignores stdout if output is FileDescriptor" do
       reader, writer = IO.pipe
-      result = Process.capture_result?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello\n"), output: writer).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "cat"], input: IO::Memory.new("hello\n"), output: writer).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should be_nil
       result.error?.should eq ""
@@ -986,7 +970,7 @@ describe Process do
     it "truncates error output", tags: %w[slow] do
       dashes32 = "-" * (32 << 10)
       input = IO::Memory.new("#{dashes32}X#{dashes32}")
-      result = Process.capture_result?(to_ary(stdin_to_stderr_command), input: input).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "cat", "--stderr"], input: input).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
       error = result.error.should be_a(String)
@@ -1016,7 +1000,7 @@ describe Process do
     end
 
     it "captures stdout from stdin" do
-      Process.capture(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).chomp.should eq "hello"
+      Process.capture([exe, "pu", "cat"], input: IO::Memory.new("hello")).chomp.should eq "hello"
     end
 
     it "raises on non-zero exit status" do
@@ -1034,7 +1018,7 @@ describe Process do
 
     it "captures stderr in error message" do
       error = expect_raises(Process::ExitError) do
-        Process.capture(to_ary(stdin_to_stderr_command(status: 1)), input: IO::Memory.new("hello"))
+        Process.capture([exe, "pu", "cat", "--stderr", "--exit", "1"], input: IO::Memory.new("hello"))
       end
       error.result.error.chomp.should eq "hello"
     end
@@ -1050,7 +1034,7 @@ describe Process do
     end
 
     it "captures stdout from stdin" do
-      Process.capture?(to_ary(stdin_to_stdout_command), input: IO::Memory.new("hello")).try(&.chomp).should eq "hello"
+      Process.capture?([exe, "pu", "cat"], input: IO::Memory.new("hello")).try(&.chomp).should eq "hello"
     end
 
     it "returns nil on unsuccessful exit" do
@@ -1191,8 +1175,8 @@ describe Process do
         File.write(stdin_path, "foobar")
 
         status, _, _ = compile_and_run_source <<-CRYSTAL
-          command = #{stdin_to_stdout_command[0].inspect}
-          args = #{stdin_to_stdout_command[1].to_a} of String
+          command = #{exe.inspect}
+          args = ["pu", "cat"]
           stdin_path = #{stdin_path.inspect}
           stdout_path = #{stdout_path.inspect}
           File.open(stdin_path) do |input|

@@ -19,6 +19,8 @@ class Spec::CLI
     end
 
     case command = args.shift?
+    when "cat"
+      IO.copy(STDIN, output)
     when "exit"
       exit args[0].to_i
     else
