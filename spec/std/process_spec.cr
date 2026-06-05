@@ -336,10 +336,10 @@ describe Process do
     end
 
     it "gets output" do
-      value = Process.run(*shell_command("echo hello")) do |proc|
+      value = Process.run(exe, ["pu", "echo", "hello"]) do |proc|
         proc.output.gets_to_end
       end
-      value.should eq("hello#{newline}")
+      value.should eq("hello\n")
     end
 
     it "sends input in IO" do
@@ -352,14 +352,14 @@ describe Process do
 
     it "sends output to IO" do
       output = IO::Memory.new
-      Process.run(*shell_command("echo hello"), output: output)
-      output.to_s.should eq("hello#{newline}")
+      Process.run(exe, ["pu", "echo", "hello"], output: output)
+      output.to_s.should eq("hello\n")
     end
 
     it "sends error to IO" do
       error = IO::Memory.new
-      Process.run(*shell_command("1>&2 echo hello"), error: error)
-      error.to_s.should eq("hello#{newline}")
+      Process.run(exe, "pu", "echo", "--stderr", "hello", error: error)
+      error.to_s.should eq("hello\n")
     end
 
     it "sends long output and error to IO" do
@@ -790,16 +790,16 @@ describe Process do
 
   describe ".capture_result" do
     it "splat overload" do
-      result = Process.capture_result(*to_splat(shell_command("echo hello")))
+      result = Process.capture_result(exe, "pu", "echo", "hello")
       result.status.success?.should be_true
-      result.output?.should eq "hello#{newline}"
+      result.output?.should eq "hello\n"
       result.error?.should eq ""
     end
 
     it "captures stdout" do
-      result = Process.capture_result(to_ary(shell_command("echo hello")))
+      result = Process.capture_result([exe, "pu", "echo", "hello"])
       result.status.success?.should be_true
-      result.output?.should eq "hello#{newline}"
+      result.output?.should eq "hello\n"
       result.error?.should eq ""
     end
 
@@ -828,24 +828,24 @@ describe Process do
     end
 
     it "captures stderr" do
-      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")))
+      result = Process.capture_result([exe, "pu", "echo", "--stderr", "hello"])
       result.status.success?.should be_true
       result.output?.should eq ""
-      result.error?.should eq "hello#{newline}"
+      result.error?.should eq "hello\n"
     end
 
     it "ignores stderr if error is IO" do
       io = IO::Memory.new
-      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: io)
+      result = Process.capture_result([exe, "pu", "echo", "--stderr", "hello"], error: io)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
-      io.to_s.should eq "hello#{newline}"
+      io.to_s.should eq "hello\n"
     end
 
     it "ignores stderr if error is FileDescriptor" do
       reader, writer = IO.pipe
-      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: writer)
+      result = Process.capture_result([exe, "pu", "echo", "--stderr", "hello"], error: writer)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
@@ -853,14 +853,14 @@ describe Process do
     end
 
     it "doesn't capture closed stdout" do
-      result = Process.capture_result(to_ary(shell_command("echo hello")), output: :close)
+      result = Process.capture_result([exe, "pu", "echo", "hello"], output: :close)
       result.output?.should be_nil
       result.error?.should_not be_nil
     end
 
     it "doesn't capture closed stderr" do
       # FIXME: Autocasting breaks in the interpreter
-      result = Process.capture_result(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close)
+      result = Process.capture_result([exe, "pu", "echo", "--stderr", "hello"], error: Process::Redirect::Close)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
@@ -891,16 +891,16 @@ describe Process do
 
   describe ".capture_result?" do
     it "splat overload" do
-      result = Process.capture_result?(*to_splat(shell_command("echo hello"))).should be_a(Process::Result)
+      result = Process.capture_result?(exe, "pu", "echo", "hello").should be_a(Process::Result)
       result.status.success?.should be_true
-      result.output?.should eq "hello#{newline}"
+      result.output?.should eq "hello\n"
       result.error?.should eq ""
     end
 
     it "captures stdout" do
-      result = Process.capture_result?(to_ary(shell_command("echo hello"))).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "hello"]).should be_a(Process::Result)
       result.status.success?.should be_true
-      result.output?.should eq "hello#{newline}"
+      result.output?.should eq "hello\n"
       result.error?.should eq ""
     end
 
@@ -929,24 +929,24 @@ describe Process do
     end
 
     it "captures stderr" do
-      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello"))).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "--stderr", "hello"]).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
-      result.error?.should eq "hello#{newline}"
+      result.error?.should eq "hello\n"
     end
 
     it "ignores stderr if error is IO" do
       io = IO::Memory.new
-      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: io).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "--stderr", "hello"], error: io).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
-      io.to_s.should eq "hello#{newline}"
+      io.to_s.should eq "hello\n"
     end
 
     it "ignores stderr if error is FileDescriptor" do
       reader, writer = IO.pipe
-      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: writer).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "--stderr", "hello"], error: writer).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
@@ -954,14 +954,14 @@ describe Process do
     end
 
     it "doesn't capture closed stdout" do
-      result = Process.capture_result?(to_ary(shell_command("echo hello")), output: :close).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "hello"], output: :close).should be_a(Process::Result)
       result.output?.should be_nil
       result.error?.should_not be_nil
     end
 
     it "doesn't capture closed stderr" do
       # FIXME: Autocasting breaks in the interpreter
-      result = Process.capture_result?(to_ary(shell_command("1>&2 echo hello")), error: Process::Redirect::Close).should be_a(Process::Result)
+      result = Process.capture_result?([exe, "pu", "echo", "--stderr", "hello"], error: Process::Redirect::Close).should be_a(Process::Result)
       result.status.success?.should be_true
       result.output?.should eq ""
       result.error?.should be_nil
@@ -992,11 +992,11 @@ describe Process do
 
   describe ".capture" do
     it "splat overload" do
-      Process.capture(*to_splat(shell_command("echo hello"))).should eq "hello#{newline}"
+      Process.capture(exe, "pu", "echo", "hello").should eq "hello\n"
     end
 
     it "captures stdout" do
-      Process.capture(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
+      Process.capture([exe, "pu", "echo", "hello"]).should eq "hello\n"
     end
 
     it "captures stdout from stdin" do
@@ -1026,11 +1026,11 @@ describe Process do
 
   describe ".capture?" do
     it "splat overload" do
-      Process.capture?(*to_splat(shell_command("echo hello"))).should eq "hello#{newline}"
+      Process.capture?(exe, "pu", "echo", "hello").should eq "hello\n"
     end
 
     it "captures stdout" do
-      Process.capture?(to_ary(shell_command("echo hello"))).should eq "hello#{newline}"
+      Process.capture?([exe, "pu", "echo", "hello"]).should eq "hello\n"
     end
 
     it "captures stdout from stdin" do

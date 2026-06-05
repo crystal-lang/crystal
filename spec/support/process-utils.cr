@@ -21,6 +21,10 @@ class Spec::CLI
     case command = args.shift?
     when "cat"
       IO.copy(STDIN, output)
+    when "echo"
+      args.each do |line|
+        output.puts line
+      end
     when "env"
       ENV.each do |key, value|
         output.puts "#{key}=#{value}"
