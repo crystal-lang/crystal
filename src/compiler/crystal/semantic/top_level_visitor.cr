@@ -879,6 +879,8 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def type_assign(target : Path, value, node, declared_type : ASTNode? = nil)
+    node.raise "constant type declaration requires a value" unless value
+
     # We are inside the assign, so we go outside it to check if we are inside an outer expression
     @exp_nest -= 1
     check_outside_exp node, "declare constant"
@@ -1036,9 +1038,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     when Var
       @vars[var.name] = MetaVar.new(var.name)
     when Path
-      value = node.value
-      node.raise "constant type declaration requires a value" unless value
-      type_assign(var, value, node, node.declared_type)
+      type_assign(var, node.value, node, node.declared_type)
       return false
     end
 

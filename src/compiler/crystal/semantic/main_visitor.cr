@@ -464,9 +464,6 @@ module Crystal
 
         node.type = @program.nil
       when Path
-        # Typed constant declarations (`FOO : Int64 = 123`) are fully handled
-        # by TopLevelVisitor + visit(Path) on the constant lookup; here we
-        # just give the node a type so binding continues to work.
         node.type = @program.nil
       else
         raise "Bug: unexpected var type: #{var.class}"
