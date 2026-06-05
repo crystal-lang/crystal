@@ -24,7 +24,7 @@ all: ##
 CRYSTAL ?= crystal ## which previous crystal compiler use
 
 release            ?= ## Compile in release mode
-stats              ?= ## Enable statistics outputq
+stats              ?= ## Enable statistics output
 progress           ?= ## Enable progress output
 threads            ?= ## Maximum number of threads to use
 debug              ?= ## Add symbolic debug info
