@@ -1,10 +1,33 @@
-require "spec"
+require "option_parser"
 
-class Spec::CLI
-  def main(args)
-    return previous_def unless args[0]? == "pu"
+# `process-utils` are a set of simple command line tools required for
+# testing process spawn behaviour in `spec/std/process_spec.cr`.
+# It can be built into the spec executable which can just spawn itself
+# with `pu` as first argument, followed by the command name.
+# Alternatively, it can be built as a standalone executable which
+# we use for interpreter tests because in interpreted mode there is
+# no executable we could call again.
+{% if @type.has_constant?(:Spec) %}
+  class Spec::CLI
+    def main(args)
+      return previous_def unless args[0]? == "pu"
 
-    args.shift # Remove "pu" from the arguments
+      ProcessUtils.main(args[1..])
+    end
+  end
+{% else %}
+  args = ARGV
+  if args[0]?.in?("pu", "--")
+    args = args[1..]
+  end
+  ProcessUtils.main(args)
+{% end %}
+
+# Provides simple helper programs for testing process spawn behaviour in `spec/std/process_spec.cr`.
+# The commands similar to coreutils, but much simplified and tailored for
+# the testing needs.
+module ProcessUtils
+  def self.main(args)
 
     output = STDOUT
     exit_status = 0

@@ -5,9 +5,24 @@ require "process"
 require "./spec_helper"
 require "../support/env"
 require "../support/wait_for"
-require "../support/process-utils"
 
-PROCESS_UTILS_PATH = Process.executable_path.not_nil!
+# Process utils are helper programs for testing process spawn behaviour.
+# They are defined in spec/support/process-utils.cr which
+# we require here in order to build them into the spec executable.
+# We then call the spec executable with "pu" as first argument followed
+# by the command name.
+# This mechanism doesn't work when running in the interpreter, because
+# there is no spec executable we could call again. Instead, we need a
+# to build process utils into a separate executable `crystal-pu` which
+# we can call from the interpreter.
+# This approach would also work for compiled specs, but building it into
+# the executable is simpler and does not require a separate build step.
+{% if flag?(:interpreted) %}
+  PROCESS_UTILS_PATH ="#{Process.executable_path.not_nil!.rchop(".exe")}-pu#{".exe" if {{ flag?(:win32) }}}"
+{% else %}
+  require "../support/process-utils"
+  PROCESS_UTILS_PATH = Process.executable_path.not_nil!
+{% end %}
 
 private def exe
   PROCESS_UTILS_PATH
