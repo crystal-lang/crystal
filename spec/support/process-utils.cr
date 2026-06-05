@@ -28,7 +28,6 @@ require "option_parser"
 # the testing needs.
 module ProcessUtils
   def self.main(args)
-
     output = STDOUT
     exit_status = 0
 
