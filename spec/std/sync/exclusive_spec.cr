@@ -1,9 +1,9 @@
 require "./spec_helper"
 require "sync/exclusive"
 
-private class Foo
-  INSTANCE = Foo.new
-  class_getter foo = Sync::Exclusive(Int64 | Foo).new(0_i64)
+private class ExclusiveFoo
+  INSTANCE = ExclusiveFoo.new
+  class_getter foo = Sync::Exclusive(Int64 | ExclusiveFoo).new(0_i64)
   @value = 123
 end
 
@@ -123,24 +123,24 @@ describe Sync::Exclusive do
       contexts << Fiber::ExecutionContext::Isolated.new("set:foo") do
         ready.wait
         while running
-          Foo.foo.set(Foo::INSTANCE)
+          ExclusiveFoo.foo.set(ExclusiveFoo::INSTANCE)
         end
       end
 
       contexts << Fiber::ExecutionContext::Isolated.new("set:zero") do
         ready.wait
         while running
-          Foo.foo.set(0_i64)
+          ExclusiveFoo.foo.set(0_i64)
         end
       end
 
       contexts << Fiber::ExecutionContext::Isolated.new("get") do
         ready.wait
         while running
-          Foo.foo.lock do |value|
+          ExclusiveFoo.foo.lock do |value|
             case value
-            in Foo
-              value.as(Void*).address.should eq(Foo::INSTANCE.as(Void*).address)
+            in ExclusiveFoo
+              value.as(Void*).address.should eq(ExclusiveFoo::INSTANCE.as(Void*).address)
             in Int64
               value.should eq(0_i64)
             end
