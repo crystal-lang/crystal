@@ -1261,13 +1261,15 @@ module Crystal
       end
     end
 
-    def parse_type_declaration(var)
+    def parse_type_declaration(var, is_const = false)
       next_token_skip_space_or_newline
       var_type = parse_bare_proc_type
       skip_space
       if @token.type.op_eq?
         next_token_skip_space_or_newline
         value = parse_op_assign_no_control
+      elsif is_const
+        raise "expected '=' for constant type declaration"
       end
       TypeDeclaration.new(var, var_type, value).at(var).at_end(value || var_type)
     end
@@ -1316,15 +1318,7 @@ module Crystal
         unless space_after_name
           warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
         end
-        next_token_skip_space_or_newline
-        var_type = parse_bare_proc_type
-        skip_space
-        unless @token.type.op_eq?
-          raise "expected '=' for constant type declaration"
-        end
-        next_token_skip_space_or_newline
-        value = parse_op_assign_no_control
-        TypeDeclaration.new(type, var_type, value).at(type).at_end(value)
+        parse_type_declaration(type, is_const: true)
       else
         parse_custom_literal type
       end
