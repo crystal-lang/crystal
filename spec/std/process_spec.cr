@@ -30,14 +30,6 @@ private def print_env_shell_command
   {% end %}
 end
 
-private def standing_command
-  {% if flag?(:win32) %}
-    {"cmd.exe"}
-  {% else %}
-    {"yes"}
-  {% end %}
-end
-
 private def path_search_command
   {% if flag?(:win32) %}
     {"cmd.exe"}
@@ -1071,15 +1063,15 @@ describe Process do
   {% unless flag?(:win32) %}
     describe "#signal(Signal::KILL)" do
       it "kills a process" do
-        process = Process.new(*standing_command)
+        process = Process.new(exe, ["pu", "sleep"])
         process.signal(Signal::KILL).should be_nil
       ensure
         process.try &.wait
       end
 
       it "kills many process" do
-        process1 = Process.new(*standing_command)
-        process2 = Process.new(*standing_command)
+        process1 = Process.new(exe, ["pu", "sleep"])
+        process2 = Process.new(exe, ["pu", "sleep"])
         process1.signal(Signal::KILL).should be_nil
         process2.signal(Signal::KILL).should be_nil
       ensure
@@ -1090,7 +1082,7 @@ describe Process do
   {% end %}
 
   it "#terminate" do
-    process = Process.new(*standing_command)
+    process = Process.new(exe, ["pu", "sleep"])
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -1099,7 +1091,7 @@ describe Process do
     process.try(&.wait)
   end
 
-  typeof(Process.new(*standing_command).terminate(graceful: false))
+  typeof(Process.new(exe, ["pu", "sleep"]).terminate(graceful: false))
 
   describe ".debugger_present?" do
     it "compiles" do
@@ -1118,7 +1110,7 @@ describe Process do
       Process.exists?(Process.ppid).should be_true
     {% end %}
 
-    process = Process.new(*standing_command)
+    process = Process.new(exe, ["pu", "sleep"])
     process.exists?.should be_true
     process.terminated?.should be_false
 
@@ -1141,7 +1133,7 @@ describe Process do
 
   {% unless flag?(:win32) %}
     it ".pgid" do
-      process = Process.new(*standing_command)
+      process = Process.new(exe, ["pu", "sleep"])
       Process.pgid(process.pid).should be_a(Int64)
       process.terminate
       Process.pgid.should eq(Process.pgid(Process.pid))

@@ -31,6 +31,8 @@ class Spec::CLI
       end
     when "exit"
       exit args[0].to_i
+    when "sleep"
+      sleep
     else
       ::abort "Unknown process util command: #{command}"
     end
