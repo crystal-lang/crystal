@@ -1319,9 +1319,13 @@ module Crystal
     # otherwise we fall back to the normal path/custom-literal parsing.
     def parse_const_or_type_declaration
       type = parse_generic(expression: true)
+      space_after_name = @token.type.space?
       skip_space
 
       if @no_type_declaration == 0 && @token.type.op_colon? && type.is_a?(Path)
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
         next_token_skip_space_or_newline
         var_type = parse_bare_proc_type
         skip_space
