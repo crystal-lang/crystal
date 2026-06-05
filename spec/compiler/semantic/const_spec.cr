@@ -33,6 +33,13 @@ describe "Semantic: const" do
       CRYSTAL
   end
 
+  it "rejects non storable types" do
+    assert_error <<-CRYSTAL, "can't use Int as the type of a constant yet"
+      FOO : Int = 1
+      FOO
+      CRYSTAL
+  end
+
   it "errors when typed constant initializer doesn't match declared type" do
     assert_error <<-CRYSTAL, "type must be Int64"
       FOO : Int64 = "hello"
