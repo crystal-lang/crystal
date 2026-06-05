@@ -458,10 +458,12 @@ describe Process do
       end
 
       it "clears and sets an environment variable" do
-        value = Process.run(exe, ["pu", "env"], clear_env: true, env: {"FOO" => "bar"}) do |proc|
+        # We must pass PATH because otherwise dynamic libraries might not be found,
+        # particularly on windows-gnu.
+        value = Process.run(exe, ["pu", "env"], clear_env: true, env: {"PATH" => ENV["PATH"]?, "FOO" => "bar"}) do |proc|
           proc.output.gets_to_end
         end
-        value.should eq("FOO=bar\n")
+        value.should eq("PATH=#{ENV["PATH"]?}\nFOO=bar\n")
       end
 
       it "sets an environment variable" do
