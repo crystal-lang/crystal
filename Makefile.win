@@ -252,7 +252,7 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
 $(O)\crystal-pu.exe: spec\support\process-utils.cr $(SOURCES)
-	@(call MKDIR,"$(O)")
+	@$(call MKDIR,"$(O)")
 	$(call export_vars)
 	.\bin\crystal build $(FLAGS) -o $@ $<
 
