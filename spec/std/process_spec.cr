@@ -473,12 +473,22 @@ describe Process do
       end
 
       it "clears and sets an environment variable" do
-        # We must pass PATH because otherwise dynamic libraries might not be found,
-        # particularly on windows-gnu.
-        value = Process.run(exe, ["pu", "env"], clear_env: true, env: {"PATH" => ENV["PATH"]?, "FOO" => "bar"}) do |proc|
+        env = {"FOO" => "bar"}
+        {% if flag?(:win32) && flag?(:gnu)%}
+          # We must pass PATH because otherwise dynamic libraries might not be found.
+          env["PATH"] = ENV["PATH"]
+        {% end %}
+
+        value = Process.run(exe, ["pu", "env"], clear_env: true, env: env) do |proc|
           proc.output.gets_to_end
         end
-        value.should eq("PATH=#{ENV["PATH"]?}\nFOO=bar\n")
+
+        {% if flag?(:win32) && flag?(:gnu)%}
+          # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which ucrt
+          # might inject.
+          value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
+        {% end %}
+        value.should eq("FOO=bar\n")
       end
 
       it "sets an environment variable" do
