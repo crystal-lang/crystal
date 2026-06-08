@@ -219,7 +219,11 @@ module Crystal
         #
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
-        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        # Inside `is_a?`, an alias of a union must keep the union's members
+        # rather than generalize to their common ancestor, so that it behaves
+        # like an inline union (#9665).
+        unaliased = @inside_is_a ? type.remove_alias_union_of : type.remove_alias_if_simple
+        node.type = check_type_in_type_args(unaliased).devirtualize
         node.target_type = type
       when ASTNode
         type.accept self unless type.type?
