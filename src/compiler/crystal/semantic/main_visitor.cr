@@ -1893,17 +1893,20 @@ module Crystal
       # than a type it must keep its original `(Foo | Bar) === x` value
       # comparison. This happens after type resolution, so we can tell apart a
       # union of constants from a union of types here (#9665).
-      if const.is_a?(Union) && (members = const.types).any? { |member| member.is_a?(Path) && member.target_const }
-        obj = node.obj.clone.at(node.obj)
-        combined = members.first.clone
-        members[1..].each do |member|
-          combined = Call.new(combined, "|", member.clone).at(node.const)
+      if const.is_a?(Union)
+        members = const.types
+        if members.any? { |member| member.is_a?(Path) && member.target_const }
+          obj = node.obj.clone.at(node.obj)
+          combined = members.first.clone
+          members[1..].each do |member|
+            combined = Call.new(combined, "|", member.clone).at(node.const)
+          end
+          comp = Call.new(combined, "===", obj).at(node)
+          comp.accept self
+          node.syntax_replacement = comp
+          node.bind_to comp
+          return false
         end
-        comp = Call.new(combined, "===", obj).at(node)
-        comp.accept self
-        node.syntax_replacement = comp
-        node.bind_to comp
-        return false
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
@@ -2913,10 +2916,13 @@ module Crystal
           # the union's members, not their common ancestor, like the inline
           # `rescue ex : Bar | Baz` (#9665). Re-resolve the alias keeping the
           # members and update the node so codegen matches the same types.
-          if type.is_a?(Path) && (target_type = type.target_type).is_a?(AliasType)
-            unaliased = target_type.remove_alias_union_of
-            if unaliased != type.type.instance_type
-              type.type = unaliased.metaclass
+          if type.is_a?(Path)
+            target_type = type.target_type
+            if target_type.is_a?(AliasType)
+              unaliased = target_type.remove_alias_union_of
+              if unaliased != type.type.instance_type
+                type.type = unaliased.metaclass
+              end
             end
           end
 

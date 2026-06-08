@@ -959,7 +959,8 @@ module Crystal
     # `Foo | Bar | Baz`, possibly with `.class` or aliases), returns the
     # equivalent `Union` node. Otherwise returns `nil`.
     private def case_when_union(node)
-      return nil unless node.is_a?(Call) && node.name == "|" && node.args.size == 1
+      return nil unless node.is_a?(Call)
+      return nil unless node.name == "|" && node.args.size == 1
       obj = node.obj
       arg = node.args.first
       return nil unless obj
@@ -979,7 +980,8 @@ module Crystal
       when Path, Generic, Union
         [node] of ASTNode
       when Call
-        if node.name == "class" && node.args.empty? && (obj = node.obj) && (obj.is_a?(Path) || obj.is_a?(Generic))
+        obj = node.obj
+        if node.name == "class" && node.args.empty? && (obj.is_a?(Path) || obj.is_a?(Generic))
           [Metaclass.new(obj).at(obj)] of ASTNode
         else
           case_when_union(node).try { |union| union.types }
