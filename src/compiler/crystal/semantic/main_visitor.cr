@@ -1888,6 +1888,24 @@ module Crystal
         return false
       end
 
+      # A `when Foo | Bar` is expanded into an `is_a?` against a union, but if
+      # any member is a constant (an enum member or a numeric constant) rather
+      # than a type it must keep its original `(Foo | Bar) === x` value
+      # comparison. This happens after type resolution, so we can tell apart a
+      # union of constants from a union of types here (#9665).
+      if const.is_a?(Union) && (members = const.types).any? { |member| member.is_a?(Path) && member.target_const }
+        obj = node.obj.clone.at(node.obj)
+        combined = members.first.clone
+        members[1..].each do |member|
+          combined = Call.new(combined, "|", member.clone).at(node.const)
+        end
+        comp = Call.new(combined, "===", obj).at(node)
+        comp.accept self
+        node.syntax_replacement = comp
+        node.bind_to comp
+        return false
+      end
+
       if needs_type_filters? && (var = get_expression_var(node.obj))
         @type_filters = TypeFilters.new var, SimpleTypeFilter.new(node.const.type)
       end
