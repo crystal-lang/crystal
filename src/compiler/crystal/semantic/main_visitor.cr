@@ -2908,6 +2908,18 @@ module Crystal
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
+
+          # A `rescue ex : BarBaz` where `alias BarBaz = Bar | Baz` must catch
+          # the union's members, not their common ancestor, like the inline
+          # `rescue ex : Bar | Baz` (#9665). Re-resolve the alias keeping the
+          # members and update the node so codegen matches the same types.
+          if type.is_a?(Path) && (target_type = type.target_type).is_a?(AliasType)
+            unaliased = target_type.remove_alias_union_of
+            if unaliased != type.type.instance_type
+              type.type = unaliased.metaclass
+            end
+          end
+
           instance_type = type.type.instance_type
 
           unless self.allowed_type_in_rescue? instance_type
