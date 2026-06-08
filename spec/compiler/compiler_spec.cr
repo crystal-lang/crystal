@@ -38,4 +38,27 @@ describe "Compiler" do
         FILE
     end
   end
+
+  it "rejects emit targets when cross compiling" do
+    emit_targets = [
+      Compiler::EmitTarget::ASM,
+      Compiler::EmitTarget::OBJ,
+      Compiler::EmitTarget::LLVM_BC,
+      Compiler::EmitTarget::LLVM_IR,
+    ]
+
+    emit_targets.each do |emit_target|
+      compiler = create_spec_compiler
+      compiler.cross_compile = true
+      compiler.emit_targets = emit_target
+      compiler.prelude = "empty"
+      compiler.stdout = IO::Memory.new
+
+      with_temp_executable "compiler_spec_output" do |path|
+        expect_raises Crystal::Error, "`--emit` is not supported together with `--cross-compile`" do
+          compiler.compile Compiler::Source.new("compiler_spec_sample", "1"), path
+        end
+      end
+    end
+  end
 end

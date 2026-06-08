@@ -440,6 +440,10 @@ module Crystal
     end
 
     private def cross_compile(program, units, output_filename)
+      unless @emit_targets.none?
+        raise Crystal::Error.new("`--emit` is not supported together with `--cross-compile`")
+      end
+
       unit = units.first
       llvm_mod = unit.llvm_mod
 
