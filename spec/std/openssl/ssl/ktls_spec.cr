@@ -26,15 +26,15 @@ describe "OpenSSL::SSL::Socket (kTLS)" do
       serve = ->(socket : TCPSocket) do
         begin
           ssl = OpenSSL::SSL::Socket::Server.new(socket, server_context, sync_close: true)
-          byte = ssl.read_byte
-          if byte
+          if byte = ssl.read_byte
             ssl.write(Bytes[byte]) # echo so the client's read completes
             ssl.flush
           end
           served.send(byte == 42_u8)
-          ssl.close
         rescue
           served.send(false)
+        ensure
+          ssl.try(&.close)
         end
       end
 
@@ -51,8 +51,10 @@ describe "OpenSSL::SSL::Socket (kTLS)" do
           ssl.write(Bytes[42_u8])
           ssl.flush
           ssl.read_byte
-          ssl.close
         rescue
+          # silence
+        ensure
+          ssl.try(&.close)
         end
       end
 
@@ -66,8 +68,8 @@ describe "OpenSSL::SSL::Socket (kTLS)" do
       select
       when count = collected.receive
         count.should eq n
-      when timeout(15.seconds)
-        fail "kTLS connections deadlocked: data sent immediately after the handshake was not delivered"
+      when timeout(5.seconds)
+        fail "timeout: data sent immediately after the handshake was not delivered"
       end
     end
   end
