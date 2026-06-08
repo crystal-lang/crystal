@@ -25,7 +25,7 @@ abstract class OpenSSL::SSL::Socket < IO
           end
         end
 
-        ret = LibSSL.ssl_connect(@ssl)
+        ret = ktls_safe_handshake { LibSSL.ssl_connect(@ssl) }
         unless ret == 1
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
         end
@@ -67,7 +67,7 @@ abstract class OpenSSL::SSL::Socket < IO
     end
 
     def accept : Nil
-      ret = LibSSL.ssl_accept(@ssl)
+      ret = ktls_safe_handshake { LibSSL.ssl_accept(@ssl) }
       unless ret == 1
         bio.io.close if @sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
@@ -99,7 +99,7 @@ abstract class OpenSSL::SSL::Socket < IO
     @bio = uninitialized BIO
   {% end %}
 
-  protected def initialize(io, context : Context, @sync_close : Bool = false)
+  protected def initialize(io, @context : Context, @sync_close : Bool = false)
     @closed = false
 
     @ssl = LibSSL.ssl_new(context)
@@ -116,15 +116,6 @@ abstract class OpenSSL::SSL::Socket < IO
       {% end %}
 
     LibSSL.ssl_set_bio(@ssl, bio, bio)
-
-    {% if OpenSSL.has_constant?(:KTLS) %}
-      # Must not use buffered transport that can read ahead during handshake, may
-      # cause bytes to be "stranded" in userspace and never delivered
-      if io.responds_to?(:read_buffering=) &&
-         context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS)
-        io.read_buffering = false
-      end
-    {% end %}
   end
 
   def finalize
@@ -295,5 +286,26 @@ abstract class OpenSSL::SSL::Socket < IO
         LibCrypto.x509_free(raw_cert)
       end
     end
+  end
+
+  # When kernel TLS is enabled, we must disable the IO read buffer during the
+  # handshake so we don't over-read in the user-space buffer and leave the
+  # kernel with missing data (desync).
+  private def ktls_safe_handshake(&)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      io = bio.io
+
+      if @context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS) && io.is_a?(IO::Buffered)
+        enabled = io.read_buffering?
+        io.read_buffering = false
+        begin
+          return yield
+        ensure
+          io.read_buffering = enabled
+        end
+      end
+    {% end %}
+
+    yield
   end
 end
