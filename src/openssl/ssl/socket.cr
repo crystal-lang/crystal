@@ -116,6 +116,15 @@ abstract class OpenSSL::SSL::Socket < IO
       {% end %}
 
     LibSSL.ssl_set_bio(@ssl, bio, bio)
+
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      # Must not use buffered transport that can read ahead during handshake, may
+      # cause bytes to be "stranded" in userspace and never delivered
+      if io.responds_to?(:read_buffering=) &&
+         context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS)
+        io.read_buffering = false
+      end
+    {% end %}
   end
 
   def finalize
