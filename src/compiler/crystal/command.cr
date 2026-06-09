@@ -161,6 +161,10 @@ class Crystal::Command
             "PATH"              => path,
             "CRYSTAL_EXEC_PATH" => crystal_exec_path,
           }, input: :inherit, output: :inherit, error: :inherit) do |process|
+            # FIXME: There's a race condition between creating the sub-process and
+            # registering the `on_terminate` callback.
+            # Should be fixed with https://github.com/crystal-lang/crystal/issues/14422
+
             Process.on_terminate do
               process.terminate
             end
