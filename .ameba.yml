@@ -80,6 +80,8 @@ Lint/SpecFilename:
   Excluded:
   - spec/compiler/data/**/*
   - spec/compiler/lexer/lexer_objects/strings.cr
+  - spec/compiler-cli/fixtures/**/*
+  - spec/compiler-cli/support/**/*
   - spec/debug/**/*
   - spec/llvm-ir/**/*
   - spec/std/float_printer/ryu_printf_test_cases.cr
