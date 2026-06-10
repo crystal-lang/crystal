@@ -500,64 +500,59 @@ private module ConsoleUtils
     @@buffer = appender.to_slice
   end
 
+  class ReadRequest
+    getter handle : LibC::HANDLE
+    getter slice : Slice(UInt16)
+    getter fiber : Fiber
+
+    property units_read = LibC::DWORD.zero
+    property error = WinError::ERROR_SUCCESS
+
+    def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16), @fiber : Fiber)
+    end
+  end
+
+  @@read_mtx = ::Thread::Mutex.new
+  @@read_cv = ::Thread::ConditionVariable.new
+  @@read_requests = Deque(ReadRequest).new
+  @@read_thread = ::Thread.new { reader_loop }
+
   private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    @@mtx.synchronize do
-      @@read_requests << ReadRequest.new(
-        handle: handle,
-        slice: slice,
-        iocp: Crystal::EventLoop.current.iocp_handle,
-        completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
-      )
+    request = ReadRequest.new(handle, slice, ::Fiber.current)
+
+    @@read_mtx.synchronize do
+      @@read_requests << request
       @@read_cv.signal
     end
 
     ::Fiber.suspend
 
-    @@mtx.synchronize do
-      @@bytes_read.shift
+    unless request.error == WinError::ERROR_SUCCESS
+      raise IO::Error.from_os_error("ReadConsoleW", request.error)
     end
+
+    request.units_read.to_i32!
   end
-
-  private def self.read_console_blocking(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
-      raise IO::Error.from_winerror("ReadConsoleW")
-    end
-    units_read.to_i32
-  end
-
-  record ReadRequest,
-    handle : LibC::HANDLE,
-    slice : Slice(UInt16),
-    iocp : LibC::HANDLE,
-    completion_key : Crystal::System::IOCP::CompletionKey
-
-  @@read_cv = ::Thread::ConditionVariable.new
-  @@read_requests = Deque(ReadRequest).new
-  @@bytes_read = Deque(Int32).new
-  @@mtx = ::Thread::Mutex.new
-
-  # Start a dedicated thread to block on reads from the console. Doesn't need an
-  # isolated execution context because there's no fiber communication (only
-  # thread communication) and only blocking I/O within the thread.
-  @@reader_thread = ::Thread.new { reader_loop }
 
   private def self.reader_loop
     while true
-      request = @@mtx.synchronize do
+      request = @@read_mtx.synchronize do
         loop do
           if entry = @@read_requests.shift?
             break entry
           end
-          @@read_cv.wait(@@mtx)
+          @@read_cv.wait(@@read_mtx)
         end
       end
+      slice = request.slice
 
-      bytes = read_console_blocking(request.handle, request.slice)
-
-      @@mtx.synchronize do
-        @@bytes_read << bytes
-        LibC.PostQueuedCompletionStatus(request.iocp, LibC::JOB_OBJECT_MSG_EXIT_PROCESS, request.completion_key.object_id, nil)
+      if LibC.ReadConsoleW(request.handle, slice, slice.size, out units_read, nil) == 0
+        request.error = WinError.value
+      else
+        request.units_read = units_read
       end
+
+      request.fiber.enqueue
     end
   end
 end
