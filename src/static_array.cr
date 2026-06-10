@@ -226,7 +226,7 @@ struct StaticArray(T, N)
   # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.=
-  def sort(&block : T, T -> U) : StaticArray(T, N) forall U
+  def sort(&block : (T, T) -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
@@ -249,7 +249,7 @@ struct StaticArray(T, N)
   # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def unstable_sort(&block : T, T -> U) : StaticArray(T, N) forall U
+  def unstable_sort(&block : (T, T) -> U) : StaticArray(T, N) forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
@@ -271,7 +271,7 @@ struct StaticArray(T, N)
   end
 
   # :inherit:
-  def sort!(&block : T, T -> U) : self forall U
+  def sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
@@ -281,7 +281,7 @@ struct StaticArray(T, N)
   end
 
   # :inherit:
-  def unstable_sort!(&block : T, T -> U) : self forall U
+  def unstable_sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}

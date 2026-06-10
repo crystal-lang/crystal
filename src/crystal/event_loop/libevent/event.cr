@@ -11,7 +11,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
     VERSION = String.new(LibEvent2.event_get_version)
 
-    def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
+    def self.callback(&block : (Int32, LibEvent2::EventFlags, Void*) ->)
       block
     end
 

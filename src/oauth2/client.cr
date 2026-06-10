@@ -170,7 +170,7 @@ class OAuth2::Client
   end
 
   # Makes a token exchange request with custom headers and form fields
-  def make_token_request(&block : URI::Params::Builder, HTTP::Headers -> _) : HTTP::Client::Response
+  def make_token_request(&block : (URI::Params::Builder, HTTP::Headers) -> _) : HTTP::Client::Response
     headers = DEFAULT_HEADERS.dup
     body = URI::Params.build do |form|
       case @auth_scheme

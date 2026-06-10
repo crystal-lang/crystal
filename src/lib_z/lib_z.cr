@@ -23,7 +23,7 @@ lib LibZ
   fun crc32(crc : ULong, buf : Bytef*, len : UInt) : ULong
   fun crc32_combine(crc1 : ULong, crc2 : ULong, len : Long) : ULong
 
-  alias AllocFunc = Void*, UInt, UInt -> Void*
+  alias AllocFunc = (Void*, UInt, UInt) -> Void*
   alias FreeFunc = (Void*, Void*) ->
 
   struct ZStream

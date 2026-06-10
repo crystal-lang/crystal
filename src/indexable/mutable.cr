@@ -244,7 +244,7 @@ module Indexable::Mutable(T)
   # gems.map_with_index! { |gem, i| "#{i}: #{gem}" }
   # gems # => ["0: crystal", "1: pearl", "2: diamond"]
   # ```
-  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
+  def map_with_index!(offset = 0, & : (T, Int32) -> _) : self
     each_index do |i|
       unsafe_put(i, yield(unsafe_fetch(i), offset + i))
     end
@@ -384,7 +384,7 @@ module Indexable::Mutable(T)
   # See `Slice#sort!(&block : T, T -> U)` for details on the implementation.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def sort!(&block : T, T -> U) : self forall U
+  def sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}
@@ -416,7 +416,7 @@ module Indexable::Mutable(T)
   # See `Slice#unstable_sort!(&block : T, T -> U)` for details on the implementation.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def unstable_sort!(&block : T, T -> U) : self forall U
+  def unstable_sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}" %}
     {% end %}

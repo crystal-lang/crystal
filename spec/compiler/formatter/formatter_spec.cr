@@ -2099,6 +2099,9 @@ describe Crystal::Formatter do
   assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
   assert_format "foo : (String -> String?) | (String)"
   assert_format "foo : (Array(String)?) | String"
+  assert_format "foo : String | Nil -> String"
+  assert_format "foo : String | Nil -> String", "foo : (String | Nil) -> String", flags: %w[proc_notation_parens]
+  assert_format "foo : (String | Nil -> String)"
   assert_format "foo : (String -> Array(String)?) | (String -> Array(String)) | Nil"
   assert_format "module Readline\n  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil\nend"
   assert_format "alias A = (B(C, (C | D)) | E)"
@@ -2122,6 +2125,7 @@ describe Crystal::Formatter do
     assert_format "G_((A) ->)"
 
     assert_format "G_(A, B -> R)"
+    assert_format "G_(A, B -> R)", "G_((A, B) -> R)", flags: %w[proc_notation_parens]
     assert_format "G_((A), B -> R)"
     assert_format "G_((A, B -> R))"
     assert_format "G_((A, B) -> R)"
@@ -2145,6 +2149,7 @@ describe Crystal::Formatter do
     assert_format "G_((A -> R) | S)"
 
     assert_format "G_(A | B -> R)"
+    assert_format "G_(A | B -> R)", "G_((A | B) -> R)", flags: %w[proc_notation_parens]
     assert_format "G_((A | B) -> C)"
     assert_format "G_(A | (B -> C))"
 
@@ -2156,6 +2161,7 @@ describe Crystal::Formatter do
     assert_format "G_((A -> ->))"
     assert_format "G_(((A) ->, B) ->)"
     assert_format "G_((A) | B ->)"
+    assert_format "G_((A) | B ->)", "G_(((A) | B) ->)", flags: %w[proc_notation_parens]
   end
 
   assert_format "foo &.bar.is_a?(Baz)"
