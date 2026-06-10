@@ -331,7 +331,7 @@ jobs:
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Build crystal-pu
-        run: make -f Makefile.win .build\crystal-pu.exe
+        run: make -f Makefile.win build\crystal-pu.exe O=build
 
       - name: Run stdlib specs with interpreter
         run: bin\crystal i spec\std_spec.cr
