@@ -67,7 +67,7 @@ module Spec
         opts.on("-l", "--line LINE", "run examples whose line matches LINE") do |line|
           @line = line.to_i
         end
-        opts.on("-p", "--profile", "Print the 10 slowest specs") do
+        opts.on("--profile", "Print the 10 slowest specs") do
           @slowest = 10
         end
         opts.on("--fail-fast", "abort the run on first failure") do
