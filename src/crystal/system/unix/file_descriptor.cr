@@ -162,41 +162,39 @@ module Crystal::System::FileDescriptor
     fd unless fd == -1
   end
 
-  private def system_flock_shared(blocking)
-    flock LibC::FlockOp::SH, blocking
-  end
+  private def system_lock(blocking : Bool, exclusive : Bool) : Nil
+    flags = exclusive ? LibC::FlockOp::EX : LibC::FlockOp::SH
 
-  private def system_flock_exclusive(blocking)
-    flock LibC::FlockOp::EX, blocking
-  end
+    # 1st attempt (always non-blocking)
+    ret = LibC.flock(fd, flags | LibC::FlockOp::NB)
+    errno = Errno.value
 
-  private def system_flock_unlock
-    flock LibC::FlockOp::UN
-  end
+    while true
+      return if ret == 0
 
-  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
-    op |= LibC::FlockOp::NB
-
-    if retry
-      until flock(op)
-        sleep 0.1.seconds
-      end
-    else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
-    end
-  end
-
-  private def flock(op) : Bool
-    if 0 == LibC.flock(fd, op)
-      true
-    else
-      errno = Errno.value
-      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
-        false
+      case errno
+      when Errno::EINTR
+        # retry
+      when Errno::EWOULDBLOCK, Errno::EAGAIN
+        raise IO::Error.from_os_error("Error applying file lock: file is already locked", errno, target: self) unless blocking
       else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
+        raise IO::Error.from_os_error("Error applying file lock", errno, target: self)
       end
+
+      ret, errno =
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          ::Fiber.syscall { {LibC.flock(fd, flags), Errno.value} }
+        {% else %}
+          # poll at regular intervals (no unlock event)
+          sleep 100.milliseconds
+          {LibC.flock(fd, flags | LibC::FlockOp::NB), Errno.value}
+        {% end %}
     end
+  end
+
+  private def system_unlock : Nil
+    ret = LibC.flock(fd, LibC::FlockOp::UN)
+    raise IO::Error.from_errno("Error removing file lock", target: self) unless ret == 0
   end
 
   private def system_fsync(flush_metadata = true) : Nil

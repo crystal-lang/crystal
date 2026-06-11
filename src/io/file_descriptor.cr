@@ -244,8 +244,6 @@ class IO::FileDescriptor < IO
     @fd_lock.reference { system_fsync(flush_metadata) }
   end
 
-  # TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
-
   def flock_shared(blocking = true, &)
     flock_shared blocking
     begin
@@ -258,7 +256,7 @@ class IO::FileDescriptor < IO
   # Places a shared advisory lock. More than one process may hold a shared lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and an existing exclusive lock is set.
   def flock_shared(blocking : Bool = true) : Nil
-    system_flock_shared(blocking)
+    system_lock(blocking, exclusive: false)
   end
 
   def flock_exclusive(blocking = true, &)
@@ -273,12 +271,12 @@ class IO::FileDescriptor < IO
   # Places an exclusive advisory lock. Only one process may hold an exclusive lock for a given file descriptor at a given time.
   # `IO::Error` is raised if *blocking* is set to `false` and any existing lock is set.
   def flock_exclusive(blocking : Bool = true) : Nil
-    system_flock_exclusive(blocking)
+    system_lock(blocking, exclusive: true)
   end
 
   # Removes an existing advisory lock held by this process.
   def flock_unlock : Nil
-    system_flock_unlock
+    system_unlock
   end
 
   # Finalizes the file descriptor resource.
