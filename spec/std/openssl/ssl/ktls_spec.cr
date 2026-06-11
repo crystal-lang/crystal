@@ -1,7 +1,4 @@
-require "spec"
-require "socket"
 require "../../spec_helper"
-require "../../socket/spec_helper"
 require "../../../support/ssl"
 
 {% skip_file unless OpenSSL.has_constant?(:KTLS) %}
