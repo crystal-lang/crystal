@@ -24,6 +24,9 @@ class Crystal::Command
         puts opts
         puts
 
+        # Short flag `-p` might collied with the same parser flag (short for `--progress`),
+        # so we don't show it here. It still works when passed as an explicit argument to the
+        # runner process (e.g. `crystal spec -- -p`).
         runtime_options = Spec::CLI.new.build_option_parser(without_p: true)
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
