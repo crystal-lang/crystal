@@ -68,7 +68,7 @@ module Sync
 
     def try_rlock? : Bool
       # uncontended
-      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :release, :relaxed)
+      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :acquire, :relaxed)
       return true if success
 
       if (word & (WLOCK | WRITER_WAITING | LONG_WAIT)) == 0
@@ -186,8 +186,8 @@ module Sync
 
     def unlock : Nil
       # uncontended
-      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :acquire, :relaxed)
-      return true if success
+      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :release, :relaxed)
+      return if success
 
       # sanity check
       if (word & WLOCK) == 0
