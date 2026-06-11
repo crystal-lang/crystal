@@ -17,7 +17,7 @@ class Crystal::Command
     compiler = new_compiler
     link_flags = [] of String
     parse_with_crystal_opts do |opts|
-      opts.banner = "Usage: crystal spec [options] [files] [runtime_options]\n\nOptions:"
+      opts.banner = "Usage: crystal spec [options] [files] [-- runtime_options]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
 
       opts.on("-h", "--help", "Show this message") do
