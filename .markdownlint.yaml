@@ -1,37 +1,82 @@
+# Indicators for comment annotations:
+#
+# * `Disabled`: The rule is disabled because it does not seem useful for this repo (or in general).
+# * `BUG`: A bug prevents using this rule either entirely or for specific files.
+# * `FIXME`: The rule seems useful, but requires some effort to resolve. That's deferred for later.
+# * `TODO`: The rule might be useful, but we need to investigate whether we want to use it or not.
+
 default: true
 
-heading-style: "setext"
+## Heading Rules
 
-no-inline-html: false
-line-length: false
+# MD003 - Heading style should be consistent
+heading-style:
+  style: "atx"
 
+# MD024 - Avoid duplicate heading text
+no-duplicate-heading:
+  siblings_only: true
+
+## List Rules
+
+# MD029 - Use consistent numbers for ordered lists
 ol-prefix:
   style: "ordered"
+
+# MD004 - Unordered list style should be consistent
 ul-style:
   style: "dash"
+
+# MD007 - Keep list indentation consistent
 ul-indent:
   indent: 2
 
+## Whitespace Rules
+
+# MD013 - Line length
+# TODO: We might want to consider automatic wrapping (maybe with https://github.com/razziel89/mdslw ?)
+line-length: false
+
+# MD028 - No blank lines inside blockquote
+# TODO: We're using consecutive blockquotes with no content in between in a few places.
+# This rule is supposed to prevent ambiguity, but there shouldn't be any with our tooling.
 no-blanks-blockquote: false
 
+## Formatting Rules
+
+# MD033 - Inline HTML
+# FIXME: We're using some legacy inline HTML.
+no-inline-html: false
+
+# MD049 - Keep italic text formatting consistent
 emphasis-style:
   style: "underscore"
+
+# MD050 - Keep bold text formatting consistent
 strong-style:
   style: "asterisk"
 
-no-duplicate-heading:
-  siblings_only: true
-no-bare-urls: false
+## Code Block Rules
 
-fenced-code-language: false
+# MD014 - Show command output in documentation
+# TODO: Not sure if this is generally useful.
 commands-show-output: false
 
-first-line-h1:
-  front_matter_title: "^\\s*(page_)?title\\s*[:=]"
-  exclude:
-    .github/PULL_REQUEST_TEMPLATE/pull_request_template.md
+# MD040 - Code blocks should have a language specified
+# FIXME: Deferred
+fenced-code-language: false
 
+## Link and Image Rules
+
+# MD034 - Bare URL used
+no-bare-urls: false
+
+# MD045 - Add Descriptive Text to Images
+# FIXME: Deferred
 no-alt-text: false
 
-hard_tab:
-  code_blocks: false
+## Table Rules
+
+# MD060 - Table column style
+# FIXME: Deferred
+table-column-style: false
