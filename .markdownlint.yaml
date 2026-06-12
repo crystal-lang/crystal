@@ -48,6 +48,10 @@ no-blanks-blockquote: false
 # FIXME: We're using some legacy inline HTML.
 no-inline-html: false
 
+# MD038 - No space in code
+# FIXME: Bug in rumdl: https://github.com/rvben/rumdl/issues/665
+no-space-in-code: false
+
 # MD049 - Keep italic text formatting consistent
 emphasis-style:
   style: "underscore"
