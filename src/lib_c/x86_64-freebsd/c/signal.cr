@@ -47,6 +47,8 @@ lib LibC
     bits : UInt32[4]
   end
 
+  CLD_EXITED = 1
+
   SA_ONSTACK = 0x0001
   SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040

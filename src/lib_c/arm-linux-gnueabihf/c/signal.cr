@@ -48,6 +48,8 @@ lib LibC
     val : ULong[32] # (1024 / (8 * sizeof(long)))
   end
 
+  CLD_EXITED = 1
+
   SA_ONSTACK = 0x08000000
   SA_RESTART = 0x10000000
   SA_SIGINFO = 0x00000004

@@ -10,5 +10,7 @@ module Crystal::System::Syscall
   ::Syscall.def_syscall io_uring_setup, LibC::Int, entries : LibC::UInt, params : Pointer(LibC::IoUringParams)
   ::Syscall.def_syscall io_uring_enter, LibC::Int, fd : LibC::Int, to_submit : LibC::UInt, min_complete : LibC::UInt, flags : LibC::UInt, arg : Pointer(Void), nr_args : LibC::SizeT
   ::Syscall.def_syscall io_uring_register, LibC::Int, fd : LibC::Int, opcode : LibC::UInt, arg : Pointer(Void), nr_args : LibC::UInt
+  ::Syscall.def_syscall pidfd_open, LibC::Int, pid : LibC::PidT, flags : LibC::UInt
+  ::Syscall.def_syscall pidfd_send_signal, LibC::Int, pidfd : LibC::Int, sig : LibC::Int, info : LibC::SiginfoT*, flag : LibC::UInt
   ::Syscall.def_syscall sched_getaffinity, LibC::Int, pid : LibC::PidT, cpusetsize : LibC::SizeT, mask : Pointer(UInt8)
 end
