@@ -4029,45 +4029,45 @@
 - The parser generates string literals out of strings with interpolated string literals. For example, `"#{__DIR__}/foo"` is interpolated at compile time and generates a string literal with the full path, since `__DIR__` is just a (special) string literal.
 - **(breaking change)** Now macro nodes are always pasted as is. If you want to generate an id use `{{var.id}}`.
 
-    Previously, a code like this:
+  Previously, a code like this:
 
-    ```ruby
-    macro foo(name)
-      def {{name}}; end
-    end
+  ```ruby
+  macro foo(name)
+    def {{name}}; end
+  end
 
-    foo :hello
-    foo "hello"
-    foo hello
-    ```
+  foo :hello
+  foo "hello"
+  foo hello
+  ```
 
-    generated this:
+  generated this:
 
-    ```ruby
-    def hello; end
-    def hello; end
-    def hello; end
-    ```
+  ```ruby
+  def hello; end
+  def hello; end
+  def hello; end
+  ```
 
-    With this change, it generates this:
+  With this change, it generates this:
 
-    ```ruby
-    def :hello; end
-    def "hello"; end
-    def hello; end
-    ```
+  ```ruby
+  def :hello; end
+  def "hello"; end
+  def hello; end
+  ```
 
-    Now, to get an identifier out of a symbol literal, string literal or a name, use id:
+  Now, to get an identifier out of a symbol literal, string literal or a name, use id:
 
-    ```ruby
-    macro foo(name)
-      def {{name.id}}; end
-    end
-    ```
+  ```ruby
+  macro foo(name)
+    def {{name.id}}; end
+  end
+  ```
 
-    Although it's longer to type, the implicit "id" call was sometimes confusing. Explicit is better than implicit.
+  Although it's longer to type, the implicit "id" call was sometimes confusing. Explicit is better than implicit.
 
-    Invoking `id` on any other kind of node has no effect on the pasted result.
+  Invoking `id` on any other kind of node has no effect on the pasted result.
 - Allow escaping curly braces inside macros with `\{`. This allows defining macros that, when expanded, can contain other macro expressions.
 - Added a special comment-like pragma to change the lexer's filename, line number and column number.
 
