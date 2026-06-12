@@ -152,6 +152,12 @@ abstract class JSON::Lexer
   private def consume_string_with_buffer(&)
     @buffer.clear
     yield
+    consume_string_tail
+  end
+
+  # Consumes the rest of a string, starting after the last char consumed
+  # so far, appending to `@buffer`, and sets the token's value from it.
+  private def consume_string_tail
     while true
       case char = next_char
       when '\0'
