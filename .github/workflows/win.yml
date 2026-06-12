@@ -258,6 +258,9 @@ jobs:
       - name: Run primitives specs
         run: make -f Makefile.win -o .build\crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
 
+      - name: Run CLI specs
+        run: make -f Makefile.win cli_spec
+
       - name: Build samples
         run: make -f Makefile.win samples
 

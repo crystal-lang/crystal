@@ -424,7 +424,7 @@ describe "OptionParser" do
     end
     parser.to_s.should eq <<-USAGE
       Usage: foo
-          --very_long_option_kills=formatter
+              --very_long_option_kills=formatter
                                            long
           -f, --flag                       some flag
           -g[FLAG]                         some other flag
@@ -443,7 +443,7 @@ describe "OptionParser" do
     end
     parser.to_s.should eq <<-USAGE
       Usage: foo
-          --very_long_option_kills=formatter
+              --very_long_option_kills=formatter
                                            long flag with
                                            multiline description
           -f, --flag                       some flag with
@@ -793,8 +793,8 @@ describe "OptionParser" do
     help.should eq <<-USAGE
       Usage: foo
           subcommand                       Subcommand Description
-          --verbose                        Verbose mode
-          --help                           Help
+              --verbose                    Verbose mode
+              --help                       Help
       USAGE
   end
 
@@ -812,8 +812,8 @@ describe "OptionParser" do
 
     help.should eq <<-USAGE
       Usage: foo subcommand
-          --verbose                        Verbose mode
-          --help                           Help
+              --verbose                    Verbose mode
+              --help                       Help
           -f, --foo                        Foo
       USAGE
   end
@@ -887,6 +887,22 @@ describe "OptionParser with summary_width and summary_indent" do
     output.should eq(expected_output)
   end
 
+  it "formats a flag pair with an empty short flag as a long-only flag" do
+    parser = OptionParser.new
+
+    parser.on("-s", "--short", "Short option") { }
+    parser.on("", "--long", "Long option") { }
+
+    output = parser.to_s
+
+    expected_output = <<-USAGE
+        -s, --short                      Short option
+            --long                       Long option
+    USAGE
+
+    output.should eq(expected_output)
+  end
+
   it "formats flags and descriptions with custom summary_width and summary_indent" do
     parser = OptionParser.new
     parser.summary_width = 40
@@ -915,7 +931,7 @@ describe "OptionParser with summary_width and summary_indent" do
     output = parser.to_s
 
     expected_output = <<-USAGE
-        --complex-option     This is a detailed description
+            --complex-option This is a detailed description
                              spanning multiple lines for testing
     USAGE
 
@@ -932,7 +948,7 @@ describe "OptionParser with summary_width and summary_indent" do
     output = parser.to_s
 
     expected_output = <<-USAGE
-        --very-very-long-option
+            --very-very-long-option
                              Description that follows a very
                              long flag
     USAGE
@@ -974,7 +990,7 @@ describe "OptionParser with summary_width and summary_indent" do
     output = parser.to_s
 
     expected_output = <<-USAGE
-        --short
+            --short
          No space for flags!
     USAGE
 
@@ -991,7 +1007,7 @@ describe "OptionParser with summary_width and summary_indent" do
     output = parser.to_s
 
     expected_output = <<-USAGE
-    --test               Indentation removed
+        --test           Indentation removed
     USAGE
 
     output.should eq(expected_output)
@@ -1020,8 +1036,8 @@ describe "OptionParser with summary_width and summary_indent" do
 
     help.should eq <<-USAGE
       Usage: foo subcommand
-      ||--help                           Help
-      ||--local                          Local flag
+      ||    --help                       Help
+      ||    --local                      Local flag
       USAGE
   end
 end
