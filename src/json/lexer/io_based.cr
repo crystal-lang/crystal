@@ -222,9 +222,34 @@ class JSON::Lexer::IOBased < JSON::Lexer
     end
   end
 
+  # Scans the digit run in the IO's peek buffer, appending whole digit
+  # spans to `@buffer` at once instead of one byte at a time.
+  private def consume_digits : Char
+    return consume_digits_slow if @io.has_non_utf8_encoding?
+
+    loop do
+      peek = @io.peek
+      return consume_digits_slow unless peek # not peekable: read byte by byte
+      return next_char if peek.empty?
+
+      pos = 0
+      while pos < peek.size && '0'.ord <= peek.unsafe_fetch(pos) <= '9'.ord
+        pos += 1
+      end
+
+      @buffer.write peek[0, pos]
+      @io.skip(pos)
+      @column_number += pos
+
+      # The digit run only ends inside the peeked window; otherwise peek
+      # again for the continuation.
+      return next_char if pos < peek.size
+    end
+  end
+
   # Consumes the digit run byte by byte, avoiding char decoding. The
   # first non-digit byte ends the run and becomes the current char.
-  private def consume_digits : Char
+  private def consume_digits_slow : Char
     while true
       byte = @io.read_utf8_byte
       @column_number += 1
