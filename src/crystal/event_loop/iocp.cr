@@ -315,6 +315,13 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::System::IOCP#wait_readable(FileDescriptor)")
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout, offset: offset) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i32
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     bytes_written = System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       overlapped.offset = UInt64::MAX if file_descriptor.system_append?
