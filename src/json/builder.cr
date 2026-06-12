@@ -15,6 +15,7 @@ class JSON::Builder
   alias State = StartState | DocumentStartState | ArrayState | ObjectState | DocumentEndState
 
   @indent : String?
+  @state : State
 
   # By default the maximum nesting of arrays/objects is 99. Nesting more
   # than this will result in a JSON::Error. Changing the value of this property
@@ -23,18 +24,17 @@ class JSON::Builder
 
   # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
-    @state = [StartState.new] of State
+    @state = StartState.new
+    @parent_states = [] of State
     @current_indent = 0
     @escape = Escape.new(io)
   end
 
   # Starts a document.
   def start_document : Nil
-    case @state.last
-    when StartState
-      @state[-1] = DocumentStartState.new
-    when DocumentEndState
-      @state[-1] = DocumentStartState.new
+    case @state
+    when StartState, DocumentEndState
+      @state = DocumentStartState.new
     else
       raise JSON::Error.new("Starting document before ending previous one")
     end
@@ -42,7 +42,7 @@ class JSON::Builder
 
   # Signals the end of a JSON document.
   def end_document : Nil
-    case @state.last
+    case @state
     when StartState
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState
@@ -200,15 +200,16 @@ class JSON::Builder
   def start_array : Nil
     start_scalar
     increase_indent
-    @state.push ArrayState.new(empty: true)
+    @parent_states.push @state
+    @state = ArrayState.new(empty: true)
     @io << '['
   end
 
   # Writes the end of an array.
   def end_array : Nil
-    case state = @state.last
+    case state = @state
     when ArrayState
-      @state.pop
+      @state = @parent_states.pop
     else
       raise JSON::Error.new("Can't do end_array: not inside an array")
     end
@@ -229,18 +230,19 @@ class JSON::Builder
   def start_object : Nil
     start_scalar
     increase_indent
-    @state.push ObjectState.new(empty: true, name: true)
+    @parent_states.push @state
+    @state = ObjectState.new(empty: true, name: true)
     @io << '{'
   end
 
   # Writes the end of an object.
   def end_object : Nil
-    case state = @state.last
+    case state = @state
     when ObjectState
       unless state.name
         raise JSON::Error.new("Missing object value")
       end
-      @state.pop
+      @state = @parent_states.pop
     else
       raise JSON::Error.new("Can't do end_object: not inside an object")
     end
@@ -319,7 +321,7 @@ class JSON::Builder
   # Returns `true` if the next thing that must pushed into this
   # builder is an object key (so a string) or the end of an object.
   def next_is_object_key? : Bool
-    state = @state.last
+    state = @state
     state.is_a?(ObjectState) && state.name
   end
 
@@ -330,7 +332,7 @@ class JSON::Builder
 
   private def start_scalar(string = false)
     object_value = false
-    case state = @state.last
+    case state = @state
     when DocumentStartState
       # okay
     when StartState
@@ -350,14 +352,14 @@ class JSON::Builder
   end
 
   private def end_scalar(string = false)
-    case state = @state.last
+    case state = @state
     when DocumentStartState
-      @state[-1] = DocumentEndState.new
+      @state = DocumentEndState.new
     when ArrayState
-      @state[-1] = ArrayState.new(empty: false)
+      @state = ArrayState.new(empty: false)
     when ObjectState
       colon if state.name
-      @state[-1] = ObjectState.new(empty: false, name: !state.name)
+      @state = ObjectState.new(empty: false, name: !state.name)
     else
       raise "Bug: unexpected state: #{state.class}"
     end
