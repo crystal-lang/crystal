@@ -67,12 +67,10 @@ jobs:
           - x86_64
           - aarch64
         opts:
-          - flags: "-Dwithout_mt" # execution_context: disable
-            workers: 1
+          - flags: "-Dwithout_mt"
           - flags: "" # execution_context: parallel
             workers: 4
           - flags: "-Devloop=io_uring -Dwithout_mt"
-            workers: 1
           - flags: "-Devloop=io_uring"
             workers: 4
         include:

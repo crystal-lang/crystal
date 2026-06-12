@@ -122,7 +122,7 @@ module Fiber::ExecutionContext
     @@thread_pool = ThreadPool.new
     size =
       {% if flag?(:preview_mt) %}
-        {% puts "WARNING: the 'preview_mt' compilation flag is deprecated. Resize the default execution context or start additional contexts instead." %}
+        {% nil.warning "Warning: the 'preview_mt' compilation flag is deprecated. Resize the default execution context or start additional contexts instead." %}
         ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
       {% else %}
         1
