@@ -1860,6 +1860,26 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "executes While" do
+    run(%(
+      {% begin %}
+        {% v = 0 %}
+        {% while v < 5; v += 1; end; %}
+        {{v}}
+      {% end %}
+    )).to_i.should eq 5
+  end
+
+  it "executes Unil" do
+    run(%(
+      {% begin %}
+        {% v = 0 %}
+        {% until v > 5; v += 1; end; %}
+        {{v}}
+      {% end %}
+    )).to_i.should eq 6
+  end
+
   it "executes OpAssign (#9356)" do
     assert_type(<<-CRYSTAL) { int32 }
       {% begin %}
