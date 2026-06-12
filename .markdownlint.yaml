@@ -13,10 +13,6 @@ default: true
 heading-style:
   style: "atx"
 
-# MD024 - Avoid duplicate heading text
-no-duplicate-heading:
-  siblings_only: true
-
 ## List Rules
 
 # MD029 - Use consistent numbers for ordered lists
@@ -33,16 +29,7 @@ ul-style:
 # TODO: We might want to consider automatic wrapping (maybe with https://github.com/razziel89/mdslw ?)
 line-length: false
 
-# MD028 - No blank lines inside blockquote
-# TODO: We're using consecutive blockquotes with no content in between in a few places.
-# This rule is supposed to prevent ambiguity, but there shouldn't be any with our tooling.
-no-blanks-blockquote: false
-
 ## Formatting Rules
-
-# MD033 - Inline HTML
-# FIXME: We're using some legacy inline HTML.
-no-inline-html: false
 
 # MD038 - No space in code
 # FIXME: Bug in rumdl: https://github.com/rvben/rumdl/issues/665
@@ -56,21 +43,7 @@ emphasis-style:
 strong-style:
   style: "asterisk"
 
-## Code Block Rules
-
-# MD014 - Show command output in documentation
-# TODO: Not sure if this is generally useful.
-commands-show-output: false
-
-# MD040 - Code blocks should have a language specified
-# FIXME: Deferred
-fenced-code-language: false
-
 ## Link and Image Rules
 
 # MD034 - Bare URL used
 no-bare-urls: false
-
-# MD045 - Add Descriptive Text to Images
-# FIXME: Deferred
-no-alt-text: false
