@@ -126,6 +126,28 @@ class JSON::Lexer::StringBased < JSON::Lexer
     @reader.current_char
   end
 
+  # Scans the digit run on raw bytes: digits are ASCII, and the number's
+  # string is built at the end as a byte slice of the source string (see
+  # `#number_string`), so there is nothing to append along the way.
+  private def consume_digits : Char
+    string = @reader.string
+    ptr = string.to_unsafe
+    bytesize = string.bytesize
+    start_pos = current_pos
+    pos = start_pos + 1
+
+    while pos < bytesize && '0'.ord <= ptr[pos] <= '9'.ord
+      pos += 1
+    end
+
+    @column_number += pos - start_pos
+    @reader.pos = pos
+    if pos < bytesize && ptr[pos] == 0
+      unexpected_char
+    end
+    current_char
+  end
+
   private def number_start
     @number_start = current_pos
   end
