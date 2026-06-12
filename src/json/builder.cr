@@ -147,36 +147,39 @@ class JSON::Builder
       raise ""
     end
 
+    # Escape sequence for every byte that needs escaping inside a JSON
+    # string, or `nil` if the byte can be written verbatim. Indexed by byte
+    # value; bytes above 0x7F are part of UTF-8 sequences and never escaped.
+    ESCAPES = begin
+      escapes = Slice(String?).new(256, nil)
+      0x20.times do |i|
+        escapes[i] = "\\u%04x" % i
+      end
+      escapes['\b'.ord] = "\\b"
+      escapes['\t'.ord] = "\\t"
+      escapes['\n'.ord] = "\\n"
+      escapes['\f'.ord] = "\\f"
+      escapes['\r'.ord] = "\\r"
+      escapes['"'.ord] = "\\\""
+      escapes['\\'.ord] = "\\\\"
+      escapes[0x7f] = "\\u007f" # DEL, escaped as an ASCII control character
+      escapes
+    end
+
     def write(slice : Bytes) : Nil
+      escapes = ESCAPES
       cursor = start = slice.to_unsafe
       fin = cursor + slice.bytesize
 
       while cursor < fin
-        case byte = cursor.value
-        when '\\' then escape = "\\\\"
-        when '"'  then escape = "\\\""
-        when '\b' then escape = "\\b"
-        when '\f' then escape = "\\f"
-        when '\n' then escape = "\\n"
-        when '\r' then escape = "\\r"
-        when '\t' then escape = "\\t"
-        when .<(0x20), 0x7f # Char#ascii_control?
+        if escape = escapes.unsafe_fetch(cursor.value)
           @io.write_string Slice.new(start, cursor - start)
-          @io << "\\u00"
-          @io << '0' if byte < 0x10
-          byte.to_s(@io, 16)
+          @io << escape
           cursor += 1
           start = cursor
-          next
         else
           cursor += 1
-          next
         end
-
-        @io.write_string Slice.new(start, cursor - start)
-        @io << escape
-        cursor += 1
-        start = cursor
       end
 
       @io.write_string Slice.new(start, cursor - start)
