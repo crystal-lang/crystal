@@ -13,36 +13,92 @@ class JSON::Lexer::StringBased < JSON::Lexer
   # to build the resulting string.
   private def consume_string
     start_pos = current_pos
+    byte, pos = scan_string_bytes(start_pos + 1)
 
-    while true
-      case next_char
-      when '\0'
-        raise "Unterminated string"
-      when '\\'
-        return consume_string_slow_path start_pos
-      when '"'
-        next_char
-        break
-      else
-        if 0 <= current_char.ord < 32
-          unexpected_char
-        end
-      end
+    if byte == '\\'.ord
+      return consume_string_slow_path start_pos
     end
 
     if @expects_object_key
-      start_pos += 1
-      end_pos = current_pos - 1
-      @token.string_value = @string_pool.get(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
+      @token.string_value = @string_pool.get(@reader.string.to_unsafe + start_pos + 1, pos - start_pos - 1)
     else
-      @token.string_value = string_range(start_pos + 1, current_pos - 1)
+      @token.string_value = string_range(start_pos + 1, pos)
+    end
+  end
+
+  # Same byte-oriented scan as `consume_string`, but without building a
+  # result, since the value is being skipped.
+  private def consume_string_skip
+    loop do
+      byte, _ = scan_string_bytes(current_pos + 1)
+      return if byte == '"'.ord
+      consume_string_escape_sequence
     end
   end
 
   private def consume_string_slow_path(start_pos)
-    consume_string_with_buffer do
+    @buffer.clear
+    loop do
       @buffer.write slice_range(start_pos + 1, current_pos)
       @buffer << consume_string_escape_sequence
+      start_pos = current_pos
+      byte, pos = scan_string_bytes(start_pos + 1)
+      if byte == '"'.ord
+        @buffer.write slice_range(start_pos + 1, pos)
+        break
+      end
+    end
+    @token.string_value =
+      if @expects_object_key
+        @string_pool.get(@buffer)
+      else
+        @buffer.to_s
+      end
+  end
+
+  # Scans the raw bytes of the source string starting at `pos` until a
+  # closing quote or a backslash, raising on control characters or end of
+  # input. Returns the found byte and its position, leaving the reader on
+  # the backslash, or right after the closing quote, respectively.
+  #
+  # Scanning bytes instead of chars is safe because every byte that
+  # affects lexing is ASCII. Multi-byte characters are passed through
+  # unchanged (as byte slices of the source string). Only `@column_number`
+  # requires counting characters, done by skipping UTF-8 continuation
+  # bytes.
+  private def scan_string_bytes(pos) : {UInt8, Int32}
+    string = @reader.string
+    ptr = string.to_unsafe
+    bytesize = string.bytesize
+    char_count = 0
+
+    loop do
+      if pos >= bytesize
+        @column_number += char_count + 1
+        @reader.pos = bytesize
+        raise "Unterminated string"
+      end
+
+      byte = ptr[pos]
+      case byte
+      when '"'
+        @column_number += char_count + 2
+        @reader.pos = pos + 1
+        return {byte, pos}
+      when '\\'
+        @column_number += char_count + 1
+        @reader.pos = pos
+        return {byte, pos}
+      else
+        if byte < ' '.ord
+          @column_number += char_count + 1
+          @reader.pos = pos
+          unexpected_char
+        end
+        # Only count initial bytes of a UTF-8 codepoint
+        char_count += 1 if byte & 0xc0 != 0x80
+      end
+      pos += 1
     end
   end
 
