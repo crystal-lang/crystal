@@ -69,6 +69,41 @@ class JSON::Lexer::IOBased < JSON::Lexer
     end
   end
 
+  # Consumes the digit run byte by byte, avoiding char decoding. The
+  # first non-digit byte ends the run and becomes the current char.
+  private def consume_digits : Char
+    while true
+      byte = @io.read_utf8_byte
+      @column_number += 1
+      if byte && '0'.ord <= byte <= '9'.ord
+        @buffer.write_byte byte
+      else
+        return set_current_char(byte)
+      end
+    end
+  end
+
+  # Restores `current_char` from a byte already consumed from the IO,
+  # reading the continuation bytes when it starts a multi-byte character.
+  private def set_current_char(byte : UInt8?) : Char
+    @current_char =
+      case byte
+      when nil
+        '\0'
+      when .< 0x80_u8
+        byte.unsafe_chr
+      else
+        size = byte < 0xe0_u8 ? 2 : byte < 0xf0_u8 ? 3 : 4
+        codepoint = (byte & (0x7f_u8 >> size)).to_u32
+        (size - 1).times do
+          continuation = @io.read_utf8_byte
+          break unless continuation
+          codepoint = (codepoint << 6) | (continuation & 0x3f_u8)
+        end
+        codepoint.unsafe_chr
+      end
+  end
+
   private def number_start
     @buffer.clear
   end
