@@ -108,7 +108,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
       @timers_lock = SpinLock.new
@@ -118,7 +118,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # thread unsafe
   def run(blocking : Bool) : Bool
     system_run(blocking) do |fiber|
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         fiber.execution_context.enqueue(fiber)
       {% else %}
         Crystal::Scheduler.enqueue(fiber)
@@ -127,7 +127,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     true
   end
 
-  {% if flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
@@ -466,7 +466,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
+          {% if !flag?(:without_mt) %}
             fiber.execution_context.enqueue(fiber)
           {% else %}
             Crystal::Scheduler.enqueue(fiber)
@@ -476,7 +476,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
       pd.value.@writers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
+          {% if !flag?(:without_mt) %}
             fiber.execution_context.enqueue(fiber)
           {% else %}
             Crystal::Scheduler.enqueue(fiber)

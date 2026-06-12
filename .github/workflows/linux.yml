@@ -67,13 +67,11 @@ jobs:
           - x86_64
           - aarch64
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+          - flags: "-Dwithout_mt"
+          - flags: "" # execution_context: parallel
             workers: 4
+          - flags: "-Devloop=io_uring -Dwithout_mt"
           - flags: "-Devloop=io_uring"
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt -Devloop=io_uring"
             workers: 4
         include:
           - arch: x86_64

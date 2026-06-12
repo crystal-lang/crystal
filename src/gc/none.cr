@@ -136,7 +136,7 @@ module GC
   end
 
   # :nodoc:
-  {% if flag?(:preview_mt) %}
+  {% if !flag?(:without_mt) %}
     def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
       # NOTE we could store stack_bottom per thread,
       #      and return it in `#current_thread_stack_bottom`,

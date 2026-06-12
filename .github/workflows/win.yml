@@ -271,9 +271,9 @@ jobs:
       fail-fast: false
       matrix:
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
+          - flags: "-Dwithout_mt" # execution_context: disable
             workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+          - flags: "" # execution_context: parallel
             workers: 4
     steps:
       - name: Disable CRLF line ending substitution

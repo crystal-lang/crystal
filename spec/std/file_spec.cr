@@ -59,7 +59,7 @@ describe "File" do
       wbuf = Bytes.new(5120)
       Random::Secure.random_bytes(wbuf)
 
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         WaitGroup.wait do |wg|
           # one fiber may block on open(2) (depends on the event loop) but the
           # monitor thread will notice and move the scheduler to another thread,
