@@ -1,5 +1,6 @@
 require "levenshtein"
 require "../syntax/ast"
+require "../syntax/transformer"
 require "../types"
 require "./type_lookup"
 
@@ -11,9 +12,36 @@ class Crystal::Call
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
+  # When true, the call needs runtime dispatch on the block's return value type.
+  # Set when multi-dispatch on block return type is detected (block returns a
+  # union and multiple overloads cover different members).
+  property? needs_block_result_dispatch = false
 
   class RetryLookupWithLiterals < ::Exception
     def initialize
+      self.callstack = Exception::CallStack.empty
+    end
+  end
+
+  # Raised when a block's return type doesn't match the expected type.
+  # This allows trying other overloads when multiple matches exist.
+  class BlockTypeMismatch < ::Exception
+    def initialize(message : String)
+      super(message)
+      self.callstack = Exception::CallStack.empty
+    end
+  end
+
+  # Raised by match_block_arg when the block's return type is a union and
+  # this overload covers a strict subset of it. The caller (instantiate) can
+  # collect these and decide whether to use them as multi-dispatch matches
+  # (if collectively they cover the full union) or treat as a regular mismatch.
+  class NarrowableBlockReturn < ::Exception
+    getter narrowed_type : Type
+    getter original_message : String
+
+    def initialize(@narrowed_type : Type, @original_message : String)
+      super(@original_message)
       self.callstack = Exception::CallStack.empty
     end
   end
@@ -368,11 +396,44 @@ class Crystal::Call
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
+    last_block_type_mismatch : BlockTypeMismatch? = nil
+    handled_block_receivers = nil
+    # Narrowable matches: candidates collected when block returns a union and
+    # this overload covers a subset. Used for multi-dispatch on block return.
+    narrowable_matches = nil
 
     matches.each do |match|
       check_visibility match
 
-      yield_vars, block_arg_type = match_block_arg(match)
+      # When there's a block, skip matches for receiver+arg_types we've
+      # already handled successfully. This handles overload selection
+      # (most specific wins among matches with the same receiver and args)
+      # while still allowing:
+      # - Multi-dispatch across receiver types
+      # - Multi-dispatch across arg type unions (different arg_types per match)
+      if block && (handled = handled_block_receivers) && handled.includes?({match.context.instantiated_type, match.arg_types})
+        next
+      end
+
+      begin
+        yield_vars, block_arg_type = match_block_arg(match)
+      rescue ex : NarrowableBlockReturn
+        # Block returns a union and this overload covers a strict subset.
+        # Collect as candidate for multi-dispatch on block return type.
+        reset_block_state(block)
+        match.narrowed_block_return_type = ex.narrowed_type
+        narrowable_matches ||= [] of Match
+        narrowable_matches << match
+        last_block_type_mismatch = BlockTypeMismatch.new(ex.original_message)
+        next
+      rescue ex : BlockTypeMismatch
+        # Block doesn't match this overload's restriction.
+        # Reset block state and try the next overload if there are more matches.
+        reset_block_state(block)
+        last_block_type_mismatch = ex
+        next
+      end
+
       use_cache = !block || match.def.block_arg
 
       if block && match.def.block_arg
@@ -439,9 +500,148 @@ class Crystal::Call
       end
 
       typed_defs << typed_def
+
+      if block
+        handled_block_receivers ||= [] of {Type, Array(Type)}
+        handled_block_receivers << {match.context.instantiated_type, match.arg_types}
+      end
+    end
+
+    # Multi-dispatch on block return type: if no matches succeeded directly but
+    # we have narrowable candidates, process them.
+    if typed_defs.empty? && narrowable_matches && block
+      typed_defs = instantiate_narrowable_matches(narrowable_matches, owner, self_type)
+    end
+
+    # If no matches succeeded and we had a block type mismatch, re-raise it
+    if typed_defs.empty? && (mismatch = last_block_type_mismatch)
+      raise mismatch.message.not_nil!
     end
 
     typed_defs
+  end
+
+  # Process narrowable matches as multi-dispatch on block return type.
+  # Each match gets its own typed_def with the narrowed return type.
+  # Returns empty array if matches don't fully cover the union (caller handles
+  # by re-raising the original BlockTypeMismatch).
+  private def instantiate_narrowable_matches(narrowable_matches : Array(Match), owner, self_type)
+    block = @block.not_nil!
+    typed_defs = Array(Def).new(narrowable_matches.size)
+
+    # Verify the narrowed types collectively cover the block's return type union.
+    # If they don't, return empty so the caller falls back to the original error.
+    block_type = block.type?
+    if block_type.is_a?(UnionType)
+      covered_types = narrowable_matches.compact_map(&.narrowed_block_return_type)
+      uncovered = block_type.union_types.reject do |union_type|
+        covered_types.any? { |covered| union_type.implements?(covered) || covered.implements?(union_type) }
+      end
+      return typed_defs unless uncovered.empty?
+    end
+
+    narrowable_matches.each do |match|
+      narrowed_type = match.narrowed_block_return_type.not_nil!
+
+      # Captured-block defs in multi-dispatch: transform block.call to yield
+      # in the def body. This converts the def to an inlinable yield-style def
+      # so the existing yield-based dispatch (with cached_block_result codegen)
+      # handles it without needing per-branch synthesized procs.
+      if match.def.uses_block_arg?
+        match = transform_captured_block_to_yield(match)
+      end
+
+      # Reset block state and re-match with narrowing applied for this overload.
+      # Use reset_type: true to clear freeze_type from any prior narrowed match.
+      reset_block_state(block, reset_type: true)
+      yield_vars, block_arg_type = match_block_arg(match, narrowed_block_return_type: narrowed_type)
+
+      typed_def = build_typed_def_for_match(match, yield_vars, block_arg_type, owner, self_type)
+      typed_def.narrowed_block_return_type = narrowed_type
+      typed_defs << typed_def
+    end
+
+    # Mark the call as needing block-result dispatch at codegen time.
+    @needs_block_result_dispatch = true if typed_defs.size > 1
+
+    typed_defs
+  end
+
+  # Extracted from instantiate's main loop - builds a typed_def for one match.
+  private def build_typed_def_for_match(match, yield_vars, block_arg_type, owner, self_type)
+    block = @block
+
+    use_cache = !block || match.def.block_arg
+
+    block_type = nil
+    if block && match.def.block_arg
+      if block_arg_type.is_a?(ProcInstanceType)
+        block_type = block_arg_type.return_type
+      end
+      use_cache = false unless block_type
+    end
+
+    # Include narrowed type in cache key so different narrowed types get different typed_defs.
+    block_type ||= match.narrowed_block_return_type
+
+    lookup_self_type = self_type || match.context.instantiated_type
+    if self_type
+      lookup_arg_types = Array(Type).new(match.arg_types.size + 1)
+      lookup_arg_types.push self_type
+      lookup_arg_types.concat match.arg_types
+    else
+      lookup_arg_types = match.arg_types
+    end
+    match_owner = match.context.instantiated_type
+    def_instance_owner = (self_type || match_owner).as(DefInstanceContainer)
+    named_args_types = match.named_arg_types
+
+    def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_types)
+    typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
+
+    unless typed_def
+      typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, block_arg_type, named_args_types)
+      def_instance_owner.add_def_instance(def_instance_key, typed_def) if use_cache
+
+      if typed_def_return_type = typed_def.return_type
+        check_return_type(typed_def, typed_def_return_type, match, match_owner)
+      end
+
+      bubbling_exception do
+        check_recursive_splat_call match.def, typed_def_args do
+          visitor = MainVisitor.new(program, typed_def_args, typed_def)
+          visitor.yield_vars = yield_vars
+          visitor.narrowed_yield_return_type = match.narrowed_block_return_type
+          visitor.match_context = match.context
+          visitor.untyped_def = match.def
+          visitor.call = self
+          visitor.scope = lookup_self_type
+          visitor.path_lookup = match.context.defining_type
+
+          yields_to_block = block && !match.def.uses_block_arg?
+
+          if yields_to_block
+            raise_if_block_too_nested(match.def.block_nest)
+            match.def.block_nest += 1
+          end
+
+          typed_def.body.accept visitor
+
+          if yields_to_block
+            match.def.block_nest -= 1
+          end
+
+          if visitor.is_initialize
+            if match.def.macro_def?
+              visitor.check_initialize_instance_vars_types(owner)
+            end
+            visitor.bind_initialize_instance_vars(owner)
+          end
+        end
+      end
+    end
+
+    typed_def
   end
 
   def raise_if_block_too_nested(block_nest)
@@ -790,7 +990,9 @@ class Crystal::Call
   end
 
   # Match the given block with the given block argument specification (&block : A, B, C -> D)
-  def match_block_arg(match)
+  # When narrowed_block_return_type is given, the block's union return type is
+  # narrowed to that subset for this match (used for multi-dispatch on block return).
+  def match_block_arg(match, narrowed_block_return_type : Type? = nil)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
     return nil, nil unless match.def.block_arity || match.def.uses_block_arg?
@@ -826,7 +1028,7 @@ class Crystal::Call
 
         if splat_index = block.splat_index
           if yield_types.size < block.args.size - 1
-            block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
+            ::raise BlockTypeMismatch.new("too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})")
           end
           splat_range = (splat_index..splat_index - block.args.size)
           yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
@@ -919,7 +1121,7 @@ class Crystal::Call
           if auto_unpack_needed
             yield_var_type = yield_var_type.not_nil!
             if block.args.size > yield_var_type.tuple_types.size
-              block.raise "too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})"
+              ::raise BlockTypeMismatch.new("too many block parameters (given #{block.args.size}, expected maximum #{yield_var_type.tuple_types.size})")
             end
 
             unpack_exps = [] of ASTNode
@@ -957,10 +1159,37 @@ class Crystal::Call
           end
 
           fun_literal = ProcLiteral.new(a_def).at(self)
-          fun_literal.expected_return_type = output_type if output_type
+          # Skip expected_return_type if narrowing: the body returns a union
+          # wider than the narrowed type, which would fail the constraint check.
+          # We narrow the proc's return type after binding.
+          fun_literal.expected_return_type = output_type if output_type && !narrowed_block_return_type
           fun_literal.from_block = true
           fun_literal.force_nil = true unless output
-          fun_literal.accept parent_visitor
+          begin
+            fun_literal.accept parent_visitor
+          rescue ex : Crystal::CodeError
+            # The proc body's return type doesn't match expected_return_type.
+            # Detect the case and convert to a proper exception so instantiate
+            # can handle multi-dispatch or try other overloads.
+            if !narrowed_block_return_type && output_type
+              body_type = a_def.body.type?
+              if body_type
+                if body_type.is_a?(UnionType)
+                  if matched = body_type.restrict(output_type, match.context)
+                    if matched != body_type
+                      # Body returns a union and matches a subset -
+                      # multi-dispatch case
+                      ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output}, not #{body_type}")
+                    end
+                  end
+                end
+                # Body type doesn't match this overload - convert to
+                # BlockTypeMismatch so instantiate can try other overloads.
+                ::raise BlockTypeMismatch.new("expected block to return #{output}, not #{body_type}")
+              end
+            end
+            ::raise ex
+          end
         end
         block.fun_literal = fun_literal
       end
@@ -981,8 +1210,16 @@ class Crystal::Call
               block.freeze_type = output_type || block_type
               block_arg_type = program.proc_of(fun_args, block_type)
             else
-              raise "expected block to return #{output}, not #{block_type}"
+              ::raise BlockTypeMismatch.new("expected block to return #{output}, not #{block_type}")
             end
+          elsif narrowed_block_return_type && matched && block_type.is_a?(UnionType) && !block_type.implements?(matched)
+            # Multi-dispatch on block return: narrow the proc's return type for
+            # this overload. The proc body returns the union, but this typed_def
+            # only handles the narrowed subset (runtime dispatch ensures that).
+            block_arg_type = program.proc_of(fun_args, matched)
+          elsif !narrowed_block_return_type && matched && block_type.is_a?(UnionType) && !block_type.implements?(matched)
+            # Block returns a union and this overload covers a subset.
+            ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output}, not #{block_type}")
           elsif output_type
             block.bind_to(block)
             block.type = output_type
@@ -1054,11 +1291,31 @@ class Crystal::Call
                             else
                               output
                             end
-              raise "expected block to return #{output_name}, not #{block_type}"
+              # If matched is a strict subset of block_type (narrowing case):
+              # - If caller passed narrowed_block_return_type matching it: apply
+              #   the narrowing (use the narrowed type as block_type for this match).
+              # - Otherwise: raise NarrowableBlockReturn so caller can decide.
+              if matched && block_type.is_a?(UnionType) && !block_type.implements?(matched)
+                if narrowed_block_return_type && (narrowed_block_return_type == matched || matched.implements?(narrowed_block_return_type))
+                  # Apply narrowing: this match handles the narrowed subset.
+                  # Don't set block.freeze_type - the block's actual type is the
+                  # union, and freeze_type would conflict with that. Each match's
+                  # narrowed type lives on the Match object.
+                  block_type = matched
+                else
+                  ::raise NarrowableBlockReturn.new(matched, "expected block to return #{output_name}, not #{block_type}")
+                end
+              else
+                ::raise BlockTypeMismatch.new("expected block to return #{output_name}, not #{block_type}")
+              end
             end
           end
 
-          block.freeze_type = block_type
+          # Only freeze block.type if not narrowing - narrowing keeps block.type
+          # as the union and stores the narrowed type on the Match.
+          unless narrowed_block_return_type
+            block.freeze_type = block_type
+          end
         end
       end
     end
@@ -1097,6 +1354,72 @@ class Crystal::Call
 
   private def cant_infer_block_return_type
     raise "can't infer block return type, try to cast the block body with `as`. See: https://crystal-lang.org/reference/syntax_and_semantics/as.html#usage-for-when-the-compiler-cant-infer-the-type-of-a-block"
+  end
+
+  # Transforms a captured-block match into a yield-style match for use in
+  # multi-dispatch on block return type. Clones the def with:
+  # - uses_block_arg = false (so codegen takes the inline path)
+  # - block.call(args) replaced with yield args
+  # The cloned def can then be processed by the same yield-based dispatch path.
+  private def transform_captured_block_to_yield(match : Match) : Match
+    original_def = match.def
+    block_arg_name = original_def.block_arg.try(&.name) || ""
+
+    cloned_def = original_def.clone
+    cloned_def.owner = original_def.owner
+    cloned_def.original_owner = original_def.original_owner if original_def.original_owner?
+    cloned_def.uses_block_arg = false
+    if cloned_body = cloned_def.body
+      cloned_def.body = transform_block_call_to_yield(cloned_body, block_arg_name)
+    end
+
+    Match.new(cloned_def, match.arg_types, match.context, match.named_arg_types).tap do |new_match|
+      new_match.narrowed_block_return_type = match.narrowed_block_return_type
+    end
+  end
+
+  # Recursively transform `block_arg.call(args)` into `yield args` in the AST.
+  private def transform_block_call_to_yield(node : ASTNode, block_arg_name : String) : ASTNode
+    transformer = BlockCallToYieldTransformer.new(block_arg_name)
+    node.transform(transformer)
+  end
+
+  # Transformer that converts `block_arg.call(args)` to `yield args`.
+  private class BlockCallToYieldTransformer < Crystal::Transformer
+    def initialize(@block_arg_name : String)
+    end
+
+    def transform(node : Call)
+      # Recursively transform args/obj first.
+      node = super
+      # Check if this is `block_arg_name.call(...)`
+      if node.is_a?(Call) && node.name == "call" && (obj = node.obj).is_a?(Var) && obj.name == @block_arg_name
+        Yield.new(node.args).at(node)
+      else
+        node
+      end
+    end
+  end
+
+  # Reset block state so it can be typed again for a different overload.
+  # This is called when block type checking fails for one overload and
+  # we want to try another.
+  private def reset_block_state(block : Block?, reset_type : Bool = false)
+    return unless block
+
+    block.fun_literal = nil
+    block.visited = false
+    block.args.each do |arg|
+      arg.type = nil
+    end
+
+    # In multi-dispatch narrowing, block.type and freeze_type may have been
+    # modified for a prior narrowed match - reset them so the next match starts clean.
+    if reset_type
+      block.freeze_type = nil
+      # Can't directly clear block.@type, but setting freeze_type to nil
+      # and re-visiting the body (block.visited = false) will recompute it.
+    end
   end
 
   private def lookup_node_type(context, node)
