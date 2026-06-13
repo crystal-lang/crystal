@@ -69,6 +69,24 @@ module Crystal
 
   class Type
     def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil, analyze_all = false)
+      is_new = owner.metaclass? && signature.name == "new"
+
+      # Prepended modules sit *before* this type in the method-resolution
+      # order. Search them first so their defs win over the type's own.
+      my_prepended =
+        if is_new
+          instance_type.prepended_modules.try &.map(&.metaclass.as(Type))
+        else
+          prepended_modules
+        end
+      if my_prepended
+        my_prepended.each do |mod|
+          matches = mod.lookup_matches(signature, owner, mod, matches_array, analyze_all: analyze_all)
+          return matches if matches.cover_all?
+          matches_array = matches.matches
+        end
+      end
+
       matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array, analyze_all: analyze_all)
       return matches if matches.cover_all?
 
@@ -76,7 +94,6 @@ module Crystal
 
       cover = matches.cover
 
-      is_new = owner.metaclass? && signature.name == "new"
       if is_new
         # For a `new` method we need to do this in case a `new` is defined
         # in a module type

@@ -2352,11 +2352,11 @@ module Crystal
     end
 
     def self.ancestors(type)
-      ancestors = type.ancestors
+      ancestors = type.ancestors_with_prepended
       if ancestors.empty?
         empty_no_return_array
       else
-        ArrayLiteral.map(type.ancestors) { |ancestor| TypeNode.new(ancestor) }
+        ArrayLiteral.map(ancestors) { |ancestor| TypeNode.new(ancestor) }
       end
     end
 
