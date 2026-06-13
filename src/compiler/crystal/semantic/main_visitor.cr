@@ -199,6 +199,18 @@ module Crystal
           type_visitor.inside_constant = true
           type.value.accept type_visitor
 
+          # When the constant was declared with `FOO : T = value`, resolve T
+          # and either autocast a number/symbol literal or assert the value's
+          # inferred type conforms to T.
+          if declared_type_node = type.declared_type
+            declared_type = type_visitor.lookup_type(declared_type_node)
+            check_automatic_cast(type.value, declared_type)
+            value_type = type.value.type
+            unless value_type.implements?(declared_type)
+              declared_type_node.raise "constant #{type} type must be #{declared_type}, not #{value_type}"
+            end
+          end
+
           type.fake_def = const_def
           type.visitor = self
           type.used = true
@@ -450,6 +462,8 @@ module Crystal
         var.var = class_var
         class_var.thread_local = true if thread_local
 
+        node.type = @program.nil
+      when Path
         node.type = @program.nil
       else
         raise "Bug: unexpected var type: #{var.class}"

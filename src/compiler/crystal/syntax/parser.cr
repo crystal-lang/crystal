@@ -1241,7 +1241,7 @@ module Crystal
           set_visibility parse_var_or_call
         end
       when .const?
-        parse_generic_or_custom_literal
+        parse_const
       when .instance_var?
         if @in_macro_expression && @token.value == "@type"
           @is_macro_def = true
@@ -1273,13 +1273,15 @@ module Crystal
       end
     end
 
-    def parse_type_declaration(var)
+    def parse_type_declaration(var, is_const = false)
       next_token_skip_space_or_newline
       var_type = parse_bare_proc_type
       skip_space
       if @token.type.op_eq?
         next_token_skip_space_or_newline
         value = parse_op_assign_no_control
+      elsif is_const
+        raise "expected '=' for constant type declaration"
       end
       TypeDeclaration.new(var, var_type, value).at(var).at_end(value || var_type)
     end
@@ -1319,10 +1321,19 @@ module Crystal
       end
     end
 
-    def parse_generic_or_custom_literal
+    def parse_const
       type = parse_generic(expression: true)
+      space_after_name = @token.type.space?
       skip_space
-      parse_custom_literal type
+
+      if @no_type_declaration == 0 && @token.type.op_colon? && type.is_a?(Path)
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
+        parse_type_declaration(type, is_const: true)
+      else
+        parse_custom_literal type
+      end
     end
 
     def parse_custom_literal(type)
