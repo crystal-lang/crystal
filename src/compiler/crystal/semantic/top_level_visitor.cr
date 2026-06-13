@@ -79,6 +79,26 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     if type
       type = type.remove_alias
 
+      # If the existing entry is only an implicit namespace placeholder
+      # (created because some `module Foo::Bar`-style declaration was
+      # seen first), upgrade it to the requested class kind in place
+      # rather than rejecting (#8685, #16918).
+      if upgraded = upgrade_assumed_namespace(type) {
+           if type_vars = node.type_vars
+             new_type = GenericClassType.new @program, scope, name, nil, type_vars, false
+             new_type.splat_index = node.splat_index
+             new_type
+           else
+             NonGenericClassType.new @program, scope, name, nil, false
+           end.tap do |t|
+             t.abstract = node.abstract?
+             t.struct = node.struct?
+           end
+         }
+        type = upgraded
+        created_new_type = true
+      end
+
       unless type.is_a?(ClassType)
         node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
       end
@@ -278,6 +298,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
 
       type = type.as(ModuleType)
+
+      # The earlier reference was just creating a namespace; this is the
+      # explicit declaration, so the type is no longer "assumed".
+      type.assumed_namespace = false if type.is_a?(NamedType)
     else
       if type_vars = node.type_vars
         type = GenericModuleType.new @program, scope, name, type_vars
@@ -557,6 +581,10 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope, name, type = lookup_type_def(node)
 
     if type
+      if upgraded = upgrade_assumed_namespace(type) { LibType.new @program, scope, name }
+        type = upgraded
+      end
+
       unless type.is_a?(LibType)
         node.raise "#{type} is not a lib, it's a #{type.type_desc}"
       end
@@ -1324,6 +1352,37 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     scope
   end
 
+  # If *existing_type* is an implicit "namespace" module that was created
+  # only because some child like `module A::B` was declared before `A`
+  # itself, replace it in its scope with a freshly-built type of the
+  # appropriate kind, transferring child types and locations across so the
+  # later explicit `class A` / `struct A` / `lib A` / `enum A` definition
+  # is honoured (#8685, #16918).
+  #
+  # Returns the new type if an upgrade was performed, otherwise `nil`.
+  private def upgrade_assumed_namespace(existing_type, &) : Type?
+    return nil unless existing_type.is_a?(NonGenericModuleType) && existing_type.assumed_namespace?
+    # If the user added defs/macros/includes/etc. to the assumed module
+    # before the upgrade attempt, treat it as a real module and don't
+    # silently change its kind.
+    return nil if existing_type.defs || existing_type.macros || existing_type.parents.try { |ps| !ps.empty? }
+
+    new_type = yield
+
+    if children = existing_type.types?
+      children.each_value { |child| child.namespace = new_type }
+      target_children = new_type.types
+      children.each { |name, child| target_children[name] = child }
+    end
+
+    existing_type.locations.try &.each { |loc| new_type.add_location(loc) }
+    new_type.private = true if existing_type.private?
+
+    scope = existing_type.namespace
+    scope.types[existing_type.name] = new_type
+    new_type
+  end
+
   def lookup_type_def_name_creating_modules(path : Path)
     base_type = path.global? ? program : current_type
     target_type = base_type.lookup_path(path, lookup_in_namespace: false).as?(Type).try &.remove_alias_if_simple
@@ -1339,6 +1398,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         else
           base_type = check_type_is_type_container(base_type, path)
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
+          # This namespace was created implicitly because a child path
+          # mentioned it. Mark it so a later explicit `class`, `struct`,
+          # `lib`, or `enum` of the same name can upgrade it to that kind
+          # rather than erroring (#8685, #16918).
+          next_type.assumed_namespace = true
           if (location = path.location)
             next_type.add_location(location)
           end
