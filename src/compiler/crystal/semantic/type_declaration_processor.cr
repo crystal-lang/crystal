@@ -681,6 +681,13 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   def check_non_nilable_class_vars_without_initializers
+    # A subclass shares class-var storage with the ancestor that declares
+    # the variable, so it inherits that ancestor's initializer. Adopt it
+    # here — after `visit_class_vars_initializers` has populated the
+    # ancestors' initializers — so the check below treats an inherited
+    # initializer as present (#5161).
+    adopt_inherited_class_var_initializers
+
     type_decl_visitor.class_vars.each do |owner, vars|
       vars.each_key do |name|
         check_non_nilable_class_var_without_initializers(owner, name)
@@ -690,6 +697,26 @@ struct Crystal::TypeDeclarationProcessor
     type_guess_visitor.class_vars.each do |owner, vars|
       vars.each_key do |name|
         check_non_nilable_class_var_without_initializers(owner, name)
+      end
+    end
+  end
+
+  private def adopt_inherited_class_var_initializers
+    {type_decl_visitor, type_guess_visitor}.each do |visitor|
+      visitor.class_vars.each do |owner, vars|
+        vars.each_key do |name|
+          next unless class_var = owner.class_vars[name]?
+          next if class_var.initializer
+
+          owner.ancestors.each do |ancestor|
+            next unless ancestor.is_a?(ClassVarContainer)
+            next unless ancestor_class_var = ancestor.class_vars[name]?
+            next unless initializer = ancestor_class_var.initializer
+
+            class_var.initializer = initializer
+            break
+          end
+        end
       end
     end
   end
@@ -742,7 +769,16 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
+            # Subclass-level class vars share storage with the ancestor's,
+            # so their types must unify. If the owner's inferred type is a
+            # supertype of the ancestor's, we narrow it to match the
+            # ancestor — typically because the ancestor's class-body
+            # initializer pins the type, and the subclass's
+            # read-before-write inference reports a spurious `(T | Nil)`
+            # (issue #5161).
             if owner_class_var.type.implements?(ancestor_class_var.type)
+              owner_class_var.type = ancestor_class_var.type
+            elsif ancestor_class_var.type.implements?(owner_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             end
 
