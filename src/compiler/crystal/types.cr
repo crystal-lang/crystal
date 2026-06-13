@@ -3431,10 +3431,27 @@ module Crystal
       subtypes
     end
 
-    def subtypes(type)
+    def subtypes(type : Type)
       subtypes = [] of Type
       type.subclasses.each do |subclass|
         collect_subtypes subclass, subtypes
+      end
+      subtypes
+    end
+
+    # Like `subtypes`, but also yields uninstantiated generic subclasses.
+    # Used for virtual *metaclass* dispatch, where `Bar.foo` is callable
+    # even when `class Bar(T)` has no instantiation (#11134).
+    def subtypes_including_generic
+      subtypes = [] of Type
+      collect_subtypes_including_generic(base_type, subtypes)
+      subtypes
+    end
+
+    def subtypes_including_generic(type : Type)
+      subtypes = [] of Type
+      type.subclasses.each do |subclass|
+        collect_subtypes_including_generic subclass, subtypes
       end
       subtypes
     end
@@ -3443,6 +3460,13 @@ module Crystal
       subtypes << type unless type.is_a?(GenericType) || type.unbound?
       type.subclasses.each do |subclass|
         collect_subtypes subclass, subtypes
+      end
+    end
+
+    def collect_subtypes_including_generic(type, subtypes)
+      subtypes << type unless type.unbound? || (type.is_a?(GenericType) && !type.instantiated_types.empty?)
+      type.subclasses.each do |subclass|
+        collect_subtypes_including_generic subclass, subtypes
       end
     end
 
@@ -3519,7 +3543,10 @@ module Crystal
     end
 
     def each_concrete_type(&)
-      instance_type.subtypes.each do |type|
+      # Include uninstantiated generic subclasses: their metaclasses are
+      # callable (e.g. `Bar.foo` where `class Bar(T)`) and must have a
+      # matching branch in virtual dispatch on `Foo+.class` (#11134).
+      instance_type.subtypes_including_generic.each do |type|
         yield type.metaclass
       end
     end
