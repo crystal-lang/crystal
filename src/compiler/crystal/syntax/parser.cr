@@ -6038,6 +6038,12 @@ module Crystal
       name = parse_path
 
       skip_space
+      type_vars, splat_index = parse_type_vars
+      if splat_index
+        raise "splat type parameters are not supported in alias definitions"
+      end
+      skip_space
+
       check :OP_EQ
       next_token_skip_space_or_newline
 
@@ -6045,7 +6051,7 @@ module Crystal
       end_location = value.end_location
       skip_space
 
-      alias_node = Alias.new(name, value).at_end(end_location)
+      alias_node = Alias.new(name, value, type_vars).at_end(end_location)
       alias_node.doc = doc
       alias_node
     end

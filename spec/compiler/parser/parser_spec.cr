@@ -1901,6 +1901,9 @@ module Crystal
 
     it_parses "alias Foo = Bar", Alias.new("Foo".path, "Bar".path)
     it_parses "alias Foo::Bar = Baz", Alias.new(Path.new("Foo", "Bar"), "Baz".path)
+    it_parses "alias Foo(T) = Bar(T)", Alias.new("Foo".path, Generic.new("Bar".path, ["T".path] of ASTNode), ["T"])
+    it_parses "alias Maybe(T) = T | Nil", Alias.new("Maybe".path, Crystal::Union.new(["T".path, "Nil".path] of ASTNode), ["T"])
+    it_parses "alias Pair(K, V) = Tuple(K, V)", Alias.new("Pair".path, Generic.new("Tuple".path, ["K".path, "V".path] of ASTNode), ["K", "V"])
     assert_syntax_error "alias Foo?"
 
     it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", body: 1.int32), If.new(1.int32)] of ASTNode

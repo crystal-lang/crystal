@@ -4088,6 +4088,23 @@ module Crystal
       end
 
       skip_space
+
+      if node.is_a?(Alias) && (type_vars = node.type_vars)
+        write_token :OP_LPAREN
+        skip_space_or_newline
+        type_vars.each_with_index do |tv, i|
+          if i > 0
+            write_token :OP_COMMA
+            skip_space_or_newline
+            write " "
+          end
+          write tv
+          next_token_skip_space_or_newline
+        end
+        write_token :OP_RPAREN
+        skip_space
+      end
+
       write_token " ", :OP_EQ, " "
       skip_space_or_newline
 
