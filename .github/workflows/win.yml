@@ -261,7 +261,7 @@ jobs:
         run: make -f Makefile.win cli_spec
 
       - name: Build samples
-        run: make -f Makefile.win samples
+        run: make -f Makefile.win -C samples
 
   test-std:
     runs-on: windows-2025-vs2026
