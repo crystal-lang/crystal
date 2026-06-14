@@ -241,6 +241,7 @@ jobs:
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_ENV "CRYSTAL=$(pwd)\build\crystal.exe"
+          Add-Content $env:GITHUB_ENV "CRYSTAL_SPEC_COMPILER_BIN=$(pwd)\build\crystal.exe"
           Add-Content $env:GITHUB_ENV "LLVM_VERSION=${{ env.CI_LLVM_VERSION }}"
           Add-Content $env:GITHUB_ENV "LLVM_TARGETS=${{ env.CI_LLVM_TARGETS }}"
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
