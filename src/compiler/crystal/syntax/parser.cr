@@ -3858,6 +3858,7 @@ module Crystal
         slash_is_regex!
         if @token.type.op_eq?
           next_token_skip_space_or_newline
+          unexpected_token if @token.keyword?(:end)
           body_location = @token.location
           body = parse_op_assign
           body = parse_expression_suffix body, body_location
