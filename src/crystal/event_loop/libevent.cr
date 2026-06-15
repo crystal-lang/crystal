@@ -161,6 +161,12 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    evented_read(file_descriptor, "Error reading file descriptor") do
+      LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+    end
+  end
+
   def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.evented_wait_readable(raise_if_closed: false) do
       raise IO::TimeoutError.new("Read timed out")

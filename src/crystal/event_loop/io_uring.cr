@@ -600,6 +600,10 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
+    pread(file_descriptor, slice, offset: -1)
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
     before_suspend =
       {% if !flag?(:without_mt) %}
         file_descriptor.__evloop_reader = ring
@@ -612,7 +616,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         nil
       {% end %}
 
-    async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout, before_suspend) do |errno|
+    async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout, before_suspend, offset) do |errno|
       case errno
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
@@ -941,11 +945,11 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     end
   end
 
-  private def async_rw(opcode, io, slice, timeout, before_suspend = nil, &)
+  private def async_rw(opcode, io, slice, timeout, before_suspend = nil, offset = -1, &)
     loop do
       res = async(opcode, timeout, before_suspend) do |sqe|
         sqe.value.fd = io.fd
-        sqe.value.off = -1
+        sqe.value.off = offset
         sqe.value.addr = slice.to_unsafe.address.to_u64!
         sqe.value.len = slice.size
       end

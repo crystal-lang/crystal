@@ -439,15 +439,13 @@ module Crystal
 
     private def cross_compile(program, units, output_filename)
       unit = units.first
-      llvm_mod = unit.llvm_mod
+      emit_targets = @emit_targets | EmitTarget::OBJ
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod, target_machine unless @optimization_mode.o0?
-
-        unit.emit(@emit_targets, emit_base_filename || output_filename)
-
-        target_machine.emit_obj_to_file llvm_mod, output_filename
+        sequential_codegen(units)
+        unit.emit(emit_targets, emit_base_filename || output_filename)
       end
+
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
