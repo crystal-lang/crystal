@@ -1413,7 +1413,7 @@ module Crystal
         end
 
         skip_space consume_newline: false
-        next_token_skip_space if @token.type.op_eq?
+        next_token_skip_space if @token.type.op_eq? && Lexer.setter?(node.name)
       end
 
       to_skip = format_def_args node
@@ -1446,7 +1446,14 @@ module Crystal
       body = remove_to_skip node, to_skip
 
       unless node.abstract?
-        format_nested_with_end body
+        skip_space consume_newline: false
+        if @token.type.op_eq?
+          write " = "
+          next_token_skip_space_or_newline
+          accept body
+        else
+          format_nested_with_end body
+        end
       end
 
       @vars.pop
