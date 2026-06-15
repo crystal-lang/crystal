@@ -406,6 +406,9 @@ module Crystal
     it_parses %(def to_s(io) = io << "nil"), Def.new("to_s", args: ["io".arg], body: Call.new("io".var, "<<", "nil".string))
     it_parses "def name = @name; def name=(@name); end", [Def.new("name", body: "@name".instance_var), Def.new("name=", args: ["name".arg], body: Assign.new("@name".instance_var, "name".var))]
     assert_syntax_error "def foo ="
+    assert_syntax_error "def foo =\n  1"
+    assert_syntax_error "def foo(x) =\n  x"
+    assert_syntax_error "def foo =\n  1\n  2\n  3"
     assert_syntax_error "def foo =\nend"
     assert_syntax_error "def foo(x) =\nend"
     assert_syntax_error "def foo # comment\n  = 1"

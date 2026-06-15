@@ -3857,7 +3857,7 @@ module Crystal
       else
         slash_is_regex!
         if @token.type.op_eq?
-          next_token_skip_space_or_newline
+          next_token_skip_space
           unexpected_token if @token.keyword?(:end)
           body_location = @token.location
           body = parse_op_assign
