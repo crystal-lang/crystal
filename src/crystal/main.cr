@@ -130,14 +130,14 @@ module Crystal
   end
 end
 
-# Main function that acts as C's main function.
-# Invokes `Crystal.main`.
-#
-# Can be redefined. See `Crystal.main` for examples.
-#
-# On Windows the actual entry point is `wmain`, but there is no need to redefine
-# that. See the file required below for details.
 {% unless flag?(:without_main) %}
+  # Main function that acts as C's main function.
+  # Invokes `Crystal.main`.
+  #
+  # Can be redefined. See `Crystal.main` for examples.
+  #
+  # On Windows the actual entry point is `wmain`, but there is no need to redefine
+  # that. See the file required below for details.
   fun main(argc : Int32, argv : UInt8**) : Int32
     Crystal.main(argc, argv)
   end
