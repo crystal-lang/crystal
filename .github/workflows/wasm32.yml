@@ -17,7 +17,7 @@ jobs:
     container: crystallang/crystal:1.20.2-build
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
