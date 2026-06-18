@@ -36,13 +36,13 @@ branch="changelog/$VERSION"
 current_changelog="CHANGELOG.$VERSION.md"
 
 echo "Generating $current_changelog..."
-scripts/github-changelog.cr "$VERSION" > "$current_changelog"
+scripts/github-changelog.cr "$VERSION" >"$current_changelog"
 
 echo "Switching to branch $branch"
-git switch "$branch" 2>/dev/null || git switch -c "$branch";
+git switch "$branch" 2>/dev/null || git switch -c "$branch"
 
 # Write release version into src/VERSION
-echo "${VERSION}" > src/VERSION
+echo "${VERSION}" >src/VERSION
 git add src/VERSION
 
 # Update shard.yml
@@ -51,20 +51,20 @@ git add shard.yml
 
 # Write release date into src/SOURCE_DATE_EPOCH
 release_date=$(head -n1 "$current_changelog" | grep -o -P '(?<=\()[^)]+')
-date --utc --date="${release_date}" +%s > src/SOURCE_DATE_EPOCH
+date --utc --date="${release_date}" +%s >src/SOURCE_DATE_EPOCH
 git add src/SOURCE_DATE_EPOCH
 
 changelog_path="doc/changelogs/v${VERSION%.*}.md"
 
 if [ ! -f "$changelog_path" ]; then
   echo "Creating new changelog file $changelog_path"
-  printf "# Changelog %s\n\n" "${VERSION%.*}" > "$changelog_path"
+  printf "# Changelog %s\n\n" "${VERSION%.*}" >"$changelog_path"
 
-  printf '%s [%s series](./v%s.md)\n' "-" "${VERSION%.*}" "${VERSION%.*}" >> "doc/changelogs/README.md"
+  printf '%s [%s series](./v%s.md)\n' "-" "${VERSION%.*}" "${VERSION%.*}" >>"doc/changelogs/README.md"
   git add "doc/changelogs/README.md"
 fi
 
-printf '\n' >> "$current_changelog"
+printf '\n' >>"$current_changelog"
 
 if grep --silent -E "^## \[$VERSION\]" "$changelog_path"; then
   echo "Replacing section in $changelog_path"

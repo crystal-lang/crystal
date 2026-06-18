@@ -43,7 +43,7 @@ for spec in $(find "spec/std" -type f -iname "*_spec.cr" | LC_ALL=C sort); do
   mkdir -p "$(dirname "$target")"
 
   if ! output=$(bin/crystal build "$spec" -o "$target" --target wasm32-wasi 2>&1); then
-    if [[ "$output" =~ "execution of command failed" ]]; then
+    if [[ $output =~ "execution of command failed" ]]; then
       echo "# $require (failed linking)"
     else
       echo "# $require (failed codegen)"
@@ -51,7 +51,8 @@ for spec in $(find "spec/std" -type f -iname "*_spec.cr" | LC_ALL=C sort); do
     continue
   fi
 
-  wasmtime run "$target" > /dev/null; exit=$?
+  wasmtime run "$target" >/dev/null
+  exit=$?
 
   if [ $exit -eq 0 ]; then
     echo "$require"

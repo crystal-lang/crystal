@@ -628,7 +628,14 @@ describe "Dir" do
   describe ".current" do
     # can't use backtick in interpreted code (#12241)
     pending_interpreted "matches shell" do
-      Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+      pwd = Process.capture(
+        {% if flag?(:win32) %}
+          ["cmd", "/c", "cd"]
+        {% else %}
+          "pwd"
+        {% end %}
+      ).chomp
+      Dir.current.should eq(pwd)
     end
 
     # Skip spec on Windows due to weak support for symlinks and $PWD.

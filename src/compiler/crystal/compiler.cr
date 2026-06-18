@@ -15,7 +15,11 @@ module Crystal
   class CompilerError < Exception
     getter status
 
-    def initialize(message, @status : Int32 = 1)
+    def self.new(message, exit : Command::Exit)
+      new message, status: exit.to_i
+    end
+
+    def initialize(message, *, @status : Int32 = 1)
       super message
     end
   end
@@ -478,7 +482,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}")
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}", :FAILURE)
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -581,11 +585,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}")
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}", :FAILURE)
           end
           output.chomp
         rescue exc
-          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}")
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}", :FAILURE)
         end
       end
     end
@@ -611,7 +615,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory")
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR)
       end
 
       output_filename = File.expand_path(output_filename)
@@ -942,9 +946,9 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}")
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}", :FAILURE)
       else
-        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}")
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}", :FAILURE)
       end
     end
 

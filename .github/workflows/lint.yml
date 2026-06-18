@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download source
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
           fetch-depth: 0
       - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
-          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/e99215c1a21cab2a995a3d01fe20d5714addea27.tar.gz # nixpkgs-unstable@2026-03-06 (with devenv 2.0)
+          nix_path: nixpkgs=channel:nixos-26.05
       - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: devenv

@@ -234,13 +234,27 @@ module JSON
                     {% end %}
 
                     %var{name} =
-                      {% if value[:root] %} pull.on_key!({{value[:root]}}) do {% else %} begin {% end %}
+                      {% if value[:root] %}
+                        {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
+                        {% for root in roots %}
+                          pull.on_key!({{root}}) do
+                        {% end %}
+                      {% else %}
+                        begin
+                      {% end %}
                         {% if value[:converter] %}
                           {{value[:converter]}}.from_json(pull)
                         {% else %}
                           ::Union(typeof(@{{ name }})).new(pull)
                         {% end %}
-                      end
+                      {% if value[:root] %}
+                        {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
+                        {% for root in roots %}
+                          end
+                        {% end %}
+                      {% else %}
+                        end
+                      {% end %}
                     %found{name} = true
                   rescue exc : ::JSON::ParseException
                     raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
@@ -322,8 +336,11 @@ module JSON
                       else
                     {% end %}
 
-                    json.object do
-                      json.field({{value[:root]}}) do
+                    {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
+                    {% for root in roots %}
+                      json.object do
+                        json.field({{root}}) do
+                    {% end %}
                   {% end %}
 
                   {% if value[:converter] %}
@@ -337,11 +354,14 @@ module JSON
                   {% end %}
 
                   {% if value[:root] %}
+                    {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
+                    {% for root in roots %}
+                        end
+                      end
+                    {% end %}
                     {% if value[:emit_null] %}
                       end
                     {% end %}
-                      end
-                    end
                   {% end %}
                 end
 

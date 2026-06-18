@@ -20,7 +20,7 @@ permissions: {}
 
 jobs:
   build:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -44,7 +44,6 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: |
-            libs/pcre.lib
             libs/pcre2-8.lib
             libs/iconv.lib
             libs/gc.lib
@@ -69,7 +68,6 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: |
-            libs/pcre-dynamic.lib
             libs/pcre2-8-dynamic.lib
             libs/iconv-dynamic.lib
             libs/gc-dynamic.lib
@@ -78,7 +76,6 @@ jobs:
             libs/mpir-dynamic.lib
             libs/yaml-dynamic.lib
             libs/xml2-dynamic.lib
-            dlls/pcre.dll
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll

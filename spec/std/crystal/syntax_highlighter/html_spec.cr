@@ -118,6 +118,12 @@ describe Crystal::SyntaxHighlighter::HTML do
     it_highlights "%w(foo bar baz)", %(<span class="s">%w(foo bar baz)</span>)
     it_highlights "%w(foo  bar\n  baz)", %(<span class="s">%w(foo  bar\n  baz)</span>)
     it_highlights "%w<foo bar baz>", %(<span class="s">%w&lt;foo bar baz&gt;</span>)
+    it_highlights "%W(foo bar baz)", %(<span class="s">%W(foo bar baz)</span>)
+    it_highlights "%W(foo  bar\n  baz)", %(<span class="s">%W(foo  bar\n  baz)</span>)
+    it_highlights "%W(foo \#{bar} baz)", %(<span class="s">%W(foo </span><span class="i">\#{</span>bar<span class="i">}</span><span class="s"> baz)</span>)
+    it_highlights "%W(foo \#{*bar} baz)", %(<span class="s">%W(foo </span><span class="i">\#{</span><span class="o">*</span>bar<span class="i">}</span><span class="s"> baz)</span>)
+    it_highlights "%W(foo a\#{bar}b baz)", %(<span class="s">%W(foo a</span><span class="i">\#{</span>bar<span class="i">}</span><span class="s">b baz)</span>)
+    it_highlights "%W(foo a\#{*bar}b baz)", %(<span class="s">%W(foo a</span><span class="i">\#{</span><span class="o">*</span>bar<span class="i">}</span><span class="s">b baz)</span>)
     it_highlights "%i(foo bar baz)", %(<span class="s">%i(foo bar baz)</span>)
 
     it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})

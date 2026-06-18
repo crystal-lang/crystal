@@ -162,3 +162,9 @@ jobs:
           make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
         env:
           SPEC_FLAGS: --tag=~external_commands # skip exec_external_command spec because it doesn't work with this setup
+
+      - name: Run CLI specs
+        shell: msys2 {0}
+        run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
+          make -o .build/crystal.exe cli_spec # we know the compiler is fresh; do not rebuild it here

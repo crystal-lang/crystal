@@ -444,12 +444,16 @@ class XML::Node
 
   protected def each_namespace(& : Namespace ->)
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
+    return unless ns_list
 
-    if ns_list
-      while ns_list.value
-        yield Namespace.new(document, ns_list.value)
-        ns_list += 1
+    begin
+      ns = ns_list
+      while ns.value
+        yield Namespace.new(document, ns.value)
+        ns += 1
       end
+    ensure
+      XML.free(ns_list.as(Void*))
     end
   end
 
