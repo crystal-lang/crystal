@@ -8,10 +8,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
     {% unless flag?(:without_mt) %}
       @sq_lock : Thread::Mutex?
-
-      # uninitialized-safety: compiler fails to notice the actual initialization
-      # because of comptime flags
-      @cq_lock = uninitialized Thread::Mutex
+      @cq_lock = Thread::Mutex.new
     {% end %}
 
     def initialize(*args, **kwargs)
@@ -25,8 +22,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         unless System::IoUring.supports_register_sync_cancel? && System::IoUring.supports_register_send_msg_ring?
           @sq_lock = Thread::Mutex.new
         end
-
-        @cq_lock = Thread::Mutex.new
       {% end %}
     end
 
