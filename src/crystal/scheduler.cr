@@ -60,7 +60,7 @@ class Crystal::Scheduler
   end
 
   @main : Fiber
-  @lock = Crystal::SpinLock.new
+  @lock = Thread::Mutex.new
 
   # :nodoc:
   def initialize(@thread : Thread)
@@ -72,11 +72,11 @@ class Crystal::Scheduler
   end
 
   protected def enqueue(fiber : Fiber) : Nil
-    @lock.sync { @runnables << fiber }
+    @lock.synchronize { @runnables << fiber }
   end
 
   protected def enqueue(fibers : Enumerable(Fiber)) : Nil
-    @lock.sync { @runnables.concat fibers }
+    @lock.synchronize { @runnables.concat fibers }
   end
 
   protected def resume(fiber : Fiber) : Nil
@@ -111,7 +111,7 @@ class Crystal::Scheduler
 
   protected def reschedule : Nil
     loop do
-      if runnable = @lock.sync { @runnables.shift? }
+      if runnable = @lock.synchronize { @runnables.shift? }
         resume(runnable) unless runnable == @thread.current_fiber
         break
       else
