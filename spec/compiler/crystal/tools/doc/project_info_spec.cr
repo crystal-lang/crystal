@@ -11,7 +11,7 @@ private def run_git(*args : String)
   if result.status.success?
     result.output
   else
-    fail Process::ExitError.new(args, result).to_s
+    fail Process::ExitError.new(args.to_a, result).to_s
   end
 end
 
