@@ -769,13 +769,20 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
-            # Subclass-level class vars share storage with the ancestor's,
-            # so their types must unify. If the owner's inferred type is a
-            # supertype of the ancestor's, we narrow it to match the
-            # ancestor — typically because the ancestor's class-body
-            # initializer pins the type, and the subclass's
-            # read-before-write inference reports a spurious `(T | Nil)`
-            # (issue #5161).
+            # A subclass shares class-var storage with the ancestor, so the
+            # types must match. When either type implements the other we
+            # narrow the owner to the ancestor's pinned type.
+            #
+            # The second branch handles #5161: a subclass that only assigns
+            # `@@x` inside a method (never at the class body) gets a `Nil`
+            # added by the guesser, since from a read-before-write standpoint
+            # it could be read before that method runs. So the owner's type is
+            # the ancestor's `T` plus a spurious `Nil` (`Int32` vs
+            # `Int32 | Nil`). The inherited initializer that removes this `Nil`
+            # is only applied in a later pass
+            # (`adopt_inherited_class_var_initializers`), so here we collapse it
+            # back to the ancestor's type. Any other mismatch falls through to
+            # the error below.
             if owner_class_var.type.implements?(ancestor_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             elsif ancestor_class_var.type.implements?(owner_class_var.type)
