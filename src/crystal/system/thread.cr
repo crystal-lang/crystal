@@ -113,14 +113,6 @@ class Thread
         stack
       end
     end
-  {% else %}
-    # :nodoc:
-    getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
-
-    # :nodoc:
-    def scheduler? : ::Crystal::Scheduler?
-      @scheduler
-    end
   {% end %}
 
   def self.unsafe_each(&)

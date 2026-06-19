@@ -14,26 +14,33 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
-  @event_loop = Crystal::EventLoop.create
-  @stack_pool = Fiber::StackPool.new
+  class_property! scheduler : Scheduler
+  @@event_loop = EventLoop.create
+  @@stack_pool = Fiber::StackPool.new
+
+  def self.init : Nil
+    @@scheduler = new(Thread.current)
+
+    {% unless flag?(:interpreted) %}
+      scheduler.spawn_stack_pool_collector
+    {% end %}
+  end
 
   def self.stack_pool : Fiber::StackPool
-    Thread.current.scheduler.@stack_pool
+    @@stack_pool
   end
 
   def self.event_loop
-    Thread.current.scheduler.@event_loop
+    @@event_loop
   end
 
   def self.event_loop?
-    if scheduler = Thread.current?.try(&.scheduler?)
-      scheduler.@event_loop
-    end
+    @@event_loop
   end
 
   def self.enqueue(fiber : Fiber) : Nil
     Crystal.trace :sched, "enqueue", fiber: fiber do
-      Thread.current.scheduler.enqueue(fiber)
+      scheduler.enqueue(fiber)
     end
   end
 
@@ -45,11 +52,11 @@ class Crystal::Scheduler
 
   def self.reschedule : Nil
     Crystal.trace :sched, "reschedule"
-    Thread.current.scheduler.reschedule
+    scheduler.reschedule
   end
 
   def self.resume(fiber : Fiber) : Nil
-    Thread.current.scheduler.resume(fiber)
+    scheduler.resume(fiber)
   end
 
   @main : Fiber
@@ -109,21 +116,15 @@ class Crystal::Scheduler
         break
       else
         Crystal.trace :sched, "event_loop" do
-          @event_loop.run(blocking: true)
+          @@event_loop.run(blocking: true)
         end
       end
     end
   end
 
-  def self.init : Nil
-    {% unless flag?(:interpreted) %}
-      Thread.current.scheduler.spawn_stack_pool_collector
-    {% end %}
-  end
-
   # Background loop to cleanup unused fiber stacks.
   def spawn_stack_pool_collector
-    fiber = Fiber.new(name: "stack-pool-collector", &->@stack_pool.collect_loop)
+    fiber = Fiber.new(name: "stack-pool-collector", &->@@stack_pool.collect_loop)
     enqueue(fiber)
   end
 end
