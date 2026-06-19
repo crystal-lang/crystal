@@ -20,7 +20,7 @@ jobs:
     environment: deploy_api_docs
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 

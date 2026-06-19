@@ -50,7 +50,7 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/community
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Uninstall openssl and conflicts
