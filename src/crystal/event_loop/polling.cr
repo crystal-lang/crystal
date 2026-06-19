@@ -204,6 +204,20 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    loop do
+      size = LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+      return size.to_i32 unless size == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(file_descriptor, file_descriptor.@read_timeout)
+        check_open(file_descriptor)
+      else
+        raise IO::Error.from_errno("pread", target: file_descriptor)
+      end
+    end
+  end
+
   def wait_readable(file_descriptor : System::FileDescriptor) : Nil
     wait_readable(file_descriptor, file_descriptor.@read_timeout) do
       raise IO::TimeoutError.new

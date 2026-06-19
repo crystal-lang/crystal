@@ -1,37 +1,49 @@
+# Indicators for comment annotations:
+#
+# * `Disabled`: The rule is disabled because it does not seem useful for this repo (or in general).
+# * `BUG`: A bug prevents using this rule either entirely or for specific files.
+# * `FIXME`: The rule seems useful, but requires some effort to resolve. That's deferred for later.
+# * `TODO`: The rule might be useful, but we need to investigate whether we want to use it or not.
+
 default: true
 
-heading-style: "setext"
+## Heading Rules
 
-no-inline-html: false
-line-length: false
+# MD003 - Heading style should be consistent
+heading-style:
+  style: "atx"
 
+## List Rules
+
+# MD029 - Use consistent numbers for ordered lists
 ol-prefix:
   style: "ordered"
+
+# MD004 - Unordered list style should be consistent
 ul-style:
   style: "dash"
-ul-indent:
-  indent: 2
 
-no-blanks-blockquote: false
+## Whitespace Rules
 
+# MD013 - Line length
+# TODO: We might want to consider automatic wrapping (maybe with https://github.com/razziel89/mdslw ?)
+line-length: false
+
+## Formatting Rules
+
+# MD038 - No space in code
+# FIXME: Bug in rumdl: https://github.com/rvben/rumdl/issues/665
+no-space-in-code: false
+
+# MD049 - Keep italic text formatting consistent
 emphasis-style:
   style: "underscore"
+
+# MD050 - Keep bold text formatting consistent
 strong-style:
   style: "asterisk"
 
-no-duplicate-heading:
-  siblings_only: true
+## Link and Image Rules
+
+# MD034 - Bare URL used
 no-bare-urls: false
-
-fenced-code-language: false
-commands-show-output: false
-
-first-line-h1:
-  front_matter_title: "^\\s*(page_)?title\\s*[:=]"
-  exclude:
-    .github/PULL_REQUEST_TEMPLATE/pull_request_template.md
-
-no-alt-text: false
-
-hard_tab:
-  code_blocks: false

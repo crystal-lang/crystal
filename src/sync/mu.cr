@@ -194,7 +194,7 @@ module Sync
         raise RuntimeError.new("Can't unlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0
         # no waiters, or there is a designated waker already (no need to wake
         # another one), try quick unlock
         _, success = @word.compare_and_set(word, word &- WLOCK, :release, :relaxed)
@@ -215,9 +215,9 @@ module Sync
         raise RuntimeError.new("Can't runlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0 && (word & RMASK) > RLOCK
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
         # no waiters, there is a designated waker already (no need to wake
-        # another one), and there are still readers, try quick unlock
+        # another one), or there are still readers, try quick unlock
         _, success = @word.compare_and_set(word, word &- RLOCK, :release, :relaxed)
         return if success
       end
