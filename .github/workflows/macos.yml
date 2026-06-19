@@ -60,7 +60,7 @@ jobs:
       fail-fast: false
       matrix:
         opts:
-          - flags: "-Dwithout_mt" # execution_context: disable
+          - flags: "-Dwithout_mt"
             workers: 1
           - flags: "" # execution_context: parallel
             workers: 4
