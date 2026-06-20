@@ -497,4 +497,15 @@ describe "Code gen: cast" do
       Base.as(Base | Base.class).as?(Base | Impl).nil?
       CRYSTAL
   end
+
+  it "casts same-type tuple to Enumerable whose splat collapses (#8771)" do
+    # `Tuple(String, String)` is instantiated early (via `ENV`) before
+    # `Tuple` includes `Indexable`, so it used to be missing from
+    # `Enumerable(String).including_types`, crashing this upcast.
+    run(<<-CRYSTAL).to_string.should eq("ab")
+      require "prelude"
+
+      ({"a", "b"}.as(Enumerable(String))).to_a.join
+      CRYSTAL
+  end
 end
