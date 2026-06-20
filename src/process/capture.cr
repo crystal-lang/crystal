@@ -10,6 +10,9 @@ class Process
                     else
                       result.status.description
                     end
+      if stderr = @result.error
+        description += "\nstderr:\n#{stderr}"
+      end
       super("Command #{args.inspect} failed: #{description}")
     end
   end
