@@ -1023,7 +1023,7 @@ describe Process do
     end
 
     it "raises on non-zero exit status" do
-      error = expect_raises(Process::ExitError, /^Command \[.*exit 1.*\] failed: Process exited with status 1$/) do
+      error = expect_raises(Process::ExitError, /^Command \[.*exit 1.*\] failed: Process exited with status 1\nstderr:$/) do
         Process.capture(to_ary(exit_code_command(1)))
       end
       error.result.status.exit_code.should eq 1
