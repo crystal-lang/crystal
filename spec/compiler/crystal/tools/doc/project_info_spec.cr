@@ -4,14 +4,15 @@ require "../../../../support/tempfile"
 private alias ProjectInfo = Crystal::Doc::ProjectInfo
 
 private def run_git(*args : String)
-  result = Process.capture_result?(["git", "-c", %(user.email=""), "-c", %(user.name="spec"), *args])
+  git_args = ["git", "-c", "user.email=", "-c", "user.name=spec", *args]
+  result = Process.capture_result?(git_args)
 
   pending! "Git is not available" unless result
 
   if result.status.success?
     result.output
   else
-    fail Process::ExitError.new(args.to_a, result).to_s
+    fail Process::ExitError.new(git_args, result).to_s
   end
 end
 
