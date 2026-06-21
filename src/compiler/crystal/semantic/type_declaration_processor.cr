@@ -793,11 +793,6 @@ struct Crystal::TypeDeclarationProcessor
             ancestor_class_var = ancestor.lookup_class_var?(name)
             next unless ancestor_class_var
 
-            # A subclass shares class-var storage with the ancestor, so the
-            # types must match. If the owner's inferred type implements the
-            # ancestor's, narrow it to the ancestor's pinned type (e.g. a
-            # virtual subtype collapses to the ancestor's exact type). Any
-            # genuine mismatch falls through to the error below.
             if owner_class_var.type.implements?(ancestor_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             end
