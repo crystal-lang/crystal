@@ -202,8 +202,32 @@ struct Crystal::TypeDeclarationProcessor
 
   private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo, freeze_type = true)
     type = info.type
-    type = Type.merge!(type, @program.nil) unless info.outside_def
+    # A class var assigned only inside a method (never at the class body) is
+    # guessed as nilable, since from a read-before-write standpoint it could be
+    # read before that method runs. But if an ancestor declares the same class
+    # var non-nilably, the storage is shared and the ancestor guarantees a
+    # value, so the `Nil` would be spurious — don't add it (#5161).
+    unless info.outside_def || inherits_non_nilable_class_var?(owner, name)
+      type = Type.merge!(type, @program.nil)
+    end
     declare_meta_type_var(vars, owner, name, type, freeze_type: freeze_type)
+  end
+
+  # Whether *name* is a class var declared non-nilably by some ancestor of
+  # *owner*. Ancestors are processed before their descendants, so by the time a
+  # subclass's class var is declared the ancestor's type is already known.
+  private def inherits_non_nilable_class_var?(owner, name)
+    return false unless owner.is_a?(ClassVarContainer)
+
+    owner.ancestors.each do |ancestor|
+      next unless ancestor.is_a?(ClassVarContainer)
+      next unless ancestor_var = ancestor.class_vars[name]?
+      next unless ancestor_type = ancestor_var.type?
+
+      return true unless ancestor_type.includes_type?(@program.nil_type)
+    end
+
+    false
   end
 
   private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true, freeze_type = true)
@@ -770,22 +794,11 @@ struct Crystal::TypeDeclarationProcessor
             next unless ancestor_class_var
 
             # A subclass shares class-var storage with the ancestor, so the
-            # types must match. When either type implements the other we
-            # narrow the owner to the ancestor's pinned type.
-            #
-            # The second branch handles #5161: a subclass that only assigns
-            # `@@x` inside a method (never at the class body) gets a `Nil`
-            # added by the guesser, since from a read-before-write standpoint
-            # it could be read before that method runs. So the owner's type is
-            # the ancestor's `T` plus a spurious `Nil` (`Int32` vs
-            # `Int32 | Nil`). The inherited initializer that removes this `Nil`
-            # is only applied in a later pass
-            # (`adopt_inherited_class_var_initializers`), so here we collapse it
-            # back to the ancestor's type. Any other mismatch falls through to
-            # the error below.
+            # types must match. If the owner's inferred type implements the
+            # ancestor's, narrow it to the ancestor's pinned type (e.g. a
+            # virtual subtype collapses to the ancestor's exact type). Any
+            # genuine mismatch falls through to the error below.
             if owner_class_var.type.implements?(ancestor_class_var.type)
-              owner_class_var.type = ancestor_class_var.type
-            elsif ancestor_class_var.type.implements?(owner_class_var.type)
               owner_class_var.type = ancestor_class_var.type
             end
 
