@@ -132,7 +132,6 @@ module Crystal::System::Socket
     end
   end
 
-
   private def system_connect_connectionless(addr, timeout)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
