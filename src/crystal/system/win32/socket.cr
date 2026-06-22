@@ -132,7 +132,6 @@ module Crystal::System::Socket
     end
   end
 
-  # :nodoc:
 
   private def system_connect_connectionless(addr, timeout)
     ret = LibC.connect(fd, addr, addr.size)
