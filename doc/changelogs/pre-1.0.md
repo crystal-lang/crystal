@@ -4070,50 +4070,50 @@
 - Allow escaping curly braces inside macros with `\{`. This allows defining macros that, when expanded, can contain other macro expressions.
 - Added a special comment-like pragma to change the lexer's filename, line number and column number.
 
-    ```ruby
-    # foo.cr
-    a = 1
-    #<loc:"bar.cr",12,24>b = 2
-    c = 3
-    ```
+  ```ruby
+  # foo.cr
+  a = 1
+  #<loc:"bar.cr",12,24>b = 2
+  c = 3
+  ```
 
-    In the previous example, `b = 2` (and the rest of the file) is considered as being parsed from file `bar.cr` at line 12, column 24.
+  In the previous example, `b = 2` (and the rest of the file) is considered as being parsed from file `bar.cr` at line 12, column 24.
 - Added a special `run` call inside macros. This compiles and executes another Crystal program and pastes its output into the current program.
 
-    As an example, consider this program:
+  As an example, consider this program:
 
-    ```ruby
-    # foo.cr
-    {{ run("my_program", 1, 2, 3) }}
-    ```
+  ```ruby
+  # foo.cr
+  {{ run("my_program", 1, 2, 3) }}
+  ```
 
-    Compiling `foo.cr` will, at compile-time, compile `my_program.cr` and execute it with arguments `1 2 3`. The output of that execution is pasted into `foo.cr` at that location.
+  Compiling `foo.cr` will, at compile-time, compile `my_program.cr` and execute it with arguments `1 2 3`. The output of that execution is pasted into `foo.cr` at that location.
 - Added ECR (Embedded Crystal) support. This is implemented using the special `run` macro call.
 
-    A small example:
+  A small example:
 
-    ```ruby
-    # template.ecr
-    Hello <%= @msg %>
-    ```
+  ```ruby
+  # template.ecr
+  Hello <%= @msg %>
+  ```
 
-    ```ruby
-    # foo.cr
-    require "ecr/macros"
+  ```ruby
+  # foo.cr
+  require "ecr/macros"
 
-    class HelloView
-      def initialize(@msg)
-      end
-
-      # This generates a to_s method with the contents of template.ecr
-      ecr_file "template.ecr"
+  class HelloView
+    def initialize(@msg)
     end
 
-    view = HelloView.new "world!"
-    view.to_s #=> "Hello world!"
-    ```
+    # This generates a to_s method with the contents of template.ecr
+    ecr_file "template.ecr"
+  end
 
-    The nice thing about this is that, using the `#<loc...>` pragma for specifying the lexer's location, if you have a syntax/semantic error in the template the error points to the template :-)
+  view = HelloView.new "world!"
+  view.to_s #=> "Hello world!"
+  ```
+
+  The nice thing about this is that, using the `#<loc...>` pragma for specifying the lexer's location, if you have a syntax/semantic error in the template the error points to the template :-)
 
 ### 0.1.0 (2014-06-18)
 
