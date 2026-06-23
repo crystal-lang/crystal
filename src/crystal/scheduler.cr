@@ -14,9 +14,9 @@ require "crystal/system/thread"
 # Only the class methods are public and safe to use. Instance methods are
 # protected and must never be called directly.
 class Crystal::Scheduler
-  class_property! scheduler : Scheduler
-  @@event_loop = EventLoop.create
-  @@stack_pool = Fiber::StackPool.new
+  private class_getter! scheduler : Scheduler
+  class_getter event_loop = EventLoop.create
+  class_getter stack_pool = Fiber::StackPool.new
 
   def self.init : Nil
     @@scheduler = new(Thread.current)
@@ -24,14 +24,6 @@ class Crystal::Scheduler
     {% unless flag?(:interpreted) %}
       scheduler.spawn_stack_pool_collector
     {% end %}
-  end
-
-  def self.stack_pool : Fiber::StackPool
-    @@stack_pool
-  end
-
-  def self.event_loop
-    @@event_loop
   end
 
   def self.event_loop?
