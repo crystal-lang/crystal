@@ -500,61 +500,74 @@ private module ConsoleUtils
     @@buffer = appender.to_slice
   end
 
-  class ReadRequest
-    getter handle : LibC::HANDLE
-    getter slice : Slice(UInt16)
-    getter fiber : Fiber
+  {% if !flag?(:without_mt) %}
+    private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+      units_read = LibC::DWORD.zero
 
-    property units_read = LibC::DWORD.zero
-    property error = WinError::ERROR_SUCCESS
+      ret, error = Fiber.syscall do
+        {LibC.ReadConsoleW(handle, slice, slice.size, pointerof(units_read), nil), WinError.value}
+      end
+      raise IO::Error.from_os_error("ReadConsoleW", error) if ret == 0
 
-    def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16), @fiber : Fiber)
+      units_read.to_i32
     end
-  end
+  {% else %}
+    class ReadRequest
+      getter handle : LibC::HANDLE
+      getter slice : Slice(UInt16)
+      getter fiber : Fiber
 
-  @@read_mtx = ::Thread::Mutex.new
-  @@read_cv = ::Thread::ConditionVariable.new
-  @@read_requests = Deque(ReadRequest).new
-  @@read_thread = ::Thread.new { reader_loop }
+      property units_read = LibC::DWORD.zero
+      property error = WinError::ERROR_SUCCESS
 
-  private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    request = ReadRequest.new(handle, slice, ::Fiber.current)
-
-    @@read_mtx.synchronize do
-      @@read_requests << request
-      @@read_cv.signal
-    end
-
-    ::Fiber.suspend
-
-    unless request.error == WinError::ERROR_SUCCESS
-      raise IO::Error.from_os_error("ReadConsoleW", request.error)
+      def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16), @fiber : Fiber)
+      end
     end
 
-    request.units_read.to_i32!
-  end
+    @@read_mtx = ::Thread::Mutex.new
+    @@read_cv = ::Thread::ConditionVariable.new
+    @@read_requests = Deque(ReadRequest).new
+    @@read_thread = ::Thread.new { reader_loop }
 
-  private def self.reader_loop
-    while true
-      request = @@read_mtx.synchronize do
-        loop do
-          if entry = @@read_requests.shift?
-            break entry
+    private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+      request = ReadRequest.new(handle, slice, ::Fiber.current)
+
+      @@read_mtx.synchronize do
+        @@read_requests << request
+        @@read_cv.signal
+      end
+
+      ::Fiber.suspend
+
+      unless request.error == WinError::ERROR_SUCCESS
+        raise IO::Error.from_os_error("ReadConsoleW", request.error)
+      end
+
+      request.units_read.to_i32!
+    end
+
+    private def self.reader_loop
+      while true
+        request = @@read_mtx.synchronize do
+          loop do
+            if entry = @@read_requests.shift?
+              break entry
+            end
+            @@read_cv.wait(@@read_mtx)
           end
-          @@read_cv.wait(@@read_mtx)
         end
-      end
-      slice = request.slice
+        slice = request.slice
 
-      if LibC.ReadConsoleW(request.handle, slice, slice.size, out units_read, nil) == 0
-        request.error = WinError.value
-      else
-        request.units_read = units_read
-      end
+        if LibC.ReadConsoleW(request.handle, slice, slice.size, out units_read, nil) == 0
+          request.error = WinError.value
+        else
+          request.units_read = units_read
+        end
 
-      request.fiber.enqueue
+        request.fiber.enqueue
+      end
     end
-  end
+  {% end %}
 end
 
 # Enable UTF-8 console I/O for the duration of program execution
