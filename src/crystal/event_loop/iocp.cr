@@ -451,44 +451,98 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
-    socket.overlapped_connect(socket.fd, "ConnectEx", timeout) do |overlapped|
+    System::IOCP::WSAOverlappedOperation.run(socket.fd) do |operation|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
+      result = System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, operation.to_unsafe)
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .wsaeaddrnotavail?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        else
+          return ::Socket::Error.from_os_error("ConnectEx", error)
+        end
+      else
+        return nil
+      end
+
+      operation.wait_for_result(timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaeconnrefused?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        when .error_operation_aborted?
+          # FIXME: Not sure why this is necessary
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        end
+      end
+
+      nil
     end
   end
 
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
-    socket.system_accept do |client_handle|
-      address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
+    client_handle, blocking = self.socket(socket.family, socket.type, socket.protocol, nil)
+    socket.initialize_handle(client_handle)
 
-      # buffer_size is set to zero to only accept the connection and don't receive any data.
-      # That will be a different operation.
-      #
-      # > If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation.
-      # > Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data.
-      #
-      # TODO: Investigate benefits from receiving data here directly. It's hard to integrate into the event loop and socket API.
-      buffer_size = 0
-      output_buffer = Bytes.new(address_size * 2 + buffer_size)
+    address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 
-      success = socket.overlapped_accept(socket.fd, "AcceptEx") do |overlapped|
-        # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
-        received_bytes = uninitialized UInt32
-        Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
-          output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
-      end
+    # buffer_size is set to zero to only accept the connection (2 addresses) and
+    # not receive any data (out of scope)
+    buffer_size = 0
+    output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
-      if success
-        # AcceptEx does not automatically set the socket options on the accepted
-        # socket to match those of the listening socket, we need to ask for that
-        # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+    success = overlapped_accept(socket) do |overlapped|
+      # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
+      received_bytes = uninitialized UInt32
+      Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
+        output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
+        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes),
+        overlapped.to_unsafe)
+    end
 
-        true
+    if success
+      # AcceptEx does not automatically set the socket options on the accepted
+      # socket to match those of the listening socket, we need to ask for that
+      # explicitly with SO_UPDATE_ACCEPT_CONTEXT
+      System::Socket.setsockopt(client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd)
+      {client_handle, blocking}
+    else
+      LibC.closesocket(client_handle)
+      nil
+    end
+  end
+
+  private def overlapped_accept(socket, &)
+    System::IOCP::WSAOverlappedOperation.run(socket.fd) do |operation|
+      result = yield operation
+
+      if result == 0
+        case WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        else
+          return false
+        end
       else
-        false
+        return true
       end
+
+      operation.wait_for_result(socket.read_timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaenotsock?
+          return false
+        when .error_operation_aborted?
+          # if the socket is closed then accept was aborted by an explicit
+          # shutdown before close, otherwise we manually canceled because of a
+          # timeout
+          return false if socket.closed?
+          raise IO::TimeoutError.new("AcceptEx timed out (overlapped_accept)")
+        end
+      end
+
+      true
     end
   end
 
