@@ -51,16 +51,22 @@ struct Crystal::System::Process
   @wait_object : LibC::HANDLE = LibC::HANDLE.null
 
   protected def self.register_wait_callback(context : Void*, _expired : LibC::BOOLEAN) : LibC::BOOL
-    Box(::Fiber).unbox(context).enqueue
-    LibC::BOOL.new(1)
+    # we can't call fiber.enqueue directly because the callback runs in a system
+    # IO thread that is unknown to Crystal and the GC, so we just post a
+    # completion event for the event loop to handle
+    iocp_handle, completion_key = context.as(Pointer({LibC::HANDLE, IOCP::CompletionKey})).value
+    LibC.PostQueuedCompletionStatus(iocp_handle, 0, completion_key.as(Void*).address, nil)
   end
 
   def wait
+    completion_key = IOCP::CompletionKey.new(:process_wait, ::Fiber.current)
+    context = {EventLoop.current.iocp_handle, completion_key}
+
     ret = LibC.RegisterWaitForSingleObject(
       pointerof(@wait_object),
       @process_handle,
       ->Process.register_wait_callback(Void*, LibC::BOOLEAN),
-      Box.box(::Fiber.current),
+      pointerof(context).as(Void*),
       LibC::INFINITE,
       LibC::WT_EXECUTEINWAITTHREAD | LibC::WT_EXECUTEONLYONCE,
     )

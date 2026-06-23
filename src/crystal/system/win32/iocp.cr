@@ -36,6 +36,7 @@ struct Crystal::System::IOCP
   # :nodoc:
   class CompletionKey
     enum Tag
+      ProcessWait
       ReadConsole
       Interrupt
       Timer
@@ -81,7 +82,7 @@ struct Crystal::System::IOCP
 
     def valid?(number_of_bytes_transferred)
       case tag
-      in .read_console?, .interrupt?, .timer?
+      in .process_wait?, .read_console?, .interrupt?, .timer?
         true
       end
     end
