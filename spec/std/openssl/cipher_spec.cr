@@ -60,29 +60,25 @@ describe OpenSSL::Cipher do
   end
 
   it "encrypts/decrypts with GCM authentication tag" do
-    begin
-      key = Random::Secure.random_bytes(32)
-      iv = Random::Secure.random_bytes(12)
-      plaintext = "Hello, GCM!"
+    key = Random::Secure.random_bytes(32)
+    iv = Random::Secure.random_bytes(12)
+    plaintext = "Hello, GCM!"
 
-      enc = OpenSSL::Cipher.new("aes-256-gcm")
-      enc.encrypt
-      enc.key = key
-      enc.iv = iv
-      ciphertext = enc.update(plaintext)
-      ciphertext += enc.final
-      tag = enc.gcm_tag
+    enc = OpenSSL::Cipher.new("aes-256-gcm")
+    enc.encrypt
+    enc.key = key
+    enc.iv = iv
+    ciphertext = enc.update(plaintext)
+    ciphertext += enc.final
+    tag = enc.gcm_tag
 
-      dec = OpenSSL::Cipher.new("aes-256-gcm")
-      dec.decrypt
-      dec.key = key
-      dec.iv = iv
-      dec.gcm_tag = tag
-      result = dec.update(ciphertext)
-      result += dec.final
-      String.new(result).should eq(plaintext)
-    rescue ArgumentError
-      # GCM not supported on this platform; skip
-    end
+    dec = OpenSSL::Cipher.new("aes-256-gcm")
+    dec.decrypt
+    dec.key = key
+    dec.iv = iv
+    dec.gcm_tag = tag
+    result = dec.update(ciphertext)
+    result += dec.final
+    String.new(result).should eq(plaintext)
   end
 end
