@@ -80,13 +80,6 @@ struct Crystal::System::IOCP
       @fiber.swap(nil, :relaxed)
     end
 
-    def valid?(number_of_bytes_transferred)
-      case tag
-      in .process_wait?, .read_console?, .interrupt?, .timer?
-        true
-      end
-    end
-
     def inspect(io : IO) : Nil
       to_s(io)
     end
