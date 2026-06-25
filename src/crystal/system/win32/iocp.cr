@@ -37,6 +37,7 @@ struct Crystal::System::IOCP
   class CompletionKey
     enum Tag
       ProcessRun
+      ReadConsole
       Interrupt
       Timer
     end
@@ -84,7 +85,7 @@ struct Crystal::System::IOCP
       case tag
       in .process_run?
         number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
-      in .interrupt?, .timer?
+      in .read_console?, .interrupt?, .timer?
         true
       end
     end

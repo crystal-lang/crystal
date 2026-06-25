@@ -515,12 +515,16 @@ private module ConsoleUtils
     class ReadRequest
       getter handle : LibC::HANDLE
       getter slice : Slice(UInt16)
-      getter fiber : Fiber
+
+      getter iocp_handle : LibC::HANDLE
+      getter completion_key : IOCP::CompletionKey
 
       property units_read = LibC::DWORD.zero
       property error = WinError::ERROR_SUCCESS
 
-      def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16), @fiber : Fiber)
+      def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16))
+        @iocp_handle = EventLoop.current.iocp_handle
+        @completion_key = IOCP::CompletionKey.new(:read_console, ::Fiber.current)
       end
     end
 
@@ -564,7 +568,13 @@ private module ConsoleUtils
           request.units_read = units_read
         end
 
-        request.fiber.enqueue
+        # OPTIMIZE: after #17091 we can merely `request.fiber.enqueue` and drop
+        # the IOCP handle and CompletionKey
+        completion_key = request.completion_key.as(Void*).address
+        ret = LibC.PostQueuedCompletionStatus(request.handle, 0, completion_key, nil)
+
+        # can't recover: the fiber will never be resumed
+        Crystal.panic("PostQueuedCompletionStatus", WinError.value) if ret == 0
       end
     end
   {% end %}
