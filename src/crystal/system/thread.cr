@@ -79,7 +79,7 @@ class Thread
 
   getter name : String?
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
 
@@ -112,14 +112,6 @@ class Thread
         @dead_fiber_stack = nil
         stack
       end
-    end
-  {% else %}
-    # :nodoc:
-    getter scheduler : Crystal::Scheduler { Crystal::Scheduler.new(self) }
-
-    # :nodoc:
-    def scheduler? : ::Crystal::Scheduler?
-      @scheduler
     end
   {% end %}
 

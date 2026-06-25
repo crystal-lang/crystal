@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:execution_context) %}
+{% skip_file if flag?(:without_mt) %}
 require "spec"
 require "wait_group"
 

@@ -59,11 +59,13 @@ describe "File" do
       wbuf = Bytes.new(5120)
       Random::Secure.random_bytes(wbuf)
 
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) || flag?(:"evloop=io_uring") %}
         WaitGroup.wait do |wg|
-          # one fiber may block on open(2) (depends on the event loop) but the
-          # monitor thread will notice and move the scheduler to another thread,
-          # unblocking the other fiber
+          # MT: one fiber may block on open(2) (depends on the event loop) but
+          # the monitor thread will notice and move the scheduler to another
+          # thread, unblocking the other fiber.
+          #
+          # io_uring: open is always async (never blocks).
           wg.spawn(name: "fifo:write") do
             File.open(path, "w") do |writer|
               64.times { |i| writer.write(wbuf) }
