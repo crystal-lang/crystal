@@ -500,7 +500,7 @@ private module ConsoleUtils
     @@buffer = appender.to_slice
   end
 
-  {% if !flag?(:without_mt) %}
+  {% if flag?(:execution_context) %}
     private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
       units_read = LibC::DWORD.zero
 
