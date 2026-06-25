@@ -172,7 +172,7 @@ module Fiber::ExecutionContext
   end
 
   def self.current? : ExecutionContext?
-    Thread.current.execution_context?
+    Thread.current?.try(&.execution_context?)
   end
 
   # :nodoc:
