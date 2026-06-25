@@ -1,5 +1,3 @@
-{% skip_file if flag?(:execution_context) %}
-
 require "crystal/event_loop"
 require "crystal/system/print_error"
 require "fiber"
