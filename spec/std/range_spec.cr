@@ -114,6 +114,14 @@ describe "Range" do
     (..5).overlaps?(5..).should be_true
     (...5).overlaps?(5..).should be_false
     (..5).overlaps?(6..).should be_false
+    (..5).overlaps?(4..).should be_true
+    (...5).overlaps?(4..).should be_true
+    (..5).overlaps?(..4).should be_true
+    (...5).overlaps?(..4).should be_true
+    (..5).overlaps?(..6).should be_true
+    (...5).overlaps?(..6).should be_true
+    (5..).overlaps?(4..).should be_true
+    (5..).overlaps?(6..).should be_true
     (..).overlaps?(1..2).should be_true
     (..).overlaps?(2...2).should be_false
 
