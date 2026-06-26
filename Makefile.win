@@ -36,7 +36,7 @@ interpreter        ?= ## Enable interpreter feature
 check              ?= ## Enable only check when running format
 order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
 docs_sanitizer     ?= ## Enable sanitization for documentation generation
-sequential_codegen ?= ## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt`
+sequential_codegen ?= ## Enforce sequential codegen in compiler builds.
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:

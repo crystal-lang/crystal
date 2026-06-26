@@ -37,7 +37,7 @@ check              ?= ## Enable only check when running format
 order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
 deref_symlinks     ?= ## Dereference symbolic links for `make install`
 docs_sanitizer     ?= ## Enable sanitization for documentation generation
-sequential_codegen ?= $(if $(filter 0,$(supports_preview_mt)),true,)## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt -Dexecution_context`
+sequential_codegen ?= $(if $(filter 0,$(supports_mt)),true,)## Enforce sequential codegen in compiler builds.
 
 O            := .build
 SOURCES      := $(shell find src -name '*.cr')
@@ -81,8 +81,10 @@ ifeq ($(LLVM_VERSION),)
 	LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 endif
 
-# Crystal versions before 1.8 cannot build a functional compiler with `-Dpreview_mt` (https://github.com/crystal-lang/crystal/pull/16380)
-supports_preview_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
+# FIXME: Crystal docker images before 1.8 can't build a functional compiler
+# with MT because the bundled LLVM version is buggy (roughly LLVM < 15)
+# See https://github.com/crystal-lang/crystal/pull/16380
+supports_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
 
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
