@@ -183,7 +183,7 @@ describe "Range" do
     (RangeSpecPredWrapper.new(1)..RangeSpecPredWrapper.new(5)).union(RangeSpecPredWrapper.new(7)..RangeSpecPredWrapper.new(8)).should be_nil
   end
 
-  it "intersects ranges" do
+  it "#intersection" do
     (1..5).intersection(3..7).should eq(3..5)
     (3..7).intersection(1..5).should eq(3..5)
 
