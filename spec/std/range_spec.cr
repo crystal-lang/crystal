@@ -202,6 +202,18 @@ describe "Range" do
     (..5).intersection(5..).should eq(5..5)
     (...5).intersection(5..).should be_nil
     (..5).intersection(3..).should eq(3..5)
+    (..5).intersection(..3).should eq(..3)
+    (..5).intersection(-5..).should eq(-5..5)
+    (...5).intersection(-5..).should eq(-5...5)
+    (..5).intersection(-5...).should eq(-5..5)
+    (..5).intersection(2..7).should eq(2..5)
+    (..5).intersection(2...7).should eq(2..5)
+    (...5).intersection(2...7).should eq(2...5)
+    (..5).intersection(2..4).should eq(2..4)
+    (...5).intersection(2..4).should eq(2..4)
+    (..5).intersection(2...4).should eq(2...4)
+    (..).intersection(2..3).should eq(2..3)
+    (..).intersection(2...3).should eq(2...3)
 
     (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)
     (1.0...3.0).intersection(3.0..4.0).should be_nil
