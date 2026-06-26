@@ -117,17 +117,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # thread unsafe
   def run(blocking : Bool) : Bool
-    system_run(blocking) do |fiber|
-      {% if flag?(:execution_context) %}
-        fiber.execution_context.enqueue(fiber)
-      {% else %}
-        Crystal::Scheduler.enqueue(fiber)
-      {% end %}
-    end
+    system_run(blocking, &.enqueue)
     true
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
@@ -479,23 +473,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.@writers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.remove(io.fd)

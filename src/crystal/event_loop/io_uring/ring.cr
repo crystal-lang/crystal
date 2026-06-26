@@ -10,10 +10,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       @sq_lock : Thread::Mutex?
     {% end %}
 
-    {% if flag?(:execution_context) %}
-      # uninitialized-safety: compiler fails to notice the actual initialization
-      # because of comptime flags
-      @cq_lock = uninitialized Thread::Mutex
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      @cq_lock = Thread::Mutex.new
     {% end %}
 
     def initialize(*args, **kwargs)
@@ -27,10 +25,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         unless System::IoUring.supports_register_sync_cancel? && System::IoUring.supports_register_send_msg_ring?
           @sq_lock = Thread::Mutex.new
         end
-      {% end %}
-
-      {% if flag?(:execution_context) %}
-        @cq_lock = Thread::Mutex.new
       {% end %}
     end
 
@@ -54,7 +48,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
     # Acquires the CQ lock for the duration of the block.
     def cq_lock(&)
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         @cq_lock.synchronize { yield }
       {% else %}
         yield
@@ -64,7 +58,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     # Tries to acquire the CQ lock for the duration of the block. Returns
     # immediately if the CQ lock couldn't be acquired.
     def cq_trylock?(&)
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         if @cq_lock.try_lock
           begin
             yield

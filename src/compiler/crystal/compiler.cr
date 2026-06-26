@@ -97,10 +97,8 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:execution_context) %}
+    property n_threads : Int32 = {% if Fiber.has_constant?(:ExecutionContext) %}
       Fiber::ExecutionContext.default_workers_count
-    {% elsif !flag?(:without_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
     {% elsif flag?(:win32) %}
       1
     {% else %}

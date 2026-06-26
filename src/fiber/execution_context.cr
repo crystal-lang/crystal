@@ -5,8 +5,8 @@ require "../fiber"
 require "./stack_pool"
 require "./execution_context/*"
 
-{% raise "ERROR: execution contexts is incompatible with the `without_mt` compilation flag" if flag?(:without_mt) %}
-{% raise "ERROR: execution contexts require the `execution_context` compilation flag" unless flag?(:execution_context) || flag?(:docs) %}
+{% raise "ERROR: execution contexts are incompatible with the 'without_mt' compilation flag" if flag?(:without_mt) %}
+{% raise "ERROR: execution contexts are incompatible with the 'preview_mt' compilation flag" if flag?(:preview_mt) && !flag?(:execution_context) %}
 
 # An execution context creates and manages a dedicated pool of one or more
 # schedulers where fibers will be running in. Each context manages the rules to

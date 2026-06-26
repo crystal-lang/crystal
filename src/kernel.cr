@@ -600,7 +600,7 @@ end
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     Fiber::ExecutionContext.init_default_context
   {% else %}
     Crystal::Scheduler.init
