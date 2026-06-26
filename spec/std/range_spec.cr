@@ -96,7 +96,7 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
-  it "overlaps?" do
+  it "#overlaps?" do
     (1..5).overlaps?(4..8).should be_true
     (4..8).overlaps?(1..5).should be_true
 
