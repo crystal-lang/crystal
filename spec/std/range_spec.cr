@@ -134,7 +134,7 @@ describe "Range" do
     (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).overlaps?(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7)).should be_false
   end
 
-  it "unions ranges" do
+  it "#unions" do
     (1..5).union(3..7).should eq(1..7)
     (3..7).union(1..5).should eq(1..7)
 
