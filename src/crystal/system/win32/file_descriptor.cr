@@ -517,14 +517,14 @@ private module ConsoleUtils
       getter slice : Slice(UInt16)
 
       getter iocp_handle : LibC::HANDLE
-      getter completion_key : IOCP::CompletionKey
+      getter completion_key : Crystal::System::IOCP::CompletionKey
 
       property units_read = LibC::DWORD.zero
       property error = WinError::ERROR_SUCCESS
 
       def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16))
-        @iocp_handle = EventLoop.current.iocp_handle
-        @completion_key = IOCP::CompletionKey.new(:read_console, ::Fiber.current)
+        @iocp_handle = Crystal::EventLoop.current.iocp_handle
+        @completion_key = Crystal::System::IOCP::CompletionKey.new(:read_console, ::Fiber.current)
       end
     end
 
@@ -534,7 +534,7 @@ private module ConsoleUtils
     @@read_thread = ::Thread.new { reader_loop }
 
     private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-      request = ReadRequest.new(handle, slice, ::Fiber.current)
+      request = ReadRequest.new(handle, slice)
 
       @@read_mtx.synchronize do
         @@read_requests << request
@@ -574,7 +574,7 @@ private module ConsoleUtils
         ret = LibC.PostQueuedCompletionStatus(request.handle, 0, completion_key, nil)
 
         # can't recover: the fiber will never be resumed
-        Crystal.panic("PostQueuedCompletionStatus", WinError.value) if ret == 0
+        Crystal::System.panic("PostQueuedCompletionStatus", WinError.value) if ret == 0
       end
     end
   {% end %}
