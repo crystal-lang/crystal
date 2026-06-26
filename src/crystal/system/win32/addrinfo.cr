@@ -46,7 +46,7 @@ module Crystal::System::Addrinfo
     IOCP::GetAddrInfoOverlappedOperation.run(Crystal::EventLoop.current.iocp_handle) do |operation|
       completion_routine = LibC::LPLOOKUPSERVICE_COMPLETION_ROUTINE.new do |dwError, dwBytes, lpOverlapped|
         orig_operation = IOCP::GetAddrInfoOverlappedOperation.unbox(lpOverlapped)
-        LibC.PostQueuedCompletionStatus(orig_operation.iocp, 0, 0, lpOverlapped)
+        LibC.PostQueuedCompletionStatus(orig_operation.iocp_handle, 0, 0, lpOverlapped)
       end
 
       # NOTE: we handle the timeout ourselves so we don't pass a `LibC::Timeval`
