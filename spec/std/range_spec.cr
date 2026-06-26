@@ -155,7 +155,14 @@ describe "Range" do
     (..5).union(5..).should eq(nil..nil)
     (...5).union(5..).should eq(nil..nil)
     (..5).union(6..).should eq(nil..nil)
+    (...5).union(6..).should be_nil
     (..5).union(7..).should be_nil
+    (..5).union(..6).should eq(..6)
+    (..5).union(4..).should eq(..)
+    (...5).union(4..).should eq(..)
+    (..).union(2..3).should eq(..)
+    (...).union(2..3).should eq(...)
+    (..).union(2...3).should eq(..)
 
     ('a'..'c').union('d'..'f').should eq('a'..'f')
     ('a'..'e').union('c'..'g').should eq('a'..'g')
