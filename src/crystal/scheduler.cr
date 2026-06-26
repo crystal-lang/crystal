@@ -4,8 +4,12 @@ require "fiber"
 require "fiber/stack_pool"
 require "crystal/system/thread"
 
-{% if flag?(:without_mt) && flag?(:preview_mt) %}
-  {% raise "The 'without_mt' and 'preview_mt' flags are incompatible." %}
+{% if flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
+    {% raise "The 'without_mt' and 'preview_mt' flags are incompatible." %}
+  {% else %}
+    {% nil.warning "The 'preview_mt' flag is deprecated. Resize the default execution context, or start additional contexts instead." %}
+  {% end %}
 {% end %}
 
 # :nodoc:
