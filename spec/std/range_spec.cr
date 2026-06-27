@@ -160,9 +160,9 @@ describe "Range" do
     (1...1).union(1..2).should eq(1..2)
     (1..2).union(2...2).should eq(1..2)
 
-    (..5).union(5..).should eq(nil..nil)
-    (...5).union(5..).should eq(nil..nil)
-    (..5).union(6..).should eq(nil..nil)
+    (..5).union(5..).should eq(..)
+    (...5).union(5..).should eq(..)
+    (..5).union(6..).should eq(..)
     (...5).union(6..).should be_nil
     (..5).union(7..).should be_nil
     (..5).union(..6).should eq(..6)
