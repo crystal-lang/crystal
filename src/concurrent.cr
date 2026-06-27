@@ -72,7 +72,7 @@ end
 #
 # wg.wait
 # ```
-def spawn(*, name : String? = nil, same_thread = false, &block)
+def spawn(*, name : String? = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("It will have no effect with execution contexts.")] {% end %} same_thread = false, &block)
   {% if flag?(:execution_context) %}
     Fiber::ExecutionContext::Scheduler.current.spawn(name: name, same_thread: same_thread, &block)
   {% else %}
@@ -134,7 +134,7 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
         {% end %}
       {% end %}
       ) {
-      spawn(name: {{name}}, same_thread: {{same_thread}}) do
+      spawn(name: {{name}}{% if same_thread %}, same_thread: {{same_thread}}{% end %}) do
         {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
           {% for arg, i in call.args %}
             {% if arg.is_a?(Splat) %}*{% end %}__arg{{i}},

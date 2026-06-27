@@ -130,24 +130,26 @@ module Crystal
   end
 end
 
-# Main function that acts as C's main function.
-# Invokes `Crystal.main`.
-#
-# Can be redefined. See `Crystal.main` for examples.
-#
-# On Windows the actual entry point is `wmain`, but there is no need to redefine
-# that. See the file required below for details.
-fun main(argc : Int32, argv : UInt8**) : Int32
-  Crystal.main(argc, argv)
-end
+{% unless flag?(:without_main) %}
+  # Main function that acts as C's main function.
+  # Invokes `Crystal.main`.
+  #
+  # Can be redefined. See `Crystal.main` for examples.
+  #
+  # On Windows the actual entry point is `wmain`, but there is no need to redefine
+  # that. See the file required below for details.
+  fun main(argc : Int32, argv : UInt8**) : Int32
+    Crystal.main(argc, argv)
+  end
 
-{% if flag?(:interpreted) %}
-  # the interpreter doesn't call Crystal.main(&)
-  Crystal.init_runtime
-{% elsif flag?(:win32) %}
-  require "./system/win32/wmain"
-{% elsif flag?(:wasi) %}
-  require "./system/wasi/main"
-{% else %}
-  require "./system/unix/main"
+  {% if flag?(:interpreted) %}
+    # the interpreter doesn't call Crystal.main(&)
+    Crystal.init_runtime
+  {% elsif flag?(:win32) %}
+    require "./system/win32/wmain"
+  {% elsif flag?(:wasi) %}
+    require "./system/wasi/main"
+  {% else %}
+    require "./system/unix/main"
+  {% end %}
 {% end %}

@@ -1654,6 +1654,7 @@ module Crystal
           exp = parse_op_assign
           call.name = "#{call.name}="
           call.args << exp
+          call.at_end(exp)
         end
       else
         # At this point we want to attach the "do" to the next call
@@ -1689,6 +1690,8 @@ module Crystal
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
           end
+
+          call.at_end(exp)
         else
           call = parse_atomic_method_suffix call, location
 
@@ -1697,6 +1700,7 @@ module Crystal
             exp = parse_op_assign
             call.name = "#{call.name}="
             call.args << exp
+            call.at_end(exp)
           end
         end
 
