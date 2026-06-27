@@ -446,15 +446,21 @@ struct Range(B, E)
     other_begin = other.begin
 
     return true if end_value && other_begin && end_value == other_begin
-    return true if end_value && other_begin && end_value.responds_to?(:succ) && end_value.succ == other_begin
-    return true if end_value && other_begin && other_begin.responds_to?(:pred) && other_begin.pred == end_value
+    unless excludes_end?
+      return true if end_value && other_begin && end_value.responds_to?(:succ) && end_value.succ == other_begin
+      return true if end_value && other_begin && other_begin.responds_to?(:pred) && other_begin.pred == end_value
+    end
 
     other_end = other.end
     begin_value = @begin
 
     return true if other_end && begin_value && other_end == begin_value
-    return true if other_end && begin_value && other_end.responds_to?(:succ) && other_end.succ == begin_value
-    !!(other_end && begin_value && begin_value.responds_to?(:pred) && begin_value.pred == other_end)
+    unless other.excludes_end?
+      return true if other_end && begin_value && other_end.responds_to?(:succ) && other_end.succ == begin_value
+      return true if other_end && begin_value && begin_value.responds_to?(:pred) && begin_value.pred == other_end
+    end
+
+    false
   end
 
   # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
