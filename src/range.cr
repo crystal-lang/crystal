@@ -435,15 +435,10 @@ struct Range(B, E)
   end
 
   protected def empty_without_iterating? : Bool
-    if end_value = @end
-      if begin_value = @begin
-        @exclusive ? begin_value >= end_value : begin_value > end_value
-      else
-        false
-      end
-    else
-      false
-    end
+    return false unless end_value = @end
+    return false unless begin_value = @begin
+    
+    @exclusive ? begin_value >= end_value : begin_value > end_value
   end
 
   private def adjacent_to?(other : Range) : Bool
