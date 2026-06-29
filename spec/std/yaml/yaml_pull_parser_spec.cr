@@ -138,6 +138,24 @@ module YAML
       end
     end
 
+    it "prevents excessive node expansions (billion-laugh attacks)" do
+      parser = PullParser.new(<<-YAML)
+      a: &a ["lol","lol","lol","lol","lol","lol","lol","lol","lol"]
+      b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]
+      c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]
+      d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]
+      e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]
+      f: &f [*e,*e,*e,*e,*e,*e,*e,*e,*e]
+      g: &g [*f,*f,*f,*f,*f,*f,*f,*f,*f]
+      h: &h [*g,*g,*g,*g,*g,*g,*g,*g,*g]
+      i: &i [*h,*h,*h,*h,*h,*h,*h,*h,*h]
+      YAML
+      expect_raises(ParseException, "Document contains excessive aliasing") do
+        until parser.read_next == EventKind::NONE
+        end
+      end
+    end
+
     describe "skip" do
       it "scalar" do
         parser = PullParser.new("[1, 2]")
