@@ -36,7 +36,7 @@ struct Crystal::System::IOCP
   # :nodoc:
   class CompletionKey
     enum Tag
-      ProcessRun
+      ProcessWait
       ReadConsole
       Interrupt
       Timer
@@ -48,8 +48,7 @@ struct Crystal::System::IOCP
     property next : CompletionKey?
     property previous : CompletionKey?
 
-    # Data structure to extend the lifetime of completion keys, in particular
-    # those created by `Process.new` without an associated `#wait` call
+    # Data structure to extend the lifetime of completion keys
     @@pending = ::Thread::LinkedList(CompletionKey).new
 
     def self.unregister(key : self) : Nil
@@ -79,15 +78,6 @@ struct Crystal::System::IOCP
     # cycle.
     def reset_fiber?
       @fiber.swap(nil, :relaxed)
-    end
-
-    def valid?(number_of_bytes_transferred)
-      case tag
-      in .process_run?
-        number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
-      in .read_console?, .interrupt?, .timer?
-        true
-      end
     end
 
     def inspect(io : IO) : Nil

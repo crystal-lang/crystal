@@ -153,9 +153,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
       System::IOCP::CompletionKey.unregister(completion_key)
 
-      if completion_key.valid?(overlapped_entry.value.dwNumberOfBytesTransferred)
-        completion_key.reset_fiber?
-      end
+      completion_key.reset_fiber?
     end
   end
 
