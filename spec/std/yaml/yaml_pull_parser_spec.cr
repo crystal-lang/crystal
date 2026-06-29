@@ -122,6 +122,22 @@ module YAML
       end
     end
 
+    it "prevents stack overflow for arrays" do
+      parser = YAML::PullParser.new(("[" * 513) + ("]" * 513))
+      expect_raises YAML::ParseException, "Nesting of 513 is too deep" do
+        until parser.read_next == EventKind::NONE
+        end
+      end
+    end
+
+    it "prevents stack overflow for hashes" do
+      parser = YAML::PullParser.new(("{" * 513) + ("}" * 513))
+      expect_raises YAML::ParseException, "Nesting of 513 is too deep" do
+        until parser.read_next == EventKind::NONE
+        end
+      end
+    end
+
     describe "skip" do
       it "scalar" do
         parser = PullParser.new("[1, 2]")
