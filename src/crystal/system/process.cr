@@ -21,6 +21,9 @@ struct Crystal::System::Process
   # Whether the process is still registered in the system.
   # def exists? : Bool
 
+  # Send *signal* to this process.
+  # def signal(signal : Signal) : Nil
+
   # Asks this process to terminate.
   # def terminate(*, graceful)
 

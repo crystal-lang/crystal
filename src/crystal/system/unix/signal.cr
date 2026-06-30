@@ -58,11 +58,17 @@ module Crystal::System::Signal
   end
 
   def self.ignore(signal) : Nil
+    {% if (flag?(:bsd) || flag?(:darwin) || flag?(:linux)) && !flag?("evloop=libevent") && !flag?(:interpreted) %}
+      if signal == ::Signal::CHLD {% if flag?(:linux) %} && Pidfd.supported? {% end %}
+        # never set SIGCHLD to SIG_IGN (breaks pidfd_open and EVFILT_PROC)
+        return set(signal, LibC::SIG_DFL)
+      end
+    {% end %}
     set(signal, LibC::SIG_IGN)
   end
 
   private def self.set(signal, handler)
-    if signal == ::Signal::CHLD
+    if (signal == ::Signal::CHLD) && !Process.supports_evented_waitid?
       # Clear any existing signal child handler
       @@child_handler = nil
       # But keep a default SIGCHLD, Process#wait requires it

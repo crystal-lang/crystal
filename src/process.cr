@@ -47,7 +47,7 @@ class Process
 
   # Sends *signal* to the process identified by *pid*.
   def self.signal(signal : Signal, pid : Int) : Nil
-    Crystal::System::Process.signal(pid, signal.value)
+    Crystal::System::Process.signal(pid, signal)
   end
 
   # Installs *handler* as the new handler for interrupt requests. Removes any
@@ -622,7 +622,7 @@ class Process
   # `signal(Signal::KILL)` as a portable alternative which also works on
   # Windows.
   def signal(signal : Signal) : Nil
-    Crystal::System::Process.signal(@process_info.pid, signal)
+    @process_info.signal(signal)
   end
 
   # Waits for this process to complete and closes any pipes.
@@ -633,7 +633,7 @@ class Process
     end
     @wait_count = 0
 
-    Process::Status.new(system_exit_status: @process_info.wait)
+    @process_info.wait
   ensure
     close
     @process_info.release

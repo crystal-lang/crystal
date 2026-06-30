@@ -6,27 +6,75 @@ require "c/limits"
 require "crystal/rw_lock"
 require "file/error"
 require "./spawn"
+{% if flag?(:linux) %}
+  require "./pidfd"
+{% end %}
 
 struct Crystal::System::Process
   getter pid : LibC::PidT
 
+  @channel : Channel(Int32)?
+
+  {% if flag?(:linux) %}
+    getter! pidfd : Int32
+  {% end %}
+
+  @closed = false
+
   def initialize(@pid : LibC::PidT)
+    {% if flag?(:bsd) || flag?(:darwin) %}
+      return
+    {% elsif flag?(:linux) && !flag?("evloop=libevent") %}
+      if Pidfd.supported?
+        flags = 0_u32
+        flags |= LibC::PIDFD_NONBLOCK unless EventLoop.current.pidfd_blocking?
+        @pidfd = Pidfd.open(@pid, flags)
+        return
+      end
+    {% end %}
+
     @channel = Crystal::System::SignalChildHandler.wait(@pid)
   end
 
   def release
+    {% if flag?(:linux) %}
+      if pidfd = @pidfd
+        @pidfd = nil
+        Pidfd.close(pidfd)
+      end
+    {% end %}
   end
 
   def wait
-    @channel.receive
+    if channel = @channel
+      return ::Process::Status.new(system_exit_status: channel.receive)
+    end
+    EventLoop.current.wait(self)
   end
 
   def exists?
-    !@channel.closed? && Crystal::System::Process.exists?(@pid)
+    return false if @channel.try(&.closed?)
+
+    {% if flag?(:linux) %}
+      if pidfd = @pidfd
+        return Pidfd.exists?(pidfd)
+      end
+    {% end %}
+
+    Crystal::System::Process.exists?(@pid)
+  end
+
+  def signal(signal : ::Signal) : Nil
+    {% if flag?(:linux) %}
+      if pidfd = @pidfd
+        return Pidfd.send_signal(pidfd, signal.value)
+      end
+    {% end %}
+    Crystal::System::Process.signal(@pid, signal.value)
   end
 
   def terminate(*, graceful)
-    Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
+    signal(graceful ? ::Signal::TERM : ::Signal::KILL)
   end
 
   def self.exit(status : Int32)
@@ -47,6 +95,21 @@ struct Crystal::System::Process
 
   def self.pid
     LibC.getpid
+  end
+
+  def self.supports_evented_waitid?
+    {% unless flag?("evloop=libevent") %}
+      {% if flag?(:bsd) || flag?(:darwin) %}
+        return true
+      {% elsif flag?(:linux) %}
+        # pidfd is supported since Linux 5.3 and widely available, except on
+        # legacy Linux desktop distributions and Android devices, in which case
+        # we fallback to Fiber.syscall(&) (except without/preview MT).
+        return Pidfd.supported? || {{ !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) }}
+      {% end %}
+    {% end %}
+
+    false
   end
 
   def self.pgid
