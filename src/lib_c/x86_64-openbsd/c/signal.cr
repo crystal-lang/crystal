@@ -52,12 +52,39 @@ lib LibC
   SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040
 
+  struct SiginfoT___data___proc___pdata___cld
+    _utime : ClockT
+    _stime : ClockT
+    _status : Int
+  end
+
+  union SiginfoT___data___proc___pdata
+    # _kill : omitted
+    _cld : SiginfoT___data___proc___pdata___cld
+  end
+
+  struct SiginfoT___data___proc
+    _pid : PidT
+    _uid : UidT
+    _pdata : SiginfoT___data___proc___pdata
+  end
+
+  struct SiginfoT___data___fault
+    _addr : Void*
+    _trapno : Int
+  end
+
+  union SiginfoT___data
+    _pad : Int[29]
+    _proc : SiginfoT___data___proc
+    _fault : SiginfoT___data___fault
+  end
+
   struct SiginfoT
     si_signo : Int
     si_code : Int
     si_errno : Int
-    si_addr : Void*
-    _pad : StaticArray(UInt8, 108)
+    _data : SiginfoT___data
   end
 
   alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
@@ -88,4 +115,22 @@ lib LibC
   fun sigdelset(SigsetT*, Int) : Int
   fun sigismember(SigsetT*, Int) : Int
   fun sigsuspend(SigsetT*) : Int
+end
+
+struct LibC::SiginfoT
+  def si_addr : Void*
+    _data._fault._addr
+  end
+
+  def si_addr=(si_addr : Void*)
+    _data._fault._addr = si_addr
+  end
+
+  def si_pid : PidT
+    _data._proc._pid
+  end
+
+  def si_status : Int
+    _data._proc._pdata._cld._status
+  end
 end
