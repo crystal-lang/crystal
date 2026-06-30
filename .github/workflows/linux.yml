@@ -67,14 +67,13 @@ jobs:
           - x86_64
           - aarch64
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+          - flags: "-Dpreview_mt"
             workers: 4
           - flags: "-Devloop=io_uring"
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt -Devloop=io_uring"
             workers: 4
+          - flags: "-Devloop=io_uring -Dwithout_mt"
         include:
           - arch: x86_64
             opts:
@@ -94,7 +93,7 @@ jobs:
           bin/ci with_build_env crystal version
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags }}"'
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
 
   check_format:
     env:
