@@ -10,10 +10,16 @@
 class YAML::PullParser
   protected getter content
 
+  # :nodoc:
+  #
+  # Maximum structural depth (nested sequences and mappings) allowed.
+  property max_nesting = 512
+
   def initialize(@content : String | IO)
     @parser = Pointer(Void).malloc(LibYAML::PARSER_SIZE).as(LibYAML::Parser*)
     @event = LibYAML::Event.new
     @closed = false
+    @nesting = 0
 
     LibYAML.yaml_parser_initialize(@parser)
 
@@ -121,6 +127,14 @@ class YAML::PullParser
       end
       raise msg, *location, context_info
     end
+
+    case kind
+    when EventKind::SEQUENCE_START, EventKind::MAPPING_START
+      increase_nesting
+    when EventKind::SEQUENCE_END, EventKind::MAPPING_END
+      decrease_nesting
+    end
+
     kind
   end
 
@@ -337,5 +351,16 @@ class YAML::PullParser
 
   def raise(msg : String, line_number = self.start_line, column_number = self.start_column, context_info = nil) : NoReturn
     ::raise ParseException.new(msg, line_number, column_number, context_info)
+  end
+
+  private def increase_nesting
+    @nesting += 1
+    if @nesting > @max_nesting
+      raise "Nesting of #{@nesting} is too deep"
+    end
+  end
+
+  private def decrease_nesting
+    @nesting -= 1
   end
 end
