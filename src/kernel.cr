@@ -599,7 +599,7 @@ end
   end
 {% end %}
 
-{% if flag?(:win32) && flag?(:execution_context) %}
+{% if flag?(:win32) && (!flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context)) %}
   Crystal::EventLoop::IOCP.start_forwarder_thread
 {% end %}
 
