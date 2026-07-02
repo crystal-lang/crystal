@@ -79,20 +79,7 @@ class YAML::PullParser
 
   # Returns the anchor associated to the current event, or `nil`
   # if there's no anchor.
-  def anchor : String?
-    case kind
-    when .scalar?
-      read_anchor @event.data.scalar.anchor
-    when .sequence_start?
-      read_anchor @event.data.sequence_start.anchor
-    when .mapping_start?
-      read_anchor @event.data.mapping_start.anchor
-    when .alias?
-      read_anchor @event.data.alias.anchor
-    else
-      nil
-    end
-  end
+  getter anchor : String?
 
   # Returns the sequence style, assuming the pull parser is located
   # at a sequence begin event. Raises otherwise.
@@ -127,6 +114,8 @@ class YAML::PullParser
       end
       raise msg, *location, context_info
     end
+
+    @anchor = read_anchor
 
     case kind
     when EventKind::SEQUENCE_START, EventKind::MAPPING_START
@@ -177,7 +166,7 @@ class YAML::PullParser
   # Reads an alias event, returning its anchor.
   def read_alias : String?
     expect_kind EventKind::ALIAS
-    anchor = self.anchor
+    anchor = @anchor
     read_next
     anchor
   end
@@ -345,7 +334,20 @@ class YAML::PullParser
     raise "Expected #{kind} but was #{self.kind}" unless kind == self.kind
   end
 
-  private def read_anchor(anchor)
+  private def read_anchor
+    anchor =
+      case kind
+      when .scalar?
+        @event.data.scalar.anchor
+      when .sequence_start?
+        @event.data.sequence_start.anchor
+      when .mapping_start?
+        @event.data.mapping_start.anchor
+      when .alias?
+        @event.data.alias.anchor
+      else
+        Pointer(UInt8).null
+      end
     anchor ? String.new(anchor) : nil
   end
 
