@@ -14,7 +14,7 @@ module Crystal::System::MIME
         if content_type
           begin
             ::MIME.register String.from_utf16(name), content_type
-          rescue
+          rescue ArgumentError
             # skip registry entries with an invalid Content Type value
           end
         end
