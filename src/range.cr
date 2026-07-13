@@ -437,7 +437,7 @@ struct Range(B, E)
   protected def empty_without_iterating? : Bool
     return false unless end_value = @end
     return false unless begin_value = @begin
-    
+
     @exclusive ? begin_value >= end_value : begin_value > end_value
   end
 
