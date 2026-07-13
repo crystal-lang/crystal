@@ -456,10 +456,12 @@ struct Range(B, E)
     other_end = other.end
     begin_value = @begin
 
-    return true if other_end && begin_value && other_end == begin_value
-    unless other.excludes_end?
-      return true if other_end && begin_value && other_end.responds_to?(:succ) && other_end.succ == begin_value
-      return true if other_end && begin_value && begin_value.responds_to?(:pred) && begin_value.pred == other_end
+    if other_end && begin_value
+      return true if other_end == begin_value
+      unless other.excludes_end?
+        return true if other_end.responds_to?(:succ) && other_end.succ == begin_value
+        return true if begin_value.responds_to?(:pred) && begin_value.pred == other_end
+      end
     end
 
     false
