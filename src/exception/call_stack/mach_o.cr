@@ -16,12 +16,17 @@ struct Exception::CallStack
   @@image_slide : LibC::Long?
 
   protected def self.load_debug_info_impl : Nil
+    # nothing to preload: DWARF debug info is read on demand, only for the
+    # program counters of the exception being decoded
+  end
+
+  # Opens the image containing the DWARF sections for the current program
+  # and yields it together with the base address of the program, keeping the
+  # image mapped only for the duration of the block.
+  protected def self.open_debug_image(&)
     locate_dsym_bundle do |image|
-      read_dwarf_sections(image)
+      return yield image, 0_u64
     end
-  rescue ex
-    @@dwarf_line_numbers = nil
-    @@dwarf_function_names = nil
   end
 
   # DWARF uses fixed addresses but Darwin loads executables at a random

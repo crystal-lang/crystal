@@ -610,12 +610,11 @@ end
     Crystal::Scheduler.init
   {% end %}
 
-  # load debug info on start up of the program is executed with CRYSTAL_LOAD_DEBUG_INFO=1
-  # this will make debug info available on print_frame that is used by Crystal's segfault handler
-  #
   # - CRYSTAL_LOAD_DEBUG_INFO=0 will never use debug info (See Exception::CallStack.load_debug_info)
-  # - CRYSTAL_LOAD_DEBUG_INFO=1 will load debug info on startup
-  # - Other values will load debug info on demand: when the backtrace of the first exception is generated
+  # - Other values will load debug info on demand: when the backtrace of an exception is generated,
+  #   only for the program counters of that backtrace
+  #
+  # On Windows (MSVC) CRYSTAL_LOAD_DEBUG_INFO=1 additionally loads the debug info on startup
   Exception::CallStack.load_debug_info if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "1"
   Exception::CallStack.setup_crash_handler
 

@@ -28,15 +28,23 @@ module Crystal
       SetDiscriminator = 4
     end
 
-    # DWARF Line Numbers parser. Supports DWARF versions 2, 3 and 4.
+    # DWARF Line Numbers resolver. Supports DWARF versions 2, 3, 4 and 5.
     #
     # Usually located in the `.debug_line` section of ELF executables, or the
     # `__debug_line` section of Mach-O files.
+    #
+    # The decompressed line number matrix for a whole program is huge, and
+    # decoding it eagerly retains a large amount of heap memory that the GC
+    # is unlikely to ever return to the OS. This decoder therefore never
+    # materializes the matrix: `resolve` streams the statement programs,
+    # matching the requested program counters on the fly, and only decodes
+    # the directory and file names actually referenced by matched rows.
     #
     # Documentation:
     # - [DWARF2](http://dwarfstd.org/doc/dwarf-2.0.0.pdf) section 6.2
     # - [DWARF3](http://dwarfstd.org/doc/Dwarf3.pdf) section 6.2
     # - [DWARF4](http://dwarfstd.org/doc/DWARF4.pdf) section 6.2
+    # - [DWARF5](http://dwarfstd.org/doc/DWARF5.pdf) section 6.2
     struct LineNumbers
       # :nodoc:
       #
@@ -109,146 +117,372 @@ module Crystal
         end
       end
 
-      # The decoded line number information for an instruction.
-      record Row,
-        address : UInt64,
-        path : String,
+      # A program counter matched during the statement program run (phase
+      # one), recorded with the raw file name index so the file path can be
+      # decoded afterwards (phase two), and only if actually referenced.
+      record Match,
+        pc_index : Int32,
+        file : UInt32,
         line : Int32,
         column : Int32
 
-      # :nodoc:
-      #
-      # An individual compressed sequence.
-      record Sequence,
-        offset : Int64,
-        unit_length : UInt32,
-        minimum_instruction_length : Int32,
-        maximum_operations_per_instruction : Int32,
-        default_is_stmt : Bool,
-        line_base : Int32,
-        line_range : Int32,
-        opcode_base : Int32,
-        # An array of how many args an array. Starts at 1 because 0 means an
-        # extended opcode.
-        standard_opcode_lengths : Array(UInt8),
-        # An array of directory names. Starts at 1; 0 means that the information
-        # is missing.
-        include_directories : Array(String),
-        # An array of file names. Starts at 1; 0 means that the information is
-        # missing.
-        file_names : Array(FileEntry) do
-        record FileEntry,
-          path : String,
-          mtime : UInt64,
-          size : UInt64
+      def initialize(@io : IO::Memory, @base_address : UInt64 = 0_u64, @strings : Strings? = nil, @line_strings : Strings? = nil)
+        @size = @io.size
+      end
 
-        # Returns the unit length, adding the size of the `unit_length`.
-        def total_length
-          unit_length + sizeof(typeof(unit_length))
+      # Resolves line number information for the given program counters,
+      # which must be sorted in ascending order and deduplicated. Yields the
+      # index of the program counter within `pcs` along with the source path,
+      # line and column. Each pc is yielded at most once; pcs without line
+      # number information are not yielded.
+      def resolve(pcs : Slice(UInt64), & : Int32, String, Int32, Int32 ->) : Nil
+        return if pcs.empty?
+
+        resolved = Bytes.new(pcs.size)
+        remaining = pcs.size
+        matches = [] of Match
+
+        while @io.pos < @size && remaining > 0
+          matches.clear
+          unit_end, version, table_pos = scan_unit(pcs, resolved, matches, remaining)
+
+          unless matches.empty?
+            remaining -= matches.size
+            @io.pos = table_pos
+            file_paths = decode_file_paths(version, matches)
+            matches.each do |match|
+              if path = file_paths.find { |entry| entry[0] == match.file }
+                yield match.pc_index, path[1], match.line, match.column
+              end
+            end
+          end
+
+          @io.pos = Math.min(unit_end, @size.to_i64)
         end
       end
 
-      # Matrix of decompressed `Row` to search line number information from the
-      # address of an instruction.
+      private macro increment_address_and_op_index(operation_advance)
+        if maximum_operations_per_instruction == 1
+          registers.address += {{operation_advance}} * minimum_instruction_length
+        else
+          registers.address += minimum_instruction_length *
+            ((registers.op_index + {{operation_advance}}) // maximum_operations_per_instruction)
+          registers.op_index = (registers.op_index + {{operation_advance}}) % maximum_operations_per_instruction
+        end
+      end
+
+      # Decodes one line number program unit header and runs its statement
+      # program without decoding the directory and file name tables,
+      # recording a `Match` for every pc it resolves. Returns the unit end
+      # offset, the unit version and the offset of the directory table so
+      # file paths for the matches can be decoded afterwards.
       #
-      # The matrix contains indexed references to `directories` and `files` to
-      # reduce the memory usage of repeating a String many times.
-      getter matrix : Array(Array(Row))
+      # TODO: support LNE::DefineFile (manually register file, uncommon)
+      private def scan_unit(pcs, resolved, matches, max_matches)
+        offset = @io.pos.to_i64
+        unit_length = @io.read_bytes(UInt32)
+        unit_end = offset + unit_length + sizeof(typeof(unit_length))
+        version = @io.read_bytes(UInt16)
 
-      def initialize(@io : IO::Memory, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
-        @matrix = Array(Array(Row)).new
-        decode_sequences(io.size)
+        if version < 2 || version > 5
+          raise "Unknown line table version: #{version}"
+        end
 
-        @matrix.sort_by!(&.first.address)
+        if version >= 5
+          _address_size = @io.read_bytes(UInt8).to_i
+          _segment_selector_size = @io.read_bytes(UInt8).to_i
+        end
+
+        header_length = @io.read_bytes(UInt32) # FIXME: UInt64 for DWARF64 (uncommon)
+        program_begin = @io.pos.to_i64 + header_length
+
+        minimum_instruction_length = @io.read_bytes(UInt8).to_i
+
+        if version >= 4
+          maximum_operations_per_instruction = @io.read_bytes(UInt8).to_i
+        else
+          maximum_operations_per_instruction = 1
+        end
+
+        if maximum_operations_per_instruction == 0
+          raise "Invalid maximum operations per instruction: 0"
+        end
+
+        default_is_stmt = @io.read_byte == 1
+        line_base = @io.read_bytes(Int8).to_i
+        line_range = @io.read_bytes(UInt8).to_i
+        if line_range == 0
+          raise "Invalid line range: 0"
+        end
+
+        opcode_base = @io.read_bytes(UInt8).to_i
+        standard_opcode_lengths = uninitialized UInt8[256]
+        standard_opcode_lengths[0] = 0_u8
+        (1...opcode_base).each do |i|
+          standard_opcode_lengths[i] = @io.read_byte.not_nil!
+        end
+
+        table_pos = @io.pos
+
+        # the directory and file name tables are skipped here; they are only
+        # decoded (in `#decode_file_paths`) when the statement program below
+        # resolved one of the requested pcs
+        if program_begin < table_pos || program_begin >= unit_end
+          return {unit_end, version.to_i, table_pos}
+        end
+        @io.pos = program_begin
+
+        registers = Register.new(default_is_stmt)
+        prev_set = false
+        prev_address = 0_u64
+        prev_file = 0_u32
+        prev_line = 0
+        prev_column = 0
+
+        loop do
+          break if @io.pos >= unit_end || matches.size >= max_matches
+
+          opcode = @io.read_byte.not_nil!
+
+          emit = false
+          if opcode >= opcode_base
+            # special opcode
+            adjusted_opcode = opcode - opcode_base
+            operation_advance = adjusted_opcode // line_range
+            increment_address_and_op_index(operation_advance)
+            registers.line &+= line_base + (adjusted_opcode % line_range)
+            emit = true
+          elsif opcode == 0
+            # extended opcode
+            len = DWARF.read_unsigned_leb128(@io) - 1 # -1 accounts for the opcode
+            case extended_opcode = LNE.new(@io.read_byte.not_nil!)
+            when LNE::EndSequence
+              registers.end_sequence = true
+              emit = true
+            when LNE::SetAddress
+              case len
+              when 8 then registers.address = @io.read_bytes(UInt64)
+              when 4 then registers.address = @io.read_bytes(UInt32).to_u64
+              else        @io.skip(len)
+              end
+              registers.op_index = 0_u32
+            when LNE::SetDiscriminator
+              registers.discriminator = DWARF.read_unsigned_leb128(@io)
+            else
+              # skip unsupported opcode
+              @io.skip(len)
+            end
+          else
+            case standard_opcode = LNS.new(opcode)
+            when .copy?
+              emit = true
+            when .advance_pc?
+              operation_advance = DWARF.read_unsigned_leb128(@io)
+              increment_address_and_op_index(operation_advance)
+            when .advance_line?
+              registers.line &+= DWARF.read_signed_leb128(@io)
+            when .set_file?
+              registers.file = DWARF.read_unsigned_leb128(@io)
+            when .set_column?
+              registers.column = DWARF.read_unsigned_leb128(@io)
+            when .negate_stmt?
+              registers.is_stmt = !registers.is_stmt
+            when .set_basic_block?
+              registers.basic_block = true
+            when .const_add_pc?
+              adjusted_opcode = 255 - opcode_base
+              operation_advance = adjusted_opcode // line_range
+              increment_address_and_op_index(operation_advance)
+            when .fixed_advance_pc?
+              registers.address += @io.read_bytes(UInt16)
+              registers.op_index = 0_u32
+            when .set_prologue_end?
+              registers.prologue_end = true
+            when .set_epilogue_begin?
+              registers.epilogue_begin = true
+            when .set_isa?
+              registers.isa = DWARF.read_unsigned_leb128(@io)
+            else
+              # consume unknown opcode args
+              n_args = standard_opcode_lengths[opcode.to_i]
+              n_args.times { DWARF.read_unsigned_leb128(@io) }
+            end
+          end
+
+          if emit
+            address = registers.address &+ @base_address
+            line = registers.line.to_i32!
+            column = registers.column.to_i32!
+
+            # checking is_stmt should be enough to avoid "non statement" operations
+            # some of which have confusing line number 0.
+            # but some operations within macros seem to be useful and marked as !is_stmt
+            # so attempt to include them also
+            if registers.is_stmt || (line > 0 && column > 0)
+              if prev_set && prev_address < address
+                match_range(pcs, resolved, matches, prev_address, address, prev_file, prev_line, prev_column)
+              end
+
+              if registers.end_sequence
+                match_exact(pcs, resolved, matches, address, registers.file, line, column)
+              else
+                prev_set = true
+                prev_address = address
+                prev_file = registers.file
+                prev_line = line
+                prev_column = column
+              end
+            elsif registers.end_sequence && prev_set
+              # the sequence-terminating row didn't produce a row of its own,
+              # so the last emitted row only covers its exact address
+              match_exact(pcs, resolved, matches, prev_address, prev_file, prev_line, prev_column)
+            end
+
+            if registers.end_sequence
+              prev_set = false
+              if (@io.pos.to_i64 - offset) < (unit_end - offset)
+                registers = Register.new(default_is_stmt)
+              else
+                break
+              end
+            else
+              registers.reset
+            end
+          end
+        end
+
+        {unit_end, version.to_i, table_pos}
       end
 
-      # Returns the `Row` for the given Program Counter (PC) address if found.
-      def find(address)
-        rows = matrix.bsearch { |r| r.last.address >= address } || return
-        return unless address >= rows.first.address
-
-        next_row_index = rows.bsearch_index { |row| row.address > address } || rows.size
-        rows[next_row_index - 1]
+      # Records every yet unresolved pc within `lo...hi` as matching the row
+      # `{file, line, column}`.
+      private def match_range(pcs, resolved, matches, lo : UInt64, hi : UInt64, file, line, column) : Nil
+        index = pcs.bsearch_index { |pc| pc >= lo } || return
+        while index < pcs.size && pcs[index] < hi
+          if resolved[index] == 0
+            resolved[index] = 1_u8
+            matches << Match.new(index, file, line, column)
+          end
+          index += 1
+        end
       end
 
-      # Decodes the compressed matrix of addresses to line numbers.
-      private def decode_sequences(size)
-        while true
-          offset = @io.tell.to_i64
-          break unless offset < size
+      # Records the pc equal to `address`, if any and yet unresolved, as
+      # matching the row `{file, line, column}`.
+      private def match_exact(pcs, resolved, matches, address : UInt64, file, line, column) : Nil
+        index = pcs.bsearch_index { |pc| pc >= address } || return
+        if pcs[index] == address && resolved[index] == 0
+          resolved[index] = 1_u8
+          matches << Match.new(index, file, line, column)
+        end
+      end
 
-          unit_length = @io.read_bytes(UInt32)
-          total_length = unit_length + sizeof(typeof(unit_length))
-          version = @io.read_bytes(UInt16)
+      # Decodes the directory and file name tables of a unit (the IO must be
+      # positioned at their start), materializing only the entries referenced
+      # by `matches`. Returns pairs of file name index and full path.
+      private def decode_file_paths(version, matches) : Array({UInt32, String})
+        if version < 5
+          decode_file_paths_v4(matches)
+        else
+          decode_file_paths_v5(matches)
+        end
+      end
 
-          if version < 2 || version > 5
-            raise "Unknown line table version: #{version}"
+      private def decode_file_paths_v4(matches) : Array({UInt32, String})
+        dir_table_pos = @io.pos
+        while skip_string > 0
+        end
+
+        # scan the file name table, keeping only the entries some match
+        # references
+        entries = Array({UInt32, String, UInt32}).new(4)
+        index = 0_u32
+        loop do
+          index &+= 1
+          name_pos = @io.pos
+          name_length = skip_string
+          break if name_length == 0
+          dir = DWARF.read_unsigned_leb128(@io)
+          DWARF.read_unsigned_leb128(@io) # mtime
+          DWARF.read_unsigned_leb128(@io) # bytesize
+          if matches.any? { |match| match.file == index }
+            entries << {index, string_at(name_pos, name_length), dir}
           end
+        end
 
-          if version >= 5
-            _address_size = @io.read_bytes(UInt8).to_i
-            _segment_selector_size = @io.read_bytes(UInt8).to_i
+        # materialize the directories those entries reference
+        dirs = Array({UInt32, String}).new(4)
+        @io.pos = dir_table_pos
+        index = 0_u32
+        loop do
+          index &+= 1
+          name_pos = @io.pos
+          name_length = skip_string
+          break if name_length == 0
+          if entries.any? { |entry| entry[2] == index }
+            dirs << {index, string_at(name_pos, name_length)}
+          end
+        end
+
+        paths = Array({UInt32, String}).new(entries.size + 1)
+
+        # file name index 0 means the information is missing
+        if matches.any? { |match| match.file == 0 }
+          paths << {0_u32, ""}
+        end
+
+        join_file_paths(entries, dirs, paths)
+        paths
+      end
+
+      private def decode_file_paths_v5(matches) : Array({UInt32, String})
+        dir_formats = uninitialized LNCTFormat[255]
+        dir_format_count = read_lnct_formats(dir_formats.to_unsafe)
+        dir_count = DWARF.read_unsigned_leb128(@io).to_i
+        dir_table_pos = @io.pos
+        dir_count.times { skip_lnct_entry(dir_formats.to_unsafe, dir_format_count) }
+
+        file_formats = uninitialized LNCTFormat[255]
+        file_format_count = read_lnct_formats(file_formats.to_unsafe)
+        file_count = DWARF.read_unsigned_leb128(@io).to_i
+
+        # in DWARF 5 file name indexes start at 0
+        entries = Array({UInt32, String, UInt32}).new(4)
+        file_count.times do |i|
+          index = i.to_u32
+          if matches.any? { |match| match.file == index }
+            path, dir = read_lnct_entry(file_formats.to_unsafe, file_format_count)
+            entries << {index, path, dir}
           else
-            _address_size = {{ flag?(:bits64) ? 8 : 4 }}
-            _segment_selector_size = 0
+            skip_lnct_entry(file_formats.to_unsafe, file_format_count)
           end
+        end
 
-          _header_length = @io.read_bytes(UInt32) # FIXME: UInt64 for DWARF64 (uncommon)
-          minimum_instruction_length = @io.read_bytes(UInt8).to_i
-
-          if version >= 4
-            maximum_operations_per_instruction = @io.read_bytes(UInt8).to_i
+        # materialize the directories those entries reference
+        dirs = Array({UInt32, String}).new(4)
+        @io.pos = dir_table_pos
+        dir_count.times do |i|
+          index = i.to_u32
+          if entries.any? { |entry| entry[2] == index }
+            path, _ = read_lnct_entry(dir_formats.to_unsafe, dir_format_count)
+            dirs << {index, path}
           else
-            maximum_operations_per_instruction = 1
+            skip_lnct_entry(dir_formats.to_unsafe, dir_format_count)
           end
+        end
 
-          if maximum_operations_per_instruction == 0
-            raise "Invalid maximum operations per instruction: 0"
-          end
+        paths = Array({UInt32, String}).new(entries.size)
+        join_file_paths(entries, dirs, paths)
+        paths
+      end
 
-          default_is_stmt = @io.read_byte == 1
-          line_base = @io.read_bytes(Int8).to_i
-          line_range = @io.read_bytes(UInt8).to_i
-          if line_range == 0
-            raise "Invalid line range: 0"
-          end
-
-          opcode_base = @io.read_bytes(UInt8).to_i
-          standard_opcode_lengths = Array(UInt8).new(opcode_base)
-          standard_opcode_lengths << 0_u8
-          (opcode_base - 1).times do
-            standard_opcode_lengths << @io.read_byte.not_nil!
-          end
-
-          if version < 5
-            include_directories = read_directory_table
-            file_names = read_filename_table(include_directories)
-          else
-            dir_format = read_lnct_format
-            count = DWARF.read_unsigned_leb128(@io)
-            include_directories = Array.new(count) { read_lnct(nil, dir_format).path }
-
-            file_format = read_lnct_format
-            count = DWARF.read_unsigned_leb128(@io)
-            file_names = Array.new(count) { read_lnct(include_directories, file_format) }
-          end
-
-          if @io.tell < offset + total_length
-            sequence = Sequence.new(
-              offset,
-              unit_length,
-              minimum_instruction_length,
-              maximum_operations_per_instruction,
-              default_is_stmt,
-              line_base,
-              line_range,
-              opcode_base,
-              standard_opcode_lengths,
-              include_directories,
-              file_names,
-            )
-            read_statement_program(sequence)
-          end
+      # Joins each file entry with the path of the directory it references,
+      # appending the resulting `{file index, full path}` pairs to `paths`.
+      private def join_file_paths(entries, dirs, paths) : Nil
+        entries.each do |(file_index, name, dir_index)|
+          dir = dirs.find { |entry| entry[0] == dir_index }.try(&.[1]) || ""
+          name = File.join(dir, name) if name != "" && dir != ""
+          paths << {file_index, name}
         end
       end
 
@@ -268,35 +502,43 @@ module Crystal
         MD5             = 0x05
       end
 
-      private def read_lnct_format
-        count = @io.read_bytes(UInt8)
-        Array(LNCTFormat).new(count) do
-          LNCTFormat.new(
+      private def read_lnct_formats(buffer : LNCTFormat*) : Int32
+        count = @io.read_byte.not_nil!.to_i
+        count.times do |i|
+          buffer[i] = LNCTFormat.new(
             lnct: LNCT.new(DWARF.read_unsigned_leb128(@io)),
             format: FORM.new(DWARF.read_unsigned_leb128(@io))
           )
         end
+        count
       end
 
-      private def read_lnct(include_directories, formats)
-        dir = ""
+      # Reads an entry of a DWARF 5 directory or file name table, decoding
+      # its path and directory index and skipping everything else. Returns
+      # the path and the directory index.
+      private def read_lnct_entry(formats : LNCTFormat*, format_count : Int32) : {String, UInt32}
         path = ""
-        mtime = 0_u64
-        size = 0_u64
+        dir = 0_u32
 
-        formats.each do |format|
+        format_count.times do |i|
+          format = formats[i]
+          materialize = format.lnct.path?
           str = nil
           val = 0_u64
 
           case format.format
           when .string?
-            str = @io.gets('\0', chomp: true) # .to_s
+            if materialize
+              str = @io.gets('\0', chomp: true)
+            else
+              skip_string
+            end
           when .line_strp?
             offset = @io.read_bytes(UInt32)
-            str = @line_strings.try &.decode(offset)
+            str = @line_strings.try &.decode(offset) if materialize
           when .strp?
             offset = @io.read_bytes(UInt32)
-            str = @strings.try &.decode(offset)
+            str = @strings.try &.decode(offset) if materialize
           when .strp_sup?
             @io.read_bytes(UInt32)
           when .strx?
@@ -323,185 +565,69 @@ module Crystal
           when .block?
             @io.skip(DWARF.read_unsigned_leb128(@io))
           when .udata?
-            val = DWARF.read_unsigned_leb128(@io)
+            val = DWARF.read_unsigned_leb128(@io).to_u64
           else
             raise "Unexpected encoding format: #{format.format}"
           end
 
           case format.lnct
-          in .path?
+          when .path?
             path = str if str
-          in .directory_index?
-            if val
-              dir = include_directories.not_nil![val]
-            end
-          in .timestamp?
-            mtime = val.to_u64
-          in .size?
-            size = val.to_u64
-          in .md5?
-            # ignore
+          when .directory_index?
+            dir = val.to_u32!
+          else
+            # timestamp, size and md5 are irrelevant here
           end
         end
 
-        if dir != "" && path != ""
-          path = File.join(dir, path)
-        end
-
-        Sequence::FileEntry.new(path, mtime, size)
+        {path, dir}
       end
 
-      private def read_directory_table
-        ary = [""]
-        loop do
-          name = @io.gets('\0', chomp: true).to_s
-          break if name.empty?
-          ary << name
-        end
-        ary
-      end
-
-      private def read_filename_table(include_directories)
-        ary = [Sequence::FileEntry.new("", 0, 0)]
-        loop do
-          name = @io.gets('\0', chomp: true).to_s
-          break if name.empty?
-          dir = DWARF.read_unsigned_leb128(@io)
-          time = DWARF.read_unsigned_leb128(@io)
-          length = DWARF.read_unsigned_leb128(@io)
-
-          dir = include_directories[dir]
-          if (name != "" && dir != "")
-            name = File.join(dir, name)
+      private def skip_lnct_entry(formats : LNCTFormat*, format_count : Int32) : Nil
+        format_count.times do |i|
+          case format = formats[i].format
+          when .string?
+            skip_string
+          when .line_strp?, .strp?, .strp_sup?
+            @io.skip(4)
+          when .strx?, .udata?
+            DWARF.read_unsigned_leb128(@io)
+          when .strx1?, .data1?
+            @io.skip(1)
+          when .strx2?, .data2?
+            @io.skip(2)
+          when .strx3?
+            @io.skip(3)
+          when .strx4?, .data4?
+            @io.skip(4)
+          when .data8?
+            @io.skip(8)
+          when .data16?
+            @io.skip(16)
+          when .block?
+            @io.skip(DWARF.read_unsigned_leb128(@io))
+          else
+            raise "Unexpected encoding format: #{format}"
           end
-          ary << Sequence::FileEntry.new(name, time.to_u64, length.to_u64)
         end
-        ary
       end
 
-      private macro increment_address_and_op_index(operation_advance)
-        if sequence.maximum_operations_per_instruction == 1
-          registers.address += {{operation_advance}} * sequence.minimum_instruction_length
+      # Skips a null-terminated string without materializing it, returning
+      # its length.
+      private def skip_string : Int32
+        slice = @io.to_slice
+        pos = @io.pos
+        if index = slice.index(0_u8, pos)
+          @io.pos = index + 1
+          index - pos
         else
-          registers.address += sequence.minimum_instruction_length *
-            ((registers.op_index + operation_advance) // sequence.maximum_operations_per_instruction)
-          registers.op_index = (registers.op_index + operation_advance) % sequence.maximum_operations_per_instruction
+          @io.pos = slice.size
+          slice.size - pos
         end
       end
 
-      # TODO: support LNE::DefineFile (manually register file, uncommon)
-      private def read_statement_program(sequence)
-        registers = Register.new(sequence.default_is_stmt)
-
-        loop do
-          opcode = @io.read_byte.not_nil!
-
-          if opcode >= sequence.opcode_base
-            # special opcode
-            adjusted_opcode = opcode - sequence.opcode_base
-            operation_advance = adjusted_opcode // sequence.line_range
-            increment_address_and_op_index(operation_advance)
-            registers.line &+= sequence.line_base + (adjusted_opcode % sequence.line_range)
-            register_to_matrix(sequence, registers)
-            registers.reset
-          elsif opcode == 0
-            # extended opcode
-            len = DWARF.read_unsigned_leb128(@io) - 1 # -1 accounts for the opcode
-            extended_opcode = LNE.new(@io.read_byte.not_nil!)
-
-            case extended_opcode
-            when LNE::EndSequence
-              registers.end_sequence = true
-              register_to_matrix(sequence, registers)
-              if (@io.tell.to_i64 - sequence.offset) < sequence.total_length
-                registers = Register.new(sequence.default_is_stmt)
-              else
-                break
-              end
-            when LNE::SetAddress
-              case len
-              when 8 then registers.address = @io.read_bytes(UInt64)
-              when 4 then registers.address = @io.read_bytes(UInt32).to_u64
-              else        @io.skip(len)
-              end
-              registers.op_index = 0_u32
-            when LNE::SetDiscriminator
-              registers.discriminator = DWARF.read_unsigned_leb128(@io)
-            else
-              # skip unsupported opcode
-              @io.read_fully(Bytes.new(len))
-            end
-          else
-            # standard opcode
-            standard_opcode = LNS.new(opcode)
-
-            case standard_opcode
-            when LNS::Copy
-              register_to_matrix(sequence, registers)
-              registers.reset
-            when LNS::AdvancePc
-              operation_advance = DWARF.read_unsigned_leb128(@io)
-              increment_address_and_op_index(operation_advance)
-            when LNS::AdvanceLine
-              registers.line &+= DWARF.read_signed_leb128(@io)
-            when LNS::SetFile
-              registers.file = DWARF.read_unsigned_leb128(@io)
-            when LNS::SetColumn
-              registers.column = DWARF.read_unsigned_leb128(@io)
-            when LNS::NegateStmt
-              registers.is_stmt = !registers.is_stmt
-            when LNS::SetBasicBlock
-              registers.basic_block = true
-            when LNS::ConstAddPc
-              adjusted_opcode = 255 - sequence.opcode_base
-              operation_advance = adjusted_opcode // sequence.line_range
-              increment_address_and_op_index(operation_advance)
-            when LNS::FixedAdvancePc
-              registers.address += @io.read_bytes(UInt16).not_nil!
-              registers.op_index = 0_u32
-            when LNS::SetPrologueEnd
-              registers.prologue_end = true
-            when LNS::SetEpilogueBegin
-              registers.epilogue_begin = true
-            when LNS::SetIsa
-              registers.isa = DWARF.read_unsigned_leb128(@io)
-            else
-              # consume unknown opcode args
-              n_args = sequence.standard_opcode_lengths[opcode.to_i]
-              n_args.times { DWARF.read_unsigned_leb128(@io) }
-            end
-          end
-        end
-      end
-
-      @current_sequence_matrix : Array(Row)?
-
-      private def register_to_matrix(sequence, registers)
-        # checking is_stmt should be enough to avoid "non statement" operations
-        # some of which have confusing line number 0.
-        # but some operations within macros seem to be useful and marked as !is_stmt
-        # so attempt to include them also
-        if registers.is_stmt || (registers.line.to_i > 0 && registers.column.to_i > 0)
-          path = sequence.file_names[registers.file].path
-
-          row = Row.new(
-            registers.address + @base_address,
-            path,
-            registers.line.to_i,
-            registers.column.to_i,
-          )
-
-          if rows = @current_sequence_matrix
-            rows << row
-          else
-            matrix << (rows = [row])
-            @current_sequence_matrix = rows
-          end
-        end
-
-        if registers.end_sequence
-          @current_sequence_matrix = nil
-        end
+      private def string_at(pos : Int32, length : Int32) : String
+        String.new(@io.to_slice[pos, length])
       end
     end
   end

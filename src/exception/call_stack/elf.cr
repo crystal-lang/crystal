@@ -19,6 +19,14 @@ struct Exception::CallStack
   end
 
   protected def self.load_debug_info_impl : Nil
+    # nothing to preload: DWARF debug info is read on demand, only for the
+    # program counters of the exception being decoded
+  end
+
+  # Opens the image containing the DWARF sections for the current program
+  # and yields it together with the base address of the program, keeping the
+  # image mapped only for the duration of the block.
+  protected def self.open_debug_image(&)
     program = Process.executable_path
     return unless program && File::Info.readable? program
 
@@ -45,11 +53,8 @@ struct Exception::CallStack
     LibC.dl_iterate_phdr(phdr_callback, pointerof(data))
 
     Crystal::System::ELF.open(data.program) do |image|
-      read_dwarf_sections(image, data.base_address)
+      yield image, data.base_address
     end
-  rescue ex
-    @@dwarf_line_numbers = nil
-    @@dwarf_function_names = nil
   end
 
   protected def self.decode_address(ip)
