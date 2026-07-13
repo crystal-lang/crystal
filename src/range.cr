@@ -445,10 +445,12 @@ struct Range(B, E)
     end_value = @end
     other_begin = other.begin
 
-    return true if end_value && other_begin && end_value == other_begin
-    unless excludes_end?
-      return true if end_value && other_begin && end_value.responds_to?(:succ) && end_value.succ == other_begin
-      return true if end_value && other_begin && other_begin.responds_to?(:pred) && other_begin.pred == end_value
+    if end_value && other_begin
+      return true if end_value == other_begin
+      unless excludes_end?
+        return true if end_value.responds_to?(:succ) && end_value.succ == other_begin
+        return true if other_begin.responds_to?(:pred) && other_begin.pred == end_value
+      end
     end
 
     other_end = other.end
