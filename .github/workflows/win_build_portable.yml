@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
 
       - name: Restore libraries
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             libs/pcre2-8.lib
@@ -56,7 +56,7 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             libs/crypto.lib
@@ -65,7 +65,7 @@ jobs:
           key: win-openssl-libs-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore DLLs
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             libs/pcre2-8-dynamic.lib
@@ -87,7 +87,7 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore OpenSSL DLLs
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -97,7 +97,7 @@ jobs:
           key: win-openssl-dlls-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         with:
           path: |
             libs/llvm_VERSION
