@@ -171,6 +171,8 @@ describe "Range" do
     (..).union(2..3).should eq(..)
     (...).union(2..3).should eq(...)
     (..).union(2...3).should eq(..)
+    (..3.0).union(4.0..).should be_nil
+    (..3).union(4.0..).should eq(..)
 
     ('a'..'c').union('d'..'f').should eq('a'..'f')
     ('a'..'e').union('c'..'g').should eq('a'..'g')
@@ -180,6 +182,9 @@ describe "Range" do
     (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)
     (1.0...5.5).union(3.2...7.8).should eq(1.0...7.8)
     (1.0...5.5).union(5.5...7.8).should eq(1.0...7.8)
+    (1..5).union(3.0..7.0).should eq(1..7.0)
+    (1..5).union(1.0...7).should eq(1...7)
+    (1.0..5).union(1...7).should eq(1.0...7)
 
     t1 = Time.local(2024, 10, 1)
     t2 = Time.local(2024, 10, 5)
@@ -259,6 +264,9 @@ describe "Range" do
 
     typeof((1..5).union(3_i64..7_i64)).should eq(Range(Int32 | Int64, Int32 | Int64)?)
     typeof((1..5).intersection(3_i64..7_i64)).should eq(Range(Int32 | Int64, Int32 | Int64)?)
+    typeof((1..5).union(3.0..7.0)).should eq(Range(Int32 | Float64, Int32 | Float64)?)
+    typeof((1..5).union(1.0...7)).should eq(Range(Int32 | Float64, Int32)?)
+    typeof((1.0..5).union(1...7)).should eq(Range(Int32 | Float64, Int32)?)
 
     typeof((..5).union(3..)).should eq(Range(Int32 | Nil, Int32 | Nil)?)
     typeof((..5).intersection(3..)).should eq(Range(Int32 | Nil, Int32 | Nil)?)
