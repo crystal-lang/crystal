@@ -271,10 +271,9 @@ jobs:
       fail-fast: false
       matrix:
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
-            workers: 4
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+
     steps:
       - name: Disable CRLF line ending substitution
         run: git config --global core.autocrlf false
@@ -302,7 +301,7 @@ jobs:
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Test
-        run: make -f Makefile.win std_spec FLAGS="${{ matrix.opts.flags }}"
+        run: make -f Makefile.win std_spec FLAGS="${{ matrix.opts.flags || '' }}"
         env:
           CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}
 

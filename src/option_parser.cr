@@ -30,6 +30,11 @@
 #     STDERR.puts parser
 #     exit(1)
 #   end
+#   parser.missing_option do |flag|
+#     STDERR.puts "ERROR: #{flag} is missing an argument."
+#     STDERR.puts parser
+#     exit(1)
+#   end
 # end
 #
 # destination = destination.upcase if upcase
