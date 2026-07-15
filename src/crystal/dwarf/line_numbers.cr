@@ -126,6 +126,8 @@ module Crystal
         line : Int32,
         column : Int32
 
+      @size : Int32
+
       def initialize(@io : IO::Memory, @base_address : UInt64 = 0_u64, @strings : Strings? = nil, @line_strings : Strings? = nil)
         @size = @io.size
       end
