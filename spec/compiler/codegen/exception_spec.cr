@@ -1136,6 +1136,33 @@ describe "Code gen: exception" do
       CRYSTAL
   end
 
+  it "propagates raise status back to a caller analyzed before the callee was known to raise" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      def oops(msg : String) : NoReturn
+        check false
+        raise msg
+      end
+
+      def check(should_raise)
+        oops "boom" if should_raise
+      end
+
+      # Since `oops` calls `check false`, this analyzes `check` first, which
+      # will be marked with `a_def.raises = false`.
+      oops "prime" rescue nil
+
+      x = 0
+      begin
+        check true
+      rescue
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
   it "doesn't crash on #1988" do
     run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
