@@ -1840,9 +1840,7 @@ module Crystal
 
           set_ensure_exception_handler(block)
 
-          request_value(@needs_value) do
-            accept block.body
-          end
+          request_value(block.body)
         end
 
         phi.add @last, block.body.type?, last: true
