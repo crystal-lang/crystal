@@ -1602,6 +1602,28 @@ describe "Code gen: block" do
       CRYSTAL
   end
 
+  it "codegens proc forwarding from an unused yielded block value (#17125)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      private record Foo,
+        proc : String ->
+
+      def bar(&proc : String ->)
+        baz(&proc)
+      end
+
+      def baz(&proc : String ->)
+      end
+
+      ([] of Foo).each do |foo|
+        bar(&foo.proc)
+      end
+
+      1
+      CRYSTAL
+  end
+
   it "doesn't materialize an unused yield block value in debug builds (#12693)" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       def foo : Nil
