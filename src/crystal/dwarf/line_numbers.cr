@@ -255,7 +255,7 @@ module Crystal
           elsif opcode == 0
             # extended opcode
             len = DWARF.read_unsigned_leb128(@io) - 1 # -1 accounts for the opcode
-            case extended_opcode = LNE.new(@io.read_byte.not_nil!)
+            case LNE.new(@io.read_byte.not_nil!)
             when LNE::EndSequence
               registers.end_sequence = true
               emit = true
@@ -273,7 +273,7 @@ module Crystal
               @io.skip(len)
             end
           else
-            case standard_opcode = LNS.new(opcode)
+            case LNS.new(opcode)
             when .copy?
               emit = true
             when .advance_pc?
