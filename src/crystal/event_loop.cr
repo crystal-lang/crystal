@@ -14,7 +14,7 @@ abstract class Crystal::EventLoop
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
-      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
         Crystal::EventLoop::Kqueue
       {% else %}
         Crystal::EventLoop::LibEvent
@@ -166,7 +166,7 @@ end
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
-  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
     require "./event_loop/kqueue"
   {% else %}
     require "./event_loop/libevent"
