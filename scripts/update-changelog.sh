@@ -64,8 +64,6 @@ if [ ! -f "$changelog_path" ]; then
   git add "doc/changelogs/README.md"
 fi
 
-printf '\n' >>"$current_changelog"
-
 if grep --silent -E "^## \[$VERSION\]" "$changelog_path"; then
   echo "Replacing section in $changelog_path"
   sed -i -E "/^## \[$VERSION\]/,/^## /{
