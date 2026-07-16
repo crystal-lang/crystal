@@ -360,7 +360,7 @@ jobs:
 
       - name: Set up Inno Setup
         run: |
-          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\is.exe
+          Invoke-WebRequest -Uri https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe -OutFile C:\is.exe
           C:\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
 
       - name: Set up environment
