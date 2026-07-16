@@ -35,3 +35,6 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
+# LSPs
+.lattice-cache
