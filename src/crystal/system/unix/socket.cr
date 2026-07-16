@@ -34,7 +34,7 @@ module Crystal::System::Socket
       len = LibC::OffT.new(count)
       ret = LibC.sendfile(fd, sockfd, offset, pointerof(len), nil, 0)
       sent_bytes = len.to_i64
-    {% elsif flag?(:dragonflybsd) || flag?(:freebsd) %}
+    {% elsif flag?(:dragonfly) || flag?(:freebsd) %}
       ret = LibC.sendfile(fd, sockfd, offset, LibC::SizeT.new(count), nil, out sbytes, flags)
       sent_bytes = sbytes.to_i64
     {% elsif flag?(:linux) || flag?(:solaris) %}
