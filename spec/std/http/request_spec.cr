@@ -289,6 +289,26 @@ module HTTP
           request.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
         end
       end
+
+      it "rejects unhandled Transfer-Encoding" do
+        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::BAD_REQUEST
+          GET / HTTP/1.1
+          Transfer-Encoding: deflate
+
+          Hello
+
+          HTTP
+      end
+
+      it "rejects unknown Transfer-Encoding" do
+        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::BAD_REQUEST
+          GET / HTTP/1.1
+          Transfer-Encoding: foobar
+
+          Hello
+
+          HTTP
+      end
     end
 
     describe "keep-alive" do
