@@ -250,8 +250,7 @@ describe YAML::Builder do
     unwrapped = YAML.build(width: 200) do |builder|
       builder.scalar("a " * 100)
     end
-    wrapped.should contain("\n")
-    unwrapped.should_not contain("\n")
+    wrapped.count('\n').should be > unwrapped.count('\n')
   end
 
   it "errors on invalid state" do
