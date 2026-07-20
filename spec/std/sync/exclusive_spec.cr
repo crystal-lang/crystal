@@ -113,7 +113,7 @@ describe Sync::Exclusive do
     counter.get(:relaxed).should be > 0
   end
 
-  {% if flag?(:execution_context) %}
+  {% if Fiber.has_constant?(:ExecutionContext) %}
     # see https://github.com/crystal-lang/crystal/issues/15085
     it "synchronizes reads/writes of mixed unions" do
       ready = WaitGroup.new(1)

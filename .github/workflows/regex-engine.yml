@@ -29,10 +29,10 @@ jobs:
   pcre:
     runs-on: ubuntu-latest
     name: "PCRE"
-    container: crystallang/crystal:1.20.2-alpine
+    container: crystallang/crystal:1.20.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Remove PCRE2
@@ -46,10 +46,10 @@ jobs:
   pcre2:
     runs-on: ubuntu-latest
     name: "PCRE2"
-    container: crystallang/crystal:1.20.2-alpine
+    container: crystallang/crystal:1.20.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Assert using PCRE2

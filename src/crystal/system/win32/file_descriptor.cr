@@ -280,7 +280,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def lock_file(handle, flags)
-    IOCP::IOOverlappedOperation.run(handle) do |operation|
+    IOCP::IOOverlappedOperation.run(Crystal::EventLoop.current.iocp_handle, handle) do |operation|
       result = LibC.LockFileEx(handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
 
       if result == 0
@@ -306,7 +306,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def unlock_file(handle)
-    IOCP::IOOverlappedOperation.run(handle) do |operation|
+    IOCP::IOOverlappedOperation.run(Crystal::EventLoop.current.iocp_handle, handle) do |operation|
       result = LibC.UnlockFileEx(handle, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, operation)
 
       if result == 0
@@ -500,66 +500,84 @@ private module ConsoleUtils
     @@buffer = appender.to_slice
   end
 
-  private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    @@mtx.synchronize do
-      @@read_requests << ReadRequest.new(
-        handle: handle,
-        slice: slice,
-        iocp: Crystal::EventLoop.current.iocp_handle,
-        completion_key: Crystal::System::IOCP::CompletionKey.new(:stdin_read, ::Fiber.current),
-      )
-      @@read_cv.signal
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+      units_read = LibC::DWORD.zero
+
+      ret, error = Fiber.syscall do
+        {LibC.ReadConsoleW(handle, slice, slice.size, pointerof(units_read), nil), WinError.value}
+      end
+      raise IO::Error.from_os_error("ReadConsoleW", error) if ret == 0
+
+      units_read.to_i32
+    end
+  {% else %}
+    class ReadRequest
+      getter handle : LibC::HANDLE
+      getter slice : Slice(UInt16)
+
+      getter iocp_handle : LibC::HANDLE
+      getter completion_key : Crystal::System::IOCP::CompletionKey
+
+      property units_read = LibC::DWORD.zero
+      property error = WinError::ERROR_SUCCESS
+
+      def initialize(@handle : LibC::HANDLE, @slice : Slice(UInt16))
+        @iocp_handle = Crystal::EventLoop.current.iocp_handle
+        @completion_key = Crystal::System::IOCP::CompletionKey.new(:read_console, ::Fiber.current)
+      end
     end
 
-    ::Fiber.suspend
+    @@read_mtx = ::Thread::Mutex.new
+    @@read_cv = ::Thread::ConditionVariable.new
+    @@read_requests = Deque(ReadRequest).new
+    @@read_thread = ::Thread.new { reader_loop }
 
-    @@mtx.synchronize do
-      @@bytes_read.shift
+    private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
+      request = ReadRequest.new(handle, slice)
+
+      @@read_mtx.synchronize do
+        @@read_requests << request
+        @@read_cv.signal
+      end
+
+      ::Fiber.suspend
+
+      unless request.error == WinError::ERROR_SUCCESS
+        raise IO::Error.from_os_error("ReadConsoleW", request.error)
+      end
+
+      request.units_read.to_i32!
     end
-  end
 
-  private def self.read_console_blocking(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
-    if 0 == LibC.ReadConsoleW(handle, slice, slice.size, out units_read, nil)
-      raise IO::Error.from_winerror("ReadConsoleW")
-    end
-    units_read.to_i32
-  end
-
-  record ReadRequest,
-    handle : LibC::HANDLE,
-    slice : Slice(UInt16),
-    iocp : LibC::HANDLE,
-    completion_key : Crystal::System::IOCP::CompletionKey
-
-  @@read_cv = ::Thread::ConditionVariable.new
-  @@read_requests = Deque(ReadRequest).new
-  @@bytes_read = Deque(Int32).new
-  @@mtx = ::Thread::Mutex.new
-
-  # Start a dedicated thread to block on reads from the console. Doesn't need an
-  # isolated execution context because there's no fiber communication (only
-  # thread communication) and only blocking I/O within the thread.
-  @@reader_thread = ::Thread.new { reader_loop }
-
-  private def self.reader_loop
-    while true
-      request = @@mtx.synchronize do
-        loop do
-          if entry = @@read_requests.shift?
-            break entry
+    private def self.reader_loop
+      while true
+        request = @@read_mtx.synchronize do
+          loop do
+            if entry = @@read_requests.shift?
+              break entry
+            end
+            @@read_cv.wait(@@read_mtx)
           end
-          @@read_cv.wait(@@mtx)
         end
-      end
+        slice = request.slice
 
-      bytes = read_console_blocking(request.handle, request.slice)
+        if LibC.ReadConsoleW(request.handle, slice, slice.size, out units_read, nil) == 0
+          request.error = WinError.value
+        else
+          request.units_read = units_read
+        end
 
-      @@mtx.synchronize do
-        @@bytes_read << bytes
-        LibC.PostQueuedCompletionStatus(request.iocp, LibC::JOB_OBJECT_MSG_EXIT_PROCESS, request.completion_key.object_id, nil)
+        # OPTIMIZE: after #17091 we can merely `request.fiber.enqueue` and drop
+        # the IOCP handle and CompletionKey
+        completion_key = request.completion_key.as(Void*).address
+        ret = LibC.PostQueuedCompletionStatus(request.handle, 0, completion_key, nil)
+
+        # can't recover: the fiber will never be resumed
+        Crystal::System.panic("PostQueuedCompletionStatus", WinError.value) if ret == 0
       end
     end
-  end
+  {% end %}
 end
 
 # Enable UTF-8 console I/O for the duration of program execution

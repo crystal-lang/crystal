@@ -6,10 +6,6 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   INTERRUPT_IDENTIFIER =  9
   TIMER_IDENTIFIER     = 10
 
-  {% unless LibC.has_constant?(:EVFILT_USER) %}
-    @pipe = uninitialized LibC::Int[2]
-  {% end %}
-
   def initialize(parallelism : Int32)
     # the kqueue instance
     @kqueue = System::Kqueue.new
@@ -17,18 +13,13 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     # notification to interrupt a run
     @interrupted = Atomic(Bool).new(false)
 
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      @kqueue.kevent(
-        INTERRUPT_IDENTIFIER,
-        LibC::EVFILT_USER,
-        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-    {% else %}
-      @pipe = System::FileDescriptor.system_pipe
-      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-    {% end %}
+    @kqueue.kevent(
+      INTERRUPT_IDENTIFIER,
+      LibC::EVFILT_USER,
+      LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
       super
 
@@ -38,16 +29,10 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
 
       @interrupted.set(false, :relaxed)
 
-      {% if LibC.has_constant?(:EVFILT_USER) %}
-        @kqueue.kevent(
-          INTERRUPT_IDENTIFIER,
-          LibC::EVFILT_USER,
-          LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-      {% else %}
-        @pipe.each { |fd| LibC.close(fd) }
-        @pipe = System::FileDescriptor.system_pipe
-        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-      {% end %}
+      @kqueue.kevent(
+        INTERRUPT_IDENTIFIER,
+        LibC::EVFILT_USER,
+        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
 
       system_set_timer(@timers.next_ready?)
 
@@ -84,20 +69,10 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def process_interrupt?(kevent)
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      if kevent.value.filter == LibC::EVFILT_USER
-        @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% else %}
-      if kevent.value.filter == LibC::EVFILT_READ && kevent.value.ident == @pipe[0]
-        ident = 0
-        ret = LibC.read(@pipe[0], pointerof(ident), sizeof(Int32))
-        raise RuntimeError.from_errno("read") if ret == -1
-        @interrupted.set(false, :relaxed) if ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% end %}
+    if kevent.value.filter == LibC::EVFILT_USER
+      @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
+      return true
+    end
     false
   end
 
@@ -142,15 +117,9 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   def interrupt : Nil
-    return if @interrupted.swap(true, :relaxed)
-
-    {% if LibC.has_constant?(:EVFILT_USER) %}
+    unless @interrupted.swap(true, :relaxed)
       @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)
-    {% else %}
-      ident = INTERRUPT_IDENTIFIER
-      ret = LibC.write(@pipe[1], pointerof(ident), sizeof(Int32))
-      raise RuntimeError.from_errno("write") if ret == -1
-    {% end %}
+    end
   end
 
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
