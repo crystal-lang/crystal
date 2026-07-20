@@ -291,7 +291,7 @@ module HTTP
       end
 
       it "rejects unhandled Transfer-Encoding" do
-        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::BAD_REQUEST
+        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::NOT_IMPLEMENTED
           GET / HTTP/1.1
           Transfer-Encoding: deflate
 
@@ -301,7 +301,7 @@ module HTTP
       end
 
       it "rejects unknown Transfer-Encoding" do
-        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::BAD_REQUEST
+        request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::NOT_IMPLEMENTED
           GET / HTTP/1.1
           Transfer-Encoding: foobar
 

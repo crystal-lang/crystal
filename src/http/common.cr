@@ -45,7 +45,7 @@ module HTTP
             body = ChunkedContent.new(io)
           else
             # Reject unrecognized transfer encodings
-            return nil
+            return HTTP::Status::NOT_IMPLEMENTED
           end
         elsif content_length = content_length(headers)
           body = FixedLengthContent.new(io, content_length)
