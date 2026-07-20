@@ -467,6 +467,13 @@ class Crystal::CodeGenVisitor
       context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
     end
 
+    {% unless LibLLVM::IS_LT_130 %}
+      case @program.optimization_mode
+      when .os? then context.fun.add_attribute LLVM::Attribute::OptimizeForSize
+      when .oz? then context.fun.add_attribute LLVM::Attribute::MinSize
+      end
+    {% end %}
+
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?

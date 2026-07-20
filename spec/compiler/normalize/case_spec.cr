@@ -13,6 +13,14 @@ describe "Normalize: case" do
     assert_expand "x = 1; case x; when Foo; 'b'; end", "if x.is_a?(Foo)\n  'b'\nend"
   end
 
+  it "normalizes `when` with multiple Path to multiple is_a? branches" do
+    assert_expand "x = 1; case x; when Foo, Bar; 'b'; end", "if x.is_a?(Foo)\n  'b'\nelsif x.is_a?(Bar)\n  'b'\nend"
+  end
+
+  it "normalizes `in` with multiple Path to multiple is_a? branches" do
+    assert_expand "x = 1; case x; in Foo, Bar; 'b'; end", "if x.is_a?(Foo)\n  'b'\nelsif x.is_a?(Bar)\n  'b'\nelse\n  raise \"unreachable\"\nend"
+  end
+
   it "normalizes case with generic to is_a?" do
     assert_expand "x = 1; case x; when Foo(T); 'b'; end", "if x.is_a?(Foo(T))\n  'b'\nend"
   end

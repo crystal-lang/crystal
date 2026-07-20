@@ -41,7 +41,7 @@ jobs:
               USE_PCRE1: true
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -67,21 +67,20 @@ jobs:
           - x86_64
           - aarch64
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+          - flags: "-Dpreview_mt"
             workers: 4
           - flags: "-Devloop=io_uring"
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt -Devloop=io_uring"
             workers: 4
+          - flags: "-Devloop=io_uring -Dwithout_mt"
         include:
           - arch: x86_64
             opts:
               flags: "-Devloop=libevent"
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -94,7 +93,7 @@ jobs:
           bin/ci with_build_env crystal version
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags }}"'
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
 
   check_format:
     env:
@@ -103,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -121,12 +120,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Actions Repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         persist-credentials: false
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@5374cbf686e897b15713110e233094e2874de7ef # v1.46.1
+      uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # v1.48.0
       env:
         CLICOLOR: 1
 
@@ -135,7 +134,7 @@ jobs:
     container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 

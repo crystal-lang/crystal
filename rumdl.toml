@@ -1,0 +1,45 @@
+# Indicators for comment annotations:
+#
+# * Disabled: The rule is disabled because it does not seem useful for this repo (or in general).
+# * BUG: A bug prevents using this rule either entirely or for specific files.
+# * FIXME: The rule seems useful, but requires some effort to resolve. That's deferred for later.
+# * TODO: The rule might be useful, but we need to investigate whether we want to use it or not.
+
+[global]
+disable = [
+  # TODO: We might want to consider automatic wrapping (maybe with https://github.com/razziel89/mdslw ?)
+  "line-length",
+  # FIXME: Bug in rumdl: https://github.com/rvben/rumdl/issues/665
+  "no-space-in-code",
+  "no-bare-urls",
+]
+
+exclude = [
+  "lib/",
+]
+
+## Heading Rules
+
+# MD003 - Heading style should be consistent
+[MD003]
+style = "atx"
+
+## List Rules
+
+# MD029 - Use consistent numbers for ordered lists
+[MD029]
+style = "ordered"
+
+# MD004 - Unordered list style should be consistent
+[MD004]
+style = "dash"
+
+## Formatting Rules
+
+# MD049 - Keep italic text formatting consistent
+[MD049]
+style = "underscore"
+
+# MD050 - Keep bold text formatting consistent
+[MD050]
+style = "asterisk"

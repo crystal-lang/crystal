@@ -577,7 +577,7 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if !flag?(:preview_mt) && flag?(:unix) %}
+{% if flag?(:without_mt) && flag?(:unix) %}
   class Process
     # :nodoc:
     #
@@ -599,8 +599,12 @@ end
   end
 {% end %}
 
+{% if flag?(:win32) && (!flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context)) %}
+  Crystal::EventLoop::IOCP.start_forwarder_thread
+{% end %}
+
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     Fiber::ExecutionContext.init_default_context
   {% else %}
     Crystal::Scheduler.init

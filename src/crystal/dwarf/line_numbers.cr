@@ -155,12 +155,9 @@ module Crystal
       # reduce the memory usage of repeating a String many times.
       getter matrix : Array(Array(Row))
 
-      @offset : Int64
-
-      def initialize(@io : IO::FileDescriptor, size, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
-        @offset = @io.tell
+      def initialize(@io : IO::Memory, @base_address : LibC::SizeT = 0, @strings : Strings? = nil, @line_strings : Strings? = nil)
         @matrix = Array(Array(Row)).new
-        decode_sequences(size)
+        decode_sequences(io.size)
 
         @matrix.sort_by!(&.first.address)
       end
@@ -177,8 +174,7 @@ module Crystal
       # Decodes the compressed matrix of addresses to line numbers.
       private def decode_sequences(size)
         while true
-          pos = @io.tell
-          offset = pos - @offset
+          offset = @io.tell.to_i64
           break unless offset < size
 
           unit_length = @io.read_bytes(UInt32)
@@ -237,7 +233,7 @@ module Crystal
             file_names = Array.new(count) { read_lnct(include_directories, file_format) }
           end
 
-          if @io.tell - @offset < offset + total_length
+          if @io.tell < offset + total_length
             sequence = Sequence.new(
               offset,
               unit_length,
@@ -417,7 +413,7 @@ module Crystal
             when LNE::EndSequence
               registers.end_sequence = true
               register_to_matrix(sequence, registers)
-              if (@io.tell - @offset - sequence.offset) < sequence.total_length
+              if (@io.tell.to_i64 - sequence.offset) < sequence.total_length
                 registers = Register.new(sequence.default_is_stmt)
               else
                 break

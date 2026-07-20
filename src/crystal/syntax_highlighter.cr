@@ -250,6 +250,10 @@ abstract class Crystal::SyntaxHighlighter
         when .string_array_end?
           render :STRING_ARRAY_END, token.raw
           break
+        when .interpolation_start?
+          render_interpolation do
+            highlight_normal_state lexer, break_on_rcurly: true
+          end
         when .eof?
           if token.delimiter_state.kind.string_array?
             raise "Unterminated string array literal"
@@ -257,7 +261,7 @@ abstract class Crystal::SyntaxHighlighter
             raise "Unterminated symbol array literal"
           end
         else
-          raise "BUG: Shouldn't happen"
+          raise "BUG: Unexpected token type: #{token.type}"
         end
       end
     end

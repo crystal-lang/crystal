@@ -13,6 +13,23 @@ require "./command/*"
 require "./tools/*"
 
 class Crystal::Command
+  enum Exit
+    # Successful exit
+    OK = 0
+
+    # Expected failure
+    FAILURE = 1
+
+    # User error (e.g. wrong CLI argument)
+    USAGE_ERROR = 1
+
+    # Code error (e.g. invalid source code)
+    CODE_ERROR = 1
+
+    # Internal compiler error
+    SOFTWARE_ERROR = 1
+  end
+
   USAGE = <<-USAGE
     Usage: crystal [command] [switches] [program file] [--] [arguments]
 
@@ -130,19 +147,37 @@ class Crystal::Command
       run_command(single_file: true)
     else
       if command.ends_with?(".cr")
-        error "file '#{command}' does not exist"
+        abort! "file '#{command}' does not exist", :USAGE_ERROR
       elsif external_command = Process.find_executable("crystal-#{command}")
         options.shift
 
         crystal_exec_path = Crystal::Config.exec_path
         path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
 
-        Process.exec(external_command, options, env: {
-          "PATH"              => path,
-          "CRYSTAL_EXEC_PATH" => crystal_exec_path,
-        })
+        {% if flag?(:win32) %}
+          # FIXME: `Process.exec` doesn't work as expected on Windows, see https://github.com/crystal-lang/crystal/issues/14422
+          options.unshift external_command
+          exit_status, _ = Process.run(options, env: {
+            "PATH"              => path,
+            "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+          }, input: :inherit, output: :inherit, error: :inherit) do |process|
+            # FIXME: There's a race condition between creating the sub-process and
+            # registering the `on_terminate` callback.
+            # Should be fixed with https://github.com/crystal-lang/crystal/issues/14422
+
+            Process.on_terminate do
+              process.terminate
+            end
+          end
+          ::exit exit_status
+        {% else %}
+          Process.exec(external_command, options, env: {
+            "PATH"              => path,
+            "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+          })
+        {% end %}
       else
-        error "unknown command: #{command}"
+        abort! "unknown command: #{command}", :USAGE_ERROR
       end
     end
   rescue ex : Crystal::CodeError
@@ -163,18 +198,21 @@ class Crystal::Command
     # errors in order to trace the require path. The causes are listed similarly
     # to `#inspect_with_backtrace` but without the backtrace.
     while cause = ex.cause
-      error ex.message, exit_code: nil
+      print_error ex.message
       ex = cause
     end
 
-    error ex.message
+    abort! ex.message, :CODE_ERROR
   rescue ex : OptionParser::Exception
-    error ex.message
+    abort! ex.message, :USAGE_ERROR
+  rescue ex : CompilerError
+    print_error ex.message
+    ::exit ex.status
   rescue ex
     report_warnings
 
     ex.inspect_with_backtrace STDERR
-    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
+    abort! "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues", :SOFTWARE_ERROR
   end
 
   private def tool
@@ -217,7 +255,7 @@ class Crystal::Command
       puts COMMANDS_USAGE
       exit
     else
-      error "unknown tool: #{tool}"
+      abort! "unknown tool: #{tool}", :USAGE_ERROR
     end
   end
 
@@ -398,7 +436,7 @@ class Crystal::Command
           if frame_pointers = FramePointers.parse?(value)
             compiler.frame_pointers = frame_pointers
           else
-            error "Invalid value `#{value}` for frame-pointers"
+            abort! "Invalid value `#{value}` for frame-pointers", :USAGE_ERROR
           end
         end
       end
@@ -418,7 +456,7 @@ class Crystal::Command
         opts.on("--x86-asm-syntax att|intel", "X86 dialect for --emit=asm: AT&T (default), Intel") do |value|
           case value = LLVM::InlineAsmDialect.parse?(value)
           in Nil
-            error "Invalid value `#{value}` for x86-asm-syntax"
+            abort! "Invalid value `#{value}` for x86-asm-syntax", :USAGE_ERROR
           in .att?
             # Do nothing
           in .intel?
@@ -612,7 +650,7 @@ class Crystal::Command
 
       # Check if we'll overwrite the main source file
       if !compiler.no_codegen? && !run && first_filename == File.expand_path(output_filename)
-        error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+        abort! "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'", :USAGE_ERROR
       end
     else
       output_filename = output_path.to_s
@@ -623,13 +661,13 @@ class Crystal::Command
 
     output_format ||= allowed_formats[0]
     unless output_format.in?(allowed_formats)
-      error "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}"
+      abort! "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}", :USAGE_ERROR
     end
 
-    error "maximum number of threads cannot be lower than 1" if compiler.n_threads < 1
+    abort! "maximum number of threads cannot be lower than 1", :USAGE_ERROR if compiler.n_threads < 1
 
     if !compiler.no_codegen? && !run && Dir.exists?(output_filename)
-      error "can't use `#{output_filename}` as output filename because it's a directory"
+      abort! "can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR
     end
 
     if run
@@ -647,7 +685,7 @@ class Crystal::Command
       Compiler::Source.new(filename, File.read(filename))
     end
   rescue exc : IO::Error
-    error exc
+    abort! exc, :CODE_ERROR
   end
 
   private def setup_simple_compiler_options(compiler, opts)
@@ -728,8 +766,7 @@ class Crystal::Command
                          when "medium"  then LLVM::CodeModel::Medium
                          when "large"   then LLVM::CodeModel::Large
                          else
-                           error "--mcmodel should be one of: default, kernel, tiny, small, medium, large"
-                           raise "unreachable"
+                           abort! "--mcmodel should be one of: default, kernel, tiny, small, medium, large", :USAGE_ERROR
                          end
     end
   end
@@ -742,8 +779,7 @@ class Crystal::Command
                                 when "none"
                                   Crystal::WarningLevel::None
                                 else
-                                  error "--warnings should be all, or none"
-                                  raise "unreachable"
+                                  abort! "--warnings should be all, or none", :USAGE_ERROR
                                 end
     end
     opts.on("--error-on-warnings", "Treat warnings as errors.") do |w|
@@ -763,16 +799,21 @@ class Crystal::Command
       if target = Compiler::EmitTarget.parse?(value.gsub('-', '_'))
         emit_targets |= target
       else
-        error "invalid emit value '#{value}'"
+        abort! "invalid emit value '#{value}'", :USAGE_ERROR
       end
     end
     emit_targets
   end
 
-  private def error(msg, exit_code = 1)
+  private def abort!(msg, exit : Command::Exit)
+    print_error(msg)
+    exit exit.to_i
+  end
+
+  private def print_error(msg)
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
-    Crystal.error msg, @color, exit_code: exit_code
+    Crystal.print_error(msg, @color)
   end
 
   private def self.crystal_opts

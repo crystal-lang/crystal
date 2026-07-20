@@ -137,23 +137,51 @@ class Process::Status
   # The other `Process::Status` methods extract the values from `exit_status`.
   @[Deprecated("Use `#exit_reason`, `#exit_code`, or `#system_exit_status` instead")]
   def exit_status : Int32
-    @exit_status.to_i32!
+    @system_exit_status.to_i32!
   end
 
   # Returns the exit status as indicated by the operating system.
   #
   # It can encode exit codes and termination signals and is platform-specific.
   def system_exit_status : UInt32
-    @exit_status.to_u32!
+    @system_exit_status.to_u32!
+  end
+
+  def self.[](code : Int)
+    new(system_exit_status: {% if flag?(:unix) %}
+      code << 8
+    {% else %}
+      code.to_u32!
+    {% end %})
+  end
+
+  def self.[](signal : Signal)
+    {% if flag?(:unix) %}
+      new(system_exit_status: signal.value)
+    {% else %}
+      raise NotImplementedError.new("Process::Status[] with Signal is not supported on Windows")
+    {% end %}
   end
 
   {% if flag?(:win32) %}
     # :nodoc:
-    def initialize(@exit_status : UInt32)
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
+    def self.new(exit_status : UInt32)
+      new(system_exit_status: exit_status)
+    end
+
+    # :nodoc:
+    def initialize(*, @system_exit_status : UInt32)
     end
   {% else %}
     # :nodoc:
-    def initialize(@exit_status : Int32)
+    @[Deprecated("Use `Process::Status.[]` for a portable constructor.")]
+    def self.new(exit_status : Int32)
+      new(system_exit_status: exit_status)
+    end
+
+    # :nodoc:
+    def initialize(*, @system_exit_status : Int32)
     end
   {% end %}
 
@@ -162,7 +190,7 @@ class Process::Status
     {% if flag?(:win32) %}
       # TODO: perhaps this should cover everything that SEH can handle?
       # https://learn.microsoft.com/en-us/windows/win32/debug/getexceptioncode
-      case @exit_status
+      case @system_exit_status
       when LibC::STATUS_FATAL_APP_EXIT
         ExitReason::Aborted
       when LibC::STATUS_CONTROL_C_EXIT
@@ -178,7 +206,7 @@ class Process::Status
       when LibC::STATUS_FLOAT_DIVIDE_BY_ZERO, LibC::STATUS_FLOAT_INEXACT_RESULT, LibC::STATUS_FLOAT_INVALID_OPERATION, LibC::STATUS_FLOAT_OVERFLOW, LibC::STATUS_FLOAT_UNDERFLOW
         ExitReason::FloatException
       else
-        @exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
+        @system_exit_status & 0xC0000000_u32 == 0 ? ExitReason::Normal : ExitReason::Unknown
       end
     {% elsif flag?(:unix) && !flag?(:wasm32) %}
       case exit_signal?
@@ -299,9 +327,9 @@ class Process::Status
 
     {% if flag?(:unix) %}
       # define __WEXITSTATUS(status) (((status) & 0xff00) >> 8)
-      (@exit_status & 0xff00) >> 8
+      (@system_exit_status & 0xff00) >> 8
     {% else %}
-      @exit_status.to_i32!
+      @system_exit_status.to_i32!
     {% end %}
   end
 
@@ -312,10 +340,10 @@ class Process::Status
 
   private def signal_code
     # define __WTERMSIG(status) ((status) & 0x7f)
-    @exit_status & 0x7f
+    @system_exit_status & 0x7f
   end
 
-  def_equals_and_hash @exit_status
+  def_equals_and_hash @system_exit_status
 
   # Prints a textual representation of the process status to *io*.
   #
@@ -342,7 +370,7 @@ class Process::Status
   end
 
   private def name_for_win32_exit_status
-    case @exit_status
+    case @system_exit_status
     # Ignoring LibC::STATUS_SUCCESS here because we prefer its numerical representation `0`
     when LibC::STATUS_FATAL_APP_EXIT          then "STATUS_FATAL_APP_EXIT"
     when LibC::STATUS_DATATYPE_MISALIGNMENT   then "STATUS_DATATYPE_MISALIGNMENT"
@@ -406,7 +434,7 @@ class Process::Status
   # Returns a textual description of this process status.
   #
   # ```
-  # Process::Status.new(0).description # => "Process exited normally"
+  # Process.run("true").description # => "Process exited normally"
   # process = Process.new("sleep", ["10"])
   # process.terminate
   # process.wait.description # => "Process received and didn't handle signal TERM (15)"
@@ -423,11 +451,11 @@ class Process::Status
 
   private def stringify_exit_status_windows(io)
     # On Windows large status codes are typically expressed in hexadecimal
-    if @exit_status >= UInt16::MAX
+    if @system_exit_status >= UInt16::MAX
       io << "0x"
-      @exit_status.to_s(base: 16, upcase: true).rjust(io, 8, '0')
+      @system_exit_status.to_s(base: 16, upcase: true).rjust(io, 8, '0')
     else
-      @exit_status.to_s(io)
+      @system_exit_status.to_s(io)
     end
   end
 end

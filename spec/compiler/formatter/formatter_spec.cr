@@ -277,6 +277,8 @@ describe Crystal::Formatter do
   assert_format "def foo\n  1\n  #\n\n\nrescue\nend", "def foo\n  1\n  #\nrescue\nend"
 
   assert_format "def foo(@[MyAnn] v); end"
+  assert_format "def foo(@[MyAnn] *v); end"
+  assert_format "def foo(@[MyAnn] **v); end"
   assert_format "def foo(@[MyAnn] &); end"
   assert_format "def foo(@[MyAnn] &block); end"
   assert_format "def foo(@[MyAnn] & : String -> Nil); end"
@@ -1060,6 +1062,7 @@ describe Crystal::Formatter do
   assert_format "10 ** a", "10 ** a"
   assert_format %(" " * 2)
   assert_format "foo.bar / 2\n", "foo.bar / 2"
+  assert_format "self/2"
 
   assert_format "! 1", "!1"
   assert_format "- 1", "-1"
@@ -1161,11 +1164,22 @@ describe Crystal::Formatter do
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
+  assert_format "%W(one   two  three)", "%W(one two three)"
   assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
   assert_format "%i{one(   two(  three)}", "%i{one( two( three)}"
+  assert_format "%W{one(   two(  three)}", "%W{one( two( three)}"
+  assert_format "%W{one( \n  two(  three)}", "%W{one(\n  two( three)}"
+  assert_format "%W{one( \\\n two( three)}"
+  assert_format "%W{one \#{two} three}"
+  assert_format "%W{one a\#{two}b three}"
+  assert_format "%W{one \#{*two} three}"
+  assert_format "%w{ one two }", "%w{one two}"
 
   assert_format "%w(\n\n)\n# ```\n# 1\n# ```\n", "%w()\n# ```\n# 1\n# ```"
   assert_format "%w(a\\ b)"
+  assert_format "%W(\n\n)\n# ```\n# 1\n# ```\n", "%W()\n# ```\n# 1\n# ```"
+  assert_format "%W(a\\ b)"
+  assert_format "%W(a\#{\n  1\n   }\\ b)", "%W(a\#{\n  1\n}\\ b)"
 
   assert_format "/foo/"
   assert_format "/foo/imx"
@@ -1364,6 +1378,11 @@ describe Crystal::Formatter do
   assert_format "1 rescue 2"
   assert_format "1 ensure 2"
   assert_format "begin\n  call\n  # comment\nrescue\n  call\n  # comment\nelse\n  call\n  # comment\nensure\n  call\n  # comment\nend"
+  assert_format "begin\nbegin\nend\nend", "begin\n  begin\n\n  end\nend"
+  assert_format "begin\nbegin\nensure\nend\nend", "begin\n  begin\n  ensure\n  end\nend"
+  assert_format "begin\nbegin\nrescue\nend\nend", "begin\n  begin\n  rescue\n  end\nend"
+  assert_format "begin\nbegin\n1\nensure\nend\nend", "begin\n  begin\n    1\n  ensure\n  end\nend"
+  assert_format "begin\nbegin\n1\nrescue\nend\nend", "begin\n  begin\n    1\n  rescue\n  end\nend"
 
   assert_format "def foo\n1\nrescue\n2\nend", "def foo\n  1\nrescue\n  2\nend"
   assert_format "def foo\n1\nensure\n2\nend", "def foo\n  1\nensure\n  2\nend"
@@ -1981,6 +2000,12 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
   assert_format "  <<-HTML   \n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "<<-HTML\n  hello\n  \n  HTML", "<<-HTML\n  hello\n\n  HTML"
+  assert_format "<<-HTML\n  hello\n   \n  HTML"
+  assert_format "<<-HTML\n   hello\n  \n   HTML", "<<-HTML\n   hello\n\n   HTML"
+  assert_format "<<-HTML\n   hello\n   \n   HTML", "<<-HTML\n   hello\n\n   HTML"
+  assert_format "<<-HTML\n   hello\n    \n   HTML"
+  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
 
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
@@ -2343,8 +2368,8 @@ describe Crystal::Formatter do
   assert_format "{\n  query     => <<-HEREDOC,\n    foo\n  HEREDOC\n}", "{\n  query => <<-HEREDOC,\n    foo\n  HEREDOC\n}"
   assert_format "begin\n  query = <<-HEREDOC\n    foo\n  HEREDOC\nend"
 
-  assert_format "begin 0[1] rescue 2 end"
-  assert_format "begin\n 0[1] rescue 2 end", "begin 0[1] rescue 2 end"
+  assert_format "begin 0[1] rescue 2 end", "begin\n  0[1] rescue 2\nend"
+  assert_format "begin\n 0[1] rescue 2 end", "begin\n  0[1] rescue 2\nend"
 
   assert_format "{%\n  if 1\n    2\n  end\n%}"
 

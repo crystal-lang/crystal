@@ -292,11 +292,11 @@ module Crystal
         elsif @wants_def_or_macro_name
           @token.type = :OP_SLASH
         elsif @slash_is_regex
-          delimited_pair :regex, '/', '/', start, advance: false
+          delimited_pair :regex, '/', '/', start
         elsif char.ascii_whitespace? || char == '\0'
           @token.type = :OP_SLASH
         elsif @wants_regex
-          delimited_pair :regex, '/', '/', start, advance: false
+          delimited_pair :regex, '/', '/', start
         else
           @token.type = :OP_SLASH
         end
@@ -501,9 +501,11 @@ module Crystal
         if @wants_def_or_macro_name
           next_char :OP_GRAVE
         else
+          next_char
           delimited_pair :command, '`', '`', start
         end
       when '"'
+        next_char
         delimited_pair :string, '"', '"', start
       when '0'..'9'
         scan_number start
@@ -1499,7 +1501,10 @@ module Crystal
             else
               @token.type = :STRING
               @token.value = current_char.to_s
-              @token.invalid_escape = true
+              unless delimiter_state.kind.array? && char.ascii_whitespace?
+                @token.invalid_escape = true
+              end
+
               next_char
             end
           end
@@ -1559,6 +1564,8 @@ module Crystal
               char = next_char
             end
 
+            @token.line_number = @line_number
+            @token.column_number = @column_number
             @token.type = :SPACE
           else
             next_string_array_token_noescape delimiter_state
@@ -1923,13 +1930,11 @@ module Crystal
             if lookahead { char == 'y' && char_sequence?('i', 'e', 'l', 'd') && !ident_part_or_end?(peek_next_char) }
               yields = true
               char = current_char
-              whitespace = true
               beginning_of_line = false
             elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) }
               char = current_char
 
               nest += 1 unless keyword.abstract_def?
-              whitespace = true
               beginning_of_line = false
               next
             end
@@ -1962,7 +1967,7 @@ module Crystal
       delimiter_kind = case char
                        when 'i'                     then Token::DelimiterKind::SYMBOL_ARRAY
                        when 'r'                     then Token::DelimiterKind::REGEX
-                       when 'w'                     then Token::DelimiterKind::STRING_ARRAY
+                       when 'w', 'W'                then Token::DelimiterKind::STRING_ARRAY
                        when 'x'                     then Token::DelimiterKind::COMMAND
                        when 'q', 'Q'                then Token::DelimiterKind::STRING
                        when '(', '[', '{', '<', '|' then Token::DelimiterKind::STRING
@@ -2264,8 +2269,7 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true, advance = true)
-      next_char if advance
+    def delimited_pair(kind : Token::DelimiterKind, string_nest, string_end, start, allow_escapes = true)
       @token.type = :DELIMITER_START
       @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)
       set_token_raw_from_start(start)
@@ -2285,6 +2289,7 @@ module Crystal
     def consume_loc_pragma
       case current_char
       when '"'
+        next_char
         delimited_pair :string, '"', '"',
           start: current_pos
 
@@ -2425,7 +2430,7 @@ module Crystal
 
       here = string_range(start_here, end_here)
 
-      delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote, advance: false
+      delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote
     end
 
     private def consume_symbol

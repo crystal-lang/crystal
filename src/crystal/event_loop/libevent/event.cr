@@ -1,12 +1,12 @@
 require "./lib_event2"
 
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   LibEvent2.evthread_use_pthreads
 {% end %}
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
-  struct Event
+  class Event
     include Crystal::EventLoop::Event
 
     VERSION = String.new(LibEvent2.event_get_version)

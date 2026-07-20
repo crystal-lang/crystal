@@ -6,8 +6,8 @@ require "./lib_crypto"
 
 # Supported library versions:
 #
-# * openssl (1.1.0–3.3+)
-# * libressl (2.0–4.0+)
+# * openssl (1.1.0–4.0+)
+# * libressl (3.0–4.0+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#tls
 {% begin %}
@@ -30,7 +30,7 @@ require "./lib_crypto"
       {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
                          (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libssl)/openssl/opensslv.h || printf %s false'` != "false") &&
                          (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libssl || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libssl || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "").gsub(/\.0(\d)/, ".\\1") %}
     {% end %}
 
     {% if from_libressl %}
@@ -40,6 +40,8 @@ require "./lib_crypto"
       LIBRESSL_VERSION = "0.0.0"
       OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
+
+    VERSION_MAJOR = {{ ssl_version.gsub(/[^0-9].*/, "") }}
   end
 {% end %}
 
@@ -52,9 +54,8 @@ require "./lib_crypto"
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
-  @[Link(dll: "libssl-3-x64.dll")]
-  @[Link(dll: "libcrypto-3-x64.dll")]
+  @[Link(dll: {{ "libssl-#{LibSSL::VERSION_MAJOR.id}-x64.dll" }})]
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-x64.dll" }})]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int
@@ -208,9 +209,11 @@ lib LibSSL
   # TLS alert codes
   SSL_AD_INTERNAL_ERROR = 80
 
-  fun tlsv1_method = TLSv1_method : SSLMethod
-  fun tlsv1_1_method = TLSv1_1_method : SSLMethod
-  fun tlsv1_2_method = TLSv1_2_method : SSLMethod
+  {% if compare_versions(OPENSSL_VERSION, "4.0.0") < 0 %}
+    fun tlsv1_method = TLSv1_method : SSLMethod
+    fun tlsv1_1_method = TLSv1_1_method : SSLMethod
+    fun tlsv1_2_method = TLSv1_2_method : SSLMethod
+  {% end %}
 
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
   fun ssl_get_servername = SSL_get_servername(ssl : SSL, host_type : TLSExt) : UInt8*

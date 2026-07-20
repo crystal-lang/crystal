@@ -1079,11 +1079,23 @@ module Crystal
           when .begin?
             check_type_declaration { parse_begin }
           when Keyword::NIL
-            check_type_declaration { node_and_next_token NilLiteral.new }
+            check_type_declaration do
+              @wants_regex = false
+              slash_is_not_regex!
+              node_and_next_token NilLiteral.new
+            end
           when .true?
-            check_type_declaration { node_and_next_token BoolLiteral.new(true) }
+            check_type_declaration do
+              @wants_regex = false
+              slash_is_not_regex!
+              node_and_next_token BoolLiteral.new(true)
+            end
           when .false?
-            check_type_declaration { node_and_next_token BoolLiteral.new(false) }
+            check_type_declaration do
+              @wants_regex = false
+              slash_is_not_regex!
+              node_and_next_token BoolLiteral.new(false)
+            end
           when .yield?
             check_type_declaration { parse_yield }
           when .with?
@@ -1401,8 +1413,8 @@ module Crystal
       slash_is_regex!
       next_token_skip_statement_end
       exps = parse_expressions
-      node, end_location = parse_exception_handler exps, begin_location: begin_location
-      if !node.is_a?(ExceptionHandler) && (!node.is_a?(Expressions) || !node.keyword.none?)
+      node, end_location, found_handler = parse_exception_handler exps, begin_location: begin_location
+      if !found_handler && (!node.is_a?(Expressions) || !node.keyword.none?)
         node = Expressions.new([node])
       end
       node.at(begin_location).at_end(end_location)
@@ -1470,9 +1482,9 @@ module Crystal
         ex.implicit = true if implicit
         ex.else_location = else_location
         ex.ensure_location = ensure_location
-        {ex, end_location}
+        {ex, end_location, true}
       else
-        {exp, end_location}
+        {exp, end_location, false}
       end
     end
 
@@ -1642,6 +1654,7 @@ module Crystal
           exp = parse_op_assign
           call.name = "#{call.name}="
           call.args << exp
+          call.at_end(exp)
         end
       else
         # At this point we want to attach the "do" to the next call
@@ -1677,6 +1690,8 @@ module Crystal
             call.name = "#{call.name}="
             call.args = [exp] of ASTNode
           end
+
+          call.at_end(exp)
         else
           call = parse_atomic_method_suffix call, location
 
@@ -1685,6 +1700,7 @@ module Crystal
             exp = parse_op_assign
             call.name = "#{call.name}="
             call.args << exp
+            call.at_end(exp)
           end
         end
 
@@ -1944,7 +1960,7 @@ module Crystal
           next_token_skip_statement_end
           check_not_pipe_before_proc_literal_body
           body = parse_expressions
-          body, end_location = parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
         elsif @token.type.op_lcurly?
           next_token_skip_statement_end
           check_not_pipe_before_proc_literal_body
@@ -2457,6 +2473,33 @@ module Crystal
         case @token.type
         when .string?
           pieces << Piece.new(@token.value.to_s, @token.line_number)
+        when .interpolation_start?
+          line_number = @token.line_number
+          # parse interpolation expression
+          next_token_skip_space_or_newline
+          if @token.type.op_star?
+            unless pieces.empty?
+              raise "splat interpolation must be the only piece in a string array element", @token
+            end
+
+            splat_location = @token.location
+            next_token_skip_space_or_newline
+
+            exp = consume_interpolation(delimiter_state)
+
+            next_string_token(delimiter_state)
+            unless @token.type.space? || @token.type.string_array_end?
+              raise "splat interpolation must be the only piece in a string array element", @token
+            end
+
+            if exp.is_a?(String)
+              exp = StringLiteral.new(exp)
+            end
+
+            return Splat.new(exp).at(splat_location)
+          else
+            pieces << Piece.new(consume_interpolation(delimiter_state), line_number)
+          end
         else
           break
         end
@@ -3831,7 +3874,7 @@ module Crystal
             end
             body = Expressions.from(exps).at(body)
           end
-          body, end_location = parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
         end
       end
 
@@ -4389,6 +4432,12 @@ module Crystal
       end
 
       @wants_regex = false
+      # Some keyword tokens (e.g. `self`, `super`) early-return from the
+      # lexer without resetting `@slash_is_regex`, so it can persist from
+      # an earlier `slash_is_regex!` and make `self/2` or `super/2` lex
+      # as a regex. The atomic we've just parsed is a value, so the next
+      # `/` is always division.
+      slash_is_not_regex!
       next_token
 
       name_followed_by_space = @token.type.space?
@@ -4531,7 +4580,8 @@ module Crystal
 
         raise "block already specified with &" if block
         parse_block2 do |body|
-          parse_exception_handler body, implicit: true
+          body, end_location, _ = parse_exception_handler body, implicit: true
+          {body, end_location}
         end
       else
         parse_curly_block(block)
@@ -5969,7 +6019,7 @@ module Crystal
             next_token
           else
             body = parse_expressions
-            body, end_location = parse_exception_handler body, implicit: true
+            body, end_location, _ = parse_exception_handler body, implicit: true
           end
 
           @fun_nest -= 1
@@ -6340,7 +6390,7 @@ module Crystal
         true
       when Call
         return false if node.has_parentheses?
-        no_args = node.args.empty? && node.named_args.nil? && node.block.nil?
+        no_args = node.args.empty? && node.named_args.nil? && node.block.nil? && node.block_arg.nil?
         return true if Lexer.ident?(node.name) && no_args
         node.name == "[]" && (node.args_in_brackets? || no_args)
       else

@@ -308,7 +308,7 @@ class Crystal::CodeGenVisitor
   # because it was of higher rank
   def codegen_trunc_binary_op_result(t1, t2, result)
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      result = trunc result, llvm_type(t1)
+      trunc result, llvm_type(t1)
     else
       result
     end

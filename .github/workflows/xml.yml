@@ -25,7 +25,7 @@ jobs:
   libssl_test:
     runs-on: ubuntu-latest
     name: "${{ matrix.pkg }}"
-    container: crystallang/crystal:1.20.1-alpine
+    container: crystallang/crystal:1.20.3-alpine
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +40,7 @@ jobs:
             repository: http://dl-cdn.alpinelinux.org/alpine/edge/main
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Uninstall libxml2 and conflicts

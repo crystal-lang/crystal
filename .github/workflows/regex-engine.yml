@@ -29,27 +29,27 @@ jobs:
   pcre:
     runs-on: ubuntu-latest
     name: "PCRE"
-    container: crystallang/crystal:1.20.1-alpine
+    container: crystallang/crystal:1.20.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Remove PCRE2
         run: apk del pcre2-dev
-      - name: Assert using PCRE
-        run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE'
+      - name: Assert not defaulting to PCRE
+        run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE2'
       - name: Show PCRE config
-        run: bin/crystal scripts/print_regex_config.cr
+        run: bin/crystal run -Duse_pcre scripts/print_regex_config.cr
       - name: Run Regex specs
-        run: bin/crystal spec --order=random spec/std/regex*
+        run: bin/crystal spec --order=random spec/std/regex* -Duse_pcre
   pcre2:
     runs-on: ubuntu-latest
     name: "PCRE2"
-    container: crystallang/crystal:1.20.1-alpine
+    container: crystallang/crystal:1.20.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Assert using PCRE2

@@ -465,6 +465,29 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
+      it "accepts media type parameters" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; charset=UTF-8"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not be_nil
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
+      {% unless flag?(:without_iconv) %}
+        it "accepts non-UTF8 media type parameters" do
+          request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; charset=UCS-2LE"}, HTTP::Params.encode({"test" => "foobar"}).encode("UCS-2LE"))
+          request.form_params?.should_not be_nil
+          request.form_params.size.should eq(1)
+          request.form_params["test"].should eq("foobar")
+        end
+      {% end %}
+
+      it "accepts arbitrary media type parameters" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded; baz=qux"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should_not be_nil
+        request.form_params.size.should eq(1)
+        request.form_params["test"].should eq("foobar")
+      end
+
       it "ignores invalid content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should be_nil
@@ -596,6 +619,32 @@ module HTTP
         HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567" , W/"12345678")}).if_match.should eq [%(W/"1234567"), %(W/"12345678")]
         HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567","12345678")}).if_match.should eq [%(W/"1234567"), %("12345678")]
         HTTP::Request.new("GET", "/", HTTP::Headers{"If-Match" => %(W/"1234567" , "12345678")}).if_match.should eq [%(W/"1234567"), %("12345678")]
+      end
+    end
+
+    describe "#replayable?" do
+      it "GET is replayable" do
+        HTTP::Request.new("GET", "/").replayable?.should be_true
+      end
+
+      it "GET with body is not replayable" do
+        HTTP::Request.new("GET", "/", body: "body").replayable?.should be_false
+      end
+
+      it "POST is not replayable" do
+        HTTP::Request.new("POST", "/").replayable?.should be_false
+      end
+
+      it "POST with Idempotency-Key header is replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"Idempotency-Key" => "key"}).replayable?.should be_true
+      end
+
+      it "POST with X-Idempotency-Key header is replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"X-Idempotency-Key" => "key"}).replayable?.should be_true
+      end
+
+      it "POST with body and Idempotency-Key header is not replayable" do
+        HTTP::Request.new("POST", "/", HTTP::Headers{"Idempotency-Key" => "key"}, "body").replayable?.should be_false
       end
     end
   end

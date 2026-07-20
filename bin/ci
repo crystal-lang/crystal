@@ -1,5 +1,7 @@
 #!/bin/sh
 
+: "${CRYSTAL_BOOTSTRAP_VERSION:=1.20.3}"
+
 fail() {
   echo "${*}" >&2
   exit 1
@@ -98,7 +100,7 @@ prepare_system() {
 }
 
 build() {
-  with_build_env 'bin/crystal scripts/print_regex_config.cr'
+  with_build_env 'bin/crystal run scripts/print_regex_config.cr'
   with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
@@ -135,8 +137,8 @@ format() {
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.20.1/crystal-1.20.1-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.20.1-1 crystal;popd'
+  on_osx curl -L "https://github.com/crystal-lang/crystal/releases/download/${CRYSTAL_BOOTSTRAP_VERSION}/crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1-darwin-universal.tar.gz" -o ~/crystal.tar.gz
+  on_osx "pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1 crystal;popd"
 
   # These commands may take a few minutes to run due to the large size of the repositories.
   # This restriction has been made on GitHub's request because updating shallow
@@ -174,8 +176,7 @@ verify_version() {
   # If building a tag, check it matches with file
   FILE_VERSION=$(cat ./src/VERSION)
 
-  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
-  then
+  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]; then
     fail "VERSION ($FILE_VERSION) does not match GIT TAG ($CURRENT_TAG)"
   fi
 }
@@ -189,13 +190,13 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION:-1.20.0}"}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION}"}"
 
   case $ARCH in
-    aarch64|x86_64)
+    aarch64 | x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
-    aarch64-musl|x86_64-musl)
+    aarch64-musl | x86_64-musl)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
@@ -266,7 +267,7 @@ case $command in
   format)
     format
     ;;
-  -h|--help|help)
+  -h | --help | help)
     usage
     ;;
   *)

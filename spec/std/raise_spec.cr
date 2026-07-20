@@ -12,12 +12,10 @@ describe "raise" do
 
   it "shouldn't overwrite the callstack on re-raise" do
     exception_after_reraise = expect_raises Exception, "exception to be rescued" do
-      begin
-        raise "exception to be rescued"
-      rescue exception_on_rescue
-        callstack_on_rescue = exception_on_rescue.callstack
-        raise exception_on_rescue
-      end
+      raise "exception to be rescued"
+    rescue exception_on_rescue
+      callstack_on_rescue = exception_on_rescue.callstack
+      raise exception_on_rescue
     end
     exception_after_reraise.callstack.should_not be_nil
     exception_after_reraise.callstack.should eq(callstack_on_rescue)

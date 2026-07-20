@@ -6,10 +6,6 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  {% if IO.has_constant?(:Evented) %}
-    include IO::Evented
-  {% end %}
-
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   alias Handle = Int32
@@ -238,16 +234,6 @@ module Crystal::System::FileDescriptor
     {% end %}
 
     pipe_fds
-  end
-
-  def self.pread(file, buffer, offset)
-    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
-
-    if bytes_read == -1
-      raise IO::Error.from_errno("Error reading file", target: file)
-    end
-
-    bytes_read
   end
 
   def self.from_stdio(fd)

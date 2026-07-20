@@ -1,4 +1,4 @@
-all:
+all: ##
 
 -include Makefile.local # for optional local options e.g. threads
 
@@ -23,30 +23,28 @@ all:
 
 CRYSTAL ?= crystal## which previous crystal compiler use
 
-release ?=        ## Compile in release mode
-stats ?=          ## Enable statistics output
-progress ?=       ## Enable progress output
-threads ?=        ## Maximum number of threads to use
-debug ?=          ## Add symbolic debug info
-verbose ?=        ## Run specs in verbose mode
-junit_output ?=   ## Path to output junit results
-static ?=         ## Enable static linking
-target ?=         ## Cross-compilation target
-interpreter ?=    ## Enable interpreter feature
-check ?=          ## Enable only check when running format
-order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
-deref_symlinks ?= ## Dereference symbolic links for `make install`
-docs_sanitizer ?= ## Enable sanitization for documentation generation
-sequential_codegen ?=$(if $(filter 0,$(supports_preview_mt)),true,)## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt -Dexecution_context`
+release            ?= ## Compile in release mode
+stats              ?= ## Enable statistics output
+progress           ?= ## Enable progress output
+threads            ?= ## Maximum number of threads to use
+debug              ?= ## Add symbolic debug info
+verbose            ?= ## Run specs in verbose mode
+junit_output       ?= ## Path to output junit results
+static             ?= ## Enable static linking
+target             ?= ## Cross-compilation target
+interpreter        ?= ## Enable interpreter feature
+check              ?= ## Enable only check when running format
+order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
+deref_symlinks     ?= ## Dereference symbolic links for `make install`
+docs_sanitizer     ?= ## Enable sanitization for documentation generation
+sequential_codegen ?= $(if $(filter 0,$(supports_mt)),true,)## Enforce sequential codegen in compiler builds.
 
-O := .build
-SOURCES := $(shell find src -name '*.cr')
+O            := .build
+SOURCES      := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
-MAN1PAGES := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
+MAN1PAGES    := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-# NOTE: USE_PCRE1 is only used for testing compatibility with legacy environments that don't provide libpcre2.
-# Newly built compilers should never be distributed with libpcre to ensure syntax consistency.
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context) $(if $(USE_PCRE1),-Duse_pcre,-Duse_pcre2)
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen), -Dwithout_mt,)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
@@ -69,8 +67,8 @@ ifeq ($(shell $(check_lld)),1)
 endif
 override EXPORTS += \
   CRYSTAL_CONFIG_BUILD_COMMIT="$(CRYSTAL_CONFIG_BUILD_COMMIT)" \
-	CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
-	SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
+  CRYSTAL_CONFIG_PATH=$(CRYSTAL_CONFIG_PATH) \
+  SOURCE_DATE_EPOCH="$(SOURCE_DATE_EPOCH)"
 override EXPORTS_BUILD += \
 	$(EXPORT_CC) \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
@@ -83,30 +81,32 @@ ifeq ($(LLVM_VERSION),)
 	LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 endif
 
-# Crystal versions before 1.8 cannot build a functional compiler with `-Dpreview_mt` (https://github.com/crystal-lang/crystal/pull/16380)
-supports_preview_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
+# FIXME: Crystal docker images before 1.8 can't build a functional compiler
+# with MT because the bundled LLVM version is buggy (roughly LLVM < 15)
+# See https://github.com/crystal-lang/crystal/pull/16380
+supports_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
 
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
-CXXFLAGS += $(if $(debug),-g -O0)
+CXXFLAGS     += $(if $(debug),-g -O0)
 
 # MSYS2 support (native Windows should use `Makefile.win` instead)
 ifeq ($(OS),Windows_NT)
-  EXE := .exe
-  WINDOWS := 1
+EXE     := .exe
+WINDOWS := 1
 else
-  EXE :=
-  WINDOWS :=
+EXE     :=
+WINDOWS :=
 endif
 CRYSTAL_BIN := crystal$(EXE)
 
 DESTDIR ?=
-PREFIX ?= /usr/local
-BINDIR ?= $(PREFIX)/bin
-LIBDIR ?= $(PREFIX)/lib
+PREFIX  ?= /usr/local
+BINDIR  ?= $(PREFIX)/bin
+LIBDIR  ?= $(PREFIX)/lib
 DATADIR ?= $(PREFIX)/share
-DOCDIR ?= $(DATADIR)/doc/crystal
-MANDIR ?= $(DATADIR)/man
+DOCDIR  ?= $(DATADIR)/doc/crystal
+MANDIR  ?= $(DATADIR)/man
 INSTALL ?= /usr/bin/install
 
 ifeq ($(or $(TERM),$(TERM),dumb),dumb)
@@ -123,9 +123,9 @@ ifneq ($(LLVM_VERSION),)
 endif
 
 check_llvm_config = $(eval \
-	check_llvm_config := $(if $(LLVM_VERSION),\
-		$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]),\
-		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt)))\
+	check_llvm_config := $(if $(LLVM_VERSION), \
+	$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]), \
+	$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell cat src/llvm/ext/llvm-versions.txt))) \
 	)
 
 .PHONY: all
@@ -148,6 +148,10 @@ compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
 .PHONY: primitives_spec
 primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
 	$(O)/primitives_spec$(EXE) $(SPEC_FLAGS)
+
+.PHONY: cli_spec
+cli_spec: $(O)/cli_spec$(EXE) ## Run compiler CLI specs
+	$(O)/cli_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: interpreter_spec
 interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
@@ -197,7 +201,15 @@ generate_data: ## Run generator scripts for Unicode, SSL config, ...
 	$(MAKE) -B -f scripts/generate_data.mk
 
 .PHONY: install
-install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
+install: ## Install the crystal compiler package at DESTDIR
+install: install_compiler install_man install_completions
+
+.PHONY: uninstall
+uninstall: ## Uninstall the Crystal compiler package from DESTDIR
+uninstall: uninstall_compiler uninstall_man uninstall_completions
+
+.PHONY: install_compiler
+install_compiler: $(O)/$(CRYSTAL_BIN)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	$(INSTALL) -m 0755 "$(O)/$(CRYSTAL_BIN)" "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
 
@@ -205,11 +217,27 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	cp -R -p $(if $(deref_symlinks),-L,-P) src "$(DESTDIR)$(DATADIR)/crystal/src"
 	rm -rf "$(DESTDIR)$(DATADIR)/crystal/$(LLVM_EXT_OBJ)" # Don't install llvm_ext.o
 
-	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
-	$(INSTALL) -m 644 man/crystal.1.gz "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/licenses/crystal/"
 	$(INSTALL) -m 644 LICENSE "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
+.PHONY: uninstall_compiler
+uninstall_compiler:
+	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
+
+	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
+	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
+
+.PHONY: install_man
+install_man: $(patsubst %.1,%.1.gz,$(MAN1PAGES))
+	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
+	$(INSTALL) -m 644 $^ "$(DESTDIR)$(MANDIR)/man1/"
+
+.PHONY: uninstall_man
+uninstall_man:
+	rm -f $(patsubst man/%,$(DESTDIR)$(MANDIR)/man1/%.gz,$(MAN1PAGES))
+
+.PHONY: install_completions
+install_completions:
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/bash-completion/completions/"
 	$(INSTALL) -m 644 etc/completion.bash "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/zsh/site-functions/"
@@ -217,25 +245,18 @@ install: $(O)/$(CRYSTAL_BIN) man/crystal.1.gz ## Install the compiler at DESTDIR
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/"
 	$(INSTALL) -m 644 etc/completion.fish "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
 
+.PHONY: uninstall_completions
+uninstall_completions:
+	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
+	rm -f "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
+	rm -f "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
+
 ifeq ($(WINDOWS),1)
 .PHONY: install_dlls
 install_dlls: $(O)/$(CRYSTAL_BIN) ## Install the compiler's dependent DLLs at DESTDIR (Windows only)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(BINDIR)/"
 	@ldd $(O)/$(CRYSTAL_BIN) | grep -iv ' => /c/windows/system32' | sed 's/.* => //; s/ (.*//' | xargs -t -i $(INSTALL) -m 0755 '{}' "$(DESTDIR)$(BINDIR)/"
 endif
-
-.PHONY: uninstall
-uninstall: ## Uninstall the compiler from DESTDIR
-	rm -f "$(DESTDIR)$(BINDIR)/$(CRYSTAL_BIN)"
-
-	rm -rf "$(DESTDIR)$(DATADIR)/crystal/src"
-
-	rm -f "$(DESTDIR)$(MANDIR)/man1/crystal.1.gz"
-	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
-
-	rm -f "$(DESTDIR)$(DATADIR)/bash-completion/completions/crystal"
-	rm -f "$(DESTDIR)$(DATADIR)/zsh/site-functions/_crystal"
-	rm -f "$(DESTDIR)$(DATADIR)/fish/vendor_completions.d/crystal.fish"
 
 .PHONY: install_docs
 install_docs: docs ## Install docs at DESTDIR
@@ -268,6 +289,10 @@ $(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCE
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
 
+$(O)/cli_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/cli_spec.cr
+
 $(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@mkdir -p $(O)
@@ -294,14 +319,17 @@ man/%.1: doc/man/%.adoc
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) asciidoctor -a crystal_version=$(CRYSTAL_VERSION) $< -b manpage -o $@
 
 .PHONY: clean
-clean: clean_crystal ## Clean up built directories and files
+clean: clean_crystal clean_man ## Clean up built directories and files
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf man/*.gz
 
 .PHONY: clean_crystal
 clean_crystal: ## Clean up crystal built files
 	rm -rf $(O)
 	rm -rf ./docs
+
+.PHONY: clean_man
+clean_man:
+	rm -rf ./man
 
 .PHONY: clean_cache
 clean_cache: ## Clean up CRYSTAL_CACHE_DIR files
@@ -312,12 +340,12 @@ help: ## Show this help
 	@echo
 	@printf '\033[34mtargets:\033[0m\n'
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
+		sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@printf '\033[34moptional variables:\033[0m\n'
 	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
+		sort | \
 		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@printf '\033[34mrecipes:\033[0m\n'
