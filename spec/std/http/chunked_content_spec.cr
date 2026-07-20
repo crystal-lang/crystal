@@ -190,6 +190,15 @@ describe HTTP::ChunkedContent do
         chunked.gets
       end
     end
+
+    it "fails on invalid trailer" do
+      mem = IO::Memory.new("0\r\nFoo\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises IO::Error, "Invalid HTTP chunked content: invalid trailer" do
+        chunked.gets
+      end
+    end
   end
 
   describe "long trailer part" do

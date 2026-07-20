@@ -225,6 +225,7 @@ module HTTP
         end
 
         key, value = HTTP.parse_header(line)
+        raise IO::Error.new("Invalid HTTP chunked content: invalid trailer") unless key.present?
         break unless headers.add?(key, value)
       end
     end
