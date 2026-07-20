@@ -348,9 +348,8 @@ class IO::FileDescriptor < IO
   private def unbuffered_close : Nil
     return if @closed
 
-    # Set before the @closed state so the pending
-    # IO::Evented readers and writers can be cancelled
-    # knowing the IO is in a closed state.
+    # Set before the @closed state so pending readers and writers can be
+    # cancelled knowing the IO is in a closed state.
     @closed = true
 
     if @fd_lock.try_close? { event_loop.shutdown(self) }

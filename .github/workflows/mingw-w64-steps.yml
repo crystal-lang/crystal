@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           msystem: ${{ inputs.msystem }}
           install: >-
@@ -40,7 +40,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -53,7 +53,7 @@ jobs:
         run: make install install_dlls deref_symlinks=1 PREFIX="$(pwd)/crystal"
 
       - name: Download shards release
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: crystal-lang/shards
           ref: v0.20.0
@@ -84,7 +84,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           msystem: ${{ inputs.msystem }}
           install: >-
@@ -99,7 +99,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -115,7 +115,7 @@ jobs:
     steps:
       - name: Setup MSYS2
         id: msys2
-        uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
           msystem: ${{ inputs.msystem }}
           install: >-
@@ -130,7 +130,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -162,3 +162,9 @@ jobs:
           make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
         env:
           SPEC_FLAGS: --tag=~external_commands # skip exec_external_command spec because it doesn't work with this setup
+
+      - name: Run CLI specs
+        shell: msys2 {0}
+        run: |
+          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
+          make -o .build/crystal.exe cli_spec # we know the compiler is fresh; do not rebuild it here

@@ -34,6 +34,8 @@
       LIBRESSL_VERSION = "0.0.0"
       OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
+
+    VERSION_MAJOR = {{ ssl_version.gsub(/[^0-9].*/, "") }}
   end
 {% end %}
 
@@ -45,8 +47,7 @@
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
-  @[Link(dll: "libcrypto-3-x64.dll")]
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-x64.dll" }})]
 {% end %}
 lib LibCrypto
   alias Char = LibC::Char

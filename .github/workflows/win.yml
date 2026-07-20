@@ -16,7 +16,7 @@ env:
 
 jobs:
   x86_64-windows-libs:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -26,13 +26,13 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Cache libraries
         id: cache-libs
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre2-8.lib
@@ -47,7 +47,7 @@ jobs:
           key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Set up Cygwin
         if: steps.cache-libs.outputs.cache-hit != 'true'
-        uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
+        uses: cygwin/cygwin-install-action@3f0a3f9f988f7e96b8c18098ae05eaec175f5b52 # v6
         with:
           packages: make
           install-dir: C:\cygwin64
@@ -79,7 +79,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             libs/crypto.lib
@@ -94,7 +94,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0
 
   x86_64-windows-dlls:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -104,13 +104,13 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Cache libraries
         id: cache-dlls
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: | # openssl and llvm take much longer to build so they are cached separately
             libs/pcre2-8-dynamic.lib
@@ -132,7 +132,7 @@ jobs:
           key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
       - name: Set up Cygwin
         if: steps.cache-dlls.outputs.cache-hit != 'true'
-        uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a # v6
+        uses: cygwin/cygwin-install-action@3f0a3f9f988f7e96b8c18098ae05eaec175f5b52 # v6
         with:
           packages: make
           install-dir: C:\cygwin64
@@ -164,7 +164,7 @@ jobs:
 
       - name: Cache OpenSSL
         id: cache-openssl-dlls
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -180,7 +180,7 @@ jobs:
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.4.1 -Dynamic
 
   x86_64-windows-llvm-dlls:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -190,13 +190,13 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Cache LLVM
         id: cache-llvm-dlls
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             libs/llvm_VERSION
@@ -217,7 +217,7 @@ jobs:
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
   x86_64-windows-test:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -228,7 +228,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -258,20 +258,22 @@ jobs:
       - name: Run primitives specs
         run: make -f Makefile.win -o .build\crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
 
+      - name: Run CLI specs
+        run: make -f Makefile.win cli_spec
+
       - name: Build samples
         run: make -f Makefile.win samples
 
   test-std:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     strategy:
       fail-fast: false
       matrix:
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
-            workers: 4
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+
     steps:
       - name: Disable CRLF line ending substitution
         run: git config --global core.autocrlf false
@@ -280,7 +282,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -299,12 +301,12 @@ jobs:
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=${{ env.CI_LLVM_LDFLAGS }}"
 
       - name: Test
-        run: make -f Makefile.win std_spec FLAGS="${{ matrix.opts.flags }}"
+        run: make -f Makefile.win std_spec FLAGS="${{ matrix.opts.flags || '' }}"
         env:
           CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}
 
   x86_64-windows-test-interpreter:
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -312,7 +314,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -338,7 +340,7 @@ jobs:
 
   x86_64-windows-installer:
     if: github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/'))
-    runs-on: windows-2025
+    runs-on: windows-2025-vs2026
     needs: [x86_64-windows-release]
     steps:
       - name: Disable CRLF line ending substitution
@@ -346,7 +348,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -358,7 +360,7 @@ jobs:
 
       - name: Set up Inno Setup
         run: |
-          Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe -OutFile C:\is.exe
+          Invoke-WebRequest -Uri https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe -OutFile C:\is.exe
           C:\is.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
 
       - name: Set up environment

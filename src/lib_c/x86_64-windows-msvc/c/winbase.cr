@@ -85,4 +85,9 @@ lib LibC
   fun LookupAccountSidW(lpSystemName : LPWSTR, sid : SID*, name : LPWSTR, cchName : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
 
   fun GetProcessAffinityMask(hProcess : HANDLE, lpProcessAffinityMask : DWORD_PTR*, lpSystemAffinityMask : DWORD_PTR*) : BOOL
+
+  alias WAITORTIMERCALLBACK = (Void*, BOOLEAN) ->
+
+  fun RegisterWaitForSingleObject(phNewWaitObject : HANDLE*, hObject : HANDLE, callback : WAITORTIMERCALLBACK, context : Void*, dwMilliseconds : ULong, dwFlags : ULong) : BOOL
+  fun UnregisterWaitEx(waitHandle : HANDLE, completionEvent : HANDLE) : BOOL
 end

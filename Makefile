@@ -37,14 +37,14 @@ check              ?= ## Enable only check when running format
 order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
 deref_symlinks     ?= ## Dereference symbolic links for `make install`
 docs_sanitizer     ?= ## Enable sanitization for documentation generation
-sequential_codegen ?= $(if $(filter 0,$(supports_preview_mt)),true,)## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt -Dexecution_context`
+sequential_codegen ?= $(if $(filter 0,$(supports_mt)),true,)## Enforce sequential codegen in compiler builds.
 
 O            := .build
 SOURCES      := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 MAN1PAGES    := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context )
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen), -Dwithout_mt,)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
@@ -81,8 +81,10 @@ ifeq ($(LLVM_VERSION),)
 	LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 endif
 
-# Crystal versions before 1.8 cannot build a functional compiler with `-Dpreview_mt` (https://github.com/crystal-lang/crystal/pull/16380)
-supports_preview_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
+# FIXME: Crystal docker images before 1.8 can't build a functional compiler
+# with MT because the bundled LLVM version is buggy (roughly LLVM < 15)
+# See https://github.com/crystal-lang/crystal/pull/16380
+supports_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
 
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
@@ -146,6 +148,10 @@ compiler_spec: $(O)/compiler_spec$(EXE) ## Run compiler specs
 .PHONY: primitives_spec
 primitives_spec: $(O)/primitives_spec$(EXE) ## Run primitives specs
 	$(O)/primitives_spec$(EXE) $(SPEC_FLAGS)
+
+.PHONY: cli_spec
+cli_spec: $(O)/cli_spec$(EXE) ## Run compiler CLI specs
+	$(O)/cli_spec$(EXE) $(SPEC_FLAGS)
 
 .PHONY: interpreter_spec
 interpreter_spec: $(O)/interpreter_spec$(EXE) ## Run interpreter specs
@@ -282,6 +288,10 @@ $(O)/compiler_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 $(O)/primitives_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
 	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/primitives_spec.cr
+
+$(O)/cli_spec$(EXE): $(O)/$(CRYSTAL_BIN) $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o $@ spec/cli_spec.cr
 
 $(O)/interpreter_spec$(EXE): $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)

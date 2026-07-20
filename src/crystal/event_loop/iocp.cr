@@ -23,6 +23,47 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     true
   end
 
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    # Creates a global IOCP instance, then forwards the completion events to their
+    # original instance (through a dedicated thread), because:
+    #
+    # We can't associate an OVERLAPPED operation to an IOCP instance.
+    # We can only assign a FILE or SOCKET to a single IOCP for its whole lifetime.
+    # Each EventLoop can only receive completion events for its execution context.
+    #
+    # WARNING: the global IOCP instance MUST only receive completion events for
+    # OVERLAPPED operations on FILE and SOCKET handles. Other completion events
+    # must be sent to the local IOCP instances.
+    @@global = System::IOCP.new
+
+    def self.start_forwarder_thread : Nil
+      Thread.new("IOCP") do
+        buffer = uninitialized LibC::OVERLAPPED_ENTRY[64]
+
+        while true
+          ret = LibC.GetQueuedCompletionStatusEx(@@global.handle, buffer, buffer.size, out removed, LibC::INFINITE, 0)
+          System.panic("GetQueuedCompletionStatusEx", WinError.value) if ret == 0
+
+          overlapped_entry = buffer.to_unsafe
+          removed.times do
+            overlapped = overlapped_entry.value.lpOverlapped
+            operation = System::IOCP::OverlappedOperation.unbox(overlapped)
+
+            ret = LibC.PostQueuedCompletionStatus(
+              operation.iocp_handle,
+              overlapped_entry.value.dwNumberOfBytesTransferred,
+              overlapped_entry.value.lpCompletionKey,
+              overlapped,
+            )
+            System.panic "PostQueuedCompletionStatus", WinError.value if ret == 0
+
+            overlapped_entry += 1
+          end
+        end
+      end
+    end
+  {% end %}
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
@@ -31,7 +72,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     @timers_mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
-    # the completion port
+    # the local completion port
     @iocp = System::IOCP.new
 
     # custom completion to interrupt a blocking run
@@ -48,13 +89,18 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  # Returns the base IO Completion Port.
   def iocp_handle : LibC::HANDLE
     @iocp.handle
   end
 
   def create_completion_port(handle : LibC::HANDLE) : LibC::HANDLE
-    iocp = LibC.CreateIoCompletionPort(handle, @iocp.handle, nil, 0)
+    iocp_handle =
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        @@global.handle
+      {% else %}
+        @iocp.handle
+      {% end %}
+    iocp = LibC.CreateIoCompletionPort(handle, iocp_handle, nil, 0)
     raise IO::Error.from_winerror("CreateIoCompletionPort") if iocp.null?
 
     # all overlapped operations may finish synchronously, in which case we do
@@ -80,7 +126,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     enqueued
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # thread unsafe
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       run_impl(blocking) { |fiber| queue.value.push(fiber) }
@@ -153,9 +199,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
       System::IOCP::CompletionKey.unregister(completion_key)
 
-      if completion_key.valid?(overlapped_entry.value.dwNumberOfBytesTransferred)
-        completion_key.reset_fiber?
-      end
+      completion_key.reset_fiber?
     end
   end
 
@@ -305,7 +349,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+    System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -315,8 +359,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::System::IOCP#wait_readable(FileDescriptor)")
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "ReadFile", file_descriptor.read_timeout, offset: offset) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i32
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    bytes_written = System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    bytes_written = System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       overlapped.offset = UInt64::MAX if file_descriptor.system_append?
 
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
@@ -373,7 +424,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
       {ret, bytes_received}
@@ -392,7 +443,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+    bytes = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
       ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -409,7 +460,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(slice)
-    bytes_written = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+    bytes_written = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -435,7 +486,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     wsabuf = wsa_buffer(slice)
 
     flags = 0_u32
-    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
       ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
       {ret, bytes_received}
     end
@@ -444,44 +495,98 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
-    socket.overlapped_connect(socket.fd, "ConnectEx", timeout) do |overlapped|
+    System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
+      result = System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, operation.to_unsafe)
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .wsaeaddrnotavail?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        else
+          return ::Socket::Error.from_os_error("ConnectEx", error)
+        end
+      else
+        return nil
+      end
+
+      operation.wait_for_result(timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaeconnrefused?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        when .error_operation_aborted?
+          # FIXME: Not sure why this is necessary
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        end
+      end
+
+      nil
     end
   end
 
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
-    socket.system_accept do |client_handle|
-      address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
+    client_handle, blocking = self.socket(socket.family, socket.type, socket.protocol, nil)
+    socket.initialize_handle(client_handle)
 
-      # buffer_size is set to zero to only accept the connection and don't receive any data.
-      # That will be a different operation.
-      #
-      # > If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation.
-      # > Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data.
-      #
-      # TODO: Investigate benefits from receiving data here directly. It's hard to integrate into the event loop and socket API.
-      buffer_size = 0
-      output_buffer = Bytes.new(address_size * 2 + buffer_size)
+    address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 
-      success = socket.overlapped_accept(socket.fd, "AcceptEx") do |overlapped|
-        # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
-        received_bytes = uninitialized UInt32
-        Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
-          output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
-      end
+    # buffer_size is set to zero to only accept the connection (2 addresses) and
+    # not receive any data (out of scope)
+    buffer_size = 0
+    output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
-      if success
-        # AcceptEx does not automatically set the socket options on the accepted
-        # socket to match those of the listening socket, we need to ask for that
-        # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+    success = overlapped_accept(socket) do |overlapped|
+      # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
+      received_bytes = uninitialized UInt32
+      Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
+        output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
+        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes),
+        overlapped.to_unsafe)
+    end
 
-        true
+    if success
+      # AcceptEx does not automatically set the socket options on the accepted
+      # socket to match those of the listening socket, we need to ask for that
+      # explicitly with SO_UPDATE_ACCEPT_CONTEXT
+      System::Socket.setsockopt(client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd)
+      {client_handle, blocking}
+    else
+      LibC.closesocket(client_handle)
+      nil
+    end
+  end
+
+  private def overlapped_accept(socket, &)
+    System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
+      result = yield operation
+
+      if result == 0
+        case WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        else
+          return false
+        end
       else
-        false
+        return true
       end
+
+      operation.wait_for_result(socket.read_timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaenotsock?
+          return false
+        when .error_operation_aborted?
+          # if the socket is closed then accept was aborted by an explicit
+          # shutdown before close, otherwise we manually canceled because of a
+          # timeout
+          return false if socket.closed?
+          raise IO::TimeoutError.new("AcceptEx timed out (overlapped_accept)")
+        end
+      end
+
+      true
     end
   end
 
@@ -490,7 +595,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # can't send more than 2,147,483,646 bytes at once
     len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
 
-    Crystal::System::IOCP::WSAOverlappedOperation.run(socket.fd) do |operation|
+    Crystal::System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
       operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
       operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
 

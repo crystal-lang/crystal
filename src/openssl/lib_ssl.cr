@@ -40,6 +40,8 @@ require "./lib_crypto"
       LIBRESSL_VERSION = "0.0.0"
       OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
+
+    VERSION_MAJOR = {{ ssl_version.gsub(/[^0-9].*/, "") }}
   end
 {% end %}
 
@@ -52,9 +54,8 @@ require "./lib_crypto"
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
-  @[Link(dll: "libssl-3-x64.dll")]
-  @[Link(dll: "libcrypto-3-x64.dll")]
+  @[Link(dll: {{ "libssl-#{LibSSL::VERSION_MAJOR.id}-x64.dll" }})]
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-x64.dll" }})]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int

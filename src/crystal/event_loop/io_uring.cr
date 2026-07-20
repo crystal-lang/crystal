@@ -54,7 +54,7 @@ require "c/sys/socket"
 require "./io_uring/*"
 require "./timers"
 
-{% if flag?(:execution_context) %}
+{% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
   # Each scheduler has its own ring, so we can avoid mutexes around the
   # submission queue for example (Linux 6.13+) and otherwise try to make sure
   # the lock is only slightly contented.
@@ -84,7 +84,7 @@ require "./timers"
   end
 {% end %}
 
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   # We must cancel pending R/W operations before we close the fd:
   #
   # 1. Closing a fd doesn't interrupt pending reads and writes in the linux
@@ -195,7 +195,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @main_ring : Ring
   @tick = Atomic(UInt32).new(0_u32)
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # compiler can't type the ivar and fails to notice that it's always
     # initialized properly because of the compile time flag
     @rings = uninitialized Array(Ring?)
@@ -205,7 +205,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @main_ring = self.class.create_ring
     @timers = Timers(Event).new
 
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       @rings = Array(Ring?).new(parallelism) { nil }
       @rings[0] = @main_ring
     {% end %}
@@ -214,13 +214,13 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @mutex = Thread::Mutex.new
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
     end
   {% end %}
 
   private def ring : Ring
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext::Scheduler.current.__evloop_ring
     {% else %}
       @main_ring
@@ -228,7 +228,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   private def ring? : Ring?
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext::Scheduler.current?.try(&.__evloop_ring?)
     {% else %}
       @main_ring
@@ -246,7 +246,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     enqueued
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     def run(queue : Fiber::List*, blocking : Bool) : Nil
       system_run(blocking) { |fiber| queue.value.push(fiber) }
     end
@@ -322,7 +322,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     Crystal.trace :evloop, "run", blocking: blocking
     enqueued = 0
 
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       # dereference @rings once (it may be replaced in parallel)
       rings = @rings
 
@@ -474,7 +474,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   private def interrupt_impl : Bool
     # search a waiting ring to wakeup
     waiting_ring =
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         @rings.find(&.try(&.waiting?))
       {% else %}
         @main_ring
@@ -600,8 +600,12 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def read(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
+    pread(file_descriptor, slice, offset: -1)
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
     before_suspend =
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         file_descriptor.__evloop_reader = ring
         -> {
           if file_descriptor.closed? && file_descriptor.__evloop_reader?
@@ -612,7 +616,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         nil
       {% end %}
 
-    async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout, before_suspend) do |errno|
+    async_rw(LibC::IORING_OP_READ, file_descriptor, slice, file_descriptor.@read_timeout, before_suspend, offset) do |errno|
       case errno
       when Errno::ECANCELED
         raise IO::TimeoutError.new("Read timed out")
@@ -623,7 +627,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       end
     end
   ensure
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       file_descriptor.__evloop_reader = nil
     {% end %}
   end
@@ -634,7 +638,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def write(file_descriptor : System::FileDescriptor, slice : Bytes) : Int32
     before_suspend =
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         file_descriptor.__evloop_writer = ring
         -> {
           if file_descriptor.closed? && file_descriptor.__evloop_writer?
@@ -656,7 +660,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       end
     end
   ensure
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       file_descriptor.__evloop_writer = nil
     {% end %}
   end
@@ -670,7 +674,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   def shutdown(file_descriptor : System::FileDescriptor) : Nil
-    {% if flag?(:preview_mt) %}
+    {% if !flag?(:without_mt) %}
       if reader_ring = file_descriptor.__evloop_reader?
         cancel(file_descriptor.fd, ring: reader_ring)
       end
@@ -941,11 +945,11 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     end
   end
 
-  private def async_rw(opcode, io, slice, timeout, before_suspend = nil, &)
+  private def async_rw(opcode, io, slice, timeout, before_suspend = nil, offset = -1, &)
     loop do
       res = async(opcode, timeout, before_suspend) do |sqe|
         sqe.value.fd = io.fd
-        sqe.value.off = -1
+        sqe.value.off = offset
         sqe.value.addr = slice.to_unsafe.address.to_u64!
         sqe.value.len = slice.size
       end

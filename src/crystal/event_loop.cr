@@ -14,7 +14,7 @@ abstract class Crystal::EventLoop
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
-      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
         Crystal::EventLoop::Kqueue
       {% else %}
         Crystal::EventLoop::LibEvent
@@ -46,7 +46,7 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current : self
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext.current.event_loop
     {% else %}
       Crystal::Scheduler.event_loop
@@ -55,7 +55,7 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current? : self | Nil
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext.current?.try(&.event_loop)
     {% else %}
       Crystal::Scheduler.event_loop?
@@ -73,7 +73,7 @@ abstract class Crystal::EventLoop
   # events.
   abstract def run(blocking : Bool) : Bool
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # Same as `#run` but collects runnable fibers into *queue* instead of
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
@@ -166,7 +166,7 @@ end
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
-  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
     require "./event_loop/kqueue"
   {% else %}
     require "./event_loop/libevent"

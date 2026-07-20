@@ -43,11 +43,13 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
 
     # This is a workaround to ensure the "before" fiber
     # is unscheduled. Otherwise it might stay alive running the event loop
-    spawn(same_thread: !{{flag?(:execution_context)}}) do
+    {% begin %}
+    spawn({% if flag?(:preview_mt) && !flag?(:execution_context) %}same_thread: true{% end %}) do
       while x.get != 2
         Fiber.yield
       end
     end
+    {% end %}
 
     before.call
     x.set(2)

@@ -51,7 +51,7 @@ jobs:
     name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -69,7 +69,7 @@ jobs:
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.20.2"
+          crystal: "1.20.3"
 
       - name: Build libllvm_ext
         run: make -B deps

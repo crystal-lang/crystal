@@ -19,7 +19,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
       super
 
