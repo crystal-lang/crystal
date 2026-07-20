@@ -15,10 +15,10 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.20.2-build
+      image: crystallang/crystal:1.20.3-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -28,10 +28,10 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.20.2-build
+      image: crystallang/crystal:1.20.3-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -49,14 +49,14 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.20.2-build
+      image: crystallang/crystal:1.20.3-build
     strategy:
       fail-fast: false
       matrix:
         part: [0, 1, 2, 3]
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -76,10 +76,10 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.20.2-build
+      image: crystallang/crystal:1.20.3-build
     name: "Test primitives_spec with interpreter"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

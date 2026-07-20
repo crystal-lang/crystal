@@ -108,7 +108,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
       @timers_lock = SpinLock.new
@@ -117,17 +117,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # thread unsafe
   def run(blocking : Bool) : Bool
-    system_run(blocking) do |fiber|
-      {% if flag?(:execution_context) %}
-        fiber.execution_context.enqueue(fiber)
-      {% else %}
-        Crystal::Scheduler.enqueue(fiber)
-      {% end %}
-    end
+    system_run(blocking, &.enqueue)
     true
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
@@ -201,6 +195,20 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       end
     else
       size.to_i32
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    loop do
+      size = LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+      return size.to_i32 unless size == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(file_descriptor, file_descriptor.@read_timeout)
+        check_open(file_descriptor)
+      else
+        raise IO::Error.from_errno("pread", target: file_descriptor)
+      end
     end
   end
 
@@ -465,23 +473,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.@writers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.remove(io.fd)

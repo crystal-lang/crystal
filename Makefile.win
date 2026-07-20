@@ -1,4 +1,4 @@
-all:
+all: ##
 
 -include Makefile.win.local # for optional local options e.g. threads
 
@@ -23,70 +23,70 @@ all:
 
 CRYSTAL ?= crystal ## which previous crystal compiler use
 
-release ?=        ## Compile in release mode
-stats ?=          ## Enable statistics output
-progress ?=       ## Enable progress output
-threads ?=        ## Maximum number of threads to use
-debug ?=          ## Add symbolic debug info
-verbose ?=        ## Run specs in verbose mode
-junit_output ?=   ## Path to output junit results
-static ?=         ## Enable static linking
-target ?=         ## Cross-compilation target
-interpreter ?=    ## Enable interpreter feature
-check ?=          ## Enable only check when running format
-order ?=random    ## Enable order for spec execution (values: "default" | "random" | seed number)
-docs_sanitizer ?= ## Enable sanitization for documentation generation
-sequential_codegen ?= ## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt`
+release            ?= ## Compile in release mode
+stats              ?= ## Enable statistics output
+progress           ?= ## Enable progress output
+threads            ?= ## Maximum number of threads to use
+debug              ?= ## Add symbolic debug info
+verbose            ?= ## Run specs in verbose mode
+junit_output       ?= ## Path to output junit results
+static             ?= ## Enable static linking
+target             ?= ## Cross-compilation target
+interpreter        ?= ## Enable interpreter feature
+check              ?= ## Enable only check when running format
+order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
+docs_sanitizer     ?= ## Enable sanitization for documentation generation
+sequential_codegen ?= ## Enforce sequential codegen in compiler builds.
 
 MAKEFLAGS += --no-builtin-rules
 .SUFFIXES:
 
 SHELL := cmd.exe
-CXX := cl.exe
-RC := rc.exe
+CXX   := cl.exe
+RC    := rc.exe
 
-GLOB = $(shell dir $1 /B /S)
-MKDIR = if not exist $1 mkdir $1
-CP = copy /B /Y $1 $2
-CPDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
-INSTALL = copy /B /Y $1 $2
+GLOB       = $(shell dir $1 /B /S)
+MKDIR      = if not exist $1 mkdir $1
+CP         = copy /B /Y $1 $2
+CPDIR      = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
+INSTALL    = copy /B /Y $1 $2
 INSTALLDIR = robocopy /E /NJH /NJS /NS /NC /NP $1 $2 & if %%ERRORLEVEL%% GEQ 8 exit /B 1
-MV = move /Y $1 $2
-RM = if exist $1 del /F /Q $1
-RMDIR = if exist $1 rd /S /Q $1
+MV         = move /Y $1 $2
+RM         = if exist $1 del /F /Q $1
+RMDIR      = if exist $1 rd /S /Q $1
 
-O := .build
-SOURCES := $(call GLOB,src\\*.cr)
+O            := .build
+SOURCES      := $(call GLOB,src\\*.cr)
 SPEC_SOURCES := $(call GLOB,spec\\*.cr)
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context )
-SPEC_WARNINGS_OFF := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives --exclude-warnings src\float\printer
-SPEC_FLAGS := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen), -Dwithout_mt,)
+SPEC_WARNINGS_OFF           := --exclude-warnings spec\std --exclude-warnings spec\compiler --exclude-warnings spec\primitives --exclude-warnings src\float\printer
+SPEC_FLAGS                  := $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := $$ORIGIN\lib
 CRYSTAL_CONFIG_BUILD_COMMIT := $(shell git rev-parse --short HEAD)
-CRYSTAL_CONFIG_PATH := $$ORIGIN\src
+CRYSTAL_CONFIG_PATH         := $$ORIGIN\src
 ifndef CRYSTAL_VERSION
 	CRYSTAL_VERSION := $(shell type src\VERSION)
 endif
 ifndef SOURCE_DATE_EPOCH
 	SOURCE_DATE_EPOCH := $(or $(shell type src\SOURCE_DATE_EPOCH 2>NUL),$(shell git show -s --format=%ct HEAD))
 endif
-export_vars = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
+export_vars       = $(eval export CRYSTAL_CONFIG_BUILD_COMMIT CRYSTAL_CONFIG_PATH SOURCE_DATE_EPOCH)
 export_build_vars = $(eval export CRYSTAL_CONFIG_LIBRARY_PATH)
 
 ifeq ($(LLVM_VERSION),)
-  LLVM_CONFIG ?=
-  LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version))
+LLVM_CONFIG  ?=
+LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version))
 endif
 
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
-CXXFLAGS += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
+CXXFLAGS     += $(if $(static),$(if $(debug),/MTd /Od ,/MT ),$(if $(debug),/MDd /Od ,/MD ))
 
-prefix ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
-BINDIR ?= $(prefix)
-LIBDIR ?= $(prefix)\lib
-SRCDIR ?= $(prefix)\src
+prefix  ?= $(or $(ProgramW6432),$(ProgramFiles))\crystal
+BINDIR  ?= $(prefix)
+LIBDIR  ?= $(prefix)\lib
+SRCDIR  ?= $(prefix)\src
 DATADIR ?= $(prefix)
 
 colorize = $(info $1)
@@ -99,9 +99,9 @@ ifneq ($(LLVM_VERSION),)
 endif
 
 check_llvm_config = $(eval \
-	check_llvm_config := $(if $(LLVM_VERSION),\
-		$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]),\
-		$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell type src\llvm\ext\llvm-versions.txt)))\
+	check_llvm_config := $(if $(LLVM_VERSION), \
+	$(call colorize,Using $(or $(LLVM_CONFIG),externally configured LLVM) [version=$(LLVM_VERSION)]), \
+	$(error "Could not locate compatible llvm-config, make sure it is installed and in your PATH, or set LLVM_VERSION / LLVM_CONFIG. Compatible versions: $(shell type src\llvm\ext\llvm-versions.txt))) \
 	)
 
 .PHONY: all
@@ -124,6 +124,10 @@ compiler_spec: $(O)\compiler_spec.exe ## Run compiler specs
 .PHONY: primitives_spec
 primitives_spec: $(O)\primitives_spec.exe ## Run primitives specs
 	$(O)\primitives_spec $(SPEC_FLAGS)
+
+.PHONY: cli_spec
+cli_spec: $(O)\cli_spec.exe ## Run compiler CLI specs
+	$(O)\cli_spec $(SPEC_FLAGS)
 
 .PHONY: interpreter_spec
 interpreter_spec: $(O)\interpreter_spec ## Run interpreter specs
@@ -221,6 +225,10 @@ $(O)\primitives_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	@$(call MKDIR,"$(O)")
 	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\primitives_spec.cr
 
+$(O)\cli_spec.exe: $(O)\crystal.exe $(DEPS) $(SOURCES) $(SPEC_SOURCES)
+	@$(call MKDIR,"$(O)")
+	.\bin\crystal build $(FLAGS) $(SPEC_WARNINGS_OFF) -o "$@" spec\cli_spec.cr
+
 $(O)\interpreter_spec: $(DEPS) $(SOURCES) $(SPEC_SOURCES)
 	$(eval interpreter=1)
 	@$(call MKDIR, "$(O)")
@@ -272,71 +280,71 @@ rc: ## Write compiler resource script to standard output
 	$(eval source_year := $(firstword $(subst -, ,$(source_date))))
 	$(eval ver_full := $(CRYSTAL_VERSION)$(if $(CRYSTAL_CONFIG_BUILD_COMMIT), [$(CRYSTAL_CONFIG_BUILD_COMMIT)])$(if $(source_date), ($(source_date))))
 	@setlocal EnableDelayedExpansion &\
-	echo #include ^<windows.h^>&\
-	echo.&\
-	set "_dir=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))" &\
-	echo 1 ICON ^"!_dir:/=\\!src\\compiler\\crystal\\tools\\playground\\public\\favicon.ico^"&\
-	echo.&\
-	echo VS_VERSION_INFO VERSIONINFO&\
-	echo     PRODUCTVERSION $(ver_comma),0&\
-	echo     FILEVERSION    $(ver_comma),1&\
-	echo     FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK&\
-	echo     FILEFLAGS      $(if $(findstring -dev,$(CRYSTAL_VERSION)),VS_FF_PRERELEASE,0)&\
-	echo     FILEOS         VOS_NT_WINDOWS32&\
-	echo     FILETYPE       VFT_APP&\
-	echo     FILESUBTYPE    VFT2_UNKNOWN&\
-	echo BEGIN&\
-	echo     BLOCK "StringFileInfo"&\
-	echo     BEGIN&\
-	echo         BLOCK "040904B0"&\
-	echo         BEGIN&\
-	echo             VALUE "ProductName",      "Crystal"&\
-	echo             VALUE "ProductVersion",   "$(ver_full)"&\
-	echo             VALUE "FileVersion",      "$(ver_full)"&\
-	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"&\
-	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"&\
-	echo             VALUE "InternalName",     "crystal.exe"&\
-	echo             VALUE "OriginalFilename", "crystal.exe"&\
-	echo             VALUE "CompanyName",      "Manas Technology Solutions"&\
-	echo             VALUE "LegalCopyright",   "Copyright 2012-$(source_year) Manas Technology Solutions"&\
-	echo         END&\
-	echo     END&\
-	echo     BLOCK "VarFileInfo"&\
-	echo     BEGIN&\
-	echo         VALUE "Translation", 0x0409, 0x04B0&\
-	echo     END&\
+	echo #include ^<windows.h^>& \
+	echo.& \
+	set "_dir=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))" & \
+	echo 1 ICON ^"!_dir:/=\\!src\\compiler\\crystal\\tools\\playground\\public\\favicon.ico^"& \
+	echo.& \
+	echo VS_VERSION_INFO VERSIONINFO& \
+	echo     PRODUCTVERSION $(ver_comma),0& \
+	echo     FILEVERSION    $(ver_comma),1& \
+	echo     FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK& \
+	echo     FILEFLAGS      $(if $(findstring -dev,$(CRYSTAL_VERSION)),VS_FF_PRERELEASE,0)& \
+	echo     FILEOS         VOS_NT_WINDOWS32& \
+	echo     FILETYPE       VFT_APP& \
+	echo     FILESUBTYPE    VFT2_UNKNOWN& \
+	echo BEGIN& \
+	echo     BLOCK "StringFileInfo"& \
+	echo     BEGIN& \
+	echo         BLOCK "040904B0"& \
+	echo         BEGIN& \
+	echo             VALUE "ProductName",      "Crystal"& \
+	echo             VALUE "ProductVersion",   "$(ver_full)"& \
+	echo             VALUE "FileVersion",      "$(ver_full)"& \
+	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"& \
+	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"& \
+	echo             VALUE "InternalName",     "crystal.exe"& \
+	echo             VALUE "OriginalFilename", "crystal.exe"& \
+	echo             VALUE "CompanyName",      "Manas Technology Solutions"& \
+	echo             VALUE "LegalCopyright",   "Copyright 2012-$(source_year) Manas Technology Solutions"& \
+	echo         END& \
+	echo     END& \
+	echo     BLOCK "VarFileInfo"& \
+	echo     BEGIN& \
+	echo         VALUE "Translation", 0x0409, 0x04B0& \
+	echo     END& \
 	echo END
 
 .PHONY: help
 help: ## Show this help
 	@setlocal EnableDelayedExpansion &\
-	echo. &\
-	echo targets: &\
-	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do (\
-		if not "%%h" == "" (\
-			set "_line=%%g                " &\
-			set "_rest=%%h" &\
-			set "_comment=!_rest:* ## =!" &\
-			if not "!_comment!" == "!_rest!"\
-				if "!_line:_rest=!" == "!_line!"\
-					echo   !_line:~0,16!!_comment!\
-		)\
-	)) &\
-	echo. &\
-	echo optional variables: &\
-	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do (\
-		if not "%%h" == "" (\
-			set "_var=%%g              " &\
-			echo   !_var:~0,14! %%h\
-		)\
-	)) &\
-	echo. &\
-	echo recipes: &\
-	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do (\
-		set "_line=%%g" &\
-		if "!_line:~0,7!" == "##   $$ " (\
-			echo !_name! &\
-			echo  !_line:~2!\
-		) else if "!_line:~0,3!" == "## "\
-			set "_name=  !_line:~3!"\
+	echo. & \
+	echo targets: & \
+	(for /F "usebackq tokens=1* delims=:" %%g in ($(MAKEFILE_LIST)) do ( \
+		if not "%%h" == "" ( \
+			set "_line=%%g                " & \
+			set "_rest=%%h" & \
+			set "_comment=!_rest:* ## =!" & \
+			if not "!_comment!" == "!_rest!" \
+				if "!_line:_rest=!" == "!_line!" \
+					echo   !_line:~0,16!!_comment! \
+		) \
+	)) & \
+	echo. & \
+	echo optional variables: & \
+	(for /F "usebackq tokens=1,3 delims=?#" %%g in ($(MAKEFILE_LIST)) do ( \
+		if not "%%h" == "" ( \
+			set "_var=%%g              " & \
+			echo   !_var:~0,14! %%h \
+		) \
+	)) & \
+	echo. & \
+	echo recipes: & \
+	(for /F "usebackq tokens=* delims=" %%g in ($(MAKEFILE_LIST)) do ( \
+		set "_line=%%g" & \
+		if "!_line:~0,7!" == "##   $$ " ( \
+			echo !_name! & \
+			echo  !_line:~2! \
+		) else if "!_line:~0,3!" == "## " \
+			set "_name=  !_line:~3!" \
 	))

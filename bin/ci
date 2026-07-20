@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: "${CRYSTAL_BOOTSTRAP_VERSION:=1.20.2}"
+: "${CRYSTAL_BOOTSTRAP_VERSION:=1.20.3}"
 
 fail() {
   echo "${*}" >&2
@@ -176,8 +176,7 @@ verify_version() {
   # If building a tag, check it matches with file
   FILE_VERSION=$(cat ./src/VERSION)
 
-  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
-  then
+  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]; then
     fail "VERSION ($FILE_VERSION) does not match GIT TAG ($CURRENT_TAG)"
   fi
 }
@@ -194,10 +193,10 @@ with_build_env() {
   export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION}"}"
 
   case $ARCH in
-    aarch64|x86_64)
+    aarch64 | x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
-    aarch64-musl|x86_64-musl)
+    aarch64-musl | x86_64-musl)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
@@ -268,7 +267,7 @@ case $command in
   format)
     format
     ;;
-  -h|--help|help)
+  -h | --help | help)
     usage
     ;;
   *)

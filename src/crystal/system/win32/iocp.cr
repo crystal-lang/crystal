@@ -36,8 +36,8 @@ struct Crystal::System::IOCP
   # :nodoc:
   class CompletionKey
     enum Tag
-      ProcessRun
-      StdinRead
+      ProcessWait
+      ReadConsole
       Interrupt
       Timer
     end
@@ -48,8 +48,7 @@ struct Crystal::System::IOCP
     property next : CompletionKey?
     property previous : CompletionKey?
 
-    # Data structure to extend the lifetime of completion keys, in particular
-    # those created by `Process.new` without an associated `#wait` call
+    # Data structure to extend the lifetime of completion keys
     @@pending = ::Thread::LinkedList(CompletionKey).new
 
     def self.unregister(key : self) : Nil
@@ -79,15 +78,6 @@ struct Crystal::System::IOCP
     # cycle.
     def reset_fiber?
       @fiber.swap(nil, :relaxed)
-    end
-
-    def valid?(number_of_bytes_transferred)
-      case tag
-      in .process_run?
-        number_of_bytes_transferred.in?(LibC::JOB_OBJECT_MSG_EXIT_PROCESS, LibC::JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS)
-      in .stdin_read?, .interrupt?, .timer?
-        true
-      end
     end
 
     def inspect(io : IO) : Nil
@@ -183,6 +173,7 @@ struct Crystal::System::IOCP
     private abstract def try_cancel : Bool
 
     @overlapped = LibC::OVERLAPPED.new
+    getter iocp_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
     @fiber = ::Fiber.current
     @state : State = :started
 
@@ -192,6 +183,8 @@ struct Crystal::System::IOCP
       yield operation
     end
 
+    # We can't associate user data to OVERLAPPED operations, and must
+    # reconstruct an OverlappedOperation from a Pointer(OVERLAPPED).
     def self.unbox(overlapped : LibC::OVERLAPPED*) : self
       start = overlapped.as(Pointer(UInt8)) - offsetof(self, @overlapped)
       Box(self).unbox(start.as(Pointer(Void)))
@@ -227,7 +220,7 @@ struct Crystal::System::IOCP
   end
 
   class IOOverlappedOperation < OverlappedOperation
-    def initialize(@handle : LibC::HANDLE)
+    def initialize(@iocp_handle : LibC::HANDLE, @handle : LibC::HANDLE)
     end
 
     def offset=(value : UInt64)
@@ -270,7 +263,7 @@ struct Crystal::System::IOCP
   end
 
   class WSAOverlappedOperation < OverlappedOperation
-    def initialize(@handle : LibC::SOCKET)
+    def initialize(@iocp_handle : LibC::HANDLE, @handle : LibC::SOCKET)
     end
 
     def wait_for_result(timeout, & : WinError ->)
@@ -309,10 +302,9 @@ struct Crystal::System::IOCP
   end
 
   class GetAddrInfoOverlappedOperation < OverlappedOperation
-    getter iocp
     setter cancel_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
 
-    def initialize(@iocp : LibC::HANDLE)
+    def initialize(@iocp_handle : LibC::HANDLE)
     end
 
     def wait_for_result(timeout, & : WinError ->)
@@ -344,11 +336,11 @@ struct Crystal::System::IOCP
     end
   end
 
-  def self.overlapped_operation(file_descriptor, method, timeout, *, offset = nil, writing = false, &)
+  def self.overlapped_operation(iocp_handle, file_descriptor, method, timeout, *, offset = nil, writing = false, &)
     handle = file_descriptor.windows_handle
     seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0
 
-    IOOverlappedOperation.run(handle) do |operation|
+    IOOverlappedOperation.run(iocp_handle, handle) do |operation|
       overlapped = operation.to_unsafe
       if seekable
         start_offset = offset || original_offset
@@ -401,8 +393,8 @@ struct Crystal::System::IOCP
     end
   end
 
-  def self.wsa_overlapped_operation(target, socket, method, timeout, connreset_is_error = true, &)
-    WSAOverlappedOperation.run(socket) do |operation|
+  def self.wsa_overlapped_operation(iocp_handle, target, socket, method, timeout, connreset_is_error = true, &)
+    WSAOverlappedOperation.run(iocp_handle, socket) do |operation|
       result, value = yield operation
 
       if result == LibC::SOCKET_ERROR

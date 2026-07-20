@@ -47,7 +47,7 @@ class Crystal::Command
       opts.on("--format=FORMAT", "-f FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
         if !VALID_OUTPUT_FORMATS.includes? value
           STDERR.puts "Invalid format '#{value}'"
-          abort opts
+          abort! opts, :USAGE_ERROR
         end
         output_format = value
       end
@@ -128,7 +128,7 @@ class Crystal::Command
     end
 
     unless project_info.name? && project_info.version?
-      abort
+      abort! nil, :USAGE_ERROR
     end
 
     if options.empty?

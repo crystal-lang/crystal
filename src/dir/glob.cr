@@ -286,8 +286,6 @@ class Dir
             yield join(path, entry.name) if cmd.matches?(entry.name)
           end
         in DirectoryMatch
-          next_cmd = sequence[next_pos]?
-
           each_child(path) do |entry|
             next unless matches_file?(entry)
             if cmd.matches?(entry.name)

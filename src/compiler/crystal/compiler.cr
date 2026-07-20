@@ -5,11 +5,25 @@ require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
 {% end %}
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   require "wait_group"
 {% end %}
 
 module Crystal
+  # This exception describes an error in the compiler.
+  # It usually leads to an unsuccessful process exit.
+  class CompilerError < Exception
+    getter status
+
+    def self.new(message, exit : Command::Exit)
+      new message, status: exit.to_i
+    end
+
+    def initialize(message, *, @status : Int32 = 1)
+      super message
+    end
+  end
+
   @[Flags]
   enum Debug
     LineNumbers
@@ -83,10 +97,8 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:execution_context) %}
+    property n_threads : Int32 = {% if Fiber.has_constant?(:ExecutionContext) %}
       Fiber::ExecutionContext.default_workers_count
-    {% elsif flag?(:preview_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
     {% elsif flag?(:win32) %}
       1
     {% else %}
@@ -468,7 +480,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              abort "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}", :FAILURE)
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -571,11 +583,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            abort "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}", :FAILURE)
           end
           output.chomp
         rescue exc
-          abort "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}", :FAILURE)
         end
       end
     end
@@ -601,7 +613,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        abort "can't use `#{output_filename}` as output filename because it's a directory"
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR)
       end
 
       output_filename = File.expand_path(output_filename)
@@ -623,7 +635,7 @@ module Crystal
     end
 
     private def parallel_codegen(units, n_threads)
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
       {% elsif LibC.has_method?("fork") %}
@@ -924,7 +936,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        abort "execution of command failed with exit status #{status}: #{command}", status: exit_code
+        raise CompilerError.new("execution of command failed with exit status #{status}: #{command}", status: exit_code)
       end
     end
 
@@ -932,14 +944,10 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        abort "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}", :FAILURE)
       else
-        abort "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}", :FAILURE)
       end
-    end
-
-    private def abort(msg, exit_code = 1)
-      Crystal.abort msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)

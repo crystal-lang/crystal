@@ -41,6 +41,9 @@ struct URI::Params
   # Annotating property, getter and setter macros is also allowed.
   #
   # `URI::Params::Field` properties:
+  # * **ignore**: if `true` skip this field in serialization and deserialization (by default `false`)
+  # * **ignore_serialize**: if truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
+  # * **ignore_deserialize**: if `true` skip this field in deserialization (by default `false`)
   # * **converter**: specify an alternate type for parsing. The converter must define `.from_www_form(params : URI::Params, name : String)`.
   # An example use case would be customizing the format when parsing `Time` instances, or supporting a type not natively supported.
   #
@@ -99,16 +102,23 @@ struct URI::Params
         {% verbatim do %}
           {% begin %}
             {% for ivar, idx in @type.instance_vars %}
-              %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
-              %value{idx} = {{(ann = ivar.annotation(URI::Params::Field)) && (converter = ann["converter"]) ? converter : ivar.type}}.from_www_form params, %name{idx}
-
-              unless %value{idx}.nil?
-                @{{ivar.name.id}} = %value{idx}
-              else
+              {% ann = ivar.annotation(URI::Params::Field) %}
+              {% if ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
                 {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
-                  raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
+                  {% raise "Can't ignore property @#{ivar.name} of #{@type} that is neither nilable nor has a default value" %}
                 {% end %}
-              end
+              {% else %}
+                %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
+                %value{idx} = {{ann && ann["converter"] || ivar.type}}.from_www_form params, %name{idx}
+
+                unless %value{idx}.nil?
+                  @{{ivar.name.id}} = %value{idx}
+                else
+                  {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
+                    raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
+                  {% end %}
+                end
+              {% end %}
             {% end %}
           {% end %}
         {% end %}
@@ -118,7 +128,16 @@ struct URI::Params
     def to_www_form(*, space_to_plus : Bool = true) : String
       URI::Params.build(space_to_plus: space_to_plus) do |form|
         {% for ivar in @type.instance_vars %}
-          @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
+          {% ann = ivar.annotation(URI::Params::Field) %}
+          {% unless ann && ann[:ignore] %}
+            {% if ann && ann[:ignore_serialize] %}
+              unless {{ann[:ignore_serialize]}}
+                @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
+              end
+            {% else %}
+              @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
+            {% end %}
+          {% end %}
         {% end %}
       end
     end
@@ -126,7 +145,16 @@ struct URI::Params
     # :nodoc:
     def to_www_form(builder : URI::Params::Builder, name : String)
       {% for ivar in @type.instance_vars %}
-        @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
+        {% ann = ivar.annotation(URI::Params::Field) %}
+        {% unless ann && ann[:ignore] %}
+          {% if ann && ann[:ignore_serialize] %}
+            unless {{ann[:ignore_serialize]}}
+              @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
+            end
+          {% else %}
+            @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
+          {% end %}
+        {% end %}
       {% end %}
     end
   end

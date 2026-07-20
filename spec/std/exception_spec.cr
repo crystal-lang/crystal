@@ -22,11 +22,9 @@ describe "Exception" do
   it "inspects with cause" do
     cause = Exception.new("inner")
     ex = expect_raises(Exception, "wrapper") do
-      begin
-        raise cause
-      rescue ex
-        raise Exception.new("wrapper", cause: ex)
-      end
+      raise cause
+    rescue ex
+      raise Exception.new("wrapper", cause: ex)
     end
 
     ex.cause.should be(cause)

@@ -15,11 +15,6 @@ module Crystal
     filename
   end
 
-  def self.abort(msg, color, exit_code : Int = 1, stderr = STDERR, leading_error = true) : NoReturn
-    print_error(msg, color, stderr, leading_error)
-    ::abort(exit_code)
-  end
-
   def self.print_error(msg, color, stderr = STDERR, leading_error = true)
     stderr.print "Error: ".colorize.toggle(color).red.bold if leading_error
     stderr.puts msg.colorize.toggle(color).bright

@@ -371,10 +371,9 @@ module MIME
       value = String.build do |io|
         # Set positions for copying data from reader string to `io` in bulk.
         value_start = reader.pos
-        value_end = reader.pos
 
         while reader.has_next?
-          case char = reader.current_char
+          case reader.current_char
           when ';'
             break unless quoted
 
@@ -385,9 +384,8 @@ module MIME
             waiting_for_closing_quote = false
             break
           when '\\'
-            reader.next_char
+            char = reader.next_char
 
-            char = reader.current_char
             # Escape `\\` and `\"`
             if char == '\\' || (quoted && char == '"')
               # Write everything before the escaping backslash to io, then set

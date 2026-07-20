@@ -258,6 +258,7 @@ module Crystal
     it_parses %(foo%r), Call.new("foo".call, "%", "r".call)
     it_parses %(foo%x), Call.new("foo".call, "%", "x".call)
     it_parses %(foo%w), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo%W), Call.new("foo".call, "%", "W".path)
 
     it_parses %(foo %i), Call.new("foo".call, "%", "i".call)
     it_parses %(foo %q), Call.new("foo".call, "%", "q".call)
@@ -265,6 +266,7 @@ module Crystal
     it_parses %(foo %r), Call.new("foo".call, "%", "r".call)
     it_parses %(foo %x), Call.new("foo".call, "%", "x".call)
     it_parses %(foo %w), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo %W), Call.new("foo".call, "%", "W".path)
 
     it_parses %(foo %i()), "foo".call(([] of ASTNode).array_of(Path.global("Symbol")))
     it_parses %(foo %q()), "foo".call("".string)
@@ -279,6 +281,7 @@ module Crystal
     it_parses %(foo % r()), Call.new("foo".call, "%", "r".call)
     it_parses %(foo % x()), Call.new("foo".call, "%", "x".call)
     it_parses %(foo % w()), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo % W()), Call.new("foo".call, "%", Generic.new("W".path, [] of ASTNode))
 
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
@@ -1522,7 +1525,7 @@ module Crystal
       it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
     end
 
-    {'i', 'q', 'r', 'w', 'x', 'Q'}.each do |ch|
+    {'i', 'q', 'r', 'w', 'W', 'x', 'Q'}.each do |ch|
       it_parses "macro foo;%#{ch}[#{ch}];end", Macro.new("foo", [] of Arg, "%#{ch}[#{ch}];".macro_literal)
     end
 
@@ -2790,6 +2793,8 @@ module Crystal
       assert_end_location %("hello "\\\n"world"), line_number: 2, column_number: 7
       assert_end_location "foo(&.bar)"
       assert_end_location "foo &.bar"
+      assert_end_location("foo &.bar = baz")
+      assert_end_location("foo &.[bar] = baz")
       assert_end_location "foo(&bar)"
       assert_end_location "foo &bar"
     end
@@ -2820,6 +2825,17 @@ module Crystal
     it_parses "%w{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%w{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%w{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one  two}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\ntwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\ttwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{\n}", ([] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\\ two}", (["one two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one \#{\"two\"} three}", (["one".string, "two".string, "three".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one \#{%w(two three)} four}", (["one".string, StringInterpolation.new([(["two".string, "three".string] of ASTNode).array_of(Path.global("String"))] of ASTNode), "four".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one a\#{\"two\"}b three}", (["one".string, "atwob".string, "three".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%i(one\\ two)", (["one two".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i{(one two)}", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i((one two))", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
@@ -2837,6 +2853,7 @@ module Crystal
         "%x[" => command("a\nb"),
         "`"   => command("a\nb"),
         "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
         "%i[" => symbol_array("a".symbol, "b".symbol),
         ":\"" => "a\nb".symbol,
       }
@@ -2849,6 +2866,7 @@ module Crystal
         "%x[" => command("a\tb"),
         "`"   => command("a\tb"),
         "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
         "%i[" => symbol_array("a".symbol, "b".symbol),
         ":\"" => "a\tb".symbol,
       }
@@ -2862,6 +2880,7 @@ module Crystal
         "%x[" => command("a\r\nb"),
         "`"   => command("a\r\nb"),
         "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
         "%i[" => symbol_array("a".symbol, "b".symbol),
         ":\"" => "a\r\nb".symbol,
       }
@@ -2875,6 +2894,7 @@ module Crystal
         "%x[" => command("a\nb"),
         "`"   => command("a\nb"),
         "%w[" => string_array("a\\nb".string),
+        "%W[" => string_array("a\nb".string),
         "%i[" => symbol_array("a\\nb".symbol),
         ":\"" => "a\nb".symbol,
       }
@@ -2888,6 +2908,7 @@ module Crystal
         "%x[" => command("a\tb"),
         "`"   => command("a\tb"),
         "%w[" => string_array("a\\tb".string),
+        "%W[" => string_array("a\tb".string),
         "%i[" => symbol_array("a\\tb".symbol),
         ":\"" => "a\tb".symbol,
       }
@@ -2901,6 +2922,7 @@ module Crystal
         "%x[" => command("a\rb"),
         "`"   => command("a\rb"),
         "%w[" => string_array("a\\rb".string),
+        "%W[" => string_array("a\rb".string),
         "%i[" => symbol_array("a\\rb".symbol),
         ":\"" => "a\rb".symbol,
       }
@@ -2914,6 +2936,7 @@ module Crystal
         "%x[" => command("ab"),
         "`"   => command("ab"),
         "%w[" => string_array("a\nb".string),
+        "%W[" => string_array("ab".string),
         "%i[" => symbol_array("a\nb".symbol),
         ":\"" => "a\nb".symbol,
       }
@@ -2927,6 +2950,7 @@ module Crystal
         "%x[" => command("aAb"),
         "`"   => command("aAb"),
         "%w[" => string_array("a\\u{41}b".string),
+        "%W[" => string_array("aAb".string),
         "%i[" => symbol_array("a\\u{41}b".symbol),
         ":\"" => "aAb".symbol,
       }
@@ -2940,6 +2964,7 @@ module Crystal
         "%x[" => command("aAb"),
         "`"   => command("aAb"),
         "%w[" => string_array("a\\x41b".string),
+        "%W[" => string_array("aAb".string),
         "%i[" => symbol_array("a\\x41b".symbol),
         ":\"" => "aAb".symbol,
       }
@@ -2953,6 +2978,7 @@ module Crystal
         "%x[" => command("aAb"),
         "`"   => command("aAb"),
         "%w[" => string_array("a\\101b".string),
+        "%W[" => string_array("aAb".string),
         "%i[" => symbol_array("a\\101b".symbol),
         ":\"" => "aAb".symbol,
       }
@@ -2966,6 +2992,7 @@ module Crystal
         "%x[" => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
         "`"   => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
         "%w[" => string_array("a\#{x}b".string),
+        "%W[" => string_array(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
         "%i[" => symbol_array("a\#{x}b".symbol),
         ":\"" => "a\#{x}b".symbol,
       }
@@ -2979,6 +3006,7 @@ module Crystal
         "%x[" => command("a\#{x}b"),
         "`"   => command("a\#{x}b"),
         "%w[" => string_array("a\\\#{x}b".string),
+        "%W[" => string_array("a\#{x}b".string),
         "%i[" => symbol_array("a\\\#{x}b".symbol),
         ":\"" => "a\#{x}b".symbol,
       }
@@ -2996,6 +3024,7 @@ module Crystal
         "%w[" => string_array("a]b".string),
         "%w{" => string_array("a\\]b".string),
         "%w|" => string_array("a\\]b".string),
+        "%W[" => string_array("a]b".string),
         "%i[" => symbol_array("a]b".symbol),
         "%i{" => symbol_array("a\\]b".symbol),
         "%i|" => symbol_array("a\\]b".symbol),
@@ -3015,6 +3044,7 @@ module Crystal
         "%w[" => string_array("a[b".string),
         "%w{" => string_array("a\\[b".string),
         "%w|" => string_array("a\\[b".string),
+        "%W[" => string_array("a[b".string),
         "%i[" => symbol_array("a[b".symbol),
         "%i{" => symbol_array("a\\[b".symbol),
         "%i|" => symbol_array("a\\[b".symbol),
@@ -3032,6 +3062,7 @@ module Crystal
         "%w[" => string_array("a[b]c".string),
         "%w{" => string_array("a\\[b\\]c".string),
         "%w|" => string_array("a\\[b\\]c".string),
+        "%W[" => string_array("a[b]c".string),
         "%i[" => symbol_array("a[b]c".symbol),
         "%i{" => symbol_array("a\\[b\\]c".symbol),
         "%i|" => symbol_array("a\\[b\\]c".symbol),
@@ -3057,6 +3088,9 @@ module Crystal
         "%w[" => "Unterminated string array literal", # ref #5403
         "%w{" => string_array("a[b\\]c".string),
         "%w|" => string_array("a[b\\]c".string),
+        "%W[" => "Unterminated string array literal", # ref #5403
+        "%W{" => string_array("a[b]c".string),
+        "%W|" => string_array("a[b]c".string),
         "%i[" => "Unterminated symbol array literal", # ref #5403
         "%i{" => symbol_array("a[b\\]c".symbol),
         "%i|" => symbol_array("a[b\\]c".symbol),
@@ -3072,6 +3106,7 @@ module Crystal
         "%x[" => command("a\\ b"),
         "`"   => command("a\\ b"),
         "%w[" => string_array("a\\".string, "b".string),
+        "%W[" => string_array("a\\".string, "b".string),
         "%i[" => symbol_array("a\\".symbol, "b".symbol),
         ":\"" => "a\\ b".symbol,
       }
@@ -3085,6 +3120,7 @@ module Crystal
         "%x[" => command("\\a"),
         "`"   => command("\\a"),
         "%w[" => string_array("\\a".string),
+        "%W[" => string_array("\\a".string),
         "%i[" => symbol_array("\\a".symbol),
         ":\"" => "\\a".symbol,
       }
@@ -3098,6 +3134,7 @@ module Crystal
         "%x[" => "Unterminated command literal",
         "`"   => "Unterminated command literal",
         "%w[" => "Unterminated string array literal",
+        "%W[" => "Unterminated string array literal",
         "%i[" => "Unterminated symbol array literal",
         ":\"" => "unterminated quoted symbol",
       }
@@ -3111,6 +3148,7 @@ module Crystal
         "%x[" => command("\\"),
         "`"   => command("\\"),
         "%w[" => string_array("\\".string),
+        "%W[" => string_array("\\".string),
         "%i[" => symbol_array("\\".symbol),
         ":\"" => "\\".symbol,
       }
@@ -3124,14 +3162,91 @@ module Crystal
         "%x[" => "Unterminated command literal",
         "`"   => "Unterminated command literal",
         "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%W[" => "Unterminated string array literal", # FIXME: #12277
         "%i[" => "Unterminated symbol array literal", # FIXME: #12277
         ":\"" => "unterminated quoted symbol",
       }
     end
 
+    it_parses "%W[ foo]", (["foo".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[foo ]", (["foo".string] of ASTNode).array_of(Path.global("String"))
+    it_parses %q(%W[ #{1}]), ([StringInterpolation.new([1.int32] of ASTNode)] of ASTNode).array_of(Path.global("String"))
+    it_parses %q(%W[#{1} ]), ([StringInterpolation.new([1.int32] of ASTNode)] of ASTNode).array_of(Path.global("String"))
+
+    it_parses %(%W{hello \\n world}), (["hello".string, "\n".string, "world".string] of ASTNode).array_of(Path.global("String"))
+    it_parses %(%w{hello \\n world}), (["hello".string, "\\n".string, "world".string] of ASTNode).array_of(Path.global("String"))
+
+    it_parses "%W[a\nb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\tb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\r\nb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\nb]", (["a\nb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\tb]", (["a\tb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\rb]", (["a\rb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\\nb]", (["ab".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\\n b]", (["ab".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\u{61}b]", (["aab".string] of ASTNode).array_of(Path.global("String"))
+
+    describe "string array" do
+      describe "parses %W interpolation into StringInterpolation" do
+        it_parses %q[%W(one #{two} three)], ([
+          "one".string,
+          StringInterpolation.new([Call.new(nil, "two")] of ASTNode),
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "parses %w without interpolation (keeps literal)" do
+        it_parses %q[%w(one #{two} three)], ([
+          "one".string,
+          %q(#{two}).string,
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "parses %W with escaped interpolation (keeps literal)" do
+        it_parses %q[%W(one \#{two} three)], ([
+          "one".string,
+          %q(#{two}).string,
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "collapses interpolation of string literal in %W" do
+        it_parses %q[%W(one #{"two three"} four)], ([
+          "one".string, "two three".string,
+          "four".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "keeps StringInterpolation for non-string expressions" do
+        it_parses %q[%W(one #{two.bar} three)], ([
+          "one".string,
+          StringInterpolation.new([Call.new(Call.new(nil, "two"), "bar")] of ASTNode),
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "raises on unterminated interpolation in %W" do
+        assert_syntax_error(%q[%W(one #{two)], "Unterminated string interpolation")
+      end
+
+      describe "splat" do
+        it_parses %q(%W[#{*%w(one two)}]), ([Splat.new((["one".string, "two".string] of ASTNode).array_of(Path.global("String")))] of ASTNode).array_of(Path.global("String"))
+        it_parses %q(%W[#{*a}]), ([Splat.new(Call.new(nil, "a"))] of ASTNode).array_of(Path.global("String"))
+
+        assert_syntax_error(%q(%W[a#{*b}]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{a}#{*b}]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{*a}b]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{*a}#{b}]), "splat interpolation must be the only piece in a string array element")
+      end
+    end
+
     assert_syntax_error "%w(", "Unterminated string array literal"
     assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
     assert_syntax_error "%w{{one}", "Unterminated string array literal"
+    assert_syntax_error "%W(", "Unterminated string array literal"
+    assert_syntax_error "%W{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%W{{one}", "Unterminated string array literal"
     assert_syntax_error "%i(", "Unterminated symbol array literal"
     assert_syntax_error "%i{one}}", "expecting token 'EOF', not '}'"
     assert_syntax_error "%i{{one}", "Unterminated symbol array literal"

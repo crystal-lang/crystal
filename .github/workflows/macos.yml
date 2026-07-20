@@ -20,19 +20,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - runs-on: macos-15-intel
+        - runs-on: macos-26-intel
           arch: x86_64-darwin
         - runs-on: macos-14
           arch: aarch64-darwin
-        - runs-on: macos-15
+        - runs-on: macos-26
           arch: aarch64-darwin
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31.10.7
         with:
           extra_nix_config: |
             experimental-features = nix-command
@@ -60,17 +60,15 @@ jobs:
       fail-fast: false
       matrix:
         opts:
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: concurrent
-            workers: 1
-          - flags: "-Dexecution_context -Dpreview_mt" # execution_context: parallel
-            workers: 4
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
+      - uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31.10.7
         with:
           extra_nix_config: |
             experimental-features = nix-command
@@ -87,4 +85,4 @@ jobs:
         run: bin/ci prepare_build
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags }}"'
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'

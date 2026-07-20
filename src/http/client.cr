@@ -584,21 +584,13 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    begin
-      response = exec_internal_single(request, implicit_compression: implicit_compression)
-    rescue exc : IO::Error
-      raise exc if @io.nil? # do not retry if client was closed
-      response = nil
+    response = retry_once(request) do
+      exec_internal_single(request, implicit_compression: implicit_compression)
     end
-    return handle_response(response) if response
 
-    # Server probably closed the connection, so retry once
-    close
-    request.body.try &.rewind
-    response = exec_internal_single(request, implicit_compression: implicit_compression)
-    return handle_response(response) if response
+    raise IO::EOFError.new("Unexpected end of http response") unless response
 
-    raise IO::EOFError.new("Unexpected end of http response")
+    handle_response(response)
   end
 
   private def exec_internal_single(request, implicit_compression = false)
@@ -637,7 +629,7 @@ class HTTP::Client
     run_before_request_callbacks(request)
 
     user_exception = nil
-    exec_internal_helper do
+    retry_once(request) do
       exec_internal_single(request, implicit_compression: implicit_compression) do |response|
         if response
           handle_response(response) do
@@ -657,23 +649,52 @@ class HTTP::Client
 
     raise user_exception if user_exception
 
-    # Server probably closed the connection, so retry once
-    close
-    request.body.try &.rewind
-    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
-      if response
-        return handle_response(response) { yield response }
-      end
-    end
-
     raise IO::EOFError.new("Unexpected end of http response")
   end
 
-  # FIXME: This helper is only needed when compiling against Crystal 1.3 or earlier, due to #9769.
-  private def exec_internal_helper(&)
+  # Determine whether we should retry a request after an IO error happened,
+  # which might've been caused by a stale connection broken down.
+  #
+  # The conditions are inspired from the implementation in Go's net/http library:
+  # https://github.com/golang/go/blob/608e9fac9055aa188c513f4dd53f12e692bc3c0c/src/net/http/transport.go#L808
+  private def should_retry_request?(request, exc, reusing_connection) : Bool
+    # The client was closed explicitly
+    return false if @io.nil?
+
+    # If the connection is fresh, the server should not have hung up on us and
+    # there's no reason to retry.
+    return false unless reusing_connection
+
+    # Only retry if the error connection was reset by the peer, which is a
+    # strong indicator of a stale connection.
+    return false unless exc.nil? || exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET, Errno::EPIPE, WinError::WSAECONNABORTED)
+
+    # Do not retry requests if they are not replayable
+    return false unless request.replayable?
+
+    true
+  end
+
+  private def retry_once(request, &)
+    reusing_connection = !@io.nil?
+
+    begin
+      result = yield
+    rescue exc : IO::Error
+      unless should_retry_request?(request, exc, reusing_connection)
+        raise exc
+      end
+    else
+      return result if result
+
+      # Reading resulted in EOF which might be caused by a stale connection
+      return unless should_retry_request?(request, nil, reusing_connection)
+    end
+
+    # Server probably closed the connection, so retry once
+    close
+
     yield
-  rescue exc : IO::Error
-    raise exc if @io.nil? # do not retry if client was closed
   end
 
   private def exec_internal_single(request, implicit_compression = false, &)
