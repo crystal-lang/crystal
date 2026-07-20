@@ -199,6 +199,15 @@ describe HTTP::ChunkedContent do
         chunked.gets
       end
     end
+
+    it "fails on invalid trailer value" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: \0\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises ArgumentError, "Header content contains invalid character" do
+        chunked.gets
+      end
+    end
   end
 
   describe "long trailer part" do
