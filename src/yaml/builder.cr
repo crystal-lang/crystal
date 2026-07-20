@@ -32,13 +32,14 @@ class YAML::Builder
   property max_nesting = 99
 
   # Creates a `YAML::Builder` that will write to the given `IO`.
-  def initialize(@io : IO)
+  def initialize(@io : IO, *, width : Int32? = nil)
     @box = Box.box(io)
     @emitter = Pointer(Void).malloc(LibYAML::EMITTER_SIZE).as(LibYAML::Emitter*)
     @event = LibYAML::Event.new
     @closed = false
     @nesting = 0
     LibYAML.yaml_emitter_initialize(@emitter)
+    LibYAML.yaml_emitter_set_width(@emitter, width) if width
     LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
       data_io = Box(IO).unbox(data)
@@ -50,8 +51,8 @@ class YAML::Builder
   # Creates a `YAML::Builder` that writes to *io* and yields it to the block.
   #
   # After returning from the block the builder is closed.
-  def self.build(io : IO, & : self ->) : Nil
-    builder = new(io)
+  def self.build(io : IO, *, width : Int32? = nil, & : self ->) : Nil
+    builder = new(io, width: width)
     yield builder ensure builder.close
   end
 
@@ -240,6 +241,8 @@ end
 module YAML
   # Returns the resulting String of writing YAML to the yielded `YAML::Builder`.
   #
+  # A preferred line width can be set using the `width` argument.
+  #
   # ```
   # require "yaml"
   #
@@ -254,17 +257,17 @@ module YAML
   # end
   # string # => "---\nfoo:\n- 1\n- 2\n"
   # ```
-  def self.build(&)
+  def self.build(*, width : Int32? = nil, &)
     String.build do |str|
-      build(str) do |yaml|
+      build(str, width: width) do |yaml|
         yield yaml
       end
     end
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO, &) : Nil
-    YAML::Builder.build(io) do |yaml|
+  def self.build(io : IO, *, width : Int32? = nil, &) : Nil
+    YAML::Builder.build(io, width: width) do |yaml|
       yaml.stream do
         yaml.document do
           yield yaml
