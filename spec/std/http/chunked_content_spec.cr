@@ -172,21 +172,23 @@ describe HTTP::ChunkedContent do
     chunked.gets(2).should eq "AB"
   end
 
-  it "reads chunked trailer part" do
-    mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
+  describe "trailing headers" do
+    it "reads chunked trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    chunked.gets.should be_nil
-    mem.gets.should be_nil
-    chunked.headers.should eq HTTP::Headers{"Additional-Header" => "Foo"}
-  end
+      chunked = HTTP::ChunkedContent.new(mem)
+      chunked.gets.should be_nil
+      mem.gets.should be_nil
+      chunked.headers.should eq HTTP::Headers{"Additional-Header" => "Foo"}
+    end
 
-  it "fails if unterminated chunked trailer part" do
-    mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
+    it "fails if unterminated chunked trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    expect_raises IO::EOFError do
-      chunked.gets
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises IO::EOFError do
+        chunked.gets
+      end
     end
   end
 
