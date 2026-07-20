@@ -1257,6 +1257,10 @@ describe Crystal::Formatter do
   assert_format "module M\nCONST : Int32 = 1\nend", "module M\n  CONST : Int32 = 1\nend"
   assert_format "PAIR : Tuple(Int32, String) = {1, \"x\"}"
   assert_format "TYPED : ::Int32 = -5"
+  assert_format "::FOO : Int64 = 123"
+  assert_format "::FOO  :  Int64  =  123", "::FOO : Int64 = 123"
+  assert_format "::FOO: Int64 = 123", "::FOO : Int64 = 123"
+  assert_format "::Foo::BAR : Int64 = 123"
 
   assert_format "def foo\n@x  :  Int32\nend", "def foo\n  @x : Int32\nend"
   assert_format "def foo\n@x   =  uninitialized   Int32\nend", "def foo\n  @x = uninitialized Int32\nend"

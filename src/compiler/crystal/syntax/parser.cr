@@ -1309,8 +1309,8 @@ module Crystal
       end
     end
 
-    def parse_const
-      type = parse_generic(expression: true)
+    def parse_const(global = false, location = @token.location)
+      type = parse_generic global, location, expression: true
       space_after_name = @token.type.space?
       skip_space
 
@@ -5059,9 +5059,7 @@ module Crystal
       when .ident?
         set_visibility parse_var_or_call global: true, location: location
       when .const?
-        ident = parse_generic global: true, location: location, expression: true
-        skip_space
-        parse_custom_literal ident
+        parse_const global: true, location: location
       else
         unexpected_token
       end

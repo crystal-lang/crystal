@@ -1789,12 +1789,17 @@ module Crystal
     it_parses "FOO : Int64 = 1", TypeDeclaration.new("FOO".path, "Int64".path, 1.int32)
     it_parses "FOO : Foo::Bar = 1", TypeDeclaration.new("FOO".path, Path.new(["Foo", "Bar"]), 1.int32)
     it_parses "Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"]), "Int64".path, 1.int32)
+    it_parses "::FOO : Int64 = 1", TypeDeclaration.new("FOO".path(global: true), "Int64".path, 1.int32)
+    it_parses "::Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"], global: true), "Int64".path, 1.int32)
     assert_syntax_warning "FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_warning "::FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
     assert_syntax_error "FOO : Int64", "expected '=' for constant type declaration"
+    assert_syntax_error "::FOO : Int64", "expected '=' for constant type declaration"
 
     it "computes name_size for a TypeDeclaration whose var is a Path (#13443)" do
       Parser.parse("FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("FOO".size)
       Parser.parse("Foo::BAR : Int64 = 1").as(TypeDeclaration).name_size.should eq("Foo::BAR".size)
+      Parser.parse("::FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("::FOO".size)
     end
 
     it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)

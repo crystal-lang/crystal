@@ -33,6 +33,25 @@ describe "Semantic: const" do
       CRYSTAL
   end
 
+  it "types a typed constant on a global path target" do
+    assert_type(<<-CRYSTAL) { int64 }
+      ::FOO : Int64 = 123
+
+      ::FOO
+      CRYSTAL
+  end
+
+  it "types a typed constant on a global qualified path target" do
+    assert_type(<<-CRYSTAL) { int64 }
+      module Foo
+      end
+
+      ::Foo::BAR : Int64 = 123
+
+      ::Foo::BAR
+      CRYSTAL
+  end
+
   it "rejects non storable types" do
     assert_error <<-CRYSTAL, "can't use Int as the type of a constant yet"
       FOO : Int = 1
