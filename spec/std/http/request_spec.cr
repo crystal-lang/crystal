@@ -513,13 +513,11 @@ module HTTP
 
       describe "invalid headers" do
         it "empty header name" do
-          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n: Bar\r\n\r\n"))
-          request.should(be_a(Request)).headers[""].should eq "Bar"
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n: Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
         it "header without colon" do
-          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar\r\n\r\n"))
-          request.should(be_a(Request)).headers[""].should eq "oo Bar"
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
         it "invalid header name" do

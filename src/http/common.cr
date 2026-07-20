@@ -121,6 +121,7 @@ module HTTP
 
         name, value = parse_header(peek[0, end_index])
         io.skip(index + 1) # Must skip until after \n
+        return nil if name.empty?
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
@@ -136,6 +137,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
+    return nil if name.empty?
     HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
