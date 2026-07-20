@@ -12,6 +12,10 @@ all: ##
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
 ##   $ make -f Makefile.win crystal release=1 interpreter=1
+## Build all assets for a package install (compiler)
+##   $ make -f Makefile.win build
+## Build and install crystal package
+##   $ make -f Makefile.win build && sudo make -f Makefile.win install
 ## Run tests
 ##   $ make -f Makefile.win test
 ## Run stdlib tests
@@ -152,6 +156,14 @@ docs: ## Generate standard library documentation
 
 .PHONY: crystal
 crystal: $(O)\crystal.exe ## Build the compiler
+
+.PHONY: build
+build: ## Build all files for a package install (currently the compiler)
+
+# bake-format off: Mbake bug with Duplicate target rule https://github.com/EbodShojaei/bake/issues/106
+build: release := 1
+build: crystal
+# bake-format on
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
