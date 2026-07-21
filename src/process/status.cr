@@ -434,15 +434,20 @@ class Process::Status
   # Returns a textual description of this process status.
   #
   # ```
-  # Process.run("true").description # => "Process exited normally"
+  # Process.run("true").description  # => "Process exited with status 0"
+  # Process.run("false").description # => "Process exited with status 1"
   # process = Process.new("sleep", ["10"])
   # process.terminate
   # process.wait.description # => "Process received and didn't handle signal TERM (15)"
   # ```
   #
-  # `ExitReason#description` provides the specific messages for non-signal exits.
+  # `ExitReason#description` provides the specific messages for abnormal exits.
   def description : String
-    if exit_reason.signal? && (signal = exit_signal?)
+    if code = exit_code?
+      "Process exited with status #{code}"
+    elsif exit_reason.signal? && (signal = exit_signal?)
+      # `ExitReason::Signal` represents signals that are not covered by more
+      # specific exit reasons, so we explicitly mention the signal.
       "Process received and didn't handle signal #{signal}"
     else
       exit_reason.description
