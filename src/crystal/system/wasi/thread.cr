@@ -1,3 +1,5 @@
+require "../panic"
+
 module Crystal::System::Thread
   alias Handle = Nil
 
@@ -34,7 +36,8 @@ module Crystal::System::Thread
 
     loop do
       return if LibC.nanosleep(pointerof(req), out rem) == 0
-      raise RuntimeError.from_errno("nanosleep() failed") unless Errno.value == Errno::EINTR
+      error = Errno.value
+      System.panic("nanosleep()", error) unless error == Errno::EINTR
       req = rem
     end
   end

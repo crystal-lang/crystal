@@ -162,6 +162,9 @@ lib LibGC
 
   fun size = GC_size(addr : Void*) : LibC::SizeT
 
+  alias BlockingProc = Void* -> Void*
+  fun do_blocking = GC_do_blocking(fn : BlockingProc, client_data : Void*) : Void*
+
   # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
   {% if flag?(:win32) %}
     fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
@@ -325,6 +328,11 @@ module GC
     Crystal.trace :gc, "free" do
       LibGC.free(pointer)
     end
+  end
+
+  # :nodoc:
+  def self.do_blocking(fn : Void* -> Void*, data : Void*) : Nil
+    LibGC.do_blocking(fn, data)
   end
 
   def self.add_finalizer(object : Reference) : Nil
