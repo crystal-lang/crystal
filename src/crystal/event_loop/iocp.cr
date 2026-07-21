@@ -128,8 +128,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      run_impl(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      run_impl(blocking) { |fiber| yield fiber }
     end
 
     # the evloop has a single IOCP instance for the context and only one

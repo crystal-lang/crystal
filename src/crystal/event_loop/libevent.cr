@@ -35,19 +35,19 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     # scheduler must wait on the evloop at any time
     include Lock
 
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
+    def run(blocking : Bool, &callback : Fiber ->) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
-      @runnables = queue
+      @callback = callback
       run(blocking)
     ensure
-      @runnables = nil
+      @callback = nil
     end
 
     def callback_enqueue(fiber : Fiber) : Nil
-      if queue = @runnables
-        queue.value.push(fiber)
+      if callback = @callback
+        callback.call(fiber)
       else
-        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+        raise "BUG: libevent callback executed outside of #run(blocking, &) call"
       end
     end
   {% end %}
