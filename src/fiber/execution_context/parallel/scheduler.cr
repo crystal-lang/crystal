@@ -122,7 +122,7 @@ module Fiber::ExecutionContext
         # run loop
         if @execution_context.capacity == 1
           # try to refill local queue
-          if fiber = @global_queue.grab?(@runnables, divisor: @execution_context.size)
+          if fiber = @global_queue.lazy_grab?(@runnables, divisor: @execution_context.size)
             return fiber
           end
 
