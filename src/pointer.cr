@@ -546,6 +546,9 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc(size : Int = 1)
     if size < 0
       raise ArgumentError.new("Negative Pointer#malloc size")
