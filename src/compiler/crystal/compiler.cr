@@ -680,11 +680,11 @@ module Crystal
 
     private def fork_codegen(units, n_threads)
       workers = fork_workers(n_threads) do |input, output|
-        while i = input.gets(chomp: true).presence
-          unit = units[i.to_i]
+        while i = input.gets(chomp: true).presence.try(&.to_i)
+          unit = units[i]
           unit.compile
           result = {
-            index:  i.to_i,
+            index:  i,
             reused: unit.reused_previous_compilation?,
             time:   unit.compilation_time.total_seconds,
           }
