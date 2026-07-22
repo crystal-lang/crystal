@@ -12,7 +12,7 @@ lib LibC
   fun malloc(size : SizeT) : Void*
   fun realloc(ptr : Void*, size : SizeT) : Void*
 
-  alias InvalidParameterHandler = WCHAR*, WCHAR*, WCHAR*, UInt, UIntPtrT ->
+  alias InvalidParameterHandler = (WCHAR*, WCHAR*, WCHAR*, UInt, UIntPtrT) ->
   fun _set_invalid_parameter_handler(pNew : InvalidParameterHandler) : InvalidParameterHandler
 
   # unused

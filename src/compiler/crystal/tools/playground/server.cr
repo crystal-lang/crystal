@@ -369,7 +369,7 @@ module Crystal::Playground
   end
 
   class PathWebSocketHandler < HTTP::WebSocketHandler
-    def initialize(@path : String, &proc : HTTP::WebSocket, HTTP::Server::Context ->)
+    def initialize(@path : String, &proc : (HTTP::WebSocket, HTTP::Server::Context) ->)
       super(&proc)
     end
 

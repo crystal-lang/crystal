@@ -110,14 +110,14 @@ module Iterable(T)
   # Same as `each.slice_when(reuse, &block)`.
   #
   # See also: `Iterator#slice_when`.
-  def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+  def slice_when(reuse : Bool | Array(T) = false, &block : (T, T) -> B) forall B
     each.slice_when(reuse, &block)
   end
 
   # Same as `each.chunk_while(reuse, &block)`.
   #
   # See also: `Iterator#chunk_while`.
-  def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+  def chunk_while(reuse : Bool | Array(T) = false, &block : (T, T) -> B) forall B
     each.chunk_while(reuse, &block)
   end
 end

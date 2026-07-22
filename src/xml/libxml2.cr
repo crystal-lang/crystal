@@ -192,7 +192,7 @@ lib LibXML
 
   alias FreeFunc = Void* ->
   alias MallocFunc = LibC::SizeT -> Void*
-  alias ReallocFunc = Void*, LibC::SizeT -> Void*
+  alias ReallocFunc = (Void*, LibC::SizeT) -> Void*
   alias StrdupFunc = UInt8* -> UInt8*
 
   fun xmlMemSetup(freeFunc : FreeFunc,

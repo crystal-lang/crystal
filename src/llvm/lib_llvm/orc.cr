@@ -6,7 +6,7 @@ lib LibLLVM
   alias OrcSymbolStringPoolEntryRef = Void*
   alias OrcJITDylibRef = Void*
   alias OrcDefinitionGeneratorRef = Void*
-  alias OrcSymbolPredicate = Void*, OrcSymbolStringPoolEntryRef -> Int
+  alias OrcSymbolPredicate = (Void*, OrcSymbolStringPoolEntryRef) -> Int
   alias OrcThreadSafeContextRef = Void*
   alias OrcThreadSafeModuleRef = Void*
 
