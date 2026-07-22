@@ -3824,6 +3824,8 @@ module Crystal
         # Skip
       when .op_colon?
         # Skip
+      when .op_eq?
+        # Endless method definition
       when .op_amp?
         unexpected_token "parentheses are mandatory for def parameters"
       when .symbol?
@@ -3852,29 +3854,48 @@ module Crystal
       end
 
       if is_abstract
+        if @token.type.op_eq?
+          raise "abstract def can't have a body", @token
+        end
         body = Nop.new
       else
         slash_is_regex!
-        skip_statement_end
-
-        end_location = token_end_location
-
-        if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns).at(@token.location)
+        if @token.type.op_eq?
           next_token_skip_space
-        else
-          body = parse_expressions
+          unexpected_token if @token.keyword?(:end)
+          body_location = @token.location
+          body = parse_op_assign
+          body = parse_expression_suffix body, body_location
+          end_location = body.end_location
+
           if extra_assigns.size > 0
             exps = [] of ASTNode
             exps.concat extra_assigns
-            if body.is_a?(Expressions)
-              exps.concat body.expressions
-            else
-              exps.push body
-            end
+            exps.push body
             body = Expressions.from(exps).at(body)
           end
-          body, end_location, _ = parse_exception_handler body, implicit: true
+        else
+          skip_statement_end
+
+          end_location = token_end_location
+
+          if @token.keyword?(:end)
+            body = Expressions.from(extra_assigns).at(@token.location)
+            next_token_skip_space
+          else
+            body = parse_expressions
+            if extra_assigns.size > 0
+              exps = [] of ASTNode
+              exps.concat extra_assigns
+              if body.is_a?(Expressions)
+                exps.concat body.expressions
+              else
+                exps.push body
+              end
+              body = Expressions.from(exps).at(body)
+            end
+            body, end_location, _ = parse_exception_handler body, implicit: true
+          end
         end
       end
 

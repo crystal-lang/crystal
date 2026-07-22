@@ -395,13 +395,34 @@ module Crystal
     it_parses "def foo\n1\nend", Def.new("foo", body: 1.int32)
     it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], 1.int32)
     it_parses "def foo ; 1 ; end", Def.new("foo", body: 1.int32)
+    it_parses "def foo = 1", Def.new("foo", body: 1.int32)
+    it_parses "def foo = 1; 2", [Def.new("foo", body: 1.int32), 2.int32]
+    it_parses "def foo = begin; 1; 2; end", Def.new("foo", body: Expressions.new([1.int32, 2.int32] of ASTNode))
+    it_parses "def foo = if true; 1; else; 2; end", Def.new("foo", body: If.new(true.bool, 1.int32, 2.int32))
+    it_parses "def foo = 1 rescue 2", Def.new("foo", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+    it_parses "def any? = !empty?", Def.new("any?", body: Not.new("empty?".call))
+    it_parses "def default_value = nil", Def.new("default_value", body: NilLiteral.new)
+    it_parses "def initialize(s : Int32) = new(s.to_s)", Def.new("initialize", args: [Arg.new("s", restriction: "Int32".path)], body: Call.new("new", Call.new("s".var, "to_s")))
+    it_parses %(def to_s(io) = io << "nil"), Def.new("to_s", args: ["io".arg], body: Call.new("io".var, "<<", "nil".string))
+    it_parses "def name = @name; def name=(@name); end", [Def.new("name", body: "@name".instance_var), Def.new("name=", args: ["name".arg], body: Assign.new("@name".instance_var, "name".var))]
+    assert_syntax_error "def foo ="
+    assert_syntax_error "def foo =\n  1"
+    assert_syntax_error "def foo(x) =\n  x"
+    assert_syntax_error "def foo =\n  1\n  2\n  3"
+    assert_syntax_error "def foo =\nend"
+    assert_syntax_error "def foo(x) =\nend"
+    assert_syntax_error "def foo # comment\n  = 1"
+    assert_syntax_error "def sum(a, b) { a + b }"
+    assert_syntax_error "def mul : Int32 { @num * 2 }"
     it_parses "def foo; end", Def.new("foo")
     it_parses "def foo(var); end", Def.new("foo", ["var".arg])
     it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg])
     it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg])
     it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg])
+    it_parses "def foo(var1, var2) = var1 + var2", Def.new("foo", ["var1".arg, "var2".arg], Call.new("var1".var, "+", "var2".var))
     it_parses "def foo; 1; 2; end", Def.new("foo", body: [1.int32, 2.int32] of ASTNode)
     it_parses "def foo=(value); end", Def.new("foo=", ["value".arg])
+    it_parses "def foo=(value) = value", Def.new("foo=", ["value".arg], "value".var)
     it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, "-", 1.int32)))
     it_parses "def type(type); end", Def.new("type", ["type".arg])
 
@@ -484,6 +505,7 @@ module Crystal
     end
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
+    it_parses "def self.foo = 1", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=()\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
@@ -640,6 +662,7 @@ module Crystal
     it_parses "def foo(x : U) forall U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(U))
     it_parses "def foo(x : U) forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], free_vars: %w(T U))
     it_parses "def foo(x : U) : Int32 forall T, U; end", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], return_type: "Int32".path, free_vars: %w(T U))
+    it_parses "def foo(x : U) forall U = x", Def.new("foo", args: [Arg.new("x", restriction: "U".path)], body: "x".var, free_vars: %w(U))
     assert_syntax_error "def foo(x : U) forall; end"
     assert_syntax_error "def foo(x : U) forall U,; end"
     assert_syntax_error "def foo(x : U) forall U, U; end", "duplicated free variable name: U"
@@ -1496,9 +1519,11 @@ module Crystal
 
     it_parses "def foo : Int32\n1\nend", Def.new("foo", body: 1.int32, return_type: "Int32".path)
     it_parses "def foo(x) : Int32\n1\nend", Def.new("foo", args: ["x".arg], body: 1.int32, return_type: "Int32".path)
+    it_parses "def foo(x) : Int32 = x", Def.new("foo", args: ["x".arg], body: "x".var, return_type: "Int32".path)
 
     it_parses "abstract def foo : Int32", Def.new("foo", return_type: "Int32".path, abstract: true)
     it_parses "abstract def foo(x) : Int32", Def.new("foo", args: ["x".arg], return_type: "Int32".path, abstract: true)
+    assert_syntax_error "abstract def foo = 1", "abstract def can't have a body"
 
     it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
     it_parses "{% for _, x, _ in y %}body{% end %}", MacroFor.new(["_".var, "x".var, "_".var], "y".var, "body".macro_literal)
@@ -2007,6 +2032,8 @@ module Crystal
 
     it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
     it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))
+    it_parses "private def foo = 1", VisibilityModifier.new(Visibility::Private, Def.new("foo", body: 1.int32))
+    it_parses "protected def foo = 1", VisibilityModifier.new(Visibility::Protected, Def.new("foo", body: 1.int32))
 
     it_parses "`foo`", Call.new("`", "foo".string)
     it_parses "`foo\#{1}bar`", Call.new("`", StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode))
