@@ -27,4 +27,37 @@ describe "Compiler" do
       end
     end
   end
+
+  it "reports codegen timings with parallel compilation" do
+    compiler = create_spec_compiler
+    compiler.n_threads = 2
+    compiler.prelude = "empty"
+    compiler.progress_tracker.stats = true
+    output = IO::Memory.new
+    compiler.stdout = output
+
+    sources = [Compiler::Source.new("codegen_stats.cr", <<-CRYSTAL)]
+      class Foo
+        def value
+          1
+        end
+      end
+
+      class Bar
+        def value
+          2
+        end
+      end
+
+      Foo.new.value + Bar.new.value
+      CRYSTAL
+
+    with_temp_executable "compiler_spec_output" do |path|
+      compiler.compile(sources, path)
+    end
+
+    output.to_s.should contain("Top 10 slowest modules:")
+    output.to_s.should contain("Foo")
+    output.to_s.should contain("Bar")
+  end
 end
