@@ -2687,7 +2687,7 @@ module Crystal
   class LibType < ModuleType
     getter link_annotations : Array(LinkAnnotation)?
     property? used = false
-    property call_convention : LLVM::CallConvention?
+    property call_convention : Crystal::CallConvention?
 
     def add_link_annotation(link_annotation : LinkAnnotation)
       link_annotations = @link_annotations ||= [] of LinkAnnotation
@@ -3329,6 +3329,15 @@ module Crystal
 
     # Is this constant accessed with pointerof(...)?
     property? pointer_read = false
+
+    # Was this constant already read during the codegen phase?
+    # If not, and we are at the place that declares the constant, we can
+    # directly initialize the constant now, without checking for an `init` flag.
+    property? read = false
+
+    # If true, there's no need to check whether the constant was initialized or
+    # not when reading it.
+    property? no_init_flag = false
 
     property visitor : MainVisitor?
 
