@@ -101,7 +101,10 @@ module Crystal::System::Thread
   {% end %}
 
   def self.sleep(time : ::Time::Span) : Nil
-    LibC.Sleep(time.total_milliseconds.to_i.clamp(1..))
+    milliseconds = (time.@seconds * 1_000 + time.@nanoseconds // 1_000_000).clamp(1..)
+    GC.syscall do
+      LibC.Sleep(milliseconds)
+    end
   end
 
   private def system_join : Exception?

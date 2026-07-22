@@ -23,10 +23,15 @@ class Thread
     end
 
     def wait(mutex : Thread::Mutex, time : Time::Span, & : ->)
-      ret = LibC.SleepConditionVariableCS(self, mutex, time.total_milliseconds)
+      ret, error = 0, WinError::NONE
+      timeout = time.total_milliseconds
+
+      GC.syscall do
+        ret = LibC.SleepConditionVariableCS(self, mutex, timeout)
+        error = WinError.value
+      end
       return if ret != 0
 
-      error = WinError.value
       if error == WinError::ERROR_TIMEOUT
         yield
       else
