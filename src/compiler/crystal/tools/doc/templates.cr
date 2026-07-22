@@ -33,7 +33,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
-  record ListItemsTemplate, types : Array(Type), current_type : Type? do
+  record ListItemsTemplate, types : Array(Type) do
     ECR.def_to_s "#{__DIR__}/html/_list_items.html"
   end
 
@@ -73,7 +73,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_head.html"
   end
 
-  record SidebarTemplate, project_info : ProjectInfo, types : Array(Type), current_type : Type? do
+  record SidebarTemplate, project_info : ProjectInfo, types : Array(Type) do
     ECR.def_to_s "#{__DIR__}/html/_sidebar.html"
   end
 
@@ -83,6 +83,10 @@ module Crystal::Doc
 
   struct JsTypeTemplate
     ECR.def_to_s "#{__DIR__}/html/js/doc.js"
+  end
+
+  struct JsTypeSidebarTemplate
+    ECR.def_to_s "#{__DIR__}/html/js/doc-sidebar.js"
   end
 
   struct JsSearchTemplate
@@ -103,6 +107,10 @@ module Crystal::Doc
 
   struct StyleTemplate
     ECR.def_to_s "#{__DIR__}/html/css/style.css"
+  end
+
+  struct StyleSidebarTemplate
+    ECR.def_to_s "#{__DIR__}/html/css/style-sidebar.css"
   end
 
   record SitemapTemplate, types : Array(Type), base_url : String, priority : String, changefreq : String do
