@@ -247,8 +247,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      system_run(blocking) { |fiber| yield fiber }
     end
 
     # no lock: the evloop expects every scheduler to wait on its dedicated ring
