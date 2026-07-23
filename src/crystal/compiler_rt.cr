@@ -18,7 +18,7 @@ require "./compiler_rt/divmod128.cr"
   require "./compiler_rt/pow.cr"
 {% end %}
 
-{% if flag?(:win32) && flag?(:bits64) %}
+{% if flag?(:win32) && flag?(:x86_64) %}
   # LLVM doesn't honor the Windows x64 ABI when calling certain compiler-rt
   # functions from its own instructions, but calls from Crystal do, so we invoke
   # those functions directly
