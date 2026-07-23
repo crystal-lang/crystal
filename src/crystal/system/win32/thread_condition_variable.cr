@@ -23,7 +23,7 @@ class Thread
     end
 
     def wait(mutex : Thread::Mutex, time : Time::Span, & : ->)
-      ret, error = 0, WinError::NONE
+      ret, error = 0, WinError::ERROR_SUCCESS
       timeout = time.total_milliseconds
 
       GC.syscall do
