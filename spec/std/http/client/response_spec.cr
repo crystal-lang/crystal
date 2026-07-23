@@ -172,6 +172,27 @@ class HTTP::Client::Response
           Response.from_io?(IO::Memory.new("HTTP/1.0 42\n\nNot an HTTP response"))
         end
       end
+
+      it "rejects unhandled Transfer-Encoding" do
+        Response.from_io?(IO::Memory.new(<<-HTTP)).should be_nil
+          HTTP/1.1 200
+          Transfer-Encoding: deflate
+
+          Hello
+
+          HTTP
+      end
+
+      it "rejects unknown Transfer-Encoding" do
+        Response.from_io?(IO::Memory.new(<<-HTTP)).should be_nil
+          HTTP/1.1 200
+          Transfer-Encoding: foobar
+
+          Hello
+
+
+          HTTP
+      end
     end
 
     it "doesn't sets content length for 1xx, 204 or 304" do
