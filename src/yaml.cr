@@ -69,6 +69,9 @@ require "base64"
 # this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
+# You can set the preferred line width used by the emitter using the `width` argument to `Object#to_yaml` or `YAML.build`.
+# Disabling line wrapping is possible using `-1` as the value.
+#
 # ```
 # yaml = YAML.dump({hello: "world"})                               # => "---\nhello: world\n"
 # File.open("foo.yml", "w") { |f| YAML.dump({hello: "world"}, f) } # writes it to the file
