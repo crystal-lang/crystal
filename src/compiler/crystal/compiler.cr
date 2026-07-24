@@ -680,10 +680,14 @@ module Crystal
 
     private def fork_codegen(units, n_threads)
       workers = fork_workers(n_threads) do |input, output|
-        while i = input.gets(chomp: true).presence
-          unit = units[i.to_i]
+        while i = input.gets(chomp: true).presence.try(&.to_i)
+          unit = units[i]
           unit.compile
-          result = {name: unit.name, reused: unit.reused_previous_compilation?}
+          result = {
+            index:  i,
+            reused: unit.reused_previous_compilation?,
+            time:   unit.compilation_time.total_seconds,
+          }
           output.puts result.to_json
         end
       rescue ex
@@ -751,9 +755,10 @@ module Crystal
         end
 
         if @progress_tracker.stats?
+          unit = units[result["index"].as_i]
+          unit.compilation_time = result["time"].as_f.seconds
+
           if result["reused"].as_bool
-            name = result["name"].as_s
-            unit = units.find! { |unit| unit.name == name }
             unit.reused_previous_compilation = true
           end
         end
@@ -815,6 +820,7 @@ module Crystal
       return unless units
 
       reused = units.count(&.reused_previous_compilation?)
+      units.sort_by! { |unit| -unit.compilation_time }
 
       puts
       puts "Codegen (bc+obj):"
@@ -823,13 +829,18 @@ module Crystal
         puts " - all previous .o files were reused"
       when .zero?
         puts " - no previous .o files were reused"
+        puts
+        puts "Top 10 slowest modules:"
+        units.first(10).each do |unit|
+          puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
+        end
       else
         puts " - #{reused}/#{units.size} .o files were reused"
         puts
         puts "These modules were not reused:"
         units.each do |unit|
           next if unit.reused_previous_compilation?
-          puts " - #{unit.original_name} (#{unit.name}.bc)"
+          puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
         end
       end
     end
@@ -962,6 +973,7 @@ module Crystal
       getter llvm_mod
       property? reused_previous_compilation = false
       getter object_extension : String
+      property compilation_time : Time::Span = Time::Span::ZERO
       @memory_buffer : LLVM::MemoryBuffer?
       @object_name : String?
       @bc_name : String?
@@ -1019,7 +1031,9 @@ module Crystal
         if must_compile?
           isolate_module_context if isolate_context
           update_bitcode_cache
-          compile_to_object
+          @compilation_time = Time.measure do
+            compile_to_object
+          end
         else
           @reused_previous_compilation = true
         end

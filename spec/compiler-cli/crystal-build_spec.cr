@@ -44,4 +44,30 @@ describe "`crystal build`" do
       .should(be_failure(1))
       .error.should(contain("Error: undefined method 'frobulate' for Int32"))
   end
+
+  it "reports codegen timings with parallel compilation" do
+    with_tempfile "codegen_stats.cr" do |source|
+      File.write source, <<-CRYSTAL
+        class Foo
+          def value
+            1
+          end
+        end
+
+        class Bar
+          def value
+            2
+          end
+        end
+
+        Foo.new.value + Bar.new.value
+        CRYSTAL
+
+      with_temp_executable "codegen_stats" do |output_path|
+        result = Process.capture_result(crystal, "build", "--stats", "--threads=2", "-o", output_path, source)
+        result.should(be_success)
+        result.output.should(contain("Top 10 slowest modules:"))
+      end
+    end
+  end
 end
