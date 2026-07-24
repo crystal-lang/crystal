@@ -52,7 +52,12 @@ module Fiber::ExecutionContext
       remaining = @every
 
       loop do
-        Thread.sleep(remaining)
+        GC.do_blocking(
+          ->(data : Void*) {
+            Thread.sleep(data.as(Time::Span*).value)
+            Pointer(Void).null
+          },
+          pointerof(remaining).as(Void*))
 
         start = Crystal::System::Time.instant
         yield(start)

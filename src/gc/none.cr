@@ -69,6 +69,11 @@ module GC
     {% end %}
   end
 
+  # :nodoc:
+  def self.do_blocking(fn : Void* -> Void*, data : Void*) : Nil
+    fn.call(data)
+  end
+
   def self.is_heap_ptr(pointer : Void*) : Bool
     false
   end
