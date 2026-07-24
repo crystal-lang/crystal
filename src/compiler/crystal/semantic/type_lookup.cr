@@ -41,13 +41,13 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type
-    TypeLookup.new(self, self_type, true, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node).not_nil!
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true, inside_is_a = false) : Type
+    TypeLookup.new(self, self_type, true, allow_typeof, free_vars, find_root_generic_type_parameters, inside_is_a: inside_is_a).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true) : Type?
-    TypeLookup.new(self, self_type, false, allow_typeof, free_vars, find_root_generic_type_parameters).lookup(node)
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil, find_root_generic_type_parameters = true, inside_is_a = false) : Type?
+    TypeLookup.new(self, self_type, false, allow_typeof, free_vars, find_root_generic_type_parameters, inside_is_a: inside_is_a).lookup(node)
   end
 
   # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
@@ -62,7 +62,7 @@ class Crystal::Type
   end
 
   private struct TypeLookup
-    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true)
+    def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil, @find_root_generic_type_parameters = true, @remove_alias = true, @inside_is_a = false)
       @in_generic_args = 0
 
       # If we are looking types inside a non-instantiated generic type,
@@ -138,7 +138,9 @@ class Crystal::Type
             type.process_value
           end
         end
-        type = type.remove_alias_if_simple if @remove_alias
+        if @remove_alias
+          type = @inside_is_a ? type.remove_alias_union_of : type.remove_alias_if_simple
+        end
       end
 
       type
@@ -156,7 +158,11 @@ class Crystal::Type
 
         type.virtual_type
       end
-      program.type_merge(types)
+      if @inside_is_a
+        program.type_merge_union_of(types)
+      else
+        program.type_merge(types)
+      end
     end
 
     def lookup(node : Metaclass)
@@ -299,6 +305,11 @@ class Crystal::Type
           # union types only when the type is instantiated.
           # TODO: check that everything is a type
           MixedUnionType.new(@root.program, type_vars.map(&.as(Type)))
+        elsif instance_type.is_a?(GenericUnionType) && @inside_is_a
+          # In the case of `exp.is_a?(Union(X, Y))` we make it work exactly
+          # like `exp.is_a?(X | Y)`, which won't resolve `X | Y` to the virtual
+          # parent type (#9665, #10244).
+          instance_type.instantiate(type_vars, type_merge_union_of: true)
         else
           instance_type.as(GenericType).instantiate(type_vars)
         end
