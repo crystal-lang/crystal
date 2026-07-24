@@ -258,5 +258,17 @@ describe Crystal::Repl::Interpreter do
         parser = "parser"
       CRYSTAL
     end
+
+    it "returns correct crystal_type_id for virtual types (#14967)" do
+      interpret(<<-CRYSTAL).should be_true
+        class Foo
+        end
+
+        class Bar < Foo
+        end
+
+        Bar.new.as(Foo).crystal_type_id == Bar.new.crystal_type_id
+      CRYSTAL
+    end
   end
 end
