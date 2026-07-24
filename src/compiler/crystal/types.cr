@@ -3320,6 +3320,12 @@ module Crystal
   # saved under a type types like any other type.
   class Const < NamedType
     property value : ASTNode
+
+    # Type restriction declared with `FOO : Int64 = 123` syntax. The value's
+    # inferred type must conform to this and number/symbol literals autocast
+    # to it.
+    property declared_type : ASTNode?
+
     property fake_def : Def?
     property? used = false
     property? visited = false
