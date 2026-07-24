@@ -57,7 +57,7 @@ extend-ignore-re = [
   "writeable:", # in spec/std/io/memory_spec.cr
   "File.writeable", # in docs/changelogs/pre-1.0.md
   # command-line options
-  "", # etc/win-ci/windres-rc.sh
+  "FO", # etc/win-ci/windres-rc.sh
 ]
 
 [files]
