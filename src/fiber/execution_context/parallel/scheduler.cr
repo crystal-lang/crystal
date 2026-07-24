@@ -127,11 +127,14 @@ module Fiber::ExecutionContext
           end
 
           # run the event loop to see if any event is activable
-          list = Fiber::List.new
-          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
-            return enqueue_many(pointerof(list))
+          @event_loop.lock? do
+            if fiber = run_evloop(blocking: false)
+              return fiber
+            end
           end
         end
+
+        nil
       end
 
       protected def run_loop : Nil
@@ -180,8 +183,6 @@ module Fiber::ExecutionContext
       end
 
       private def find_next_runnable(&) : Nil
-        list = Fiber::List.new
-
         # nothing to do: start spinning
         spinning do
           return if @shutdown
@@ -192,22 +193,15 @@ module Fiber::ExecutionContext
 
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
-          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
-            unless list.empty?
-              # must stop spinning before calling enqueue_many that may call
-              # wake_scheduler which returns immediately if a thread is
-              # spinning... but we're spinning, so that would always fail to
-              # wake sleeping schedulers despite having runnable fibers
-              spin_stop
-              yield enqueue_many(pointerof(list))
-            end
+          @event_loop.lock? do
+            yield run_evloop(blocking: false)
           end
 
           yield try_steal?
         end
 
         # wait on the event loop for events and timers to activate
-        evloop_ran = @event_loop.lock? do
+        @event_loop.lock? do
           @state = State::WAITING
 
           # there is a time window between stop spinning and start waiting
@@ -218,11 +212,7 @@ module Fiber::ExecutionContext
 
           # block on the event loop until an event is ready or the loop is
           # interrupted
-          @event_loop.run(pointerof(list), blocking: true)
-        end
-
-        if evloop_ran
-          yield enqueue_many(pointerof(list))
+          yield run_evloop(blocking: true)
 
           # the event loop was interrupted: restart the loop
           return
@@ -251,12 +241,21 @@ module Fiber::ExecutionContext
         @state = State::SPINNING
       end
 
-      private def enqueue_many(list : Fiber::List*) : Fiber?
-        if fiber = list.value.pop?
-          Crystal.trace :sched, "enqueue", size: list.value.size, fiber: fiber
-          @runnables.bulk_push(list) unless list.value.empty?
-          fiber
+      private def run_evloop(blocking)
+        fiber = nil
+        size = 0
+
+        @event_loop.run(blocking) do |runnable|
+          if fiber
+            @runnables.push(runnable)
+          else
+            fiber = runnable
+          end
+          size += 1
         end
+
+        Crystal.trace :sched, "enqueue", size: size, fiber: fiber
+        fiber
       end
 
       # This method always runs in parallel!
