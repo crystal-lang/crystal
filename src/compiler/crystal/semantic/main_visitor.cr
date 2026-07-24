@@ -900,7 +900,7 @@ module Crystal
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
       # by one since we are inside an Assign)
-      if !@typed_def && (@exp_nest <= 1) && !inside_block?
+      if !@scope && !@typed_def && (@exp_nest <= 1) && !inside_block?
         var = lookup_class_var(target)
         target.var = var
         var.thread_local = true if thread_local
