@@ -64,6 +64,10 @@ struct Exception::CallStack
 
     file, line_number, column_number = decode_line_number(pc)
 
+    format_backtrace_frame(ip, show_full_info, file, line_number, column_number, decode_function_name(pc))
+  end
+
+  def self.format_backtrace_frame(ip, show_full_info, file, line_number, column_number, function_name) : String?
     if file && file != "??"
       return if @@skip.includes?(file)
 
@@ -82,7 +86,7 @@ struct Exception::CallStack
       end
     end
 
-    if name = decode_function_name(pc)
+    if name = function_name
       function = name
     elsif frame = decode_frame(ip)
       _, function, file = frame
