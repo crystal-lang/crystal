@@ -46,6 +46,8 @@ fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
   GC.realloc(ptr, LibC::SizeT.new(size))
 end
 
+# This module provides functions to interact with Crystal's garbage collector(GC).
+# NOTE: Some functions listed here are internal implementation details and are discouraged to be used outside of the compiler.
 module GC
   struct Stats
     # The system memory allocated by the GC for its HEAP, in bytes. The memory
