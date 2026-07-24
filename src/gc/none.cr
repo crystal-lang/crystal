@@ -219,4 +219,9 @@ module GC
     # finally, we can release the lock
     Thread.unlock
   end
+
+  # :nodoc:
+  def self.syscall(&proc : ->) : Nil
+    proc.call
+  end
 end

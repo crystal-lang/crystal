@@ -134,6 +134,22 @@ module GC
   def self.realloc(pointer : T*, size : Int) : T* forall T
     realloc(pointer.as(Void*), LibC::SizeT.new(size)).as(T*)
   end
+
+  # :nodoc:
+  #
+  # Marks the thread as doing a call that doesn't involve the GC, for example a
+  # blocking syscall such as `nanosleep` or `pthread_cond_timedwait`.
+  #
+  # The GC records the stack pointer at the entrypoint of the function, so the
+  # thread's stack will be scanned up to the stack pointer. The thread won't
+  # need to be suspended or resumed on wakeup (for the duration of the block).
+  #
+  # WARNING: Allocating memory into the GC HEAP (e.g. raising an exception), or
+  # mutating memory allocated into the GC HEAP are undefined behavior.
+  #
+  # WARNING: A system error (e.g. Errno, WinError) must be read before the block
+  # terminates as the value can change before the method returns.
+  # abstract def self.syscall(&block : ->) : Nil
 end
 
 {% if flag?(:gc_none) || flag?(:wasm32) %}
