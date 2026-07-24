@@ -2595,6 +2595,36 @@ module Crystal
     end
   end
 
+  # `prepend Foo` — mixes a module into the inheriting class such that the
+  # module's methods take precedence over the class's own. The prepended
+  # module sits *before* the class itself in the method lookup chain.
+  class Prepend < ASTNode
+    property name : ASTNode
+
+    def initialize(@name)
+    end
+
+    def accept_children(visitor)
+      @name.accept visitor
+    end
+
+    def clone_without_location
+      Prepend.new(@name)
+    end
+
+    def end_location
+      @end_location || @name.end_location
+    end
+
+    def_equals_and_hash name
+
+    def pretty_print(pp) : Nil
+      pp_type(pp, "Prepend[", "]") do
+        name.pretty_print(pp)
+      end
+    end
+  end
+
   class LibDef < ASTNode
     property name : Path
     property doc : String?

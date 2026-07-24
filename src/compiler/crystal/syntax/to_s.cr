@@ -1345,6 +1345,12 @@ module Crystal
       false
     end
 
+    def visit(node : Prepend)
+      @str << "prepend "
+      node.name.accept self
+      false
+    end
+
     def visit(node : And)
       to_s_binary node, "&&"
     end

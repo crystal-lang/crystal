@@ -664,19 +664,63 @@ class Crystal::Call
     # TODO: do this better
     lookup = enclosing_def.owner
 
+    scope_type = parent_visitor.scope
+    prepended = scope_type.prepended_modules
+
+    in_initialize = enclosing_def.name == "initialize"
+
+    # Detect `super` issued from inside a prepended module. The MRO at the
+    # current point is `..rest_prepended.., scope, ..scope.ancestors..`,
+    # and we must search scope's own defs without re-entering its
+    # `prepended_modules` (otherwise we'd recurse into ourselves).
+    if prepended
+      idx =
+        case lookup
+        when NonGenericModuleType
+          prepended.index(lookup)
+        when GenericModuleType
+          prepended.index { |m| m.is_a?(GenericModuleInstanceType) && m.generic_type == lookup }
+        else
+          nil
+        end
+
+      if idx
+        rest_prepended = prepended[(idx + 1)..]
+        rest_prepended.each do |mod|
+          if mod.lookup_first_def(enclosing_def.name, block)
+            return lookup_matches_in_type(mod, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_autocast: with_autocast)
+          end
+        end
+
+        # Now search scope's own defs (without going back through
+        # prepended_modules) and then its regular ancestors.
+        if scope_type.has_def_without_parents?(enclosing_def.name)
+          return lookup_matches_in_type(scope_type, arg_types, named_args_types, scope, enclosing_def.name, false, search_in_toplevel: false, with_autocast: with_autocast)
+        end
+
+        scope_type.ancestors.each do |ancestor|
+          if ancestor.lookup_first_def(enclosing_def.name, block)
+            return lookup_matches_in_type(ancestor, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_autocast: with_autocast)
+          end
+        end
+
+        return lookup_matches_in_type(scope_type.ancestors.last? || scope_type, arg_types, named_args_types, scope, enclosing_def.name, !in_initialize, search_in_toplevel: false, with_autocast: with_autocast)
+      end
+    end
+
     case lookup
     when VirtualType
       parents = lookup.base_type.ancestors
     when NonGenericModuleType
-      ancestors = parent_visitor.scope.ancestors
+      ancestors = scope_type.ancestors
       index_of_ancestor = ancestors.index!(lookup)
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
-      ancestors = parent_visitor.scope.ancestors
+      ancestors = scope_type.ancestors
       index_of_ancestor = ancestors.index! { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
-      ancestors = parent_visitor.scope.ancestors
+      ancestors = scope_type.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericClassInstanceType) && ancestor.generic_type == lookup }
       if index_of_ancestor
         parents = ancestors[index_of_ancestor + 1..-1]
@@ -686,8 +730,6 @@ class Crystal::Call
     else
       parents = lookup.ancestors
     end
-
-    in_initialize = enclosing_def.name == "initialize"
 
     if parents && parents.size > 0
       parents.each_with_index do |parent, i|

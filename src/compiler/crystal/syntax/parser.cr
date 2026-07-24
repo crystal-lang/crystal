@@ -1156,6 +1156,12 @@ module Crystal
                 parse_extend
               end
             end
+          when .prepend?
+            check_type_declaration do
+              check_not_inside_def("can't prepend") do
+                parse_prepend
+              end
+            end
           when .class?
             check_type_declaration do
               check_not_inside_def("can't define class") do
@@ -3163,6 +3169,10 @@ module Crystal
       parse_include_or_extend Extend
     end
 
+    def parse_prepend
+      parse_include_or_extend Prepend
+    end
+
     def parse_include_or_extend(klass)
       location = @token.location
 
@@ -4275,7 +4285,7 @@ module Crystal
         # so they are invalid internal name.
         when .begin?, Keyword::NIL, .true?, .false?, .yield?, .with?, .abstract?,
              .def?, .macro?, .require?, .case?, .select?, .if?, .unless?, .include?,
-             .extend?, .class?, .struct?, .module?, .enum?, .while?, .until?, .return?,
+             .extend?, .prepend?, .class?, .struct?, .module?, .enum?, .while?, .until?, .return?,
              .next?, .break?, .lib?, .fun?, .alias?, .pointerof?, .sizeof?, .offsetof?,
              .instance_sizeof?, .typeof?, .private?, .protected?, .asm?, .out?,
              .self?, Keyword::IN, .end?, .alignof?, .instance_alignof?
@@ -4287,7 +4297,7 @@ module Crystal
         case keyword
         when "begin", "nil", "true", "false", "yield", "with", "abstract",
              "def", "macro", "require", "case", "select", "if", "unless", "include",
-             "extend", "class", "struct", "module", "enum", "while", "until", "return",
+             "extend", "prepend", "class", "struct", "module", "enum", "while", "until", "return",
              "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
              "instance_sizeof", "typeof", "private", "protected", "asm", "out",
              "self", "in", "end", "alignof", "instance_alignof"
