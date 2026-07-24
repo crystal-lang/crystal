@@ -32,26 +32,26 @@ output=
 defines=""
 
 while [ $# -gt 0 ]; do
-	case $1 in
-	-D* | -d*)
-		defines="$1 ${defines}"
-		shift
-		;;
-	-i)
-		shift
-		input=$1
-		shift
-		;;
-	-o)
-		shift
-		output=$1
-		shift
-		;;
-	*)
-		# ignore --output-format=coff as it is the default already
-		shift
-		;;
-	esac
+  case $1 in
+    -D* | -d*)
+      defines="$1 ${defines}"
+      shift
+      ;;
+    -i)
+      shift
+      input=$1
+      shift
+      ;;
+    -o)
+      shift
+      output=$1
+      shift
+      ;;
+    *)
+      # ignore --output-format=coff as it is the default already
+      shift
+      ;;
+  esac
 done
 
 # shellcheck disable=SC2086
