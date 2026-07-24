@@ -6,7 +6,7 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/HertzDevil/mpir.git -Ref c3578f8d4a863482a785480e14cbda7e236f194b # vs2026-arm64@{2026-07-24}
+Setup-Git -Path $BuildTree -Url https://github.com/BrianGladman/mpir.git -Ref 5e0c2061af105c151970d41c8394ce956f77e455 # master@{2026-07-24}
 $arch = (Get-CimInstance Win32_operatingsystem).OSArchitecture
 $platform = if ($arch -eq "ARM 64-bit Processor") { "ARM64" } else { "x64" }
 
