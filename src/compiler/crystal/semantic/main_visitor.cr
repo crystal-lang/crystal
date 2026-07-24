@@ -373,7 +373,7 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        if var.type?.is_a?(Program) && node.name == "self"
+        if var.type?.is_a?(Program | FileModule) && node.name == "self"
           node.raise "there's no self in this scope"
         end
 
