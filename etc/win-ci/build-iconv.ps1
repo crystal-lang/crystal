@@ -14,7 +14,9 @@ rm libiconv.tar.gz
 
 Run-InDirectory $BuildTree {
     $env:CHERE_INVOKING = 1
+    cp "$PSScriptRoot\windres-rc.sh" "build-aux\windres-rc"
     [System.IO.File]::WriteAllText("src\Makefile.in", [System.IO.File]::ReadAllText("src\Makefile.in").Replace("chmod 777 .", "true"))
+    [System.IO.File]::WriteAllText("windows\windres-options", [System.IO.File]::ReadAllText("windows\windres-options").Replace("escape=yes", ""))
 
     & 'C:\cygwin64\bin\bash.exe' --login "$PSScriptRoot\cygwin-build-iconv.sh" "$(if ($Dynamic) { 1 })"
     if (-not $?) {
