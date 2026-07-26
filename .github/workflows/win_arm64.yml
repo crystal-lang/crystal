@@ -328,11 +328,13 @@ jobs:
 
       - name: Cross-compile Crystal
         run: |
-          cp dlls/libffi-8.dll "${{ steps.install-crystal.outputs.path }}/"
+          cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
           crystal build --release --cross-compile --target=aarch64-windows-msvc src\compiler\crystal.cr -Di_know_what_im_doing
           cl crystal.obj /Fecrystal /link /LIBPATH:$(pwd)\libs /INCREMENTAL:NO /STACK:0x800000 /ENTRY:wmainCRTStartup `
             kernel32.lib ucrt.lib ole32.lib DbgHelp.lib advapi32.lib ws2_32.lib msvcrt.lib ntdll.lib shell32.lib `
             ffi-dynamic.lib gc-dynamic.lib iconv-dynamic.lib llvm-dynamic.lib pcre2-8-dynamic.lib ssl-dynamic.lib crypto-dynamic.lib xml2-dynamic.lib z-dynamic.lib
+        env:
+          CRYSTAL_DIR: ${{ steps.install-crystal.outputs.path }}
 
       - name: Gather Crystal binaries
         run: |
