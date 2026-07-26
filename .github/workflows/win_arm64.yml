@@ -328,7 +328,7 @@ jobs:
 
       - name: Cross-compile Crystal
         run: |
-          cp dlls/libffi-8.dll ${{ steps.install-crystal.outputs.path }}/
+          cp dlls/libffi-8.dll "${{ steps.install-crystal.outputs.path }}/"
           crystal build --release --cross-compile --target=aarch64-windows-msvc src\compiler\crystal.cr -Di_know_what_im_doing
           cl crystal.obj /Fecrystal /link /LIBPATH:$(pwd)\libs /INCREMENTAL:NO /STACK:0x800000 /ENTRY:wmainCRTStartup `
             kernel32.lib ucrt.lib ole32.lib DbgHelp.lib advapi32.lib ws2_32.lib msvcrt.lib ntdll.lib shell32.lib `

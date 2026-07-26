@@ -122,7 +122,7 @@ jobs:
 
       - name: Build Crystal
         run: |
-          cp dlls/libffi-8.dll ${{ steps.install-crystal.outputs.path }}/
+          cp dlls/libffi-8.dll "${{ steps.install-crystal.outputs.path }}/"
           bin/crystal.bat env
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
