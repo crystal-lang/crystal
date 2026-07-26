@@ -124,7 +124,7 @@ jobs:
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll
-            dlls/libffi.dll
+            dlls/libffi-8.dll
             dlls/zlib1.dll
             dlls/mpir.dll
             dlls/yaml.dll

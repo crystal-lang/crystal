@@ -79,7 +79,7 @@ jobs:
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll
-            dlls/libffi.dll
+            dlls/libffi-8.dll
             dlls/zlib1.dll
             dlls/mpir.dll
             dlls/yaml.dll
@@ -122,6 +122,7 @@ jobs:
 
       - name: Build Crystal
         run: |
+          cp dlls/libffi-8.dll ${{ steps.install-crystal.outputs.path }}/
           bin/crystal.bat env
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
