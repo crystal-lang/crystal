@@ -29,30 +29,38 @@ class Thread
     end
 
     def wait(mutex : Thread::Mutex) : Nil
-      ret = LibC.pthread_cond_wait(self, mutex)
+      ret = 0
+      GC.syscall do
+        ret = LibC.pthread_cond_wait(self, mutex)
+      end
       raise RuntimeError.from_os_error("pthread_cond_wait", Errno.new(ret)) unless ret == 0
     end
 
     def wait(mutex : Thread::Mutex, time : Time::Span, & : ->)
-      ret =
-        {% if flag?(:darwin) %}
-          ts = uninitialized LibC::Timespec
-          ts.tv_sec = time.to_i
-          ts.tv_nsec = time.nanoseconds
+      ret = 0
 
-          LibC.pthread_cond_timedwait_relative_np(self, mutex, pointerof(ts))
-        {% else %}
-          LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out ts)
-          ts.tv_sec += time.to_i
-          ts.tv_nsec += time.nanoseconds
+      {% if flag?(:darwin) %}
+        ts = uninitialized LibC::Timespec
+        ts.tv_sec = time.to_i
+        ts.tv_nsec = time.nanoseconds
 
-          if ts.tv_nsec >= 1_000_000_000
-            ts.tv_sec += 1
-            ts.tv_nsec -= 1_000_000_000
-          end
+        GC.syscall do
+          ret = LibC.pthread_cond_timedwait_relative_np(self, mutex, pointerof(ts))
+        end
+      {% else %}
+        LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out ts)
+        ts.tv_sec += time.to_i
+        ts.tv_nsec += time.nanoseconds
 
-          LibC.pthread_cond_timedwait(self, mutex, pointerof(ts))
-        {% end %}
+        if ts.tv_nsec >= 1_000_000_000
+          ts.tv_sec += 1
+          ts.tv_nsec -= 1_000_000_000
+        end
+
+        GC.syscall do
+          ret = LibC.pthread_cond_timedwait(self, mutex, pointerof(ts))
+        end
+      {% end %}
 
       case errno = Errno.new(ret)
       when .none?
