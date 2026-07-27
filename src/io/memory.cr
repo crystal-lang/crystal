@@ -9,6 +9,9 @@ class IO::Memory < IO
   # Same as `size`.
   getter bytesize : Int32
 
+  # Returns `true` if this `IO::Memory` can be written to.
+  getter? writable : Bool
+
   @capacity : Int32
 
   # Creates an empty, resizeable and writable `IO::Memory` with the given
