@@ -12,117 +12,119 @@ end
 
 module HTTP
   describe Request do
-    it "serialize GET" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/", headers
+    describe "#to_io" do
+      it "serialize GET" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/", headers
 
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(original_headers)
-    end
-
-    it "serialize GET (with query params)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/greet?q=hello&name=world", headers
-
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(original_headers)
-    end
-
-    it "serialize GET (with cookie)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/", headers
-      request.cookies << Cookie.new("foo", "bar")
-
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-      headers.should eq(original_headers)
-    end
-
-    it "serialize GET (with cookies, from headers)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      headers["Cookie"] = "foo=bar"
-      original_headers = headers.dup
-
-      request = Request.new "GET", "/", headers
-
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-
-      request.cookies["foo"].value.should eq "bar" # Force lazy initialization
-
-      io.clear
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-
-      request.cookies["foo"] = "baz"
-      request.cookies["quux"] = "baz"
-
-      io.clear
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
-      headers.should eq(original_headers)
-    end
-
-    it "serialize POST (with body)" do
-      request = Request.new "POST", "/", body: "thisisthebody"
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
-    end
-
-    it "serialize POST (with bytes body)" do
-      request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")
-    end
-
-    it "serialize POST (with io body, without content-length header)" do
-      request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
-    end
-
-    it "serialize POST (with io body, with content-length header)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
-    end
-
-    it "raises if serializing POST body with incorrect content-length (less then real)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize - 1
-      io = IO::Memory.new
-      expect_raises(ArgumentError) do
+        io = IO::Memory.new
         request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
+        headers.should eq(original_headers)
       end
-    end
 
-    it "raises if serializing POST body with incorrect content-length (more then real)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize + 1
-      io = IO::Memory.new
-      expect_raises(ArgumentError) do
+      it "serialize GET (with query params)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/greet?q=hello&name=world", headers
+
+        io = IO::Memory.new
         request.to_io(io)
+        io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize GET (with cookie)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/", headers
+        request.cookies << Cookie.new("foo", "bar")
+
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize GET (with cookies, from headers)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        headers["Cookie"] = "foo=bar"
+        original_headers = headers.dup
+
+        request = Request.new "GET", "/", headers
+
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+
+        request.cookies["foo"].value.should eq "bar" # Force lazy initialization
+
+        io.clear
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+
+        request.cookies["foo"] = "baz"
+        request.cookies["quux"] = "baz"
+
+        io.clear
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize POST (with body)" do
+        request = Request.new "POST", "/", body: "thisisthebody"
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "serialize POST (with bytes body)" do
+        request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")
+      end
+
+      it "serialize POST (with io body, without content-length header)" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+      end
+
+      it "serialize POST (with io body, with content-length header)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "raises if serializing POST body with incorrect content-length (less then real)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize - 1
+        io = IO::Memory.new
+        expect_raises(ArgumentError) do
+          request.to_io(io)
+        end
+      end
+
+      it "raises if serializing POST body with incorrect content-length (more then real)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize + 1
+        io = IO::Memory.new
+        expect_raises(ArgumentError) do
+          request.to_io(io)
+        end
       end
     end
 
@@ -309,9 +311,37 @@ module HTTP
 
           HTTP
       end
+
+      it "accepts multiple identical Content-Length headers" do
+        io = IO::Memory.new <<-HTTP
+          GET / HTTP/1.1
+          Host: host
+          Content-Length: 5
+          Content-Length: 5
+          Content-Type: text/plain
+
+          abcde
+          HTTP
+        HTTP::Request.from_io(io)
+      end
+
+      it "raises on multiple differing Content-Length headers" do
+        io = IO::Memory.new <<-HTTP
+          GET / HTTP/1.1
+          Host: host
+          Content-Length: 5
+          Content-Length: 6
+          Content-Type: text/plain
+
+          abcde
+          HTTP
+        expect_raises(ArgumentError) do
+          HTTP::Request.from_io(io)
+        end
+      end
     end
 
-    describe "keep-alive" do
+    describe "#keep_alive?" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
         request.keep_alive?.should be_false
@@ -571,34 +601,6 @@ module HTTP
 
         request.uri.path = "/some_other_route"
         request.resource.should eq("/some_other_route")
-      end
-    end
-
-    it "doesn't raise on request with multiple Content_length headers" do
-      io = IO::Memory.new <<-HTTP
-        GET / HTTP/1.1
-        Host: host
-        Content-Length: 5
-        Content-Length: 5
-        Content-Type: text/plain
-
-        abcde
-        HTTP
-      HTTP::Request.from_io(io)
-    end
-
-    it "raises if request has multiple and differing content-length headers" do
-      io = IO::Memory.new <<-HTTP
-        GET / HTTP/1.1
-        Host: host
-        Content-Length: 5
-        Content-Length: 6
-        Content-Type: text/plain
-
-        abcde
-        HTTP
-      expect_raises(ArgumentError) do
-        HTTP::Request.from_io(io)
       end
     end
 
