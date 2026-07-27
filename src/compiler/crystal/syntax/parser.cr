@@ -1485,6 +1485,7 @@ module Crystal
 
       check_ident :end
       slash_is_not_regex!
+      @wants_regex = false
       next_token_skip_space
 
       if rescues || a_ensure
@@ -1620,6 +1621,7 @@ module Crystal
         skip_space_or_newline
         check :OP_RPAREN
         end_location = token_end_location
+        @wants_regex = false
         next_token_skip_space
       else
         skip_space
@@ -4606,6 +4608,7 @@ module Crystal
           check :OP_RCURLY
           end_location = token_end_location
           slash_is_not_regex!
+          @wants_regex = false
           next_token_skip_space
           {body, end_location}
         end

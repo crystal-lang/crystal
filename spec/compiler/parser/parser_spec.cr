@@ -719,6 +719,13 @@ module Crystal
     it_parses "foo &.as?(T).bar", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
     it_parses "foo(\n  &.block\n)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
 
+    it_parses "foo(&.bar)/2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo(&.bar)/ 2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+
     it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
     it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
 
