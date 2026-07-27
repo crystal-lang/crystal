@@ -395,6 +395,8 @@ module Crystal
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    include Comparable(self)
+
     property value : String
     property kind : NumberKind
 
@@ -414,7 +416,7 @@ module Crystal
         raise "BUG: called 'integer_value' for non-integer literal"
       end
 
-      kind.cast(value)
+      kind.cast(value).as(Int)
     end
 
     # Returns true if this literal is representable in the *other_type*. Used to
@@ -433,6 +435,22 @@ module Crystal
         true
       else
         false
+      end
+    end
+
+    def <=>(other : self)
+      if (kind.signed_int? || kind.unsigned_int?) && (other.kind.signed_int? || other.kind.unsigned_int?)
+        integer_value <=> other.integer_value
+      else
+        value.to_f64 <=> other.value.to_f64
+      end
+    end
+
+    def succ : self
+      if kind.signed_int? || kind.unsigned_int?
+        NumberLiteral.new(integer_value.succ.to_s, kind)
+      else
+        raise "BUG: called 'succ' for non-integer literal"
       end
     end
 
