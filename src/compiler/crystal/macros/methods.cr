@@ -1381,8 +1381,12 @@ module Crystal
       Range.new(from, to, self.exclusive?)
     end
 
+    def interpret_to_range(from : CharLiteral, to : CharLiteral)
+      Range.new(from, to, self.exclusive?)
+    end
+
     def interpret_to_range(from, to)
-      raise "range begin and must be both NumberLiteral, not #{from.class_desc}..#{to.class_desc}"
+      raise "range begin and must be both NumberLiteral or both CharLiteral, not #{from.class_desc}..#{to.class_desc}"
     end
 
     def interpret_to_nilable_range(interpreter)

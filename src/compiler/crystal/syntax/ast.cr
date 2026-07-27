@@ -475,6 +475,8 @@ module Crystal
   #     "'" \w "'"
   #
   class CharLiteral < ASTNode
+    include Comparable(self)
+
     property value : Char
 
     def initialize(@value : Char)
@@ -485,6 +487,14 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def <=>(other : self)
+      value <=> other.value
+    end
+
+    def succ : self
+      CharLiteral.new(value.succ)
+    end
 
     def pretty_print(pp) : Nil
       pp_type(pp, "CharLiteral[", "]") do
