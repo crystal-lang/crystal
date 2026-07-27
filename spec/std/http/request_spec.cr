@@ -373,13 +373,12 @@ module HTTP
 
     describe "#path" do
       it "returns parsed path" do
-        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).should be_a(Request)
         request.path.should eq("/api/v3/some/resource")
       end
 
       it "falls back to /" do
-        request = Request.new("GET", "")
-        request.path.should eq("/")
+        Request.new("GET", "").path.should eq("/")
       end
 
       it "parses with only leading with double slash" do
