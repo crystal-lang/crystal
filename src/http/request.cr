@@ -16,6 +16,7 @@ require "socket"
 # NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
   getter method : String
+  @resource : String
   property headers : Headers
   getter body : IO?
   getter version : String
@@ -66,8 +67,9 @@ class HTTP::Request
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end
 
-  private def initialize(method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1", *, internal)
+  private def initialize(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1", *, internal)
     @method = HTTP.validate_token(method, "Invalid HTTP method")
+    @resource = HTTP.validate_resource(resource)
     @headers = headers || Headers.new
     @version = HTTP.validate_version(version)
     self.body = body

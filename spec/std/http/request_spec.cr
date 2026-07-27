@@ -42,16 +42,11 @@ module HTTP
           Request.new "GET", "/foo/bar?baz=qux"
         end
 
-        it "accepts empty resource" do
-          Request.new("GET", "").path.should eq "/"
-        end
-
         it "rejects invalid resource target" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET", "foo /").resource.should eq "foo /"
-          Request.new("GET", "foo\n").resource.should eq "foo\n"
-          Request.new("GET", "foo\r").resource.should eq "foo\r"
-          Request.new("GET", "").resource.should eq ""
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo /\"") { Request.new "GET", "foo /" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo\\n\"") { Request.new "GET", "foo\n" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo\\r\"") { Request.new "GET", "foo\r" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"\"") { Request.new "GET", "" }
         end
 
         describe "target forms" do
@@ -653,10 +648,6 @@ module HTTP
       it "returns parsed path" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).should be_a(Request)
         request.path.should eq("/api/v3/some/resource")
-      end
-
-      it "falls back to /" do
-        Request.new("GET", "").path.should eq("/")
       end
 
       it "parses with only leading with double slash" do
