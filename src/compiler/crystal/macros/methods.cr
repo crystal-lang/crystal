@@ -548,6 +548,12 @@ module Crystal
           raise "undefined method '~' for float literal: #{self}" unless num.is_a?(Int)
           NumberLiteral.new(~num)
         end
+      when "chr"
+        interpret_check_args do
+          num = to_number
+          raise "undefined method 'chr' for float literal: #{self}" unless num.is_a?(Int)
+          CharLiteral.new(num.chr)
+        end
       when "kind"
         interpret_check_args { SymbolLiteral.new(kind.to_s) }
       when "to_number"
