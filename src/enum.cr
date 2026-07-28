@@ -492,6 +492,10 @@ abstract struct Enum
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
+  def self.parse(slice : Bytes) : self
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{slice}")
+  end
+
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
@@ -508,6 +512,10 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
+    parse? string.to_slice
+  end
+
+  def self.parse?(slice : Bytes) : self?
     {% begin %}
       # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
       # to figure out how much space we actually need. Maybe some regex could
@@ -520,14 +528,14 @@ abstract struct Enum
       {% max_size = @type.constants.map(&.size).sort.last %}
       buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
       appender = buffer.to_unsafe.appender
-      char_counter = 0
-      string.each_char do |char|
-        next if char == '-' || char == '_'
-        char_counter += 1
-        return nil if char_counter > {{max_size}}
-        char.downcase &.each_byte do |byte|
-          appender << byte
-        end
+      byte_counter = 0
+      slice.each do |byte|
+        next if byte == '-'.ord || byte == '_'.ord
+        byte_counter += 1
+        return nil if byte_counter > {{max_size}}
+        # Setting the 6th bit on an alphabetical ASCII byte is effectively a
+        # downcase.
+        appender << ('A'.ord <= byte <= 'Z'.ord ? byte | 0x20_u8 : byte)
       end
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
