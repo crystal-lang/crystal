@@ -7,6 +7,12 @@ module Fiber::ExecutionContext
 
     @thread : Thread?
 
+    {% if compare_versions(Crystal::VERSION, "1.4.0") < 0 %}
+      @every : Time::Span
+      @collect_stacks_next : Time::Instant
+      @increase_parallelism_next : Time::Instant
+    {% end %}
+
     def initialize(@every = DEFAULT_EVERY)
       @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY

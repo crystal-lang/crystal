@@ -184,14 +184,12 @@ describe Crystal::FdLock do
       WaitGroup.wait do |wg|
         10.times do
           wg.spawn do
-            begin
-              lock.reference do
-                ready.done
-                Fiber.yield
-              end
-            rescue ex
-              exceptions.send(ex)
+            lock.reference do
+              ready.done
+              Fiber.yield
             end
+          rescue ex
+            exceptions.send(ex)
           end
         end
 

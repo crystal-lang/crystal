@@ -104,12 +104,24 @@ module Crystal::System::Thread
 
   def self.sleep(time : ::Time::Span) : Nil
     req = uninitialized LibC::Timespec
+    rem = uninitialized LibC::Timespec
+
     req.tv_sec = typeof(req.tv_sec).new(time.@seconds)
     req.tv_nsec = typeof(req.tv_nsec).new(time.@nanoseconds)
 
-    loop do
-      return if LibC.nanosleep(pointerof(req), out rem) == 0
-      raise RuntimeError.from_errno("nanosleep() failed") unless Errno.value == Errno::EINTR
+    while true
+      ret, errno = 0, Errno::NONE
+
+      GC.syscall do
+        ret = LibC.nanosleep(pointerof(req), pointerof(rem))
+        errno = Errno.value
+      end
+      return if ret == 0
+
+      unless errno == Errno::EINTR
+        raise RuntimeError.from_os_error("nanosleep", errno)
+      end
+
       req = rem
     end
   end

@@ -44,7 +44,7 @@ class Crystal::Command
           end
         end
       else
-        raise CompilerError.new("file or directory does not exist: #{path}")
+        raise CompilerError.new("file or directory does not exist: #{path}", :USAGE_ERROR)
       end
     end
   end

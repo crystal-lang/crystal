@@ -214,7 +214,13 @@ module Crystal
     def self.common_descendent(type1 : GenericClassType, type2 : GenericClassType)
       return type1 if type1 == type2
 
-      common_descendent_instance_and_generic(type1, type2)
+      # Try both directions: e.g. for `class C(T) < B(T)`, `common_descendent(B, C)`
+      # should resolve to `C` because every C is also a B. Without the symmetric
+      # check, chained type filters like `x.is_a?(B) && x.is_a?(C)` narrow `x`
+      # to `B(T)` and `is_a?(C)` returns `false` even when the runtime value is
+      # actually a C (#10831).
+      common_descendent_instance_and_generic(type1, type2) ||
+        common_descendent_instance_and_generic(type2, type1)
     end
 
     def self.common_descendent(type1 : Type, type2 : AliasType)

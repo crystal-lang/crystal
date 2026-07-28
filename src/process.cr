@@ -152,7 +152,7 @@ class Process
   # Available only on Unix-like operating systems.
   @[Deprecated("Fork is no longer supported.")]
   def self.fork : Process?
-    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithread mode") unless flag?(:without_mt) %}
 
     if pid = Crystal::System::Process.fork
       new Crystal::System::Process.new(pid)
@@ -648,7 +648,7 @@ class Process
     end
     @wait_count = 0
 
-    Process::Status.new(@process_info.wait)
+    Process::Status.new(system_exit_status: @process_info.wait)
   ensure
     close
     @process_info.release

@@ -1,9 +1,9 @@
 require "./spec_helper"
 require "sync/shared"
 
-private class Foo
-  INSTANCE = Foo.new
-  class_getter foo = Sync::Shared(Int64 | Foo).new(0_i64)
+private class SharedFoo
+  INSTANCE = SharedFoo.new
+  class_getter foo = Sync::Shared(Int64 | SharedFoo).new(0_i64)
   @value = 123
 end
 
@@ -121,7 +121,7 @@ describe Sync::Shared do
     counter.get(:relaxed).should be > 0
   end
 
-  {% if flag?(:execution_context) %}
+  {% if Fiber.has_constant?(:ExecutionContext) %}
     # see https://github.com/crystal-lang/crystal/issues/15085
     it "synchronizes reads/writes of mixed unions" do
       ready = WaitGroup.new(1)
@@ -131,24 +131,24 @@ describe Sync::Shared do
       contexts << Fiber::ExecutionContext::Isolated.new("set:foo") do
         ready.wait
         while running
-          Foo.foo.set(Foo::INSTANCE)
+          SharedFoo.foo.set(SharedFoo::INSTANCE)
         end
       end
 
       contexts << Fiber::ExecutionContext::Isolated.new("set:zero") do
         ready.wait
         while running
-          Foo.foo.set(0_i64)
+          SharedFoo.foo.set(0_i64)
         end
       end
 
       contexts << Fiber::ExecutionContext::Isolated.new("get") do
         ready.wait
         while running
-          Foo.foo.shared do |value|
+          SharedFoo.foo.shared do |value|
             case value
-            in Foo
-              value.as(Void*).address.should eq(Foo::INSTANCE.as(Void*).address)
+            in SharedFoo
+              value.as(Void*).address.should eq(SharedFoo::INSTANCE.as(Void*).address)
             in Int64
               value.should eq(0_i64)
             end

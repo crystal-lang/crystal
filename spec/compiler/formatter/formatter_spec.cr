@@ -1164,11 +1164,22 @@ describe Crystal::Formatter do
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
+  assert_format "%W(one   two  three)", "%W(one two three)"
   assert_format "%w{one(   two(  three)}", "%w{one( two( three)}"
   assert_format "%i{one(   two(  three)}", "%i{one( two( three)}"
+  assert_format "%W{one(   two(  three)}", "%W{one( two( three)}"
+  assert_format "%W{one( \n  two(  three)}", "%W{one(\n  two( three)}"
+  assert_format "%W{one( \\\n two( three)}"
+  assert_format "%W{one \#{two} three}"
+  assert_format "%W{one a\#{two}b three}"
+  assert_format "%W{one \#{*two} three}"
+  assert_format "%w{ one two }", "%w{one two}"
 
   assert_format "%w(\n\n)\n# ```\n# 1\n# ```\n", "%w()\n# ```\n# 1\n# ```"
   assert_format "%w(a\\ b)"
+  assert_format "%W(\n\n)\n# ```\n# 1\n# ```\n", "%W()\n# ```\n# 1\n# ```"
+  assert_format "%W(a\\ b)"
+  assert_format "%W(a\#{\n  1\n   }\\ b)", "%W(a\#{\n  1\n}\\ b)"
 
   assert_format "/foo/"
   assert_format "/foo/imx"
@@ -1251,6 +1262,19 @@ describe Crystal::Formatter do
   assert_format "x  =   uninitialized   Int32", "x = uninitialized Int32"
   assert_format "x  :   Int32  =   1", "x : Int32 = 1"
   assert_format "x : (Foo.class)?"
+
+  # Typed constant declarations (#13443)
+  assert_format "FOO : Int64 = 123"
+  assert_format "FOO  :  Int64  =  123", "FOO : Int64 = 123"
+  assert_format "FOO: Int64 = 123", "FOO : Int64 = 123"
+  assert_format "class A\nCONST : Int32 = 1\nend", "class A\n  CONST : Int32 = 1\nend"
+  assert_format "module M\nCONST : Int32 = 1\nend", "module M\n  CONST : Int32 = 1\nend"
+  assert_format "PAIR : Tuple(Int32, String) = {1, \"x\"}"
+  assert_format "TYPED : ::Int32 = -5"
+  assert_format "::FOO : Int64 = 123"
+  assert_format "::FOO  :  Int64  =  123", "::FOO : Int64 = 123"
+  assert_format "::FOO: Int64 = 123", "::FOO : Int64 = 123"
+  assert_format "::Foo::BAR : Int64 = 123"
 
   assert_format "def foo\n@x  :  Int32\nend", "def foo\n  @x : Int32\nend"
   assert_format "def foo\n@x   =  uninitialized   Int32\nend", "def foo\n  @x = uninitialized Int32\nend"
@@ -1989,6 +2013,12 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  hello \n  HTML"
   assert_format "<<-HTML\n  hello \n  world   \n  HTML"
   assert_format "  <<-HTML   \n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
+  assert_format "<<-HTML\n  hello\n  \n  HTML", "<<-HTML\n  hello\n\n  HTML"
+  assert_format "<<-HTML\n  hello\n   \n  HTML"
+  assert_format "<<-HTML\n   hello\n  \n   HTML", "<<-HTML\n   hello\n\n   HTML"
+  assert_format "<<-HTML\n   hello\n   \n   HTML", "<<-HTML\n   hello\n\n   HTML"
+  assert_format "<<-HTML\n   hello\n    \n   HTML"
+  assert_format "  <<-HTML\n    hello \n    world   \n    HTML", "<<-HTML\n  hello \n  world   \n  HTML"
 
   assert_format "x, y = <<-FOO, <<-BAR\n  hello\n  FOO\n  world\n  BAR"
   assert_format "x, y, z = <<-FOO, <<-BAR, <<-BAZ\n  hello\n  FOO\n  world\n  BAR\n  qux\nBAZ"
@@ -2475,6 +2505,24 @@ describe Crystal::Formatter do
   assert_format "foo\n  .bar(\n    1\n  )"
   assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
   assert_format "foo.bar\n  .baz(\n    1\n  )"
+
+  # #13202
+  describe "assignment syntax" do
+    assert_format "x.foo=bar", "x.foo = bar"
+    assert_format "x.foo=(bar)"
+    assert_format "x.foo = bar"
+    assert_format "x.foo = (bar)"
+    assert_format "x.foo= bar", "x.foo = bar"
+    assert_format "x.foo =bar", "x.foo = bar"
+    assert_format "x.foo= (bar)", "x.foo = (bar)"
+    assert_format "x.foo =(bar)", "x.foo = (bar)"
+
+    assert_format "x.foo = (y).bar"
+    assert_format "x.foo=(y).bar", "x.foo = (y).bar"
+    assert_format "x.foo =(y).bar", "x.foo = (y).bar"
+    assert_format "x.foo= (y).bar", "x.foo = (y).bar"
+    assert_format "x.foo =(a..b)", "x.foo = (a..b)"
+  end
 
   assert_format <<-CRYSTAL,
     def foo

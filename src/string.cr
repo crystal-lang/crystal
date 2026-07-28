@@ -142,6 +142,8 @@ require "float/fast_float"
 # engine may reject strings that are not valid UTF-8, or it may invoke undefined
 # behavior on invalid strings. If this is undesired, `#scrub` could be used to
 # remove the offending byte sequences first.
+#
+# NOTE: This type cannot be inherited due to its special memory representation.
 class String
   # :nodoc:
   #
@@ -3696,7 +3698,7 @@ class String
     pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case pos
     when .nil?
@@ -3725,7 +3727,7 @@ class String
       pos -= 1
     end
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case
     when match_result.nil?

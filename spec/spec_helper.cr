@@ -334,7 +334,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     with_temp_executable("crystal-spec-output", file: file) do |output_filename|
       compiler.compile Compiler::Source.new("spec", code), output_filename
 
-      output = `#{Process.quote(output_filename)}`
+      output = Process.capture(output_filename)
       return SpecRunOutput.new(output)
     end
   else

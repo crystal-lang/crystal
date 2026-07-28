@@ -541,7 +541,7 @@
 - **(breaking-change)** Rename `Log::Severity::Warning` to `Warn`. Drop `Verbose`. Add `Trace` and `Notice`. ([#9293](https://github.com/crystal-lang/crystal/pull/9293), [#9107](https://github.com/crystal-lang/crystal/pull/9107), [#9316](https://github.com/crystal-lang/crystal/pull/9316), thanks @bcardiff, @paulcsmith)
 - **(breaking-change)** Allow local data on entries via `Log::Metadata` and redesign `Log::Context`. ([#9118](https://github.com/crystal-lang/crystal/pull/9118), [#9227](https://github.com/crystal-lang/crystal/pull/9227), [#9150](https://github.com/crystal-lang/crystal/pull/9150), [#9157](https://github.com/crystal-lang/crystal/pull/9157), thanks @bcardiff, @waj)
 - **(breaking-change)** Split top-level `Log::Metadata` from `Log::Metadata::Value`, drop immutability via clone, improve performance. ([#9295](https://github.com/crystal-lang/crystal/pull/9295), thanks @bcardiff)
-- **(breaking-change)** Rework `Log.setup_from_env` and defaults. ([#9145](https://github.com/crystal-lang/crystal/pull/9145), [#9240](https://github.com/crystal-lang/crystal/pull/9240),  thanks @bcardiff)
+- **(breaking-change)** Rework `Log.setup_from_env` and defaults. ([#9145](https://github.com/crystal-lang/crystal/pull/9145), [#9240](https://github.com/crystal-lang/crystal/pull/9240), thanks @bcardiff)
 - Add `Log.capture` spec helper. ([#9201](https://github.com/crystal-lang/crystal/pull/9201), thanks @bcardiff)
 - Redesign `Log::Formatter`. ([#9211](https://github.com/crystal-lang/crystal/pull/9211), thanks @waj)
 - Add `to_json` for `Log::Context`. ([#9101](https://github.com/crystal-lang/crystal/pull/9101), thanks @paulcsmith)
@@ -1506,7 +1506,7 @@
 #### Language semantics
 
 - **(breaking-change)** Fix new/initialize lookup regarding modules. ([#7818](https://github.com/crystal-lang/crystal/pull/7818), thanks @asterite)
-- **(breaking-change)**  Don't precompute `sizeof` on abstract structs and modules. ([#7801](https://github.com/crystal-lang/crystal/pull/7801), thanks @asterite)
+- **(breaking-change)** Don't precompute `sizeof` on abstract structs and modules. ([#7801](https://github.com/crystal-lang/crystal/pull/7801), thanks @asterite)
 - Consider macro calls in `@ivar` initializer. ([#7750](https://github.com/crystal-lang/crystal/pull/7750), thanks @asterite)
 - Give precedence to `T.class` over `Class` in method lookup. ([#7759](https://github.com/crystal-lang/crystal/pull/7759), thanks @asterite)
 - Honor enum base type on non-default values. ([#7776](https://github.com/crystal-lang/crystal/pull/7776), thanks @asterite)
@@ -1545,7 +1545,7 @@
 ### Language changes
 
 - **(breaking-change)** Enum declaration members can no longer be separated by a space, only by a newline, `;` or `,`, the latter being deprecated and reformatted to a newline. ([#7607](https://github.com/crystal-lang/crystal/pull/7607), [#7618](https://github.com/crystal-lang/crystal/pull/7618), thanks @asterite, and @j8r)
-- Add begin-less and end-less ranges: `array[5..]`.  ([#7179](https://github.com/crystal-lang/crystal/pull/7179), thanks @asterite)
+- Add begin-less and end-less ranges: `array[5..]`. ([#7179](https://github.com/crystal-lang/crystal/pull/7179), thanks @asterite)
 - Add `offsetof(Type, @ivar)` expression. ([#7589](https://github.com/crystal-lang/crystal/pull/7589), thanks @malte-v)
 
 #### Macros
@@ -1607,7 +1607,7 @@
 
 #### Time
 
-- **(breaking-change)** Rename `Time` constructors. Deprecate `Time.now` to encourage usage  `Time.utc` or `Time.local` ([#5346](https://github.com/crystal-lang/crystal/pull/5346), [#7586](https://github.com/crystal-lang/crystal/pull/7586), thanks @straight-shoota)
+- **(breaking-change)** Rename `Time` constructors. Deprecate `Time.now` to encourage usage `Time.utc` or `Time.local` ([#5346](https://github.com/crystal-lang/crystal/pull/5346), [#7586](https://github.com/crystal-lang/crystal/pull/7586), thanks @straight-shoota)
 - **(breaking-change)** Rename `Time#add_span` to `Time#shift` for changing a time instance by calendar units and handle other units. ([#6598](https://github.com/crystal-lang/crystal/pull/6598), thanks @straight-shoota)
 - **(breaking-change)** Change `Time#date` to return a `Tuple` of `{year, month, day}`. Use `Time#at_beginning_of_day` if a `Time` instance is wanted. ([#5822](https://github.com/crystal-lang/crystal/pull/5822), thanks @straight-shoota)
 - Fix Windows monotonic time bug. ([#7377](https://github.com/crystal-lang/crystal/pull/7377), thanks @domgetter)
@@ -1632,7 +1632,6 @@
 - Add support for OAuth 2.0 resource owner password credentials grant type. ([#7424](https://github.com/crystal-lang/crystal/pull/7424), thanks @Blacksmoke16)
 - Add support for IIS date format in cookies. ([#7405](https://github.com/crystal-lang/crystal/pull/7405), thanks @Sija)
 - Allow calls to `IO::Syscall#wait_readable` and `IO::Syscall#wait_writable`. ([#7366](https://github.com/crystal-lang/crystal/pull/7366), thanks @stakach)
-
 - Fix spec of `HTTP::Client` to not write server response after timeout. ([#7402](https://github.com/crystal-lang/crystal/pull/7402), thanks @asterite)
 - Fix spec of `TCP::Server` for musl. ([#7484](https://github.com/crystal-lang/crystal/pull/7484), thanks @straight-shoota)
 
@@ -2909,7 +2908,7 @@
 
 - **(breaking change)** Removed `ifdef` from the language
 - **(breaking change)** Removed `PointerIO`
-- **(breaking change)** The `body` property of `HTTP::Request` is now an `IO?` (previously it was `String`). Use `request.body.try(&.gets_to_end)`  if you need the entire body as a String.
+- **(breaking change)** The `body` property of `HTTP::Request` is now an `IO?` (previously it was `String`). Use `request.body.try(&.gets_to_end)` if you need the entire body as a String.
 - **(breaking change)** `MemoryIO` has been renamed to `IO::Memory`. The old name can still be used but will produce a compile-time warning. `MemoryIO` will be removed immediately after 0.20.0.
 - **(breaking change)** `Char#digit?` was split into `Char#ascii_number?` and `Char#number?`. The old name is still available and will produce a compile-time warning, but will be removed immediately after 0.20.0.
 - **(breaking change)** `Char#alpha?` was split into `Char#ascii_letter?` and `Char#letter?`. The old name is still available and will produce a compile-time warning, but will be removed immediately after 0.20.0.
@@ -2939,7 +2938,7 @@
 - Optimized `Array#sort` by using introsort (thanks @c910335)
 - [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.20.0)
 
-### 0.19.4  (2016-10-07)
+### 0.19.4 (2016-10-07)
 
 - Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)
 - More iconv fixes for FreeBSD (thanks @ysbaddaden)
@@ -2950,7 +2949,7 @@
 - Added `Char#+(Int)` and `Char#-(Int)`
 - [A few bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.4)
 
-### 0.19.3  (2016-09-30)
+### 0.19.3 (2016-09-30)
 
 - `crystal eval` now accepts some flags like `--stats`, `--release` and `--help`
 - Added `File.chown` and `File.chmod` (thanks @ysbaddaden)
@@ -2958,7 +2957,7 @@
 - Added docs to `OAuth` and `OAuth2`
 - [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.3)
 
-### 0.19.2  (2016-09-16)
+### 0.19.2 (2016-09-16)
 
 - Generic type variables no longer need to be single-letter names (for example `class Gen(Foo)` is now possible)
 - Added syntax to denote free variables: `def foo(x : T) forall T`. The old rule of single-letter name still applies but will be removed in the future.
@@ -2973,13 +2972,13 @@
 - Error messages no longer include a type trace by default, pass `--error-trace` to show the full trace (the trace is often useless and makes it harder to understand error messages)
 - [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.2)
 
-### 0.19.1  (2016-09-09)
+### 0.19.1 (2016-09-09)
 
 - Types (class, module, etc.) can now be marked as `private`.
-- Added `WeakRef`  (thanks @bcardiff)
+- Added `WeakRef` (thanks @bcardiff)
 - [Several bug fixes](https://github.com/crystal-lang/crystal/issues?q=is%3Aclosed+milestone%3A0.19.1)
 
-### 0.19.0  (2016-09-02)
+### 0.19.0 (2016-09-02)
 
 - **(breaking change)** Added `select` keyword
 - **(breaking change)** Removed $global variables. Use @@class variables instead.
@@ -3106,7 +3105,7 @@
 - The output of the `debug()` macro method now tries to format the code (pass `false` to disable this)
 - Added `JSON` and `YAML` parsing and mapping for unions
 - Added `FileUtils.cp_r` (thanks @Dreauw)
-- Added `Tuple.from` and `NamedTuple.from`  (thanks @jhass)
+- Added `Tuple.from` and `NamedTuple.from` (thanks @jhass)
 - Added `XML.escape` (thanks @juanedi)
 - Added `HTTP::Server::Response#respond_with_error` (thanks @jhass)
 - Added `TCPServer#accept?`
@@ -4029,93 +4028,92 @@
 - The parser generates string literals out of strings with interpolated string literals. For example, `"#{__DIR__}/foo"` is interpolated at compile time and generates a string literal with the full path, since `__DIR__` is just a (special) string literal.
 - **(breaking change)** Now macro nodes are always pasted as is. If you want to generate an id use `{{var.id}}`.
 
-    Previously, a code like this:
+  Previously, a code like this:
 
-    ```ruby
-    macro foo(name)
-      def {{name}}; end
-    end
+  ```ruby
+  macro foo(name)
+    def {{name}}; end
+  end
 
-    foo :hello
-    foo "hello"
-    foo hello
-    ```
+  foo :hello
+  foo "hello"
+  foo hello
+  ```
 
-    generated this:
+  generated this:
 
-    ```ruby
-    def hello; end
-    def hello; end
-    def hello; end
-    ```
+  ```ruby
+  def hello; end
+  def hello; end
+  def hello; end
+  ```
 
-    With this change, it generates this:
+  With this change, it generates this:
 
-    ```ruby
-    def :hello; end
-    def "hello"; end
-    def hello; end
-    ```
+  ```ruby
+  def :hello; end
+  def "hello"; end
+  def hello; end
+  ```
 
-    Now, to get an identifier out of a symbol literal, string literal or a name, use id:
+  Now, to get an identifier out of a symbol literal, string literal or a name, use id:
 
-    ```ruby
-    macro foo(name)
-      def {{name.id}}; end
-    end
-    ```
+  ```ruby
+  macro foo(name)
+    def {{name.id}}; end
+  end
+  ```
 
-    Although it's longer to type, the implicit "id" call was sometimes confusing. Explicit is better than implicit.
+  Although it's longer to type, the implicit "id" call was sometimes confusing. Explicit is better than implicit.
 
-    Invoking `id` on any other kind of node has no effect on the pasted result.
+  Invoking `id` on any other kind of node has no effect on the pasted result.
 - Allow escaping curly braces inside macros with `\{`. This allows defining macros that, when expanded, can contain other macro expressions.
 - Added a special comment-like pragma to change the lexer's filename, line number and column number.
 
-    ```ruby
-    # foo.cr
-    a = 1
-    #<loc:"bar.cr",12,24>b = 2
-    c = 3
-    ```
+  ```ruby
+  # foo.cr
+  a = 1
+  #<loc:"bar.cr",12,24>b = 2
+  c = 3
+  ```
 
-    In the previous example, `b = 2` (and the rest of the file) is considered as being parsed from file `bar.cr` at line 12, column 24.
-
+  In the previous example, `b = 2` (and the rest of the file) is considered as being parsed from file `bar.cr` at line 12, column 24.
 - Added a special `run` call inside macros. This compiles and executes another Crystal program and pastes its output into the current program.
 
-    As an example, consider this program:
+  As an example, consider this program:
 
-    ```ruby
-    # foo.cr
-    {{ run("my_program", 1, 2, 3) }}
-    ```
+  ```ruby
+  # foo.cr
+  {{ run("my_program", 1, 2, 3) }}
+  ```
 
-    Compiling `foo.cr` will, at compile-time, compile `my_program.cr` and execute it with arguments `1 2 3`. The output of that execution is pasted into `foo.cr` at that location.
+  Compiling `foo.cr` will, at compile-time, compile `my_program.cr` and execute it with arguments `1 2 3`. The output of that execution is pasted into `foo.cr` at that location.
 - Added ECR (Embedded Crystal) support. This is implemented using the special `run` macro call.
 
-    A small example:
+  A small example:
 
-    ```ruby
-    # template.ecr
-    Hello <%= @msg %>
-    ```
+  ```ruby
+  # template.ecr
+  Hello <%= @msg %>
+  ```
 
-    ```ruby
-    # foo.cr
-    require "ecr/macros"
+  ```ruby
+  # foo.cr
+  require "ecr/macros"
 
-    class HelloView
-      def initialize(@msg)
-      end
-
-      # This generates a to_s method with the contents of template.ecr
-      ecr_file "template.ecr"
+  class HelloView
+    def initialize(@msg)
     end
 
-    view = HelloView.new "world!"
-    view.to_s #=> "Hello world!"
-    ```
+    # This generates a to_s method with the contents of template.ecr
+    ecr_file "template.ecr"
+  end
 
-    The nice thing about this is that, using the `#<loc...>` pragma for specifying the lexer's location, if you have a syntax/semantic error in the template the error points to the template :-)
+  view = HelloView.new "world!"
+  view.to_s #=> "Hello world!"
+  ```
+
+  The nice thing about this is that, using the `#<loc...>` pragma for specifying the lexer's location, if you have a syntax/semantic error in the template the error points to the template :-)
 
 ### 0.1.0 (2014-06-18)
 

@@ -2193,6 +2193,8 @@ module Crystal
         var.name.size
       when Global
         var.name.size
+      when Path
+        var.name_size
       else
         raise "can't happen"
       end

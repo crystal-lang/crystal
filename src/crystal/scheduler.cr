@@ -1,10 +1,16 @@
-{% skip_file if flag?(:execution_context) %}
-
 require "crystal/event_loop"
 require "crystal/system/print_error"
 require "fiber"
 require "fiber/stack_pool"
 require "crystal/system/thread"
+
+{% if flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
+    {% raise "The 'without_mt' and 'preview_mt' flags are incompatible." %}
+  {% else %}
+    {% nil.warning "The 'preview_mt' flag is deprecated. Resize the default execution context, or start additional contexts instead." %}
+  {% end %}
+{% end %}
 
 # :nodoc:
 #

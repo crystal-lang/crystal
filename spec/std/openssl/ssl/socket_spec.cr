@@ -230,14 +230,12 @@ describe OpenSSL::SSL::Socket do
     client_error = Channel(Exception?).new
 
     spawn do
-      begin
-        Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "test.example.com") do |socket|
-          socket.print "hello"
-        end
-        client_error.send(nil)
-      rescue ex
-        client_error.send(ex)
+      Client.open(TCPSocket.new(tcp_server.local_address.address, tcp_server.local_address.port), client_context, hostname: "test.example.com") do |socket|
+        socket.print "hello"
       end
+      client_error.send(nil)
+    rescue ex
+      client_error.send(ex)
     end
 
     OpenSSL::SSL::Server.open(tcp_server, server_context) do |server|

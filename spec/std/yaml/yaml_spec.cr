@@ -101,38 +101,34 @@ describe "YAML" do
       end
 
       it "has correct line/number info (#2585)" do
-        begin
-          YAML.parse <<-YAML
+        YAML.parse <<-YAML
             ---
             level_one:
             - name: "test"
                attributes:
                  one: "broken"
             YAML
-          fail "expected YAML.parse to raise"
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(4)
-          ex.column_number.should eq(4)
-        end
+        fail "expected YAML.parse to raise"
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(4)
+        ex.column_number.should eq(4)
       end
 
       it "has correct line/number info (2)" do
-        begin
-          parser = YAML::PullParser.new <<-MSG
+        parser = YAML::PullParser.new <<-MSG
 
               authors:
                 - [foo] bar
             MSG
 
-          parser.read_stream do
-            parser.read_document do
-              parser.read_scalar
-            end
+        parser.read_stream do
+          parser.read_document do
+            parser.read_scalar
           end
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(2)
-          ex.column_number.should eq(3)
         end
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(2)
+        ex.column_number.should eq(3)
       end
 
       it "has correct message (#4006)" do

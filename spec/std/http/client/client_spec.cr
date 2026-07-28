@@ -233,7 +233,7 @@ module HTTP
       end
     end
 
-    it "will retry once on connection error" do
+    it "does not retry on initial connection error" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
@@ -243,7 +243,161 @@ module HTTP
         expect_raises(IO::Error) do
           client.get(path: "/")
         end
+        requests.should eq 1
+      end
+    end
+
+    it "retries when re-using connection with error (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/")
+        requests.should eq 3
+      end
+    end
+
+    it "retries when re-using connection with error (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/") { }
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "no retry unless request is replayable (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/")
+        end
         requests.should eq 2
+      end
+    end
+
+    it "no retry unless request is replayable (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/") { }
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "retry if request is replayable (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"}) { }
+        requests.should eq 3
+      end
+    end
+
+    it "retry if request is replayable (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"})
+        requests.should eq 3
+      end
+    end
+
+    it "retries on unexpected EOF when re-using connection (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/")
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "retries on unexpected EOF when re-using connection (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 3
       end
     end
 

@@ -30,6 +30,11 @@
 #     STDERR.puts parser
 #     exit(1)
 #   end
+#   parser.missing_option do |flag|
+#     STDERR.puts "ERROR: #{flag} is missing an argument."
+#     STDERR.puts parser
+#     exit(1)
+#   end
 # end
 #
 # destination = destination.upcase if upcase
@@ -222,7 +227,12 @@ class OptionParser
     check_starts_with_dash short_flag, "short_flag", allow_empty: true
     check_starts_with_dash long_flag, "long_flag"
 
-    append_flag "#{short_flag}, #{long_flag}", description
+    if short_flag.empty?
+      # Long-only option.
+      append_flag long_flag, description
+    else
+      append_flag "#{short_flag}, #{long_flag}", description
+    end
 
     short_flag, short_value_type = parse_flag_definition(short_flag)
     long_flag, long_value_type = parse_flag_definition(long_flag)
@@ -328,10 +338,12 @@ class OptionParser
   property summary_indent : String = "    "
 
   private def append_flag(flag, description)
+    # Add indent for long-only options to align with those following a short option
+    flag = "    #{flag}" if flag.starts_with?("--")
     description_indent = "#{summary_indent}#{" " * summary_width} "
     description = description.gsub("\n", "\n#{description_indent}")
 
-    if flag.size >= summary_width
+    if flag.size > summary_width
       @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
       @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
@@ -529,7 +541,7 @@ class OptionParser
     # subcommands since they are no longer valid.
     unless flag.starts_with?('-')
       @handlers.select! { |k, _| k.starts_with?('-') }
-      @flags.select!(&.starts_with?("#{summary_indent}-"))
+      @flags.select! { |entry| summary_flag?(entry) }
     end
 
     handler.block.call(value || "")
@@ -554,5 +566,11 @@ class OptionParser
 
       handled
     end
+  end
+
+  private def summary_flag?(entry : String) : Bool
+    # Long-only options have extra spaces after summary_indent.
+    entry.starts_with?(summary_indent) &&
+      entry[summary_indent.size..].lstrip.starts_with?('-')
   end
 end

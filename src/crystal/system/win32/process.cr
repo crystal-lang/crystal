@@ -3,6 +3,8 @@ require "c/handleapi"
 require "c/jobapi2"
 require "c/synchapi"
 require "c/tlhelp32"
+require "c/winbase"
+require "c/winnt"
 require "c/debugapi"
 require "process/shell"
 require "crystal/atomic_semaphore"
@@ -15,10 +17,7 @@ struct Crystal::System::Process
   {% end %}
 
   getter pid : LibC::DWORD
-  @thread_id : LibC::DWORD
   @process_handle : LibC::HANDLE
-  @job_object : LibC::HANDLE
-  @completion_key = IOCP::CompletionKey.new(:process_run)
 
   @@interrupt_handler : Proc(::Process::ExitReason, Nil)?
   @@interrupt_count = Crystal::AtomicSemaphore.new
@@ -28,94 +27,56 @@ struct Crystal::System::Process
 
   def initialize(process_info)
     @pid = process_info.dwProcessId
-    @thread_id = process_info.dwThreadId
     @process_handle = process_info.hProcess
 
-    @job_object = LibC.CreateJobObjectW(nil, nil)
-
-    # enable IOCP notifications
-    config_job_object(
-      LibC::JOBOBJECTINFOCLASS::AssociateCompletionPortInformation,
-      LibC::JOBOBJECT_ASSOCIATE_COMPLETION_PORT.new(
-        completionKey: @completion_key.as(Void*),
-        completionPort: Crystal::EventLoop.current.iocp_handle,
-      ),
-    )
-
-    # but not for any child processes
-    config_job_object(
-      LibC::JOBOBJECTINFOCLASS::ExtendedLimitInformation,
-      LibC::JOBOBJECT_EXTENDED_LIMIT_INFORMATION.new(
-        basicLimitInformation: LibC::JOBOBJECT_BASIC_LIMIT_INFORMATION.new(
-          limitFlags: LibC::JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK,
-        ),
-      ),
-    )
-
-    if LibC.AssignProcessToJobObject(@job_object, @process_handle) == 0
-      raise RuntimeError.from_winerror("AssignProcessToJobObject")
-    end
-
+    # NOTE: needed because of `CREATE_SUSPENDED` flag in `.spawn`
     if LibC.ResumeThread(process_info.hThread) == 0xFFFFFFFF_u32
       raise RuntimeError.from_winerror("ResumeThread")
     end
-
     close_handle(process_info.hThread)
   end
 
-  private def config_job_object(kind, info)
-    if LibC.SetInformationJobObject(@job_object, kind, pointerof(info), sizeof(typeof(info))) == 0
-      raise RuntimeError.from_winerror("SetInformationJobObject")
+  def release
+    return if @process_handle.null?
+
+    close_handle(@process_handle)
+    @process_handle = LibC::HANDLE.null
+
+    if wait_object = @wait_object
+      ret = LibC.UnregisterWaitEx(wait_object, LibC::INVALID_HANDLE_VALUE)
+      raise RuntimeError.from_winerror("UnregisterWaitEx") if ret == 0
     end
   end
 
-  def release
-    return if @process_handle == LibC::HANDLE.null
-    close_handle(@process_handle)
-    @process_handle = LibC::HANDLE.null
-    close_handle(@job_object)
-    @job_object = LibC::HANDLE.null
+  @wait_object : LibC::HANDLE = LibC::HANDLE.null
+
+  protected def self.register_wait_callback(context : Void*, _expired : LibC::BOOLEAN) : LibC::BOOL
+    # we can't call fiber.enqueue directly because the callback runs in a system
+    # IO thread that is unknown to Crystal and the GC, so we just post a
+    # completion event for the event loop to handle
+    iocp_handle, completion_key = context.as(Pointer({LibC::HANDLE, IOCP::CompletionKey})).value
+    LibC.PostQueuedCompletionStatus(iocp_handle, 0, completion_key.as(Void*).address, nil)
   end
 
   def wait
-    @completion_key.fiber = ::Fiber.current
+    completion_key = IOCP::CompletionKey.new(:process_wait, ::Fiber.current)
+    context = {EventLoop.current.iocp_handle, completion_key}
 
-    if LibC.GetExitCodeProcess(@process_handle, out exit_code) == 0
-      raise RuntimeError.from_winerror("GetExitCodeProcess")
-    end
+    ret = LibC.RegisterWaitForSingleObject(
+      pointerof(@wait_object),
+      @process_handle,
+      ->Process.register_wait_callback(Void*, LibC::BOOLEAN),
+      pointerof(context).as(Void*),
+      LibC::INFINITE,
+      LibC::WT_EXECUTEINWAITTHREAD | LibC::WT_EXECUTEONLYONCE,
+    )
+    raise RuntimeError.from_winerror("RegisterWaitForSingleObject") if ret == 0
 
-    unless exit_code == LibC::STILL_ACTIVE
-      # MT race? another thread received the completion event and will resume
-      # the fiber, we must suspend the current fiber before we can return
-      ::Fiber.suspend unless @completion_key.reset_fiber?
-
-      return exit_code
-    end
-
-    # let `@job_object` do its job
-    # TODO: message delivery is "not guaranteed"; does it ever happen? Are we
-    # stuck forever in that case?
-    # (https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_associate_completion_port)
     ::Fiber.suspend
 
-    # If the IOCP notification is delivered before the process fully exits,
-    # wait for it
-    if LibC.WaitForSingleObject(@process_handle, LibC::INFINITE) != LibC::WAIT_OBJECT_0
-      raise RuntimeError.from_winerror("WaitForSingleObject")
-    end
+    ret = LibC.GetExitCodeProcess(@process_handle, out exit_code)
+    raise RuntimeError.from_winerror("GetExitCodeProcess") if ret == 0
 
-    # WaitForSingleObject returns immediately once ExitProcess is called in the child, but
-    # the process still has yet to be destructed by the OS and have it's memory unmapped.
-    # Since the semantics on unix are that the resources of a process have been released once
-    # waitpid returns, we wait 5 milliseconds to attempt to replicate this behaviour.
-    sleep 5.milliseconds
-
-    if LibC.GetExitCodeProcess(@process_handle, pointerof(exit_code)) == 0
-      raise RuntimeError.from_winerror("GetExitCodeProcess")
-    end
-    if exit_code == LibC::STILL_ACTIVE
-      raise "BUG: Process still active"
-    end
     exit_code
   end
 

@@ -536,7 +536,6 @@ struct Path
 
   private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
-    start_pos = reader.pos
 
     if anchor = self.anchor
       reader.pos = anchor.@name.bytesize
