@@ -354,10 +354,10 @@ module Crystal
       define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
         The LLVM target triple of the target system (the machine that the compiler builds for).
         MD
-      define_crystal_macro_constant "USER_FLAGS", ArrayLiteral.new(user_flags.map{ |flag| StringLiteral.new(flag).as(ASTNode) }), <<-MD
+      define_crystal_macro_constant "USER_FLAGS", ArrayLiteral.map(user_flags) { |flag| StringLiteral.new(flag) }), <<-MD
         The flags provided by the user via the `-D` command line argument.
         MD
-      define_crystal_macro_constant "ALL_FLAGS", ArrayLiteral.new(flags.map { |flag| StringLiteral.new(flag).as(ASTNode) }), <<-MD
+      define_crystal_macro_constant "ALL_FLAGS", ArrayLiteral.map(flags) { |flag| StringLiteral.new(flag) }), <<-MD
         The combined flags of the user and the program, including the target triple and the user flags.
         MD
     end

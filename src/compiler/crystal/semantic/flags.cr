@@ -3,7 +3,7 @@ class Crystal::Program
   @host_flags : Set(String)?
 
   # Custom flags passed via `-D` command line argument.
-  property user_flags = Set(String).new
+  property user_flags = [] of String
 
   # Returns the flags for this program. By default these
   # are computed from the target triple (for example x86_64,
