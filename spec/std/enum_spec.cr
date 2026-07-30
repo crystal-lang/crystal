@@ -49,6 +49,11 @@ private enum SpecEnumWithCaseSensitiveMembers
   Foo = 2
 end
 
+private enum SpecEnumWithUnicodeMembers
+  Föö = 1
+  Bár = 2
+end
+
 describe Enum do
   describe "#to_s" do
     it "for simple enum" do
@@ -369,6 +374,12 @@ describe Enum do
     SpecEnumWithCaseSensitiveMembers.parse("foo".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("FOO".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("Foo".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
+
+    SpecEnumWithUnicodeMembers.parse("Föö".to_slice).should eq SpecEnumWithUnicodeMembers::Föö
+    expect_raises(ArgumentError, "Unknown enum SpecEnumWithUnicodeMembers value: Fööd") do
+      SpecEnumWithUnicodeMembers.parse("Fööd".to_slice)
+    end
+    SpecEnumWithUnicodeMembers.parse("FÖÖ".to_slice).should eq SpecEnumWithUnicodeMembers::Föö
   end
 
   it ".parse?" do
