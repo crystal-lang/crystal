@@ -105,6 +105,23 @@ describe IO::Memory do
     {% end %}
   end
 
+  describe "#writable?" do
+    it "returns false if underlying buffer is read only" do
+      buffer = Bytes.new(10, read_only: true)
+      IO::Memory.new(buffer).writable?.should be_false
+    end
+
+    it "returns true if underlying buffer isn't read only" do
+      buffer = Bytes.new(10, read_only: false)
+      IO::Memory.new(buffer).writable?.should be_true
+    end
+
+    it "returns false if writable is explicitly set to false" do
+      buffer = Bytes.new(10, read_only: false) # buffer writable
+      IO::Memory.new(buffer, writable: false).writable?.should be_false
+    end
+  end
+
   it "reads single line content" do
     io = IO::Memory.new("foo")
     io.gets.should eq("foo")
@@ -326,7 +343,16 @@ describe IO::Memory do
     end
   end
 
-  it "creates from slice, non-writeable" do
+  it "creates from slice, non-writable" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice, writable: false
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
+  it "creates from slice, non-writable (deprecated)" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 

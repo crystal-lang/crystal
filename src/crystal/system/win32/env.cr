@@ -81,15 +81,40 @@ module Crystal::System::Env
     end
   end
 
-  # Used internally to create an input for `CreateProcess` `lpEnvironment`.
-  def self.make_env_block(env : Enumerable({String, String}))
+  # Used internally to create an input for `CreateProcessW` `lpEnvironment`.
+  def self.make_env_block(env, clear_env)
+    # If neither clearing nor adding anything, use the default behavior of
+    # inheriting everything.
+    return Pointer(UInt16).null if !env && !clear_env
+
     # NOTE: the entire string contains embedded null bytes so we can't use
     # `System.to_wstr` here
     String.build do |io|
-      env.each do |(key, value)|
-        check_valid_key(key)
-        io << key.check_no_null_byte("key") << '=' << value.check_no_null_byte("value") << '\0'
+      unless clear_env
+        each do |key, value|
+          # skip override
+          next if env.try(&.any? { |k, _| k.compare(key, case_insensitive: true) == 0 })
+
+          io << key.check_no_null_byte("key")
+          io << '='
+          io << value.check_no_null_byte("value")
+          io << '\0'
+        end
       end
+
+      env.try(&.each do |key, value|
+        check_valid_key(key)
+
+        # skip deletion
+        next if value.nil?
+
+        io << key.check_no_null_byte("key")
+        io << '='
+        io << value.check_no_null_byte("value")
+        io << '\0'
+      end)
+
+      # terminate the block
       io << '\0'
     end.to_utf16.to_unsafe
   end

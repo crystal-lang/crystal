@@ -33,7 +33,7 @@ describe HTTP::Server::RequestProcessor do
     it "when body is consumed" do
       processor = HTTP::Server::RequestProcessor.new do |context|
         context.response.content_type = "text/plain"
-        context.response << context.request.body.not_nil!.gets(chomp: true)
+        context.response << context.request.body.should_not(be_nil).gets(chomp: true)
         context.response << "\r\n"
       end
 
@@ -199,7 +199,7 @@ describe HTTP::Server::RequestProcessor do
 
     it "continues when request body is entirely consumed" do
       processor = HTTP::Server::RequestProcessor.new do |context|
-        io = context.request.body.not_nil!
+        io = context.request.body.should_not(be_nil)
         io.gets_to_end
       end
 

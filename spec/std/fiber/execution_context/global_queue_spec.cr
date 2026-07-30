@@ -1,3 +1,4 @@
+{% skip_file unless Fiber.has_constant?(:ExecutionContext) %}
 require "./spec_helper"
 require "../../../support/thread"
 
@@ -90,7 +91,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
 
   # interpreter doesn't support threads yet (#14287)
   pending_interpreted describe: "thread safety" do
-    it "one by one" do
+    it "one by one", tags: %w[slow] do
       {% if flag?(:win32) && flag?(:aarch64) %}
         pending! "CI/WIN32/CLANGARM64 always fails"
       {% end %}
@@ -130,7 +131,7 @@ describe Fiber::ExecutionContext::GlobalQueue do
       fibers.each { |fc| fc.counter.should eq(increments) }
     end
 
-    it "bulk operations" do
+    it "bulk operations", tags: %w[slow] do
       n = 7
       increments = 15
 

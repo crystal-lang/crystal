@@ -159,7 +159,7 @@ class Crystal::Call
 
             named_args_types ||= [] of NamedArgumentType
             raise "duplicate key: #{name}" if named_args_types.any? &.name.==(name)
-            named_args_types << NamedArgumentType.new(name, type)
+            named_args_types << NamedArgumentType.new(name, type, entry.loc)
           end
         when UnionType
           arg.raise "double splatting a union #{arg_type} is not yet supported"
@@ -180,6 +180,7 @@ class Crystal::Call
         named_args_types << NamedArgumentType.new(
           named_arg.name,
           named_arg.value.type(with_autocast: with_autocast),
+          named_arg.location,
         )
       end
     end
@@ -284,15 +285,20 @@ class Crystal::Call
       end
     end
 
-    if matches.empty?
-      # If the owner is abstract type without subclasses,
-      # or if the owner is an abstract generic instance type,
-      # don't give error. This is to allow small code comments without giving
-      # compile errors, which will anyway appear once you add concrete
-      # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
-        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
-      end
+    # Reject partial matches. Lookup in this method is intentionally
+    # restricted to a single owner, so it requires full type coverage.
+    partial_match = !matches.cover_all? && !owner.abstract_leaf?
+
+    # If the owner is abstract type without subclasses,
+    # or if the owner is an abstract generic instance type,
+    # don't give error on empty matches. This is to allow small code comments
+    # without giving compile errors, which will anyway appear once you add
+    # concrete subclasses and instances.
+    empty_match = matches.empty? &&
+                  (def_name == "new" || owner.metaclass? || !owner.abstract_leaf?)
+
+    if partial_match || empty_match
+      raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
     end
 
     # If this call is an implicit call to self
@@ -1017,8 +1023,7 @@ class Crystal::Call
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
-              block_type = lookup_node_type(match.context, output).virtual_type
-              block_type = program.nil if block_type.void?
+              lookup_node_type(match.context, output).virtual_type
             rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
@@ -1255,6 +1260,11 @@ class Crystal::Call
 
   def attach_subclass_observer(type : Type)
     if subclass_notifier = @subclass_notifier
+      # If the new notifier is a subtype of (or equal to) the current one,
+      # keep observing the wider type. Migrating to the narrower type would
+      # stop us from being woken when sibling subtypes are later added to
+      # the wider one — leaving the dispatch table stale (#16947).
+      return if type.implements?(subclass_notifier)
       subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 

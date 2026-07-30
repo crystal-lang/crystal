@@ -149,7 +149,7 @@ module HTTP
       cookies << Cookie.new("not_the_key", "not_the_value")
       cookies << Cookie.new("a", "b")
       cookies.has_key?("the_key").should be_true
-      cookies.delete("the_key").not_nil!.value.should eq "the_value"
+      cookies.delete("the_key").should_not(be_nil).value.should eq "the_value"
       cookies.has_key?("the_key").should be_false
       cookies.size.should eq 2
     end

@@ -123,5 +123,13 @@ end
 {% elsif flag?(:wasm32) %}
   require "./call_stack/null"
 {% else %}
+  {% if flag?(:darwin) %}
+    require "./call_stack/mach_o"
+  {% elsif flag?(:win32) %}
+    require "./call_stack/pe"
+  {% else %}
+    require "./call_stack/elf"
+  {% end %}
+  require "./call_stack/dwarf"
   require "./call_stack/libunwind"
 {% end %}

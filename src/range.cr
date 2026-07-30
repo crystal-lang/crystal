@@ -361,7 +361,7 @@ struct Range(B, E)
 
       Range.new(b, e, @exclusive).sample(rng)
     {% else %}
-      super
+      super(rng)
     {% end %}
   end
 
@@ -398,7 +398,7 @@ struct Range(B, E)
       # faster to just traverse the entire range than hitting
       # a lot of duplicates because or random.
       if n >= available // 4
-        return super
+        return super(n, rng)
       end
 
       possible = Math.min(n, available)
@@ -431,7 +431,7 @@ struct Range(B, E)
       when 1
         [sample(rng)]
       else
-        super
+        super(n, rng)
       end
     {% end %}
   end

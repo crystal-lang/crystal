@@ -6,43 +6,51 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal - compiler for the Crystal language
 
 == Synopsis
+
 *crystal* command [switches] programfile -- [arguments]
 
 == Description
+
 Crystal is a statically type-checked programming language. It was created with the
 beauty of Ruby and the performance of C in mind.
 
 == Usage
+
 You can compile and run a program by invoking the compiler with a single filename:
 
-```shell
+[source, shell]
+----
 crystal some_program.cr
-```
+----
 
 Crystal files usually end with the .cr extension, though this is not mandatory.
 
 Alternatively you can use the run command:
 
-```shell
+[source, shell]
+----
 crystal run some_program.cr
-```
+----
 
 To create an executable use the build command:
 
-```shell
+[source, shell]
+----
 crystal build some_program.cr
-```
+----
 
 This will create an executable named "some_program".
 
 Note that by default the generated executables are not fully optimized.  To turn optimizations on, use the *--release*  flag:
 
-```shell
+[source, shell]
+----
 crystal build --release some_program.cr
-```
+----
 
 Make sure to always use *--release*  for production-ready executables and when performing benchmarks.
 
@@ -111,6 +119,7 @@ is file:line:column.
 *crystal-tool-unreachable(1)*:: Identify methods that are never called
 
 == Optimizations
+
 The optimization level specifies the codegen effort for producing optimal code.  It's
 a trade-off between compilation performance (decreasing per optimization level) and
 runtime performance (increasing per optimization level).
@@ -128,17 +137,20 @@ are achieved with *--release*  which also implies *--single-module*
 == Environment Variables
 
 === CRYSTAL_CACHE_DIR
+
 Defines path where Crystal caches partial compilation results for faster
 subsequent builds. This path is also used to temporarily store executables
 when Crystal programs are run with '*crystal* run' rather than '*crystal*
 build'.
 
 === CRYSTAL_EXEC_PATH
+
 Determines the path where *crystal* looks for external sub-commands.
 
 === CRYSTAL_LIBRARY_PATH
+
 Defines paths where Crystal searches for (binary) libraries. Multiple paths
-can be separated by ":".	 These paths are passed to the linker as `-L`
+can be separated by ":".  These paths are passed to the linker as `-L`
 flags.
 
 The pattern '$ORIGIN' at the start of the path expands to the directory
@@ -147,6 +159,7 @@ resolves the standard library path relative to the compiler location in a
 generic way, independent of the absolute paths (assuming the relative location is correct).
 
 === CRYSTAL_PATH
+
 Defines paths where Crystal searches for required source files. Multiple
 paths can be separated by ":".
 
@@ -154,6 +167,7 @@ The pattern '$ORIGIN' at the start of the path expands to the directory
 where the compiler binary is located. For example, '$ORIGIN/../share/crystal/src' resolves the standard library path relative to the compiler location in a generic way, independent of the absolute paths (assuming the relative location is correct).
 
 === CRYSTAL_OPTS
+
 Defines options for the Crystal compiler to be used besides the command
 line arguments. The syntax is identical to the command line arguments. This
 is handy when using Crystal in build setups, for example 'CRYSTAL_OPTS=--debug make build'.
@@ -162,6 +176,6 @@ is handy when using Crystal in build setups, for example 'CRYSTAL_OPTS=--debug m
 
 *shards*(1)
 
-<https://crystal-lang.org/>			   The official web site.
+<https://crystal-lang.org/>      The official web site.
 
-<https://github.com/crystal-lang/crystal> 	   Official Repository.
+<https://github.com/crystal-lang/crystal>     Official Repository.

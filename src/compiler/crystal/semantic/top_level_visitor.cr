@@ -858,13 +858,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def visit(node : Expressions)
     node.expressions.each_with_index do |child, i|
-      begin
-        child.accept self
-      rescue ex : SkipMacroException
-        @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
-        node.expressions.delete_at(i..-1)
-        break
-      end
+      child.accept self
+    rescue ex : SkipMacroException
+      @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
+      node.expressions.delete_at(i..-1)
+      break
     end
     false
   end
@@ -880,7 +878,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
-  def type_assign(target : Path, value, node)
+  def type_assign(target : Path, value, node, declared_type : ASTNode? = nil)
+    node.raise "constant type declaration requires a value" unless value
+
     # We are inside the assign, so we go outside it to check if we are inside an outer expression
     @exp_nest -= 1
     check_outside_exp node, "declare constant"
@@ -896,6 +896,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     const = Const.new(@program, scope, name, value)
+    const.declared_type = declared_type
     const.private = true if target.visibility.private?
 
     process_annotations(annotations) do |annotation_type, ann|
@@ -1033,8 +1034,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : TypeDeclaration)
-    if (var = node.var).is_a?(Var)
+    case var = node.var
+    when Var
       @vars[var.name] = MetaVar.new(var.name)
+    when Path
+      type_assign(var, node.value, node, node.declared_type)
+      return false
     end
 
     # Because the value could be using macro expansions
@@ -1227,7 +1232,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def check_ditto(node : Def | Assign | FunDef | Const | Macro, location : Location?) : Nil
+  def check_ditto(node : Def | Assign | FunDef | Const | Macro | TypeDeclaration, location : Location?) : Nil
     return if !@program.wants_doc?
 
     if stripped_doc = node.doc.try &.strip
@@ -1260,6 +1265,24 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         node.returns_twice = true
       when @program.raises_annotation
         node.raises = true
+      when @program.target_feature_annotation
+        ann.named_args.try &.each do |named_arg|
+          case named_arg.name
+          when "cpu"
+            cpu_value = named_arg.value
+            named_arg.raise "expected argument 'cpu' to be String" unless cpu_value.is_a?(StringLiteral)
+            node.target_cpu = cpu_value.value
+          else
+            named_arg.raise "no argument named '#{named_arg.name}', expected 'cpu'"
+          end
+        end
+
+        if ann.args.size > 0
+          ann.raise "wrong number of arguments for TargetFeature (given #{ann.args.size}, expected 0..1)" if ann.args.size > 1
+          features_value = ann.args[0]
+          ann.raise "expected argument #1 to 'TargetFeature' to be String" unless features_value.is_a?(StringLiteral)
+          node.target_features = features_value.value
+        end
       else
         yield annotation_type, ann
       end
@@ -1333,7 +1356,11 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       target_type = next_type
     end
 
-    target_type.as(NamedType)
+    unless target_type.is_a?(NamedType)
+      path.raise "#{target_type} can't be used as a namespace"
+    end
+
+    target_type
   end
 
   # Turns all finished macros into expanded nodes, and

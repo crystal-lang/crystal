@@ -120,8 +120,7 @@ class XML::Node
   # Returns the content for this Node. An empty string is
   # returned if the node has no content.
   def content : String
-    content = LibXML.xmlNodeGetContent(self)
-    content ? String.new(content) : ""
+    XML.node_content_to_string(to_unsafe)
   end
 
   # Sets the Node's content to a Text node containing string.
@@ -445,12 +444,16 @@ class XML::Node
 
   protected def each_namespace(& : Namespace ->)
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
+    return unless ns_list
 
-    if ns_list
-      while ns_list.value
-        yield Namespace.new(document, ns_list.value)
-        ns_list += 1
+    begin
+      ns = ns_list
+      while ns.value
+        yield Namespace.new(document, ns.value)
+        ns += 1
       end
+    ensure
+      XML.free(ns_list.as(Void*))
     end
   end
 

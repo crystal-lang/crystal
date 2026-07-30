@@ -10,9 +10,7 @@ private def parse_first_cookie(header)
 end
 
 private def parse_set_cookie(header)
-  cookie = HTTP::Cookie::Parser.parse_set_cookie(header)
-  cookie.should_not be_nil
-  cookie.not_nil!
+  HTTP::Cookie::Parser.parse_set_cookie(header).should_not be_nil
 end
 
 # invalid printable ascii characters, non-printable ascii characters and control characters
@@ -573,7 +571,7 @@ module HTTP
 
       it "sets future expiration_time with max-age" do
         cookie = parse_set_cookie("bla=1; max-age=1")
-        cookie.expiration_time.not_nil!.should be > Time.utc
+        cookie.expiration_time.should_not(be_nil).should be > Time.utc
       end
 
       it "sets future expiration_time with max-age and future cookie creation time" do

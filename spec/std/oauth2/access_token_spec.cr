@@ -65,7 +65,7 @@ class OAuth2::AccessToken
         "scope" : "baz",
         "unknown": [1, 2, 3]
         }))
-      token.extra.not_nil!["unknown"].should eq("[1,2,3]")
+      token.extra.should_not(be_nil)["unknown"].should eq("[1,2,3]")
     end
 
     it "builds from json without token_type, assumes Bearer (#4503)" do

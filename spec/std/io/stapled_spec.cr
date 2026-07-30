@@ -121,8 +121,8 @@ describe IO::Stapled do
         a.sync_close = false
         b.sync_close = false
       end
-      ext_a.not_nil!.closed?.should be_true
-      ext_b.not_nil!.closed?.should be_true
+      ext_a.should_not(be_nil).closed?.should be_true
+      ext_b.should_not(be_nil).closed?.should be_true
     end
   end
 end

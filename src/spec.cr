@@ -130,7 +130,7 @@ module Spec
         Process.on_terminate { abort! }
       {% end %}
 
-      {% if flag?(:execution_context) %}
+      {% if Fiber.has_constant?(:ExecutionContext) %}
         if count = ENV["CRYSTAL_WORKERS"]?.try(&.to_i?)
           Fiber::ExecutionContext.default.resize(count)
         end

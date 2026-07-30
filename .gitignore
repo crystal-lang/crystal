@@ -18,7 +18,7 @@
 /.build/
 /samples/.build/
 /docs/
-/man/*.gz
+/man/
 
 # CI
 /coverage/

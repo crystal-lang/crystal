@@ -9,7 +9,7 @@ to work with all future minor releases of the same major release series.
 Still, even bug fixes introduce changes that may break existing code in some edge cases.
 We're only listing the most relevant changes here that could have a relevant impact.
 
-The [changelog](./CHANGELOG.md) contains more information about all changes in
+The [changelogs](./doc/changelogs/README.md) contain more information about all changes in
 a specific release.
 
 ## Crystal 1.13

@@ -68,7 +68,7 @@ module Sync
 
     def try_rlock? : Bool
       # uncontended
-      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :release, :relaxed)
+      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :acquire, :relaxed)
       return true if success
 
       if (word & (WLOCK | WRITER_WAITING | LONG_WAIT)) == 0
@@ -110,6 +110,9 @@ module Sync
         add_on_acquire: RLOCK)
     end
 
+    # Called from CV#wait after a cv waiter has been transferred to mu then
+    # woken from mu. They must act as if they had always waited on mu (for
+    # example a reader musn't fail to lock even if the WRITER_WAITING is set).
     protected def lock_slow(waiter : Pointer(Waiter), clear : UInt32)
       if waiter.value.writer?
         zero_to_acquire = ANY_LOCK
@@ -117,7 +120,7 @@ module Sync
         set_on_waiting = WRITER_WAITING
         clear_on_acquire = WRITER_WAITING
       else
-        zero_to_acquire = WLOCK | WRITER_WAITING
+        zero_to_acquire = WLOCK
         add_on_acquire = RLOCK
         set_on_waiting = 0_u32
         clear_on_acquire = 0_u32
@@ -138,7 +141,7 @@ module Sync
 
         if (word & zero_to_acquire) == 0
           # unlocked, no long waiter, try to lock
-          word, success = @word.compare_and_set(word, (word + add_on_acquire) & ~(long_wait | clear | clear_on_acquire), :acquire, :relaxed)
+          _, success = @word.compare_and_set(word, (word + add_on_acquire) & ~(long_wait | clear | clear_on_acquire), :acquire, :relaxed)
           return if success
         elsif (word & SPINLOCK) == 0
           # locked by another fiber or there is a long waiter, spinlock is
@@ -183,15 +186,15 @@ module Sync
 
     def unlock : Nil
       # uncontended
-      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :acquire, :relaxed)
-      return true if success
+      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :release, :relaxed)
+      return if success
 
       # sanity check
       if (word & WLOCK) == 0
         raise RuntimeError.new("Can't unlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0
         # no waiters, or there is a designated waker already (no need to wake
         # another one), try quick unlock
         _, success = @word.compare_and_set(word, word &- WLOCK, :release, :relaxed)
@@ -212,9 +215,9 @@ module Sync
         raise RuntimeError.new("Can't runlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0 && (word & RMASK) > RLOCK
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
         # no waiters, there is a designated waker already (no need to wake
-        # another one), and there are still readers, try quick unlock
+        # another one), or there are still readers, try quick unlock
         _, success = @word.compare_and_set(word, word &- RLOCK, :release, :relaxed)
         return if success
       end
@@ -240,7 +243,7 @@ module Sync
         if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
           # no waiters, there is a designated waker (no need to wake another
           # one), or there are still readers, try release lock
-          word, success = @word.compare_and_set(word, word - sub_on_release, :release, :relaxed)
+          _, success = @word.compare_and_set(word, word - sub_on_release, :release, :relaxed)
           return if success
         elsif (word & SPINLOCK) == 0
           # there might be a waiter, and no designated waker, try to acquire

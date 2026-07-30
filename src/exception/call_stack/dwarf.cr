@@ -1,19 +1,8 @@
 require "crystal/dwarf"
-{% if flag?(:darwin) %}
-  require "./mach_o"
-{% else %}
-  require "./elf"
-{% end %}
 
 struct Exception::CallStack
   @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
   @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
-
-  {% if flag?(:win32) %}
-    @@coff_symbols : Hash(Int32, Array(Crystal::PE::COFFSymbol))?
-  {% end %}
-
-  # :nodoc:
 
   protected def self.decode_line_number(pc)
     if ln = @@dwarf_line_numbers
@@ -29,6 +18,48 @@ struct Exception::CallStack
       fn.each do |(low_pc, high_pc, function_name)|
         return function_name if low_pc <= pc <= high_pc
       end
+    end
+  end
+
+  protected def self.read_dwarf_sections(image, base_address = 0_u64) : Nil
+    line_strings = image.section?(DEBUG_LINE_STR) do |bytes, _|
+      Crystal::DWARF::Strings.new(bytes)
+    end
+
+    strings = image.section?(DEBUG_STR) do |bytes, _|
+      Crystal::DWARF::Strings.new(bytes)
+    end
+
+    image.section?(DEBUG_LINE) do |bytes, _|
+      io = IO::Memory.new(bytes)
+      @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, base_address, strings, line_strings)
+    end
+
+    abbrev_tables = {} of Int64 => Array(Crystal::DWARF::Abbrev)
+    image.section?(DEBUG_ABBREV) do |bytes, _|
+      io = IO::Memory.new(bytes)
+      while (offset = io.pos.to_i64) < bytes.size
+        abbrev_tables[offset] = Crystal::DWARF::Abbrev.read(io)
+      end
+    end
+
+    image.section?(DEBUG_INFO) do |bytes, offset|
+      io = IO::Memory.new(bytes)
+      names = [] of {LibC::SizeT, LibC::SizeT, String}
+
+      while io.pos < bytes.size
+        info = Crystal::DWARF::Info.new(io, offset)
+
+        if abbrev = abbrev_tables[info.debug_abbrev_offset]?
+          info.abbreviations = abbrev
+        end
+
+        parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
+          names << {low_pc + base_address, high_pc + base_address, name}
+        end
+      end
+
+      @@dwarf_function_names = names
     end
   end
 

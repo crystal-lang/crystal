@@ -25,7 +25,7 @@ module Sync
     # Acquires the exclusive lock for the duration of the block. The lock will
     # be released automatically before returning, or if the block raises an
     # exception.
-    def synchronize(& : -> U) : U forall U
+    def synchronize(& : -> _)
       lock
       begin
         yield
@@ -39,7 +39,7 @@ module Sync
       unless @mu.try_lock?
         unless @type.unchecked?
           if owns_lock?
-            raise Error::Deadlock.new unless @type.reentrant?
+            raise Error::Deadlock.new("Can't lock mutex recursively") unless @type.reentrant?
             @counter += 1
             return
           end

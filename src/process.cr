@@ -140,7 +140,7 @@ class Process
   # Available only on Unix-like operating systems.
   @[Deprecated("Fork is no longer supported.")]
   def self.fork(&) : Process
-    new Crystal::System::Process.fork { yield }
+    new Crystal::System::Process.new(Crystal::System::Process.fork { yield })
   end
 
   # :nodoc:
@@ -152,10 +152,10 @@ class Process
   # Available only on Unix-like operating systems.
   @[Deprecated("Fork is no longer supported.")]
   def self.fork : Process?
-    {% raise("Process fork is unsupported with multithread mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithread mode") unless flag?(:without_mt) %}
 
     if pid = Crystal::System::Process.fork
-      new pid
+      new Crystal::System::Process.new(pid)
     end
   end
 
@@ -177,11 +177,54 @@ class Process
   alias ExecStdio = Redirect | IO::FileDescriptor
   alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
-  # Executes a process and waits for it to complete.
+  # Executes a child process and waits for it to complete, returning its status.
   #
-  # By default the process is configured without input, output or error.
+  # See `Process.new` for the meaning of the parameters.
   #
-  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
+  # Returns a `Process::Status` representing the child process' exit status.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # io = IO::Memory.new
+  # status = Process.run(%w[echo hello], output: io)
+  # io.to_s # => "hello\n"
+  # status  # => Process::Status[0]
+  # ```
+  @[Experimental]
+  def self.run(args : Enumerable(String), *, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir).wait
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+  end
+
+  # Executes a child process and waits for it to complete, returning its status.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # Returns a `Process::Status` representing the child process' exit status.
+  # The global `$?` variable is set to the returned status.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # status = Process.run("echo", ["hello"], output: Process::Redirect::Inherit)
+  # # outputs "hello\n"
+  # $?     # => Process::Status[0]
+  # status # => Process::Status[0]
+  # ```
   def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : Process::Status
     status = new(command, args, env, clear_env, shell, input, output, error, chdir).wait
@@ -189,19 +232,113 @@ class Process
     status
   end
 
-  # Executes a process, yields the block, and then waits for it to finish.
+  # Executes a child process and waits for it to complete, returning its status.
   #
-  # By default the process is configured to use pipes for input, output and error. These
-  # will be closed automatically at the end of the block.
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # Returns a `Process::Status` representing the child process' exit status.
+  # The global `$?` variable is set to the returned status.
+  #
+  # Returns `nil` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # Process.run?(["true"])        # => Process::Status[0]
+  # Process.run?(["nonexistent"]) # => nil
+  # ```
+  @[Experimental]
+  def self.run?(args : Enumerable(String), *,
+                env : Env? = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    status = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) { return nil }.wait
+    status
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run?(*args : String, env : Env? = nil, clear_env : Bool = false,
+                input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close,
+                chdir : Path | String? = nil) : Process::Status?
+    run?(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+  end
+
+  # Executes a child process, yields the block, and then waits for it to finish.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # By default the process is configured to use pipes for input, output and error.
+  # These will be closed automatically at the end of the block.
+  #
+  # Returns a tuple with the process' exit status and the block's output value.
+  #
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # status, result = Process.run(%w[echo hello]) do |process|
+  #   process.output.gets_to_end
+  # end
+  # status # => Process::Status[0]
+  # result # => "hello\n"
+  # ```
+  @[Experimental]
+  def self.run(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
+    process = new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+    begin
+      value = yield process
+
+      process.close
+      status = process.wait
+      {status, value}
+    rescue ex
+      process.terminate
+      raise ex
+    end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.run(*args : String, env : Env? = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, & : Process -> _)
+    run(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |process|
+      yield process
+    end
+  end
+
+  # Executes a child process, yields the block, and then waits for it to finish.
+  #
+  # See `Process.new` for the meaning of the parameters.
+  #
+  # By default the process is configured to use pipes for input, output and error.
+  # These will be closed automatically at the end of the block.
   #
   # Returns the block's value.
   #
-  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
+  # Raises `IO::Error` if the execution itself fails (for example because the
+  # executable does not exist or is not executable).
+  #
+  # Example:
+  #
+  # ```
+  # output = Process.run("echo", ["hello"]) do |process|
+  #   process.output.gets_to_end
+  # end
+  # $?     # => Process::Status[0]
+  # output # => "hello\n"
+  # ```
   def self.run(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                input : Stdio = Redirect::Pipe, output : Stdio = Redirect::Pipe, error : Stdio = Redirect::Pipe, chdir : Path | String? = nil, &)
     process = new(command, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
+
+      process.close
       $? = process.wait
       value
     rescue ex
@@ -258,31 +395,162 @@ class Process
   @process_info : Crystal::System::Process
   @wait_count = 0
 
-  # Creates a process, executes it, but doesn't wait for it to complete.
+  # Creates and executes a child process.
   #
-  # To wait for it to finish, invoke `wait`.
+  # This starts a new process for the command given in *args[0]*.
   #
-  # By default the process is configured without input, output or error.
+  # The command is either a path to the executable to run, or the name of an
+  # executable which is then looked up by the operating system.
+  # The lookup uses the `PATH` variable of the current process environment
+  # (i.e. `ENV["PATH"]).
+  # In order to resolve to a specific executable, provide a path instead of
+  # only a command name. `Process.find_executable` can help with looking up a
+  # command in a custom `PATH`.
   #
-  # If *shell* is false, the *command* is the path to the executable to run,
-  # along with a list of *args*.
+  # The following arguments in *args* are passed as arguments to the child process.
   #
-  # If *shell* is true, the *command* should be the full command line
-  # including space-separated args.
-  # * On POSIX this uses `/bin/sh` to process the command string. *args* are
-  #   also passed to the shell, and you need to include the string `"${@}"` in
-  #   the *command* to safely insert them there.
-  # * On Windows this is implemented by passing the string as-is to the
-  #   process, and passing *args* is not supported.
+  # Raises `IO::Error` if executing *args[0]* fails, for example because the
+  # executable doesn't exist or is not executable.
   #
-  # Raises `IO::Error` if executing the command fails (for example if the executable doesn't exist).
+  # *env* provides a mapping of environment variables for the child process.
+  # If *clear_env* is `true`, only these explicit variables are used; if `false`,
+  # the child inherits the parent's environment with *env*  merged.
+  #
+  # *input*, *output*, *error* configure the child process's standard streams.
+  # * `Redirect::Close` passes the null device
+  # * `Redirect::Pipe` creates a pipe that's accessible via `#input`, `#output`
+  #    or `#error`.
+  # * `Redirect::Inherit` to share the parent's streams (`STDIN`, `STDOUT`, `STDERR`).
+  # * An `IO` instance creates a pipe that reads/writes into the given IO.
+  #
+  # *chdir* changes the working directory of the child process. If `nil`, uses
+  # the current working directory of the parent process.
+  #
+  # Example:
+  #
+  # ```
+  # process = Process.new(["echo", "Hello"], output: Process::Redirect::Pipe)
+  # process.output.gets_to_end # => "Hello\n"
+  # process.wait               # => Process::Status[0]
+  # ```
+  #
+  # Similar methods:
+  #
+  # * `Process.run` is a convenient short cut if you just want to run a command
+  #    and wait for it to finish.
+  # * `Process.exec` replaces the current process.
+  @[Experimental]
+  def self.new(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
+  end
+
+  # :ditto:
+  @[Experimental]
+  def self.new(*args : String, env : Env = nil, clear_env : Bool = false,
+               input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil) : self
+    new(args, env: env, clear_env: clear_env, input: input, output: output, error: error, chdir: chdir)
+  end
+
+  # :nodoc:
+  protected def initialize(args : Enumerable(String), *, env : Env = nil, clear_env : Bool = false,
+                           input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil, &)
+    raise File::NotFoundError.new("Error executing process: No command", file: "") if args.empty?
+
+    fork_input = stdio_to_fd(input, for: STDIN)
+    fork_output = stdio_to_fd(output, for: STDOUT)
+    fork_error = stdio_to_fd(error, for: STDERR)
+
+    prepared_args = Crystal::System::Process.prepare_args(args)
+    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      yield error, command
+    end
+    @process_info = Crystal::System::Process.new(pid)
+
+    fork_input.close unless fork_input.in?(input, STDIN)
+    fork_output.close unless fork_output.in?(output, STDOUT)
+    fork_error.close unless fork_error.in?(error, STDERR)
+  end
+
+  # Creates and executes a child process.
+  #
+  # This starts a new process for `command`.
+  #
+  # ## `shell: false` (the default)
+  #
+  # *command* is either a path to the executable to run, or the name of an
+  # executable which is then looked up by the operating system.
+  # The lookup uses the `PATH` variable of the current process environment
+  # (i.e. `ENV["PATH"]).
+  # In order to resolve to a specific executable, provide a path instead of
+  # only a command name. `Process.find_executable` can help with looking up a
+  # command in a custom `PATH`.
+  #
+  # The arguments in *args* are passed as arguments to the child process.
+  #
+  # Raises `IO::Error` if executing *command*  fails, for example because the
+  # executable doesn't exist or is not executable.
+  #
+  # ## `shell: true`
+  #
+  # *command* is a shell script executed in the system shell (`/bin/sh` on Unix
+  # systems, `cmd.exe` on Windows).
+  # Command names are looked up by the shell itself, using the `PATH` variable
+  # of the shell process (i.e. `env["PATH"]`).
+  #
+  # *args* is unsupported on Windows.
+  # On Unix it's passed as additional arguments to the shell process and can be
+  # used in the shell script with `"${@}"` to safely insert them there. If the
+  # script is a single command (no whitespace), `"${@}"` is appended implicitly.
+  #
+  # The returned instance represents the shell process, not the process executed
+  # for *command*.
+  #
+  # If executing *command*  fails, for example because the executable doesn't
+  # exist or is not executable, it may raise `IO::Error` (on Windows) or return
+  # an unsuccessful exit status (on Unix).
+  #
+  # ## Shared parameters
+  #
+  # *env* provides a mapping of environment variables for the child process.
+  # If *clear_env* is `true`, only these explicit variables are used; if `false`,
+  # the child inherits the parent's environment with *env*  merged.
+  #
+  # *input*, *output*, *error* configure the child process's standard streams.
+  # * `Redirect::Close` passes the null device
+  # * `Redirect::Pipe` creates a pipe that's accessible via `#input`, `#output`
+  #    or `#error`.
+  # * `Redirect::Inherit` to share the parent's streams (`STDIN`, `STDOUT`, `STDERR`).
+  # * An `IO` instance creates a pipe that reads/writes into the given IO.
+  #
+  # *chdir* changes the working directory of the child process. If `nil`, uses
+  # the current working directory of the parent process.
+  #
+  # Example:
+  #
+  # ```
+  # process = Process.new("echo", ["Hello"], output: Process::Redirect::Pipe)
+  # process.output.gets_to_end # => "Hello\n"
+  # process.wait               # => Process::Status[0]
+  # ```
+  #
+  # Similar methods:
+  #
+  # * `Process.run` is a convenient short cut if you just want to run a command
+  #    and wait for it to finish.
+  # * `Process.exec` replaces the current process.
   def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
     fork_input = stdio_to_fd(input, for: STDIN)
     fork_output = stdio_to_fd(output, for: STDOUT)
     fork_error = stdio_to_fd(error, for: STDERR)
 
-    pid = Crystal::System::Process.spawn(command, args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s)
+    prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
+    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+    end
     @process_info = Crystal::System::Process.new(pid)
 
     fork_input.close unless fork_input.in?(input, STDIN)
@@ -359,9 +627,8 @@ class Process
     fork_io
   end
 
-  # :nodoc:
-  def initialize(pid : LibC::PidT)
-    @process_info = Crystal::System::Process.new(pid)
+  # :nodoc
+  def initialize(@process_info : Crystal::System::Process)
   end
 
   # Sends *signal* to this process.
@@ -375,15 +642,13 @@ class Process
 
   # Waits for this process to complete and closes any pipes.
   def wait : Process::Status
-    close_io @input # only closed when a pipe was created but not managed by copy_io
-
     @wait_count.times do
       ex = channel.receive
       raise ex if ex
     end
     @wait_count = 0
 
-    Process::Status.new(@process_info.wait)
+    Process::Status.new(system_exit_status: @process_info.wait)
   ensure
     close
     @process_info.release

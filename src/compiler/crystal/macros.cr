@@ -888,7 +888,23 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#map`
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
+    end
+
+    # Similar to `Hash#select`
+    def select(&) : HashLiteral
+    end
+
+    # Returns a new `HashLiteral` with only the provided *keys*.
+    def select(*keys : ASTNode) : HashLiteral
+    end
+
+    # Similar to `Hash#reject`
+    def reject(&) : HashLiteral
+    end
+
+    # Returns a new `HashLiteral` without the provided *keys*.
+    def reject(*keys : ASTNode) : HashLiteral
     end
 
     # Similar to `Hash#[]?`
@@ -963,7 +979,23 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#map`
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
+    end
+
+    # Similar to `Hash#select`
+    def select(&) : NamedTupleLiteral
+    end
+
+    # Returns a new `NamedTupleLiteral` with only the provided *keys*.
+    def select(*keys : SymbolLiteral | StringLiteral | MacroId) : NamedTupleLiteral
+    end
+
+    # Similar to `Hash#reject`
+    def reject(&) : NamedTupleLiteral
+    end
+
+    # Returns a new `NamedTupleLiteral` without the provided *keys*.
+    def reject(*keys : SymbolLiteral | StringLiteral | MacroId) : NamedTupleLiteral
     end
 
     # Similar to `HashLiteral#double_splat`
@@ -2869,6 +2901,10 @@ module Crystal::Macros
     # Returns the instance methods defined by this type, without including
     # inherited methods.
     def methods : ArrayLiteral(Def)
+    end
+
+    # Returns the instance methods defined by this type, including those inherited from ancestors and base types (`Reference`, `Value`, and `Object`).
+    def all_methods : ArrayLiteral(Def)
     end
 
     # Returns `true` if this type has a method. For example `default_options`

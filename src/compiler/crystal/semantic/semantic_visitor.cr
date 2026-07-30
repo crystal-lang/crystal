@@ -443,12 +443,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     skip_macro_exception = nil
 
     generated_nodes = expand_macro(the_macro, node, mode: mode, visibility: :public, accept: accept) do
-      begin
-        @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
-      rescue ex : SkipMacroException
-        skip_macro_exception = ex
-        {ex.expanded_before_skip, ex.macro_expansion_pragmas}
-      end
+      @program.expand_macro node, (@scope || current_type), @path_lookup, free_vars, @untyped_def
+    rescue ex : SkipMacroException
+      skip_macro_exception = ex
+      {ex.expanded_before_skip, ex.macro_expansion_pragmas}
     end
 
     node.expanded = generated_nodes

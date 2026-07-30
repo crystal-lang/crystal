@@ -199,6 +199,18 @@ module Crystal
           type_visitor.inside_constant = true
           type.value.accept type_visitor
 
+          # When the constant was declared with `FOO : T = value`, resolve T
+          # and either autocast a number/symbol literal or assert the value's
+          # inferred type conforms to T.
+          if declared_type_node = type.declared_type
+            declared_type = type_visitor.lookup_type(declared_type_node)
+            check_automatic_cast(type.value, declared_type)
+            value_type = type.value.type
+            unless value_type.implements?(declared_type)
+              declared_type_node.raise "constant #{type} type must be #{declared_type}, not #{value_type}"
+            end
+          end
+
           type.fake_def = const_def
           type.visitor = self
           type.used = true
@@ -361,7 +373,7 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
-        if var.type?.is_a?(Program) && node.name == "self"
+        if var.type?.is_a?(Program | FileModule) && node.name == "self"
           node.raise "there's no self in this scope"
         end
 
@@ -450,6 +462,8 @@ module Crystal
         var.var = class_var
         class_var.thread_local = true if thread_local
 
+        node.type = @program.nil
+      when Path
         node.type = @program.nil
       else
         raise "Bug: unexpected var type: #{var.class}"
@@ -886,7 +900,7 @@ module Crystal
       # Outside a def is already handled by ClassVarsInitializerVisitor
       # (@exp_nest is 1 if we are at the top level because it was incremented
       # by one since we are inside an Assign)
-      if !@typed_def && (@exp_nest <= 1) && !inside_block?
+      if !@scope && !@typed_def && (@exp_nest <= 1) && !inside_block?
         var = lookup_class_var(target)
         target.var = var
         var.thread_local = true if thread_local
@@ -2159,14 +2173,18 @@ module Crystal
       after_cond_vars = @vars.dup
       @while_vars = after_cond_vars
 
-      filter_vars cond_type_filters
-
       # `node.body` may reset this status, so we capture them in a set
-      # (we don't need the full MetaVars at the moment)
+      # (we don't need the full MetaVars at the moment).
+      #
+      # We capture *before* `filter_vars` because filtering may replace a var
+      # with a fresh MetaVar that drops the `nil_if_read?` flag, even though
+      # the variable could still legitimately be nil on loop exit (#16483).
       after_cond_vars_nil_if_read = Set(String).new
       @vars.each do |name, var|
         after_cond_vars_nil_if_read << name if var.nil_if_read?
       end
+
+      filter_vars cond_type_filters
 
       @type_filters = nil
       @block, old_block = nil, @block
@@ -3096,13 +3114,7 @@ module Crystal
       node.program = @program
       node.update
 
-      node.elements.each do |element|
-        if element.is_a?(Splat) && (type = element.type?)
-          unless type.is_a?(TupleInstanceType)
-            node.raise "argument to splat must be a tuple, not #{type}"
-          end
-        end
-      end
+      node.validate_splats!
 
       false
     end
@@ -3449,15 +3461,9 @@ module Crystal
     end
 
     def bind_meta_var(var : Var)
-      @meta_vars[var.name].bind_to(var)
-    end
-
-    def bind_meta_var(var : InstanceVar)
-      # Nothing to do
-    end
-
-    def bind_meta_var(var)
-      raise "BUG: trying to bind var or instance var but got #{var}"
+      meta_var = @meta_vars[var.name]
+      meta_var.bind_to(var)
+      meta_var
     end
 
     def bind_initialize_instance_vars(owner)

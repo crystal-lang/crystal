@@ -153,7 +153,7 @@ describe "colorize" do
     colorize("hello").italic.to_s.should eq("\e[3mhello\e[23m")
     colorize("hello").underline.to_s.should eq("\e[4mhello\e[24m")
     colorize("hello").blink.to_s.should eq("\e[5mhello\e[25m")
-    colorize("hello").blink_fast.to_s.should eq("\e[6mhello\e[26m")
+    colorize("hello").blink_fast.to_s.should eq("\e[6mhello\e[25m")
     colorize("hello").reverse.to_s.should eq("\e[7mhello\e[27m")
     colorize("hello").hidden.to_s.should eq("\e[8mhello\e[28m")
     colorize("hello").strikethrough.to_s.should eq("\e[9mhello\e[29m")

@@ -15,12 +15,7 @@ module Crystal
     filename
   end
 
-  def self.error(msg, color, exit_code : Int = 1, stderr = STDERR, leading_error = true) : NoReturn
-    error(msg, color, nil, stderr, leading_error)
-    exit(exit_code)
-  end
-
-  def self.error(msg, color, exit_code : Nil, stderr = STDERR, leading_error = true)
+  def self.print_error(msg, color, stderr = STDERR, leading_error = true)
     stderr.print "Error: ".colorize.toggle(color).red.bold if leading_error
     stderr.puts msg.colorize.toggle(color).bright
   end

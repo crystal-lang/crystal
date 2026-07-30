@@ -123,9 +123,18 @@ describe Crystal::SyntaxHighlighter::Colorize do
     it_highlights "%w(foo bar baz)", %(\e[93m%w(foo bar baz)\e[39m)
     it_highlights "%w(foo  bar\n  baz)", %(\e[93m%w(foo  bar\n  baz)\e[39m)
     it_highlights "%w<foo bar baz>", %(\e[93m%w<foo bar baz>\e[39m)
+    it_highlights "%W(foo bar baz)", %(\e[93m%W(foo bar baz)\e[39m)
+    it_highlights "%W(foo  bar\n  baz)", %(\e[93m%W(foo  bar\n  baz)\e[39m)
+    it_highlights "%W(foo \#{bar} baz)", %(\e[93m%W(foo \#{\e[39mbar\e[93m} baz)\e[39m)
+    it_highlights "%W(foo \#{*bar} baz)", %(\e[93m%W(foo \#{\e[39m\e[91m*\e[39mbar\e[93m} baz)\e[39m)
+    it_highlights "%W(foo a\#{bar}b baz)", %(\e[93m%W(foo a\#{\e[39mbar\e[93m}b baz)\e[39m)
+    it_highlights "%W(foo a\#{*bar}b baz)", %(\e[93m%W(foo a\#{\e[39m\e[91m*\e[39mbar\e[93m}b baz)\e[39m)
     it_highlights "%i(foo bar baz)", %(\e[93m%i(foo bar baz)\e[39m)
 
     it_highlights "Set{1, 2, 3}", %(\e[36mSet\e[39m{\e[35m1\e[39m, \e[35m2\e[39m, \e[35m3\e[39m})
+
+    # Typed constant declarations (#13443)
+    it_highlights "FOO : Int64 = 123", %(\e[36mFOO\e[39m : \e[36mInt64\e[39m \e[91m=\e[39m \e[35m123\e[39m)
 
     it_highlights "foo(/Name: /)", %(foo(\e[93m/Name: /\e[39m))
     it_highlights "foo[/Name: /]", %(foo[\e[93m/Name: /\e[39m])

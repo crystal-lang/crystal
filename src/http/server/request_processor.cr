@@ -43,6 +43,13 @@ class HTTP::Server::RequestProcessor
           return
         end
 
+        # RFC 9112, Section 6.1: reject & close on ambiguous body content to
+        # prevent request smuggling
+        if request.headers.has_key?("Content-Length") && request.headers.has_key?("Transfer-Encoding")
+          response.respond_with_status(HTTP::Status::BAD_REQUEST)
+          return
+        end
+
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)

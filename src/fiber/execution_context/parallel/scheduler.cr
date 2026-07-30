@@ -14,27 +14,38 @@ module Fiber::ExecutionContext
     class Scheduler
       include ExecutionContext::Scheduler
 
+      private enum State
+        NONE     = 0
+        RUNNING
+        SPINNING
+        WAITING
+        PARKED
+      end
+
       getter name : String
 
       # :nodoc:
       property execution_context : Parallel
       protected property! thread : Thread
-      protected property! main_fiber : Fiber
+      protected property main_fiber : Fiber
 
       @global_queue : GlobalQueue
       @runnables : Runnables(256)
       @event_loop : Crystal::EventLoop
 
       @tick : UInt32 = 0
-      @spinning = false
-      @waiting = false
-      @parked = false
+      @state = State::NONE
       @shutdown = false
 
       protected def initialize(@execution_context, @name)
         @global_queue = @execution_context.global_queue
         @runnables = Runnables(256).new(@global_queue)
         @event_loop = @execution_context.event_loop
+        @main_fiber = Fiber.new("#{@name}:loop", @execution_context) { run_loop }
+      end
+
+      protected def running! : Nil
+        @state = State::RUNNING
       end
 
       protected def shutdown! : Nil
@@ -53,7 +64,6 @@ module Fiber::ExecutionContext
       protected def enqueue(fiber : Fiber) : Nil
         Crystal.trace :sched, "enqueue", fiber: fiber
         @runnables.push(fiber)
-        @execution_context.wake_scheduler unless @execution_context.capacity == 1
       end
 
       protected def reschedule : Nil
@@ -117,20 +127,28 @@ module Fiber::ExecutionContext
           end
 
           # run the event loop to see if any event is activable
-          list = Fiber::List.new
-          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
-            return enqueue_many(pointerof(list))
+          @event_loop.lock? do
+            if fiber = run_evloop(blocking: false)
+              return fiber
+            end
           end
         end
+
+        nil
       end
 
       protected def run_loop : Nil
+        @state = State::RUNNING
+
         Crystal.trace :sched, "started"
 
         loop do
           if @shutdown
             spin_stop
+
+            # drain everything into the global queue
             @runnables.drain
+            @event_loop.drain { |fiber| @global_queue.push(fiber) }
 
             # we may have been the last running scheduler, waiting on the event
             # loop while there are pending events for example; let's resume a
@@ -143,6 +161,7 @@ module Fiber::ExecutionContext
 
           if fiber = find_next_runnable
             spin_stop
+            @state = State::RUNNING
             resume fiber
           else
             # the event loop enqueued a fiber (or was interrupted) or the
@@ -154,6 +173,7 @@ module Fiber::ExecutionContext
         end
       ensure
         @event_loop.unregister(self)
+        ExecutionContext.thread_pool.checkin
       end
 
       private def find_next_runnable : Fiber?
@@ -163,31 +183,26 @@ module Fiber::ExecutionContext
       end
 
       private def find_next_runnable(&) : Nil
-        list = Fiber::List.new
-
         # nothing to do: start spinning
         spinning do
           return if @shutdown
 
+          # usually empty but the scheduler may have been transferred to another
+          # thread with queued fibers
+          yield @runnables.shift?
+
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
 
-          if @event_loop.lock? { @event_loop.run(pointerof(list), blocking: false) }
-            unless list.empty?
-              # must stop spinning before calling enqueue_many that may call
-              # wake_scheduler which returns immediately if a thread is
-              # spinning... but we're spinning, so that would always fail to
-              # wake sleeping schedulers despite having runnable fibers
-              spin_stop
-              yield enqueue_many(pointerof(list))
-            end
+          @event_loop.lock? do
+            yield run_evloop(blocking: false)
           end
 
           yield try_steal?
         end
 
         # wait on the event loop for events and timers to activate
-        evloop_ran = @event_loop.lock? do
-          @waiting = true
+        @event_loop.lock? do
+          @state = State::WAITING
 
           # there is a time window between stop spinning and start waiting
           # during which another context may have enqueued a fiber, check again
@@ -197,13 +212,7 @@ module Fiber::ExecutionContext
 
           # block on the event loop until an event is ready or the loop is
           # interrupted
-          @event_loop.run(pointerof(list), blocking: true)
-        ensure
-          @waiting = false
-        end
-
-        if evloop_ran
-          yield enqueue_many(pointerof(list))
+          yield run_evloop(blocking: true)
 
           # the event loop was interrupted: restart the loop
           return
@@ -222,26 +231,31 @@ module Fiber::ExecutionContext
           yield @global_queue.unsafe_grab?(@runnables, divisor: @execution_context.size)
           yield try_steal?
 
-          @parked = true
+          @state = State::PARKED
           nil
         end
-        @parked = false
 
         # immediately mark the scheduler as spinning (we just unparked); we
         # don't increment the number of spinning threads since
         # `Parallel#wake_scheduler` already did
-        @spinning = true
+        @state = State::SPINNING
       end
 
-      private def enqueue_many(list : Fiber::List*) : Fiber?
-        if fiber = list.value.pop?
-          Crystal.trace :sched, "enqueue", size: list.value.size, fiber: fiber
-          unless list.value.empty?
-            @runnables.bulk_push(list)
-            @execution_context.wake_scheduler unless @execution_context.capacity == 1
+      private def run_evloop(blocking)
+        fiber = nil
+        size = 0
+
+        @event_loop.run(blocking) do |runnable|
+          if fiber
+            @runnables.push(runnable)
+          else
+            fiber = runnable
           end
-          fiber
+          size += 1
         end
+
+        Crystal.trace :sched, "enqueue", size: size, fiber: fiber
+        fiber
       end
 
       # This method always runs in parallel!
@@ -272,17 +286,17 @@ module Fiber::ExecutionContext
       end
 
       private def spin_start : Nil
-        return if @spinning
+        return if @state.spinning?
 
-        @spinning = true
+        @state = State::SPINNING
         @execution_context.@spinning.add(1, :acquire_release)
       end
 
       private def spin_stop : Nil
-        return unless @spinning
+        return unless @state.spinning?
 
         @execution_context.@spinning.sub(1, :acquire_release)
-        @spinning = false
+        # don't change @state because we might go to RUNNING or WAITING
       end
 
       def inspect(io : IO) : Nil
@@ -295,15 +309,26 @@ module Fiber::ExecutionContext
         io << ' ' << @name << '>'
       end
 
+      protected def active? : Bool
+        (@state.running? && !syscall_flag?) || @state.spinning?
+      end
+
       def status : String
-        if @spinning
+        case @state
+        in .spinning?
           "spinning"
-        elsif @waiting
+        in .waiting?
           "event-loop"
-        elsif @parked
+        in .parked?
           "parked"
-        else
-          "running"
+        in .running?
+          if syscall_flag?
+            "syscall"
+          else
+            "running"
+          end
+        in .none?
+          "none"
         end
       end
     end

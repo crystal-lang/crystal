@@ -1,3 +1,5 @@
+require "fiber/pointer_linked_list_node"
+
 # The general design is influenced by fdMutex in Go (LICENSE: BSD 3-Clause,
 # Copyright Google):
 # https://github.com/golang/go/blob/go1.25.1/src/internal/poll/fd_mutex.go
@@ -61,7 +63,7 @@ struct Crystal::FdLock
   # Locks for read and increments the references by one for the duration of the
   # block. Raises if the fdlock is closed while trying to acquire the lock.
   def read(& : -> F) : F forall F
-    m, success = @m.compare_and_set(0_u32, RLOCK + REF, :acquire, :relaxed)
+    _, success = @m.compare_and_set(0_u32, RLOCK + REF, :acquire, :relaxed)
     lock_slow(RLOCK, RWAIT, RSPIN, RWAKER, pointerof(@readers)) unless success
 
     begin
@@ -76,7 +78,7 @@ struct Crystal::FdLock
   # Locks for write and increments the references by one for the duration of the
   # block. Raises if the fdlock is closed while trying to acquire the lock.
   def write(& : -> F) : F forall F
-    m, success = @m.compare_and_set(0_u32, WLOCK + REF, :acquire, :relaxed)
+    _, success = @m.compare_and_set(0_u32, WLOCK + REF, :acquire, :relaxed)
     lock_slow(WLOCK, WWAIT, WSPIN, WWAKER, pointerof(@writers)) unless success
 
     begin
@@ -102,11 +104,11 @@ struct Crystal::FdLock
         raise IO::Error.new("Closed")
       elsif (m & xlock) == 0_u32
         # acquire the lock + increment ref
-        m, success = @m.compare_and_set(m, ((m | xlock) + REF) & ~clear, :acquire, :relaxed)
+        _, success = @m.compare_and_set(m, ((m | xlock) + REF) & ~clear, :acquire, :relaxed)
         return if success
       elsif (m & xspin) == 0_u32
         # acquire spinlock + forward declare pending waiter
-        m, success = @m.compare_and_set(m, (m | xspin | xwait) & ~clear, :acquire, :relaxed)
+        _, success = @m.compare_and_set(m, (m | xspin | xwait) & ~clear, :acquire, :relaxed)
         if success
           # new waiters are added to the tail, while woken waiters that failed
           # to lock again are added to the head to give them some edge
@@ -233,7 +235,7 @@ struct Crystal::FdLock
         return false
       end
 
-      m, success = @m.compare_and_set(m, (m + REF) | CLOSED | RSPIN | WSPIN, :acquire, :relaxed)
+      _, success = @m.compare_and_set(m, (m + REF) | CLOSED | RSPIN | WSPIN, :acquire, :relaxed)
       break if success
 
       attempts = Thread.delay(attempts)
@@ -247,12 +249,12 @@ struct Crystal::FdLock
     @readers.consume_each(&.value.enqueue)
     @writers.consume_each(&.value.enqueue)
 
-    # decrement the last ref
-    m = @m.sub(REF, :release)
-
     begin
       yield
     ensure
+      # decrement the last ref
+      m = @m.sub(REF, :release)
+
       # wait for the last ref... unless we're the last ref!
       Fiber.suspend unless (m & MASK) == REF
     end

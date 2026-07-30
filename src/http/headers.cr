@@ -9,8 +9,6 @@ struct HTTP::Headers
 
   # :nodoc:
   record Key, name : String do
-    forward_missing_to @name
-
     def hash(hasher)
       name.each_byte do |c|
         hasher = normalize_byte(c).hash(hasher)
@@ -47,6 +45,14 @@ struct HTTP::Headers
       return '-'.ord if char == '_'
 
       byte
+    end
+
+    def to_json_object_key
+      name
+    end
+
+    def to_yaml(builder : YAML::Nodes::Builder)
+      name.to_yaml(builder)
     end
   end
 
@@ -180,7 +186,7 @@ struct HTTP::Headers
 
   def merge!(other) : self
     other.each do |key, value|
-      self[wrap(key)] = value
+      self[key] = value
     end
     self
   end
@@ -344,11 +350,25 @@ struct HTTP::Headers
     end
   end
 
+  def to_json(builder : JSON::Builder) : Nil
+    @hash.to_json(builder)
+  end
+
+  def to_yaml(builder : YAML::Nodes::Builder) : Nil
+    @hash.to_yaml(builder)
+  end
+
   def valid_value?(value : String) : Bool
     invalid_value_char(value).nil?
   end
 
-  forward_missing_to @hash
+  def clear
+    @hash.clear
+  end
+
+  def object_id
+    @hash.object_id
+  end
 
   private def unsafe_add(key, value : String)
     key = wrap(key)

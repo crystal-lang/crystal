@@ -51,12 +51,14 @@ require "../types"
 # multidispatch. However, we do need to analyze it to check if there's an ambiguity.
 
 module Crystal
-  record NamedArgumentType, name : String, type : Type do
+  record NamedArgumentType, name : String, type : Type, loc : Location? = nil do
     def self.from_args(named_args : Array(NamedArgument)?, with_autocast = false)
       named_args.try &.map do |named_arg|
-        new(named_arg.name, named_arg.value.type(with_autocast: with_autocast))
+        new(named_arg.name, named_arg.value.type(with_autocast: with_autocast), named_arg.location)
       end
     end
+
+    def_equals_and_hash name, type
   end
 
   record CallSignature,
@@ -312,7 +314,7 @@ module Crystal
             end
 
             matched_named_arg_types ||= [] of NamedArgumentType
-            matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
+            matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type, named_arg.loc)
           else
             # If there's a double splat it's OK, the named arg will be put there
             if a_def.double_splat
@@ -331,7 +333,7 @@ module Crystal
               end
 
               matched_named_arg_types ||= [] of NamedArgumentType
-              matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
+              matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type, named_arg.loc)
 
               found_unmatched_named_arg = true
               next

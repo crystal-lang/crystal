@@ -4,11 +4,17 @@ abstract class Crystal::EventLoop
       Crystal::EventLoop::Wasi
     {% elsif flag?(:unix) %}
       # TODO: enable more targets by default (need manual tests or fixes)
-      {% if flag?("evloop=libevent") %}
+      {% if flag?("evloop=io_uring") %}
+        if Crystal::EventLoop::IoUring.supported?
+          Crystal::EventLoop::IoUring
+        else
+          System.panic "io_uring_setup", Errno::ENOSYS
+        end
+      {% elsif flag?("evloop=libevent") %}
         Crystal::EventLoop::LibEvent
       {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
         Crystal::EventLoop::Epoll
-      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
         Crystal::EventLoop::Kqueue
       {% else %}
         Crystal::EventLoop::LibEvent
@@ -40,7 +46,7 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current : self
-    {% if flag?(:execution_context) %}
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext.current.event_loop
     {% else %}
       Crystal::Scheduler.event_loop
@@ -49,8 +55,8 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current? : self | Nil
-    {% if flag?(:execution_context) %}
-      Fiber::ExecutionContext.current.event_loop
+    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      Fiber::ExecutionContext.current?.try(&.event_loop)
     {% else %}
       Crystal::Scheduler.event_loop?
     {% end %}
@@ -67,11 +73,11 @@ abstract class Crystal::EventLoop
   # events.
   abstract def run(blocking : Bool) : Bool
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # Same as `#run` but collects runnable fibers into *queue* instead of
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
-    abstract def run(queue : Fiber::List*, blocking : Bool) : Nil
+    abstract def run(blocking : Bool, & : Fiber ->) : Nil
 
     # Tries to lock the event loop and yields if the lock was acquired. Must
     # unlock before returning. Returns true if the lock was acquired, false
@@ -94,6 +100,13 @@ abstract class Crystal::EventLoop
     def unregister(scheduler : Fiber::ExecutionContext::Scheduler) : Nil
     end
   {% end %}
+
+  # Blocks the current scheduler until all the pending events have completed.
+  # Must yield every runnable fiber.
+  #
+  # Optional.
+  def drain(& : Fiber ->) : Nil
+  end
 
   # Tells a blocking run loop to no longer wait for events to activate. It may
   # for example enqueue a NOOP event with an immediate (or past) timeout. Having
@@ -147,11 +160,13 @@ end
 {% if flag?(:wasi) %}
   require "./event_loop/wasi"
 {% elsif flag?(:unix) %}
-  {% if flag?("evloop=libevent") %}
+  {% if flag?("evloop=io_uring") %}
+    require "./event_loop/io_uring"
+  {% elsif flag?("evloop=libevent") %}
     require "./event_loop/libevent"
   {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) %}
     require "./event_loop/epoll"
-  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) %}
+  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
     require "./event_loop/kqueue"
   {% else %}
     require "./event_loop/libevent"

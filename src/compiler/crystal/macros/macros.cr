@@ -82,7 +82,7 @@ class Crystal::Program
   end
 
   def macro_compile(filename)
-    time = Time.monotonic
+    time = Time.instant
 
     source = File.read(filename)
 
@@ -107,8 +107,7 @@ class Crystal::Program
     {% end %}
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
-      elapsed_time = Time.monotonic - time
-      return CompiledMacroRun.new(executable_path, elapsed_time, true)
+      return CompiledMacroRun.new(executable_path, time.elapsed, true)
     end
 
     result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
@@ -131,8 +130,7 @@ class Crystal::Program
       requires_with_timestamps.to_json(file)
     end
 
-    elapsed_time = Time.monotonic - time
-    CompiledMacroRun.new(executable_path, elapsed_time, false)
+    CompiledMacroRun.new(executable_path, time.elapsed, false)
   end
 
   @host_compiler : Compiler?
@@ -199,13 +197,11 @@ class Crystal::Program
     # We start with the target filename
     required_files = Set{filename}
     recorded_requires.map do |recorded_require|
-      begin
-        files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
-        required_files.concat(files) if files
-      rescue Crystal::CrystalPath::NotFoundError
-        # Maybe the file is gone
-        next
-      end
+      files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
+      required_files.concat(files) if files
+    rescue Crystal::CrystalPath::NotFoundError
+      # Maybe the file is gone
+      next
     end
 
     new_requires_with_timestamps = required_files.map do |required_file|

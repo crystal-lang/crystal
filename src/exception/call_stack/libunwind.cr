@@ -5,12 +5,6 @@ require "c/stdio"
 require "c/string"
 require "../lib_unwind"
 
-{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) || flag?(:solaris) || flag?(:win32) %}
-  require "./dwarf"
-{% else %}
-  require "./null"
-{% end %}
-
 struct Exception::CallStack
   skip(__FILE__)
 

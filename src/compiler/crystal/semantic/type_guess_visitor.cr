@@ -852,7 +852,7 @@ module Crystal
         guessed_arg_type = guess_type(named_arg.value)
         return unless guessed_arg_type
 
-        NamedArgumentType.new(named_arg.name, guessed_arg_type)
+        NamedArgumentType.new(named_arg.name, guessed_arg_type, named_arg.location)
       end)
 
       signature = CallSignature.new(

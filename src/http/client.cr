@@ -584,21 +584,13 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    begin
-      response = exec_internal_single(request, implicit_compression: implicit_compression)
-    rescue exc : IO::Error
-      raise exc if @io.nil? # do not retry if client was closed
-      response = nil
+    response = retry_once(request) do
+      exec_internal_single(request, implicit_compression: implicit_compression)
     end
-    return handle_response(response) if response
 
-    # Server probably closed the connection, so retry once
-    close
-    request.body.try &.rewind
-    response = exec_internal_single(request, implicit_compression: implicit_compression)
-    return handle_response(response) if response
+    raise IO::EOFError.new("Unexpected end of http response") unless response
 
-    raise IO::EOFError.new("Unexpected end of http response")
+    handle_response(response)
   end
 
   private def exec_internal_single(request, implicit_compression = false)
@@ -636,30 +628,77 @@ class HTTP::Client
     set_defaults request
     run_before_request_callbacks(request)
 
-    exec_internal_single(request, ignore_io_error: true, implicit_compression: implicit_compression) do |response|
-      if response
-        return handle_response(response) { yield response }
+    user_exception = nil
+    retry_once(request) do
+      exec_internal_single(request, implicit_compression: implicit_compression) do |response|
+        if response
+          handle_response(response) do
+            result = yield response
+          rescue exc : Exception
+            # Capture exception in user code to re-raise it afterwards, so it
+            # does not interfere with the retry logic in case of an IO error in
+            # user code.
+            user_exception = exc
+            break
+          else
+            return result
+          end
+        end
       end
+    end
+
+    raise user_exception if user_exception
+
+    raise IO::EOFError.new("Unexpected end of http response")
+  end
+
+  # Determine whether we should retry a request after an IO error happened,
+  # which might've been caused by a stale connection broken down.
+  #
+  # The conditions are inspired from the implementation in Go's net/http library:
+  # https://github.com/golang/go/blob/608e9fac9055aa188c513f4dd53f12e692bc3c0c/src/net/http/transport.go#L808
+  private def should_retry_request?(request, exc, reusing_connection) : Bool
+    # The client was closed explicitly
+    return false if @io.nil?
+
+    # If the connection is fresh, the server should not have hung up on us and
+    # there's no reason to retry.
+    return false unless reusing_connection
+
+    # Only retry if the error connection was reset by the peer, which is a
+    # strong indicator of a stale connection.
+    return false unless exc.nil? || exc.os_error.in?(Errno::ECONNRESET, WinError::WSAECONNRESET, Errno::EPIPE, WinError::WSAECONNABORTED)
+
+    # Do not retry requests if they are not replayable
+    return false unless request.replayable?
+
+    true
+  end
+
+  private def retry_once(request, &)
+    reusing_connection = !@io.nil?
+
+    begin
+      result = yield
+    rescue exc : IO::Error
+      unless should_retry_request?(request, exc, reusing_connection)
+        raise exc
+      end
+    else
+      return result if result
+
+      # Reading resulted in EOF which might be caused by a stale connection
+      return unless should_retry_request?(request, nil, reusing_connection)
     end
 
     # Server probably closed the connection, so retry once
     close
-    request.body.try &.rewind
-    exec_internal_single(request, implicit_compression: implicit_compression) do |response|
-      if response
-        return handle_response(response) { yield response }
-      end
-    end
-    raise IO::EOFError.new("Unexpected end of http response")
+
+    yield
   end
 
-  private def exec_internal_single(request, ignore_io_error = false, implicit_compression = false, &)
-    begin
-      send_request(request)
-    rescue ex : IO::Error
-      return yield nil if ignore_io_error && !@io.nil? # ignore_io_error only if client was not closed
-      raise ex
-    end
+  private def exec_internal_single(request, implicit_compression = false, &)
+    send_request(request)
     HTTP::Client::Response.from_io?(io, ignore_body: request.ignore_body?, decompress: implicit_compression) do |response|
       yield response
     end

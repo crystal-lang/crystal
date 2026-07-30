@@ -78,13 +78,13 @@ describe "Signal" do
 
     it "CHLD.reset sets default Crystal child handler" do
       Signal::CHLD.reset
-      child = Process.new("true", shell: true)
+      child = Process.new("true")
       child.wait # doesn't block forever
     end
 
     it "CHLD.ignore sets default Crystal child handler" do
       Signal::CHLD.ignore
-      child = Process.new("true", shell: true)
+      child = Process.new("true")
       child.wait # doesn't block forever
     end
 
@@ -97,7 +97,7 @@ describe "Signal" do
         existed.send(Process.exists?(child_process.pid))
       end
 
-      child = Process.new("true", shell: true)
+      child = Process.new("true")
       child.wait # doesn't block forever
       chan.send(child)
       existed.receive.should be_false
@@ -112,14 +112,14 @@ describe "Signal" do
         call_count += 1
       end
 
-      Process.new("true", shell: true).wait
+      Process.new("true").wait
       Fiber.yield
 
       call_count.should eq(1)
 
       Signal::CHLD.reset
 
-      Process.new("true", shell: true).wait
+      Process.new("true").wait
       Fiber.yield
 
       call_count.should eq(1)

@@ -54,8 +54,8 @@ module Random
   DEFAULT = PCG32.new
 
   # :nodoc:
-  thread_local(thread_default : ::Random) do
-    ::Random::PCG32.new.as(::Random)
+  thread_local(thread_default : ::Random::PCG32) do
+    ::Random::PCG32.new
   end
 
   # :nodoc:

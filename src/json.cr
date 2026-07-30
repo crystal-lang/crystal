@@ -113,6 +113,8 @@
 # `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
 # for primitive types, but you need to define `to_json(JSON::Builder)`
 # for custom objects, either manually or using `JSON::Serializable`.
+#
+# You can also generate human-readable JSON with `to_pretty_json`.
 module JSON
   # Generic JSON error.
   class Error < Exception

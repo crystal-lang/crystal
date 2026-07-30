@@ -163,13 +163,13 @@ describe "Range" do
 
     it "Float" do
       inf = Float64::INFINITY
-      (0.0...100.0).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
-      (0.0...inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
-      (-inf..100.0).bsearch { |x| x >= 0 || Math.log(-x / 10) < 0 }.not_nil!.should be_close(-10.0, 0.0001)
-      (-inf..inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (0.0...100.0).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
+      (0.0...inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
+      (-inf..100.0).bsearch { |x| x >= 0 || Math.log(-x / 10) < 0 }.should_not(be_nil).should be_close(-10.0, 0.0001)
+      (-inf..inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
       (-inf..5).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
 
-      (-inf..10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (-inf..10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
       (inf...10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
 
       (-inf..inf).bsearch { false }.should be_nil
@@ -178,22 +178,22 @@ describe "Range" do
       (0..inf).bsearch { |x| x == inf }.should eq inf
       (0...inf).bsearch { |x| x == inf }.should be_nil
 
-      v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
+      v = (0.0..1.0).bsearch { |x| x > 0 }.should_not(be_nil)
       v.should be_close(0, 0.0001)
       v.should be > 0
 
       (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
       (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
 
-      (0.0..inf).bsearch { |x| Math.log(x) >= 0 }.not_nil!.should be_close(1.0, 0.0001)
+      (0.0..inf).bsearch { |x| Math.log(x) >= 0 }.should_not(be_nil).should be_close(1.0, 0.0001)
 
-      (0.0..10).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
-      (0..10.0).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
+      (0.0..10).bsearch { |x| x >= 3.5 }.should_not(be_nil).should be_close(3.5, 0.0001)
+      (0..10.0).bsearch { |x| x >= 3.5 }.should_not(be_nil).should be_close(3.5, 0.0001)
 
-      (0_f32..5_f32).bsearch { |x| x >= 5_f32 }.not_nil!.should be_close(5_f32, 0.0001_f32)
+      (0_f32..5_f32).bsearch { |x| x >= 5_f32 }.should_not(be_nil).should be_close(5_f32, 0.0001_f32)
       (0_f32...5_f32).bsearch { |x| x >= 5_f32 }.should be_nil
-      (0_f32..5.0).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
-      (0..5.0_f32).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
+      (0_f32..5.0).bsearch { |x| x >= 5.0 }.should_not(be_nil).should be_close(5.0, 0.0001)
+      (0..5.0_f32).bsearch { |x| x >= 5.0 }.should_not(be_nil).should be_close(5.0, 0.0001)
 
       inf32 = Float32::INFINITY
       (0..inf32).bsearch { |x| x == inf32 }.should eq inf32
@@ -453,6 +453,25 @@ describe "Range" do
 
     it "samples with n = 0" do
       (1..3).sample(0).empty?.should be_true
+    end
+
+    describe "doesn't lose randomness when delegating to Enumerable#sample (#16480)" do
+      it do
+        results = Array(Int32).new(100) { (0..9.0).sample }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
+
+      it do
+        results = Array(Array(Int32)).new
+        100.times { results << (0..9).sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
+
+      it do
+        results = Array(Array(Char)).new
+        100.times { results << ('0'..'9').sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
     end
 
     context "for an integer range" do

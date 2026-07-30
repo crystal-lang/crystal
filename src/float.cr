@@ -227,8 +227,8 @@ struct Float32
     (unsafe_as(UInt32) ^ 0x80000000_u32).unsafe_as(Float32)
   end
 
-  def abs
-    Math.copysign(self, 1)
+  def abs : Float32
+    Math.copysign(self, 1.0_f32)
   end
 
   # Returns `-1` if the sign bit of this float is set, `1` otherwise.
@@ -448,8 +448,8 @@ struct Float64
     (unsafe_as(UInt64) ^ 0x80000000_00000000_u64).unsafe_as(Float64)
   end
 
-  def abs
-    Math.copysign(self, 1)
+  def abs : Float64
+    Math.copysign(self, 1.0)
   end
 
   # Returns `-1` if the sign bit of this float is set, `1` otherwise.

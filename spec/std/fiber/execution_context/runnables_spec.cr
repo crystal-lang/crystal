@@ -1,3 +1,4 @@
+{% skip_file unless Fiber.has_constant?(:ExecutionContext) %}
 require "./spec_helper"
 require "../../../support/thread"
 
@@ -205,7 +206,7 @@ describe Fiber::ExecutionContext::Runnables do
 
   # interpreter doesn't support threads yet (#14287)
   pending_interpreted describe: "thread safety" do
-    it "stress test" do
+    it "stress test", tags: %w[slow] do
       n = 7
       increments = 7919
 

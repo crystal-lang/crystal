@@ -98,6 +98,13 @@ class Crystal::Location
     end
   end
 
+  def equals?(other)
+    return false unless (@filename || "") == (other.filename || "")
+    return false unless @line_number == other.line_number
+    return false unless @column_number == other.column_number
+    true
+  end
+
   # Returns the number of lines between start and finish locations.
   def self.lines(start, finish)
     return unless start && finish && start.filename == finish.filename

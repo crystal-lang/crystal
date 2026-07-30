@@ -157,7 +157,7 @@ class Time::Location
         it "loads from custom zipfile" do
           with_zoneinfo(ZONEINFO_ZIP) do
             location = Location.load("Asia/Jerusalem")
-            location.not_nil!.name.should eq "Asia/Jerusalem"
+            location.should_not(be_nil).name.should eq "Asia/Jerusalem"
           end
         end
 

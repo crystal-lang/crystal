@@ -37,10 +37,18 @@ module HTTP
 
         if body_type.prohibited?
           body = nil
+        elsif transfer_encoding = headers["Transfer-Encoding"]?
+          # RFC 9112, Section 6.1: Transfer-Encoding is defined as overriding the
+          # Content-Length header that must be ignored.
+          case transfer_encoding
+          when "chunked"
+            body = ChunkedContent.new(io)
+          else
+            # Reject unrecognized transfer encodings
+            return HTTP::Status::NOT_IMPLEMENTED
+          end
         elsif content_length = content_length(headers)
           body = FixedLengthContent.new(io, content_length)
-        elsif headers["Transfer-Encoding"]? == "chunked"
-          body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
         end

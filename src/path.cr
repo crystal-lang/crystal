@@ -164,6 +164,8 @@ struct Path
     windows("").join(parts)
   end
 
+  getter kind : Kind
+
   # :nodoc:
   protected def initialize(@name : String, @kind : Kind)
   end
@@ -534,7 +536,6 @@ struct Path
 
   private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
-    start_pos = reader.pos
 
     if anchor = self.anchor
       reader.pos = anchor.@name.bytesize

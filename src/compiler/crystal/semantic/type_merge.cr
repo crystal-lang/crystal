@@ -294,7 +294,7 @@ module Crystal
         name = self_entry.name
         other_type = type2.name_type(name)
         merged_type = merge!(self_entry.type, other_type).as(Type)
-        NamedArgumentType.new(name, merged_type)
+        NamedArgumentType.new(name, merged_type, self_entry.loc)
       end
 
       type1.program.named_tuple_of(merged_entries)

@@ -3,33 +3,31 @@ name: Update devenv
 on:
   schedule:
     - cron: "0 3 * * 2" # Weekly on Tuesdays
-  pull_request:
-    paths:
-      - '.github/workflows/update-devenv.yml'
   push:
+    branches:
+      - master
     paths:
       - '.github/workflows/update-devenv.yml'
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   update-devenv:
     if: github.repository == 'crystal-lang/crystal'
     runs-on: ubuntu-latest
+    environment: github-write
 
     steps:
       - name: Download source
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: master
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@0b0e072294b088b73964f1d72dfdac0951439dbd # v31
+      - uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31.11.0
 
-      - uses: cachix/cachix-action@0fc020193b5a1fa3ac4575aa3a7d3aa6a35435ad # v16
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: devenv
 
@@ -51,7 +49,7 @@ jobs:
 
       - name: Create PR
         if: steps.changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           commit-message: "Update `devenv.lock`"
           title: "Update `devenv.lock`"
@@ -59,3 +57,4 @@ jobs:
           labels: "topic:infrastructure"
           branch: infra/update-devenv
           delete-branch: true
+          token: ${{ secrets.CRYSBOT_WRITE_PAT }}

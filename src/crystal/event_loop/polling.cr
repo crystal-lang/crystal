@@ -108,7 +108,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # no parallelism issues, but let's clean-up anyway
     def after_fork : Nil
       @timers_lock = SpinLock.new
@@ -117,24 +117,18 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # thread unsafe
   def run(blocking : Bool) : Bool
-    system_run(blocking) do |fiber|
-      {% if flag?(:execution_context) %}
-        fiber.execution_context.enqueue(fiber)
-      {% else %}
-        Crystal::Scheduler.enqueue(fiber)
-      {% end %}
-    end
+    system_run(blocking, &.enqueue)
     true
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
 
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      system_run(blocking) { |fiber| yield fiber }
     end
   {% end %}
 
@@ -174,8 +168,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
-    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
-    return Errno.value if fd == -1
+    fd, errno = ::Fiber.syscall do
+      ret = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+      {ret, Errno.value}
+    end
+    return errno if fd == -1
 
     {% if flag?(:darwin) %}
       # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
@@ -198,6 +195,20 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       end
     else
       size.to_i32
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    loop do
+      size = LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+      return size.to_i32 unless size == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(file_descriptor, file_descriptor.@read_timeout)
+        check_open(file_descriptor)
+      else
+        raise IO::Error.from_errno("pread", target: file_descriptor)
+      end
     end
   end
 
@@ -365,6 +376,58 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def recvmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.recvmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(socket, socket.@read_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
+  # Extension to support Kernel TLS in OpenSSL::BIO.
+  def sendmsg(socket : ::Socket, message : Pointer(LibC::Msghdr), flags : Int32) : Int32 | Errno
+    loop do
+      ret = LibC.sendmsg(socket.fd, message, flags)
+      return ret.to_i unless ret == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_writable(socket, socket.@write_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      else
+        return Errno.value
+      end
+    end
+  end
+
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
+    loop do
+      ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)
+      return sent_bytes unless ret == -1
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        # Darwin/BSD may have written bytes before blocking
+        return sent_bytes if sent_bytes > 0
+
+        wait_writable(socket, socket.@write_timeout) { return Errno::ETIMEDOUT }
+        return Errno::EBADF if socket.closed?
+      when Errno::EINTR, Errno::EBUSY
+        # Darwin/BSD may have written bytes before being interrupted (zero
+        # doesn't necessarily means EOF)
+        return sent_bytes if sent_bytes > 0
+      else
+        return errno
+      end
+    end
+  end
+
   def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
@@ -410,23 +473,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.@writers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.remove(io.fd)
@@ -647,5 +698,5 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   protected abstract def system_del(fd : Int32, closing = true, &) : Nil
 
   # Arm a timer to interrupt a run at *time*. Set to `nil` to disarm the timer.
-  private abstract def system_set_timer(time : Time::Span?) : Nil
+  private abstract def system_set_timer(time : Time::Instant?) : Nil
 end

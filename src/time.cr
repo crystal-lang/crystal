@@ -339,6 +339,7 @@ struct Time
   # ```
   #
   # The execution time of a block can be measured using `.measure`.
+  @[Deprecated("Use `Time.instant` instead.")]
   def self.monotonic : Time::Span
     seconds, nanoseconds = Crystal::System::Time.monotonic
     Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
@@ -356,9 +357,9 @@ struct Time
   # elapsed_time # => 20.milliseconds (approximately)
   # ```
   def self.measure(&block : ->) : Time::Span
-    start = monotonic
+    start = instant
     yield
-    monotonic - start
+    start.elapsed
   end
 
   # Creates a new `Time` instance representing the current time from the

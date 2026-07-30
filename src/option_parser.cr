@@ -30,6 +30,11 @@
 #     STDERR.puts parser
 #     exit(1)
 #   end
+#   parser.missing_option do |flag|
+#     STDERR.puts "ERROR: #{flag} is missing an argument."
+#     STDERR.puts parser
+#     exit(1)
+#   end
 # end
 #
 # destination = destination.upcase if upcase
@@ -222,7 +227,12 @@ class OptionParser
     check_starts_with_dash short_flag, "short_flag", allow_empty: true
     check_starts_with_dash long_flag, "long_flag"
 
-    append_flag "#{short_flag}, #{long_flag}", description
+    if short_flag.empty?
+      # Long-only option.
+      append_flag long_flag, description
+    else
+      append_flag "#{short_flag}, #{long_flag}", description
+    end
 
     short_flag, short_value_type = parse_flag_definition(short_flag)
     long_flag, long_value_type = parse_flag_definition(long_flag)
@@ -328,10 +338,12 @@ class OptionParser
   property summary_indent : String = "    "
 
   private def append_flag(flag, description)
+    # Add indent for long-only options to align with those following a short option
+    flag = "    #{flag}" if flag.starts_with?("--")
     description_indent = "#{summary_indent}#{" " * summary_width} "
     description = description.gsub("\n", "\n#{description_indent}")
 
-    if flag.size >= summary_width
+    if flag.size > summary_width
       @flags << "#{summary_indent}#{flag}\n#{description_indent}#{description}"
     else
       @flags << "#{summary_indent}#{flag}#{" " * (summary_width - flag.size)} #{description}"
@@ -401,9 +413,12 @@ class OptionParser
           break
         end
 
-        flag, value = parse_arg_to_flag_and_value(arg)
-
-        arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        if bundle = validate_bundle(arg)
+          arg_index = handle_bundled_short_options(arg, bundle, arg_index, args, handled_args)
+        else
+          flag, value = parse_arg_to_flag_and_value(arg)
+          arg_index = handle_flag(flag, value, arg_index, args, handled_args)
+        end
 
         arg_index += 1
       end
@@ -444,6 +459,29 @@ class OptionParser
     end
   end
 
+  private def short_arg?(arg : String) : Bool
+    arg.starts_with?('-') && !arg.starts_with?("--") && arg.size > 2
+  end
+
+  # Validates all flags in a bundle before executing any handlers.
+  # Returns the array of validated handlers if all flags are recognized, or nil
+  # if any flag is unrecognized, so the entire bundle can be treated as a single
+  # unhandled argument. Stops collecting handlers at the first value-consuming flag
+  # since remaining chars become its value rather than separate flags.
+  private def validate_bundle(arg : String) : Array(Handler)?
+    return nil unless short_arg?(arg)
+    handlers = [] of Handler
+    rest = arg[1..]
+    rest.each_char do |char|
+      handler = @handlers["-#{char}"]?
+      return nil unless handler
+      handlers << handler
+      # If this flag consumes a value, remaining chars become its value — stop validating
+      break if handler.value_type.required? || handler.value_type.optional?
+    end
+    handlers
+  end
+
   # Parses a command-line argument into a flag and optional inline value.
   private def parse_arg_to_flag_and_value(arg : String) : {String, String?}
     if arg.starts_with?("--")
@@ -451,10 +489,20 @@ class OptionParser
       if separator == "="
         return {name, value}
       end
-    elsif arg.starts_with?('-') && arg.size > 2
+    elsif short_arg?(arg)
       return {arg[0..1], arg[2..]}
     end
     {arg, nil}
+  end
+
+  private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+    bundle.each_with_index do |handler, index|
+      value = arg[(index + 2)..] unless handler.value_type.none?
+      handler.block.call value || ""
+    end
+
+    handled_args << arg_index
+    arg_index
   end
 
   # Processes a single flag/subcommand. Matches original behaviour exactly.
@@ -493,7 +541,7 @@ class OptionParser
     # subcommands since they are no longer valid.
     unless flag.starts_with?('-')
       @handlers.select! { |k, _| k.starts_with?('-') }
-      @flags.select!(&.starts_with?("#{summary_indent}-"))
+      @flags.select! { |entry| summary_flag?(entry) }
     end
 
     handler.block.call(value || "")
@@ -518,5 +566,11 @@ class OptionParser
 
       handled
     end
+  end
+
+  private def summary_flag?(entry : String) : Bool
+    # Long-only options have extra spaces after summary_indent.
+    entry.starts_with?(summary_indent) &&
+      entry[summary_indent.size..].lstrip.starts_with?('-')
   end
 end

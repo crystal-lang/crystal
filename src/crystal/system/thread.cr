@@ -79,16 +79,19 @@ class Thread
 
   getter name : String?
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
 
     # :nodoc:
-    property! scheduler : Fiber::ExecutionContext::Scheduler
+    def execution_context=(@execution_context : Fiber::ExecutionContext?)
+    end
 
     # :nodoc:
-    def execution_context=(@execution_context : Fiber::ExecutionContext) : Fiber::ExecutionContext
-      main_fiber.execution_context = execution_context
+    getter! scheduler : Fiber::ExecutionContext::Scheduler
+
+    # :nodoc:
+    def scheduler=(@scheduler : Fiber::ExecutionContext::Scheduler?)
     end
 
     # When a fiber terminates we can't release its stack until we swap context

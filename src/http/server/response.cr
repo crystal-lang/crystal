@@ -73,10 +73,20 @@ class HTTP::Server
       headers["Content-Type"] = content_type
     end
 
+    # Convenience method to get `Content-Type` header.
+    def content_type : String?
+      headers["Content-Type"]?
+    end
+
     # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int) : String
       check_headers
       headers["Content-Length"] = content_length.to_s
+    end
+
+    # Convenience method to get the `Content-Length` header.
+    def content_length : Int64?
+      headers["Content-Length"]?.try(&.to_i64)
     end
 
     # Convenience method to retrieve the HTTP status code.

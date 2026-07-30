@@ -154,13 +154,4 @@ class OAuth::Consumer
   private def authenticate(client, token, token_secret, extra_params)
     OAuth.authenticate(client, token, token_secret, @consumer_key, @consumer_secret, extra_params)
   end
-
-  private def handle_response(response, &)
-    case response.status_code
-    when 200, 201
-      yield
-    else
-      raise OAuth::Error.new(response)
-    end
-  end
 end

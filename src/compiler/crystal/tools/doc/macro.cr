@@ -20,7 +20,7 @@ class Crystal::Doc::Macro
   end
 
   def doc
-    @macro.doc
+    @macro.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   def doc_copied_from
@@ -55,7 +55,13 @@ class Crystal::Doc::Macro
   end
 
   def visibility
-    @type.visibility
+    case @macro.visibility
+    in .public?
+    in .protected?
+      "protected"
+    in .private?
+      "private"
+    end
   end
 
   def real_name

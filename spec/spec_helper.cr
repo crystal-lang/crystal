@@ -1,6 +1,6 @@
 {% raise("Please use `make test` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
 
-ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
+Crystal::Config.path = "#{__DIR__}/../src"
 
 require "spec"
 
@@ -228,6 +228,26 @@ def codegen(code, *, inject_primitives = true, single_module = false, debug = Cr
   result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
+def compile(*codes, prelude = "empty", debug = Crystal::Debug::None, target = nil)
+  sources = codes.map_with_index do |code, index|
+    Compiler::Source.new("file#{index}.cr", code)
+  end.to_a
+
+  compiler = create_spec_compiler
+  compiler.prelude = prelude
+  compiler.debug = debug
+  compiler.stdout = IO::Memory.new # don't print anything
+
+  if target
+    compiler.cross_compile = true # skip linker
+    compiler.codegen_target = Crystal::Codegen::Target.new(target)
+  end
+
+  with_temp_executable("crystal-spec-output") do |output_filename|
+    compiler.compile(sources, output_filename)
+  end
+end
+
 private def new_program
   program = Program.new
   program.color = false
@@ -315,7 +335,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     with_temp_executable("crystal-spec-output", file: file) do |output_filename|
       compiler.compile Compiler::Source.new("spec", code), output_filename
 
-      output = `#{Process.quote(output_filename)}`
+      output = Process.capture(output_filename)
       return SpecRunOutput.new(output)
     end
   else

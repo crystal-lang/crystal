@@ -119,7 +119,8 @@ class PrettyPrint
     text close_obj
   end
 
-  private def group_sub(&)
+  # :nodoc:
+  def group_sub(&)
     group = Group.new(@group_stack.last.depth + 1)
     @group_stack.push group
     @group_queue.enq group

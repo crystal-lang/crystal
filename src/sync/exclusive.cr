@@ -65,7 +65,7 @@ module Sync
     #
     # WARNING: The value musn't be retained and accessed after the block has
     # returned.
-    def lock(& : T -> U) : U forall U
+    def lock(& : T -> _)
       lock.synchronize { yield @value }
     end
 

@@ -299,15 +299,13 @@ struct JSON::Any
     inspect_key = {0_u64, :__json_inspect__}
 
     hash.put(inspect_key, nil) do
-      begin
-        # here's the root case, where we wrap with JSON::Any(...)
-        io << "JSON::Any("
-        @raw.inspect(io)
-        io << ")"
-        return
-      ensure
-        hash.delete(inspect_key)
-      end
+      # here's the root case, where we wrap with JSON::Any(...)
+      io << "JSON::Any("
+      @raw.inspect(io)
+      io << ")"
+      return
+    ensure
+      hash.delete(inspect_key)
     end
 
     # This is the non-root case, where we don't wrap with anything.

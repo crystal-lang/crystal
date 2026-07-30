@@ -329,10 +329,6 @@ struct Time::Span
     cmp
   end
 
-  def sign : Int32
-    (self <=> ZERO).sign
-  end
-
   def inspect(io : IO) : Nil
     if to_i < 0 || nanoseconds < 0
       io << '-'

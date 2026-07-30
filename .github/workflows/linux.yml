@@ -21,11 +21,15 @@ jobs:
     env:
       ARCH: ${{ matrix.arch }}
       ARCH_CMD: linux64
-    runs-on: ubuntu-latest
+    runs-on: ${{ case(startsWith(matrix.arch, 'aarch64'), 'ubuntu-24.04-arm', 'ubuntu-latest') }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, x86_64-musl]
+        arch:
+          - x86_64
+          - x86_64-musl
+          - aarch64
+          - aarch64-musl
         env: [{}]
         include:
           - arch: x86_64
@@ -35,10 +39,9 @@ jobs:
               FLAGS: "-Dwithout_ffi"
               # pcre2 is only available starting from the 1.7.0 build images
               USE_PCRE1: true
-
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -52,14 +55,32 @@ jobs:
         run: bin/ci build
         env: ${{ matrix.env }}
 
-  x86_64-gnu-test-execution-context-parallel:
+  test-std:
     env:
-      ARCH: x86_64
+      ARCH: ${{ matrix.arch }}
       ARCH_CMD: linux64
-    runs-on: ubuntu-latest
+    runs-on: ${{ case(startsWith(matrix.arch, 'aarch64'), 'ubuntu-24.04-arm', 'ubuntu-latest') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+        opts:
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+          - flags: "-Dpreview_mt"
+            workers: 4
+          - flags: "-Devloop=io_uring"
+            workers: 4
+          - flags: "-Devloop=io_uring -Dwithout_mt"
+        include:
+          - arch: x86_64
+            opts:
+              flags: "-Devloop=libevent"
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -67,36 +88,12 @@ jobs:
         run: bin/ci prepare_system
 
       - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Make Crystal
-        run: bin/ci with_build_env 'make crystal'
-
-      - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-Dexecution_context -Dpreview_mt"'
-
-  x86_64-gnu-test-execution-context-concurrent:
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Crystal source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
-      - name: Make Crystal
-        run: bin/ci with_build_env 'make crystal'
+        run: |
+          bin/ci prepare_build
+          bin/ci with_build_env crystal version
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=1 make std_spec threads=1 FLAGS="-Dexecution_context -Dpreview_mt"'
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
 
   check_format:
     env:
@@ -105,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -123,12 +120,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Actions Repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         persist-credentials: false
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@2d0ce569feab1f8752f1dde43cc2f2aa53236e06 # v1.40.0
+      uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # v1.48.0
       env:
         CLICOLOR: 1
 
@@ -137,7 +134,7 @@ jobs:
     container: ghcr.io/crystal-ameba/ameba:sha-d861f4ed0f904e0ecdad11c26f98e968f7d95afa # 1.7.0-dev
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 

@@ -1,4 +1,5 @@
 require "./libevent/event"
+require "./libevent/evented"
 require "./lock"
 
 # :nodoc:
@@ -16,7 +17,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def initialize(parallelism : Int32)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
       event_base.reinit
@@ -29,24 +30,24 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop(flags)
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include Lock
 
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
+    def run(blocking : Bool, &callback : Fiber ->) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
-      @runnables = queue
+      @callback = callback
       run(blocking)
     ensure
-      @runnables = nil
+      @callback = nil
     end
 
     def callback_enqueue(fiber : Fiber) : Nil
-      if queue = @runnables
-        queue.value.push(fiber)
+      if callback = @callback
+        callback.call(fiber)
       else
-        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+        raise "BUG: libevent callback executed outside of #run(blocking, &) call"
       end
     end
   {% end %}
@@ -64,7 +65,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(f)
       {% else %}
@@ -80,7 +81,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       if select_action = f.timeout_select_action
         f.timeout_select_action = nil
         if select_action.time_expired?
-          {% if flag?(:execution_context) %}
+          {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
             event_loop.callback_enqueue(f)
           {% else %}
@@ -92,7 +93,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -107,7 +108,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_read_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -134,8 +135,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
     path.check_no_null_byte
 
-    fd = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
-    return Errno.value if fd == -1
+    fd, errno = ::Fiber.syscall do
+      ret = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+      {ret, Errno.value}
+    end
+    return errno if fd == -1
 
     {% if flag?(:darwin) %}
       # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
@@ -154,6 +158,12 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           raise IO::Error.new "File not open for reading", target: file_descriptor
         end
       end
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    evented_read(file_descriptor, "Error reading file descriptor") do
+      LibC.pread(file_descriptor.fd, slice, slice.size, offset)
     end
   end
 
@@ -268,6 +278,29 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
+    loop do
+      ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)
+      return sent_bytes unless ret == -1
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        # Darwin/BSD may have written bytes before blocking
+        return sent_bytes if sent_bytes > 0
+
+        socket.evented_wait_writable(timeout: socket.@write_timeout) do
+          return Errno::ETIMEDOUT
+        end
+      when Errno::EINTR, Errno::EBUSY
+        # Darwin/BSD may have written bytes before being interrupted (zero
+        # doesn't necessarily means EOF)
+        return sent_bytes if sent_bytes > 0
+      else
+        return errno
+      end
+    end
+  end
+
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
@@ -333,8 +366,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         raise IO::Error.from_errno(errno_msg, target: target)
       end
     end
-  ensure
-    target.evented_resume_pending_readers
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
@@ -352,7 +383,5 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         raise IO::Error.from_errno(errno_msg, target: target)
       end
     end
-  ensure
-    target.evented_resume_pending_writers
   end
 end

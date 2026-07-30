@@ -142,6 +142,8 @@ require "float/fast_float"
 # engine may reject strings that are not valid UTF-8, or it may invoke undefined
 # behavior on invalid strings. If this is undesired, `#scrub` could be used to
 # remove the offending byte sequences first.
+#
+# NOTE: This type cannot be inherited due to its special memory representation.
 class String
   # :nodoc:
   #
@@ -3014,6 +3016,11 @@ class String
     bytesize == 0
   end
 
+  # Returns `true` if this string is not `#blank?`.
+  def present? : Bool
+    !blank?
+  end
+
   # Returns `true` if this string consists exclusively of unicode whitespace.
   #
   # ```
@@ -3691,7 +3698,7 @@ class String
     pos = self.rindex(search)
     search_size = search.is_a?(Char) ? 1 : search.size
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case pos
     when .nil?
@@ -3720,7 +3727,7 @@ class String
       pos -= 1
     end
 
-    pre = mid = post = ""
+    pre = mid = ""
 
     case
     when match_result.nil?
@@ -4909,7 +4916,7 @@ class String
       $~ = match
       yield match
       match_bytesize = match.byte_end(0) - index
-      match_bytesize += char_bytesize_at(byte_offset) if match_bytesize == 0
+      match_bytesize += char_bytesize_at(index) if match_bytesize == 0
       byte_offset = index + match_bytesize
       options |= :no_utf_check
     end
@@ -5602,6 +5609,12 @@ class String
   #
   # May contain invalid UTF-8 byte sequences; `#scrub` may be used to first
   # obtain a `String` that is guaranteed to be valid UTF-8.
+  #
+  # The byte sequence at the pointer is always null-terminated
+  # (`string.to_unsafe[string.bytesize] == 0u8`), so it can be passed to C APIs
+  # that expects a NUL-terminated string. The string itself may also contain `\0`
+  # bytes in the middle; the terminator is not a reliable end-of-string marker for
+  # strings that may embed '\0' bytes (see `#check_no_null_byte` for testing that).
   def to_unsafe : UInt8*
     pointerof(@c)
   end

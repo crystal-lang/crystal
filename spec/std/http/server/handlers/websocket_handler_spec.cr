@@ -155,4 +155,135 @@ describe HTTP::WebSocketHandler do
 
     io.to_s.should eq("HTTP/1.1 426 Upgrade Required\r\nSec-WebSocket-Version: 13\r\nContent-Length: 0\r\n\r\n")
   end
+
+  it "includes Sec-WebSocket-Protocol in upgrade response if it is valid" do
+    io = IO::Memory.new
+    headers = HTTP::Headers{
+      "Upgrade"                => "WebSocket",
+      "Connection"             => "Upgrade",
+      "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version"  => "13",
+      "Sec-WebSocket-Protocol" => "chat",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new(["chat"]) { }
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
+
+    begin
+      handler.call context
+    rescue IO::Error
+      # Raises because the IO::Memory is empty
+    end
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\nSec-WebSocket-Protocol: chat\r\n\r\n")
+  end
+
+  it "excludes Sec-WebSocket-Protocol in upgrade response if it is not valid" do
+    io = IO::Memory.new
+    headers = HTTP::Headers{
+      "Upgrade"                => "WebSocket",
+      "Connection"             => "Upgrade",
+      "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version"  => "13",
+      "Sec-WebSocket-Protocol" => "chat",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new(["video"]) { }
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
+
+    begin
+      handler.call context
+    rescue IO::Error
+      # Raises because the IO::Memory is empty
+    end
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
+  end
+
+  [
+    {
+      client_protocols: "chat",
+      expected:         "chat",
+      server_protocols: ["chat"],
+    },
+    {
+      client_protocols: "chat,video",
+      expected:         "video",
+      server_protocols: ["video"],
+    },
+    {
+      client_protocols: "chat,video",
+      expected:         "chat",
+      server_protocols: ["video", "chat"],
+    },
+    {
+      client_protocols: "chat,video",
+      expected:         "chat",
+      server_protocols: ["audio", "chat"],
+    },
+  ].each do |test_case|
+    it "uses the first matched Sec-WebSocket-Protocol in upgrade response for '#{test_case[:client_protocols]}'" do
+      io = IO::Memory.new
+      headers = HTTP::Headers{
+        "Upgrade"                => "WebSocket",
+        "Connection"             => "Upgrade",
+        "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
+        "Sec-WebSocket-Version"  => "13",
+        "Sec-WebSocket-Protocol" => test_case[:client_protocols],
+      }
+      request = HTTP::Request.new("GET", "/", headers: headers)
+      response = HTTP::Server::Response.new(io)
+      context = HTTP::Server::Context.new(request, response)
+
+      handler = HTTP::WebSocketHandler.new(test_case[:server_protocols]) { }
+      handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
+
+      begin
+        handler.call context
+      rescue IO::Error
+        # Raises because the IO::Memory is empty
+      end
+
+      response.close
+
+      io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\nSec-WebSocket-Protocol: #{test_case[:expected]}\r\n\r\n")
+    end
+  end
+
+  it "excludes Sec-WebSocket-Protocol in upgrade response if no protocol is provided to handler" do
+    io = IO::Memory.new
+    headers = HTTP::Headers{
+      "Upgrade"                => "WebSocket",
+      "Connection"             => "Upgrade",
+      "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version"  => "13",
+      "Sec-WebSocket-Protocol" => "chat",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new() { }
+    handler.next = HTTP::Handler::HandlerProc.new &.response.print("Hello")
+
+    begin
+      handler.call context
+    rescue IO::Error
+      # Raises because the IO::Memory is empty
+    end
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
+  end
 end

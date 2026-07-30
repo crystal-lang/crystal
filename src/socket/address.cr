@@ -352,7 +352,12 @@ class Socket
       end
 
       if need_v4
-        x0, x1, x2, x3 = parse_v4_fields?(Slice.new(ptr, finish - ptr)) || return nil
+        slice = Slice.new(ptr, finish - ptr)
+        if suffix = slice.index('%'.ord.to_u8!)
+          zone_slice = slice[suffix..] + 1
+          slice = slice[0, suffix]
+        end
+        x0, x1, x2, x3 = parse_v4_fields?(slice) || return nil
         fields[6] = x0.to_u16! << 8 | x1
         fields[7] = x2.to_u16! << 8 | x3
       end

@@ -1,6 +1,6 @@
 # Supported library versions:
 #
-# * openssl (1.1.0–3.3+)
+# * openssl (1.1.0–4.0+)
 # * libressl (2.0–4.0+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#tls
@@ -24,7 +24,7 @@
       {% from_libressl = (`sh -c 'hash pkg-config 2> /dev/null || printf %s false'` != "false") &&
                          (`sh -c 'test -f $(pkg-config --silence-errors --variable=includedir libcrypto)/openssl/opensslv.h || printf %s false'` != "false") &&
                          (`sh -c 'printf "#include <openssl/opensslv.h>\nLIBRESSL_VERSION_NUMBER" | ${CC:-cc} $(pkg-config --cflags --silence-errors libcrypto || true) -E -'`.chomp.split('\n').last != "LIBRESSL_VERSION_NUMBER") %}
-      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "") %}
+      {% ssl_version = `sh -c 'hash pkg-config 2> /dev/null && pkg-config --silence-errors --modversion libcrypto || printf %s 0.0.0'`.split.last.gsub(/[^0-9.]/, "").gsub(/\.0(\d)/, ".\\1") %}
     {% end %}
 
     {% if from_libressl %}
@@ -34,6 +34,8 @@
       LIBRESSL_VERSION = "0.0.0"
       OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
+
+    VERSION_MAJOR = {{ ssl_version.gsub(/[^0-9].*/, "") }}
   end
 {% end %}
 
@@ -45,8 +47,8 @@
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
-  @[Link(dll: "libcrypto-3-x64.dll")]
+  {% suffix = flag?(:aarch64) ? "arm64" : "x64" %}
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
 {% end %}
 lib LibCrypto
   alias Char = LibC::Char
@@ -62,6 +64,14 @@ lib LibCrypto
   type X509_NAME_ENTRY = Void*
   type X509_STORE = Void*
   type X509_STORE_CTX = Void*
+
+  BIO_TYPE_DESCRIPTOR  = 0x0100
+  BIO_TYPE_SOURCE_SINK = 0x0400
+
+  BIO_FLAGS_KTLS_TX_CTRL_MSG          = 0x1000
+  BIO_FLAGS_KTLS_RX                   = 0x2000
+  BIO_FLAGS_KTLS_TX                   = 0x4000
+  BIO_FLAGS_KTLS_TX_ZEROCOPY_SENDFILE = 0x8000
 
   struct Bio
     method : Void*
@@ -86,28 +96,30 @@ lib LibCrypto
   alias BIO_callback_fn = (Bio*, Int, Char*, Int, Long, Long) -> Long
   alias BIO_callback_fn_ex = (Bio*, Int, Char, SizeT, Int, Long, Int, SizeT*) -> Long
 
-  PKCS5_SALT_LEN     =  8
-  EVP_MAX_KEY_LENGTH = 32
-  EVP_MAX_IV_LENGTH  = 16
+  PKCS5_SALT_LEN      =  8
+  EVP_MAX_KEY_LENGTH  = 32
+  EVP_MAX_IV_LENGTH   = 16
+  EVP_GCM_TLS_TAG_LEN = 16
 
-  CTRL_EOF           =  2
-  CTRL_PUSH          =  6
-  CTRL_POP           =  7
-  CTRL_FLUSH         = 11
-  CTRL_SET_KTLS_SEND = 72
-  CTRL_GET_KTLS_SEND = 73
-  CTRL_GET_KTLS_RECV = 76
+  EVP_CTRL_GCM_GET_TAG = 0x10
+  EVP_CTRL_GCM_SET_TAG = 0x11
 
-  alias BioMethodWrite = (Bio*, Char*, SizeT, SizeT*) -> Int
-  alias BioMethodWriteOld = (Bio*, Char*, Int) -> Int
-  alias BioMethodRead = (Bio*, Char*, SizeT, SizeT*) -> Int
-  alias BioMethodReadOld = (Bio*, Char*, Int) -> Int
-  alias BioMethodPuts = (Bio*, Char*) -> Int
-  alias BioMethodGets = (Bio*, Char*, Int) -> Int
-  alias BioMethodCtrl = (Bio*, Int, Long, Void*) -> Long
-  alias BioMethodCreate = Bio* -> Int
-  alias BioMethodDestroy = Bio* -> Int
-  alias BioMethodCallbackCtrl = (Bio*, Int, Void*) -> Long
+  SSL3_RT_HEADER_LENGTH = 5
+
+  TLS1_2_VERSION_MAJOR = 0x03
+  TLS1_2_VERSION_MINOR = 0x03
+
+  CTRL_EOF                           =   2
+  CTRL_PUSH                          =   6
+  CTRL_POP                           =   7
+  CTRL_FLUSH                         =  11
+  CTRL_SET_KTLS                      =  72
+  CTRL_GET_KTLS_SEND                 =  73
+  CTRL_SET_KTLS_TX_SEND_CTRL_MSG     =  74
+  CTRL_CLEAR_KTLS_TX_CTRL_MSG        =  75
+  CTRL_GET_KTLS_RECV                 =  76
+  CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE =  90
+  BIO_C_GET_FD                       = 105
 
   type BioMethod = Void
 
@@ -119,15 +131,29 @@ lib LibCrypto
   fun BIO_set_init(Bio*, Int)
   fun BIO_set_shutdown(Bio*, Int)
 
+  fun BIO_set_flags(Bio*, Int)
+  fun BIO_test_flags(Bio*, Int) : Int
+  fun BIO_clear_flags(Bio*, Int)
+
+  fun BIO_ctrl(Bio*, Int, Long, Void*) : Long
+
+  fun BIO_get_new_index : Int
   fun BIO_meth_new(Int, Char*) : BioMethod*
-  fun BIO_meth_set_read(BioMethod*, BioMethodReadOld)
-  fun BIO_meth_set_write(BioMethod*, BioMethodWriteOld)
-  fun BIO_meth_set_puts(BioMethod*, BioMethodPuts)
-  fun BIO_meth_set_gets(BioMethod*, BioMethodGets)
-  fun BIO_meth_set_ctrl(BioMethod*, BioMethodCtrl)
-  fun BIO_meth_set_create(BioMethod*, BioMethodCreate)
-  fun BIO_meth_set_destroy(BioMethod*, BioMethodDestroy)
-  fun BIO_meth_set_callback_ctrl(BioMethod*, BioMethodCallbackCtrl)
+  fun BIO_meth_set_read(BioMethod*, (Bio*, Char*, Int) -> Int)
+  fun BIO_meth_set_write(BioMethod*, (Bio*, Char*, Int) -> Int)
+
+  {% unless compare_versions(LIBRESSL_VERSION, "0.0.0") > 0 %}
+    # LibreSSL doesn't support the _ex functions
+    fun BIO_meth_set_read_ex(BioMethod*, (Bio*, Char*, SizeT, SizeT*) -> Int)
+    fun BIO_meth_set_write_ex(BioMethod*, (Bio*, Char*, SizeT, SizeT*) -> Int)
+  {% end %}
+
+  fun BIO_meth_set_puts(BioMethod*, (Bio*, Char*) -> Int)
+  fun BIO_meth_set_gets(BioMethod*, (Bio*, Char*, Int) -> Int)
+  fun BIO_meth_set_ctrl(BioMethod*, (Bio*, Int, Long, Void*) -> Long)
+  fun BIO_meth_set_create(BioMethod*, (Bio*) -> Int)
+  fun BIO_meth_set_destroy(BioMethod*, (Bio*) -> Int)
+  fun BIO_meth_set_callback_ctrl(BioMethod*, (Bio*, Int, Void*) -> Long)
 
   fun sha1 = SHA1(data : Char*, length : SizeT, md : Char*) : Char*
 
@@ -156,7 +182,10 @@ lib LibCrypto
   fun obj_find_sigid_algs = OBJ_find_sigid_algs(sigid : Int32, pdig_nid : Int32*, ppkey_nid : Int32*) : Int32
 
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
-  fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% if compare_versions(OPENSSL_VERSION, "4.0.0") < 0 %}
+    fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  {% end %}
+  fun asn1_string_get0_data = ASN1_STRING_get0_data(x : ASN1_STRING) : Char*
   fun asn1_string_length = ASN1_STRING_length(x : ASN1_STRING) : Int
   fun asn1_string_print = ASN1_STRING_print(out : Bio*, v : ASN1_STRING) : Int
   fun i2t_asn1_object = i2t_ASN1_OBJECT(buf : Char*, buf_len : Int, a : ASN1_OBJECT) : Int
@@ -234,6 +263,7 @@ lib LibCrypto
   fun evp_cipherfinal_ex = EVP_CipherFinal_ex(ctx : EVP_CIPHER_CTX, out : UInt8*, outl : Int32*) : Int32
   fun evp_cipher_ctx_set_padding = EVP_CIPHER_CTX_set_padding(ctx : EVP_CIPHER_CTX, padding : Int32) : Int32
   fun evp_cipher_ctx_cipher = EVP_CIPHER_CTX_cipher(ctx : EVP_CIPHER_CTX) : EVP_CIPHER
+  fun evp_cipher_ctx_ctrl = EVP_CIPHER_CTX_ctrl(ctx : EVP_CIPHER_CTX, type : Int32, arg : Int32, ptr : Void*) : Int32
 
   @[Flags]
   enum CipherFlags : ULong

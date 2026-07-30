@@ -127,17 +127,14 @@ describe "Slice" do
   it "does []? with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
 
-    slice1 = slice[1, 2]?
-    slice1.should_not be_nil
-    slice1 = slice1.not_nil!
+    slice1 = slice[1, 2]?.should_not be_nil
     slice1.size.should eq(2)
     slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
     slice2 = slice[-1, 1]?
-    slice2.should_not be_nil
-    slice2 = slice2.not_nil!
+    slice2 = slice2.should_not be_nil
     slice2.size.should eq(1)
     slice2.to_unsafe.should eq(slice.to_unsafe + 3)
 
@@ -149,9 +146,7 @@ describe "Slice" do
   it "does []? with range" do
     slice = Slice.new(4) { |i| i + 1 }
 
-    slice1 = slice[1..2]?
-    slice1.should_not be_nil
-    slice1 = slice1.not_nil!
+    slice1 = slice[1..2]?.should_not be_nil
     slice1.size.should eq(2)
     slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
