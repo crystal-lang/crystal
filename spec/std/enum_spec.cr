@@ -334,13 +334,19 @@ describe Enum do
     SpecEnumWithCaseSensitiveMembers.parse("foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("FOO").should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
+
+    SpecEnumWithUnicodeMembers.parse("Föö").should eq SpecEnumWithUnicodeMembers::Föö
+    expect_raises(ArgumentError, "Unknown enum SpecEnumWithUnicodeMembers value: Fööd") do
+      SpecEnumWithUnicodeMembers.parse("Fööd")
+    end
+    SpecEnumWithUnicodeMembers.parse("FÖÖ").should eq SpecEnumWithUnicodeMembers::Föö
   end
 
   it ".parse(Bytes)" do
     SpecEnum.parse("Two".to_slice).should eq(SpecEnum::Two)
     SpecEnum2.parse("FortyTwo".to_slice).should eq(SpecEnum2::FortyTwo)
     SpecEnum2.parse("forty_two".to_slice).should eq(SpecEnum2::FortyTwo)
-    expect_raises(ArgumentError, "Unknown enum SpecEnum value: #{"Four".to_slice}") { SpecEnum.parse("Four".to_slice) }
+    expect_raises(ArgumentError, "Unknown enum SpecEnum value: #{"Four"}") { SpecEnum.parse("Four".to_slice) }
 
     SpecEnum.parse("TWO".to_slice).should eq(SpecEnum::Two)
     SpecEnum.parse("TwO".to_slice).should eq(SpecEnum::Two)

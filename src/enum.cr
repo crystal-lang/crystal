@@ -493,7 +493,7 @@ abstract struct Enum
   end
 
   def self.parse(slice : Bytes) : self
-    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{slice}")
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{String.new(slice)}")
   end
 
   # Returns the enum member that has the given name, or
