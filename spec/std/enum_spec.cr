@@ -351,7 +351,7 @@ describe Enum do
     SpecEnum.parse("Two".to_slice).should eq(SpecEnum::Two)
     SpecEnum2.parse("FortyTwo".to_slice).should eq(SpecEnum2::FortyTwo)
     SpecEnum2.parse("forty_two".to_slice).should eq(SpecEnum2::FortyTwo)
-    expect_raises(ArgumentError, "Unknown enum SpecEnum value: #{"Four"}") { SpecEnum.parse("Four".to_slice) }
+    expect_raises(ArgumentError, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four".to_slice) }
 
     SpecEnum.parse("TWO".to_slice).should eq(SpecEnum::Two)
     SpecEnum.parse("TwO".to_slice).should eq(SpecEnum::Two)
