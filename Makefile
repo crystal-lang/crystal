@@ -135,7 +135,7 @@ check_llvm_config = $(eval \
 	)
 
 .PHONY: all
-all: crystal ## Build all files (currently crystal only) [default]
+all: crystal
 
 .PHONY: test
 test: spec ## Run tests
@@ -192,7 +192,7 @@ docs: ## Generate standard library documentation
 	cp -R -P -p doc/ docs/
 
 .PHONY: crystal
-crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
+crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler [default]
 
 .PHONY: build
 build: ## Build all files for a package install (currently the compiler and manpages)

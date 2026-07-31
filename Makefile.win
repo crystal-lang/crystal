@@ -109,7 +109,7 @@ check_llvm_config = $(eval \
 	)
 
 .PHONY: all
-all: crystal ## Build all files (currently crystal only) [default]
+all: crystal
 
 .PHONY: test
 test: spec ## Run tests
@@ -155,7 +155,7 @@ docs: ## Generate standard library documentation
 	.\bin\crystal docs src\docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
 
 .PHONY: crystal
-crystal: $(O)\crystal.exe ## Build the compiler
+crystal: $(O)\crystal.exe ## Build the compiler [default]
 
 .PHONY: build
 build: ## Build all files for a package install (currently the compiler)
