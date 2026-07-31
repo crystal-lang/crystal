@@ -236,16 +236,6 @@ module Crystal::System::FileDescriptor
     pipe_fds
   end
 
-  def self.pread(file, buffer, offset)
-    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
-
-    if bytes_read == -1
-      raise IO::Error.from_errno("Error reading file", target: file)
-    end
-
-    bytes_read
-  end
-
   def self.from_stdio(fd)
     # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
     # We need to reopen it to use O_NONBLOCK without causing other programs to break

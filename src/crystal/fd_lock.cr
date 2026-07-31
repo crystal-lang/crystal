@@ -249,12 +249,12 @@ struct Crystal::FdLock
     @readers.consume_each(&.value.enqueue)
     @writers.consume_each(&.value.enqueue)
 
-    # decrement the last ref
-    m = @m.sub(REF, :release)
-
     begin
       yield
     ensure
+      # decrement the last ref
+      m = @m.sub(REF, :release)
+
       # wait for the last ref... unless we're the last ref!
       Fiber.suspend unless (m & MASK) == REF
     end

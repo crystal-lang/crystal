@@ -34,6 +34,8 @@
       LIBRESSL_VERSION = "0.0.0"
       OPENSSL_VERSION = {{ ssl_version }}
     {% end %}
+
+    VERSION_MAJOR = {{ ssl_version.gsub(/[^0-9].*/, "") }}
   end
 {% end %}
 
@@ -45,8 +47,8 @@
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  # TODO: if someone brings their own OpenSSL 1.x.y on Windows, will this have a different name?
-  @[Link(dll: "libcrypto-3-x64.dll")]
+  {% suffix = flag?(:aarch64) ? "arm64" : "x64" %}
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
 {% end %}
 lib LibCrypto
   alias Char = LibC::Char
@@ -98,6 +100,9 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH  = 32
   EVP_MAX_IV_LENGTH   = 16
   EVP_GCM_TLS_TAG_LEN = 16
+
+  EVP_CTRL_GCM_GET_TAG = 0x10
+  EVP_CTRL_GCM_SET_TAG = 0x11
 
   SSL3_RT_HEADER_LENGTH = 5
 
@@ -258,6 +263,7 @@ lib LibCrypto
   fun evp_cipherfinal_ex = EVP_CipherFinal_ex(ctx : EVP_CIPHER_CTX, out : UInt8*, outl : Int32*) : Int32
   fun evp_cipher_ctx_set_padding = EVP_CIPHER_CTX_set_padding(ctx : EVP_CIPHER_CTX, padding : Int32) : Int32
   fun evp_cipher_ctx_cipher = EVP_CIPHER_CTX_cipher(ctx : EVP_CIPHER_CTX) : EVP_CIPHER
+  fun evp_cipher_ctx_ctrl = EVP_CIPHER_CTX_ctrl(ctx : EVP_CIPHER_CTX, type : Int32, arg : Int32, ptr : Void*) : Int32
 
   @[Flags]
   enum CipherFlags : ULong

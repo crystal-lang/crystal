@@ -23,7 +23,7 @@ describe System do
             ["getconf", "_NPROCESSORS_ONLN"],
             ["nproc", "--all"],
             ["grep", "-sc", "^processor", "/proc/cpuinfo"],
-            ["sysctl", "-n", "hw.cpu"],
+            ["sysctl", "-n", "hw.ncpu"],
           ].find_value(0) do |args|
             Process.capture_result?(args).try(&.output.to_i)
           end

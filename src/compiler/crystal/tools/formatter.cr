@@ -2650,10 +2650,11 @@ module Crystal
       passed_backslash_newline = @token.passed_backslash_newline
 
       if assignment
+        space_before_equals = @token.type.space?
         skip_space
 
         next_token
-        if @token.type.op_lparen?
+        if @token.type.op_lparen? && !space_before_equals && !setter_arg_needs_assignment_syntax?(node.args.first)
           write "=("
           slash_is_regex!
           next_token
@@ -2947,6 +2948,17 @@ module Crystal
       end
       skip_space_or_newline
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
+    end
+
+    private def setter_arg_needs_assignment_syntax?(arg)
+      case arg
+      when Call
+        arg.obj.is_a?(Expressions)
+      when Expressions
+        arg.expressions.size == 1 && setter_arg_needs_assignment_syntax?(arg.expressions.first)
+      else
+        false
+      end
     end
 
     def visit(node : NamedArgument)

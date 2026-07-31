@@ -12,6 +12,10 @@ all: ##
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1 interpreter=1
+## Build all assets for a package install (compiler and manpages)
+##   $ make build
+## Build and install crystal package
+##   $ make build && sudo make install
 ## Run tests
 ##   $ make test
 ## Run stdlib tests
@@ -37,14 +41,14 @@ check              ?= ## Enable only check when running format
 order              ?= random## Enable order for spec execution (values: "default" | "random" | seed number)
 deref_symlinks     ?= ## Dereference symbolic links for `make install`
 docs_sanitizer     ?= ## Enable sanitization for documentation generation
-sequential_codegen ?= $(if $(filter 0,$(supports_preview_mt)),true,)## Enforce sequential codegen in compiler builds. Base compiler before Crystal 1.8 cannot build with `-Dpreview_mt -Dexecution_context`
+sequential_codegen ?= $(if $(filter 0,$(supports_mt)),true,)## Enforce sequential codegen in compiler builds.
 
 O            := .build
 SOURCES      := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
 MAN1PAGES    := $(patsubst doc/man/%.adoc,man/%.1,$(wildcard doc/man/*.adoc))
 override FLAGS += -D strict_multi_assign -D preview_overload_order $(if $(release),--release )$(if $(stats),--stats )$(if $(progress),--progress )$(if $(threads),--threads $(threads) )$(if $(debug),-d )$(if $(static),--static )$(if $(LDFLAGS),--link-flags="$(LDFLAGS)" )$(if $(target),--cross-compile --target $(target) )
-override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen),, -Dpreview_mt -Dexecution_context )
+override COMPILER_FLAGS += $(if $(interpreter),,-Dwithout_interpreter )$(if $(docs_sanitizer),,-Dwithout_libxml2 ) -Dwithout_openssl -Dwithout_zlib$(if $(sequential_codegen), -Dwithout_mt,)
 SPEC_WARNINGS_OFF := --exclude-warnings spec/std --exclude-warnings spec/compiler --exclude-warnings spec/primitives --exclude-warnings src/float/printer --exclude-warnings src/random.cr
 override SPEC_FLAGS += $(if $(verbose),-v )$(if $(junit_output),--junit_output $(junit_output) )$(if $(order),--order=$(order) )
 CRYSTAL_CONFIG_LIBRARY_PATH := '$$ORIGIN/../lib/crystal'
@@ -74,6 +78,8 @@ override EXPORTS_BUILD += \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 
+manpages_gz := $(patsubst %.1,%.1.gz,$(MAN1PAGES))
+
 ifeq ($(LLVM_VERSION),)
 	ifndef LLVM_CONFIG
   	LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config.sh)
@@ -81,8 +87,10 @@ ifeq ($(LLVM_VERSION),)
 	LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version 2> /dev/null))
 endif
 
-# Crystal versions before 1.8 cannot build a functional compiler with `-Dpreview_mt` (https://github.com/crystal-lang/crystal/pull/16380)
-supports_preview_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
+# FIXME: Crystal docker images before 1.8 can't build a functional compiler
+# with MT because the bundled LLVM version is buggy (roughly LLVM < 15)
+# See https://github.com/crystal-lang/crystal/pull/16380
+supports_mt := $(if $(filter 1.8.0,$(shell printf "%s\n%s" "1.8.0" "$(BASE_CRYSTAL_VERSION)" | sort -V | tail -n1)),0,1)
 
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
@@ -127,7 +135,7 @@ check_llvm_config = $(eval \
 	)
 
 .PHONY: all
-all: crystal ## Build all files (currently crystal only) [default]
+all: crystal
 
 .PHONY: test
 test: spec ## Run tests
@@ -184,7 +192,18 @@ docs: ## Generate standard library documentation
 	cp -R -P -p doc/ docs/
 
 .PHONY: crystal
-crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
+crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler [default]
+
+.PHONY: build
+build: ## Build all files for a package install (currently the compiler and manpages)
+# bake-format off: Mbake bug with Duplicate target rule https://github.com/EbodShojaei/bake/issues/106
+build: release := 1
+build: crystal manpages
+# bake-format on
+
+.PHONY: manpages
+manpage: ## Build the manpages
+manpages: $(manpages_gz)
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
@@ -226,7 +245,7 @@ uninstall_compiler:
 	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
 .PHONY: install_man
-install_man: $(patsubst %.1,%.1.gz,$(MAN1PAGES))
+install_man: $(manpages_gz)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
 	$(INSTALL) -m 644 $^ "$(DESTDIR)$(MANDIR)/man1/"
 

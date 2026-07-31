@@ -206,7 +206,7 @@ struct Crystal::System::Process
 
   # Only used by deprecated `::Process.fork`
   def self.fork
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithreaded mode") unless flag?(:without_mt) %}
 
     pid, errno = lock_write do
       pthread_disable_cancelstate do

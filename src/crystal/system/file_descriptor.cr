@@ -35,6 +35,11 @@ module Crystal::System::FileDescriptor
     event_loop.read(self, slice)
   end
 
+  # :nodoc:
+  def system_pread(slice : Bytes, offset : Int64) : Int32
+    event_loop.pread(self, slice, offset)
+  end
+
   private def system_write(slice : Bytes) : Int32
     event_loop.write(self, slice)
   end

@@ -17,7 +17,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def initialize(parallelism : Int32)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
       event_base.reinit
@@ -30,24 +30,24 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop(flags)
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include Lock
 
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
+    def run(blocking : Bool, &callback : Fiber ->) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
-      @runnables = queue
+      @callback = callback
       run(blocking)
     ensure
-      @runnables = nil
+      @callback = nil
     end
 
     def callback_enqueue(fiber : Fiber) : Nil
-      if queue = @runnables
-        queue.value.push(fiber)
+      if callback = @callback
+        callback.call(fiber)
       else
-        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+        raise "BUG: libevent callback executed outside of #run(blocking, &) call"
       end
     end
   {% end %}
@@ -65,7 +65,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(f)
       {% else %}
@@ -81,7 +81,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       if select_action = f.timeout_select_action
         f.timeout_select_action = nil
         if select_action.time_expired?
-          {% if flag?(:execution_context) %}
+          {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
             event_loop.callback_enqueue(f)
           {% else %}
@@ -158,6 +158,12 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           raise IO::Error.new "File not open for reading", target: file_descriptor
         end
       end
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    evented_read(file_descriptor, "Error reading file descriptor") do
+      LibC.pread(file_descriptor.fd, slice, slice.size, offset)
     end
   end
 
