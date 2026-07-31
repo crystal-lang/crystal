@@ -180,6 +180,9 @@ lib LibGC
   fun start_world_external = GC_start_world_external
   fun get_suspend_signal = GC_get_suspend_signal : Int
   fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
+
+  alias FnType = Void* -> Void*
+  fun do_blocking = GC_do_blocking(FnType, Void*) : Void*
 end
 
 module GC
@@ -515,4 +518,15 @@ module GC
       Signal.new(LibGC.get_thr_restart_signal)
     end
   {% end %}
+
+  # :nodoc:
+  def self.syscall(&proc : ->) : Nil
+    # `GC_do_blocking` immediately calls the callback and the thread's stack
+    # will be scanned up to the entry of `GC_do_blocking` so we don't need to
+    # box the proc
+    LibGC.do_blocking(->(data : Void*) {
+      data.as(Proc(Nil)*).value.call
+      Pointer(Void).null
+    }, pointerof(proc))
+  end
 end

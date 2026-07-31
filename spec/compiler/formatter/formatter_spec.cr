@@ -1263,6 +1263,19 @@ describe Crystal::Formatter do
   assert_format "x  :   Int32  =   1", "x : Int32 = 1"
   assert_format "x : (Foo.class)?"
 
+  # Typed constant declarations (#13443)
+  assert_format "FOO : Int64 = 123"
+  assert_format "FOO  :  Int64  =  123", "FOO : Int64 = 123"
+  assert_format "FOO: Int64 = 123", "FOO : Int64 = 123"
+  assert_format "class A\nCONST : Int32 = 1\nend", "class A\n  CONST : Int32 = 1\nend"
+  assert_format "module M\nCONST : Int32 = 1\nend", "module M\n  CONST : Int32 = 1\nend"
+  assert_format "PAIR : Tuple(Int32, String) = {1, \"x\"}"
+  assert_format "TYPED : ::Int32 = -5"
+  assert_format "::FOO : Int64 = 123"
+  assert_format "::FOO  :  Int64  =  123", "::FOO : Int64 = 123"
+  assert_format "::FOO: Int64 = 123", "::FOO : Int64 = 123"
+  assert_format "::Foo::BAR : Int64 = 123"
+
   assert_format "def foo\n@x  :  Int32\nend", "def foo\n  @x : Int32\nend"
   assert_format "def foo\n@x   =  uninitialized   Int32\nend", "def foo\n  @x = uninitialized Int32\nend"
 
@@ -2492,6 +2505,24 @@ describe Crystal::Formatter do
   assert_format "foo\n  .bar(\n    1\n  )"
   assert_format "foo\n  .bar\n  .baz(\n    1\n  )"
   assert_format "foo.bar\n  .baz(\n    1\n  )"
+
+  # #13202
+  describe "assignment syntax" do
+    assert_format "x.foo=bar", "x.foo = bar"
+    assert_format "x.foo=(bar)"
+    assert_format "x.foo = bar"
+    assert_format "x.foo = (bar)"
+    assert_format "x.foo= bar", "x.foo = bar"
+    assert_format "x.foo =bar", "x.foo = bar"
+    assert_format "x.foo= (bar)", "x.foo = (bar)"
+    assert_format "x.foo =(bar)", "x.foo = (bar)"
+
+    assert_format "x.foo = (y).bar"
+    assert_format "x.foo=(y).bar", "x.foo = (y).bar"
+    assert_format "x.foo =(y).bar", "x.foo = (y).bar"
+    assert_format "x.foo= (y).bar", "x.foo = (y).bar"
+    assert_format "x.foo =(a..b)", "x.foo = (a..b)"
+  end
 
   assert_format <<-CRYSTAL,
     def foo

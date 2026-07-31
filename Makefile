@@ -12,6 +12,10 @@ all: ##
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1 interpreter=1
+## Build all assets for a package install (compiler and manpages)
+##   $ make build
+## Build and install crystal package
+##   $ make build && sudo make install
 ## Run tests
 ##   $ make test
 ## Run stdlib tests
@@ -74,6 +78,8 @@ override EXPORTS_BUILD += \
 	CRYSTAL_CONFIG_LIBRARY_PATH=$(CRYSTAL_CONFIG_LIBRARY_PATH)
 SHELL = sh
 
+manpages_gz := $(patsubst %.1,%.1.gz,$(MAN1PAGES))
+
 ifeq ($(LLVM_VERSION),)
 	ifndef LLVM_CONFIG
   	LLVM_CONFIG := $(shell src/llvm/ext/find-llvm-config.sh)
@@ -129,7 +135,7 @@ check_llvm_config = $(eval \
 	)
 
 .PHONY: all
-all: crystal ## Build all files (currently crystal only) [default]
+all: crystal
 
 .PHONY: test
 test: spec ## Run tests
@@ -186,7 +192,18 @@ docs: ## Generate standard library documentation
 	cp -R -P -p doc/ docs/
 
 .PHONY: crystal
-crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler
+crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler [default]
+
+.PHONY: build
+build: ## Build all files for a package install (currently the compiler and manpages)
+# bake-format off: Mbake bug with Duplicate target rule https://github.com/EbodShojaei/bake/issues/106
+build: release := 1
+build: crystal manpages
+# bake-format on
+
+.PHONY: manpages
+manpage: ## Build the manpages
+manpages: $(manpages_gz)
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
@@ -228,7 +245,7 @@ uninstall_compiler:
 	rm -f "$(DESTDIR)$(DATADIR)/licenses/crystal/LICENSE"
 
 .PHONY: install_man
-install_man: $(patsubst %.1,%.1.gz,$(MAN1PAGES))
+install_man: $(manpages_gz)
 	$(INSTALL) -d -m 0755 "$(DESTDIR)$(MANDIR)/man1/"
 	$(INSTALL) -m 644 $^ "$(DESTDIR)$(MANDIR)/man1/"
 

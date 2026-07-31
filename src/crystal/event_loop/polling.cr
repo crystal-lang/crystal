@@ -127,8 +127,8 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     include EventLoop::Lock
 
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      system_run(blocking) { |fiber| yield fiber }
     end
   {% end %}
 

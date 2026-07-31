@@ -14,9 +14,12 @@
 #   GITHUB_TOKEN: Access token for the GitHub API (required)
 require "http/client"
 require "json"
+require "colorize"
 
 abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
 api_token = ENV["GITHUB_TOKEN"]
+
+MISSING_TOPICS = Set(PullRequest).new
 
 case ARGV.size
 when 0
@@ -141,6 +144,10 @@ record PullRequest,
     io << "[#" << number << "]"
   end
 
+  def ==(other : self)
+    number == other.number
+  end
+
   def <=>(other : self)
     sort_tuple <=> other.sort_tuple
   end
@@ -173,7 +180,7 @@ record PullRequest,
 
   def topic
     topics.fetch(0) do
-      STDERR.puts "Missing topic for ##{number}"
+      MISSING_TOPICS.add(self)
       nil
     end
   end
@@ -493,5 +500,13 @@ SECTION_TITLES.each do |id, title|
       topic_entries.sort_by!(&.pr)
       print_entries topic_entries
     end
+  end
+end
+
+if MISSING_TOPICS.present?
+  Colorize.enabled = true
+  STDERR.puts "Missing topics:"
+  MISSING_TOPICS.each do |pr|
+    STDERR.puts "\e]8;;https://github.com/crystal-lang/crystal/pull/#{pr.number}\e\\#{pr.title.colorize(:white)} (#{pr.number.to_s.colorize(:light_gray)})\e]8;;\e\\ (#{pr.labels.join(", ")})"
   end
 end
