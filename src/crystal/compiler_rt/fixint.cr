@@ -27,8 +27,12 @@ private macro __fixint_impl(name, from, to)
       end
 
       # If 0 <= exponent < significandBits, right shift to get the result.
-      # Otherwise, shift left. (`#<<` handles this)
-      {{to}}.new!(sign) * ({{to}}.new!(significand) << (exponent &- significand_bits))
+      # Otherwise, shift left.
+      if exponent < significand_bits
+        {{to}}.new!(sign) &* {{to}}.new!(significand).unsafe_shr(significand_bits &- exponent)
+      else
+        {{to}}.new!(sign) &* {{to}}.new!(significand).unsafe_shl(exponent &- significand_bits)
+      end
     {% else %}
       # If either the value or the exponent is negative, the result is zero.
       if sign == -1 || exponent < 0
@@ -41,8 +45,12 @@ private macro __fixint_impl(name, from, to)
       end
 
       # If 0 <= exponent < significandBits, right shift to get the result.
-      # Otherwise, shift left. (`#<<` handles this)
-      {{to}}.new!(significand) << (exponent &- significand_bits)
+      # Otherwise, shift left.
+      if exponent < significand_bits
+        {{to}}.new!(significand).unsafe_shr(significand_bits &- exponent)
+      else
+        {{to}}.new!(significand).unsafe_shl(exponent &- significand_bits)
+      end
     {% end %}
   end
 end
