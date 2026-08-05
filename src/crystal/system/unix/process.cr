@@ -310,8 +310,7 @@ struct Crystal::System::Process
 
   def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
     pathname = args.first
-    # `execve` requires argv[argc] == NULL. Allocate the terminator slot
-    # explicitly; do not rely on GC size-class padding beyond the request.
+    # `execve` requires NULL terminator
     argv = Pointer(Pointer(UInt8)).malloc(args.size + 1)
     args.each_with_index do |arg, i|
       argv[i] = arg.check_no_null_byte.to_unsafe
