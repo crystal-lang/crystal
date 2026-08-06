@@ -87,8 +87,8 @@ class HTTP::Request
   def form_params? : HTTP::Params?
     @form_params ||= begin
       if (body = self.body) && (ct = headers["Content-Type"]?)
-        mt = MIME::MediaType.parse(ct)
-        if mt.media_type == "application/x-www-form-urlencoded"
+        mt = MIME::MediaType.parse?(ct)
+        if mt && mt.media_type == "application/x-www-form-urlencoded"
           if charset = mt["charset"]?
             body.set_encoding(charset)
           end
