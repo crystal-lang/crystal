@@ -836,7 +836,7 @@ module HTTP
         request.hostname.should eq("host.example.org")
       end
 
-      it "#hostname" do
+      it "extracts hostname" do
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org"})
         request.hostname.should eq("host.example.org")
 
@@ -852,6 +852,8 @@ module HTTP
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000"})
         request.hostname.should eq("host.example.org")
 
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.:3000"}).hostname.should eq "host."
+
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0:3000"})
         request.hostname.should eq("0.0.0.0")
 
@@ -866,12 +868,23 @@ module HTTP
       end
 
       it "rejects invalid hostnames" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
-        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should eq "host.example.org:3000"
-        Request.new("GET", "/", HTTP::Headers{"Host" => "host.:3000"}).hostname.should eq "host."
-        Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80:90"}).hostname.should eq "[1234:5678::1]:80"
-        Request.new("GET", "/", HTTP::Headers{"Host" => "::1"}).hostname.should eq ":"
-        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should eq "foo,bar"
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:80bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80:90"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "::1"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+      end
+
+      it "returns nil for empty hostname" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ""}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ":4000"}).hostname.should be_nil
+      end
+
+      it "returns nil when there are multiple headers" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["", ""]}).hostname.should be_nil
       end
     end
 
