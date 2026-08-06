@@ -92,10 +92,15 @@ module HTTP
         end
 
         it "rejects invalid HTTP versions" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET", "/", version: "HTTP/1.2").version.should eq "HTTP/1.2"
-          Request.new("GET", "/", version: "HTTP/3.0").version.should eq "HTTP/3.0"
-          Request.new("GET", "/", version: "INVALID").version.should eq "INVALID"
+          expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/1.2") do
+            Request.new("GET", "/", version: "HTTP/1.2")
+          end
+          expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/3.0") do
+            Request.new("GET", "/", version: "HTTP/3.0")
+          end
+          expect_raises(ArgumentError, "Unsupported HTTP version: INVALID") do
+            Request.new("GET", "/", version: "INVALID")
+          end
         end
       end
     end
@@ -163,14 +168,16 @@ module HTTP
       end
 
       it "rejects invalid HTTP versions" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.version = "HTTP/1.2"
-        req.version.should eq "HTTP/1.2"
-        req.version = "HTTP/3.0"
-        req.version.should eq "HTTP/3.0"
-        req.version = "INVALID"
-        req.version.should eq "INVALID"
+        expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/1.2") do
+          req.version = "HTTP/1.2"
+        end
+        expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/3.0") do
+          req.version = "HTTP/3.0"
+        end
+        expect_raises(ArgumentError, "Unsupported HTTP version: INVALID") do
+          req.version = "INVALID"
+        end
       end
     end
 
