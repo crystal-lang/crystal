@@ -365,8 +365,8 @@ class XML::Node
   # doc.root.not_nil!.first_element_child.not_nil!.line_number # => 3
   # ```
   def line_number : Int64?
-    line = LibXML.xmlGetLineNo(@node)
-    line == -1 ? nil : line.to_i64
+    line_number = LibXML.xmlGetLineNo(@node)
+    line_number.to_i64 unless line_number == -1
   end
 
   # Returns the name for this Node.
