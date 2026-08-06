@@ -11,6 +11,49 @@ end
 
 require "crystal/system/process"
 
+# The Process class provides tools for working with processes.
+# ```
+# # Starts a process and waits for it to finish
+# # Returns Process::Status afterwards
+# command = Process.run("ls")
+# puts command.success? # => true
+#
+# # Starts a process without waiting
+# command = Process.new("ls")
+#
+# # Waits for the process to finish
+# command.wait
+#
+# # Replaces the current process with a new process
+# Process.exec("ls")
+#
+# # Using arguments
+# command = Process.run("ls", ["../"])
+#
+# # Setting environment variables
+# Process.run(
+#   "ls",
+#   env: {
+#     "FOO" => "123"
+#   }
+# )
+#
+# # Setting the working directory
+# Process.run("ls", chdir: "../")
+#
+# # Piping IO
+# command = Process.run("ls", output: Process::Redirect::Pipe) # Captures IO
+# command = Process.run("ls", output: Process::Redirect::Inherit) # Makes the process inherit the parent's IO
+#
+# # With a shell
+# command = Process.run("ls ./*", shell: true)
+#
+# # Exit the process early
+# command = Process.new("sleep 10")
+# command.terminate # Ask for the process to terminate
+# command.exit
+# ```
+# For more options, look into `.new` and `.run`
 class Process
   # Terminate the current process immediately. All open files, pipes and sockets
   # are flushed and closed, all child processes are inherited by PID 1. This does
