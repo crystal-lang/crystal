@@ -213,12 +213,40 @@ struct Time::Span
     (to_i.to_f * NANOSECONDS_PER_SECOND) + nanoseconds
   end
 
+  # Returns the number of full seconds in this time span.
+  #
+  # The value is negative if the time span is negative.
+  def to_seconds : Int64
+    @seconds
+  end
+
+  # Returns the total number of full milliseconds in this time span.
+  #
+  # The value is negative if the time span is negative.
+  def to_milliseconds : Int128
+    to_nanoseconds.tdiv NANOSECONDS_PER_MILLISECOND.to_i128
+  end
+
+  # Returns the total number of full microseconds in this time span.
+  #
+  # The value is negative if the time span is negative.
+  def to_microseconds : Int128
+    to_nanoseconds.tdiv NANOSECONDS_PER_MICROSECOND.to_i128
+  end
+
+  # Returns the total number of full nanoseconds in this time span.
+  #
+  # The value is negative if the time span is negative.
+  def to_nanoseconds : Int128
+    (@seconds.to_i128 * NANOSECONDS_PER_SECOND.to_i128) + nanoseconds.to_i128
+  end
+
   # Alias of `total_seconds`.
   def to_f : Float64
     total_seconds
   end
 
-  # Returns the number of full seconds.
+  # Alias of `#to_seconds`.
   def to_i : Int64
     @seconds
   end
