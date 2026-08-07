@@ -283,6 +283,121 @@ struct Range(B, E)
         (@exclusive ? value < end_value : value <= end_value))
   end
 
+  # Returns `true` if this range and *other* have at least one value in common.
+  #
+  # ```
+  # (1..5).overlaps?(5..10)  # => true
+  # (1...5).overlaps?(5..10) # => false
+  # (1...1).overlaps?(1..1)  # => false
+  # ```
+  def overlaps?(other : Range) : Bool
+    return false if empty_without_iterating?
+    return false if other.empty_without_iterating?
+
+    begin_value = @begin
+    end_value = @end
+    other_begin = other.begin
+    other_end = other.end
+
+    if end_value && other_begin
+      return false if @exclusive ? end_value <= other_begin : end_value < other_begin
+    end
+
+    if other_end && begin_value
+      return false if other.excludes_end? ? other_end <= begin_value : other_end < begin_value
+    end
+
+    true
+  end
+
+  # Returns a range that covers all values in this range and *other*.
+  #
+  # Returns `nil` if the ranges cannot be represented as a single continuous range.
+  #
+  # ```
+  # (1..5).union(3..7)     # => 1..7
+  # (1...10).union(10..20) # => 1..20
+  # (1..5).union(10..20)   # => nil
+  # (1..5).union(6..10)    # => 1..10
+  # ```
+  def union(other : Range(OB, OE)) : Range(B | OB, E | OE)? forall OB, OE
+    self_empty = empty_without_iterating?
+    other_empty = other.empty_without_iterating?
+
+    return nil if self_empty && other_empty
+    return Range(B | OB, E | OE).new(other.begin, other.end, other.excludes_end?) if self_empty
+    return Range(B | OB, E | OE).new(@begin, @end, @exclusive) if other_empty
+    return nil unless overlaps?(other) || adjacent_to?(other)
+
+    begin_value = @begin
+    end_value = @end
+    other_begin = other.begin
+    other_end = other.end
+
+    union_begin =
+      if begin_value.nil? || (other_begin && begin_value <= other_begin)
+        begin_value
+      else
+        other_begin
+      end
+
+    union_end, exclusive =
+      if end_value.nil?
+        {end_value, @exclusive}
+      elsif other_end.nil?
+        {other_end, other.excludes_end?}
+      elsif end_value < other_end
+        {other_end, other.excludes_end?}
+      elsif end_value > other_end
+        {end_value, @exclusive}
+      else
+        {end_value, @exclusive && other.excludes_end?}
+      end
+
+    Range(B | OB, E | OE).new(union_begin, union_end, exclusive)
+  end
+
+  # Returns a range that covers all values common to this range and *other*.
+  #
+  # Returns `nil` if the ranges do not overlap.
+  #
+  # ```
+  # (1..5).intersection(3..7)    # => 3..5
+  # (1...10).intersection(7..12) # => 7...10
+  # (1..5).intersection(10..20)  # => nil
+  # (1...10).intersection(10..)  # => nil
+  # ```
+  def intersection(other : Range(OB, OE)) : Range(B | OB, E | OE)? forall OB, OE
+    return nil unless overlaps?(other)
+
+    begin_value = @begin
+    end_value = @end
+    other_begin = other.begin
+    other_end = other.end
+
+    intersection_begin =
+      if begin_value.nil? || (other_begin && other_begin >= begin_value)
+        other_begin
+      else
+        begin_value
+      end
+
+    intersection_end, exclusive =
+      if end_value.nil?
+        {other_end, other.excludes_end?}
+      elsif other_end.nil?
+        {end_value, @exclusive}
+      elsif other_end < end_value
+        {other_end, other.excludes_end?}
+      elsif end_value < other_end
+        {end_value, @exclusive}
+      else
+        {end_value, @exclusive || other.excludes_end?}
+      end
+
+    Range(B | OB, E | OE).new(intersection_begin, intersection_end, exclusive)
+  end
+
   # Same as `includes?`.
   def covers?(value)
     includes?(value)
@@ -317,6 +432,39 @@ struct Range(B, E)
 
   def inspect(io : IO) : Nil
     to_s(io)
+  end
+
+  protected def empty_without_iterating? : Bool
+    return false unless end_value = @end
+    return false unless begin_value = @begin
+
+    @exclusive ? begin_value >= end_value : begin_value > end_value
+  end
+
+  private def adjacent_to?(other : Range) : Bool
+    end_value = @end
+    other_begin = other.begin
+
+    if end_value && other_begin
+      return true if end_value == other_begin
+      unless excludes_end?
+        return true if end_value.responds_to?(:succ) && end_value.succ == other_begin
+        return true if other_begin.responds_to?(:pred) && other_begin.pred == end_value
+      end
+    end
+
+    other_end = other.end
+    begin_value = @begin
+
+    if other_end && begin_value
+      return true if other_end == begin_value
+      unless other.excludes_end?
+        return true if other_end.responds_to?(:succ) && other_end.succ == begin_value
+        return true if begin_value.responds_to?(:pred) && begin_value.pred == other_end
+      end
+    end
+
+    false
   end
 
   # Optimized version of `Enumerable#sum` that runs in O(1) time when `self` is
