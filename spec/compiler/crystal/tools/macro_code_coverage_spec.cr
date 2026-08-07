@@ -1026,4 +1026,123 @@ describe "macro_code_coverage" do
     test 1
     test 2
     CRYSTAL
+
+  # then-body is Expressions - case 1:  top-level block-form if/else, both branches taken across expansions
+  assert_coverage <<-'CRYSTAL', {2 => 2, 4 => 1}
+    macro define_view(downcase)
+      {% if downcase %}
+        1 + 1
+      {% else %}
+        2 + 2
+      {% end %}
+    end
+
+    define_view(true)
+    define_view(false)
+    CRYSTAL
+
+  # then-body is Expressions - case 2 : block-form if/else inside a def, no outer `if`
+  assert_coverage <<-'CRYSTAL', {4 => 2, 6 => 1}
+    macro define_view(downcase)
+      struct View
+        def foo
+          {% if downcase %}
+            puts "downcase"
+          {% else %}
+            puts "else"
+          {% end %}
+        end
+      end
+    end
+
+    define_view(true)
+    define_view(false)
+    CRYSTAL
+
+  # then-body is Expressions - case 3 : block-form if/else inside a def wrapped in a runtime `if ov`
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1}
+    macro define_view(name, downcase)
+      struct {{name}}
+        def foo(ov)
+          if ov
+            {% if downcase %}
+              puts "downcase"
+            {% else %}
+              return ov if ov
+            {% end %}
+          end
+        end
+      end
+    end
+
+    define_view(A, true)
+    define_view(B, false)
+    CRYSTAL
+
+  # then-body is Expressions - case 4 : two-method version: sibling method (foo2)
+  # with an inline-form MacroIf must not corrupt foo1's block-form MacroIf coverage.
+  # Neither the `if` line nor the `else`-associated line should ever read 0
+  # once both branches were actually exercised.
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 13 => "2/2"}
+    macro define_overlay_view(name, downcase)
+      struct {{name}}
+        def foo1(ov)
+          if ov
+            {% if downcase %}
+              ov.each { |k, v| puts v }
+            {% else %}
+              return ov if ov
+            {% end %}
+          end
+        end
+        def foo2
+          ({} of String => String)[{% if downcase %} "a".downcase {% else %} "a" {% end %}] = "b"
+        end
+      end
+    end
+    define_overlay_view(A, true)
+    define_overlay_view(B, false)
+    CRYSTAL
+
+  # then-body is Expressions - case 5 : three-method extended version: duplicate-body branches (foo3) must
+  # still be tracked correctly and not regress foo1/foo2's coverage.
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 14 => "2/2", 19 => 2, 21 => 1, 27 => 2, 29 => 1}
+    macro define_overlay_view(name, downcase)
+      struct {{name}}
+        def foo1(ov)
+          if ov
+            {% if downcase %}
+              ov.each { |k, v| puts v }
+            {% else %}
+              return ov if ov
+            {% end %}
+          end
+        end
+
+        def foo2
+          ({} of String => String)[{% if downcase %} "a".downcase {% else %} "a" {% end %}] = "b"
+        end
+
+        def foo3(ov)
+          if ov.nil?
+            {% if downcase %}
+              ov.each { |k, v| puts v }
+            {% else %}
+              ov.each { |k, v| puts v }
+            {% end %}
+            return
+          end
+
+          {% if downcase %}
+            ov.each { |k, v| puts v }
+          {% else %}
+            ov.each { |k, v| puts v }
+          {% end %}
+        end
+      end
+    end
+
+    define_overlay_view(A, true)
+    define_overlay_view(B, false)
+    CRYSTAL
 end
