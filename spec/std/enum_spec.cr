@@ -49,6 +49,11 @@ private enum SpecEnumWithCaseSensitiveMembers
   Foo = 2
 end
 
+private enum SpecEnumWithUnicodeMembers
+  Föö = 1
+  Bár = 2
+end
+
 describe Enum do
   describe "#to_s" do
     it "for simple enum" do
@@ -307,7 +312,7 @@ describe Enum do
     SpecEnum::Two.hash.should_not eq(SpecEnum::Three.hash)
   end
 
-  it ".parse" do
+  it ".parse(String)" do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
     SpecEnum2.parse("FortyTwo").should eq(SpecEnum2::FortyTwo)
     SpecEnum2.parse("forty_two").should eq(SpecEnum2::FortyTwo)
@@ -334,12 +339,57 @@ describe Enum do
     SpecEnumWithCaseSensitiveMembers.parse("foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("FOO").should eq SpecEnumWithCaseSensitiveMembers::FOO
     SpecEnumWithCaseSensitiveMembers.parse("Foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
+
+    SpecEnumWithUnicodeMembers.parse("Föö").should eq SpecEnumWithUnicodeMembers::Föö
+    expect_raises(ArgumentError, "Unknown enum SpecEnumWithUnicodeMembers value: Fööd") do
+      SpecEnumWithUnicodeMembers.parse("Fööd")
+    end
+    SpecEnumWithUnicodeMembers.parse("FÖÖ").should eq SpecEnumWithUnicodeMembers::Föö
+  end
+
+  it ".parse(Bytes)" do
+    SpecEnum.parse("Two".to_slice).should eq(SpecEnum::Two)
+    SpecEnum2.parse("FortyTwo".to_slice).should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("forty_two".to_slice).should eq(SpecEnum2::FortyTwo)
+    expect_raises(ArgumentError, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four".to_slice) }
+
+    SpecEnum.parse("TWO".to_slice).should eq(SpecEnum::Two)
+    SpecEnum.parse("TwO".to_slice).should eq(SpecEnum::Two)
+    SpecEnum2.parse("FORTY_TWO".to_slice).should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO".to_slice).should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO_".to_slice).should eq(SpecEnum2::FortyTwo)
+
+    SpecEnum2.parse("FORTY_FOUR".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty_four".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTY-FOUR".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("forty-four".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FortyFour".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("FORTYFOUR".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+    SpecEnum2.parse("fortyfour".to_slice).should eq(SpecEnum2::FORTY_FOUR)
+
+    PrivateEnum.parse("FOO".to_slice).should eq(PrivateEnum::FOO)
+    PrivateEnum.parse("BAR".to_slice).should eq(PrivateEnum::BAR)
+    PrivateEnum.parse("QUX".to_slice).should eq(PrivateEnum::QUX)
+
+    SpecEnumWithCaseSensitiveMembers.parse("foo".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("FOO".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
+    SpecEnumWithCaseSensitiveMembers.parse("Foo".to_slice).should eq SpecEnumWithCaseSensitiveMembers::FOO
+
+    SpecEnumWithUnicodeMembers.parse("Föö".to_slice).should eq SpecEnumWithUnicodeMembers::Föö
+    expect_raises(ArgumentError, "Unknown enum SpecEnumWithUnicodeMembers value: Fööd") do
+      SpecEnumWithUnicodeMembers.parse("Fööd".to_slice)
+    end
+    SpecEnumWithUnicodeMembers.parse("FÖÖ".to_slice).should eq SpecEnumWithUnicodeMembers::Föö
   end
 
   it ".parse?" do
     SpecEnum.parse?("Two").should eq(SpecEnum::Two)
     SpecEnum.parse?("Four").should be_nil
     SpecEnum.parse?("Fo-ur").should be_nil
+
+    SpecEnum.parse?("Two".to_slice).should eq(SpecEnum::Two)
+    SpecEnum.parse?("Four".to_slice).should be_nil
+    SpecEnum.parse?("Fo-ur".to_slice).should be_nil
   end
 
   it "clones" do
