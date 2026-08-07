@@ -378,4 +378,30 @@ describe Time::Span do
     past2 = jan_1_2k + delta.milliseconds
     past2.should eq(past)
   end
+
+  describe "int conversions" do
+    it "#to_nanoseconds" do
+      Time::Span::ZERO.to_nanoseconds.should eq 0_i128
+      Time::Span::MAX.to_nanoseconds.should eq 9_223_372_036_854_775_807_999_999_999_i128
+      Time::Span::MIN.to_nanoseconds.should eq -9_223_372_036_854_775_808_999_999_999_i128
+    end
+
+    it "#to_microseconds" do
+      Time::Span::ZERO.to_microseconds.should eq 0_i128
+      Time::Span::MAX.to_microseconds.should eq 9_223_372_036_854_775_807_999_999_i128
+      Time::Span::MIN.to_microseconds.should eq -9_223_372_036_854_775_808_999_999_i128
+    end
+
+    it "#to_milliseconds" do
+      Time::Span::ZERO.to_milliseconds.should eq 0_i128
+      Time::Span::MAX.to_milliseconds.should eq 9_223_372_036_854_775_807_999_i128
+      Time::Span::MIN.to_milliseconds.should eq -9_223_372_036_854_775_808_999_i128
+    end
+
+    it "#to_seconds" do
+      Time::Span::ZERO.to_seconds.should eq 0_i128
+      Time::Span::MAX.to_seconds.should eq 9_223_372_036_854_775_807_i128
+      Time::Span::MIN.to_seconds.should eq -9_223_372_036_854_775_808_i128
+    end
+  end
 end
