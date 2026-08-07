@@ -495,4 +495,20 @@ describe "Semantic: class var" do
       Foo(Int32).inc
       CRYSTAL
   end
+
+  it "allows a subclass method to assign to a class var initialized by the superclass (#5161)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      class A
+        @@x = 0
+      end
+
+      class B < A
+        def foo
+          @@x = 10
+        end
+      end
+
+      B.new.foo
+      CRYSTAL
+  end
 end
