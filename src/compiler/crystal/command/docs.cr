@@ -41,10 +41,10 @@ class Crystal::Command
         project_info.source_url_pattern = value
       end
 
-      opts.on("-o DIR", "--output=DIR", "Set the output directory (default: #{output_directory})") do |value|
+      opts.on("-o", "--output=DIR", "Set the output directory (default: #{output_directory})") do |value|
         output_directory = value
       end
-      opts.on("-f FORMAT", "--format=FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
+      opts.on("-f", "--format=FORMAT", "Set the output format [#{VALID_OUTPUT_FORMATS.join(", ")}] (default: #{output_format})") do |value|
         if !VALID_OUTPUT_FORMATS.includes? value
           STDERR.puts "Invalid format '#{value}'"
           abort! opts, :USAGE_ERROR
@@ -64,7 +64,7 @@ class Crystal::Command
         project_info.base_path = value
       end
 
-      opts.on("-b URL", "--sitemap-base-url=URL", "Set the sitemap base URL and generates sitemap") do |value|
+      opts.on("-b", "--sitemap-base-url=URL", "Set the sitemap base URL and generates sitemap") do |value|
         sitemap_base_url = value
       end
 
@@ -76,7 +76,7 @@ class Crystal::Command
         sitemap_changefreq = value
       end
 
-      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+      opts.on("-D", "--define FLAG", "Define a compile-time flag") do |flag|
         compiler.flags << flag
       end
 
