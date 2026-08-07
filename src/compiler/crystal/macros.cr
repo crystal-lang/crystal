@@ -652,6 +652,10 @@ module Crystal::Macros
     def ~ : NumberLiteral
     end
 
+    # Same as `Int#chr`
+    def chr : CharLiteral
+    end
+
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
     def kind : SymbolLiteral
     end
