@@ -369,7 +369,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    alias_type = AliasType.new(@program, scope, name, node.value)
+    alias_type = AliasType.new(@program, scope, name, node.value, node.type_vars)
     process_annotations(annotations) do |annotation_type, ann|
       alias_type.add_annotation(annotation_type, ann)
     end

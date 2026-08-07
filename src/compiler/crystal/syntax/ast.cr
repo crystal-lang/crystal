@@ -2803,10 +2803,13 @@ module Crystal
   class Alias < ASTNode
     property name : Path
     property value : ASTNode
+    # Names of the type parameters for a generic alias, e.g. `alias Foo(T) = ...`.
+    # `nil` for a plain `alias Foo = ...`.
+    property type_vars : Array(String)?
     property doc : String?
     property visibility = Visibility::Public
 
-    def initialize(@name : Path, @value : ASTNode)
+    def initialize(@name : Path, @value : ASTNode, @type_vars : Array(String)? = nil)
     end
 
     def accept_children(visitor)
@@ -2814,10 +2817,10 @@ module Crystal
     end
 
     def clone_without_location
-      Alias.new(@name.clone, @value.clone)
+      Alias.new(@name.clone, @value.clone, @type_vars.dup)
     end
 
-    def_equals_and_hash @name, @value
+    def_equals_and_hash @name, @value, @type_vars
 
     def pretty_print(pp) : Nil
       pp_type(pp, "Alias[", "]") do
