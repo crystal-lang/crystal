@@ -122,8 +122,12 @@ private macro def_string_methods(klass)
   def titleize : {{klass}}
   end
 
-  # Similar to `String#to_i`.
-  def to_i(base = 10)
+  # Similar to `String#to_i64`.
+  #
+  # The returned `NumberLiteral` has the `:i32` kind if it fits into `Int32`'s
+  # range, and the `:i64` kind otherwise. This matches the behavior of
+  # suffix-less number literals in Crystal.
+  def to_i(base : NumberLiteral = 10) : NumberLiteral
   end
 
   # Returns an expression that evaluates to a slice literal containing the
