@@ -22,6 +22,10 @@ private macro def_string_methods(klass)
   def +(other : StringLiteral | CharLiteral) : {{klass}}
   end
 
+  # Similar to `String#bytesize`.
+  def bytesize : NumberLiteral
+  end
+
   # Similar to `String#camelcase`.
   def camelcase(*, lower : BoolLiteral = false) : {{klass}}
   end
