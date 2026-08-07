@@ -109,19 +109,6 @@ struct Exception::CallStack
   end
 
   private def self.print_frame_location(repeated_frame)
-    {% if flag?(:debug) %}
-      if @@loaded
-        pc = CallStack.decode_address(repeated_frame.ip)
-        if name = decode_function_name(pc)
-          file, line, column = Exception::CallStack.decode_line_number(pc)
-          if file && file != "??"
-            Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
-            return
-          end
-        end
-      end
-    {% end %}
-
     unsafe_decode_frame(repeated_frame.ip) do |offset, sname, fname|
       Crystal::System.print_error "%s +%lld in %s", sname, offset.to_i64, fname
       return

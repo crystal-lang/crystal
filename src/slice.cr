@@ -1242,6 +1242,9 @@ struct Slice(T)
     {% end %}
   end
 
+  # This works around a compiler bug documented in #17127 and fixed in #17128.
+  # The annotation can be safely removed after #17128 is merged.
+  @[Raises]
   protected def check_writable
     raise "Can't write to read-only Slice" if @read_only
   end
