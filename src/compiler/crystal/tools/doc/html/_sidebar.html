@@ -1,4 +1,23 @@
-<div class="sidebar">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link href="css/style-sidebar.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="js/doc-sidebar.js"></script>
+  <meta name="repository-name" content="<%= project_info.name %>">
+  <meta name="crystal_docs.project_version" content="<%= project_info.version %>">
+  <meta name="crystal_docs.project_name" content="<%= project_info.name %>">
+  <% if json_config_url = project_info.json_config_url %>
+    <meta name="crystal_docs.json_config_url" content="<%= json_config_url %>">
+  <% end %>
+  <title>Sidebar</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "";
+  </script>
+  <base target="_parent">
+</head>
+<body>
+
+  <div class="sidebar">
   <div class="sidebar-header">
     <div class="search-box">
       <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
@@ -6,7 +25,7 @@
 
     <div class="project-summary">
       <h1 class="project-name">
-        <a href="<%= current_type.try(&.path_to("")) %>index.html">
+        <a href="index.html">
           <%= project_info.name %>
         </a>
       </h1>
@@ -22,6 +41,9 @@
   </div>
 
   <div class="types-list">
-    <%= ListItemsTemplate.new(types, current_type) %>
+    <%= ListItemsTemplate.new(types) %>
   </div>
 </div>
+
+</body>
+</html>
