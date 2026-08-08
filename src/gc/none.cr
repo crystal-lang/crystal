@@ -14,11 +14,16 @@ module GC
     Crystal.trace :gc, "malloc", size: size
 
     {% if flag?(:win32) %}
-      LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
+      ptr = LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
+      oom(size) if ptr.null? && size != 0
+      ptr
     {% else %}
+      ptr = LibC.malloc(size)
+      oom(size) if ptr.null? && size != 0
       # libc malloc is not guaranteed to return cleared memory, so we need to
       # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
-      LibC.malloc(size).tap(&.clear(size))
+      ptr.clear(size)
+      ptr
     {% end %}
   end
 
@@ -26,28 +31,36 @@ module GC
   def self.malloc_atomic(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size, atomic: 1
 
-    {% if flag?(:win32) %}
-      LibC.HeapAlloc(LibC.GetProcessHeap, 0, size)
-    {% else %}
-      LibC.malloc(size)
-    {% end %}
+    ptr =
+      {% if flag?(:win32) %}
+        LibC.HeapAlloc(LibC.GetProcessHeap, 0, size)
+      {% else %}
+        LibC.malloc(size)
+      {% end %}
+    oom(size) if ptr.null? && size != 0
+    ptr
   end
 
   # :nodoc:
   def self.realloc(pointer : Void*, size : LibC::SizeT) : Void*
     Crystal.trace :gc, "realloc", size: size
 
-    {% if flag?(:win32) %}
-      # realloc with a null pointer should behave like plain malloc, but Win32
-      # doesn't do that
-      if pointer
-        LibC.HeapReAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, pointer, size)
-      else
-        LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
-      end
-    {% else %}
-      LibC.realloc(pointer, size)
-    {% end %}
+    ptr =
+      {% if flag?(:win32) %}
+        # realloc with a null pointer should behave like plain malloc, but Win32
+        # doesn't do that
+        if pointer
+          LibC.HeapReAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, pointer, size)
+        else
+          LibC.HeapAlloc(LibC.GetProcessHeap, LibC::HEAP_ZERO_MEMORY, size)
+        end
+      {% else %}
+        LibC.realloc(pointer, size)
+      {% end %}
+    # `realloc(ptr, 0)` may legitimately return NULL (free semantics), only a
+    # NULL result for a non-zero size means out of memory
+    oom(size) if ptr.null? && size != 0
+    ptr
   end
 
   def self.collect

@@ -1,3 +1,5 @@
+require "crystal/system/print_error"
+
 # :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
   GC.malloc(LibC::SizeT.new(size))
@@ -103,11 +105,24 @@ module GC
     expl_freed_bytes_since_gc : UInt64,
     obtained_from_os_bytes : UInt64
 
+  # :nodoc:
+  #
+  # Aborts the program when the GC failed to allocate memory. This method must
+  # not allocate memory itself: raising an exception would allocate the
+  # callstack and the unwind payload, which would fail again.
+  def self.oom(size : LibC::SizeT) : NoReturn
+    Crystal::System.print_error "Out of memory: failed to allocate %llu bytes\n", size
+    LibC._exit(1)
+  end
+
   # Allocates and clears *size* bytes of memory.
   #
   # The resulting object may contain pointers and they will be tracked by the GC.
   #
   # The memory will be automatically deallocated when unreferenced.
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc(size : Int) : Void*
     malloc(LibC::SizeT.new(size))
   end
@@ -117,6 +132,9 @@ module GC
   # The client promises that the resulting object will never contain any pointers.
   #
   # The memory is not cleared. It will be automatically deallocated when unreferenced.
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
   end
@@ -128,6 +146,9 @@ module GC
   # If *pointer* was allocated with `malloc_atomic`, the same constraints apply.
   #
   # The return value is a pointer that may be identical to *pointer* or different.
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   #
   # WARNING: Memory allocated using `Pointer.malloc` must be reallocated using
   # `Pointer#realloc` instead.
