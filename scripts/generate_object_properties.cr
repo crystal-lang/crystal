@@ -82,6 +82,33 @@ struct Generator
     TEXT
   end
 
+  # NOTE: we explicitly cast .as(typeof(yield)) to avoid type inference
+  # regressions, see https://github.com/crystal-lang/crystal/issues/15556
+  #
+  # FIXME: still parallel unsafe in case of parallel call to `setter` (unless
+  # type is a reference)  because we can't trust mixed union load/store to be
+  # safe operations.
+  def def_safe_getter(suffix = "")
+    <<-TEXT
+          {% if block %} #{@var_prefix}__{{var_name}}_lock = Crystal::Lock.new {% end %}
+
+          def #{@method_prefix}{{var_name}}#{suffix} {% if type %} : {{type}} {% end %}
+            {% if block %}
+              if (%value = #{@var_prefix}__{{var_name}}_lock.rlock { #{@var_prefix}{{var_name}} }).nil?
+                #{@var_prefix}__{{var_name}}_lock
+                  .lock { #{@var_prefix}{{var_name}} ||= {{yield}} }
+                  {% unless type %}.as(typeof({{yield}})){% end %}
+              else
+                %value
+              end
+            {% else %}
+              #{@var_prefix}{{var_name}}
+            {% end %}
+          end
+
+    TEXT
+  end
+
   def def_getter!
     <<-TEXT
           def #{@method_prefix}{{var_name}}? {% if type %} : {{type}}? {% end %}
@@ -116,7 +143,7 @@ struct Generator
       macro #{@macro_prefix}property(*names, &block)
         {% for name in names %}
     #{def_vars}
-    #{def_getter}
+    #{@macro_prefix == "class_" ? def_safe_getter : def_getter}
     #{def_setter}
         {% end %}
       end
@@ -128,7 +155,7 @@ struct Generator
       macro #{@macro_prefix}property?(*names, &block)
         {% for name in names %}
     #{def_vars}
-    #{def_getter "?"}
+    #{@macro_prefix == "class_" ? def_safe_getter("?") : def_getter("?")}
     #{def_setter}
         {% end %}
       end
@@ -158,6 +185,8 @@ File.open(output, "w") do |f|
   f.puts "#   scripts/generate_object_properties.cr"
   f.puts "#"
   f.puts "# DO NOT EDIT"
+  f.puts
+  f.puts %(require "crystal/lock")
   f.puts
   f.puts "class Object"
 
@@ -281,7 +310,7 @@ File.open(output, "w") do |f|
     macro class_getter(*names, &block)
       {% for name in names %}
   #{g.def_vars}
-  #{g.def_getter}
+  #{g.def_safe_getter}
       {% end %}
     end
 
@@ -309,7 +338,7 @@ File.open(output, "w") do |f|
     macro class_getter?(*names, &block)
       {% for name in names %}
   #{g.def_vars}
-  #{g.def_getter "?"}
+  #{g.def_safe_getter "?"}
       {% end %}
     end
 
