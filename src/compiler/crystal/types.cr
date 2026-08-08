@@ -786,11 +786,18 @@ module Crystal
   # There are other types that have a name but it can be deduced from other(s) type(s),
   # so they don't inherit NamedType: a union type, a metaclass, etc.
   abstract class NamedType < Type
-    getter namespace : ModuleType
+    property namespace : ModuleType
     getter name : String
     getter locations : Array(Location)?
     property doc : String?
     property? private : Bool = false
+
+    # Set when this type was created implicitly to host a child namespace
+    # like `module Foo::Bar` (which creates `Foo` automatically). A type
+    # marked with this flag may be upgraded to a class, struct, lib, or
+    # enum if a later definition explicitly declares it as such, instead
+    # of erroring with "Foo is not a class, it's a module" (#8685, #16918).
+    property? assumed_namespace : Bool = false
 
     def initialize(program, @namespace, @name)
       super(program)
