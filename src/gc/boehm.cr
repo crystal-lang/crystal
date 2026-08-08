@@ -103,7 +103,7 @@ lib LibGC
   fun is_heap_ptr = GC_is_heap_ptr(pointer : Void*) : Int
   fun general_register_disappearing_link = GC_general_register_disappearing_link(link : Void**, obj : Void*) : Int
 
-  alias Finalizer = Void*, Void* ->
+  alias Finalizer = (Void*, Void*) ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int
@@ -151,7 +151,7 @@ lib LibGC
   fun set_on_collection_event = GC_set_on_collection_event(cb : OnCollectionEventProc)
   fun get_on_collection_event = GC_get_on_collection_event : OnCollectionEventProc
 
-  alias OnThreadEventProc = EventType, Void* ->
+  alias OnThreadEventProc = (EventType, Void*) ->
   fun set_on_thread_event = GC_set_on_thread_event(cb : OnThreadEventProc)
   fun get_on_thread_event = GC_get_on_thread_event : OnThreadEventProc
 
@@ -172,7 +172,7 @@ lib LibGC
     fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
   {% end %}
 
-  alias WarnProc = LibC::Char*, Word ->
+  alias WarnProc = (LibC::Char*, Word) ->
   fun set_warn_proc = GC_set_warn_proc(WarnProc)
   $warn_proc = GC_current_warn_proc : WarnProc
 

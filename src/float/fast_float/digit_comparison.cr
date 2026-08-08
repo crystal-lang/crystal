@@ -110,7 +110,7 @@ module Float::FastFloat
 
     # round an extended-precision float to the nearest machine float.
     # NOTE(crystal): passes *am* in and out by value
-    def round(am : AdjustedMantissa, & : AdjustedMantissa, Int32 -> AdjustedMantissa) : AdjustedMantissa
+    def round(am : AdjustedMantissa, & : (AdjustedMantissa, Int32) -> AdjustedMantissa) : AdjustedMantissa
       mantissa_shift = 64 &- mantissa_explicit_bits &- 1
       if 0 &- am.power2 >= mantissa_shift
         # have a denormal float
@@ -141,7 +141,7 @@ module Float::FastFloat
     end
 
     # NOTE(crystal): passes *am* in and out by value
-    def round_nearest_tie_even(am : AdjustedMantissa, shift : Int32, & : Bool, Bool, Bool -> Bool) : AdjustedMantissa
+    def round_nearest_tie_even(am : AdjustedMantissa, shift : Int32, & : (Bool, Bool, Bool) -> Bool) : AdjustedMantissa
       mask = shift == 64 ? UInt64::MAX : 1_u64.unsafe_shl(shift) &- 1
       halfway = shift == 0 ? 0_u64 : 1_u64.unsafe_shl(shift &- 1)
       truncated_bits = am.mantissa & mask

@@ -1541,7 +1541,7 @@ class Hash(K, V)
     hash
   end
 
-  def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
+  def merge(other : Hash(L, W), & : (L, V, W) -> V | W) : Hash(K | L, V | W) forall L, W
     # Don't retain @block as far as key type may be changed and retained @block
     # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
@@ -1588,7 +1588,7 @@ class Hash(K, V)
     end
   end
 
-  protected def merge_into!(other : Hash(K2, V2), & : K, V2, V -> V2) forall K2, V2
+  protected def merge_into!(other : Hash(K2, V2), & : (K, V2, V) -> V2) forall K2, V2
     {% unless K2 >= K && V2 >= V %}
       {% raise "#{Hash(K, V)} can't be merged into #{Hash(K2, V2)}" %}
     {% end %}
@@ -1605,12 +1605,12 @@ class Hash(K, V)
   # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
   # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
-  def select(& : K, V ->) : Hash(K, V)
+  def select(& : (K, V) ->) : Hash(K, V)
     reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather than returning a new one. Returns `self`.
-  def select!(& : K, V ->) : self
+  def select!(& : (K, V) ->) : self
     reject! { |k, v| !yield(k, v) }
   end
 
@@ -1620,7 +1620,7 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(& : K, V ->) : Hash(K, V)
+  def reject(& : (K, V) ->) : Hash(K, V)
     object = {} of K => V
     object.compare_by_identity if compare_by_identity?
 
@@ -1630,7 +1630,7 @@ class Hash(K, V)
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather than returning a new one. Returns `self`.
-  def reject!(& : K, V -> _)
+  def reject!(& : (K, V) -> _)
     # No indices allocated yet so we won't need `DELETED_INDEX` yet
     if @indices.null?
       each_entry_with_index do |entry, index|
@@ -1785,7 +1785,7 @@ class Hash(K, V)
   # hash.transform_keys { |key| key.to_s }                # => {"a" => 1, "b" => 2, "c" => 3}
   # hash.transform_keys { |key, value| key.to_s * value } # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
-  def transform_keys(& : K, V -> K2) : Hash(K2, V) forall K2
+  def transform_keys(& : (K, V) -> K2) : Hash(K2, V) forall K2
     copy = Hash(K2, V).new(initial_capacity: entries_capacity)
     each_with_object(copy) do |(key, value), memo|
       memo[yield(key, value)] = value
@@ -1803,7 +1803,7 @@ class Hash(K, V)
   # hash.transform_keys! { |key, value| key * value }
   # hash # => {"a" => 1, "bb" => 2, "ccc" => 3}
   # ```
-  def transform_keys!(& : K, V -> K) : self
+  def transform_keys!(& : (K, V) -> K) : self
     copy = transform_keys { |k, v| (yield k, v).as(K) }
     initialize_dup_entries(copy) # we need only to copy the buffer
     initialize_copy_non_entries_vars(copy)
@@ -1819,7 +1819,7 @@ class Hash(K, V)
   # hash.transform_values { |value| value + 1 }             # => {:a => 2, :b => 3, :c => 4}
   # hash.transform_values { |value, key| "#{key}#{value}" } # => {:a => "a1", :b => "b2", :c => "c3"}
   # ```
-  def transform_values(& : V, K -> V2) : Hash(K, V2) forall V2
+  def transform_values(& : (V, K) -> V2) : Hash(K, V2) forall V2
     copy = Hash(K, V2).new(initial_capacity: entries_capacity)
     copy.compare_by_identity if compare_by_identity?
 
@@ -1840,7 +1840,7 @@ class Hash(K, V)
   # hash # => {:a => 99, :b => 101, :c => 103}
   # ```
   # See `#update` for updating a *single* value.
-  def transform_values!(& : V, K -> V) : self
+  def transform_values!(& : (V, K) -> V) : self
     each_entry_with_index do |entry, i|
       new_value = yield entry.value, entry.key
       set_entry(i, Entry(K, V).new(entry.hash, entry.key, new_value))

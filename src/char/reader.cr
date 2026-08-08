@@ -274,7 +274,7 @@ struct Char
 
     # :nodoc:
     # See also: `IO#read_char_with_bytesize`.
-    private def decode_char_at(pos, & : UInt32, Int32, UInt8? ->)
+    private def decode_char_at(pos, & : (UInt32, Int32, UInt8?) ->)
       first = byte_at(pos)
       if first < 0x80
         return yield first, 1, nil
@@ -368,7 +368,7 @@ struct Char
     # 0xF0..0xF0 | _ _ _ _ _ 0
     # 0xF1..0xF3 | _ _ _ _ 0 0
     # 0xF4..0xF4 | _ _ _ _ 0 _
-    private def decode_char_before(pos, & : UInt32, Int32, UInt8? ->)
+    private def decode_char_before(pos, & : (UInt32, Int32, UInt8?) ->)
       fourth = byte_at(pos - 1)
       if fourth <= 0x7f
         return yield fourth, 1, nil

@@ -427,7 +427,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def map_with_index!(offset = 0, & : T, Int32 -> _) : self
+  def map_with_index!(offset = 0, & : (T, Int32) -> _) : self
     check_writable
     super { |elem, i| yield elem, i }
   end
@@ -958,7 +958,7 @@ struct Slice(T)
   # See `Indexable::Mutable#sort!(&block : T, T -> U)` for details on the sorting mechanism.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def sort(&block : T, T -> U) : self forall U
+  def sort(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by`?" %}
     {% end %}
@@ -980,7 +980,7 @@ struct Slice(T)
   # See `Indexable::Mutable#unstable_sort!(&block : T, T -> U)` for details on the sorting mechanism.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def unstable_sort(&block : T, T -> U) : self forall U
+  def unstable_sort(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by`?" %}
     {% end %}
@@ -1091,7 +1091,7 @@ struct Slice(T)
   # performance advantage over stable sort.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def sort!(&block : T, T -> U) : self forall U
+  def sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#sort_by!`?" %}
     {% end %}
@@ -1134,7 +1134,7 @@ struct Slice(T)
   # If stability is necessary, use  `#sort!(&block : T, T -> U)` instead.
   #
   # Raises `ArgumentError` if for any two elements the block returns `nil`.
-  def unstable_sort!(&block : T, T -> U) : self forall U
+  def unstable_sort!(&block : (T, T) -> U) : self forall U
     {% unless U <= Int32? %}
       {% raise "Expected block to return Int32 or Nil, not #{U}.\nThe block is supposed to be a custom comparison operation, compatible with `Comparable#<=>`.\nDid you mean to use `#unstable_sort_by!`?" %}
     {% end %}

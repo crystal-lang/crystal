@@ -70,7 +70,7 @@ class HTTP::WebSocket
   end
 
   # Called when the connection is closed by the other party.
-  def on_close(&@on_close : CloseCode, String ->) : Proc(HTTP::WebSocket::CloseCode, String, Nil)
+  def on_close(&@on_close : (CloseCode, String) ->) : Proc(HTTP::WebSocket::CloseCode, String, Nil)
   end
 
   protected def check_open

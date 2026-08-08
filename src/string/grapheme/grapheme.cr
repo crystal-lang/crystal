@@ -7,7 +7,7 @@ class String
   # respective grapheme cluster in the entire string.
   # The third input value is the last character itself, which can be used
   # to avoid multiple decoding in single-char graphemes.
-  private def each_grapheme_boundary(& : Range(Int32, Int32), Char -> Nil) : Nil
+  private def each_grapheme_boundary(& : (Range(Int32, Int32), Char) -> Nil) : Nil
     state = Grapheme::Property::Start
 
     reader = Char::Reader.new(self)

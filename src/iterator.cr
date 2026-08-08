@@ -248,7 +248,7 @@ module Iterator(T)
   # iter.next # => "the, quick, brown, fox"
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def accumulate(&block : T, T -> T)
+  def accumulate(&block : (T, T) -> T)
     AccumulateIterator(typeof(self), T).new(self, block)
   end
 
@@ -267,7 +267,7 @@ module Iterator(T)
   # iter.next # => "XXXXXXXXXXXXXXXXXXXXXXXX"
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
-  def accumulate(initial : U, &block : U, T -> U) forall U
+  def accumulate(initial : U, &block : (U, T) -> U) forall U
     AccumulateInitIterator(typeof(self), T, U).new(self, initial, block)
   end
 
@@ -276,7 +276,7 @@ module Iterator(T)
 
     @acc : U | Iterator::Stop
 
-    def initialize(@iterator : I, @acc : U, @func : U, T -> U)
+    def initialize(@iterator : I, @acc : U, @func : (U, T) -> U)
     end
 
     def next
@@ -294,7 +294,7 @@ module Iterator(T)
 
     @acc : T | Iterator::Stop = Iterator::Stop::INSTANCE
 
-    def initialize(@iterator : I, @func : T, T -> T)
+    def initialize(@iterator : I, @func : (T, T) -> T)
     end
 
     def next
@@ -1794,7 +1794,7 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   #
   # See also `#chunk_while`, which works similarly but the block's condition is inverted.
-  def slice_when(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+  def slice_when(reuse : Bool | Array(T) = false, &block : (T, T) -> B) forall B
     SliceWhenIterator(typeof(self), T, B).new(self, block, reuse)
   end
 
@@ -1824,7 +1824,7 @@ module Iterator(T)
   # interest is to be used in a read-only fashion.
   #
   # See also `#slice_when`, which works similarly but the block's condition is inverted.
-  def chunk_while(reuse : Bool | Array(T) = false, &block : T, T -> B) forall B
+  def chunk_while(reuse : Bool | Array(T) = false, &block : (T, T) -> B) forall B
     SliceWhenIterator(typeof(self), T, B).new(self, block, reuse, negate: true)
   end
 
@@ -1834,7 +1834,7 @@ module Iterator(T)
     @has_previous_value = false
     @previous_value : T?
 
-    def initialize(@iterator : I, @block : T, T -> B, reuse, @negate = false)
+    def initialize(@iterator : I, @block : (T, T) -> B, reuse, @negate = false)
       @end = false
 
       if reuse

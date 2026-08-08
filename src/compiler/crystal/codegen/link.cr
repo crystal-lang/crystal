@@ -196,7 +196,7 @@ module Crystal
     # for every DLL specified in the used `@[Link]` annotations. Yields the
     # absolute path and `true` if found, the base name and `false` if not found.
     # The directories should match `Crystal::Repl::Context#dll_search_paths`
-    def each_dll_path(& : String, Bool ->)
+    def each_dll_path(& : (String, Bool) ->)
       executable_path = nil
       compiler_origin = nil
       paths = nil

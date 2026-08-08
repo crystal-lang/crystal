@@ -22,7 +22,7 @@ def pending_ipv6(description = "assert", file = __FILE__, line = __LINE__, end_l
   end
 end
 
-def each_ip_family(&block : Socket::Family, String, String ->)
+def each_ip_family(&block : (Socket::Family, String, String) ->)
   describe "using IPv4" do
     block.call Socket::Family::INET, "127.0.0.1", "0.0.0.0"
   end

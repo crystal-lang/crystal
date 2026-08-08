@@ -17,7 +17,7 @@ require "../../web_socket"
 class HTTP::WebSocketHandler
   include HTTP::Handler
 
-  def initialize(@subprotocols : Array(String)? = nil, &@proc : WebSocket, Server::Context ->)
+  def initialize(@subprotocols : Array(String)? = nil, &@proc : (WebSocket, Server::Context) ->)
   end
 
   def call(context) : Nil

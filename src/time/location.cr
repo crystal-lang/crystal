@@ -319,7 +319,7 @@ class Time::Location
   end
 
   # :nodoc:
-  def self.load?(name : String, & : String? ->) : Location?
+  def self.load?(name : String, & : (String?) ->) : Location?
     case name
     when "", "UTC", "Etc/UTC", "GMT", "Etc/GMT"
       # `UTC` is a special identifier, empty string represents a fallback mechanism.

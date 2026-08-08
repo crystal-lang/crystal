@@ -229,7 +229,7 @@ class Time::Location
   # :nodoc:
   # Reads a packed tzdata file for Android's Bionic C runtime. Defined in
   # https://android.googlesource.com/platform/bionic/+/master/libc/tzcode/bionic.cpp
-  def self.read_android_tzdata(io : IO, local : Bool, & : String, Time::Location ->)
+  def self.read_android_tzdata(io : IO, local : Bool, & : (String, Time::Location) ->)
     header = io.read_string(12)
     raise InvalidTZDataError.new unless header.starts_with?("tzdata") && header.ends_with?('\0')
 

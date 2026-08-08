@@ -184,7 +184,7 @@ module Indexable(T)
   # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
-  def bsearch_index(& : T, Int32 -> _)
+  def bsearch_index(& : (T, Int32) -> _)
     (0...size).bsearch { |index| yield unsafe_fetch(index), index }
   end
 

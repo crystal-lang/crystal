@@ -15,7 +15,7 @@ private def abi(win64 = false)
   win64 ? Crystal::ABI::X86_Win64.new(machine) : Crystal::ABI::X86_64.new(machine)
 end
 
-private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : Crystal::ABI, LLVM::Context ->)
+private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : (Crystal::ABI, LLVM::Context) ->)
   it msg, file: file, line: line do
     abi = abi(win64)
     ctx = LLVM::Context.new

@@ -63,7 +63,7 @@ module Crystal::System::Env
   end
 
   # Iterates all environment variables.
-  def self.each(&block : String, String ->)
+  def self.each(&block : (String, String) ->)
     orig_pointer = pointer = LibC.GetEnvironmentStringsW
     raise RuntimeError.from_winerror("GetEnvironmentStringsW") if pointer.null?
 

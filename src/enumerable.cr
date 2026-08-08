@@ -520,7 +520,7 @@ module Enumerable(T)
   # end
   # hash # => {"Alice" => 5, "Bob" => 3}
   # ```
-  def each_with_object(obj : U, & : T, U ->) : U forall U
+  def each_with_object(obj : U, & : (T, U) ->) : U forall U
     each do |elem|
       yield elem, obj
     end
@@ -896,7 +896,7 @@ module Enumerable(T)
   # ```
   # [2, 3, 4, 5].accumulate { |x, y| x * y } # => [2, 6, 24, 120]
   # ```
-  def accumulate(&block : T, T -> T) : Array(T)
+  def accumulate(&block : (T, T) -> T) : Array(T)
     values = [] of T
     memo = uninitialized T
 
@@ -919,7 +919,7 @@ module Enumerable(T)
   # ```
   # [1, 3, 5, 7].accumulate(9) { |x, y| x * y } # => [9, 9, 27, 135, 945]
   # ```
-  def accumulate(initial : U, &block : U, T -> U) : Array(U) forall U
+  def accumulate(initial : U, &block : (U, T) -> U) : Array(U) forall U
     values = [initial]
 
     each do |elem|
@@ -1001,7 +1001,7 @@ module Enumerable(T)
   # ```text
   # (1), (2), (3), (4), (5)
   # ```
-  def join(io : IO, separator = "", & : T, IO ->)
+  def join(io : IO, separator = "", & : (T, IO) ->)
     each_with_index do |elem, i|
       io << separator if i > 0
       yield elem, io
@@ -1047,7 +1047,7 @@ module Enumerable(T)
   #
   # Accepts an optional *offset* parameter, which tells it to start counting
   # from there.
-  def map_with_index(offset = 0, & : T, Int32 -> U) : Array(U) forall U
+  def map_with_index(offset = 0, & : (T, Int32) -> U) : Array(U) forall U
     ary = [] of U
     each_with_index(offset) { |e, i| ary << yield e, i }
     ary

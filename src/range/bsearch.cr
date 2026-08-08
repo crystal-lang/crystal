@@ -81,7 +81,7 @@ struct Range(B, E)
   # (0..10).bsearch { |x| x >= 5 }                       # => 5
   # (0..Float64::INFINITY).bsearch { |x| x ** 4 >= 256 } # => 4
   # ```
-  def bsearch(&block : B | E -> _)
+  def bsearch(&block : (B | E) -> _)
     from = self.begin
     to = self.end
 
