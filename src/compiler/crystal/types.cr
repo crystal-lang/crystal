@@ -381,6 +381,12 @@ module Crystal
       nil
     end
 
+    # See `ModuleType#prepended_modules`. Returns `nil` for types that
+    # cannot have prepended modules.
+    def prepended_modules
+      nil
+    end
+
     def ancestors
       ancestors = [] of Type
       collect_ancestors(ancestors)
@@ -392,6 +398,22 @@ module Crystal
         ancestors << parent
         parent.collect_ancestors(ancestors)
       end
+    end
+
+    # Like `ancestors` but also includes modules brought in via `prepend`.
+    # The prepended modules sit at the head, in walk order (most recently
+    # prepended first), followed by the type itself implicitly and then
+    # the regular `ancestors`. The type itself is *not* present in the
+    # returned list (matching `ancestors`).
+    def ancestors_with_prepended
+      result = [] of Type
+      prepended_modules.try &.each do |mod|
+        result << mod
+        mod.prepended_modules.try { |inner| inner.each { |im| result << im } }
+        mod.collect_ancestors(result)
+      end
+      collect_ancestors(result)
+      result
     end
 
     # Returns this type's superclass, or `nil` if it doesn't have one
@@ -406,12 +428,29 @@ module Crystal
     end
 
     def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool? = false)
+      is_new = name == "new"
+      is_new_or_initialize = is_new || name == "initialize"
+
+      # Prepended modules sit *before* this type in the method-resolution
+      # order, so consult them first and short-circuit `new`/`initialize`
+      # discovery just like the rest of the chain.
+      my_prepended =
+        if is_new
+          instance_type.prepended_modules.try &.map(&.metaclass.as(Type))
+        else
+          prepended_modules
+        end
+      my_prepended.try &.each do |mod|
+        old_size = all_defs.size
+        mod.lookup_defs(name, all_defs, lookup_ancestors_for_new)
+        break if is_new_or_initialize && all_defs.size > old_size
+      end
+      return if is_new_or_initialize && !all_defs.empty?
+
       self.defs.try &.[name]?.try &.each do |item|
         all_defs << item.def unless all_defs.find(&.same?(item.def))
       end
 
-      is_new = name == "new"
-      is_new_or_initialize = is_new || name == "initialize"
       return if is_new_or_initialize && !all_defs.empty?
 
       if !is_new_or_initialize || (lookup_ancestors_for_new || self.lookup_new_in_ancestors?)
@@ -856,6 +895,7 @@ module Crystal
     Inherited
     Included
     Extended
+    Prepended
     MethodAdded
   end
 
@@ -908,6 +948,11 @@ module Crystal
     getter hooks : Array(Hook)?
     getter(parents) { [] of Type }
 
+    # Modules brought in via `prepend`. They sit *before* this type itself in
+    # the ancestor chain, so their defs take precedence over this type's own
+    # defs (Ruby's `Module#prepend` semantics).
+    getter(prepended_modules) { [] of Type }
+
     def add_def(a_def)
       a_def.owner = self
 
@@ -949,6 +994,8 @@ module Crystal
         return add_hook :included, a_macro
       when "extended"
         return add_hook :extended, a_macro
+      when "prepended"
+        return add_hook :prepended, a_macro
       when "method_added"
         return add_hook :method_added, a_macro, args_size: 1
       when "method_missing"
@@ -1002,6 +1049,34 @@ module Crystal
 
       unless parents.includes?(mod)
         parents.insert 0, mod
+        mod.add_including_type(self)
+      end
+    end
+
+    # See `prepended_modules`.
+    def prepend(mod)
+      generic_module = mod.is_a?(GenericModuleInstanceType) ? mod.generic_type : mod
+
+      if generic_module == self
+        raise TypeException.new "cyclic prepend detected"
+      end
+
+      # Walk both the regular ancestor chain *and* the prepended chain so a
+      # cycle through `prepend` (e.g. `A.prepend(B)` followed by
+      # `B.prepend(A)`) is caught.
+      generic_module.ancestors_with_prepended.each do |ancestor|
+        if ancestor == self || (ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == self)
+          raise TypeException.new "cyclic prepend detected"
+        end
+      end
+
+      modules = prepended_modules
+      unless modules.includes?(mod)
+        # Insert at the front so that the most-recently prepended module sits
+        # closest to the type itself in the lookup order: walking
+        # `prepended_modules` left-to-right gives the order they should be
+        # consulted *before* `self.defs`.
+        modules.unshift mod
         mod.add_including_type(self)
       end
     end
