@@ -1027,122 +1027,120 @@ describe "macro_code_coverage" do
     test 2
     CRYSTAL
 
-  # then-body is Expressions - case 1:  top-level block-form if/else, both branches taken across expansions
+  # else is Expressions: top-level if/else statement, both branches taken across expansions
   assert_coverage <<-'CRYSTAL', {2 => 2, 4 => 1}
-    macro define_view(downcase)
-      {% if downcase %}
+    macro test(val)
+      {% if val %}
         1 + 1
       {% else %}
         2 + 2
       {% end %}
     end
 
-    define_view(true)
-    define_view(false)
+    test(true)
+    test(false)
     CRYSTAL
 
-  # then-body is Expressions - case 2 : block-form if/else inside a def, no outer `if`
+  # else is Expressions: if/else statement inside a def, no outer `if`
   assert_coverage <<-'CRYSTAL', {4 => 2, 6 => 1}
-    macro define_view(downcase)
-      struct View
+    macro test(val)
+      struct Example
         def foo
-          {% if downcase %}
-            puts "downcase"
+          {% if val %}
+            puts "true"
           {% else %}
-            puts "else"
+            puts "false"
           {% end %}
         end
       end
     end
 
-    define_view(true)
-    define_view(false)
+    test(true)
+    test(false)
     CRYSTAL
 
-  # then-body is Expressions - case 3 : block-form if/else inside a def wrapped in a runtime `if ov`
+  # else is Expressions: if/else statement inside a def wrapped in a runtime `if v`
   assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1}
-    macro define_view(name, downcase)
+    macro test(name, val)
       struct {{name}}
-        def foo(ov)
-          if ov
-            {% if downcase %}
-              puts "downcase"
+        def foo(v)
+          if v
+            {% if val %}
+              puts "true"
             {% else %}
-              return ov if ov
+              return v if v
             {% end %}
           end
         end
       end
     end
 
-    define_view(A, true)
-    define_view(B, false)
+    test(A, true)
+    test(B, false)
     CRYSTAL
 
-  # then-body is Expressions - case 4 : two-method version: sibling method (foo2)
-  # with an inline-form MacroIf must not corrupt foo1's block-form MacroIf coverage.
-  # Neither the `if` line nor the `else`-associated line should ever read 0
-  # once both branches were actually exercised.
+  # else is Expressions: inline MacroIf (foo2) must not affect a sibling
+  # method's if/else statement coverage (foo1). Neither branch reads 0.
   assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 13 => "2/2"}
-    macro define_overlay_view(name, downcase)
+    macro test(name, flag)
       struct {{name}}
-        def foo1(ov)
-          if ov
-            {% if downcase %}
-              ov.each { |k, v| puts v }
+        def foo1(v)
+          if v
+            {% if flag %}
+              v.each { |k, v| puts v }
             {% else %}
-              return ov if ov
+              return v if v
             {% end %}
           end
         end
         def foo2
-          ({} of String => String)[{% if downcase %} "a".downcase {% else %} "a" {% end %}] = "b"
+          x = {% if flag %} "a" {% else %} "b" {% end %}
         end
       end
     end
-    define_overlay_view(A, true)
-    define_overlay_view(B, false)
+    test(A, true)
+    test(B, false)
     CRYSTAL
 
-  # then-body is Expressions - case 5 : three-method extended version: duplicate-body branches (foo3) must
-  # still be tracked correctly and not regress foo1/foo2's coverage.
+  # else is Expressions: same as above, plus a third method (foo3) with two
+  # duplicate-body if/else statements, to check the separated tracking.
   assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 14 => "2/2", 19 => 2, 21 => 1, 27 => 2, 29 => 1}
-    macro define_overlay_view(name, downcase)
+    macro test(name, flag)
       struct {{name}}
-        def foo1(ov)
-          if ov
-            {% if downcase %}
-              ov.each { |k, v| puts v }
+        def foo1(v)
+          if v
+            {% if flag %}
+              v.each { |k, v| puts v }
             {% else %}
-              return ov if ov
+              return v if v
             {% end %}
           end
         end
 
         def foo2
-          ({} of String => String)[{% if downcase %} "a".downcase {% else %} "a" {% end %}] = "b"
+          x = {% if flag %} "a" {% else %} "b" {% end %}
         end
 
-        def foo3(ov)
-          if ov.nil?
-            {% if downcase %}
-              ov.each { |k, v| puts v }
+        def foo3(v)
+          if v.nil?
+            {% if flag %}
+              v.each { |k, v| puts v }
             {% else %}
-              ov.each { |k, v| puts v }
+              v.each { |k, v| puts v }
             {% end %}
             return
           end
 
-          {% if downcase %}
-            ov.each { |k, v| puts v }
+          {% if flag %}
+            v.each { |k, v| puts v }
           {% else %}
-            ov.each { |k, v| puts v }
+            v.each { |k, v| puts v }
           {% end %}
         end
       end
     end
 
-    define_overlay_view(A, true)
-    define_overlay_view(B, false)
+    test(A, true)
+    test(B, false)
     CRYSTAL
 end
