@@ -208,6 +208,15 @@ describe HTTP::ChunkedContent do
         chunked.gets
       end
     end
+
+    it "fails on invalid trailer key" do
+      mem = IO::Memory.new("0\r\nFoo\0: Bar\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises ArgumentError, "Invalid header name" do
+        chunked.gets
+      end
+    end
   end
 
   describe "long trailer part" do
