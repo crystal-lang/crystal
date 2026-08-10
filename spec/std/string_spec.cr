@@ -753,6 +753,20 @@ describe "String" do
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
     end
 
+    it "handles consecutive spaces (#17199)" do
+      assert_prints "a  b".titleize, "A  B"
+      assert_prints "a  b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a _b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a_ b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a__b".titleize(underscore_to_space: true), "A  B"
+
+      assert_prints "á  é".titleize, "Á  É"
+      assert_prints "á  é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á _é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á_ é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á__é".titleize(underscore_to_space: true), "Á  É"
+    end
+
     describe "with IO" do
       it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
       it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }

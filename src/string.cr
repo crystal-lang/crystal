@@ -1509,15 +1509,17 @@ class String
           byte = to_unsafe[i]
           if byte < 0x80
             char = byte.unsafe_chr
-            replaced_char, upcase_next = if upcase_next
-                                           {char.upcase, false}
-                                         elsif underscore_to_space && '_' == char
-                                           {' ', true}
-                                         else
-                                           {char.downcase, char.ascii_whitespace?}
-                                         end
+            replaced_char =
+              if underscore_to_space && '_' == char
+                ' '
+              elsif upcase_next
+                char.upcase
+              else
+                char.downcase
+              end
 
             buffer[i] = replaced_char.ord.to_u8!
+            upcase_next = char.ascii_whitespace? || (underscore_to_space && '_' == char)
           else
             buffer[i] = byte
             upcase_next = false
@@ -1542,16 +1544,15 @@ class String
     upcase_next = true
 
     each_char_with_index do |char, i|
-      if upcase_next
-        upcase_next = false
-        char.titlecase(io, options)
-      elsif underscore_to_space && '_' == char
-        upcase_next = true
+      if underscore_to_space && '_' == char
         io << ' '
+      elsif upcase_next
+        char.titlecase(io, options)
       else
-        upcase_next = char.whitespace?
         char.downcase(io, options)
       end
+
+      upcase_next = char.whitespace? || (underscore_to_space && '_' == char)
     end
   end
 
