@@ -108,9 +108,13 @@ class Fiber
       # isolated context).
       private def enter_thread_loop(thread)
         parked = Parked.new(thread)
+        failures = 0
+        parked_for_checkout = false
         parked.synchronize do
           loop do
             if scheduler = thread.scheduler?
+              parked_for_checkout = false
+
               unless thread == @main_thread
                 Thread.name = scheduler.name
               end
@@ -127,8 +131,11 @@ class Fiber
               {% end %}
             end
 
-            @mutex.synchronize do
-              @pool.push pointerof(parked)
+            unless parked_for_checkout
+              @mutex.synchronize do
+                @pool.push pointerof(parked)
+              end
+              parked_for_checkout = true
             end
 
             if thread == @main_thread || {% flag?(:win32) && Crystal::EventLoop.has_constant?(:IOCP) %}
@@ -168,6 +175,9 @@ class Fiber
                 end
               end
             end
+
+            parked_for_checkout = false
+            failures = 0
           rescue exception
             Crystal.trace :sched, "thread.exception",
               class: exception.class.name,
@@ -175,6 +185,20 @@ class Fiber
 
             Crystal.print_error_buffered("BUG: %s#enter_thread_loop crashed",
               self.class.name, exception: exception)
+
+            failures += 1
+            if failures >= 3
+              stop = !parked_for_checkout
+              unless stop
+                @mutex.synchronize do
+                  if parked.linked?
+                    @pool.delete pointerof(parked)
+                    stop = true
+                  end
+                end
+              end
+              return if stop
+            end
           end
         end
       end
