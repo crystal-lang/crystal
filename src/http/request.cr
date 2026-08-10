@@ -48,6 +48,7 @@ class HTTP::Request
   # ```
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#remote_address` instead.")]
   property remote_address : Socket::Address?
 
   # The network address of the HTTP server.
@@ -57,6 +58,7 @@ class HTTP::Request
   # Middlewares can overwrite this value.
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#local_address` instead.")]
   property local_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : self
