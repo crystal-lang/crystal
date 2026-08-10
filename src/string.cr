@@ -2877,7 +2877,7 @@ class String
 
         if str.bytesize == 0
           # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + char_bytesize_at(byte_offset)
+          byte_offset = index + char_bytesize_at(index)
           last_byte_offset = index
         else
           byte_offset = index + str.bytesize
