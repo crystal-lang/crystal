@@ -711,6 +711,8 @@ module Crystal
 
           StringLiteral.new(@value * num)
         end
+      when "bytesize"
+        interpret_check_args { NumberLiteral.new(@value.bytesize) }
       when "camelcase"
         interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)
