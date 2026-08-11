@@ -296,6 +296,7 @@ class HTTP::Request
 
   # Sets request's path component.
   def path=(path : String) : String
+    HTTP.validate_resource(path) unless path.empty?
     uri.path = path
   end
 

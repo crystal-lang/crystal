@@ -138,18 +138,20 @@ module HTTP
       end
 
       it "rejects invalid path" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new "GET", "/"
-        req.path = "foo\r"
-        req.path.should eq "foo\r"
-        req.path = "\r"
-        req.path.should eq "/"
+        expect_raises(ArgumentError, "Invalid HTTP resource") do
+          req.path = "foo\r"
+        end
+        expect_raises(ArgumentError, "Invalid HTTP resource") do
+          req.path = "\r"
+        end
       end
 
       it "accepts empty path" do
         req = Request.new "GET", "/foo"
         req.path = ""
         req.path.should eq "/"
+        req.resource.should eq "/"
       end
     end
 
