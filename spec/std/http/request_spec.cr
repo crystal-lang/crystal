@@ -181,6 +181,15 @@ module HTTP
     end
 
     describe "#body=" do
+      it "returns the value" do
+        req = Request.new("GET", "/")
+        (req.body = "foo").should eq "foo"
+        (req.body = "foo".to_slice).should eq "foo".to_slice
+        io = IO::Memory.new
+        (req.body = io).should be io
+        (req.body = nil).should be_nil
+      end
+
       it "keeps content-length header in sync" do
         # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/", body: "foo")
