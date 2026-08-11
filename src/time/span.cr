@@ -376,7 +376,7 @@ struct Time::Span
 
   # Creates a new `Time::Span` representing a span of zero time.
   def self.zero : Time::Span
-    ZERO
+    new(nanoseconds: 0)
   end
 
   # Returns `true` if `self` represents a span of zero time.
