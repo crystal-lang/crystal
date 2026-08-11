@@ -1,9 +1,12 @@
 require "c/pthread"
 require "c/sched"
+require "c/semaphore"
 require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::PthreadT
+
+  @semaphore = uninitialized LibC::SemT
 
   def to_unsafe
     @system_handle
@@ -132,6 +135,7 @@ module Crystal::System::Thread
   end
 
   private def system_close
+    LibC.sem_destroy(pointerof(@semaphore))
     GC.pthread_detach(@system_handle)
   end
 
@@ -269,6 +273,24 @@ module Crystal::System::Thread
   private def system_resume : Nil
     if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
       System.panic("pthread_kill()", Errno.value)
+    end
+  end
+
+  protected def init_semaphore : Nil
+    if LibC.sem_init(pointerof(@semaphore), 0, 0) == -1
+      raise RuntimeError.from_errno("sem_init")
+    end
+  end
+
+  def wait : Nil
+    if LibC.sem_wait(pointerof(@semaphore)) == -1
+      raise RuntimeError.from_errno("sem_wait")
+    end
+  end
+
+  def wake : Nil
+    if LibC.sem_post(pointerof(@semaphore)) == -1
+      raise RuntimeError.from_errno("sem_post")
     end
   end
 
