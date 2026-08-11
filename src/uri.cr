@@ -464,6 +464,7 @@ class URI
         path = base
       elsif !base.empty?
         out_base = base.ends_with?('/') ? base : base[0..base.rindex('/')]
+        out_base = "" unless out_base.ends_with?("/")
         path = String.interpolation(out_base, path)
       end
     end
