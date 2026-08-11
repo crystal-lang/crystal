@@ -807,10 +807,26 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
-      it "ignores invalid content-type" do
+      it "ignores missing content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should be_nil
         request.form_params.size.should eq(0)
+      end
+
+      it "ignores unknown content-type" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "unknown/type"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
+      end
+
+      it "ignores invalid content-type" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "//"}, HTTP::Params.encode({"test" => "foobar"}))
+        expect_raises(MIME::Error, "Invalid '/'") do
+          request.form_params?
+        end
+        expect_raises(MIME::Error, "Invalid '/'") do
+          request.form_params
+        end
       end
     end
 
