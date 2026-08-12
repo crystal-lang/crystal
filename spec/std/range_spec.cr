@@ -673,6 +673,21 @@ describe "Range" do
         [RangeSpecIntWrapper.new(Int32::MAX - 2)],
         (RangeSpecIntWrapper.new(Int32::MAX - 2)..RangeSpecIntWrapper.new(Int32::MAX - 1)).step(by: 2)
     end
+
+    it "raises on invalid step size" do
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0)
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0)
+      end
+    end
   end
 
   describe "map" do
