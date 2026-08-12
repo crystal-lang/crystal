@@ -107,6 +107,10 @@ module Crystal
           if fiber.execution_context?
             Waiter.new(fiber)
           else
+            # the fiber is a bare thread's main fiber, either never associated
+            # to an execution context, or the thread got detached (thread pool),
+            # and there is no scheduler to suspend/enqueue the fiber; instead we
+            # suspend/resume the thread
             Waiter.new(Thread.current)
           end
         {% else %}
