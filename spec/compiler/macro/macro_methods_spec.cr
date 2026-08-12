@@ -3565,6 +3565,14 @@ module Crystal
       end
     end
 
+    describe NumberLiteral do
+      describe "#chr" do
+        it "executes chr" do
+          assert_macro %({{x.chr}}), %('a'), {x: 97.int32}
+        end
+      end
+    end
+
     describe ClassDef do
       class_def = ClassDef.new(Path.new("Foo"), abstract: true, superclass: Path.new("Parent"))
       struct_def = ClassDef.new(Path.new("Foo", "Bar", global: true), type_vars: %w(A B C D), splat_index: 2, struct: true, body: CharLiteral.new('a'))
