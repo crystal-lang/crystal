@@ -95,7 +95,15 @@ struct BigRational < Number
   end
 
   def <=>(other : Float::Primitive) : Int32?
-    self <=> BigRational.new(other) unless other.nan?
+    return nil if other.nan?
+    # `BigRational.new` rejects non-finite floats, so order against an infinity
+    # directly: every finite rational is greater than -Infinity and less than
+    # +Infinity. `Float#infinite?` is `1` for +Infinity and `-1` for -Infinity.
+    if inf = other.infinite?
+      -inf
+    else
+      self <=> BigRational.new(other)
+    end
   end
 
   def <=>(other : BigFloat) : Int32
