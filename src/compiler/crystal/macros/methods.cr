@@ -1336,7 +1336,7 @@ module Crystal
           end
 
           range.each do |num|
-            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.define_var(block_arg.name, num) if block_arg
             interpreter.accept block.body
           end
 
@@ -1347,15 +1347,13 @@ module Crystal
           block_arg = block.args.first?
 
           interpret_map(block, interpreter) do |num|
-            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.define_var(block_arg.name, num) if block_arg
             interpreter.accept block.body
           end
         end
       when "to_a"
         interpret_check_args do
-          interpret_map(nil, interpreter) do |num|
-            NumberLiteral.new(num)
-          end
+          interpret_map(nil, interpreter, &.itself)
         end
       else
         super
@@ -1378,7 +1376,7 @@ module Crystal
       node = interpreter.accept(self.from)
       from = case node
              when NumberLiteral
-               node.to_number.to_i
+               node
              else
                raise "range begin must be a NumberLiteral, not #{node.class_desc}"
              end
@@ -1386,7 +1384,7 @@ module Crystal
       node = interpreter.accept(self.to)
       to = case node
            when NumberLiteral
-             node.to_number.to_i
+             node
            else
              raise "range end must be a NumberLiteral, not #{node.class_desc}"
            end
