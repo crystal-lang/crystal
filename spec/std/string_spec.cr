@@ -2031,6 +2031,13 @@ describe "String" do
       "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
     end
 
+    it "empty match + advanced offset" do
+      "a  b".gsub(/(?= )/, "-").should eq "a- - b"
+      "┬  7".gsub(/(?= )/, "-").should eq "┬- - 7"
+      "a  ".gsub(/(?<= )/, "-").should eq "a - -"
+      "┬  ".gsub(/(?<= )/, "-").should eq "┬ - -"
+    end
+
     it "empty string" do
       "ab".gsub("", "-").should eq "-a-b-"
       "┬7".gsub("", "-").should eq "-┬-7-"
