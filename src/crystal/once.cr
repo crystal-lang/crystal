@@ -14,18 +14,43 @@ require "crystal/spin_lock"
 module Crystal
   # :nodoc:
   module Once
+    struct Waiter
+      include PointerLinkedList::Node
+
+      def initialize(@object : Fiber | Thread)
+      end
+
+      def suspend : Nil
+        case object = @object
+        in Fiber
+          Fiber.suspend
+        in Thread
+          object.wait
+        end
+      end
+
+      def enqueue : Nil
+        case object = @object
+        in Fiber
+          object.enqueue
+        in Thread
+          object.wake
+        end
+      end
+    end
+
     struct Operation
       include PointerLinkedList::Node
 
       getter fiber : Fiber
       getter flag : Bool*
 
-      def initialize(@flag : Bool*, @fiber : Fiber)
-        @waiting = PointerLinkedList(Fiber::PointerLinkedListNode).new
+      def initialize(@flag, @fiber)
+        @waiting = PointerLinkedList(Waiter).new
       end
 
-      def add_waiter(node) : Nil
-        @waiting.push(node)
+      def add_waiter(waiter : Pointer(Waiter)) : Nil
+        @waiting.push(waiter)
       end
 
       def resume_all : Nil
@@ -75,10 +100,23 @@ module Crystal
     end
 
     private def self.wait_initializer(operation)
-      waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
-      operation.value.add_waiter(pointerof(waiting))
+      fiber = Fiber.current
+
+      waiter =
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          if fiber.execution_context?
+            Waiter.new(fiber)
+          else
+            Waiter.new(Thread.current)
+          end
+        {% else %}
+          Waiter.new(fiber)
+        {% end %}
+
+      operation.value.add_waiter(pointerof(waiter))
       @@spin.unlock
-      Fiber.suspend
+
+      waiter.suspend
     end
 
     private def self.run_initializer(flag, &)
