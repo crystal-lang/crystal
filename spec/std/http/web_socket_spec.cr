@@ -38,6 +38,15 @@ private class MalformerHandler
   end
 end
 
+private def protocol_pair(&)
+  IO::Stapled.pipe do |io1, io2|
+    pr1 = HTTP::WebSocket::Protocol.new(io1)
+    pr2 = HTTP::WebSocket::Protocol.new(io2)
+
+    yield pr1, pr2
+  end
+end
+
 describe HTTP::WebSocket do
   describe "Protocol#receive" do
     it "can read a small text packet" do
@@ -177,6 +186,39 @@ describe HTTP::WebSocket do
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
+    end
+  end
+
+  describe "#receive" do
+    it "reads ping packet in between fragmented packet" do
+      protocol_pair do |a, b|
+        a.send "Hel".to_slice, :text, :none
+        a.ping "Foo"
+        a.send "lo".to_slice, :text
+
+        # BUG: The message should be "Hello"
+        HTTP::WebSocket.new(b).receive?.should eq "lo"
+
+        buffer = Bytes.new(16)
+        info = a.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::PONG
+
+        # BUG: The message should be "Foo"
+        buffer[0, info.size].should eq "HelFoo".to_slice
+      end
+    end
+
+    pending "rejects invalid packets" do
+      protocol_pair do |a, b|
+        a.send Bytes.empty, :ping, :none
+
+        ws = HTTP::WebSocket.new(b)
+        ws.receive?.should be_nil
+        ws.closed?.should be_true
+
+        info = a.receive(Bytes.empty)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+      end
     end
   end
 
