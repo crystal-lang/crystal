@@ -38,6 +38,15 @@ private class MalformerHandler
   end
 end
 
+private def protocol_pair(&)
+  IO::Stapled.pipe do |io1, io2|
+    pr1 = HTTP::WebSocket::Protocol.new(io1)
+    pr2 = HTTP::WebSocket::Protocol.new(io2)
+
+    yield pr1, pr2
+  end
+end
+
 describe HTTP::WebSocket do
   describe "Protocol#receive" do
     it "can read a small text packet" do
@@ -177,6 +186,20 @@ describe HTTP::WebSocket do
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
+    end
+  end
+
+  describe "#receive" do
+    it "rejects mixed opcode continuation" do
+      protocol_pair do |a, b|
+        a.send "Foo".to_slice, :text, :none
+        a.send "Bar".to_slice, :binary
+
+        ws = HTTP::WebSocket.new(b)
+        # BUG: Should reject mixed opcodes
+        ws.receive?.should eq "FooBar".to_slice
+        ws.closed?.should be_false
+      end
     end
   end
 
