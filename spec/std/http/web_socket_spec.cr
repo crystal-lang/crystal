@@ -196,9 +196,11 @@ describe HTTP::WebSocket do
         a.send "Bar".to_slice, :binary
 
         ws = HTTP::WebSocket.new(b)
-        # BUG: Should reject mixed opcodes
-        ws.receive?.should eq "FooBar".to_slice
-        ws.closed?.should be_false
+        ws.receive?.should be_nil
+        ws.closed?.should be_true
+
+        info = a.receive(Bytes.empty)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
       end
     end
   end

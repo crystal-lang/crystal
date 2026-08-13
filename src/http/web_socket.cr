@@ -5,6 +5,8 @@ require "./headers"
 class HTTP::WebSocket
   getter? closed = false
 
+  @current_message_opcode : Protocol::Opcode? = nil
+
   # :nodoc:
   def initialize(io : IO, sync_close = true)
     initialize(Protocol.new(io, sync_close: sync_close))
@@ -204,20 +206,36 @@ class HTTP::WebSocket
           @current_message.clear
         end
       in .text?
+        unless @current_message_opcode.in?(nil, info.opcode)
+          close CloseCode::ProtocolError
+          return nil
+        end
+
         @current_message.write @buffer[0, info.size]
         if info.final
           message = @current_message.to_s
           @on_message.try &.call(message)
           @current_message.clear
+          @current_message_opcode = nil
           return message
+        else
+          @current_message_opcode = info.opcode
         end
       in .binary?
+        unless @current_message_opcode.in?(nil, info.opcode)
+          close CloseCode::ProtocolError
+          return nil
+        end
+
         @current_message.write @buffer[0, info.size]
         if info.final
           slice = @current_message.to_slice.clone
           @on_binary.try &.call(slice)
           @current_message.clear
+          @current_message_opcode = nil
           return slice
+        else
+          @current_message_opcode = info.opcode
         end
       in .close?
         @current_message.write @buffer[0, info.size]
