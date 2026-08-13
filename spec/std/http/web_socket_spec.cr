@@ -196,19 +196,17 @@ describe HTTP::WebSocket do
         a.ping "Foo"
         a.send "lo".to_slice, :text
 
-        # BUG: The message should be "Hello"
-        HTTP::WebSocket.new(b).receive?.should eq "lo"
+        HTTP::WebSocket.new(b).receive?.should eq "Hello"
 
         buffer = Bytes.new(16)
         info = a.receive(buffer)
         info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::PONG
 
-        # BUG: The message should be "Foo"
-        buffer[0, info.size].should eq "HelFoo".to_slice
+        buffer[0, info.size].should eq "Foo".to_slice
       end
     end
 
-    pending "rejects invalid packets" do
+    it "rejects invalid packets" do
       protocol_pair do |a, b|
         a.send Bytes.empty, :ping, :none
 
