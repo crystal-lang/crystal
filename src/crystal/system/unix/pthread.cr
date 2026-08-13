@@ -7,7 +7,7 @@ module Crystal::System::Thread
   alias Handle = LibC::PthreadT
 
   {% if flag?(:darwin) %}
-    @semaphore : LibC::SemT* = LibC::SEM_FAILED
+    @semaphore : LibC::SemT* = Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
   {% else %}
     @semaphore = uninitialized LibC::SemT
   {% end %}
@@ -290,9 +290,9 @@ module Crystal::System::Thread
       # to a named semaphore that we immediately unlink to keep it private (and
       # maybe leaking a semaphore name); it will be destroyed when we close it,
       # at worst on exec or when the process exits
-      sem_name = "/crystal-thread-#{LibC.getpid}-#{@system_handle.address}"
+      sem_name = "/crystal-thread-#{LibC.getpid}-#{LibC.gettid}"
       @semaphore = LibC.sem_open(sem_name, LibC::O_CREAT | LibC::O_EXCL, 0o644, 0)
-      raise RuntimeError.from_errno("sem_open") if @semaphore == LibC::SEM_FAILED
+      raise RuntimeError.from_errno("sem_open") if @semaphore == Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
       LibC.sem_unlink(sem_name)
     {% else %}
       if LibC.sem_init(pointerof(@semaphore), 0, 0) == -1
