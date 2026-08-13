@@ -290,7 +290,8 @@ module Crystal::System::Thread
       # to a named semaphore that we immediately unlink to keep it private (and
       # maybe leaking a semaphore name); it will be destroyed when we close it,
       # at worst on exec or when the process exits
-      sem_name = "/crystal-thread-#{LibC.getpid}-#{LibC.gettid}"
+      LibC.pthread_threadid_np(@system_handle, out tid)
+      sem_name = "/crystal-thread-#{LibC.getpid}-#{tid}"
       @semaphore = LibC.sem_open(sem_name, LibC::O_CREAT | LibC::O_EXCL, 0o644, 0)
       raise RuntimeError.from_errno("sem_open") if @semaphore == Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
       LibC.sem_unlink(sem_name)

@@ -30,7 +30,6 @@ lib LibC
   fun getpgid(x0 : PidT) : PidT
   fun getpid : PidT
   fun getppid : PidT
-  fun gettid : PidT
   fun getuid : UidT
   fun setuid(uid : UidT) : Int
   fun isatty(x0 : Int) : Int
