@@ -4,15 +4,27 @@ module YAML::Schema::Core
   # Deserializes a YAML document.
   #
   # Same as `YAML.parse`.
-  def self.parse(data : String | IO, options = Options.new) : YAML::Any
+  def self.parse(data : String | IO, options : Options = Options.new) : YAML::Any
     Parser.new data, options, &.parse
+  end
+
+  # Same as `.parse(String | IO, Options)` but passing options as keyword
+  # arguments.
+  def self.parse(data : String | IO, **options) : YAML::Any
+    Parser.new data, Options.new(**options), &.parse
   end
 
   # Deserializes multiple YAML documents.
   #
   # Same as `YAML.parse_all`.
-  def self.parse_all(data : String | IO, options = Options.new) : Array(YAML::Any)
+  def self.parse_all(data : String | IO, options : Options = Options.new) : Array(YAML::Any)
     Parser.new data, options, &.parse_all
+  end
+
+  # Same as `.parse_all(String | IO, Options)` but passing options as keyword
+  # arguments.
+  def self.parse_all(data : String | IO, **options) : Array(YAML::Any)
+    Parser.new data, Options.new(**options), &.parse_all
   end
 
   # Assuming the *pull_parser* is positioned in a scalar,

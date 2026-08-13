@@ -12,10 +12,20 @@ def Object.from_yaml(string_or_io : String | IO, options : YAML::Options = YAML:
   new(YAML::ParseContext.new, parse_yaml(string_or_io, options))
 end
 
+# Same as `.from_yaml(String | IO, Options)` but passing options as keyword
+# arguments.
+def Object.from_yaml(string_or_io : String | IO, **options)
+  from_yaml(string_or_io, YAML::Options.new(**options))
+end
+
 def Array.from_yaml(string_or_io : String | IO, options : YAML::Options = YAML::Options.new, &)
   new(YAML::ParseContext.new, parse_yaml(string_or_io, options)) do |element|
     yield element
   end
+end
+
+def Array.from_yaml(string_or_io : String | IO, **options)
+  from_yaml(string_or_io, YAML::Options.new(**options))
 end
 
 private def parse_yaml(string_or_io, options)

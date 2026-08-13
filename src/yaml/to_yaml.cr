@@ -5,6 +5,11 @@ class Object
     end
   end
 
+  # Same as `.to_yaml(Options)` but passing options as keyword arguments.
+  def to_yaml(*, max_nesting = 99, **options) : String
+    to_yaml YAML::Options.new(**options, max_nesting: max_nesting)
+  end
+
   def to_yaml(io : IO, options : YAML::Options = YAML::Options.new(max_nesting: 99)) : Nil
     # First convert the object to an in-memory tree.
     # With this, `to_yaml` will be invoked just once
@@ -17,6 +22,11 @@ class Object
     YAML.build(io, options) do |builder|
       nodes_builder.document.to_yaml(builder)
     end
+  end
+
+  # Same as `.to_yaml(IO, Options)` but passing options as keyword arguments.
+  def to_yaml(io : IO, *, max_nesting = 99, **options) : String
+    to_yaml YAML::Options.new(**options, max_nesting: max_nesting)
   end
 end
 
