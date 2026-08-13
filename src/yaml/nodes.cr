@@ -9,12 +9,12 @@ require "./parser"
 # invoking `to_yaml` on the document object.
 module YAML::Nodes
   # Parses a `String` or `IO` into a `YAML::Nodes::Document`.
-  def self.parse(string_or_io : String | IO) : Document
-    Parser.new string_or_io, &.parse
+  def self.parse(string_or_io : String | IO, options = Options.new) : Document
+    Parser.new string_or_io, options, &.parse
   end
 
   # Parses a `String` or `IO` into multiple `YAML::Nodes::Document`s.
-  def self.parse_all(string_or_io : String | IO) : Array(Document)
-    Parser.new string_or_io, &.parse_all
+  def self.parse_all(string_or_io : String | IO, options = Options.new) : Array(Document)
+    Parser.new string_or_io, options, &.parse_all
   end
 end

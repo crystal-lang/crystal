@@ -8,18 +8,18 @@
 # ```
 # Hash(String, String).from_yaml("{env: production}") # => {"env" => "production"}
 # ```
-def Object.from_yaml(string_or_io : String | IO)
-  new(YAML::ParseContext.new, parse_yaml(string_or_io))
+def Object.from_yaml(string_or_io : String | IO, options : YAML::Options = YAML::Options.new)
+  new(YAML::ParseContext.new, parse_yaml(string_or_io, options))
 end
 
-def Array.from_yaml(string_or_io : String | IO, &)
-  new(YAML::ParseContext.new, parse_yaml(string_or_io)) do |element|
+def Array.from_yaml(string_or_io : String | IO, options : YAML::Options = YAML::Options.new, &)
+  new(YAML::ParseContext.new, parse_yaml(string_or_io, options)) do |element|
     yield element
   end
 end
 
-private def parse_yaml(string_or_io)
-  document = YAML::Nodes.parse(string_or_io)
+private def parse_yaml(string_or_io, options)
+  document = YAML::Nodes.parse(string_or_io, options)
 
   # If the document is empty we simulate an empty scalar with
   # plain style, that parses to Nil

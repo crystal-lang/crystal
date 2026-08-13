@@ -1,11 +1,11 @@
 class Object
-  def to_yaml : String
+  def to_yaml(options : YAML::Options = YAML::Options.new(max_nesting: 99)) : String
     String.build do |io|
-      to_yaml(io)
+      to_yaml(io, options)
     end
   end
 
-  def to_yaml(io : IO) : Nil
+  def to_yaml(io : IO, options : YAML::Options = YAML::Options.new(max_nesting: 99)) : Nil
     # First convert the object to an in-memory tree.
     # With this, `to_yaml` will be invoked just once
     # on every object and we can use anchors and aliases
@@ -14,7 +14,7 @@ class Object
     to_yaml(nodes_builder)
 
     # Then we convert the tree to YAML.
-    YAML.build(io) do |builder|
+    YAML.build(io, options) do |builder|
       nodes_builder.document.to_yaml(builder)
     end
   end

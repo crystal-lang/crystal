@@ -128,8 +128,8 @@ module YAML
   # # => "paragraph" => "foo\nbar\n"
   # # => }
   # ```
-  def self.parse(data : String | IO) : Any
-    YAML::Schema::Core.parse(data)
+  def self.parse(data : String | IO, options = Options.new) : Any
+    YAML::Schema::Core.parse(data, options)
   end
 
   # Deserializes multiple YAML documents according to the core schema.
@@ -147,8 +147,8 @@ module YAML
   # YAML.parse_all(File.read("./foo.yml"))
   # # => [{"foo" => "bar"}, {"hello" => "world"}]
   # ```
-  def self.parse_all(data : String) : Array(Any)
-    YAML::Schema::Core.parse_all(data)
+  def self.parse_all(data : String, options = Options.new) : Array(Any)
+    YAML::Schema::Core.parse_all(data, options)
   end
 
   # Serializes an object to YAML, returning it as a `String`.
