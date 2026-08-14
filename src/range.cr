@@ -214,6 +214,7 @@ struct Range(B, E)
     if current.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
@@ -244,6 +245,7 @@ struct Range(B, E)
     if start.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
