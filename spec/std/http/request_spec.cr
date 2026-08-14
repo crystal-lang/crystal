@@ -291,6 +291,27 @@ module HTTP
       end
     end
 
+    it ".from_io automatically decompresses" do
+      compressed = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("foobar"))
+      end
+
+      io = IO::Memory.new
+      io << <<-HTTP
+        POST / HTTP/1.1
+        Content-Encoding: gzip
+        Content-Length: #{compressed.bytesize}
+
+        #{compressed}
+
+        HTTP
+      io.rewind
+      request = HTTP::Request.from_io(io).should be_a(HTTP::Request)
+      request.headers["Content-Encoding"]?.should be_nil
+      body = request.body.should_not be_nil
+      body.gets_to_end.should eq "foobar"
+    end
+
     describe "keep-alive" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
