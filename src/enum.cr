@@ -492,6 +492,10 @@ abstract struct Enum
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
+  def self.parse(slice : Bytes) : self
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{String.new(slice)}")
+  end
+
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
@@ -508,6 +512,10 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
+    parse? string.to_slice
+  end
+
+  def self.parse?(slice : Bytes) : self?
     {% begin %}
       # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
       # to figure out how much space we actually need. Maybe some regex could
@@ -520,13 +528,30 @@ abstract struct Enum
       {% max_size = @type.constants.map(&.size).sort.last %}
       buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
       appender = buffer.to_unsafe.appender
-      char_counter = 0
-      string.each_char do |char|
-        next if char == '-' || char == '_'
-        char_counter += 1
-        return nil if char_counter > {{max_size}}
-        char.downcase &.each_byte do |byte|
-          appender << byte
+      byte_counter = 0
+      pos = 0
+      while pos < slice.size
+        byte = slice.unsafe_fetch(pos)
+
+        if byte < 0x80
+          # The byte is ASCII, so it contains the full Char value
+          pos += 1
+          next if byte == '-'.ord || byte == '_'.ord
+          byte_counter += 1
+          return nil if byte == 0
+          return nil if byte_counter > {{max_size * 4}}
+          # Setting the 6th bit on an alphabetical ASCII byte is a downcase.
+          appender << ('A'.ord <= byte <= 'Z'.ord ? byte | 0x20_u8 : byte)
+        else
+          # Multi-byte characters need to be decoded so `Char#downcase` can
+          # apply the same Unicode case mapping as the compile-time
+          # normalization of the member names.
+          char, width = decode_utf8_char(slice, pos)
+          pos += width
+          downcased = char.downcase
+          byte_counter += downcased.bytesize
+          return nil if byte_counter > {{max_size * 4}}
+          downcased.each_byte { |b| appender << b }
         end
       end
       # Temporarily map all constants to their normalized value in order to
@@ -549,6 +574,39 @@ abstract struct Enum
         nil
       end
     {% end %}
+  end
+
+  # Decodes the UTF8-encoded character starting at `pos` in `slice` and
+  # returns it along with its width in bytes. Invalid byte sequences decode
+  # to `Char::REPLACEMENT` with a width of 1, the same as `Char::Reader` does.
+  #
+  # TODO: This should probably live somewhere other than `Enum`.
+  private def self.decode_utf8_char(slice : Bytes, pos : Int) : {Char, Int32}
+    first = slice[pos].to_u32!
+
+    second = slice.fetch(pos + 1) { 0u32 }
+    return {Char::REPLACEMENT, 1} if first < 0xc2 || second & 0xc0 != 0x80
+
+    return {((first << 6) &+ second &- 0x3080).unsafe_chr, 2} if first < 0xe0
+
+    third = slice.fetch(pos + 2) { 0u32 }
+    if third & 0xc0 != 0x80 ||
+       (first == 0xe0 && second < 0xa0) || # overlong encoding
+       (first == 0xed && second >= 0xa0)   # UTF-16 surrogate?
+      return {Char::REPLACEMENT, 1}
+    end
+
+    return {((first << 12) &+ (second << 6) &+ third &- 0xe2080).unsafe_chr, 3} if first < 0xf0
+
+    fourth = slice.fetch(pos + 3) { 0u32 }
+    if fourth & 0xc0 != 0x80 ||
+       (first == 0xf0 && second < 0x90) ||  # overlong encoding
+       (first == 0xf4 && second >= 0x90) || # beyond Unicode range?
+       first > 0xf4                         # beyond Unicode range?
+      return {Char::REPLACEMENT, 1}
+    end
+
+    {((first << 18) &+ (second << 12) &+ (third << 6) &+ fourth &- 0x3c82080).unsafe_chr, 4}
   end
 
   def clone
