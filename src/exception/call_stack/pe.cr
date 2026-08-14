@@ -7,25 +7,25 @@ struct Exception::CallStack
   DEBUG_ABBREV   = ".debug_abbrev"
   DEBUG_INFO     = ".debug_info"
 
+  @@base_address = 0_u64
   @@coff_symbols : Hash(Int32, Array(Crystal::System::PE::COFFSymbol))?
 
   protected def self.load_debug_info_impl : Nil
-    program = Process.executable_path
-    return unless program && File::Info.readable? program
+    return unless path = Process.executable_path
+    return if LibC.GetModuleHandleExW(LibC::GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nil, out hmodule) == 0
+    return unless program = Crystal::System::PE.open(path)
 
-    ret = LibC.GetModuleHandleExW(LibC::GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, nil, out hmodule)
-    return if ret == 0
+    @@base_address = hmodule.address - program.original_image_base
+    @@coff_symbols = program.read_coff_symbols
 
-    Crystal::System::PE.open(program) do |image|
-      @@coff_symbols = image.read_coff_symbols
-      read_dwarf_sections(image, hmodule.address - image.original_image_base)
-    end
-  rescue ex
-    @@dwarf_line_numbers = nil
-    @@dwarf_function_names = nil
+    preload_dwarf_sections(program)
   end
 
   protected def self.decode_address(ip)
-    ip.address
+    if ip.null?
+      ip.address
+    else
+      ip.address &- @@base_address
+    end
   end
 end
