@@ -7,6 +7,11 @@ private def requestize(string)
   string.gsub('\n', "\r\n")
 end
 
+private class MemoryIOWithAddresses < IO::Memory
+  property local_address : Socket::Address?
+  property remote_address : Socket::Address?
+end
+
 describe HTTP::Server::RequestProcessor do
   it "works" do
     processor = HTTP::Server::RequestProcessor.new do |context|
@@ -348,5 +353,29 @@ describe HTTP::Server::RequestProcessor do
     logs.entry.context.should be_empty
     logs.check :info, "after"
     logs.entry.context[:foo].should eq "bar"
+  end
+
+  it "sets local_address and remote_address" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.print context.local_address
+      context.response.print "\r\n"
+      context.response.print context.remote_address
+    end
+
+    input = MemoryIOWithAddresses.new("GET / HTTP/1.1\r\n\r\n")
+    input.local_address = Socket::IPAddress.new("0.0.0.0", 12345)
+    input.remote_address = Socket::IPAddress.new("1.2.3.4", 5678)
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.rewind
+    output.gets_to_end.should eq(requestize(<<-HTTP
+      HTTP/1.1 200 OK
+      Connection: keep-alive
+      Content-Length: 27
+
+      0.0.0.0:12345
+      1.2.3.4:5678
+      HTTP
+    ))
   end
 end
