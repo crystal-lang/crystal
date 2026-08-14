@@ -988,6 +988,46 @@ describe IO do
   {% end %}
 
   describe "#close" do
+    it "raises IO::ClosedError when reading from a closed IO::Memory" do
+      io = IO::Memory.new("hello")
+      io.close
+
+      expect_raises(IO::ClosedError, "Closed stream") do
+        io.read(Bytes.new(1))
+      end
+    end
+
+    it "raises IO::ClosedError when writing to a closed IO::Memory" do
+      io = IO::Memory.new
+      io.close
+
+      expect_raises(IO::ClosedError, "Closed stream") do
+        io.write(Bytes[1])
+      end
+    end
+
+    it "can still be rescued as IO::Error" do
+      io = IO::Memory.new("hello")
+      io.close
+
+      error = expect_raises(IO::Error, "Closed stream") do
+        io.read(Bytes.new(1))
+      end
+      error.should be_a(IO::ClosedError)
+    end
+
+    it "doesn't rescue closed streams as EOF" do
+      io = IO::Memory.new("hello")
+      io.close
+
+      expect_raises(IO::ClosedError, "Closed stream") do
+        begin
+          io.read(Bytes.new(1))
+        rescue IO::EOFError
+        end
+      end
+    end
+
     it "aborts 'read' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
@@ -1029,6 +1069,14 @@ describe IO do
 
         write.close
         ch.receive.should eq SpecChannelStatus::End
+      end
+    end
+  end
+
+  describe IO::ClosedError do
+    describe ".new" do
+      it "defaults to a closed stream message" do
+        IO::ClosedError.new.message.should eq("Closed stream")
       end
     end
   end
