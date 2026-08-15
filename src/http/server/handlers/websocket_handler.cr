@@ -37,6 +37,11 @@ class HTTP::WebSocketHandler
       return
     end
 
+    unless context.request.headers.has_key?("Host")
+      response.respond_with_status(:bad_request)
+      return
+    end
+
     version = context.request.headers["Sec-WebSocket-Version"]?
     unless version == WebSocket::Protocol::VERSION
       response.status = :upgrade_required
