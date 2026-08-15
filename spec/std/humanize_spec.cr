@@ -304,7 +304,7 @@ end
 describe Int do
   describe "#humanize_bytes" do
     # default IEC
-    it { assert_prints 1024.humanize_bytes, "1.0kiB" }
+    it { assert_prints 1024.humanize_bytes, "1.0KiB" }
 
     it { assert_prints 0.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "0B" }
     it { assert_prints 1.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC), "1B" }
@@ -329,7 +329,7 @@ describe Int do
     it { assert_prints 1.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u2009'), "1\u2009B" }
     it { assert_prints 1152921504606846976.humanize_bytes(format: Int::BinaryPrefixFormat::JEDEC, unit_separator: '\u2009'), "1.0\u2009EB" }
 
-    it { assert_prints 1024.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0kiB" }
+    it { assert_prints 1024.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0KiB" }
     it { assert_prints 1073741824.humanize_bytes(format: Int::BinaryPrefixFormat::IEC), "1.0GiB" }
   end
 end
