@@ -115,6 +115,28 @@ describe HTTP::WebSocketHandler do
     io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
   end
 
+  it "returns bad request if the request method is not GET" do
+    io = IO::Memory.new
+
+    headers = HTTP::Headers{
+      "Host"                  => "example.com",
+      "Upgrade"               => "websocket",
+      "Connection"            => "Upgrade",
+      "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version" => "13",
+    }
+    request = HTTP::Request.new("POST", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
+  end
+
   it "returns upgrade required if Sec-WebSocket-Version is missing" do
     io = IO::Memory.new
 
