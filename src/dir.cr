@@ -294,7 +294,7 @@ class Dir
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
   #
-  # Does nothing if the directory already exists.
+  # Does nothing if the directories already exists.
   def self.mkdir_p(path : Path | String, mode : Int32 = 0o777) : Nil
     return if Dir.exists?(path)
 
