@@ -73,6 +73,14 @@ describe IO::Memory do
       io.@capacity.should_not eq old_capacity
     end
 
+    it "appends to itself even when messing with pos" do
+      io = IO::Memory.new(8)
+      io << "ABCDEF"
+      io.pos = 7
+      io.to_s(io)
+      io.to_s.should eq "ABCDEF\0ABCDEF"
+    end
+
     {% if flag?(:without_iconv) %}
       pending "encoding"
     {% else %}
