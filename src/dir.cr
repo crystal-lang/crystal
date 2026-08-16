@@ -284,6 +284,7 @@ class Dir
   # Dir.mkdir("testdir")
   # Dir.exists?("testdir") # => true
   # ```
+  #
   # Throws if the directory already exists.
   def self.mkdir(path : Path | String, mode : Int32 = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
@@ -292,6 +293,8 @@ class Dir
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
+  #
+  # Does nothing if the directory already exists.
   def self.mkdir_p(path : Path | String, mode : Int32 = 0o777) : Nil
     return if Dir.exists?(path)
 
