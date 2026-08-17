@@ -285,7 +285,7 @@ class Dir
   # Dir.exists?("testdir") # => true
   # ```
   #
-  # Throws if the directory already exists.
+  # Raises `File::AlreadyExistsError` if the directory already exists.
   def self.mkdir(path : Path | String, mode : Int32 = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
   end
