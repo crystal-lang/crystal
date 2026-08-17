@@ -196,7 +196,7 @@ struct Int
   #
   # This uses floored division.
   #
-  # See `Int#/` for more details.
+  # See `Int#//` for more details.
   def %(other : Int)
     {% begin %}
       if other == 0
