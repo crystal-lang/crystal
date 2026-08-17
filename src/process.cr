@@ -483,7 +483,7 @@ class Process
   # *command* is either a path to the executable to run, or the name of an
   # executable which is then looked up by the operating system.
   # The lookup uses the `PATH` variable of the current process environment
-  # (i.e. `ENV["PATH"]).
+  # (i.e. `ENV["PATH"]`).
   # In order to resolve to a specific executable, provide a path instead of
   # only a command name. `Process.find_executable` can help with looking up a
   # command in a custom `PATH`.
