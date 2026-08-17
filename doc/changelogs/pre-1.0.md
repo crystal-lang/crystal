@@ -2942,7 +2942,7 @@
 
 - Added support for OpenBSD (thanks @wmoxam and @ysbaddaden)
 - More iconv fixes for FreeBSD (thanks @ysbaddaden)
-- Changed how `require` works for the upcoming `shards` release (this is backwards compatible). See https://github.com/crystal-lang/crystal/pull/2788
+- Changed how `require` works for the upcoming `shards` release (this is backwards compatible). See [#2788](https://github.com/crystal-lang/crystal/pull/2788)
 - Added `Atomic` and exposed all LLVM atomic instructions to Crystal (needed to implemented multiple-thread support)
 - Added `Process.executable_path` (thanks @kostya, @whereami and @ysbaddaden)
 - Added `HTML.unescape` (thanks @dukex)
@@ -3242,7 +3242,7 @@
 
 - Fixed regression with formatter ([#2348](https://github.com/crystal-lang/crystal/issues/2348))
 - Fixed regression with block return types ([#2347](https://github.com/crystal-lang/crystal/issues/2347))
-- Fixed regression with openssl (https://github.com/crystal-lang/crystal/commit/78c12caf2366b01f949046e78ad4dab65d0d80d4)
+- Fixed regression with openssl ([`78c12c`](https://github.com/crystal-lang/crystal/commit/78c12caf2366b01f949046e78ad4dab65d0d80d4))
 
 ### 0.14.1 (2016-03-21)
 

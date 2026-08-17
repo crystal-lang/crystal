@@ -9,9 +9,6 @@
 disable = [
   # TODO: We might want to consider automatic wrapping (maybe with https://github.com/razziel89/mdslw ?)
   "line-length",
-  # FIXME: Bug in rumdl: https://github.com/rvben/rumdl/issues/665
-  "no-space-in-code",
-  "no-bare-urls",
 ]
 
 exclude = [

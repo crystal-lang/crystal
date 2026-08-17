@@ -517,41 +517,28 @@ abstract struct Enum
 
   def self.parse?(slice : Bytes) : self?
     {% begin %}
-      # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
-      # to figure out how much space we actually need. Maybe some regex could
-      # work. For now just play it safe.
-      # FIXME: We might want to establish some upper limit in case a member name
-      # is exorbitantly long.
-
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
-      {% max_size = @type.constants.map(&.size).sort.last %}
-      buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
+      {%
+        max_charsize = @type.constants.map(&.size).sort.last
+        max_bytesize = if compare_versions(Crystal::VERSION, "1.22.0") >= 0
+                         @type.constants.map(&.bytesize).sort.last
+                       else
+                         # Without `StringLiteral#bytesize` we have no means to figure out how
+                         # much space we actually need. So we calculate the worst case based on
+                         # char size.
+                         max_charsize * 4
+                       end
+      %}
+      buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
       appender = buffer.to_unsafe.appender
-      byte_counter = 0
-      pos = 0
-      while pos < slice.size
-        byte = slice.unsafe_fetch(pos)
-
-        if byte < 0x80
-          # The byte is ASCII, so it contains the full Char value
-          pos += 1
-          next if byte == '-'.ord || byte == '_'.ord
-          byte_counter += 1
-          return nil if byte == 0
-          return nil if byte_counter > {{max_size * 4}}
-          # Setting the 6th bit on an alphabetical ASCII byte is a downcase.
-          appender << ('A'.ord <= byte <= 'Z'.ord ? byte | 0x20_u8 : byte)
-        else
-          # Multi-byte characters need to be decoded so `Char#downcase` can
-          # apply the same Unicode case mapping as the compile-time
-          # normalization of the member names.
-          char, width = decode_utf8_char(slice, pos)
-          pos += width
-          downcased = char.downcase
-          byte_counter += downcased.bytesize
-          return nil if byte_counter > {{max_size * 4}}
-          downcased.each_byte { |b| appender << b }
+      char_counter = 0
+      string.each_char do |char|
+        next if char == '-' || char == '_'
+        char_counter += 1
+        return nil if char_counter > {{ max_charsize }}
+        char.downcase &.each_byte do |byte|
+          appender << byte
         end
       end
       # Temporarily map all constants to their normalized value in order to

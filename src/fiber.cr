@@ -194,7 +194,11 @@ class Fiber
         if stack = Thread.current.dying_fiber(self)
           # we can however release the stack of a previously dying fiber (we
           # since swapped context)
-          execution_context.stack_pool.release(stack)
+          if stack_pool = execution_context.stack_pool?
+            stack_pool.release(stack)
+          else
+            Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
+          end
         end
       {% else %}
         Crystal::Scheduler.stack_pool.release(@stack)
