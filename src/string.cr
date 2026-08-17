@@ -5742,13 +5742,15 @@ class String
       return stop if @end
 
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
+      if @remove_empty
+        while byte_index && (byte_index == @offset || (byte_index == @offset + 1 && @string.to_unsafe[@offset] === '\r'))
+          @offset = byte_index + 1
+          byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
+        end
+      end
+
       if byte_index
         count = byte_index - @offset + 1
-
-        if @remove_empty && (byte_index == @offset || (byte_index == @offset + 1 && @string.to_unsafe[@offset] === '\r'))
-          @offset = byte_index + 1
-          return self.next
-        end
 
         if @chomp
           count -= 1

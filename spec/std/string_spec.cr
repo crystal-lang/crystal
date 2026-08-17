@@ -2736,6 +2736,8 @@ describe "String" do
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
   it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
   it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
+  it_iterates "#each_line(remove_empty: true)", [] of String, "\n\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", [] of String, ("\n" * 100_000).each_line(remove_empty: true)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
