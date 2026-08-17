@@ -387,7 +387,7 @@ struct Time::Span
   # 1.second.zero? # => false
   # ```
   def zero? : Bool
-    self == ZERO
+    self == Span.zero
   end
 
   # Returns `true` if `self` represents a positive time span.
@@ -398,7 +398,7 @@ struct Time::Span
   # -3.days.positive? # => false
   # ```
   def positive? : Bool
-    self > ZERO
+    self > Span.zero
   end
 
   # Returns `true` if `self` represents a negative time span.
@@ -409,7 +409,7 @@ struct Time::Span
   # -3.days.negative? # => true
   # ```
   def negative? : Bool
-    self < ZERO
+    self < Span.zero
   end
 end
 
