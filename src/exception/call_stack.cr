@@ -1,3 +1,6 @@
+require "crystal/lru_cache"
+require "sync/exclusive"
+
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
 def caller : Array(String)
@@ -19,6 +22,7 @@ struct Exception::CallStack
   skip(__FILE__)
 
   @@loaded = false
+  @@lru_cache = Sync::Exclusive(Crystal::LRUCache(Void*, String)).new(Crystal::LRUCache(Void*, String).new(1024))
 
   # :nodoc:
   def self.load_debug_info : Nil
@@ -60,15 +64,22 @@ struct Exception::CallStack
 
   # :nodoc:
   def self.decode_backtrace_frame(ip, show_full_info) : String?
-    pc = decode_address(ip)
+    line = @@lru_cache.lock(&.fetch?(ip))
 
-    file, line_number, column_number = decode_line_number(pc)
-    return if @@skip.includes?(file)
+    unless line
+      pc = decode_address(ip)
+      file, line_number, column_number = decode_line_number(pc)
 
-    file = relative_to_initial_directory(file)
-    function, file = function_or_symbol_name(ip, file, show_full_info) { decode_function_name(pc) }
+      unless @@skip.includes?(file)
+        file = relative_to_initial_directory(file)
+        function, file = function_or_symbol_name(ip, file, show_full_info) { decode_function_name(pc) }
+        line = format_backtrace_frame(file, line_number, column_number, function, show_full_info ? ip : nil)
+      end
 
-    format_backtrace_frame(file, line_number, column_number, function, show_full_info ? ip : nil)
+      @@lru_cache.lock(&.put(ip, line || ""))
+    end
+
+    line
   end
 
   private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String?
