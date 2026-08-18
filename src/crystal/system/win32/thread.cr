@@ -5,7 +5,7 @@ require "../panic"
 module Crystal::System::Thread
   alias Handle = LibC::HANDLE
 
-  @semaphore : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
+  @semaphore : LibC::HANDLE = LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
 
   def to_unsafe
     @system_handle
@@ -119,7 +119,7 @@ module Crystal::System::Thread
   end
 
   private def system_close
-    LibC.CloseHandle(@semaphore) unless @semaphore == LibC::INVALID_HANDLE_VALUE
+    LibC.CloseHandle(@semaphore) unless @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
     LibC.CloseHandle(@system_handle)
   end
 
@@ -175,7 +175,7 @@ module Crystal::System::Thread
   protected def init_semaphore : Nil
     @semaphore = LibC.CreateSemaphoreA(nil, 0, LibC::LONG::MAX, nil)
 
-    if @semaphore == LibC::INVALID_HANDLE_VALUE
+    if @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
       raise RuntimeError.from_winerror("CreateSemaphoreA")
     end
   end
