@@ -158,16 +158,17 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      exc_suff = {% if flag?(:windows) %}
-                   ""
-                 {% elsif flag?(:darwin) || flag?(:bsd) %}
-                   ": Device not configured"
-                 {% else %}
-                   ": No such device or address"
-                 {% end %}
-      expect_raises(Socket::Error, "Failed to look up interface name for index 333#{exc_suff}") do
+      err = expect_raises(Socket::Error, "Failed to look up interface name for index 333") do
         Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
       end
+
+      {% if flag?(:win32) %}
+        err.os_error.should eq(WinError::ERROR_FILE_NOT_FOUND)
+      {% elsif flag?(:android) %}
+        err.os_error.should eq(Errno::ENODEV)
+      {% else %}
+        err.os_error.should eq(Errno::ENXIO)
+      {% end %}
     end
 
     it "interface name lookup returns nil in unsupported cases" do
@@ -201,9 +202,15 @@ describe Socket::IPAddress do
 
     it "fails on non-existent link-local zone interface" do
       # looking up an interface index obviously requires for said interface device to exist
-      expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
+      err = expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
         Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
       end
+
+      {% if flag?(:win32) %}
+        err.os_error.should eq(WinError::ERROR_INVALID_NAME)
+      {% else %}
+        err.os_error.should eq(Errno::ENODEV)
+      {% end %}
     end
   end
 

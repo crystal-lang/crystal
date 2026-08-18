@@ -393,4 +393,20 @@ module Crystal::System::Socket
       ret.to_i64
     {% end %}
   end
+
+  def self.network_interface_to_index(name : String, & : Errno ->) : Int
+    zone_id = LibC.if_nametoindex(name)
+    return zone_id if zone_id != 0
+
+    yield Errno.value
+  end
+
+  def self.network_interface_from_index(index : Int, & : Errno ->) : String
+    buf = uninitialized UInt8[LibC::IF_NAMESIZE]
+    if result = LibC.if_indextoname(index, buf)
+      return String.new(buf.to_slice, truncate_at_null: true)
+    end
+
+    yield Errno.value
+  end
 end

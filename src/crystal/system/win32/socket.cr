@@ -407,4 +407,29 @@ module Crystal::System::Socket
 
     event_loop.sendfile(self, file.fd, offset, count, 0)
   end
+
+  def self.network_interface_to_index(name : String, & : WinError ->) : Int
+    err = LibC.ConvertInterfaceNameToLuidW(System.to_wstr(name), out luid)
+    if err == 0
+      err = LibC.ConvertInterfaceLuidToIndex(pointerof(luid), out index)
+      if err == 0
+        return index
+      end
+    end
+
+    yield WinError.new(err)
+  end
+
+  def self.network_interface_from_index(index : Int, & : WinError ->) : String
+    err = LibC.ConvertInterfaceIndexToLuid(index, out luid)
+    if err == 0
+      buf = uninitialized LibC::WCHAR[LibC::IF_NAMESIZE]
+      err = LibC.ConvertInterfaceLuidToNameW(pointerof(luid), buf, buf.size)
+      if err == 0
+        return String.from_utf16(buf.to_slice, truncate_at_null: true)
+      end
+    end
+
+    yield WinError.new(err)
+  end
 end
