@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)] [string] $BuildTree,
     [Parameter(Mandatory)] [string] $Version,
+    [switch] $UseClangCl,
     [switch] $Dynamic
 )
 
@@ -14,7 +15,15 @@ Run-InDirectory $BuildTree {
     Replace-Text Configurations\10-main.conf '/Zi /Fdossl_static.pdb' ''
     Replace-Text Configurations\10-main.conf '"/nologo /debug"' '"/nologo /debug:none"'
 
-    $platform = if ($arch -eq "ARM 64-bit Processor") { "VC-WIN64-ARM" } else { "VC-WIN64A" }
+    $platform = if ($arch -eq "ARM 64-bit Processor") {
+        if ($UseClangCl) {
+            "VC-CLANG-WIN64-CLANGASM-ARM"
+        } else {
+            "VC-WIN64-ARM"
+        }
+    } else {
+        "VC-WIN64A"
+    }
 
     if ($Dynamic) {
         perl Configure "$platform" no-tests
