@@ -404,7 +404,7 @@ module Crystal::System::Socket
   def self.network_interface_from_index(index : Int, & : Errno ->) : String
     buf = uninitialized UInt8[LibC::IF_NAMESIZE]
     if result = LibC.if_indextoname(index, buf)
-      return String.new(buf.to_slice, truncate_at_null: true)
+      return String.new(result)
     end
 
     yield Errno.value
