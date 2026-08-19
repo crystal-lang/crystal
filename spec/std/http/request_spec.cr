@@ -28,11 +28,10 @@ module HTTP
         end
 
         it "rejects invalid methods" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET /", "/").method.should eq "GET /"
-          Request.new("GET\n", "/").method.should eq "GET\n"
-          Request.new("GET\r", "/").method.should eq "GET\r"
-          Request.new("", "/").method.should eq ""
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET /", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\n", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\r", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "", "/" }
         end
       end
 
@@ -116,16 +115,11 @@ module HTTP
       end
 
       it "rejects invalid methods" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.method = "GET /"
-        req.method.should eq "GET /"
-        req.method = "GET\n"
-        req.method.should eq "GET\n"
-        req.method = "GET\r"
-        req.method.should eq "GET\r"
-        req.method = ""
-        req.method.should eq ""
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET /" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\n" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\r" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "" }
       end
     end
 
