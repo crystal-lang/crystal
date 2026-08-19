@@ -1,5 +1,5 @@
 {% if !flag?(:without_zlib) %}
-  require "compress/deflate"
+  require "compress/zlib"
   require "compress/gzip"
 {% end %}
 
@@ -57,7 +57,7 @@ class HTTP::CompressHandler
         elsif request_headers.includes_word?("Accept-Encoding", "deflate")
           @context.response.headers["Content-Encoding"] = "deflate"
           @context.response.headers.delete("Content-Length")
-          @io = Compress::Deflate::Writer.new(@io, sync_close: true)
+          @io = Compress::Zlib::Writer.new(@io, sync_close: true)
         end
       end
     end

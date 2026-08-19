@@ -339,7 +339,7 @@ class HTTP::Client::Response
 
     it "deletes Content-Encoding and Content-Length headers after deflate decompression" do
       body = String.build do |io|
-        Compress::Deflate::Writer.open(io, &.print("hello"))
+        Compress::Zlib::Writer.open(io, &.print("hello"))
       end
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: deflate\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
       response.body.should eq("hello")
