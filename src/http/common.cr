@@ -448,6 +448,50 @@ module HTTP
       quote_string(string, io)
     end
   end
+
+  # :nodoc:
+  VALID_TOKEN_CHAR_MAP = {% begin %}
+    {%
+      table = (0x00..0xFF).map { 0 }
+      table['!'.ord] = 1
+      table['#'.ord] = 1
+      table['$'.ord] = 1
+      table['%'.ord] = 1
+      table['&'.ord] = 1
+      table['\''.ord] = 1
+      table['*'.ord] = 1
+      table['+'.ord] = 1
+      table['-'.ord] = 1
+      table['.'.ord] = 1
+      table['^'.ord] = 1
+      table['_'.ord] = 1
+      table['`'.ord] = 1
+      table['|'.ord] = 1
+      table['~'.ord] = 1
+      ('0'.ord..'9'.ord).each do |i|
+        table[i] = 1
+      end
+      ('A'.ord..'Z'.ord).each do |i|
+        table[i] = 1
+      end
+      ('a'.ord..'z'.ord).each do |i|
+        table[i] = 1
+      end
+    %}
+    {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+      Slice.literal({{ table.splat }})
+    {% else %}
+      {{table}}.to_slice
+    {% end %}
+  {% end %}
+
+  def self.validate_token(string : String, message = "Invalid HTTP token") : String
+    if string.empty? || string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+      raise ArgumentError.new(message)
+    end
+
+    string
+  end
 end
 
 require "./status"
