@@ -1394,7 +1394,7 @@ module Crystal
     end
 
     def interpret_to_range(from, to)
-      raise "range begin and must be both NumberLiteral or both CharLiteral, not #{from.class_desc}..#{to.class_desc}"
+      raise "range begin and end must be both NumberLiteral or both CharLiteral, not #{from.class_desc}..#{to.class_desc}"
     end
 
     def interpret_to_nilable_range(interpreter)
