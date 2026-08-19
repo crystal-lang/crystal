@@ -291,7 +291,7 @@ module Crystal::System::Thread
       # maybe leaking a semaphore name); it will be destroyed when we close it,
       # at worst on exec or when the process exits
       LibC.pthread_threadid_np(@system_handle, out tid)
-      sem_name = "/crystal-thread-#{LibC.getpid}-#{tid}"
+      sem_name = "/CRYSTAL/#{tid}" # limited to PSNAMLEN chars (31)
       @semaphore = LibC.sem_open(sem_name, LibC::O_CREAT | LibC::O_EXCL, 0o644, 0)
       raise RuntimeError.from_errno("sem_open") if @semaphore == Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
       LibC.sem_unlink(sem_name)
