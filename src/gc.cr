@@ -112,7 +112,7 @@ module GC
   # callstack and the unwind payload, which would fail again.
   def self.oom(size : LibC::SizeT) : NoReturn
     Crystal::System.print_error "Out of memory: failed to allocate %llu bytes\n", size
-    LibC._exit(1)
+    LibC.exit(1)
   end
 
   # Allocates and clears *size* bytes of memory.
