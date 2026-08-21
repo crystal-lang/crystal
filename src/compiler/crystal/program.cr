@@ -379,7 +379,6 @@ module Crystal
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
 
     def codegen_target=(@codegen_target : Codegen::Target) : Codegen::Target
-      crystal.types["TARGET_TRIPLE"].as(Const).value.as(StringLiteral).value = codegen_target.to_s
       @codegen_target
     end
 
