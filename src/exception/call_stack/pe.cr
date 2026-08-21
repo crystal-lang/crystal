@@ -10,6 +10,23 @@ struct Exception::CallStack
   @@coff_symbols : Hash(Int32, Array(Crystal::System::PE::COFFSymbol))?
 
   protected def self.load_debug_info_impl : Nil
+    # DWARF debug info is read on demand, only for the program counters of
+    # the exception being decoded; only the COFF symbols used by
+    # `Exception::CallStack.dladdr` are kept in memory
+    program = Process.executable_path
+    return unless program && File::Info.readable? program
+
+    Crystal::System::PE.open(program) do |image|
+      @@coff_symbols = image.read_coff_symbols
+    end
+  rescue ex
+    @@coff_symbols = nil
+  end
+
+  # Opens the image containing the DWARF sections for the current program
+  # and yields it together with the base address of the program, keeping the
+  # image mapped only for the duration of the block.
+  protected def self.open_debug_image(&)
     program = Process.executable_path
     return unless program && File::Info.readable? program
 
@@ -17,12 +34,8 @@ struct Exception::CallStack
     return if ret == 0
 
     Crystal::System::PE.open(program) do |image|
-      @@coff_symbols = image.read_coff_symbols
-      read_dwarf_sections(image, hmodule.address - image.original_image_base)
+      yield image, hmodule.address &- image.original_image_base
     end
-  rescue ex
-    @@dwarf_line_numbers = nil
-    @@dwarf_function_names = nil
   end
 
   protected def self.decode_address(ip)
