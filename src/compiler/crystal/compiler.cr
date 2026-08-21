@@ -279,11 +279,10 @@ module Crystal
     # Set maximum level of optimization.
     def release!
       @optimization_mode = OptimizationMode::O3
-      @single_module = true
     end
 
     def release?
-      @optimization_mode.o3? && @single_module
+      @optimization_mode.o3?
     end
 
     private def new_program(sources)
@@ -901,7 +900,7 @@ module Crystal
         optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, "lto<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
     end
