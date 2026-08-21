@@ -11,49 +11,79 @@ end
 
 require "crystal/system/process"
 
-# The Process class provides tools for working with processes.
-# ```
+# The `Process` class provides tools for spawning and managing external processes.
+#
+# ### Running a Process
+#
+# The simplest way to execute a command and wait for it to finish is using `.run`.
+# It returns a `Process::Status` object that you can use to get information on the process after it has run.
+#
+# ```crystal
 # # Starts a process and waits for it to finish
 # # Returns Process::Status afterwards
-# command = Process.run("ls")
-# puts command.success? # => true
+# status = Process.run("ls")
+# status.success? # => true
+# ```
 #
+# ### Creating and Managing a Process
+#
+# For more control, you can instantiate a process with `.new` without blocking.
+# You can then wait for it to finish or terminate it early.
+#
+# ```crystal
 # # Starts a process without waiting
-# command = Process.new("ls")
+# process = Process.new("ls")
 #
-# # Waits for the process to finish
-# command.wait
+# # Waits for the process to finish. Returns Process::Status afterwards
+# process.wait
 #
-# # Replaces the current process with a new process
+# # Terminating a running process
+# process = Process.new("sleep", ["10"])
+# process.terminate # Ask for the process to terminate
+# process.exit # Forcefully terminates the process
+# ```
+#
+# ### Replacing the Current Process
+#
+# To replace the current process with a new one, use `.exec`.
+# This method does not return, as the current process is entirely replaced.
+#
+# ```crystal
 # Process.exec("ls")
+# ```
 #
+# ### Configuring the Process
+#
+# You can customize the execution environment by passing arguments, setting
+# environment variables, changing the working directory, or invoking a shell.
+#
+# ```crystal
 # # Using arguments
-# command = Process.run("ls", ["../"])
+# Process.run("ls", ["../"])
 #
 # # Setting environment variables
-# Process.run(
-#   "ls",
-#   env: {
-#     "FOO" => "123"
-#   }
-# )
+# Process.run("ls", env: {"FOO" => "123"})
 #
 # # Setting the working directory
 # Process.run("ls", chdir: "../")
 #
-# # Piping IO
-# command = Process.run("ls", output: Process::Redirect::Pipe) # Captures IO
-# command = Process.run("ls", output: Process::Redirect::Inherit) # Makes the process inherit the parent's IO
-#
 # # With a shell
-# command = Process.run("ls ./*", shell: true)
-#
-# # Exit the process early
-# command = Process.new("sleep 10")
-# command.terminate # Ask for the process to terminate
-# command.exit
+# # NOTE: Use with caution, especially when incorporating untrusted input
+# Process.run("ls ./*", shell: true)
 # ```
-# For more options, look into `.new` and `.run`
+#
+# ### Input/Output Redirection
+#
+# You can control how the process handles standard input, output, and error
+# streams using `Process::Redirect` options.
+#
+# ```crystal
+# # Piping IO
+# status = Process.run("ls", output: Process::Redirect::Pipe)   # Pipes IO to the parent. Returns Process::Result
+# Process.run("ls", output: Process::Redirect::Inherit)         # Makes the process inherit the parent's IO
+# ```
+#
+# For more options and details, see `.new` and `.run`.
 class Process
   # Terminate the current process immediately. All open files, pipes and sockets
   # are flushed and closed, all child processes are inherited by PID 1. This does
