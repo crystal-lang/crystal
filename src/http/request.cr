@@ -137,7 +137,6 @@ class HTTP::Request
   end
 
   def body=(@body : IO) : IO
-    body
   end
 
   def body=(@body : Nil) : Nil
