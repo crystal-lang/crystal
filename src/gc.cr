@@ -36,6 +36,20 @@ fun __crystal_malloc_atomic64(size : UInt64) : Void*
 end
 
 # :nodoc:
+fun __crystal_calloc_atomic64(size : UInt64) : Void*
+  {% if flag?(:bits32) %}
+    if size > UInt32::MAX
+      raise ArgumentError.new("Given size is bigger than UInt32::MAX")
+    end
+  {% end %}
+
+  size_t = LibC::SizeT.new(size)
+  ptr = GC.malloc_atomic(size_t)
+  ptr.clear(size_t) unless ptr.null?
+  ptr
+end
+
+# :nodoc:
 fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
   {% if flag?(:bits32) %}
     if size > UInt32::MAX
