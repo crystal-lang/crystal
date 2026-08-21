@@ -67,7 +67,7 @@ class Time::Location
       cache[:location]
     else
       File.open(path) do |file|
-        read_android_tzdata(file, false) do |location_name, location|
+        read_android_tzdata(file) do |location_name, location|
           @@location_cache[location_name] = {time: mtime, location: location}
         end
         @@location_cache[name].try &.[:location]
@@ -229,7 +229,7 @@ class Time::Location
   # :nodoc:
   # Reads a packed tzdata file for Android's Bionic C runtime. Defined in
   # https://android.googlesource.com/platform/bionic/+/master/libc/tzcode/bionic.cpp
-  def self.read_android_tzdata(io : IO, local : Bool, & : String, Time::Location ->)
+  def self.read_android_tzdata(io : IO, & : String, Time::Location ->)
     header = io.read_string(12)
     raise InvalidTZDataError.new unless header.starts_with?("tzdata") && header.ends_with?('\0')
 
@@ -251,7 +251,7 @@ class Time::Location
 
     entries.each do |(name, start, length)|
       io.seek(start + data_offset)
-      yield name, read_zoneinfo(local ? "Local" : name, read_buffer(io, length))
+      yield name, read_zoneinfo(name, read_buffer(io, length))
     end
   end
 

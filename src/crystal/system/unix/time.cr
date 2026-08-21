@@ -103,7 +103,7 @@ module Crystal::System::Time
       return nil unless path = ::Time::Location.find_android_tzdata_file(android_tzdata_sources)
 
       ::File.open(path) do |file|
-        ::Time::Location.read_android_tzdata(file, true) do |name, location|
+        ::Time::Location.read_android_tzdata(file) do |name, location|
           return location if name == timezone
         end
       end
