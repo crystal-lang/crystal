@@ -70,7 +70,7 @@ class Time::Location
         read_android_tzdata(file) do |location_name, location|
           @@location_cache[location_name] = {time: mtime, location: location}
         end
-        @@location_cache[name].try &.[:location]
+        @@location_cache[name]?.try &.[:location]
       end
     end
   end
