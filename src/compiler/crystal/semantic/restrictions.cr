@@ -1,5 +1,27 @@
 require "../syntax/ast"
+require "../syntax/transformer"
 require "../types"
+
+module Crystal
+  # Walks an AST node replacing single-name `Path`s that match a registered
+  # type-parameter name with the supplied substitution node. Used to expand
+  # a generic alias's body during overload matching.
+  class AliasGenericArgSubstituter < Transformer
+    def initialize(@substitutions : Hash(String, ASTNode))
+    end
+
+    def substitute(node : ASTNode) : ASTNode
+      node.transform(self)
+    end
+
+    def transform(node : Path) : ASTNode
+      if (name = node.single_name?) && (replacement = @substitutions[name]?)
+        return replacement.clone.at(node.location)
+      end
+      node
+    end
+  end
+end
 
 # Here is the logic for deciding two things:
 #
@@ -935,8 +957,18 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
       generic_type = get_generic_type(other, context)
+
+      # Generic alias (`alias Foo(T) = ...`): expand the alias body with
+      # the supplied type arguments and re-enter `restrict` on the
+      # expanded restriction. This makes generic aliases transparent for
+      # overload matching including `forall T` unification.
+      if generic_type.is_a?(AliasType) && (alias_type_vars = generic_type.type_vars)
+        substituted = expand_generic_alias_restriction(generic_type, alias_type_vars, other)
+        return restrict(substituted, context)
+      end
+
+      # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
       if generic_type.is_a?(GenericUnionType)
         types = [] of Type
 
@@ -1150,6 +1182,17 @@ module Crystal
 
     def restrict(other : Generic, context)
       generic_type = get_generic_type(other, context)
+
+      # Generic alias: rewrite the restriction by substituting the alias's
+      # type-parameter names with the arguments at the use site, then
+      # re-enter `restrict` with the expanded restriction. This lets the
+      # existing matching machinery (including `forall` unification) handle
+      # generic aliases the same way as a hand-written restriction would.
+      if generic_type.is_a?(AliasType) && (alias_type_vars = generic_type.type_vars)
+        substituted = expand_generic_alias_restriction(generic_type, alias_type_vars, other)
+        return restrict(substituted, context)
+      end
+
       generic_type = generic_type.remove_alias if generic_type.is_a? AliasType
       return super unless generic_type == self.generic_type
 
@@ -1829,4 +1872,24 @@ private def get_generic_type(node, context)
   else
     name.type
   end
+end
+
+# Expands a `Foo(T1, T2, ...)` restriction whose `Foo` is a generic alias
+# (`alias Foo(A, B) = ...`) into the alias's body with the alias's type
+# parameter names substituted by the supplied argument AST nodes.
+# The returned node can then be fed back into `restrict` and unified the
+# same way as a hand-written restriction.
+private def expand_generic_alias_restriction(alias_type, alias_type_vars, generic_node)
+  if alias_type_vars.size != generic_node.type_vars.size
+    generic_node.wrong_number_of "type vars", alias_type, generic_node.type_vars.size, alias_type_vars.size
+  end
+
+  substitutions = {} of String => Crystal::ASTNode
+  alias_type_vars.each_with_index do |name, i|
+    substitutions[name] = generic_node.type_vars[i]
+  end
+
+  Crystal::AliasGenericArgSubstituter
+    .new(substitutions)
+    .substitute(alias_type.value.clone)
 end
