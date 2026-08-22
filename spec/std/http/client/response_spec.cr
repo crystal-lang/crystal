@@ -347,6 +347,28 @@ class HTTP::Client::Response
       response.headers["content-length"]?.should be_nil
     end
 
+    it "rejects response with unsupported Content-Encoding" do
+      expect_raises Exception, "Unexpected end of http request" do
+        Response.from_io(IO::Memory.new(<<-HTTP))
+          HTTP/1.1 200 OK
+          Content-Encoding: br
+
+          foobar
+          HTTP
+      end
+    end
+
+    it "rejects response with unknown Content-Encoding" do
+      expect_raises Exception, "Unexpected end of http request" do
+        Response.from_io(IO::Memory.new(<<-HTTP))
+          HTTP/1.1 200 OK
+          Content-Encoding: foo
+
+          foobar
+          HTTP
+      end
+    end
+
     describe "success?" do
       it "returns true for the 2xx" do
         response = Response.new(:ok)

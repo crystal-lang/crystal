@@ -61,13 +61,18 @@ module HTTP
           encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
             case encoding
+            when Nil
+              # nothing
             when "gzip", "deflate"
               raise "Can't decompress because `-D without_zlib` was passed at compile time"
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% else %}
             case encoding
+            when Nil
+              # nothing
             when "gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
@@ -78,6 +83,7 @@ module HTTP
               headers.delete("Content-Length")
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% end %}
         end
