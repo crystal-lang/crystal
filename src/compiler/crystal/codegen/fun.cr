@@ -396,7 +396,7 @@ class Crystal::CodeGenVisitor
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
     if call_convention = target_def.call_convention
-      context.fun.call_convention = call_convention
+      context.fun.call_convention = call_convention.to_llvm
     end
 
     if @single_module && mangled_name.starts_with?("__crystal_")
