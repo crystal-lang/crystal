@@ -828,12 +828,8 @@ module HTTP
 
       it "ignores invalid content-type" do
         request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "//"}, HTTP::Params.encode({"test" => "foobar"}))
-        expect_raises(MIME::Error, "Invalid '/'") do
-          request.form_params?
-        end
-        expect_raises(MIME::Error, "Invalid '/'") do
-          request.form_params
-        end
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
       end
     end
 
