@@ -452,34 +452,34 @@ module HTTP
   # :nodoc:
   VALID_TOKEN_CHAR_MAP = {% begin %}
     {%
-      table = (0x00..0xFF).map { 0 }
-      table['!'.ord] = 1
-      table['#'.ord] = 1
-      table['$'.ord] = 1
-      table['%'.ord] = 1
-      table['&'.ord] = 1
-      table['\''.ord] = 1
-      table['*'.ord] = 1
-      table['+'.ord] = 1
-      table['-'.ord] = 1
-      table['.'.ord] = 1
-      table['^'.ord] = 1
-      table['_'.ord] = 1
-      table['`'.ord] = 1
-      table['|'.ord] = 1
-      table['~'.ord] = 1
+      table = (0x00..0xFF).map { 0_u8 }
+      table['!'.ord] = 1_u8
+      table['#'.ord] = 1_u8
+      table['$'.ord] = 1_u8
+      table['%'.ord] = 1_u8
+      table['&'.ord] = 1_u8
+      table['\''.ord] = 1_u8
+      table['*'.ord] = 1_u8
+      table['+'.ord] = 1_u8
+      table['-'.ord] = 1_u8
+      table['.'.ord] = 1_u8
+      table['^'.ord] = 1_u8
+      table['_'.ord] = 1_u8
+      table['`'.ord] = 1_u8
+      table['|'.ord] = 1_u8
+      table['~'.ord] = 1_u8
       ('0'.ord..'9'.ord).each do |i|
-        table[i] = 1
+        table[i] = 1_u8
       end
       ('A'.ord..'Z'.ord).each do |i|
-        table[i] = 1
+        table[i] = 1_u8
       end
       ('a'.ord..'z'.ord).each do |i|
-        table[i] = 1
+        table[i] = 1_u8
       end
     %}
     {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
-      Slice.literal({{ table.splat }})
+      Slice(UInt8).literal({{ table.splat }})
     {% else %}
       {{table}}.to_slice
     {% end %}
