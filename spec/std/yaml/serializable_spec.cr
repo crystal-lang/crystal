@@ -1232,4 +1232,19 @@ describe "YAML::Serializable" do
   it "supports generic type variables in converters" do
     YAMLAttrWithGenericConverter(Time::EpochConverter).from_yaml(%({"value":1459859781})).value.should eq(Time.unix(1459859781))
   end
+
+  it ".from_yaml enforces limits" do
+    yaml = String.build do |str|
+      11.times { str << "- John\n" }
+    end
+    expect_raises YAML::ParseException, "Exceeded maximum number of nodes" do
+      YAMLAttrPerson.from_yaml(yaml, YAML::Options.new(max_nodes: 10))
+    end
+  end
+
+  it ".to_yaml enforces limits" do
+    expect_raises YAML::Error, "Exceeded maximum number of nodes" do
+      Array.new(10) { YAMLAttrPerson.new("John") }.to_yaml(YAML::Options.new(max_nodes: 10))
+    end
+  end
 end

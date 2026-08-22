@@ -128,8 +128,14 @@ module YAML
   # # => "paragraph" => "foo\nbar\n"
   # # => }
   # ```
-  def self.parse(data : String | IO) : Any
-    YAML::Schema::Core.parse(data)
+  def self.parse(data : String | IO, options : Options = Options.new) : Any
+    YAML::Schema::Core.parse(data, options)
+  end
+
+  # Same as `.parse(String | IO, Options)` but passing options as keyword
+  # arguments.
+  def self.parse(data : String | IO, **options) : Any
+    YAML::Schema::Core.parse(data, Options.new(**options))
   end
 
   # Deserializes multiple YAML documents according to the core schema.
@@ -147,8 +153,14 @@ module YAML
   # YAML.parse_all(File.read("./foo.yml"))
   # # => [{"foo" => "bar"}, {"hello" => "world"}]
   # ```
-  def self.parse_all(data : String) : Array(Any)
-    YAML::Schema::Core.parse_all(data)
+  def self.parse_all(data : String, options : Options = Options.new) : Array(Any)
+    YAML::Schema::Core.parse_all(data, options)
+  end
+
+  # Same as `.parse_all(String, Options)` but passing options as keyword
+  # arguments.
+  def self.parse_all(data : String, **options) : Array(Any)
+    YAML::Schema::Core.parse_all(data, Options.new(**options))
   end
 
   # Serializes an object to YAML, returning it as a `String`.
