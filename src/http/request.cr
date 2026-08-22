@@ -116,8 +116,9 @@ class HTTP::Request
     @method == "HEAD"
   end
 
-  def content_length=(length : Int) : String
+  def content_length=(length : Int) : Int
     headers["Content-Length"] = length.to_s
+    length
   end
 
   def content_length
