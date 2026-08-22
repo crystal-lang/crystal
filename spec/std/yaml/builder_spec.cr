@@ -243,6 +243,16 @@ describe YAML::Builder do
     end.should eq 1.to_yaml
   end
 
+  it ".build with set width" do
+    wrapped = YAML.build(width: 20) do |builder|
+      builder.scalar("a " * 100)
+    end
+    unwrapped = YAML.build(width: 200) do |builder|
+      builder.scalar("a " * 100)
+    end
+    wrapped.count('\n').should be > unwrapped.count('\n')
+  end
+
   it "errors on invalid state" do
     String.build do |io|
       YAML::Builder.build(io) do |builder|
