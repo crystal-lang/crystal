@@ -465,13 +465,14 @@ class Process
 
     prepared_args = Crystal::System::Process.prepare_args(args)
     pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      close
       yield error, command
     end
     @process_info = Crystal::System::Process.new(pid)
-
-    fork_input.close unless fork_input.in?(input, STDIN)
-    fork_output.close unless fork_output.in?(output, STDOUT)
-    fork_error.close unless fork_error.in?(error, STDERR)
+  ensure
+    fork_input.close if fork_input && !fork_input.in?(input, STDIN)
+    fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
+    fork_error.close if fork_error && !fork_error.in?(error, STDERR)
   end
 
   # Creates and executes a child process.
@@ -549,13 +550,14 @@ class Process
 
     prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
     pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      close
       raise ::File::Error.from_os_error("Error executing process", error, file: command)
     end
     @process_info = Crystal::System::Process.new(pid)
-
-    fork_input.close unless fork_input.in?(input, STDIN)
-    fork_output.close unless fork_output.in?(output, STDOUT)
-    fork_error.close unless fork_error.in?(error, STDERR)
+  ensure
+    fork_input.close if fork_input && !fork_input.in?(input, STDIN)
+    fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
+    fork_error.close if fork_error && !fork_error.in?(error, STDERR)
   end
 
   def finalize : Nil
