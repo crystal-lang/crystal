@@ -296,6 +296,7 @@ module Crystal
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
+      program.define_crystal_constants
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
