@@ -282,5 +282,20 @@ describe Socket, tags: "network" do
         file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
+
+    it "handles count greater than file size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 0, (file.size + 10).to_i32)
+        received.bytesize.should eq file.size
+        received.should eq file.gets_to_end
+      end
+    end
+
+    it "handles offset + count greater than file size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, (file.size - 13).to_i32, 20)
+        received.should eq "\nHello World\n"
+      end
+    end
   end
 end
