@@ -103,7 +103,7 @@ module Crystal::System::Thread
   {% end %}
 
   def self.sleep(time : ::Time::Span) : Nil
-    milliseconds = time.total_milliseconds.to_i.clamp(1..)
+    milliseconds = time.to_milliseconds.to_i.clamp(1..)
     GC.syscall do
       LibC.Sleep(milliseconds)
     end
