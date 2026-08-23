@@ -71,7 +71,7 @@ struct Exception::CallStack
     format_backtrace_frame(file, line_number, column_number, function, show_full_info ? ip : nil)
   end
 
-  private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String?
+  private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String
     return "???" if file == "??" && function == "??"
 
     String.build do |str|
