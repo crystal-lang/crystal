@@ -12,117 +12,349 @@ end
 
 module HTTP
   describe Request do
-    it "serialize GET" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/", headers
+    describe ".new" do
+      context "method" do
+        it "accepts standard methods" do
+          Request.new "GET", "/"
+          Request.new "POST", "/"
+          Request.new "PUT", "/"
+          Request.new "DELETE", "/"
+          Request.new "PATCH", "/"
+        end
 
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(original_headers)
-    end
+        it "accepts unknown methods" do
+          Request.new "FOO", "/"
+          Request.new "bar", "/"
+        end
 
-    it "serialize GET (with query params)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/greet?q=hello&name=world", headers
+        it "rejects invalid methods" do
+          # BUG: The following specs all demonstrate incorrect behaviour.
+          Request.new("GET /", "/").method.should eq "GET /"
+          Request.new("GET\n", "/").method.should eq "GET\n"
+          Request.new("GET\r", "/").method.should eq "GET\r"
+          Request.new("", "/").method.should eq ""
+        end
+      end
 
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
-      headers.should eq(original_headers)
-    end
+      context "resource" do
+        it "accepts valid resource target" do
+          Request.new "GET", "/"
+          Request.new "GET", "/foo/bar"
+          Request.new "GET", "/foo/bar?baz=qux"
+        end
 
-    it "serialize GET (with cookie)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      original_headers = headers.dup
-      request = Request.new "GET", "/", headers
-      request.cookies << Cookie.new("foo", "bar")
+        it "accepts empty resource" do
+          Request.new("GET", "").path.should eq "/"
+        end
 
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
-      headers.should eq(original_headers)
-    end
+        it "rejects invalid resource target" do
+          # BUG: The following specs all demonstrate incorrect behaviour.
+          Request.new("GET", "foo /").resource.should eq "foo /"
+          Request.new("GET", "foo\n").resource.should eq "foo\n"
+          Request.new("GET", "foo\r").resource.should eq "foo\r"
+          Request.new("GET", "").resource.should eq ""
+        end
 
-    it "serialize GET (with cookies, from headers)" do
-      headers = HTTP::Headers.new
-      headers["Host"] = "host.example.org"
-      headers["Cookie"] = "foo=bar"
-      original_headers = headers.dup
+        describe "target forms" do
+          describe "origin-form" do
+            it "accepts origin-form" do
+              req = Request.new "GET", "/foo/bar"
+              String.build { |io| req.to_io(io) }.should eq "GET /foo/bar HTTP/1.1\r\n\r\n"
+            end
+          end
 
-      request = Request.new "GET", "/", headers
+          describe "absolute-form" do
+            it "accepts absolute-form" do
+              req = Request.new "GET", "http://example.com/foo/bar"
+              String.build { |io| req.to_io(io) }.should eq "GET http://example.com/foo/bar HTTP/1.1\r\n\r\n"
+            end
+          end
 
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+          describe "authority-form" do
+            it "accepts authority-form" do
+              req = Request.new "CONNECT", "proxy.example.com:80"
+              String.build { |io| req.to_io(io) }.should eq "CONNECT proxy.example.com:80 HTTP/1.1\r\n\r\n"
+            end
+          end
 
-      request.cookies["foo"].value.should eq "bar" # Force lazy initialization
+          describe "asterisk-form" do
+            it "accepts asterisk-form" do
+              req = Request.new "OPTIONS", "*"
+              String.build { |io| req.to_io(io) }.should eq "OPTIONS * HTTP/1.1\r\n\r\n"
+            end
+          end
+        end
+      end
 
-      io.clear
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+      context "version" do
+        it "accepts valid HTTP versions" do
+          Request.new("GET", "/", version: "HTTP/1.0")
+          Request.new("GET", "/", version: "HTTP/1.1")
+        end
 
-      request.cookies["foo"] = "baz"
-      request.cookies["quux"] = "baz"
-
-      io.clear
-      request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
-      headers.should eq(original_headers)
-    end
-
-    it "serialize POST (with body)" do
-      request = Request.new "POST", "/", body: "thisisthebody"
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
-    end
-
-    it "serialize POST (with bytes body)" do
-      request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")
-    end
-
-    it "serialize POST (with io body, without content-length header)" do
-      request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
-    end
-
-    it "serialize POST (with io body, with content-length header)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize
-      io = IO::Memory.new
-      request.to_io(io)
-      io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
-    end
-
-    it "raises if serializing POST body with incorrect content-length (less then real)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize - 1
-      io = IO::Memory.new
-      expect_raises(ArgumentError) do
-        request.to_io(io)
+        it "rejects invalid HTTP versions" do
+          # BUG: The following specs all demonstrate incorrect behaviour.
+          Request.new("GET", "/", version: "HTTP/1.2").version.should eq "HTTP/1.2"
+          Request.new("GET", "/", version: "HTTP/3.0").version.should eq "HTTP/3.0"
+          Request.new("GET", "/", version: "INVALID").version.should eq "INVALID"
+        end
       end
     end
 
-    it "raises if serializing POST body with incorrect content-length (more then real)" do
-      string = "thisisthebody"
-      request = Request.new "POST", "/", body: IO::Memory.new(string)
-      request.content_length = string.bytesize + 1
-      io = IO::Memory.new
-      expect_raises(ArgumentError) do
+    describe "#method=" do
+      it "accepts standard methods" do
+        Request.new("GET", "/").method = "GET"
+        Request.new("GET", "/").method = "POST"
+        Request.new("GET", "/").method = "PUT"
+        Request.new("GET", "/").method = "DELETE"
+        Request.new("GET", "/").method = "PATCH"
+      end
+
+      it "accepts unknown methods" do
+        Request.new("GET", "/").method = "FOO"
+        Request.new("GET", "/").method = "bar"
+      end
+
+      it "rejects invalid methods" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new("GET", "/")
+        req.method = "GET /"
+        req.method.should eq "GET /"
+        req.method = "GET\n"
+        req.method.should eq "GET\n"
+        req.method = "GET\r"
+        req.method.should eq "GET\r"
+        req.method = ""
+        req.method.should eq ""
+      end
+    end
+
+    describe "#path=" do
+      it "accepts valid path" do
+        req = Request.new "GET", "/"
+        req.path = "/foo/bar"
+        req.path.should eq "/foo/bar"
+        req.path = "/foo/bar?baz=qux"
+        req.path.should eq "/foo/bar?baz=qux"
+        req.path = "/"
+        req.path.should eq "/"
+
+        req.path = "foo%20bar"
+        req.path.should eq "foo%20bar"
+      end
+
+      it "rejects invalid path" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new "GET", "/"
+        req.path = "foo\r"
+        req.path.should eq "foo\r"
+        req.path = "\r"
+        req.path.should eq "/"
+      end
+
+      it "accepts empty path" do
+        req = Request.new "GET", "/foo"
+        req.path = ""
+        req.path.should eq "/"
+      end
+    end
+
+    describe "#version=" do
+      it "accepts valid HTTP versions" do
+        req = Request.new("GET", "/")
+        req.version = "HTTP/1.0"
+        req.version.should eq "HTTP/1.0"
+        req.version = "HTTP/1.1"
+        req.version.should eq "HTTP/1.1"
+      end
+
+      it "rejects invalid HTTP versions" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new("GET", "/")
+        req.version = "HTTP/1.2"
+        req.version.should eq "HTTP/1.2"
+        req.version = "HTTP/3.0"
+        req.version.should eq "HTTP/3.0"
+        req.version = "INVALID"
+        req.version.should eq "INVALID"
+      end
+    end
+
+    describe "#body=" do
+      it "returns the value" do
+        req = Request.new("GET", "/")
+        (req.body = "foo").should eq "foo"
+        (req.body = "foo".to_slice).should eq "foo".to_slice
+        io = IO::Memory.new
+        (req.body = io).should be io
+        (req.body = nil).should be_nil
+      end
+
+      it "keeps content-length header in sync" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new("GET", "/", body: "foo")
+        req.body = IO::Memory.new("")
+        req.method = "POST"
+        req.content_length.should eq 3
+        String.build do |io|
+          expect_raises(ArgumentError, "Content-Length header is 3 but body had 0 bytes") do
+            req.to_io(io)
+          end
+        end
+      end
+
+      it "keeps content-length header in sync" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new("PATCH", "/", body: "foo")
+        req.body = nil
+        req.content_length.should eq 3
+        String.build do |io|
+          req.to_io(io)
+        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
+      end
+    end
+
+    describe "#content_length=" do
+      it "accepts valid values" do
+        req = Request.new("GET", "/")
+        req.content_length = 1234
+        req.content_length.should eq 1234
+        req.headers["Content-Length"].should eq "1234"
+
+        req.content_length = 0
+        req.content_length.should eq 0
+        req.headers["Content-Length"].should eq "0"
+
+        req.content_length = UInt64::MAX
+        req.content_length.should eq UInt64::MAX
+        req.headers["Content-Length"].should eq UInt64::MAX.to_s
+      end
+
+      it "rejects invalid values" do
+        # BUG: The following specs all demonstrate incorrect behaviour.
+        req = Request.new("GET", "/")
+        req.content_length = -1
+        req.headers["Content-Length"].should eq "-1"
+        req.content_length = -1234
+        req.headers["Content-Length"].should eq "-1234"
+        req.content_length = UInt64::MAX.to_i128 + 1
+        req.headers["Content-Length"].should eq (UInt64::MAX.to_i128 + 1).to_s
+      end
+    end
+
+    describe "#to_io" do
+      it "serialize GET" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/", headers
+
+        io = IO::Memory.new
         request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize GET (with query params)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/greet?q=hello&name=world", headers
+
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("GET /greet?q=hello&name=world HTTP/1.1\r\nHost: host.example.org\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize GET (with cookie)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        original_headers = headers.dup
+        request = Request.new "GET", "/", headers
+        request.cookies << Cookie.new("foo", "bar")
+
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize GET (with cookies, from headers)" do
+        headers = HTTP::Headers.new
+        headers["Host"] = "host.example.org"
+        headers["Cookie"] = "foo=bar"
+        original_headers = headers.dup
+
+        request = Request.new "GET", "/", headers
+
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+
+        request.cookies["foo"].value.should eq "bar" # Force lazy initialization
+
+        io.clear
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
+
+        request.cookies["foo"] = "baz"
+        request.cookies["quux"] = "baz"
+
+        io.clear
+        request.to_io(io)
+        io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
+        headers.should eq(original_headers)
+      end
+
+      it "serialize POST (with body)" do
+        request = Request.new "POST", "/", body: "thisisthebody"
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "serialize POST (with bytes body)" do
+        request = Request.new "POST", "/", body: Bytes['a'.ord, 'b'.ord]
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 2\r\n\r\nab")
+      end
+
+      it "serialize POST (with io body, without content-length header)" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+      end
+
+      it "serialize POST (with io body, with content-length header)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "raises if serializing POST body with incorrect content-length (less then real)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize - 1
+        io = IO::Memory.new
+        expect_raises(ArgumentError) do
+          request.to_io(io)
+        end
+      end
+
+      it "raises if serializing POST body with incorrect content-length (more then real)" do
+        string = "thisisthebody"
+        request = Request.new "POST", "/", body: IO::Memory.new(string)
+        request.content_length = string.bytesize + 1
+        io = IO::Memory.new
+        expect_raises(ArgumentError) do
+          request.to_io(io)
+        end
       end
     end
 
@@ -206,8 +438,6 @@ module HTTP
       it "handles malformed request" do
         request = Request.from_io(IO::Memory.new("nonsense"))
         request.should eq HTTP::Status::BAD_REQUEST
-        request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n"))
-        request.should eq HTTP::Status::BAD_REQUEST
       end
 
       it "handles unsupported HTTP version" do
@@ -290,6 +520,55 @@ module HTTP
         end
       end
 
+      describe "invalid headers" do
+        it "empty header name" do
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n: Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+        end
+
+        it "header without colon" do
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+        end
+
+        it "invalid header name" do
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar: baz\r\n")).should eq HTTP::Status::BAD_REQUEST
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo\tBar: baz\r\n")).should eq HTTP::Status::BAD_REQUEST
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo[Bar: baz\r\n")).should eq HTTP::Status::BAD_REQUEST
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo\0Bar: baz\r\n")).should eq HTTP::Status::BAD_REQUEST
+        end
+
+        it "invalid header value" do
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n")).should eq HTTP::Status::BAD_REQUEST
+        end
+
+        it "doesn't raise on request with multiple Content-Length headers" do
+          io = IO::Memory.new <<-HTTP
+            GET / HTTP/1.1
+            Host: host
+            Content-Length: 5
+            Content-Length: 5
+            Content-Type: text/plain
+
+            abcde
+            HTTP
+          HTTP::Request.from_io(io)
+        end
+
+        it "raises if request has multiple and differing Content-Length headers" do
+          io = IO::Memory.new <<-HTTP
+            GET / HTTP/1.1
+            Host: host
+            Content-Length: 5
+            Content-Length: 6
+            Content-Type: text/plain
+
+            abcde
+            HTTP
+          expect_raises(ArgumentError) do
+            HTTP::Request.from_io(io)
+          end
+        end
+      end
+
       it "rejects unhandled Transfer-Encoding" do
         request = Request.from_io(IO::Memory.new(<<-HTTP)).should eq HTTP::Status::NOT_IMPLEMENTED
           GET / HTTP/1.1
@@ -309,9 +588,37 @@ module HTTP
 
           HTTP
       end
+
+      it "accepts multiple identical Content-Length headers" do
+        io = IO::Memory.new <<-HTTP
+          GET / HTTP/1.1
+          Host: host
+          Content-Length: 5
+          Content-Length: 5
+          Content-Type: text/plain
+
+          abcde
+          HTTP
+        HTTP::Request.from_io(io)
+      end
+
+      it "raises on multiple differing Content-Length headers" do
+        io = IO::Memory.new <<-HTTP
+          GET / HTTP/1.1
+          Host: host
+          Content-Length: 5
+          Content-Length: 6
+          Content-Type: text/plain
+
+          abcde
+          HTTP
+        expect_raises(ArgumentError) do
+          HTTP::Request.from_io(io)
+        end
+      end
     end
 
-    describe "keep-alive" do
+    describe "#keep_alive?" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
         request.keep_alive?.should be_false
@@ -343,13 +650,12 @@ module HTTP
 
     describe "#path" do
       it "returns parsed path" do
-        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
+        request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).should be_a(Request)
         request.path.should eq("/api/v3/some/resource")
       end
 
       it "falls back to /" do
-        request = Request.new("GET", "")
-        request.path.should eq("/")
+        Request.new("GET", "").path.should eq("/")
       end
 
       it "parses with only leading with double slash" do
@@ -508,8 +814,20 @@ module HTTP
         request.form_params["test"].should eq("foobar")
       end
 
-      it "ignores invalid content-type" do
+      it "ignores missing content-type" do
         request = Request.new("POST", "/form", nil, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
+      end
+
+      it "ignores unknown content-type" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "unknown/type"}, HTTP::Params.encode({"test" => "foobar"}))
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
+      end
+
+      it "ignores invalid content-type" do
+        request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "//"}, HTTP::Params.encode({"test" => "foobar"}))
         request.form_params?.should be_nil
         request.form_params.size.should eq(0)
       end
@@ -521,7 +839,7 @@ module HTTP
         request.hostname.should eq("host.example.org")
       end
 
-      it "#hostname" do
+      it "extracts hostname" do
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org"})
         request.hostname.should eq("host.example.org")
 
@@ -537,6 +855,8 @@ module HTTP
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000"})
         request.hostname.should eq("host.example.org")
 
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.:3000"}).hostname.should eq "host."
+
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0:3000"})
         request.hostname.should eq("0.0.0.0")
 
@@ -548,6 +868,26 @@ module HTTP
 
         request = Request.new("GET", "/")
         request.hostname.should be_nil
+      end
+
+      it "rejects invalid hostnames" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:80bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80:90"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "::1"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+      end
+
+      it "returns nil for empty hostname" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ""}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ":4000"}).hostname.should be_nil
+      end
+
+      it "returns nil when there are multiple headers" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["", ""]}).hostname.should be_nil
       end
     end
 
@@ -571,34 +911,6 @@ module HTTP
 
         request.uri.path = "/some_other_route"
         request.resource.should eq("/some_other_route")
-      end
-    end
-
-    it "doesn't raise on request with multiple Content_length headers" do
-      io = IO::Memory.new <<-HTTP
-        GET / HTTP/1.1
-        Host: host
-        Content-Length: 5
-        Content-Length: 5
-        Content-Type: text/plain
-
-        abcde
-        HTTP
-      HTTP::Request.from_io(io)
-    end
-
-    it "raises if request has multiple and differing content-length headers" do
-      io = IO::Memory.new <<-HTTP
-        GET / HTTP/1.1
-        Host: host
-        Content-Length: 5
-        Content-Length: 6
-        Content-Type: text/plain
-
-        abcde
-        HTTP
-      expect_raises(ArgumentError) do
-        HTTP::Request.from_io(io)
       end
     end
 

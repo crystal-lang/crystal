@@ -336,6 +336,27 @@ struct Crystal::System::IOCP
     end
   end
 
+  def self.simple_overlapped_operation(iocp_handle, file_descriptor, method, &)
+    IOOverlappedOperation.run(iocp_handle, file_descriptor.windows_handle) do |operation|
+      result = yield operation
+
+      if result == 0
+        case error = WinError.value
+        when WinError::ERROR_IO_PENDING
+          # the operation is running asynchronously; do nothing
+        else
+          raise IO::Error.from_os_error(method, error, target: file_descriptor)
+        end
+      else
+        return
+      end
+
+      operation.wait_for_result(nil) do |error|
+        raise IO::Error.from_os_error(method, error, target: file_descriptor)
+      end
+    end
+  end
+
   def self.overlapped_operation(iocp_handle, file_descriptor, method, timeout, *, offset = nil, writing = false, &)
     handle = file_descriptor.windows_handle
     seekable = LibC.SetFilePointerEx(handle, 0, out original_offset, IO::Seek::Current) != 0

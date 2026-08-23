@@ -79,7 +79,7 @@ jobs:
             dlls/pcre2-8.dll
             dlls/iconv-2.dll
             dlls/gc.dll
-            dlls/libffi.dll
+            dlls/libffi-8.dll
             dlls/zlib1.dll
             dlls/mpir.dll
             dlls/yaml.dll
@@ -122,8 +122,11 @@ jobs:
 
       - name: Build Crystal
         run: |
+          cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
           bin/crystal.bat env
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
+        env:
+          CRYSTAL_DIR: ${{ steps.install-crystal.outputs.path }}
 
       - name: Download shards release
         uses: actions/checkout@v7

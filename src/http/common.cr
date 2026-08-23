@@ -1,6 +1,6 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "compress/deflate"
+  require "compress/zlib"
   require "compress/gzip"
 {% end %}
 
@@ -61,23 +61,29 @@ module HTTP
           encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
             case encoding
+            when Nil
+              # nothing
             when "gzip", "deflate"
               raise "Can't decompress because `-D without_zlib` was passed at compile time"
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% else %}
             case encoding
+            when Nil
+              # nothing
             when "gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             when "deflate"
-              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              body = Compress::Zlib::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% end %}
         end
@@ -121,6 +127,7 @@ module HTTP
 
         name, value = parse_header(peek[0, end_index])
         io.skip(index + 1) # Must skip until after \n
+        return nil if name.empty?
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
@@ -136,6 +143,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
+    return nil if name.empty?
     HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 

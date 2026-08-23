@@ -160,22 +160,27 @@ struct BitArray
     else
       ba = BitArray.new(count)
       start_bit_index, start_sub_index = start.divmod(32)
-      end_bit_index = (start + count) // 32
+      end_bit_index = (start + count - 1) // 32
 
-      i = 0
-      bits = @bits[start_bit_index]
-      while start_bit_index + i <= end_bit_index
-        low_bits = bits
-        low_bits >>= start_sub_index
+      if start_sub_index == 0
+        # The bits are aligned: copy them all and trim the unused bits later
+        @bits.copy_to(ba.@bits, end_bit_index - start_bit_index + 1)
+      else
+        bits_ptr = @bits + start_bit_index
+        bits_end = @bits + end_bit_index
+        out_ptr = ba.@bits
 
-        bits = @bits[start_bit_index + i + 1]
+        while bits_ptr <= bits_end
+          out_bits = bits_ptr.value >> start_sub_index
+          bits_ptr += 1
 
-        high_bits = bits
-        high_bits &= ~(UInt32::MAX << start_sub_index)
-        high_bits <<= 32 - start_sub_index
+          if bits_ptr <= bits_end
+            out_bits |= bits_ptr.value << (32 - start_sub_index)
+          end
 
-        ba.@bits[i] = low_bits | high_bits
-        i += 1
+          out_ptr.value = out_bits
+          out_ptr += 1
+        end
       end
 
       # The last assignment to `bits` might refer to a `UInt32` in the middle of

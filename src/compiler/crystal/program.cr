@@ -354,7 +354,7 @@ module Crystal
       define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
         The LLVM target triple of the host system (the machine that the compiler runs on).
         MD
-      define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+      define_crystal_string_constant "TARGET_TRIPLE", codegen_target.to_s, <<-MD
         The LLVM target triple of the target system (the machine that the compiler builds for).
         MD
       define_constant "USER_FLAGS", ArrayLiteral.map(user_flags) { |flag| StringLiteral.new(flag) }, <<-MD

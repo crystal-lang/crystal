@@ -52,7 +52,15 @@ class HTTP::Server::RequestProcessor
 
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        context = Context.new(request, response)
+        if input.responds_to?(:remote_address)
+          remote_address = input.remote_address
+        end
+
+        if input.responds_to?(:local_address)
+          local_address = input.local_address
+        end
+        context = Context.new(request, response,
+          remote_address: remote_address, local_address: local_address)
 
         Log.with_context do
           @handler.call(context)

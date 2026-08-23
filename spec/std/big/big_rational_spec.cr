@@ -200,6 +200,21 @@ describe BigRational do
 
       typeof(1.to_big_r <=> 1.to_big_f).should eq(Int32)
     end
+
+    it "compares against infinities" do
+      (1.to_big_r <=> Float64::INFINITY).should eq(-1)
+      (1.to_big_r <=> -Float64::INFINITY).should eq(1)
+      (1.to_big_r <=> Float32::INFINITY).should eq(-1)
+      (1.to_big_r <=> -Float32::INFINITY).should eq(1)
+
+      (Float64::INFINITY <=> 1.to_big_r).should eq(1)
+      (-Float64::INFINITY <=> 1.to_big_r).should eq(-1)
+      (Float32::INFINITY <=> 1.to_big_r).should eq(1)
+      (-Float32::INFINITY <=> 1.to_big_r).should eq(-1)
+
+      typeof(1.to_big_r <=> Float64::INFINITY).should eq(Int32?)
+      typeof(Float64::INFINITY <=> 1.to_big_r).should eq(Int32?)
+    end
   end
 
   it "#+" do

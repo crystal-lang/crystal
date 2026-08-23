@@ -30,4 +30,5 @@ lib LibC
   fun pthread_self : PthreadT
   fun pthread_setcancelstate(state : Int, oldstate : Int*) : Int
   fun pthread_setname_np(Char*) : Int
+  fun pthread_threadid_np(PthreadT, ULong*) : Int
 end

@@ -1,9 +1,16 @@
 require "c/pthread"
 require "c/sched"
+require "c/semaphore"
 require "../panic"
 
 module Crystal::System::Thread
   alias Handle = LibC::PthreadT
+
+  {% if flag?(:darwin) %}
+    @semaphore : LibC::SemT* = Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
+  {% else %}
+    @semaphore = uninitialized LibC::SemT
+  {% end %}
 
   def to_unsafe
     @system_handle
@@ -132,6 +139,11 @@ module Crystal::System::Thread
   end
 
   private def system_close
+    {% if flag?(:darwin) %}
+      LibC.sem_close(semaphore)
+    {% else %}
+      LibC.sem_destroy(semaphore)
+    {% end %}
     GC.pthread_detach(@system_handle)
   end
 
@@ -270,6 +282,44 @@ module Crystal::System::Thread
     if LibC.pthread_kill(@system_handle, SIG_RESUME) == -1
       System.panic("pthread_kill()", Errno.value)
     end
+  end
+
+  protected def init_semaphore : Nil
+    {% if flag?(:darwin) %}
+      # macOS deprecated then removed unnamed POSIX semaphores, we thus fallback
+      # to a named semaphore that we immediately unlink to keep it private (and
+      # maybe leaking a semaphore name); it will be destroyed when we close it,
+      # at worst on exec or when the process exits
+      LibC.pthread_threadid_np(@system_handle, out tid)
+      sem_name = "/CRYSTAL/#{tid}" # limited to PSNAMLEN chars (31)
+      @semaphore = LibC.sem_open(sem_name, LibC::O_CREAT | LibC::O_EXCL, 0o644, 0)
+      raise RuntimeError.from_errno("sem_open") if @semaphore == Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
+      LibC.sem_unlink(sem_name)
+    {% else %}
+      if LibC.sem_init(pointerof(@semaphore), 0, 0) == -1
+        raise RuntimeError.from_errno("sem_init")
+      end
+    {% end %}
+  end
+
+  def wait : Nil
+    if LibC.sem_wait(semaphore) == -1
+      raise RuntimeError.from_errno("sem_wait")
+    end
+  end
+
+  def wake : Nil
+    if LibC.sem_post(semaphore) == -1
+      raise RuntimeError.from_errno("sem_post")
+    end
+  end
+
+  private def semaphore
+    {% if flag?(:darwin) %}
+      @semaphore
+    {% else %}
+      pointerof(@semaphore)
+    {% end %}
   end
 
   # the suspend/resume signals try to follow BDWGC but aren't exact (e.g. it may
