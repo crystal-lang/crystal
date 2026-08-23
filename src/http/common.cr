@@ -1,6 +1,6 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "compress/deflate"
+  require "compress/zlib"
   require "compress/gzip"
 {% end %}
 
@@ -78,7 +78,7 @@ module HTTP
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             when "deflate"
-              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              body = Compress::Zlib::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             else
