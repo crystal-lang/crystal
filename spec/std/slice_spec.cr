@@ -24,9 +24,9 @@ private class Spaceship
 end
 
 private struct SliceSpecMutable
-  property value : Int32
+  property number : Int32
 
-  def initialize(@value : Int32)
+  def initialize(@number : Int32)
   end
 end
 
@@ -93,9 +93,9 @@ describe "Slice" do
     it "allows mutating a stored struct" do
       slice = Slice[SliceSpecMutable.new(1)]
 
-      slice.pointer_at(0).value.value = 2
+      slice.pointer_at(0).value.number = 2
 
-      slice[0].value.should eq(2)
+      slice[0].number.should eq(2)
     end
 
     it "raises for an index outside the slice" do
@@ -113,7 +113,7 @@ describe "Slice" do
 
       result = slice.each_pointer do |pointer|
         pointers << pointer
-        pointer.value.value = pointer.value.value + 1
+        pointer.value.number = pointer.value.number + 1
       end
 
       pointers.should eq([
@@ -121,7 +121,7 @@ describe "Slice" do
         slice.to_unsafe + 1,
         slice.to_unsafe + 2,
       ])
-      slice.map(&.value).should eq(Slice[1, 2, 3])
+      slice.map(&.number).should eq(Slice[1, 2, 3])
       result.should be_nil
     end
 

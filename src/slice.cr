@@ -907,9 +907,7 @@ struct Slice(T)
   # Negative indices can be used to start counting from the end of the slice.
   # Raises `IndexError` if *index* is outside the slice's range.
   #
-  # This method is unsafe because the returned pointer does not perform bounds
-  # checks. Writing through the pointer also bypasses this slice's read-only
-  # guard.
+  # Writing through the returned pointer bypasses this slice's read-only guard.
   #
   # ```
   # slice = Slice[10, 20, 30]
@@ -923,9 +921,7 @@ struct Slice(T)
 
   # Yields a pointer to each element in this slice, and returns `nil`.
   #
-  # This method is unsafe because the yielded pointers do not perform bounds
-  # checks. Writing through the pointers also bypasses this slice's read-only
-  # guard.
+  # Writing through the yielded pointers bypasses this slice's read-only guard.
   #
   # ```
   # slice = Slice[1, 2, 3]
