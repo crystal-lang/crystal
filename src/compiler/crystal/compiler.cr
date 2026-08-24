@@ -159,6 +159,11 @@ module Crystal
     # --release automatically enable this option
     property? single_module = false
 
+    # If `true`, enables ThinLTO for parallel link-time optimization.
+    # This emits bitcode objects and uses the linker to perform
+    # whole-program optimization with cross-module inlining.
+    property? lto = false
+
     # A `ProgressTracker` object which tracks compilation progress.
     property progress_tracker = ProgressTracker.new
 
@@ -338,7 +343,7 @@ module Crystal
 
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}|#{@lto}"
       bc_flags_filename = "#{output_dir}/bc_flags#{optimization_mode.suffix}"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -543,10 +548,33 @@ module Crystal
           link_flags += " -L/usr/local/lib"
         end
 
-        link_flags = use_modern_linker(link_flags)
+        # Add ThinLTO flag if LTO is enabled
+        link_flags += " -flto=thin" if @lto
 
-        {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+        # Choose linker based on LTO mode
+        linker = @lto ? find_lto_driver : DEFAULT_LINKER
+        link_flags = use_modern_linker(link_flags) unless @lto
+
+        {linker, %(#{linker} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
       end
+    end
+
+    # Finds a suitable driver for ThinLTO (requires clang with matching lld)
+    private def find_lto_driver : String
+      # Try to find clang with matching lld version
+      ["clang-22", "clang-21", "clang-20", "clang-19", "clang-18", "clang"].each do |clang|
+        if Process.find_executable(clang)
+          # Extract version number from clang name
+          version = clang[/\d+/]?
+          lld_name = version ? "ld.lld-#{version}" : "ld.lld"
+          if Process.find_executable(lld_name)
+            # Return clang with -fuse-ld flag for the matching lld
+            return "#{clang} -fuse-ld=#{version ? "lld-#{version}" : "lld"}"
+          end
+        end
+      end
+      # Fallback to default linker (will likely fail, but gives better error message)
+      DEFAULT_LINKER
     end
 
     # Tests if `mold` or `lld` are available and prefers them as linkers over
@@ -556,13 +584,20 @@ module Crystal
       return link_flags unless DEFAULT_LINKER == "cc"
       return link_flags if link_flags.includes?("-fuse-ld=")
 
-      if Process.find_executable("mold")
-        link_flags + " -fuse-ld=mold"
-      elsif Process.find_executable("ld.lld")
-        link_flags + " -fuse-ld=lld"
+      # When LTO is enabled, we must use lld (mold doesn't support ThinLTO)
+      if @lto
+        if Process.find_executable("ld.lld")
+          return link_flags + " -fuse-ld=lld"
+        end
       else
-        link_flags
+        if Process.find_executable("mold")
+          return link_flags + " -fuse-ld=mold"
+        elsif Process.find_executable("ld.lld")
+          return link_flags + " -fuse-ld=lld"
+        end
       end
+
+      link_flags
     end
 
     private GCC_RESPONSE_FILE_TR = {
@@ -899,8 +934,11 @@ module Crystal
         optimization_mode = @optimization_mode
         optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
+        # Use thin LTO pipeline when LTO is enabled, otherwise use lto pipeline
+        pipeline = @lto ? "thin<#{optimization_mode}>" : "lto<#{optimization_mode}>"
+
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "lto<#{optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, pipeline, target_machine, options)
         end
       {% end %}
     end
@@ -1066,8 +1104,19 @@ module Crystal
       private def compile_to_object
         temporary_object_name = self.temporary_object_name
         target_machine = compiler.create_target_machine
-        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
-        target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+
+        if compiler.lto?
+          # For ThinLTO: emit bitcode as the object file
+          # The linker will perform LTO optimization using the bitcode
+          compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+          memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
+          File.write(temporary_object_name, memory_buffer.to_slice)
+          memory_buffer.dispose
+        else
+          compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+          target_machine.emit_obj_to_file llvm_mod, temporary_object_name
+        end
+
         File.rename(temporary_object_name, object_name)
       end
 
