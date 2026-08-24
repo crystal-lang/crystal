@@ -45,6 +45,7 @@ describe HTTP::WebSocketHandler do
     it "gives upgrade response for websocket upgrade request with '{{connection.id}}' request" do
       io = IO::Memory.new
       headers = HTTP::Headers{
+        "Host" =>              "example.com",
         "Upgrade" =>           "websocket",
         "Connection" =>        {{connection}},
         "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -72,6 +73,7 @@ describe HTTP::WebSocketHandler do
   it "gives upgrade response for case-insensitive 'WebSocket' upgrade request" do
     io = IO::Memory.new
     headers = HTTP::Headers{
+      "Host"                  => "example.com",
       "Upgrade"               => "WebSocket",
       "Connection"            => "Upgrade",
       "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -99,8 +101,74 @@ describe HTTP::WebSocketHandler do
     io = IO::Memory.new
 
     headers = HTTP::Headers{
+      "Host"                  => "example.com",
       "Upgrade"               => "websocket",
       "Connection"            => "Upgrade",
+      "Sec-WebSocket-Version" => "13",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
+  end
+
+  it "returns bad request if the request method is not GET" do
+    io = IO::Memory.new
+
+    headers = HTTP::Headers{
+      "Host"                  => "example.com",
+      "Upgrade"               => "websocket",
+      "Connection"            => "Upgrade",
+      "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version" => "13",
+    }
+    request = HTTP::Request.new("POST", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
+  end
+
+  it "returns bad request if the request HTTP version is not HTTP/1.1" do
+    io = IO::Memory.new
+
+    headers = HTTP::Headers{
+      "Host"                  => "example.com",
+      "Upgrade"               => "websocket",
+      "Connection"            => "Upgrade",
+      "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
+      "Sec-WebSocket-Version" => "13",
+    }
+    request = HTTP::Request.new("GET", "/", headers: headers, version: "HTTP/1.0")
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 16\r\n\r\n400 Bad Request\n")
+  end
+
+  it "returns bad request if Host header is missing" do
+    io = IO::Memory.new
+
+    headers = HTTP::Headers{
+      "Upgrade"               => "websocket",
+      "Connection"            => "Upgrade",
+      "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
       "Sec-WebSocket-Version" => "13",
     }
     request = HTTP::Request.new("GET", "/", headers: headers)
@@ -119,6 +187,7 @@ describe HTTP::WebSocketHandler do
     io = IO::Memory.new
 
     headers = HTTP::Headers{
+      "Host"              => "example.com",
       "Upgrade"           => "websocket",
       "Connection"        => "Upgrade",
       "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -139,6 +208,7 @@ describe HTTP::WebSocketHandler do
     io = IO::Memory.new
 
     headers = HTTP::Headers{
+      "Host"                  => "example.com",
       "Upgrade"               => "websocket",
       "Connection"            => "Upgrade",
       "Sec-WebSocket-Key"     => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -159,6 +229,7 @@ describe HTTP::WebSocketHandler do
   it "includes Sec-WebSocket-Protocol in upgrade response if it is valid" do
     io = IO::Memory.new
     headers = HTTP::Headers{
+      "Host"                   => "example.com",
       "Upgrade"                => "WebSocket",
       "Connection"             => "Upgrade",
       "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -186,6 +257,7 @@ describe HTTP::WebSocketHandler do
   it "excludes Sec-WebSocket-Protocol in upgrade response if it is not valid" do
     io = IO::Memory.new
     headers = HTTP::Headers{
+      "Host"                   => "example.com",
       "Upgrade"                => "WebSocket",
       "Connection"             => "Upgrade",
       "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -235,6 +307,7 @@ describe HTTP::WebSocketHandler do
     it "uses the first matched Sec-WebSocket-Protocol in upgrade response for '#{test_case[:client_protocols]}'" do
       io = IO::Memory.new
       headers = HTTP::Headers{
+        "Host"                   => "example.com",
         "Upgrade"                => "WebSocket",
         "Connection"             => "Upgrade",
         "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",
@@ -263,6 +336,7 @@ describe HTTP::WebSocketHandler do
   it "excludes Sec-WebSocket-Protocol in upgrade response if no protocol is provided to handler" do
     io = IO::Memory.new
     headers = HTTP::Headers{
+      "Host"                   => "example.com",
       "Upgrade"                => "WebSocket",
       "Connection"             => "Upgrade",
       "Sec-WebSocket-Key"      => "dGhlIHNhbXBsZSBub25jZQ==",

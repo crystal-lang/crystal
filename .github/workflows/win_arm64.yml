@@ -96,7 +96,7 @@ jobs:
         uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0 -UseClangCl
 
   aarch64-windows-dlls:
     runs-on: windows-11-vs2026-arm
@@ -184,7 +184,7 @@ jobs:
         uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
-        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0 -Dynamic
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version 3.5.0 -UseClangCl -Dynamic
 
   aarch64-windows-llvm-dlls:
     runs-on: windows-11-vs2026-arm
