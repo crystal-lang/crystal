@@ -119,7 +119,11 @@ module Crystal
             end
 
             # save state
-            address = registers.address
+            if registers.end_sequence?
+              address = 0_u64
+            else
+              address = registers.address
+            end
             file_index = registers.file
             line = registers.line
             column = registers.column
