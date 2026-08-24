@@ -287,6 +287,7 @@ describe Socket, tags: "network" do
       File.open(datapath("test_file.txt")) do |file|
         received = sendfile_test.call(file, 0, (file.size + 10).to_i32)
         received.bytesize.should eq file.size
+        file.rewind
         received.should eq file.gets_to_end
       end
     end
