@@ -57,7 +57,7 @@ module Crystal::DWARF
       def read_statement_program(registers : Registers*, &)
         reader = Reader.new(@program)
 
-        while true
+        until reader.eof?
           opcode = reader.read_u8
 
           if opcode >= @opcode_base
