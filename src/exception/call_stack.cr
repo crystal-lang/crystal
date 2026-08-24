@@ -79,7 +79,7 @@ struct Exception::CallStack
       @@lru_cache.lock(&.put(ip, line || ""))
     end
 
-    line
+    line unless line.try(&.empty?)
   end
 
   private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String?
