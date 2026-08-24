@@ -6,17 +6,35 @@ module Markd::Parser
       new(options).parse(source)
     end
 
-    RULES = {
-      Node::Type::Document      => Rule::Document.new,
-      Node::Type::BlockQuote    => Rule::BlockQuote.new,
-      Node::Type::Heading       => Rule::Heading.new,
-      Node::Type::CodeBlock     => Rule::CodeBlock.new,
-      Node::Type::HTMLBlock     => Rule::HTMLBlock.new,
-      Node::Type::ThematicBreak => Rule::ThematicBreak.new,
-      Node::Type::List          => Rule::List.new,
-      Node::Type::Item          => Rule::Item.new,
-      Node::Type::Paragraph     => Rule::Paragraph.new,
-    }
+    def self.rule_for(type : Node::Type)
+      case type
+      when Node::Type::Document      then Rule::Document.new
+      when Node::Type::BlockQuote    then Rule::BlockQuote.new
+      when Node::Type::Heading       then Rule::Heading.new
+      when Node::Type::CodeBlock     then Rule::CodeBlock.new
+      when Node::Type::HTMLBlock     then Rule::HTMLBlock.new
+      when Node::Type::ThematicBreak then Rule::ThematicBreak.new
+      when Node::Type::List          then Rule::List.new
+      when Node::Type::Item          then Rule::Item.new
+      when Node::Type::Paragraph     then Rule::Paragraph.new
+      else
+        raise "Unknown rule type: #{type}"
+      end
+    end
+
+    def self.all_rules
+      [
+        Rule::Document.new,
+        Rule::BlockQuote.new,
+        Rule::Heading.new,
+        Rule::CodeBlock.new,
+        Rule::HTMLBlock.new,
+        Rule::ThematicBreak.new,
+        Rule::List.new,
+        Rule::Item.new,
+        Rule::Paragraph.new,
+      ]
+    end
 
     property! tip : Node?
     property offset, column
@@ -94,7 +112,7 @@ module Markd::Parser
 
         find_next_nonspace
 
-        case RULES[container.type].continue(self, container)
+        case self.class.rule_for(container.type).continue(self, container)
         when Rule::ContinueStatus::Continue
           # we've matched, keep going
         when Rule::ContinueStatus::Stop
@@ -112,7 +130,7 @@ module Markd::Parser
       @all_closed = (container == @oldtip)
       @last_matched_container = container
 
-      matched_leaf = !container.type.paragraph? && RULES[container.type].accepts_lines?
+      matched_leaf = !container.type.paragraph? && self.class.rule_for(container.type).accepts_lines?
 
       while !matched_leaf
         find_next_nonspace
@@ -126,7 +144,7 @@ module Markd::Parser
           end
         end
 
-        matched = RULES.each_value do |rule|
+        matched = self.class.all_rules.each do |rule|
           case rule.match(self, container)
           when Rule::MatchValue::Container
             container = tip
@@ -169,7 +187,7 @@ module Markd::Parser
           cont = cont.parent?
         end
 
-        if RULES[container_type].accepts_lines?
+        if self.class.rule_for(container_type).accepts_lines?
           add_line
 
           # if HtmlBlock, check for end condition
@@ -210,7 +228,7 @@ module Markd::Parser
         container.source_pos[0],
         {line_number, @last_line_length},
       }
-      RULES[container.type].token(self, container)
+      self.class.rule_for(container.type).token(self, container)
 
       @tip = container_parent
 
@@ -231,7 +249,7 @@ module Markd::Parser
     end
 
     def add_child(type : Node::Type, offset : Int32) : Node
-      while !RULES[tip.type].can_contain?(type)
+      while !self.class.rule_for(tip.type).can_contain?(type)
         token(tip, @current_line - 1)
       end
 
