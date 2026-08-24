@@ -91,71 +91,85 @@ module Crystal
       end
 
       def lookup_line_number(pc : Int) : {Bytes, Bytes, UInt32, UInt32} | Nil
+        each_line_number do |sequence, low_pc, limit_pc, file_index, line, column|
+          if low_pc <= pc < limit_pc
+            directory, file = file_and_directory_at(sequence, file_index)
+            return directory, file, line, column
+          end
+        end
+      end
+
+      def each_line_number(&) : Nil
         return unless @initialized
         return unless debug_line = @debug_line
 
+        i = 0
         DWARF.each_line_sequence(debug_line) do |sequence|
-          registers = Line::Registers.new(sequence.default_is_stmt)
-
           # state of the previous entry in the matrix
+          address = 0_u64
           file_index = 0_u32
           line = 0_u32
           column = 0_u32
 
+          registers = Line::Registers.new(sequence.default_is_stmt)
+
           sequence.read_statement_program(pointerof(registers)) do
-            if pc < registers.address
-              # the previous state matched, we now resolve directory/file
-              file = Bytes.empty
-              directory = Bytes.empty
-              directory_index = 0
-
-              # must parse directories before we can parse files (skip)
-              sequence.each_directory { }
-
-              # files are 1-indexed
-              i = 1
-              sequence.each_file do |(form, value), dir_index, _, _, _|
-                if i == file_index
-                  file = decode_str(form, value)
-                  directory_index = dir_index
-                  break
-                end
-                i += 1
-              end
-
-              unless file.empty?
-                case directory_index
-                when 0
-                  # special case
-                  directory = ".".to_slice
-                else
-                  # re-parse the directories to get the file's directory
-                  sequence.rewind_headers
-
-                  # directories are 1-indexed
-                  i = 1
-                  sequence.each_directory do |(form, value)|
-                    if i == directory_index
-                      directory = decode_str(form, value)
-                      break
-                    end
-                    i += 1
-                  end
-                end
-              end
-
-              return {directory, file, line, column}
+            unless address.zero? || line.zero?
+              yield pointerof(sequence), address, registers.address, file_index, line, column
             end
 
             # save state
+            address = registers.address
             file_index = registers.file
             line = registers.line
             column = registers.column
           end
+
+          i += 1
+        end
+      end
+
+      private def file_and_directory_at(sequence, file_index)
+        file = Bytes.empty
+        directory = Bytes.empty
+        directory_index = 0
+
+        # must parse directories before we can parse files (skip)
+        sequence.value.each_directory { }
+
+        # files are 1-indexed
+        i = 1
+        sequence.value.each_file do |(form, value), dir_index, _, _, _|
+          if i == file_index
+            file = decode_str(form, value)
+            directory_index = dir_index
+            break
+          end
+          i += 1
         end
 
-        # not found
-        nil
+        unless file.empty?
+          case directory_index
+          when 0
+            # special case
+            directory = ".".to_slice
+          else
+            # re-parse the directories to get the file's directory
+            sequence.value.rewind_headers
+
+            # directories are 1-indexed
+            i = 1
+            sequence.value.each_directory do |(form, value)|
+              if i == directory_index
+                directory = decode_str(form, value)
+                break
+              end
+              i += 1
+            end
+          end
+        end
+
+        {directory, file}
       end
 
       private def decode_str(form, value)
