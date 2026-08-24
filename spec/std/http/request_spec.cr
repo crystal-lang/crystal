@@ -217,11 +217,11 @@ module HTTP
     describe "#content_length=" do
       it "accepts valid values" do
         req = Request.new("GET", "/")
-        (req.content_length = 1234).should eq 1234_i64
+        (req.content_length = 1234).should eq 1234
         req.content_length.should eq 1234
         req.headers["Content-Length"].should eq "1234"
 
-        (req.content_length = 0).should eq 0_i64
+        (req.content_length = 0).should eq 0
         req.content_length.should eq 0
         req.headers["Content-Length"].should eq "0"
 
