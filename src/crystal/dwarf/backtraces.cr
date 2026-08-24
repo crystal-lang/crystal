@@ -111,7 +111,7 @@ module Crystal
           line = 0_u32
           column = 0_u32
 
-          registers = Line::Registers.new(sequence.default_is_stmt)
+          registers = Line::Registers.new(sequence.default_is_stmt?)
 
           sequence.read_statement_program(pointerof(registers)) do
             unless address.zero? || line.zero?

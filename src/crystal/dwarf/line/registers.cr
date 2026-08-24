@@ -24,22 +24,22 @@ module Crystal::DWARF
       property column : UInt32 = 0
 
       # Recommended breakpoint location.
-      property is_stmt : Bool
+      property? is_stmt : Bool
 
       # Indicates that the instruction is the beginning of a basic block.
-      property basic_block : Bool = false
+      property? basic_block : Bool = false
 
       # Terminates a sequence of lines. Other information in the same row (of
       # the decoded matrix) isn't meaningful.
-      property end_sequence : Bool = false
+      property? end_sequence : Bool = false
 
       # Indicates the instruction is one where execution should be suspended
       # (for an entry breakpoint).
-      property prologue_end : Bool = false
+      property? prologue_end : Bool = false
 
       # Indicates the instruction is one where execution should be suspended
       # (for an exit breakpoint).
-      property epilogue_begin : Bool = false
+      property? epilogue_begin : Bool = false
 
       # Applicable Instruction Set Architecture for the instruction.
       property isa : UInt32 = 0

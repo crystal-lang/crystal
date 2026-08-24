@@ -7,7 +7,7 @@ module Crystal::DWARF
       property line_range : Int32
       property opcode_base : Int32
       property standard_opcode_lengths : Slice(UInt8)
-      property default_is_stmt : Bool
+      property? default_is_stmt : Bool
       @version : UInt8
       @dwarf64 : Bool
 
@@ -106,7 +106,7 @@ module Crystal::DWARF
             when DW_LNS_set_column
               registers.value.column = reader.read_uleb128
             when DW_LNS_negate_stmt
-              registers.value.is_stmt = !registers.value.is_stmt
+              registers.value.is_stmt = !registers.value.is_stmt?
             when DW_LNS_set_basic_block
               registers.value.basic_block = true
             when DW_LNS_const_add_pc
@@ -308,7 +308,7 @@ module Crystal::DWARF
         io << " @version=" << @version
         io << " @minimum_instruction_length=" << minimum_instruction_length
         io << " @maximum_operations_per_instruction=" << maximum_operations_per_instruction
-        io << " @default_is_stmt=" << default_is_stmt
+        io << " @default_is_stmt=" << default_is_stmt?
         io << " @line_base=" << line_base
         io << " @line_range=" << line_range
         io << " @opcode_base=" << opcode_base
