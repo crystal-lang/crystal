@@ -220,23 +220,28 @@ describe Socket, tags: "network" do
   end
 
   describe "#sendfile" do
-    sendfile_test = ->(file : File, offset : Int32, count : Int32) {
+    sendfile_test = ->(file : File, offset : Int32, count : Int32, expected : Int64) {
       begin
         port = unused_local_tcp_port
         server = Socket.tcp(:inet)
         server.bind("127.0.0.1", port)
         server.listen
+        actual = nil
 
         spawn do
           client = server.not_nil!.accept
-          client.sendfile(file, offset, count)
+          actual = client.sendfile(file, offset, count)
         ensure
           client.try(&.close)
         end
 
         socket = Socket.tcp(:inet)
         socket.connect("localhost", port)
-        socket.gets_to_end
+        string = socket.gets_to_end
+
+        actual.should eq(expected)
+
+        string
       ensure
         server.try(&.close)
         socket.try(&.close)
@@ -253,7 +258,7 @@ describe Socket, tags: "network" do
 
     it "writes file range to socket" do
       File.open(datapath("test_file.txt")) do |file|
-        received = sendfile_test.call(file, 0, 11)
+        received = sendfile_test.call(file, 0, 11, 11_i64)
         received.should eq("Hello World")
       end
     end
@@ -265,7 +270,7 @@ describe Socket, tags: "network" do
         file.read_buffering = false
         file.read(buf.to_slice)
 
-        received = sendfile_test.call(file, 17, 11)
+        received = sendfile_test.call(file, 17, 11, 11_i64)
         received.should eq(" World\nHell")
         file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
@@ -277,7 +282,7 @@ describe Socket, tags: "network" do
       File.open(datapath("test_file.txt")) do |file|
         file.read(buf.to_slice)
 
-        received = sendfile_test.call(file, 3, 10)
+        received = sendfile_test.call(file, 3, 10, 10_i64)
         received.should eq("lo World\nH")
         file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
@@ -285,7 +290,7 @@ describe Socket, tags: "network" do
 
     it "handles count greater than file size" do
       File.open(datapath("test_file.txt")) do |file|
-        received = sendfile_test.call(file, 0, (file.size + 10).to_i32)
+        received = sendfile_test.call(file, 0, (file.size + 10).to_i32, file.size)
         received.bytesize.should eq file.size
         file.rewind
         received.should eq file.gets_to_end
@@ -294,7 +299,7 @@ describe Socket, tags: "network" do
 
     it "handles offset + count greater than file size" do
       File.open(datapath("test_file.txt")) do |file|
-        received = sendfile_test.call(file, (file.size - 13).to_i32, 20)
+        received = sendfile_test.call(file, (file.size - 13).to_i32, 20, 13_i64)
         received.should eq "\nHello World\n"
       end
     end
