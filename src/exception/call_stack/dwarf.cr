@@ -21,10 +21,11 @@ struct Exception::CallStack
           if directory.empty?
             String.new(file)
           else
-            bytesize = directory.size + File::SEPARATOR_STRING.size + file.size
+            separator = Path.separators(Path::Kind.native).first
+            bytesize = directory.size + separator.bytesize + file.size
             String.build(bytesize) do |io|
               io.write(directory)
-              io << File::SEPARATOR_STRING
+              io << separator
               io.write(file)
             end
           end
