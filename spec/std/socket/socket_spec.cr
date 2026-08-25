@@ -227,6 +227,8 @@ describe Socket, tags: "network" do
         server.bind("127.0.0.1", port)
         server.listen
 
+        pos = file.pos
+
         spawn do
           client = server.not_nil!.accept
           client.sendfile(file, offset, count)
@@ -238,7 +240,7 @@ describe Socket, tags: "network" do
         socket.connect("localhost", port)
         string = socket.gets_to_end
 
-        file.pos.should eq 0
+        file.pos.should eq(pos), "`Socket#sendfile` should not affect `File#pos`, but it moved by #{file.pos - pos}"
 
         string
       ensure
