@@ -35,7 +35,7 @@ module Crystal::DWARF
       case form
       when DW_FORM_addr
         address_size == 4 ? @reader.read_u32 : @reader.read_u64
-      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
+      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
         @reader.read_uleb128
       when DW_FORM_addrx1, DW_FORM_data1, DW_FORM_ref1, DW_FORM_strx1
         @reader.read_u8
@@ -47,6 +47,8 @@ module Crystal::DWARF
         @reader.read_u32
       when DW_FORM_block, DW_FORM_exprloc
         @reader.read @reader.read_uleb128
+      when DW_FORM_block1
+        @reader.read @reader.read_u8
       when DW_FORM_block2
         @reader.read @reader.read_u16
       when DW_FORM_block4
@@ -79,7 +81,7 @@ module Crystal::DWARF
       case form
       when DW_FORM_addr
         @reader.skip(address_size)
-      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
+      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
         @reader.read_uleb128
       when DW_FORM_addrx1, DW_FORM_data1, DW_FORM_ref1, DW_FORM_strx1, DW_FORM_flag
         @reader.skip(1)
@@ -91,6 +93,8 @@ module Crystal::DWARF
         @reader.skip(4)
       when DW_FORM_block, DW_FORM_exprloc
         @reader.skip @reader.read_uleb128
+      when DW_FORM_block1
+        @reader.skip @reader.read_u8
       when DW_FORM_block2
         @reader.skip @reader.read_u16
       when DW_FORM_block4
