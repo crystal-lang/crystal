@@ -459,20 +459,25 @@ class Process
                            input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil, &)
     raise File::NotFoundError.new("Error executing process: No command", file: "") if args.empty?
 
-    fork_input = stdio_to_fd(input, for: STDIN)
-    fork_output = stdio_to_fd(output, for: STDOUT)
-    fork_error = stdio_to_fd(error, for: STDERR)
+    begin
+      fork_input = stdio_to_fd(input, for: STDIN)
+      fork_output = stdio_to_fd(output, for: STDOUT)
+      fork_error = stdio_to_fd(error, for: STDERR)
 
-    prepared_args = Crystal::System::Process.prepare_args(args)
-    pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      prepared_args = Crystal::System::Process.prepare_args(args)
+      pid = Crystal::System::Process.spawn(prepared_args, false, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+        yield error, command
+      end
+      process_info = Crystal::System::Process.new(pid)
+    rescue exc
       close
-      yield error, command
+      raise exc
+    ensure
+      fork_input.close if fork_input && !fork_input.in?(input, STDIN)
+      fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
+      fork_error.close if fork_error && !fork_error.in?(error, STDERR)
     end
-    @process_info = Crystal::System::Process.new(pid)
-  ensure
-    fork_input.close if fork_input && !fork_input.in?(input, STDIN)
-    fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
-    fork_error.close if fork_error && !fork_error.in?(error, STDERR)
+    @process_info = process_info
   end
 
   # Creates and executes a child process.
@@ -544,20 +549,25 @@ class Process
   # * `Process.exec` replaces the current process.
   def initialize(command : String, args : Enumerable(String)? = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false,
                  input : Stdio = Redirect::Close, output : Stdio = Redirect::Close, error : Stdio = Redirect::Close, chdir : Path | String? = nil)
-    fork_input = stdio_to_fd(input, for: STDIN)
-    fork_output = stdio_to_fd(output, for: STDOUT)
-    fork_error = stdio_to_fd(error, for: STDERR)
+    begin
+      fork_input = stdio_to_fd(input, for: STDIN)
+      fork_output = stdio_to_fd(output, for: STDOUT)
+      fork_error = stdio_to_fd(error, for: STDERR)
 
-    prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
-    pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+      prepared_args = Crystal::System::Process.prepare_args(command, args, shell)
+      pid = Crystal::System::Process.spawn(prepared_args, shell, env, clear_env, fork_input, fork_output, fork_error, chdir.try &.to_s) do |error, command|
+        raise ::File::Error.from_os_error("Error executing process", error, file: command)
+      end
+      process_info = Crystal::System::Process.new(pid)
+    rescue exc
       close
-      raise ::File::Error.from_os_error("Error executing process", error, file: command)
+      raise exc
+    ensure
+      fork_input.close if fork_input && !fork_input.in?(input, STDIN)
+      fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
+      fork_error.close if fork_error && !fork_error.in?(error, STDERR)
     end
-    @process_info = Crystal::System::Process.new(pid)
-  ensure
-    fork_input.close if fork_input && !fork_input.in?(input, STDIN)
-    fork_output.close if fork_output && !fork_output.in?(output, STDOUT)
-    fork_error.close if fork_error && !fork_error.in?(error, STDERR)
+    @process_info = process_info
   end
 
   def finalize : Nil
