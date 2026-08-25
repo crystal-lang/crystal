@@ -132,11 +132,12 @@ class Crystal::Call
       owner_trace = inner_exception
     end
 
+    highlights = [] of DiagnosticMessage::Highlight
     message = String.build do |msg|
       no_overload_matches_message(msg, full_name(owner, def_name), defs, args, arg_types, named_args_types)
 
       msg << "Overloads are:"
-      append_matches(defs, arg_types, msg)
+      append_matches(defs, arg_types, msg, highlights)
 
       if matches
         cover = matches.cover
@@ -161,9 +162,13 @@ class Crystal::Call
               else
                 signature_args = missing_types.join ", "
               end
-              msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
-              msg << ", &block" if block
-              msg << ')'
+              signature = String.build do |signature|
+                signature << full_name(owner, def_name) << '(' << signature_args
+                signature << ", &block" if block
+                signature << ')'
+              end
+              msg << "\n - "
+              append_highlighted_signature(msg, highlights, signature, owner)
             end
 
             if missing.size > MAX_RENDERED_OVERLOADS
@@ -174,7 +179,7 @@ class Crystal::Call
       end
     end
 
-    raise message, owner_trace
+    raise DiagnosticMessage.new(message, highlights), owner_trace
   end
 
   private def check_block_mismatch(call_errors, owner, def_name)
@@ -380,16 +385,17 @@ class Crystal::Call
   end
 
   private def raise_no_overload_matches(node, defs, arg_types, inner_exception, &)
+    highlights = [] of DiagnosticMessage::Highlight
     error_message = String.build do |str|
       yield str
 
       str.puts
       str.puts
       str << "Overloads are:"
-      append_matches(defs, arg_types, str)
+      append_matches(defs, arg_types, str, highlights)
     end
 
-    node.raise(error_message, inner_exception)
+    node.raise(DiagnosticMessage.new(error_message, highlights), inner_exception)
   end
 
   record WrongNumberOfArguments
@@ -674,7 +680,8 @@ class Crystal::Call
     end
     all_arguments_sizes.uniq!.sort!
 
-    raise(String.build do |str|
+    highlights = [] of DiagnosticMessage::Highlight
+    error_message = String.build do |str|
       if single_message = single_def_error_message(defs, named_args_types)
         str << single_message
         str << '\n'
@@ -698,8 +705,9 @@ class Crystal::Call
         str << ")\n"
       end
       str << "Overloads are:"
-      append_matches(defs, arg_types, str)
-    end, inner: inner_exception)
+      append_matches(defs, arg_types, str, highlights)
+    end
+    raise DiagnosticMessage.new(error_message, highlights), inner: inner_exception
   end
 
   def convert_to_logical_operator(def_name)
@@ -795,16 +803,17 @@ class Crystal::Call
     end
   end
 
-  def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
+  def append_matches(defs, arg_types, str, highlights, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       next if a_def.abstract?
       str << "\n - "
-      append_def_full_name a_def.owner, a_def, arg_types, str
+      signature = def_full_name(a_def.owner, a_def, arg_types)
+      append_highlighted_signature(str, highlights, signature, a_def.owner)
       if defs.size > 1 && a_def.same?(matched_def)
-        str << colorize(" (trying this one)").blue
+        append_highlight(str, highlights, " (trying this one)", :blue)
       end
       if a_def.args.any? { |arg| arg.default_value && arg.external_name == argument_name }
-        str << colorize(" (did you mean this one?)").yellow.bold
+        append_highlight(str, highlights, " (did you mean this one?)", :yellow_bold)
       end
     end
   end
@@ -819,6 +828,32 @@ class Crystal::Call
 
   def append_def_full_name(owner, a_def, arg_types, str)
     Call.append_def_full_name(owner, a_def, arg_types, str)
+  end
+
+  private def append_highlighted_signature(str, highlights, signature, owner)
+    offset = str.bytesize
+    str << signature
+    append_signature_highlights(highlights, offset, signature, owner.to_s)
+  end
+
+  private def append_signature_highlights(highlights, offset, signature, receiver)
+    prefix = "#{receiver}#"
+    unless signature.starts_with?(prefix)
+      highlights << DiagnosticMessage::Highlight.new(offset, signature.bytesize, :syntax)
+      return
+    end
+
+    # `Type#method` is diagnostic notation, not Crystal syntax. Keep the `#`
+    # separator outside both fragments so it isn't parsed as a comment.
+    highlights << DiagnosticMessage::Highlight.new(offset, receiver.bytesize, :syntax)
+    method_offset = offset + prefix.bytesize
+    highlights << DiagnosticMessage::Highlight.new(method_offset, signature.bytesize - prefix.bytesize, :syntax)
+  end
+
+  private def append_highlight(str, highlights, value, kind : DiagnosticMessage::HighlightKind)
+    offset = str.bytesize
+    str << value
+    highlights << DiagnosticMessage::Highlight.new(offset, value.bytesize, kind)
   end
 
   def self.append_def_full_name(owner, a_def, arg_types, str)
