@@ -431,7 +431,10 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       else
         event.value.res = cqe.value.res
         # event.value.flags = cqe.value.flags
-        yield event.value.fiber
+
+        if fiber = event.value.fiber?
+          yield fiber
+        end
       end
     end
   end
@@ -849,40 +852,87 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     pipe = System::FileDescriptor.system_pipe
 
     begin
-      res = async_impl do |event|
-        count = link_timeout ? 3 : 2
+      # we need two events to know the result of each splice, yet only need the
+      # second splice to resume the fiber
+      event1 = Event.new(:async, nil)
+      event2 = Event.new(:async, Fiber.current)
 
-        ring.submit(sqes.to_slice[0, count]) do
-          # file -> pipe
-          sqes[0].value.opcode = LibC::IORING_OP_SPLICE | LibC::IOSQE_IO_LINK
-          sqes[0].value.splice_fd_in = fd
-          sqes[0].value.fd = pipe[1]
-          sqes[0].value.splice_off_in = offset
-          sqes[0].value.off = -1
-          sqes[0].value.len = len
+      count = link_timeout ? 3 : 2
+      ring.submit(sqes.to_slice[0, count]) do
+        # file -> pipe
+        sqes[0].value.opcode = LibC::IORING_OP_SPLICE
+        sqes[0].value.flags = LibC::IOSQE_IO_LINK
+        sqes[0].value.splice_fd_in = fd
+        sqes[0].value.fd = pipe[1]
+        sqes[0].value.splice_off_in = offset
+        sqes[0].value.off = -1
+        sqes[0].value.len = len
+        sqes[0].value.user_data = pointerof(event1).address.to_u64!
 
-          # pipe -> socket
-          sqes[1].value.opcode = LibC::IORING_OP_SPLICE | (link_timeout ? LibC::IOSQE_IO_LINK : 0_u32)
-          sqes[1].value.splice_fd_in = pipe[0]
-          sqes[1].value.fd = socket.fd
-          sqes[1].value.splice_off_in = -1
-          sqes[1].value.off = -1
-          sqes[1].value.len = len
-          sqes[1].value.user_data = event.address.to_u64!
+        # pipe -> socket
+        sqes[1].value.opcode = LibC::IORING_OP_SPLICE
+        sqes[1].value.splice_fd_in = pipe[0]
+        sqes[1].value.fd = socket.fd
+        sqes[1].value.splice_off_in = -1
+        sqes[1].value.off = -1
+        sqes[1].value.len = len
+        sqes[1].value.user_data = pointerof(event2).address.to_u64!
 
-          if link_timeout
-            event.value.timeout = link_timeout
+        if link_timeout
+          sqes[1].value.flags = LibC::IOSQE_IO_LINK
 
-            sqes[2].value.opcode = LibC::IORING_OP_LINK_TIMEOUT
-            sqes[2].value.addr = event.value.timespec.address.to_u64!
-            sqes[2].value.len = 1
-          end
+          event2.timeout = link_timeout
+          sqes[2].value.opcode = LibC::IORING_OP_LINK_TIMEOUT
+          sqes[2].value.addr = event2.timespec.address.to_u64!
+          sqes[2].value.len = 1
         end
       end
-      res < 0 ? Errno.new(-res) : res.to_i64
+
+      Fiber.suspend
+
+      if event2.res == -LibC::ECANCELED
+        if event1.res < 0
+          # read failed
+          return Errno.new(-event1.res)
+        elsif event1.res == 0
+          # read nothing (e.g. offset > file.size)
+          return 0_i64
+        elsif event1.res < len
+          # read less than expected, (e.g. offset + count > file.size) but still
+          # read something into the pipe
+          ring.submit(sqes.to_slice[0, count - 1]) do
+            # pipe -> socket (retry)
+            sqes[0].value.opcode = LibC::IORING_OP_SPLICE
+            sqes[0].value.splice_fd_in = pipe[0]
+            sqes[0].value.fd = socket.fd
+            sqes[0].value.splice_off_in = -1
+            sqes[0].value.off = -1
+            sqes[0].value.len = event1.res
+            sqes[0].value.user_data = pointerof(event2).address.to_u64!
+
+            if link_timeout
+              sqes[0].value.flags = LibC::IOSQE_IO_LINK
+
+              sqes[1].value.opcode = LibC::IORING_OP_LINK_TIMEOUT
+              sqes[1].value.addr = event2.timespec.address.to_u64!
+              sqes[1].value.len = 1
+            end
+          end
+
+          Fiber.suspend
+        end
+      end
+
+      if event2.res < 0
+        errno = Errno.new(-event2.res)
+        raise IO::TimeoutError.new("Sendfile timed out") if errno == Errno::ECANCELED
+        errno
+      else
+        event2.res.to_i64
+      end
     ensure
       # async close (single submit, no wait)
-      ring.submit(sqes.to_slice[0, 2]) do
+      ring.submit(sqes.to_slice[0, 1]) do
         sqes[0].value.opcode = LibC::IORING_OP_CLOSE
         sqes[0].value.fd = pipe[0]
 
