@@ -236,7 +236,11 @@ describe Socket, tags: "network" do
 
         socket = Socket.tcp(:inet)
         socket.connect("localhost", port)
-        socket.gets_to_end
+        string = socket.gets_to_end
+
+        file.pos.should eq 0
+
+        string
       ensure
         server.try(&.close)
         socket.try(&.close)
