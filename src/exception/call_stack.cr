@@ -1,3 +1,6 @@
+require "crystal/lru_cache"
+require "sync/exclusive"
+
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
 def caller : Array(String)
@@ -19,6 +22,7 @@ struct Exception::CallStack
   skip(__FILE__)
 
   @@loaded = false
+  @@lru_cache = Sync::Exclusive(Crystal::LRUCache(Void*, String)).new(Crystal::LRUCache(Void*, String).new(1024))
 
   # :nodoc:
   def self.load_debug_info : Nil
@@ -60,59 +64,78 @@ struct Exception::CallStack
 
   # :nodoc:
   def self.decode_backtrace_frame(ip, show_full_info) : String?
-    pc = decode_address(ip)
+    line = @@lru_cache.lock(&.fetch?(ip))
 
-    file, line_number, column_number = decode_line_number(pc)
+    unless line
+      pc = decode_address(ip)
+      file, line_number, column_number = decode_line_number(pc)
 
-    if file && file != "??"
-      return if @@skip.includes?(file)
+      unless @@skip.includes?(file)
+        file = relative_to_initial_directory(file)
+        function, file = function_or_symbol_name(ip, file, show_full_info) { decode_function_name(pc) }
+        line = format_backtrace_frame(file, line_number, column_number, function, show_full_info ? ip : nil)
+      end
 
-      # Turn to relative to the current dir, if possible
-      if current_dir = CURRENT_DIR
-        if rel = Path[file].relative_to?(current_dir)
-          rel = rel.to_s
-          file = rel unless rel.starts_with?("..")
+      @@lru_cache.lock(&.put(ip, line || ""))
+    end
+
+    line unless line.try(&.empty?)
+  end
+
+  private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String?
+    return "???" if file == "??" && function == "??"
+
+    String.build do |str|
+      str << file
+
+      unless file == "??" || line_number == 0
+        str << ':'
+        str << line_number
+
+        unless column_number == 0
+          str << ':'
+          str << column_number
         end
       end
 
-      file_line_column = file
-      unless line_number == 0
-        file_line_column = "#{file_line_column}:#{line_number}"
-        file_line_column = "#{file_line_column}:#{column_number}" unless column_number == 0
+      str << " in '" << function << '\''
+
+      if ip
+        str << " at 0x"
+        ip.address.to_s(str, 16)
       end
     end
+  end
 
-    if name = decode_function_name(pc)
-      function = name
-    elsif frame = decode_frame(ip)
-      _, function, file = frame
+  private def self.function_or_symbol_name(ip, file, show_full_info, &)
+    if show_full_info && (frame = decode_frame(ip))
+      _, symbol, _ = frame
+      return {symbol, file}
+    end
+
+    if function = yield
+      return {function, file}
+    end
+
+    if !show_full_info && (frame = decode_frame(ip))
+      _, symbol, file = frame
       # Crystal methods (their mangled name) start with `*`, so
       # we remove that to have less clutter in the output.
-      function = function.lchop('*')
-    else
-      function = "??"
+      symbol = symbol.lchop('*')
+      return {symbol, file}
     end
 
-    if file_line_column
-      if show_full_info && (frame = decode_frame(ip))
-        _, sname, _ = frame
-        line = "#{file_line_column} in '#{sname}'"
-      else
-        line = "#{file_line_column} in '#{function}'"
-      end
-    else
-      if file == "??" && function == "??"
-        line = "???"
-      else
-        line = "#{file} in '#{function}'"
+    {"??", file}
+  end
+
+  private def self.relative_to_initial_directory(file)
+    if file != "??" && (current_dir = CURRENT_DIR)
+      if rel = Path[file].relative_to?(current_dir)
+        rel = rel.to_s
+        return rel unless rel.starts_with?("..")
       end
     end
-
-    if show_full_info
-      line = "#{line} at 0x#{ip.address.to_s(16)}"
-    end
-
-    line
+    file
   end
 end
 
