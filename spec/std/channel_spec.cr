@@ -898,4 +898,11 @@ describe "buffered" do
     ch = Channel(Int32).new(10)
     ch.pretty_inspect.should eq("#<Channel(Int32):0x#{ch.object_id.to_s(16)}>")
   end
+
+  it "#tap" do
+    ch = Channel(Nil).new
+    ch.tap do |c|
+      c.should be(ch)
+    end.should be(ch)
+  end
 end
