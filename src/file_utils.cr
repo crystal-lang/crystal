@@ -223,7 +223,8 @@ module FileUtils
       dest_path = File.join(dest_path, File.basename(src_path))
     end
 
-    rm_rf(dest_path) if File.exists?(dest_path) || File.symlink?(dest_path)
+    # Can't use `File.exists?` for the check because it follows symlinks and reports false for a dangling one.
+    rm_rf(dest_path) if File.info?(dest_path, follow_symlinks: false)
     File.symlink(src_path, dest_path)
   end
 
