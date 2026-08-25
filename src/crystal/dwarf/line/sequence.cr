@@ -1,11 +1,11 @@
 module Crystal::DWARF
   module Line
     struct Sequence
-      property minimum_instruction_length : Int32
-      property maximum_operations_per_instruction : Int32
-      property line_base : Int32
-      property line_range : Int32
-      property opcode_base : Int32
+      property minimum_instruction_length : UInt8
+      property maximum_operations_per_instruction : UInt8
+      property line_base : Int8
+      property line_range : UInt8
+      property opcode_base : UInt8
       property standard_opcode_lengths : Slice(UInt8)
       property? default_is_stmt : Bool
       @version : UInt8
@@ -135,7 +135,7 @@ module Crystal::DWARF
         if @maximum_operations_per_instruction == 1
           registers.value.address = registers.value.address &+ operation_advance &* @minimum_instruction_length
         else
-          registers.value.address = registers.value.address &+ @minimum_instruction_length &* ((registers.value.op_index &+ operation_advance) // @maximum_operations_per_instruction)
+          registers.value.address = registers.value.address &+ @minimum_instruction_length.to_u64 &* ((registers.value.op_index &+ operation_advance) // @maximum_operations_per_instruction)
           registers.value.op_index = (registers.value.op_index &+ operation_advance) % @maximum_operations_per_instruction
         end
       end
