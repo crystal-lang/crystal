@@ -23,12 +23,12 @@ env:
   CI_ATOMIC_OPS_VERSION: "7.10.0"
   CI_PCRE2_VERSION: "10.47"
   CI_ICONV_VERSION: "1.19"
-  CI_FFI_VERSION: "3.5.1"
-  CI_Z_VERSION: "1.3.1"
+  CI_FFI_VERSION: "3.8.0"
+  CI_Z_VERSION: "1.3.2"
   CI_YAML_VERSION: "0.2.5"
   CI_XML2_VERSION: "2.15.3"
-  CI_SSL_VERSION: "3.5.0"
-  CI_SSL_MAJOR: "3"
+  CI_SSL_VERSION: "4.0.1"
+  CI_SSL_MAJOR: "4"
   WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
 
 defaults:

@@ -13,8 +13,8 @@ concurrency:
 
 env:
   SPEC_SPLIT_DOTS: 160
-  CI_SSL_VERSION: "3.5.0"
-  CI_LLVM_VERSION: "22.1.8"
+  CI_SSL_VERSION: "4.0.1"
+  CI_LLVM_VERSION: "23.1.0"
   CI_LLVM_TARGETS: "X86,AArch64"
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
@@ -25,7 +25,7 @@ jobs:
     with:
       arch: aarch64
       runs-on: windows-11-vs2026-arm
-      llvm_version: "22.1.8"
+      llvm_version: "23.1.0"
       llvm_targets: "X86;AArch64"
 
   aarch64-windows-release:
@@ -135,6 +135,8 @@ jobs:
       - name: Cross-compile Crystal
         run: |
           cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
+          cp dlls/libcrypto-4-x64.dll "$env:CRYSTAL_DIR/"
+          cp dlls/libssl-4-x64.dll "$env:CRYSTAL_DIR/"
           crystal build --release --cross-compile --target=aarch64-windows-msvc src\compiler\crystal.cr -Di_know_what_im_doing
           cl crystal.obj /Fecrystal /link /LIBPATH:$(pwd)\libs /INCREMENTAL:NO /STACK:0x800000 /ENTRY:wmainCRTStartup `
             kernel32.lib ucrt.lib ole32.lib DbgHelp.lib advapi32.lib ws2_32.lib msvcrt.lib ntdll.lib shell32.lib `
