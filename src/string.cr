@@ -3760,9 +3760,6 @@ class String
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
   def byte_index(byte : Int, offset : Int32 = 0) : Int32?
-    offset += bytesize if offset < 0
-    return unless 0 <= offset < bytesize
-
     to_slice.index(byte, offset)
   end
 
