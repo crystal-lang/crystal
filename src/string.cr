@@ -3763,9 +3763,7 @@ class String
     offset += bytesize if offset < 0
     return unless 0 <= offset < bytesize
 
-    if index = (to_slice + offset).index(byte)
-      offset + index
-    end
+    to_slice.index(byte, offset)
   end
 
   # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
