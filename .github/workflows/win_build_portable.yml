@@ -83,7 +83,7 @@ jobs:
             dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi-8.dll
-            dlls/zlib1.dll
+            dlls/libz.dll
             dlls/mpir.dll
             dlls/yaml.dll
             dlls/libxml2.dll
@@ -126,6 +126,7 @@ jobs:
       - name: Build Crystal
         run: |
           cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
+          cp dlls/libz.dll "$env:CRYSTAL_DIR/"
           cp dlls/libcrypto-4-x64.dll "$env:CRYSTAL_DIR/"
           cp dlls/libssl-4-x64.dll "$env:CRYSTAL_DIR/"
           bin/crystal.bat env
