@@ -19,7 +19,12 @@ lib LibC
   O_RDONLY   =       0o0
   O_RDWR     =       0o2
   O_WRONLY   =       0o1
-  AT_FDCWD   =      -100
+
+  AT_FDCWD            =  -100
+  AT_SYMLINK_NOFOLLOW = 0x100
+  AT_REMOVEDIR        = 0x200
+  AT_SYMLINK_FOLLOW   = 0x400
+  AT_EACCESS          = 0x200
 
   struct Flock
     l_type : Short

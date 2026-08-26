@@ -12,6 +12,7 @@ lib LibC
 
   fun chroot(__path : Char*) : Int
   fun access(__path : Char*, __mode : Int) : Int
+  fun faccessat(__dirfd : Int, __path : Char*, __mode : Int, __flags : Int) : Int
   fun chdir(__path : Char*) : Int
   fun chown(__path : Char*, __owner : UidT, __group : GidT) : Int
   fun fchown(__fd : Int, __owner : UidT, __group : GidT) : Int

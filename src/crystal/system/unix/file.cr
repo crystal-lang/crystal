@@ -79,8 +79,8 @@ module Crystal::System::File
     info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
   end
 
-  def self.exists?(path)
-    accessible?(path, LibC::F_OK)
+  def self.exists?(path, *, follow_symlinks = true)
+    accessible?(path, LibC::F_OK, follow_symlinks: follow_symlinks)
   end
 
   def self.readable?(path) : Bool
@@ -95,8 +95,23 @@ module Crystal::System::File
     accessible?(path, LibC::X_OK)
   end
 
-  private def self.accessible?(path, flag)
-    LibC.access(path.check_no_null_byte, flag) == 0
+  private def self.accessible?(path, flag, *, follow_symlinks = true)
+    if follow_symlinks
+      LibC.access(path.check_no_null_byte, flag) == 0
+    else
+      {% if LibC.has_method?(:faccessat) %}
+        LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, flag, LibC::AT_SYMLINK_NOFOLLOW) == 0
+      {% else %}
+        # faccessat is not available, for example on wasm32
+        if flag == LibC::F_OK
+          # success of stat/lstat can be used to determine the existence of a file
+          stat = uninitialized LibC::Stat
+          lstat(path.check_no_null_byte, pointerof(stat)).zero?
+        else
+          raise NotImplementedError.new("follow_symlinks: false is not supported on this platform")
+        end
+      {% end %}
+    end
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)

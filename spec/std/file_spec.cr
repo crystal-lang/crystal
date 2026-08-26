@@ -226,6 +226,34 @@ describe "File" do
     it "gives true for null file (#15019)" do
       File.exists?(File::NULL).should be_true
     end
+
+    describe "follow_symlinks: false" do
+      it "gives true" do
+        File.exists?(datapath("test_file.txt"), follow_symlinks: false).should be_true
+      end
+
+      it "gives false" do
+        File.exists?(datapath("non_existing_file.txt"), follow_symlinks: false).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.exists?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
+      end
+
+      it "checks existence of symlink" do
+        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+          File.exists?(good_path, follow_symlinks: false).should be_true
+          File.exists?(bad_path, follow_symlinks: false).should be_true
+        end
+      end
+
+      it "gives true for null file (#15019)" do
+        File.exists?(File::NULL, follow_symlinks: false).should be_true
+      end
+    end
   end
 
   describe "file?" do
