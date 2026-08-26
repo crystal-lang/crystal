@@ -154,7 +154,7 @@ jobs:
             dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi-8.dll
-            dlls/zlib1.dll
+            dlls/libz.dll
             dlls/mpir.dll
             dlls/yaml.dll
             dlls/libxml2.dll
