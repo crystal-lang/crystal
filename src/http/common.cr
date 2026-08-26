@@ -454,6 +454,77 @@ module HTTP
       quote_string(string, io)
     end
   end
+
+  # :nodoc:
+  VALID_TOKEN_CHAR_MAP = {% if compare_versions(Crystal::VERSION, "1.11.0") >= 0 %}
+    {%
+      table = (0x00..0xFF).map { 0_u8 }
+      table['!'.ord] = 1_u8
+      table['#'.ord] = 1_u8
+      table['$'.ord] = 1_u8
+      table['%'.ord] = 1_u8
+      table['&'.ord] = 1_u8
+      table['\''.ord] = 1_u8
+      table['*'.ord] = 1_u8
+      table['+'.ord] = 1_u8
+      table['-'.ord] = 1_u8
+      table['.'.ord] = 1_u8
+      table['^'.ord] = 1_u8
+      table['_'.ord] = 1_u8
+      table['`'.ord] = 1_u8
+      table['|'.ord] = 1_u8
+      table['~'.ord] = 1_u8
+      ('0'.ord..'9'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('A'.ord..'Z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('a'.ord..'z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+    %}
+    {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+      Slice(UInt8).literal({{ table.splat }})
+    {% else %}
+      {{table}}.to_slice
+    {% end %}
+  {% else %}
+                           table = Slice(UInt8).new(256)
+                           table[0x21] = 1
+                           table[0x23] = 1
+                           table[0x24] = 1
+                           table[0x25] = 1
+                           table[0x26] = 1
+                           table[0x27] = 1
+                           table[0x2a] = 1
+                           table[0x2b] = 1
+                           table[0x2d] = 1
+                           table[0x2e] = 1
+                           table[0x5e] = 1
+                           table[0x5f] = 1
+                           table[0x60] = 1
+                           table[0x7c] = 1
+                           table[0x7e] = 1
+                           (0x30..0x39).each do |i|
+                             table[i] = 1
+                           end
+                           (0x41..0x5a).each do |i|
+                             table[i] = 1
+                           end
+                           (0x61..0x7a).each do |i|
+                             table[i] = 1
+                           end
+                           table
+                         {% end %}
+
+  def self.validate_token(string : String, message = "Invalid HTTP token") : String
+    if string.empty? || string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+      raise ArgumentError.new(message)
+    end
+
+    string
+  end
 end
 
 require "./status"
