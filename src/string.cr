@@ -3761,14 +3761,11 @@ class String
   # ```
   def byte_index(byte : Int, offset : Int32 = 0) : Int32?
     offset += bytesize if offset < 0
-    return if offset < 0
+    return unless 0 <= offset < bytesize
 
-    offset.upto(bytesize - 1) do |i|
-      if to_unsafe[i] == byte
-        return i
-      end
+    if index = (to_slice + offset).index(byte)
+      offset + index
     end
-    nil
   end
 
   # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
