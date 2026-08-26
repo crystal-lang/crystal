@@ -126,18 +126,96 @@ describe HTTP::Headers do
     headers["baz"]?.should be_nil
   end
 
-  it "adds string" do
-    headers = HTTP::Headers.new
-    headers.add("foo", "bar")
-    headers.add("foo", "baz")
-    headers["foo"].should eq("bar,baz")
+  describe "#[]=(String)" do
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers[""] = "bar"
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["ä"] = "bar"
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["Foo: foo\r\nBar"] = "bar"
+      end
+    end
   end
 
-  it "adds array of string" do
-    headers = HTTP::Headers.new
-    headers.add("foo", "bar")
-    headers.add("foo", ["baz", "qux"])
-    headers["foo"].should eq("bar,baz,qux")
+  describe "#[]=(Array)" do
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers[""] = ["bar"]
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["ä"] = ["bar"]
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["Foo: foo\r\nBar"] = ["bar"]
+      end
+    end
+  end
+
+  describe "#add(String)" do
+    it "adds string" do
+      headers = HTTP::Headers.new
+      headers.add("foo", "bar")
+      headers.add("foo", "baz")
+      headers["foo"].should eq("bar,baz")
+    end
+
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("", "bar")
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("ä", "bar")
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("Foo: foo\r\nBar", "bar")
+      end
+    end
+  end
+
+  describe "#add(Array)" do
+    it "adds array of string" do
+      headers = HTTP::Headers.new
+      headers.add("foo", "bar")
+      headers.add("foo", ["baz", "qux"])
+      headers["foo"].should eq("bar,baz,qux")
+    end
+
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("", ["bar"])
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("ä", ["bar"])
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("Foo: foo\r\nBar", ["bar"])
+      end
+    end
+  end
+
+  describe "#add?(String)" do
+    it "returns false on invalid name" do
+      headers = HTTP::Headers.new
+      headers.add?("", "bar").should be_false
+      headers.add?("ä", "bar").should be_false
+      headers.add?("Foo: foo\r\nBar", "bar").should be_false
+    end
+  end
+
+  describe "#add?(Array)" do
+    it "returns false on invalid name" do
+      headers = HTTP::Headers.new
+      headers.add?("", ["bar"]).should be_false
+      headers.add?("ä", ["bar"]).should be_false
+      headers.add?("Foo: foo\r\nBar", ["bar"]).should be_false
+    end
   end
 
   it "gets all values" do

@@ -1,3 +1,5 @@
+require "http/common"
+
 # A `Hash`-like object that holds HTTP headers.
 #
 # Two headers are considered the same if their downcase representation is the same
@@ -64,12 +66,14 @@ struct HTTP::Headers
   end
 
   def []=(key : String, value : String) : String
+    check_invalid_header_name key
     check_invalid_header_content(value)
 
     @hash[wrap(key)] = value
   end
 
   def []=(key : String, value : Array(String)) : Array(String)
+    check_invalid_header_name key
     value.each { |val| check_invalid_header_content val }
 
     @hash[wrap(key)] = value
@@ -139,24 +143,28 @@ struct HTTP::Headers
   # headers["Connection"] # => "keep-alive,Upgrade"
   # ```
   def add(key : String, value : String) : self
+    check_invalid_header_name key
     check_invalid_header_content value
     unsafe_add(key, value)
     self
   end
 
   def add(key : String, value : Array(String)) : self
+    check_invalid_header_name key
     value.each { |val| check_invalid_header_content val }
     unsafe_add(key, value)
     self
   end
 
   def add?(key : String, value : String) : Bool
+    return false unless valid_name?(key)
     return false unless valid_value?(value)
     unsafe_add(key, value)
     true
   end
 
   def add?(key : String, value : Array(String)) : Bool
+    return false unless valid_name?(key)
     value.each { |val| return false unless valid_value?(val) }
     unsafe_add(key, value)
     true
@@ -358,6 +366,10 @@ struct HTTP::Headers
     @hash.to_yaml(builder)
   end
 
+  def valid_name?(name : String) : Bool
+    HTTP.valid_token?(name)
+  end
+
   def valid_value?(value : String) : Bool
     invalid_value_char(value).nil?
   end
@@ -425,6 +437,10 @@ struct HTTP::Headers
     else
       values.join ","
     end
+  end
+
+  private def check_invalid_header_name(key)
+    HTTP.validate_token(key, "Invalid header name")
   end
 
   private def check_invalid_header_content(value)

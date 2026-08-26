@@ -518,8 +518,14 @@ module HTTP
                            table
                          {% end %}
 
+  # :nodoc:
+  def self.valid_token?(string : String) : Bool
+    !string.empty? && !string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+  end
+
+  # :nodoc:
   def self.validate_token(string : String, message = "Invalid HTTP token") : String
-    if string.empty? || string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+    unless valid_token?(string)
       raise ArgumentError.new(message)
     end
 
