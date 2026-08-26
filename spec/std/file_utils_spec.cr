@@ -825,6 +825,22 @@ describe "FileUtils" do
       end
     end
 
+    it "overwrites a destination dangling symlink" do
+      with_tempfile("ln_sf_src", "ln_sf_dst_dangling") do |path1, path2|
+        test_with_string_and_path(path1, path2) do |arg1, arg2|
+          FileUtils.touch([path1])
+          File.symlink(File.join(File.dirname(path2), "missing"), path2)
+          File.symlink?(path2).should be_true
+          File.exists?(path2).should be_false
+
+          FileUtils.ln_sf(arg1, arg2)
+          File.symlink?(path2).should be_true
+          File.realpath(path2).should eq File.realpath(path1)
+          FileUtils.rm_rf([path1, path2])
+        end
+      end
+    end
+
     {% if flag?(:unix) %}
       # can't spawn subprocesses in interpreted code (#12241)
       pending_interpreted "overwrites a destination named pipe" do
