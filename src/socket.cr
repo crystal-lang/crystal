@@ -381,7 +381,9 @@ class Socket < IO
 
     file.@fd_lock.read do
       @fd_lock.write do
-        while (sent_bytes = system_sendfile(file, offset, count)) > 0
+        until count == 0
+          sent_bytes = system_sendfile(file, offset, count)
+          break if sent_bytes == 0
           offset += sent_bytes
           count -= sent_bytes
           total += sent_bytes
