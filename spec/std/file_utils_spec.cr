@@ -222,6 +222,23 @@ describe "FileUtils" do
         end
       end
     end
+
+    it "copies a directory containing a dangling symlink" do
+      with_tempfile("cp_r-test", "cp_r-test-copied") do |src_path, dest_path|
+        test_with_string_and_path(src_path, dest_path) do |*args|
+          Dir.mkdir_p(src_path)
+          File.symlink("../missing", File.join(src_path, "link"))
+
+          FileUtils.cp_r(*args)
+          link = File.join(dest_path, "link")
+          File.symlink?(link).should be_true
+          File.readlink(link).should eq("../missing")
+
+          FileUtils.rm_rf(src_path)
+          FileUtils.rm_rf(dest_path)
+        end
+      end
+    end
   end
 
   describe ".rm" do
