@@ -71,7 +71,7 @@ module HTTP
             case encoding
             when Nil
               # nothing
-            when "gzip"
+            when "gzip", "x-gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
