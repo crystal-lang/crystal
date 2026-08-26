@@ -1,0 +1,251 @@
+name: Windows CI / Build Libraries
+
+on:
+  workflow_call:
+    inputs:
+      arch:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
+      llvm_version:
+        required: true
+        type: string
+      llvm_targets:
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  CI_GC_VERSION: "8.2.12"
+  CI_ATOMIC_OPS_VERSION: "7.10.0"
+  CI_PCRE2_VERSION: "10.47"
+  CI_ICONV_VERSION: "1.19"
+  CI_FFI_VERSION: "3.5.1"
+  CI_Z_VERSION: "1.3.1"
+  CI_YAML_VERSION: "0.2.5"
+  CI_XML2_VERSION: "2.15.3"
+  CI_SSL_VERSION: "3.5.0"
+  CI_SSL_MAJOR: "3"
+  WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  windows-libs:
+    name: Static libraries
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ env.WIN_ARCH }}
+
+      - name: Download Crystal source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Cache libraries
+        id: cache-libs
+        uses: actions/cache@v6
+        with:
+          path: | # openssl and llvm take much longer to build so they are cached separately
+            libs/pcre2-8.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/ffi.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
+            libs/libxml_VERSION
+          key: libs-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+
+      - name: Set up Cygwin
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: cygwin/cygwin-install-action@3f0a3f9f988f7e96b8c18098ae05eaec175f5b52 # v6
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
+      - name: Build libgc
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version ${{ env.CI_GC_VERSION }} -AtomicOpsVersion ${{ env.CI_ATOMIC_OPS_VERSION }}
+      - name: Build libpcre2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version ${{ env.CI_PCRE2_VERSION }}
+      - name: Build libiconv
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version ${{ env.CI_ICONV_VERSION }}
+      - name: Build libffi
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version ${{ env.CI_FFI_VERSION }}
+      - name: Build zlib
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version ${{ env.CI_Z_VERSION }}
+      - name: Build mpir
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir
+      - name: Build libyaml
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version ${{ env.CI_YAML_VERSION }}
+      - name: Build libxml2
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version ${{ env.CI_XML2_VERSION }}
+
+      - name: Cache OpenSSL
+        id: cache-openssl
+        uses: actions/cache@v6
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+            libs/openssl_VERSION
+          key: libs-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+
+      - name: Set up NASM
+        if: steps.cache-openssl.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+      - name: Build OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
+
+  windows-dlls:
+    name: Dynamic libraries
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ env.WIN_ARCH }}
+
+      - name: Download Crystal source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Cache libraries
+        id: cache-dlls
+        uses: actions/cache@v6
+        with:
+          path: | # openssl and llvm take much longer to build so they are cached separately
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre2-8.dll
+            dlls/iconv-2.dll
+            dlls/gc.dll
+            dlls/libffi-8.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: dlls-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+
+      - name: Set up Cygwin
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        uses: cygwin/cygwin-install-action@3f0a3f9f988f7e96b8c18098ae05eaec175f5b52 # v6
+        with:
+          packages: make
+          install-dir: C:\cygwin64
+          add-to-path: false
+      - name: Build libgc
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-gc.ps1 -BuildTree deps\gc -Version ${{ env.CI_GC_VERSION }} -AtomicOpsVersion ${{ env.CI_ATOMIC_OPS_VERSION }} -Dynamic
+      - name: Build libpcre2
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-pcre2.ps1 -BuildTree deps\pcre2 -Version ${{ env.CI_PCRE2_VERSION }} -Dynamic
+      - name: Build libiconv
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-iconv.ps1 -BuildTree deps\iconv -Version ${{ env.CI_ICONV_VERSION }} -Dynamic
+      - name: Build libffi
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-ffi.ps1 -BuildTree deps\ffi -Version ${{ env.CI_FFI_VERSION }} -Dynamic
+      - name: Build zlib
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-z.ps1 -BuildTree deps\z -Version ${{ env.CI_Z_VERSION }} -Dynamic
+      - name: Build mpir
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-mpir.ps1 -BuildTree deps\mpir -Dynamic
+      - name: Build libyaml
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-yaml.ps1 -BuildTree deps\yaml -Version ${{ env.CI_YAML_VERSION }} -Dynamic
+      - name: Build libxml2
+        if: steps.cache-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-xml2.ps1 -BuildTree deps\xml2 -Version ${{ env.CI_XML2_VERSION }} -Dynamic
+
+      - name: Cache OpenSSL
+        id: cache-openssl-dlls
+        uses: actions/cache@v6
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-${{ env.CI_SSL_MAJOR }}-${{ env.WIN_ARCH }}.dll
+            dlls/libssl-${{ env.CI_SSL_MAJOR }}-${{ env.WIN_ARCH }}.dll
+          key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+      - name: Set up NASM
+        if: steps.cache-openssl-dlls.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
+        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+      - name: Build OpenSSL
+        if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} -Dynamic ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
+
+  windows-llvm-dlls:
+    name: LLVM DLL
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Set up Python
+        if: inputs.arch == 'aarch64'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ env.WIN_ARCH }}
+
+      - name: Download Crystal source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Cache LLVM
+        id: cache-llvm-dlls
+        uses: actions/cache@v6
+        with:
+          path: |
+            libs/llvm_VERSION
+            libs/llvm-dynamic.lib
+            dlls/LLVM-C.dll
+          key: dlls-llvm-${{ inputs.llvm_version }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}
+
+      - name: Build LLVM
+        if: steps.cache-llvm-dlls.outputs.cache-hit != 'true'
+        run: .\etc\win-ci\build-llvm.ps1 -BuildTree deps\llvm -Version "$env:INPUTS_LLVM_VERSION" -TargetsToBuild "$env:INPUTS_LLVM_TARGETS" -Dynamic ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
+        env:
+          INPUTS_LLVM_VERSION: ${{ inputs.llvm_version }}
+          INPUTS_LLVM_TARGETS: ${{ inputs.llvm_targets }}
