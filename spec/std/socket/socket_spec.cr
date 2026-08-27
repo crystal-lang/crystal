@@ -288,7 +288,7 @@ describe Socket, tags: "network" do
       end
     end
 
-    it "handles count greater than file size" do
+    it "writes full file if count > file.size" do
       File.open(datapath("test_file.txt")) do |file|
         received = sendfile_test.call(file, 0, (file.size + 10).to_i32, file.size)
         received.bytesize.should eq file.size
@@ -297,7 +297,14 @@ describe Socket, tags: "network" do
       end
     end
 
-    it "handles offset + count greater than file size" do
+    it "writes nothing when offset > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 500, 11, 0_i64)
+        received.should eq("")
+      end
+    end
+
+    it "writes remainder if offset + count > file.size" do
       File.open(datapath("test_file.txt")) do |file|
         received = sendfile_test.call(file, (file.size - 13).to_i32, 20, 13_i64)
         received.should eq "\nHello World\n"
