@@ -134,6 +134,7 @@ struct Crystal::DWARF::Reader
       (@pointer + pos).copy_to(slice.to_unsafe, bytes_count)
       @pos = pos + bytes_count
     else
+      @pos = @bytesize
       raise IO::EOFError.new
     end
   end
@@ -146,20 +147,29 @@ struct Crystal::DWARF::Reader
       @pos = pos + bytes_count
       Bytes.new(@pointer + pos, bytes_count, read_only: true)
     else
+      @pos = @bytesize
       raise IO::EOFError.new
     end
   end
 
   def read_string : Bytes
     start = @pointer + @pos
-    size = Bytes.new(start, remainder).index!(0_u8)
-    skip(size + 1) # chomp trailing NULL byte
-    Bytes.new(start, size)
+    if size = Bytes.new(start, remainder).index(0_u8)
+      skip(size + 1) # chomp trailing NULL byte
+      Bytes.new(start, size)
+    else
+      @pos = @bytesize
+      raise IO::EOFError.new
+    end
   end
 
   def skip_string : Nil
-    size = Bytes.new(@pointer + @pos, remainder).index!(0_u8)
-    skip(size + 1) # chomp trailing NULL byte
+    if size = Bytes.new(@pointer + @pos, remainder).index(0_u8)
+      skip(size + 1) # chomp trailing NULL byte
+    else
+      @pos = @bytesize
+      raise IO::EOFError.new
+    end
   end
 
   def skip(bytes_count : Int) : Nil
@@ -168,6 +178,7 @@ struct Crystal::DWARF::Reader
     if bytes_count <= remainder
       @pos += bytes_count
     else
+      @pos = @bytesize
       raise IO::EOFError.new
     end
   end
