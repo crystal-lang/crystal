@@ -174,7 +174,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       # Cannot use `::Time.instant` here because it could be mocked.
       t = time.duration_since(Crystal::System::Time.instant)
 
-      data = t.total_nanoseconds.to_i64!
+      data = t.to_nanoseconds.to_i64!
       {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
         # legacy BSD (and DragonFly) only have millisecond precision, so we
         # round up to the next millisecond.

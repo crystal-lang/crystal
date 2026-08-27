@@ -337,14 +337,46 @@ class HTTP::Client::Response
       response.headers["content-length"]?.should be_nil
     end
 
+    it "deletes Content-Encoding and Content-Length headers after x-gzip decompression" do
+      body = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("hello"))
+      end
+      response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: x-gzip\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
+      response.body.should eq("hello")
+      response.headers["content-encoding"]?.should be_nil
+      response.headers["content-length"]?.should be_nil
+    end
+
     it "deletes Content-Encoding and Content-Length headers after deflate decompression" do
       body = String.build do |io|
-        Compress::Deflate::Writer.open(io, &.print("hello"))
+        Compress::Zlib::Writer.open(io, &.print("hello"))
       end
       response = Response.from_io(IO::Memory.new("HTTP/1.1 200 OK\r\nContent-Encoding: deflate\r\nContent-Length: #{body.bytesize}\r\n\r\n#{body}"))
       response.body.should eq("hello")
       response.headers["content-encoding"]?.should be_nil
       response.headers["content-length"]?.should be_nil
+    end
+
+    it "rejects response with unsupported Content-Encoding" do
+      expect_raises Exception, "Unexpected end of http request" do
+        Response.from_io(IO::Memory.new(<<-HTTP))
+          HTTP/1.1 200 OK
+          Content-Encoding: br
+
+          foobar
+          HTTP
+      end
+    end
+
+    it "rejects response with unknown Content-Encoding" do
+      expect_raises Exception, "Unexpected end of http request" do
+        Response.from_io(IO::Memory.new(<<-HTTP))
+          HTTP/1.1 200 OK
+          Content-Encoding: foo
+
+          foobar
+          HTTP
+      end
     end
 
     describe "success?" do

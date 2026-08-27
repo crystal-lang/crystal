@@ -587,7 +587,7 @@ module HTTP
 
       io_request.rewind
       request = HTTP::Request.from_io(io_request).as(HTTP::Request)
-      request.hostname.should eq("")
+      request.hostname.should be_nil
     end
 
     it "can specify host and port when initialized with IO" do

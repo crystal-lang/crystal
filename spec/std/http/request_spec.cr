@@ -28,11 +28,10 @@ module HTTP
         end
 
         it "rejects invalid methods" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET /", "/").method.should eq "GET /"
-          Request.new("GET\n", "/").method.should eq "GET\n"
-          Request.new("GET\r", "/").method.should eq "GET\r"
-          Request.new("", "/").method.should eq ""
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET /", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\n", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\r", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "", "/" }
         end
       end
 
@@ -116,16 +115,11 @@ module HTTP
       end
 
       it "rejects invalid methods" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.method = "GET /"
-        req.method.should eq "GET /"
-        req.method = "GET\n"
-        req.method.should eq "GET\n"
-        req.method = "GET\r"
-        req.method.should eq "GET\r"
-        req.method = ""
-        req.method.should eq ""
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET /" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\n" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\r" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "" }
       end
     end
 
@@ -181,6 +175,15 @@ module HTTP
     end
 
     describe "#body=" do
+      it "returns the value" do
+        req = Request.new("GET", "/")
+        (req.body = "foo").should eq "foo"
+        (req.body = "foo".to_slice).should eq "foo".to_slice
+        io = IO::Memory.new
+        (req.body = io).should be io
+        (req.body = nil).should be_nil
+      end
+
       it "keeps content-length header in sync" do
         # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/", body: "foo")
@@ -513,13 +516,11 @@ module HTTP
 
       describe "invalid headers" do
         it "empty header name" do
-          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n: Bar\r\n\r\n"))
-          request.should(be_a(Request)).headers[""].should eq "Bar"
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\n: Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
         it "header without colon" do
-          request = Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar\r\n\r\n"))
-          request.should(be_a(Request)).headers[""].should eq "oo Bar"
+          Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nFoo Bar\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
         it "invalid header name" do
@@ -821,12 +822,8 @@ module HTTP
 
       it "ignores invalid content-type" do
         request = Request.new("POST", "/form", HTTP::Headers{"Content-Type" => "//"}, HTTP::Params.encode({"test" => "foobar"}))
-        expect_raises(MIME::Error, "Invalid '/'") do
-          request.form_params?
-        end
-        expect_raises(MIME::Error, "Invalid '/'") do
-          request.form_params
-        end
+        request.form_params?.should be_nil
+        request.form_params.size.should eq(0)
       end
     end
 
@@ -836,7 +833,7 @@ module HTTP
         request.hostname.should eq("host.example.org")
       end
 
-      it "#hostname" do
+      it "extracts hostname" do
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org"})
         request.hostname.should eq("host.example.org")
 
@@ -852,6 +849,8 @@ module HTTP
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000"})
         request.hostname.should eq("host.example.org")
 
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.:3000"}).hostname.should eq "host."
+
         request = Request.new("GET", "/", HTTP::Headers{"Host" => "0.0.0.0:3000"})
         request.hostname.should eq("0.0.0.0")
 
@@ -866,12 +865,23 @@ module HTTP
       end
 
       it "rejects invalid hostnames" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
-        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should eq "host.example.org:3000"
-        Request.new("GET", "/", HTTP::Headers{"Host" => "host.:3000"}).hostname.should eq "host."
-        Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80:90"}).hostname.should eq "[1234:5678::1]:80"
-        Request.new("GET", "/", HTTP::Headers{"Host" => "::1"}).hostname.should eq ":"
-        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should eq "foo,bar"
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:80bar"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "[1234:5678::1]:80:90"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => "::1"}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+      end
+
+      it "returns nil for empty hostname" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ""}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ":4000"}).hostname.should be_nil
+      end
+
+      it "returns nil when there are multiple headers" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["foo", "bar"]}).hostname.should be_nil
+        Request.new("GET", "/", HTTP::Headers{"Host" => ["", ""]}).hostname.should be_nil
       end
     end
 
