@@ -261,6 +261,26 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors when a macro expands a class declaration inside a block (#12052)" do
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
+      struct Int32
+        macro bar
+          class Foo
+          end
+        end
+      end
+
+      def foo
+        with 1 yield
+      end
+
+      foo do
+        bar do
+        end
+      end
+      CRYSTAL
+  end
+
   it "errors if find macros but wrong arguments" do
     assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 1, expected 0)", inject_primitives: true)
       macro foo
