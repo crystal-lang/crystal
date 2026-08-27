@@ -103,7 +103,6 @@ module Crystal
         return unless @initialized
         return unless debug_line = @debug_line
 
-        i = 0
         DWARF.each_line_sequence(debug_line) do |sequence|
           # state of the previous entry in the matrix
           address = 0_u64
@@ -128,8 +127,6 @@ module Crystal
             line = registers.line
             column = registers.column
           end
-
-          i += 1
         end
       end
 

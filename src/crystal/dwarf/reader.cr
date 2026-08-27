@@ -50,13 +50,13 @@ struct Crystal::DWARF::Reader
   def read_i8 : Int8
     buf = uninitialized UInt8[1]
     read(buf.to_slice)
-    buf.to_unsafe.as(Int8*).value
+    buf.unsafe_as(Int8)
   end
 
   def read_u16 : UInt16
     buf = uninitialized UInt8[2]
     read(buf.to_slice)
-    buf.to_unsafe.as(UInt16*).value
+    buf.unsafe_as(UInt16)
   end
 
   def read_u24 : UInt32
@@ -70,37 +70,25 @@ struct Crystal::DWARF::Reader
       read(buf.to_slice[1, 3])
     {% end %}
 
-    buf.to_unsafe.as(UInt32*).value
+    buf.unsafe_as(UInt32)
   end
 
   def read_u32 : UInt32
     buf = uninitialized UInt8[4]
     read(buf.to_slice)
-    buf.to_unsafe.as(UInt32*).value
+    buf.unsafe_as(UInt32)
   end
 
   def read_u64 : UInt64
     buf = uninitialized UInt8[8]
     read(buf.to_slice)
-    buf.to_unsafe.as(UInt64*).value
+    buf.unsafe_as(UInt64)
   end
 
   def read_u128 : UInt128
     buf = uninitialized UInt8[16]
     read(buf.to_slice)
-    read(16).to_unsafe.as(UInt128*).value
-  end
-
-  def read_unsigned(bytes : Bytes, type : F.class) : UInt64 forall F
-    value = F.zero
-    buf = Bytes.new(pointerof(value).as(UInt8*), sizeof(F))
-
-    {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::BigEndian %}
-      buf += sizeof(F) - bytes.size
-    {% end %}
-
-    bytes.copy_to(buf, bytes.size)
-    value
+    buf.unsafe_as(UInt128)
   end
 
   def read_uleb128 : UInt32

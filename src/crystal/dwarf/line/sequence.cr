@@ -159,16 +159,13 @@ module Crystal::DWARF
 
       private def each_lnct(&)
         buf = uninitialized Tuple(UInt32, UInt32)[255]
-        i = 0
 
-        @headers.read_u8.times do
-          buf.to_unsafe[i] = {
+        formats = buf.to_slice[0, @headers.read_u8].fill do
+          {
             @headers.read_uleb128, # DW_LNCT
             @headers.read_uleb128, # DW_FORM
           }
-          i += 1
         end
-        formats = buf.to_slice[0, i]
 
         @headers.read_u8.times do |i|
           path = nil
