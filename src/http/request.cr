@@ -15,10 +15,10 @@ require "socket"
 #
 # NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
-  property method : String
+  getter method : String
   property headers : Headers
   getter body : IO?
-  property version : String
+  getter version : String
   @cookies : Cookies?
   @query_params : URI::Params?
   @form_params : HTTP::Params?
@@ -48,6 +48,7 @@ class HTTP::Request
   # ```
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#remote_address` instead.")]
   property remote_address : Socket::Address?
 
   # The network address of the HTTP server.
@@ -57,6 +58,7 @@ class HTTP::Request
   # Middlewares can overwrite this value.
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#local_address` instead.")]
   property local_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : self
@@ -64,9 +66,19 @@ class HTTP::Request
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end
 
-  private def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1", *, internal)
+  private def initialize(method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1", *, internal)
+    @method = HTTP.validate_token(method, "Invalid HTTP method")
     @headers = headers || Headers.new
+    @version = HTTP.validate_version(version)
     self.body = body
+  end
+
+  def method=(method : String) : String
+    @method = HTTP.validate_token(method, "Invalid HTTP method")
+  end
+
+  def version=(version : String) : String
+    @version = HTTP.validate_version(version)
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
@@ -87,8 +99,8 @@ class HTTP::Request
   def form_params? : HTTP::Params?
     @form_params ||= begin
       if (body = self.body) && (ct = headers["Content-Type"]?)
-        mt = MIME::MediaType.parse(ct)
-        if mt.media_type == "application/x-www-form-urlencoded"
+        mt = MIME::MediaType.parse?(ct)
+        if mt && mt.media_type == "application/x-www-form-urlencoded"
           if charset = mt["charset"]?
             body.set_encoding(charset)
           end

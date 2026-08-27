@@ -732,6 +732,11 @@ describe "Range" do
       it { (-Int32::MAX..-Int32::MAX).size.should eq(1) }
       it { (-Int32::MAX...-Int32::MAX).size.should eq(0) }
 
+      it { (0...Int32::MAX).size.should eq(Int32::MAX) }
+      it { expect_raises(OverflowError) { (0..Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN...Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN..Int32::MAX).size } }
+
       it { (5_u8..12_u8).size.should eq(8) }
       it { (5_u8...12_u8).size.should eq(7) }
       it { (5_u8..4_u8).size.should eq(0) }
