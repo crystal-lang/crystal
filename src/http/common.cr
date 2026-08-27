@@ -542,8 +542,10 @@ module HTTP
 end
 
 require "./status"
-require "./request"
-require "./client/response"
+{% unless flag?(:wasi) %}
+  require "./request"
+  require "./client/response"
+{% end %}
 require "./headers"
 require "./content"
 require "./cookie"
