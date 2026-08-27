@@ -1,4 +1,3 @@
-require "levenshtein"
 require "../syntax/ast"
 require "../types"
 require "./type_lookup"
