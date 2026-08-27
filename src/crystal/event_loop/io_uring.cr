@@ -857,8 +857,8 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       event1 = Event.new(:async, nil)
       event2 = Event.new(:async, Fiber.current)
 
-      count = link_timeout ? 3 : 2
-      ring.submit(sqes.to_slice[0, count]) do
+      sqe_count = link_timeout ? 3 : 2
+      ring.submit(sqes.to_slice[0, sqe_count]) do
         # file -> pipe
         sqes[0].value.opcode = LibC::IORING_OP_SPLICE
         sqes[0].value.flags = LibC::IOSQE_IO_LINK
@@ -898,9 +898,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
           # read nothing (e.g. offset > file.size)
           return 0_i64
         elsif event1.res < len
-          # read less than expected, (e.g. offset + count > file.size) but still
+          # read less than expected, (e.g. offset + len > file.size) but still
           # read something into the pipe
-          ring.submit(sqes.to_slice[0, count - 1]) do
+          ring.submit(sqes.to_slice[0, sqe_count - 1]) do
             # pipe -> socket (retry)
             sqes[0].value.opcode = LibC::IORING_OP_SPLICE
             sqes[0].value.splice_fd_in = pipe[0]
