@@ -162,15 +162,15 @@ module Crystal::System::File
     accessible?(path, check_writable: false, follow_symlinks: follow_symlinks)
   end
 
-  def self.readable?(path) : Bool
-    accessible?(path, check_writable: false, follow_symlinks: true)
+  def self.readable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, check_writable: false, follow_symlinks: follow_symlinks)
   end
 
-  def self.writable?(path) : Bool
-    accessible?(path, check_writable: true, follow_symlinks: true)
+  def self.writable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, check_writable: true, follow_symlinks: follow_symlinks)
   end
 
-  def self.executable?(path) : Bool
+  def self.executable?(path, *, follow_symlinks = true) : Bool
     # NOTE: this always follows symlinks:
     # https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getbinarytypew#remarks
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
