@@ -35,7 +35,7 @@ module Crystal::DWARF
       case form
       when DW_FORM_addr
         address_size == 4 ? @reader.read_u32 : @reader.read_u64
-      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
+      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata, DW_FORM_GNU_addr_index, DW_FORM_GNU_str_index
         @reader.read_uleb128
       when DW_FORM_addrx1, DW_FORM_data1, DW_FORM_ref1, DW_FORM_strx1
         @reader.read_u8
@@ -65,7 +65,7 @@ module Crystal::DWARF
         implicit_const_value
       when DW_FORM_indirect
         read_attribute_value(@reader.read_uleb128, implicit_const_value)
-      when DW_FORM_line_strp, DW_FORM_ref_addr, DW_FORM_sec_offset, DW_FORM_strp, DW_FORM_strp_sup
+      when DW_FORM_line_strp, DW_FORM_ref_addr, DW_FORM_sec_offset, DW_FORM_strp, DW_FORM_strp_sup, DW_FORM_GNU_ref_alt, DW_FORM_GNU_strp_alt
         @reader.read_ulong(@dwarf64 ? 8 : 4)
       when DW_FORM_sdata
         @reader.read_sleb128
@@ -81,7 +81,7 @@ module Crystal::DWARF
       case form
       when DW_FORM_addr
         @reader.skip(address_size)
-      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata
+      when DW_FORM_addrx, DW_FORM_ref_udata, DW_FORM_loclistx, DW_FORM_rnglistx, DW_FORM_strx, DW_FORM_udata, DW_FORM_GNU_addr_index, DW_FORM_GNU_str_index
         @reader.read_uleb128
       when DW_FORM_addrx1, DW_FORM_data1, DW_FORM_ref1, DW_FORM_strx1, DW_FORM_flag
         @reader.skip(1)
@@ -107,7 +107,7 @@ module Crystal::DWARF
         # nothing
       when DW_FORM_indirect
         skip_attribute_value(@reader.read_uleb128)
-      when DW_FORM_line_strp, DW_FORM_ref_addr, DW_FORM_sec_offset, DW_FORM_strp, DW_FORM_strp_sup
+      when DW_FORM_line_strp, DW_FORM_ref_addr, DW_FORM_sec_offset, DW_FORM_strp, DW_FORM_strp_sup, DW_FORM_GNU_ref_alt, DW_FORM_GNU_strp_alt
         @reader.skip(@dwarf64 ? 8 : 4)
       when DW_FORM_sdata
         @reader.read_sleb128

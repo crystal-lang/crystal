@@ -244,6 +244,11 @@ module Crystal::DWARF
   DW_FORM_addrx3         = 0x2b_u32 # address
   DW_FORM_addrx4         = 0x2c_u32 # address
 
+  DW_FORM_GNU_addr_index = 0x1f01_u32
+  DW_FORM_GNU_str_index  = 0x1f02_u32
+  DW_FORM_GNU_ref_alt    = 0x1f20_u32
+  DW_FORM_GNU_strp_alt   = 0x1f21_u32
+
   DW_LNS_copy               =  1
   DW_LNS_advance_pc         =  2
   DW_LNS_advance_line       =  3
