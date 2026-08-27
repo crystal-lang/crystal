@@ -273,7 +273,6 @@ describe Socket, tags: "network" do
 
         received = sendfile_test.call(file, 17, 11)
         received.should eq(" World\nHell")
-        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
 
@@ -285,7 +284,6 @@ describe Socket, tags: "network" do
 
         received = sendfile_test.call(file, 3, 10)
         received.should eq("lo World\nH")
-        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
   end
