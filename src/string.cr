@@ -4380,7 +4380,6 @@ class String
 
   private def split_byte_index(separator : UInt8, limit = nil, *, remove_empty = false, &block : Int32, Int32 -> _) : Nil
     last_byte_offset = 0
-    single_byte_optimizable = single_byte_optimizable?
 
     scan_byte_index(separator) do |index|
       piece_bytesize = index - last_byte_offset
