@@ -5,7 +5,7 @@ module Crystal
     STAGE_PADDING = 34
 
     property? stats = false
-    property? progress = false
+    property? progress = true
 
     getter current_stage = 1
     getter current_stage_name : String?
