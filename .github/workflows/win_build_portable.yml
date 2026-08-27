@@ -18,6 +18,9 @@ on:
 
 permissions: {}
 
+env:
+  CI_SSL_VERSION: "3.5.0"
+
 jobs:
   build:
     runs-on: windows-2025-vs2026
@@ -53,7 +56,7 @@ jobs:
             libs/yaml.lib
             libs/xml2.lib
             libs/libxml_VERSION
-          key: win-libs-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          key: libs-x86_64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL
         uses: actions/cache/restore@v6
@@ -62,7 +65,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: win-openssl-libs-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: libs-openssl-${{ env.CI_SSL_VERSION }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore DLLs
         uses: actions/cache/restore@v6
@@ -84,7 +87,7 @@ jobs:
             dlls/mpir.dll
             dlls/yaml.dll
             dlls/libxml2.dll
-          key: win-dlls-${{ hashFiles('.github/workflows/win.yml', 'etc/win-ci/*.ps1') }}-msvc
+          key: dlls-x86_64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL DLLs
         uses: actions/cache/restore@v6
@@ -94,7 +97,7 @@ jobs:
             libs/ssl-dynamic.lib
             dlls/libcrypto-3-x64.dll
             dlls/libssl-3-x64.dll
-          key: win-openssl-dlls-3.4.1-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}-msvc
+          key: dlls-openssl-${{ env.CI_SSL_VERSION }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
         uses: actions/cache/restore@v6
@@ -103,7 +106,7 @@ jobs:
             libs/llvm_VERSION
             libs/llvm-dynamic.lib
             dlls/LLVM-C.dll
-          key: llvm-dlls-${{ inputs.llvm_version }}-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}-msvc
+          key: dlls-llvm-${{ inputs.llvm_version }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}
           fail-on-cache-miss: true
 
       - name: Set up environment
