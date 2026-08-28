@@ -3760,15 +3760,7 @@ class String
   # "Dizzy Miss Lizzy".byte_index('z'.ord, -17) # => nil
   # ```
   def byte_index(byte : Int, offset : Int32 = 0) : Int32?
-    offset += bytesize if offset < 0
-    return if offset < 0
-
-    offset.upto(bytesize - 1) do |i|
-      if to_unsafe[i] == byte
-        return i
-      end
-    end
-    nil
+    to_slice.index(byte, offset)
   end
 
   # Returns the index of the _first_ occurrence of *char* in the string, or `nil` if not present.
