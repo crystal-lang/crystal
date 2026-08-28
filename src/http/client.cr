@@ -591,6 +591,9 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response") unless response
 
     handle_response(response)
+  rescue ex : IO::Error
+    close
+    raise ex
   end
 
   private def exec_internal_single(request, implicit_compression = false)
@@ -650,6 +653,9 @@ class HTTP::Client
     raise user_exception if user_exception
 
     raise IO::EOFError.new("Unexpected end of http response")
+  rescue ex : IO::Error
+    close
+    raise ex
   end
 
   # Determine whether we should retry a request after an IO error happened,
