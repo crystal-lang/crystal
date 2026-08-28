@@ -318,3 +318,38 @@ end
     {% end %}
   end
 {% end %}
+
+require "../support/process-utils"
+
+describe "SIGPIPE emulation" do
+  it "exits cleanly when stdout is closed" do
+    IO.pipe do |reader, writer|
+      reader.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "foobar", output: writer)
+      result.output.should eq ""
+      result.error.should contain "Unhandled exception: write"
+      result.error.should contain "Broken pipe (IO::Error)"
+      result.status.should eq Process::Status[1]
+    end
+  end
+
+  it "exits cleanly when stderr is closed" do
+    IO.pipe do |reader, writer|
+      reader.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "foobar", error: writer)
+      result.output.should eq ""
+      result.error.should eq ""
+      result.status.should eq Process::Status[1]
+    end
+  end
+
+  it "exits cleanly when stdin is closed" do
+    IO.pipe do |reader, writer|
+      writer.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "cat", input: reader)
+      result.output.should eq ""
+      result.error.should eq ""
+      result.status.success?.should be_true
+    end
+  end
+end
