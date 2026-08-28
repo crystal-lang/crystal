@@ -318,6 +318,14 @@ class Channel(T)
     nil
   end
 
+  # Overrides `Iterator#tap` to restore the original implementation of `Object#tap`.
+  def tap(&) : self
+    # FIXME: This method is a workaround and should be removed once we have cleared the `Iterator` interface.
+
+    yield self
+    self
+  end
+
   # :nodoc:
   def send_select_action(value : T)
     SendAction.new(self, value)
