@@ -30,6 +30,8 @@ class IO::FileDescriptor < IO
   # The time to wait when reading before raising an `IO::TimeoutError`.
   property read_timeout : Time::Span?
 
+  property? exit_on_epipe : Bool = false
+
   # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
   def read_timeout=(read_timeout : Number) : Number
@@ -78,7 +80,9 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   def self.from_stdio(fd : Handle) : self
-    Crystal::System::FileDescriptor.from_stdio(fd)
+    Crystal::System::FileDescriptor.from_stdio(fd).tap do |io|
+      io.exit_on_epipe = true
+    end
   end
 
   # Returns whether I/O operations on this file descriptor block the current
