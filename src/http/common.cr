@@ -331,6 +331,7 @@ module HTTP
     first_header.to_u64
   end
 
+  # :nodoc:
   def self.validate_content_length(length : Int64) : Int64
     raise ArgumentError.new("Invalid Content-Length: #{length}") if length < 0
 
