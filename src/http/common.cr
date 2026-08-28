@@ -525,6 +525,14 @@ module HTTP
 
     string
   end
+
+  def self.validate_version(version : String) : String
+    if HTTP::SUPPORTED_VERSIONS.includes?(version)
+      version
+    else
+      raise ArgumentError.new("Unsupported HTTP version: #{version}")
+    end
+  end
 end
 
 require "./status"
