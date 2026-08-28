@@ -533,6 +533,14 @@ module HTTP
       raise ArgumentError.new("Unsupported HTTP version: #{version}")
     end
   end
+
+  # :nodoc:
+  def self.validate_resource(string : String) : String
+    if string.empty? || string.to_slice.any? { |c| c < 0x21_u8 || c >= 0x7F_u8 }
+      raise ArgumentError.new("Invalid HTTP resource: #{string.inspect}")
+    end
+    string
+  end
 end
 
 require "./status"
