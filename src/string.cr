@@ -2807,33 +2807,34 @@ class String
   # "hello yellow".gsub("ll") { "dd" } # => "heddo yeddow"
   # ```
   def gsub(string : String, &block) : String
-    byte_offset = 0
-    index = self.byte_index(string, byte_offset)
-    return self unless index
-
-    last_byte_offset = 0
-
-    String.build(bytesize) do |buffer|
-      while index
-        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
+    # Special case: replace at all character positions if *string* is empty
+    if string.empty?
+      return String.build(bytesize) do |buffer|
         buffer << yield string
-
-        if string.bytesize == 0
-          # The pattern matched an empty result. We must advance one character to avoid stagnation.
-          byte_offset = index + char_bytesize_at(byte_offset)
-          last_byte_offset = index
-        else
-          byte_offset = index + string.bytesize
-          last_byte_offset = byte_offset
+        each_char do |ch|
+          buffer << ch << yield string
         end
-
-        index = self.byte_index(string, byte_offset)
-      end
-
-      if last_byte_offset < bytesize
-        buffer.write unsafe_byte_slice(last_byte_offset)
       end
     end
+
+    buffer = nil
+    last_byte_offset = 0
+
+    scan_byte_index(string) do |index|
+      buffer ||= String::Builder.new(bytesize)
+
+      buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
+      buffer << yield string
+      last_byte_offset = index + string.bytesize
+    end
+
+    # *buffer* is nil if no matches were found
+    return self unless buffer
+
+    if last_byte_offset < bytesize
+      buffer.write unsafe_byte_slice(last_byte_offset)
+    end
+    buffer.to_s
   end
 
   # Returns a `String` where all chars in the given hash are replaced
@@ -3821,47 +3822,12 @@ class String
   # ```
   def byte_index(search : String, offset = 0) : Int32?
     offset += bytesize if offset < 0
-    return if offset < 0
+    return unless 0 <= offset <= bytesize
+    return offset if search.empty?
 
-    return bytesize < offset ? nil : offset if search.empty?
-
-    # Rabin-Karp algorithm
-    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
-
-    # calculate a rolling hash of search text (needle)
-    search_hash = 0u32
-    search.each_byte do |b|
-      search_hash = search_hash &* PRIME_RK &+ b
+    scan_byte_index(search, offset) do |index|
+      return index
     end
-    pow = PRIME_RK &** search.bytesize
-
-    # calculate a rolling hash of this text (haystack)
-    pointer = head_pointer = to_unsafe + offset
-    hash_end_pointer = pointer + search.bytesize
-    end_pointer = to_unsafe + bytesize
-    hash = 0u32
-    return if hash_end_pointer > end_pointer
-    while pointer < hash_end_pointer
-      hash = hash &* PRIME_RK &+ pointer.value
-      pointer += 1
-    end
-
-    while true
-      # check hash equality and real string equality
-      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
-        return offset
-      end
-
-      return if pointer >= end_pointer
-
-      # update a rolling hash of this text (haystack)
-      hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
-      pointer += 1
-      head_pointer += 1
-      offset += 1
-    end
-
-    nil
   end
 
   # Returns the byte index of the regex *pattern* in the string, or `nil` if the pattern does not find a match.
@@ -4930,12 +4896,12 @@ class String
   # Searches the string for instances of *pattern*,
   # yielding the matched string for each match.
   def scan(pattern : String, &) : self
-    return self if pattern.empty?
-    index = 0
-    while index = byte_index(pattern, index)
-      yield pattern
-      index += pattern.bytesize
+    unless pattern.empty?
+      scan_byte_index(pattern) do
+        yield pattern
+      end
     end
+
     self
   end
 
@@ -4947,6 +4913,58 @@ class String
       matches << match
     end
     matches
+  end
+
+  # Yields the byte indices of all occurrences of *search* in the string.
+  # Used by the `String` overloads of `#gsub`, `#scan`, and `#byte_index`.
+  #
+  # *offset* must be within `0..bytesize` and *search* must not be empty.
+  private def scan_byte_index(search : String, offset = 0, & : Int32 ->) : Nil
+    # Rabin-Karp algorithm
+    # https://en.wikipedia.org/wiki/Rabin%E2%80%93Karp_algorithm
+
+    # calculate a rolling hash of this text (haystack)
+    pointer = head_pointer = to_unsafe + offset
+    hash_end_pointer = pointer + search.bytesize
+    end_pointer = to_unsafe + bytesize
+    hash = 0u32
+    return if hash_end_pointer > end_pointer
+    while pointer < hash_end_pointer
+      hash = hash &* PRIME_RK &+ pointer.value
+      pointer += 1
+    end
+
+    # calculate a rolling hash of search text (needle)
+    search_hash = 0u32
+    search.each_byte do |b|
+      search_hash = search_hash &* PRIME_RK &+ b
+    end
+    pow = PRIME_RK &** search.bytesize
+
+    while true
+      # check hash equality and real string equality
+      if hash == search_hash && head_pointer.memcmp(search.to_unsafe, search.bytesize) == 0
+        yield offset
+        offset += search.bytesize
+
+        # no overlapping matches; advance past the matched string
+        search.bytesize.times do
+          hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
+          pointer += 1
+          head_pointer += 1
+        end
+
+        next
+      end
+
+      return if pointer >= end_pointer
+
+      # update a rolling hash of this text (haystack)
+      hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
+      pointer += 1
+      head_pointer += 1
+      offset += 1
+    end
   end
 
   # Yields each character in the string to the block.
