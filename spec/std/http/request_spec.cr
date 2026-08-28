@@ -359,11 +359,9 @@ module HTTP
         request = Request.new "GET", "/"
         request.uri.path = "foo bar"
         io = IO::Memory.new
-        request.to_io(io)
-        io.to_s.should eq <<-HTTP
-          GET foo bar HTTP/1.1\r
-          \r\n
-          HTTP
+        expect_raises(ArgumentError, %(Invalid HTTP resource: "foo bar")) do
+          request.to_io(io)
+        end
       end
     end
 
@@ -930,7 +928,13 @@ module HTTP
       it "validates after unobserved modification" do
         request = Request.new "GET", "/"
         request.uri.path = "foo bar"
-        request.resource.should eq "foo bar"
+        expect_raises(ArgumentError, %(Invalid HTTP resource: "foo bar")) do
+          request.resource
+        end
+        request.uri.path = "\r"
+        expect_raises(ArgumentError, %(Invalid HTTP resource: "\\r")) do
+          request.resource
+        end
       end
     end
 

@@ -118,8 +118,13 @@ class HTTP::Request
   end
 
   def resource : String
+    uri = @uri
+    return @resource unless uri
+
     update_uri
-    @uri.try(&.request_target) || @resource
+    resource = uri.request_target
+    HTTP.validate_resource(resource)
+    resource
   end
 
   def keep_alive? : Bool
