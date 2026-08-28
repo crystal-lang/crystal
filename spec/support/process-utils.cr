@@ -1,68 +1,23 @@
-require "option_parser"
+# Process utils are helper programs for testing process spawn behaviour.
+# They are defined in spec/support/process-utils.cr which
+# we require here in order to build them into the spec executable.
+# We then call the spec executable with "pu" as first argument followed
+# by the command name.
+# This mechanism doesn't work when running in the interpreter, because
+# there is no spec executable we could call again. Instead, we need a
+# to build process utils into a separate executable `crystal-pu` which
+# we can call from the interpreter.
+# This approach would also work for compiled specs, but building it into
+# the executable is simpler and does not require a separate build step.
 
-# `process-utils` are a set of simple command line tools required for
-# testing process spawn behaviour in `spec/std/process_spec.cr`.
-# It can be built into the spec executable which can just spawn itself
-# with `pu` as first argument, followed by the command name.
-# Alternatively, it can be built as a standalone executable which
-# we use for interpreter tests because in interpreted mode there is
-# no executable we could call again.
-{% if @type.has_constant?(:Spec) %}
-  class Spec::CLI
-    def main(args)
-      return previous_def unless args[0]? == "pu"
-
-      ProcessUtils.main(args[1..])
-    end
-  end
-{% else %}
-  args = ARGV
-  if args[0]?.in?("pu", "--")
-    args = args[1..]
-  end
-  ProcessUtils.main(args)
+{% unless flag?(:interpreted) %}
+  require "./process-utils-exe.cr"
 {% end %}
 
-# Provides simple helper programs for testing process spawn behaviour in `spec/std/process_spec.cr`.
-# The commands similar to coreutils, but much simplified and tailored for
-# the testing needs.
 module ProcessUtils
-  def self.main(args)
-    output = STDOUT
-    exit_status = 0
-
-    OptionParser.parse(args) do |opts|
-      opts.on("", "--exit status", "Exit with the given status code") do |status|
-        exit_status = status.to_i
-      end
-      opts.on("", "--stderr", "Write to stderr instead of stdout") do
-        output = STDERR
-      end
-    end
-
-    case command = args.shift?
-    when "cat"
-      IO.copy(STDIN, output)
-    when "echo"
-      args.each do |line|
-        output.puts line
-      end
-    when "env"
-      ENV.each do |key, value|
-        output.puts "#{key}=#{value}"
-      end
-    when "exit"
-      exit args[0].to_i
-    when "long-output"
-      output.puts "." * 8000
-    when "pwd"
-      output.puts Dir.current
-    when "sleep"
-      sleep
-    else
-      ::abort "Unknown process util command: #{command}"
-    end
-
-    exit exit_status
-  end
+  EXE = {% if flag?(:interpreted) %}
+    "#{Process.executable_path.not_nil!.rchop(".exe")}-pu#{".exe" if {{ flag?(:win32) }}}"
+  {% else %}
+          Process.executable_path.not_nil!
+        {% end %}
 end
