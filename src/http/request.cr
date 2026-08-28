@@ -309,6 +309,7 @@ class HTTP::Request
   # Sets request's query component.
   def query=(value : String?) : String?
     uri.query = value
+    HTTP.validate_resource(uri.request_target)
     update_query_params
     value
   end

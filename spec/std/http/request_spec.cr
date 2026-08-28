@@ -707,8 +707,9 @@ module HTTP
 
       it "rejects invalid query" do
         request = Request.new "GET", "/"
-        request.query = "foo bar"
-        request.resource.should eq("/?foo bar")
+        expect_raises(ArgumentError, "Invalid HTTP resource: \"/?foo bar\"") do
+          request.query = "foo bar"
+        end
       end
     end
 
