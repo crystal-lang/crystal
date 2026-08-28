@@ -161,6 +161,10 @@ describe "MacroExpander" do
     it "expands macro with for over range literal, evaluating elements (exclusive)" do
       assert_macro "{%for e in x...y %}{{e}}{%end%}", "345", {x: 3.int32, y: 6.int32}
     end
+
+    it "expands macro with for over char range literal" do
+      assert_macro "{%for e in 'a'..'c' %}{{e}}{%end%}", "'a''b''c'"
+    end
   end
 
   it "does regular if" do

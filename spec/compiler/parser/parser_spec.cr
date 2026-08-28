@@ -719,6 +719,13 @@ module Crystal
     it_parses "foo &.as?(T).bar", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
     it_parses "foo(\n  &.block\n)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
 
+    it_parses "foo(&.bar)/2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo(&.bar)/ 2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+
     it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
     it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
 
@@ -1801,6 +1808,22 @@ module Crystal
     it_parses "@a : Foo = 1", TypeDeclaration.new("@a".instance_var, "Foo".path, 1.int32)
     it_parses "@@a : Foo = 1", TypeDeclaration.new("@@a".class_var, "Foo".path, 1.int32)
 
+    it_parses "FOO : Int64 = 1", TypeDeclaration.new("FOO".path, "Int64".path, 1.int32)
+    it_parses "FOO : Foo::Bar = 1", TypeDeclaration.new("FOO".path, Path.new(["Foo", "Bar"]), 1.int32)
+    it_parses "Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"]), "Int64".path, 1.int32)
+    it_parses "::FOO : Int64 = 1", TypeDeclaration.new("FOO".path(global: true), "Int64".path, 1.int32)
+    it_parses "::Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"], global: true), "Int64".path, 1.int32)
+    assert_syntax_warning "FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_warning "::FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_error "FOO : Int64", "expected '=' for constant type declaration"
+    assert_syntax_error "::FOO : Int64", "expected '=' for constant type declaration"
+
+    it "computes name_size for a TypeDeclaration whose var is a Path (#13443)" do
+      Parser.parse("FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("FOO".size)
+      Parser.parse("Foo::BAR : Int64 = 1").as(TypeDeclaration).name_size.should eq("Foo::BAR".size)
+      Parser.parse("::FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("::FOO".size)
+    end
+
     it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)
     it_parses "a : Foo*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), ["Foo".path] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), ["Foo".path, 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
@@ -2793,6 +2816,8 @@ module Crystal
       assert_end_location %("hello "\\\n"world"), line_number: 2, column_number: 7
       assert_end_location "foo(&.bar)"
       assert_end_location "foo &.bar"
+      assert_end_location("foo &.bar = baz")
+      assert_end_location("foo &.[bar] = baz")
       assert_end_location "foo(&bar)"
       assert_end_location "foo &bar"
     end

@@ -9,6 +9,9 @@ class IO::Memory < IO
   # Same as `size`.
   getter bytesize : Int32
 
+  # Returns `true` if this `IO::Memory` can be written to.
+  getter? writable : Bool
+
   @capacity : Int32
 
   # Creates an empty, resizeable and writable `IO::Memory` with the given
@@ -430,8 +433,7 @@ class IO::Memory < IO
     if io == self
       # When appending to itself, we need to pull the resize up before taking
       # pointer to the buffer. It would become invalid when a resize happens during `#write`.
-      new_bytesize = bytesize * 2
-      resize_to_capacity(new_bytesize) if @capacity < new_bytesize
+      increase_capacity_by(bytesize)
     end
     if encoding = @encoding
       {% if flag?(:without_iconv) %}

@@ -548,6 +548,12 @@ module Crystal
           raise "undefined method '~' for float literal: #{self}" unless num.is_a?(Int)
           NumberLiteral.new(~num)
         end
+      when "chr"
+        interpret_check_args do
+          num = to_number
+          raise "undefined method 'chr' for float literal: #{self}" unless num.is_a?(Int)
+          CharLiteral.new(num.chr)
+        end
       when "kind"
         interpret_check_args { SymbolLiteral.new(kind.to_s) }
       when "to_number"
@@ -711,6 +717,8 @@ module Crystal
 
           StringLiteral.new(@value * num)
         end
+      when "bytesize"
+        interpret_check_args { NumberLiteral.new(@value.bytesize) }
       when "camelcase"
         interpret_check_args(named_params: ["lower"]) do
           lower = if named_args && (lower_arg = named_args["lower"]?)
@@ -1334,7 +1342,7 @@ module Crystal
           end
 
           range.each do |num|
-            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.define_var(block_arg.name, num) if block_arg
             interpreter.accept block.body
           end
 
@@ -1345,15 +1353,13 @@ module Crystal
           block_arg = block.args.first?
 
           interpret_map(block, interpreter) do |num|
-            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.define_var(block_arg.name, num) if block_arg
             interpreter.accept block.body
           end
         end
       when "to_a"
         interpret_check_args do
-          interpret_map(nil, interpreter) do |num|
-            NumberLiteral.new(num)
-          end
+          interpret_map(nil, interpreter, &.itself)
         end
       else
         super
@@ -1373,23 +1379,22 @@ module Crystal
     end
 
     def interpret_to_range(interpreter)
-      node = interpreter.accept(self.from)
-      from = case node
-             when NumberLiteral
-               node.to_number.to_i
-             else
-               raise "range begin must be a NumberLiteral, not #{node.class_desc}"
-             end
+      interpret_to_range(
+        interpreter.accept(self.from),
+        interpreter.accept(self.to)
+      )
+    end
 
-      node = interpreter.accept(self.to)
-      to = case node
-           when NumberLiteral
-             node.to_number.to_i
-           else
-             raise "range end must be a NumberLiteral, not #{node.class_desc}"
-           end
-
+    def interpret_to_range(from : NumberLiteral, to : NumberLiteral)
       Range.new(from, to, self.exclusive?)
+    end
+
+    def interpret_to_range(from : CharLiteral, to : CharLiteral)
+      Range.new(from, to, self.exclusive?)
+    end
+
+    def interpret_to_range(from, to)
+      raise "range begin and end must be both NumberLiteral or both CharLiteral, not #{from.class_desc}..#{to.class_desc}"
     end
 
     def interpret_to_nilable_range(interpreter)

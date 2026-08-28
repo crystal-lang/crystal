@@ -15,10 +15,10 @@ require "socket"
 #
 # NOTE: To use `Request`, you must explicitly import it with `require "http/request"`
 class HTTP::Request
-  property method : String
+  getter method : String
   property headers : Headers
   getter body : IO?
-  property version : String
+  getter version : String
   @cookies : Cookies?
   @query_params : URI::Params?
   @form_params : HTTP::Params?
@@ -48,6 +48,7 @@ class HTTP::Request
   # ```
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#remote_address` instead.")]
   property remote_address : Socket::Address?
 
   # The network address of the HTTP server.
@@ -57,6 +58,7 @@ class HTTP::Request
   # Middlewares can overwrite this value.
   #
   # This property is not used by `HTTP::Client`.
+  @[Deprecated("Use `HTTP::Server::Context#local_address` instead.")]
   property local_address : Socket::Address?
 
   def self.new(method : String, resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1") : self
@@ -64,9 +66,19 @@ class HTTP::Request
     new(method, resource, headers.try(&.dup), body, version, internal: nil)
   end
 
-  private def initialize(@method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, @version = "HTTP/1.1", *, internal)
+  private def initialize(method : String, @resource : String, headers : Headers? = nil, body : String | Bytes | IO | Nil = nil, version : String = "HTTP/1.1", *, internal)
+    @method = HTTP.validate_token(method, "Invalid HTTP method")
     @headers = headers || Headers.new
+    @version = HTTP.validate_version(version)
     self.body = body
+  end
+
+  def method=(method : String) : String
+    @method = HTTP.validate_token(method, "Invalid HTTP method")
+  end
+
+  def version=(version : String) : String
+    @version = HTTP.validate_version(version)
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
@@ -87,8 +99,8 @@ class HTTP::Request
   def form_params? : HTTP::Params?
     @form_params ||= begin
       if (body = self.body) && (ct = headers["Content-Type"]?)
-        mt = MIME::MediaType.parse(ct)
-        if mt.media_type == "application/x-www-form-urlencoded"
+        mt = MIME::MediaType.parse?(ct)
+        if mt && mt.media_type == "application/x-www-form-urlencoded"
           if charset = mt["charset"]?
             body.set_encoding(charset)
           end
@@ -116,8 +128,9 @@ class HTTP::Request
     @method == "HEAD"
   end
 
-  def content_length=(length : Int) : String
+  def content_length=(length : Int) : Int
     headers["Content-Length"] = length.to_s
+    length
   end
 
   def content_length
@@ -127,11 +140,13 @@ class HTTP::Request
   def body=(body : String) : String
     @body = IO::Memory.new(body)
     self.content_length = body.bytesize
+    body
   end
 
-  def body=(body : Bytes) : String
+  def body=(body : Bytes) : Bytes
     @body = IO::Memory.new(body)
     self.content_length = body.size
+    body
   end
 
   def body=(@body : IO) : IO
@@ -297,26 +312,46 @@ class HTTP::Request
 
   # Extracts the hostname from `Host` header.
   #
-  # Returns `nil` if the `Host` header is missing.
+  # Returns `nil` if the `Host` header is missing, if there is more than one
+  # `Host` header, or if the header's value does not resemble a valid
+  # authority component.
   #
   # If the `Host` header contains a port number, it is stripped off.
   def hostname : String?
-    header = @headers["Host"]?
-    return unless header
+    header = @headers.get?("Host")
+    return unless header && header.size == 1
 
-    host, _, port = header.rpartition(":")
-    if host.empty?
-      # no colon in header
-      host = header
+    header = header.first
+
+    if header.starts_with?('[')
+      # unwrap IPv6 literal
+      close_index = header.index(']') || return
+      host = header.byte_slice(1, close_index - 1)
+      if close_index + 1 < header.bytesize
+        port_index = close_index + 1
+        return unless header.byte_at(port_index) === ':'
+      end
     else
-      port = port.to_i?(whitespace: false)
-      unless port && Socket::IPAddress.valid_port?(port)
-        # what we identified as port is not valid, so use the entire header
+      port_index = header.index(':')
+      if port_index
+        host = header.byte_slice(0, port_index)
+        return if host.index(':') # invalid host with multiple colons
+      else
         host = header
       end
     end
 
-    URI.unwrap_ipv6(host)
+    return if host.empty?
+
+    if port_index
+      # validate port index
+      return unless header.bytesize > port_index
+      port = header.byte_slice(port_index + 1).to_i?(whitespace: false) || return
+
+      return unless Socket::IPAddress.valid_port?(port)
+    end
+
+    host
   end
 
   # Returns request host with port from headers.

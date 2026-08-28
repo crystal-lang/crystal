@@ -81,7 +81,7 @@ class Crystal::System::ELF
   def valid? : Bool
     header.value.ei_magic.to_slice == LibELF::MAGIC.to_slice &&
       header.value.ei_class == {% if flag?(:bits64) %} LibELF::CLASS_64 {% else %} LibELF::CLASS_32 {% end %} &&
-      header.value.ei_data == {% if flag?(:endianness) == "big" %} LibELF::ENDIAN_BIG {% else %} LibELF::ENDIAN_LITTLE {% end %} &&
+      header.value.ei_data == {% if IO::ByteFormat::SystemEndian == IO::ByteFormat::BigEndian %} LibELF::ENDIAN_BIG {% else %} LibELF::ENDIAN_LITTLE {% end %} &&
       header.value.ei_version == 1 &&
       header.value.e_version == 1 &&
       header.value.e_ehsize == sizeof(LibELF::Header)

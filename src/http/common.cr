@@ -1,6 +1,6 @@
 require "mime/media_type"
 {% if !flag?(:without_zlib) %}
-  require "compress/deflate"
+  require "compress/zlib"
   require "compress/gzip"
 {% end %}
 
@@ -35,15 +35,19 @@ module HTTP
       when EndOfRequest
         body = nil
 
-        # RFC 9112, Section 6.1: Transfer-Encoding is defined as overriding the
-        # Content-Length header that must be ignored.
-        transfer_encoding = headers["Transfer-Encoding"]?
-
         if body_type.prohibited?
           body = nil
-        elsif transfer_encoding == "chunked"
-          body = ChunkedContent.new(io)
-        elsif !transfer_encoding && (content_length = content_length(headers))
+        elsif transfer_encoding = headers["Transfer-Encoding"]?
+          # RFC 9112, Section 6.1: Transfer-Encoding is defined as overriding the
+          # Content-Length header that must be ignored.
+          case transfer_encoding
+          when "chunked"
+            body = ChunkedContent.new(io)
+          else
+            # Reject unrecognized transfer encodings
+            return HTTP::Status::NOT_IMPLEMENTED
+          end
+        elsif content_length = content_length(headers)
           body = FixedLengthContent.new(io, content_length)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
@@ -57,23 +61,27 @@ module HTTP
           encoding = headers["Content-Encoding"]?
           {% if flag?(:without_zlib) %}
             case encoding
-            when "gzip", "deflate"
-              raise "Can't decompress because `-D without_zlib` was passed at compile time"
+            when Nil
+              # nothing
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% else %}
             case encoding
-            when "gzip"
+            when Nil
+              # nothing
+            when "gzip", "x-gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             when "deflate"
-              body = Compress::Deflate::Reader.new(body, sync_close: true)
+              body = Compress::Zlib::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
             else
               # not a format we support
+              return HTTP::Status::UNSUPPORTED_MEDIA_TYPE
             end
           {% end %}
         end
@@ -117,6 +125,7 @@ module HTTP
 
         name, value = parse_header(peek[0, end_index])
         io.skip(index + 1) # Must skip until after \n
+        return nil if name.empty?
         return HeaderLine.new name: name, value: value, bytesize: index + 1
       end
     end
@@ -132,6 +141,7 @@ module HTTP
     end
 
     name, value = parse_header(line)
+    return nil if name.empty?
     HeaderLine.new name: name, value: value, bytesize: line.bytesize
   end
 
@@ -442,6 +452,85 @@ module HTTP
   def self.quote_string(string : String) : String
     String.build do |io|
       quote_string(string, io)
+    end
+  end
+
+  # :nodoc:
+  VALID_TOKEN_CHAR_MAP = {% if compare_versions(Crystal::VERSION, "1.11.0") >= 0 %}
+    {%
+      table = (0x00..0xFF).map { 0_u8 }
+      table['!'.ord] = 1_u8
+      table['#'.ord] = 1_u8
+      table['$'.ord] = 1_u8
+      table['%'.ord] = 1_u8
+      table['&'.ord] = 1_u8
+      table['\''.ord] = 1_u8
+      table['*'.ord] = 1_u8
+      table['+'.ord] = 1_u8
+      table['-'.ord] = 1_u8
+      table['.'.ord] = 1_u8
+      table['^'.ord] = 1_u8
+      table['_'.ord] = 1_u8
+      table['`'.ord] = 1_u8
+      table['|'.ord] = 1_u8
+      table['~'.ord] = 1_u8
+      ('0'.ord..'9'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('A'.ord..'Z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('a'.ord..'z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+    %}
+    {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+      Slice(UInt8).literal({{ table.splat }})
+    {% else %}
+      {{table}}.to_slice
+    {% end %}
+  {% else %}
+                           table = Slice(UInt8).new(256)
+                           table[0x21] = 1
+                           table[0x23] = 1
+                           table[0x24] = 1
+                           table[0x25] = 1
+                           table[0x26] = 1
+                           table[0x27] = 1
+                           table[0x2a] = 1
+                           table[0x2b] = 1
+                           table[0x2d] = 1
+                           table[0x2e] = 1
+                           table[0x5e] = 1
+                           table[0x5f] = 1
+                           table[0x60] = 1
+                           table[0x7c] = 1
+                           table[0x7e] = 1
+                           (0x30..0x39).each do |i|
+                             table[i] = 1
+                           end
+                           (0x41..0x5a).each do |i|
+                             table[i] = 1
+                           end
+                           (0x61..0x7a).each do |i|
+                             table[i] = 1
+                           end
+                           table
+                         {% end %}
+
+  def self.validate_token(string : String, message = "Invalid HTTP token") : String
+    if string.empty? || string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+      raise ArgumentError.new(message)
+    end
+
+    string
+  end
+
+  def self.validate_version(version : String) : String
+    if HTTP::SUPPORTED_VERSIONS.includes?(version)
+      version
+    else
+      raise ArgumentError.new("Unsupported HTTP version: #{version}")
     end
   end
 end

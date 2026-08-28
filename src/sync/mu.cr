@@ -68,7 +68,7 @@ module Sync
 
     def try_rlock? : Bool
       # uncontended
-      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :release, :relaxed)
+      word, success = @word.compare_and_set(UNLOCKED, RLOCK, :acquire, :relaxed)
       return true if success
 
       if (word & (WLOCK | WRITER_WAITING | LONG_WAIT)) == 0
@@ -186,15 +186,15 @@ module Sync
 
     def unlock : Nil
       # uncontended
-      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :acquire, :relaxed)
-      return true if success
+      word, success = @word.compare_and_set(WLOCK, UNLOCKED, :release, :relaxed)
+      return if success
 
       # sanity check
       if (word & WLOCK) == 0
         raise RuntimeError.new("Can't unlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0
         # no waiters, or there is a designated waker already (no need to wake
         # another one), try quick unlock
         _, success = @word.compare_and_set(word, word &- WLOCK, :release, :relaxed)
@@ -215,9 +215,9 @@ module Sync
         raise RuntimeError.new("Can't runlock Sync::MU that isn't held")
       end
 
-      if (word & WAITING) == 0 && (word & DESIGNATED_WAKER) != 0 && (word & RMASK) > RLOCK
+      if (word & WAITING) == 0 || (word & DESIGNATED_WAKER) != 0 || (word & RMASK) > RLOCK
         # no waiters, there is a designated waker already (no need to wake
-        # another one), and there are still readers, try quick unlock
+        # another one), or there are still readers, try quick unlock
         _, success = @word.compare_and_set(word, word &- RLOCK, :release, :relaxed)
         return if success
       end

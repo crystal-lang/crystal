@@ -93,7 +93,7 @@ class Fiber
           # OPTIMIZE: allocate minimum stack size
           pointer = Crystal::System::Fiber.allocate_stack(StackPool::STACK_SIZE, protect: true)
           stack = Stack.new(pointer, StackPool::STACK_SIZE, reusable: true)
-          Fiber.new(execution_context: ExecutionContext.default) { enter_thread_loop(@main_thread) }
+          Fiber.new(nil, stack, ExecutionContext.default) { enter_thread_loop(@main_thread) }
         end
       end
 

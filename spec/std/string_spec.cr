@@ -753,6 +753,20 @@ describe "String" do
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
     end
 
+    it "handles consecutive spaces (#17199)" do
+      assert_prints "a  b".titleize, "A  B"
+      assert_prints "a  b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a _b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a_ b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a__b".titleize(underscore_to_space: true), "A  B"
+
+      assert_prints "á  é".titleize, "Á  É"
+      assert_prints "á  é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á _é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á_ é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á__é".titleize(underscore_to_space: true), "Á  É"
+    end
+
     describe "with IO" do
       it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
       it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }
@@ -2031,6 +2045,13 @@ describe "String" do
       "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
     end
 
+    it "empty match + advanced offset" do
+      "a  b".gsub(/(?= )/, "-").should eq "a- - b"
+      "┬  7".gsub(/(?= )/, "-").should eq "┬- - 7"
+      "a  ".gsub(/(?<= )/, "-").should eq "a - -"
+      "┬  ".gsub(/(?<= )/, "-").should eq "┬ - -"
+    end
+
     it "empty string" do
       "ab".gsub("", "-").should eq "-a-b-"
       "┬7".gsub("", "-").should eq "-┬-7-"
@@ -2736,6 +2757,8 @@ describe "String" do
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
   it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
   it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
+  it_iterates "#each_line(remove_empty: true)", [] of String, "\n\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", [] of String, ("\n" * 100_000).each_line(remove_empty: true)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 

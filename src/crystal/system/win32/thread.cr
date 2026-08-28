@@ -5,6 +5,8 @@ require "../panic"
 module Crystal::System::Thread
   alias Handle = LibC::HANDLE
 
+  @semaphore : LibC::HANDLE = LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
+
   def to_unsafe
     @system_handle
   end
@@ -101,7 +103,10 @@ module Crystal::System::Thread
   {% end %}
 
   def self.sleep(time : ::Time::Span) : Nil
-    LibC.Sleep(time.total_milliseconds.to_i.clamp(1..))
+    milliseconds = time.to_milliseconds.to_i.clamp(1..)
+    GC.syscall do
+      LibC.Sleep(milliseconds)
+    end
   end
 
   private def system_join : Exception?
@@ -114,6 +119,7 @@ module Crystal::System::Thread
   end
 
   private def system_close
+    LibC.CloseHandle(@semaphore) unless @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
     LibC.CloseHandle(@system_handle)
   end
 
@@ -163,6 +169,26 @@ module Crystal::System::Thread
   private def system_resume : Nil
     if LibC.ResumeThread(@system_handle) == -1
       Crystal::System.panic("ResumeThread()", WinError.value)
+    end
+  end
+
+  protected def init_semaphore : Nil
+    @semaphore = LibC.CreateSemaphoreA(nil, 0, LibC::LONG::MAX, nil)
+
+    if @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
+      raise RuntimeError.from_winerror("CreateSemaphoreA")
+    end
+  end
+
+  def wait : Nil
+    unless LibC.WaitForSingleObject(@semaphore, LibC::INFINITE) == LibC::WAIT_OBJECT_0
+      raise RuntimeError.from_winerror("WaitForSingleObject")
+    end
+  end
+
+  def wake : Nil
+    if LibC.ReleaseSemaphore(@semaphore, 1, out _) == 0
+      raise RuntimeError.from_winerror("ReleaseSemaphore")
     end
   end
 end

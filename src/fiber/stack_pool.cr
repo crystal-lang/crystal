@@ -5,9 +5,8 @@ class Fiber
   class StackPool
     STACK_SIZE = 8 * 1024 * 1024
 
-    {% if flag?(:execution_context) %}
-      # must explicitly declare the variable because of the macro in #initialize
-      @lock = uninitialized Crystal::SpinLock
+    {% unless flag?(:without_mt) %}
+      @lock = Crystal::SpinLock.new
     {% end %}
 
     # If *protect* is true, guards all top pages (pages with the lowest address
@@ -22,10 +21,6 @@ class Fiber
     # scheduler's fiber stack pool where the interpreter runs.
     def initialize(@protect : Bool = true, @reuse_dead_fiber_stack : Bool = true)
       @deque = Deque(Stack).new
-
-      {% if flag?(:execution_context) %}
-        @lock = Crystal::SpinLock.new
-      {% end %}
     end
 
     def finalize
@@ -68,7 +63,7 @@ class Fiber
     def release(stack : Stack) : Nil
       return unless stack.reusable?
 
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         @lock.sync { @deque.push(stack) }
       {% else %}
         @deque.push(stack)
@@ -82,7 +77,7 @@ class Fiber
     end
 
     private def shift?
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         @lock.sync { @deque.shift? } unless @deque.empty?
       {% else %}
         @deque.shift?
@@ -90,12 +85,13 @@ class Fiber
     end
 
     private def pop?
-      {% if flag?(:execution_context) %}
-        if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
-          stack
-        else
-          @lock.sync { @deque.pop? } unless @deque.empty?
-        end
+      {% if !flag?(:without_mt) %}
+        {% if !flag?(:preview_mt) || flag?(:execution_context) %}
+          if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
+            return stack
+          end
+        {% end %}
+        @lock.sync { @deque.pop? } unless @deque.empty?
       {% else %}
         @deque.pop?
       {% end %}

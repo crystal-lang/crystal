@@ -206,7 +206,7 @@ struct Crystal::System::Process
 
   # Only used by deprecated `::Process.fork`
   def self.fork
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithreaded mode") unless flag?(:without_mt) %}
 
     pid, errno = lock_write do
       pthread_disable_cancelstate do
@@ -310,7 +310,8 @@ struct Crystal::System::Process
 
   def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
     pathname = args.first
-    argv = Pointer(Pointer(UInt8)).malloc(args.size)
+    # `execve` requires NULL terminator
+    argv = Pointer(Pointer(UInt8)).malloc(args.size + 1)
     args.each_with_index do |arg, i|
       argv[i] = arg.check_no_null_byte.to_unsafe
     end

@@ -1049,6 +1049,15 @@ describe Process do
   end
 
   {% unless flag?(:win32) %}
+    describe "Crystal::System::Process.prepare_args" do
+      it "null-terminates argv for execve (#17183)" do
+        _, argv = Crystal::System::Process.prepare_args(["echo", "hello"])
+        String.new(argv[0]).should eq("echo")
+        String.new(argv[1]).should eq("hello")
+        argv[2].null?.should be_true
+      end
+    end
+
     describe "#signal(Signal::KILL)" do
       it "kills a process" do
         process = Process.new(exe, ["pu", "sleep"])
@@ -1130,7 +1139,7 @@ describe Process do
     end
   {% end %}
 
-  {% unless flag?(:preview_mt) || flag?(:win32) %}
+  {% if flag?(:without_mt) && !flag?(:win32) %}
     describe ".fork" do
       it "executes the new process with exec" do
         with_tempfile("crystal-spec-exec") do |path|

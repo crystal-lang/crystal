@@ -105,7 +105,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
-    pushing_type(node.resolved_type) do
+    resolved_type = node.resolved_type?
+    node.raise "can't declare class dynamically" unless resolved_type
+    pushing_type(resolved_type) do
       node.hook_expansions.try &.each &.accept self
       node.body.accept self
     end

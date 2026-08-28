@@ -1351,6 +1351,21 @@ describe "Code gen: class" do
       CRYSTAL
   end
 
+  it "runs instance variable initializer using a class variable assignment (#9886)" do
+    run(<<-CRYSTAL).to_i.should eq(3)
+      class Foo
+        @@id = 0
+        @id : Int32 = (@@id &+= 1)
+
+        def id
+          @id
+        end
+      end
+
+      Foo.new.id &+ Foo.new.id
+      CRYSTAL
+  end
+
   it "runs instance variable initializer at the class level, for generic type" do
     run(<<-CRYSTAL).to_i.should eq(42)
       class Foo(T)
