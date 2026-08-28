@@ -218,15 +218,15 @@ module HTTP
     describe "#content_length=" do
       it "accepts valid values" do
         req = Request.new("GET", "/")
-        req.content_length = 1234
+        (req.content_length = 1234).should eq 1234
         req.content_length.should eq 1234
         req.headers["Content-Length"].should eq "1234"
 
-        req.content_length = 0
+        (req.content_length = 0).should eq 0
         req.content_length.should eq 0
         req.headers["Content-Length"].should eq "0"
 
-        req.content_length = UInt64::MAX
+        (req.content_length = UInt64::MAX).should eq UInt64::MAX
         req.content_length.should eq UInt64::MAX
         req.headers["Content-Length"].should eq UInt64::MAX.to_s
       end
