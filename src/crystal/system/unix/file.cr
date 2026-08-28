@@ -95,23 +95,9 @@ module Crystal::System::File
     accessible?(path, LibC::X_OK)
   end
 
-  private def self.accessible?(path, flag, *, follow_symlinks = true)
-    if follow_symlinks
-      LibC.access(path.check_no_null_byte, flag) == 0
-    else
-      {% if LibC.has_method?(:faccessat) %}
-        LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, flag, LibC::AT_SYMLINK_NOFOLLOW) == 0
-      {% else %}
-        # faccessat is not available, for example on wasm32
-        if flag == LibC::F_OK
-          # success of stat/lstat can be used to determine the existence of a file
-          stat = uninitialized LibC::Stat
-          lstat(path.check_no_null_byte, pointerof(stat)).zero?
-        else
-          raise NotImplementedError.new("follow_symlinks: false is not supported on this platform")
-        end
-      {% end %}
-    end
+  private def self.accessible?(path, mode, *, follow_symlinks = true)
+    flags = follow_symlinks ? LibC::AT_SYMLINK_FOLLOW : LibC::AT_SYMLINK_NOFOLLOW
+    LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
