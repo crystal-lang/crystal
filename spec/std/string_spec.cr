@@ -2912,15 +2912,15 @@ describe "String" do
     end
 
     it "treats invalid code units as replacement char in an non-optimizable string" do
-      "ö\xC0".compare("ö\xE0", case_insensitive: true).should eq(0)
-      "ö\xE0".compare("ö\xC0", case_insensitive: true).should eq(0)
+      "ö\xC0".compare("ö\xE0", case_insensitive: true).should eq(-1)
+      "ö\xE0".compare("ö\xC0", case_insensitive: true).should eq(1)
       "ö\xC0".compare("öa", case_insensitive: true).should eq(1)
       "öa".compare("ö\xC0", case_insensitive: true).should eq(-1)
     end
 
     it "treats invalid code units as replacement char in an otherwise ascii string" do
-      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
-      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(-1)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(1)
       "\xC0".compare("a", case_insensitive: true).should eq(1)
       "a".compare("\xC0", case_insensitive: true).should eq(-1)
     end
