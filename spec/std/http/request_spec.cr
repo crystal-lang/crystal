@@ -352,6 +352,17 @@ module HTTP
           request.to_io(io)
         end
       end
+
+      it "validates resource after unobserved modification" do
+        request = Request.new "GET", "/"
+        request.uri.path = "foo bar"
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq <<-HTTP
+          GET foo bar HTTP/1.1\r
+          \r\n
+          HTTP
+      end
     end
 
     describe ".from_io" do
@@ -691,6 +702,12 @@ module HTTP
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).as(Request)
         request.query.should eq("filter=hello&world=test")
       end
+
+      it "rejects invalid query" do
+        request = Request.new "GET", "/"
+        request.query = "foo bar"
+        request.resource.should eq("/?foo bar")
+      end
     end
 
     describe "#query=" do
@@ -903,6 +920,14 @@ module HTTP
 
         request.uri.path = "/some_other_route"
         request.resource.should eq("/some_other_route")
+      end
+    end
+
+    describe "#resource" do
+      it "validates after unobserved modification" do
+        request = Request.new "GET", "/"
+        request.uri.path = "foo bar"
+        request.resource.should eq "foo bar"
       end
     end
 
