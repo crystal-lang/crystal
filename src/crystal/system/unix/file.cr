@@ -96,7 +96,7 @@ module Crystal::System::File
   end
 
   private def self.accessible?(path, mode, *, follow_symlinks = true)
-    flags = follow_symlinks ? LibC::AT_SYMLINK_FOLLOW : LibC::AT_SYMLINK_NOFOLLOW
+    flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
     LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
   end
 
