@@ -484,12 +484,10 @@ module HTTP
     end
 
     it "closes if an IO::Error occurs while the request is in-flight (non-yielding)" do
-      server = HTTP::Server.new do |context|
-        context.response.headers["Connection"] = "keep-alive"
-      end
+      server = HTTP::Server.new {}
 
       client_for server do |client|
-        client.get "/", headers: HTTP::Headers{"Connection" => "keep-alive"}
+        client.get "/"
         client.@io.not_nil!.close
         expect_raises(IO::Error) { client.get "/" }
 
@@ -499,12 +497,10 @@ module HTTP
     end
 
     it "closes if an IO::Error occurs while the request is in-flight (yielding)" do
-      server = HTTP::Server.new do |context|
-        context.response.headers["Connection"] = "keep-alive"
-      end
+      server = HTTP::Server.new {}
 
       client_for server do |client|
-        client.get "/", headers: HTTP::Headers{"Connection" => "keep-alive"}
+        client.get "/"
         client.@io.not_nil!.close
         expect_raises(IO::Error) { client.get "/" { } }
 
