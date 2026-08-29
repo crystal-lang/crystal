@@ -19,7 +19,7 @@ on:
 permissions: {}
 
 env:
-  CI_SSL_VERSION: "4.0.1"
+  CI_SSL_VERSION: "4.0.2"
 
 jobs:
   build:

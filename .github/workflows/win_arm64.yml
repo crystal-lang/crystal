@@ -13,7 +13,7 @@ concurrency:
 
 env:
   SPEC_SPLIT_DOTS: 160
-  CI_SSL_VERSION: "4.0.1"
+  CI_SSL_VERSION: "4.0.2"
   CI_LLVM_VERSION: "23.1.0"
   CI_LLVM_TARGETS: "X86,AArch64"
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"

@@ -27,7 +27,7 @@ env:
   CI_Z_VERSION: "1.3.2.1"
   CI_YAML_VERSION: "0.2.5"
   CI_XML2_VERSION: "2.15.3"
-  CI_SSL_VERSION: "4.0.1"
+  CI_SSL_VERSION: "4.0.2"
   CI_SSL_MAJOR: "4"
   WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
 
