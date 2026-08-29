@@ -19,7 +19,7 @@ struct Exception::CallStack
     locate_dsym_bundle do |image|
       read_dwarf_sections(image)
     end
-  rescue ex
+  rescue
     @@dwarf_line_numbers = nil
     @@dwarf_function_names = nil
   end

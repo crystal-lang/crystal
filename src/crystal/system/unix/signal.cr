@@ -198,7 +198,7 @@ module Crystal::System::Signal
           stack_top = current_fiber.@stack.pointer - 4096
           stack_bottom = current_fiber.@stack.bottom
           stack_top <= addr < stack_bottom
-        rescue e
+        rescue
           Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
           false
         end

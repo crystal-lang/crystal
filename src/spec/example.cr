@@ -52,7 +52,7 @@ module Spec
     rescue ex : Spec::AssertionFailed
       @parent.report(:fail, description, file, line, start.elapsed, ex)
       @parent.cli.abort! if @parent.cli.fail_fast?
-    rescue ex : Spec::ExamplePending
+    rescue Spec::ExamplePending
       @parent.report(:pending, description, file, line, start.elapsed)
     rescue ex
       @parent.report(:error, description, file, line, start.elapsed, ex)

@@ -37,15 +37,12 @@ module Crystal
 
     init_runtime
 
-    status =
-      begin
-        yield
-        0
-      rescue ex
-        1
-      end
-
-    exit(status, ex)
+    begin
+      yield
+      exit(0)
+    rescue ex
+      exit(1, ex)
+    end
   end
 
   # :nodoc:

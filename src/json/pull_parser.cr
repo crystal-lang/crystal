@@ -446,7 +446,7 @@ class JSON::PullParser
   def read?(klass : Float32.class) : Float32?
     return read_int.to_f32 if kind.int?
     return raw_value.to_f32.tap { read_next } if kind.float?
-  rescue exc : JSON::ParseException | ArgumentError
+  rescue JSON::ParseException | ArgumentError
     nil
   end
 
