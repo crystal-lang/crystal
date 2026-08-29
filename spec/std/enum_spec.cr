@@ -50,8 +50,8 @@ private enum SpecEnumWithCaseSensitiveMembers
 end
 
 private enum SpecEnumWithUnicodeMembers
-  Föö             = 1
-  Bár             = 2
+  Föö = 1
+  Bár = 2
 end
 
 describe Enum do
