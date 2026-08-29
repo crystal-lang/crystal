@@ -2834,13 +2834,13 @@ module Crystal
     end
 
     def skip_space_or_newline
-      while (@token.type.space? || @token.type.newline?)
+      while @token.type.space? || @token.type.newline?
         next_token
       end
     end
 
     def skip_statement_end
-      while (@token.type.space? || @token.type.newline? || @token.type.op_semicolon?)
+      while @token.type.space? || @token.type.newline? || @token.type.op_semicolon?
         next_token
       end
     end

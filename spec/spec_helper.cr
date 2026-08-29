@@ -276,7 +276,7 @@ def program_flags_options : Array(String)
   f = [] of String
   apply_program_flags(f)
   options = f.map { |x| "-D#{x}" }
-  if (n_threads = spec_compiler_threads)
+  if n_threads = spec_compiler_threads
     options << "--threads=#{n_threads}"
   end
   options
@@ -301,7 +301,7 @@ end
 
 def create_spec_compiler
   compiler = Compiler.new
-  if (n_threads = spec_compiler_threads)
+  if n_threads = spec_compiler_threads
     compiler.n_threads = n_threads
   end
 

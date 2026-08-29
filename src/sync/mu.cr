@@ -331,9 +331,9 @@ module Sync
       #
       # The requirement that some thread holds the lock ensures that at least
       # one of the transferred waiters will be woken.
-      if ((old_word & ANY_LOCK) != 0 &&
+      if (old_word & ANY_LOCK) != 0 &&
          (old_word & SPINLOCK) == 0 &&
-         (first_cant_acquire || (!next_waiter.null? && !all_readers)))
+         (first_cant_acquire || (!next_waiter.null? && !all_readers))
         # acquire the spinlock + mark mu as having waiters
         _, success = @word.compare_and_set(old_word, old_word | SPINLOCK | WAITING, :acquire, :relaxed)
         return unless success

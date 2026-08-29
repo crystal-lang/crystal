@@ -1556,7 +1556,7 @@ module Crystal
     end
 
     private def format_parameter_annotations(node)
-      return unless (anns = node.parsed_annotations)
+      return unless anns = node.parsed_annotations
 
       anns.each do |ann|
         ann.accept self

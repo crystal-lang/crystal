@@ -371,7 +371,7 @@ module Crystal
           length = DWARF.read_unsigned_leb128(@io)
 
           dir = include_directories[dir]
-          if (name != "" && dir != "")
+          if name != "" && dir != ""
             name = File.join(dir, name)
           end
           ary << Sequence::FileEntry.new(name, time.to_u64, length.to_u64)

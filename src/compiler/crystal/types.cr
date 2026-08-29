@@ -1586,7 +1586,7 @@ module Crystal
     end
 
     def instantiate(type_vars)
-      if (instance = generic_types[type_vars]?)
+      if instance = generic_types[type_vars]?
         return instance
       end
 
@@ -2329,7 +2329,7 @@ module Crystal
     @struct = true
 
     def instantiate(type_vars)
-      if (instance = generic_types[type_vars]?)
+      if instance = generic_types[type_vars]?
         return instance
       end
 
@@ -2415,7 +2415,7 @@ module Crystal
     @struct = true
 
     def instantiate(type_vars)
-      if (instance = generic_types[type_vars]?)
+      if instance = generic_types[type_vars]?
         return instance
       end
 

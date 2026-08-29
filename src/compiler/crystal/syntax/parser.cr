@@ -4546,7 +4546,7 @@ module Crystal
               # local variable afterwards.)
               push_var declare_var unless @call_args_start_locations.includes?(location)
               declare_var
-            elsif (!force_call && is_var)
+            elsif !force_call && is_var
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
                 @uses_block_arg = true
               end

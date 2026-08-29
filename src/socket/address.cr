@@ -330,7 +330,7 @@ class Socket
         return nil if i == 7
 
         unless ptr < finish && ptr.value === ':'
-          if (ptr < finish && ptr.value === '%')
+          if ptr < finish && ptr.value === '%'
             zone_slice = Bytes.new(ptr + 1, finish - ptr - 1)
             break
           end
@@ -792,7 +792,7 @@ class Socket
     # associated zone_id property.
     def link_local_interface : String | Nil
       return nil if @zone_id.zero?
-      return nil unless (@family == Socket::Family::INET6 && link_local?)
+      return nil unless @family == Socket::Family::INET6 && link_local?
 
       Crystal::System::Socket.network_interface_from_index(@zone_id) do |os_error|
         raise Error.from_os_error("Failed to look up interface name for index #{@zone_id}", os_error)

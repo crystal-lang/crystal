@@ -339,7 +339,7 @@ module Math
     res = value.class.zero
     bit = res.succ << (res.leading_zeros_count - 2)
     bit >>= value.leading_zeros_count & ~0x3
-    while (bit != 0)
+    while bit != 0
       if value >= res + bit
         value -= res + bit
         res = (res >> 1) + bit

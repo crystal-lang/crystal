@@ -488,7 +488,7 @@ module Crystal
       end
 
       # If one has required named args and the other doesn't, none is stricter than the other
-      if (self_named_args || other_named_args)
+      if self_named_args || other_named_args
         return false
       end
 

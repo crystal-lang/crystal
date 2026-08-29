@@ -82,7 +82,7 @@ class Random::PCG32
     acc_plus = 0u64
     cur_plus = @inc
     cur_mult = PCG_DEFAULT_MULTIPLIER_64
-    while (deltau64 > 0)
+    while deltau64 > 0
       if deltau64 & 1 > 0
         acc_mult &*= cur_mult
         acc_plus = acc_plus &* cur_mult &+ cur_plus

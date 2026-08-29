@@ -198,7 +198,7 @@ module Crystal
       end
 
       node.target_defs.try &.each do |a_def|
-        if (location = a_def.location)
+        if location = a_def.location
           @used_def_locations.update(location, &.+(1)) if interested_in(location)
         end
 

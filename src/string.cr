@@ -2170,7 +2170,7 @@ class String
   private def calc_excess_right(&block)
     byte_index = bytesize
     reader = Char::Reader.new(at_end: self)
-    while (yield reader.current_char)
+    while yield(reader.current_char)
       byte_index = reader.pos
       if byte_index == 0
         return bytesize
@@ -2210,7 +2210,7 @@ class String
 
   private def calc_excess_left(&block)
     reader = Char::Reader.new(self)
-    while (yield reader.current_char)
+    while yield(reader.current_char)
       reader.next_char
       return bytesize unless reader.has_next?
     end

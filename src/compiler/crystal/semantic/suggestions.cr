@@ -40,7 +40,7 @@ module Crystal
     def lookup_similar_def(name, args_size, block)
       return nil unless name =~ SuggestableDefName
 
-      if (defs = self.defs)
+      if defs = self.defs
         best_def = nil
         best_match = nil
         Levenshtein.find(name) do |finder|
