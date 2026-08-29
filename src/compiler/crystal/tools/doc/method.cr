@@ -295,8 +295,6 @@ class Crystal::Doc::Method
       io << " forall "
       free_vars.join(io, ", ")
     end
-
-    io
   end
 
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)

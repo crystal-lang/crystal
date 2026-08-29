@@ -168,17 +168,13 @@ module Crystal
     def apply(other)
       types = @filter.apply(other)
 
-      if types
-        case types
-        when UnionType
-          types = types.union_types
-        when Array
-          types
-        else
-          types = [types] of Type
-        end
-      else
+      case types
+      when Nil
         types = [] of Type
+      when UnionType
+        types = types.union_types
+      else
+        types = [types] of Type
       end
 
       if other.is_a?(UnionType)

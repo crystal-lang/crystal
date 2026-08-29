@@ -1999,7 +1999,6 @@ module Crystal
         check :MACRO_CONTROL_START
         next_token_skip_space_or_newline
 
-        check_end
         next_token_skip_space_or_newline
         check :OP_PERCENT_RCURLY
 

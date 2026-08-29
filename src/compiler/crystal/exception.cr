@@ -212,7 +212,7 @@ module Crystal
       in VirtualFile
         io << "macro '" << colorize("#{source_filename.macro.name}").underline << '\''
       in Nil
-        "unknown location"
+        io << "unknown location"
       end
 
       lines = source_lines(source_filename)

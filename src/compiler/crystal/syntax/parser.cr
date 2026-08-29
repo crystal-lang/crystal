@@ -451,7 +451,6 @@ module Crystal
 
             atomic = Assign.new(atomic, atomic_value).at(location)
             atomic.doc = doc
-            atomic
           end
         when .assignment_operator?
           unexpected_token unless allow_ops
@@ -800,7 +799,6 @@ module Crystal
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
-            atomic
           end
         when .op_lsquare_rsquare?
           check_void_value atomic, location
@@ -813,7 +811,6 @@ module Crystal
           atomic.name_location = name_location
           atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
-          atomic
         when .op_lsquare?
           check_void_value atomic, location
 
@@ -857,7 +854,6 @@ module Crystal
           atomic.end_location = end_location
           atomic.name_size = 0
           atomic.args_in_brackets = true
-          atomic
         else
           break
         end
