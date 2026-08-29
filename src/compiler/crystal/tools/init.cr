@@ -269,15 +269,15 @@ module Crystal
     TEMPLATE_DIR = "#{__DIR__}/init/template"
 
     macro template(name, template_path, destination_path)
-      class {{name.id}} < View
-        ECR.def_to_s {{"#{TEMPLATE_DIR.id}/#{template_path.id}"}}
+      class {{ name.id }} < View
+        ECR.def_to_s {{ "#{TEMPLATE_DIR.id}/#{template_path.id}" }}
 
         def path
-          {{destination_path}}
+          {{ destination_path }}
         end
       end
 
-      View.register({{name.id}})
+      View.register({{ name.id }})
     end
 
     template GitignoreView, "gitignore.ecr", ".gitignore"

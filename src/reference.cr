@@ -85,7 +85,7 @@ class Reference
     {% if @type.abstract? %}
       # This shouldn't happen, as the type is abstract,
       # but we need to avoid the allocate invocation below
-      raise "Can't dup {{@type}}"
+      raise "Can't dup {{ @type }}"
     {% else %}
       dup = self.class.allocate
       dup.as(Void*).copy_from(self.as(Void*), instance_sizeof(self))
@@ -112,7 +112,7 @@ class Reference
   # Person.new("John", 32).inspect # => #<Person:0x10fd31f20 @name="John", @age=32>
   # ```
   def inspect(io : IO) : Nil
-    io << "#<" << {{@type.name.id.stringify}} << ":0x"
+    io << "#<" << {{ @type.name.id.stringify }} << ":0x"
     object_id.to_s(io, 16)
 
     executed = exec_recursive(:inspect) do
@@ -120,8 +120,8 @@ class Reference
         {% if i > 0 %}
           io << ','
         {% end %}
-        io << " @{{ivar.id}}="
-        @{{ivar.id}}.inspect io
+        io << " @{{ ivar.id }}="
+        @{{ ivar.id }}.inspect io
       {% end %}
     end
     unless executed
@@ -134,7 +134,7 @@ class Reference
     {% if @type.overrides?(Reference, "inspect") %}
       pp.text inspect
     {% else %}
-      prefix = "#<#{{{@type.name.id.stringify}}}:0x#{object_id.to_s(16)}"
+      prefix = "#<#{{{ @type.name.id.stringify }}}:0x#{object_id.to_s(16)}"
       executed = exec_recursive(:pretty_print) do
         pp.surround(prefix, ">", left_break: nil, right_break: nil) do
           {% for ivar, i in @type.instance_vars.map(&.name).sort %}
@@ -144,10 +144,10 @@ class Reference
               pp.comma
             {% end %}
             pp.group do
-              pp.text "@{{ivar.id}}="
+              pp.text "@{{ ivar.id }}="
               pp.nest do
                 pp.breakable ""
-                @{{ivar.id}}.pretty_print(pp)
+                @{{ ivar.id }}.pretty_print(pp)
               end
             end
           {% end %}

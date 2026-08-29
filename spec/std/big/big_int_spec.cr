@@ -614,82 +614,82 @@ describe "BigInt" do
   end
 
   {% for n in [8, 16, 32, 64, 128] %}
-    describe "#to_u{{n}}" do
-      it "converts to UInt{{n}}" do
-        (0..{{n - 1}}).each do |i|
-          (1.to_big_i << i).to_u{{n}}.should eq(UInt{{n}}.new(1) << i)
+    describe "#to_u{{ n }}" do
+      it "converts to UInt{{ n }}" do
+        (0..{{ n - 1 }}).each do |i|
+          (1.to_big_i << i).to_u{{ n }}.should eq(UInt{{ n }}.new(1) << i)
         end
 
-        UInt{{n}}::MIN.to_big_i.to_u{{n}}.should eq(UInt{{n}}::MIN)
-        UInt{{n}}::MAX.to_big_i.to_u{{n}}.should eq(UInt{{n}}::MAX)
+        UInt{{ n }}::MIN.to_big_i.to_u{{ n }}.should eq(UInt{{ n }}::MIN)
+        UInt{{ n }}::MAX.to_big_i.to_u{{ n }}.should eq(UInt{{ n }}::MAX)
       end
 
       it "raises OverflowError" do
-        expect_raises(OverflowError) { (1.to_big_i << {{n}}).to_u{{n}} }
-        expect_raises(OverflowError) { (-1.to_big_i).to_u{{n}} }
-        expect_raises(OverflowError) { (-1.to_big_i << {{n}}).to_u{{n}} }
+        expect_raises(OverflowError) { (1.to_big_i << {{ n }}).to_u{{ n }} }
+        expect_raises(OverflowError) { (-1.to_big_i).to_u{{ n }} }
+        expect_raises(OverflowError) { (-1.to_big_i << {{ n }}).to_u{{ n }} }
       end
     end
 
-    describe "#to_i{{n}}" do
-      it "converts to Int{{n}}" do
-        (0..{{n - 2}}).each do |i|
-          (1.to_big_i << i).to_i{{n}}.should eq(Int{{n}}.new(1) << i)
-          (-1.to_big_i << i).to_i{{n}}.should eq(Int{{n}}.new(-1) << i)
+    describe "#to_i{{ n }}" do
+      it "converts to Int{{ n }}" do
+        (0..{{ n - 2 }}).each do |i|
+          (1.to_big_i << i).to_i{{ n }}.should eq(Int{{ n }}.new(1) << i)
+          (-1.to_big_i << i).to_i{{ n }}.should eq(Int{{ n }}.new(-1) << i)
         end
 
-        Int{{n}}.zero.to_big_i.to_i{{n}}.should eq(Int{{n}}.zero)
-        Int{{n}}::MAX.to_big_i.to_i{{n}}.should eq(Int{{n}}::MAX)
-        Int{{n}}::MIN.to_big_i.to_i{{n}}.should eq(Int{{n}}::MIN)
+        Int{{ n }}.zero.to_big_i.to_i{{ n }}.should eq(Int{{ n }}.zero)
+        Int{{ n }}::MAX.to_big_i.to_i{{ n }}.should eq(Int{{ n }}::MAX)
+        Int{{ n }}::MIN.to_big_i.to_i{{ n }}.should eq(Int{{ n }}::MIN)
       end
 
       it "raises OverflowError" do
-        expect_raises(OverflowError) { (Int{{n}}::MAX.to_big_i + 1).to_i{{n}} }
-        expect_raises(OverflowError) { (Int{{n}}::MIN.to_big_i - 1).to_i{{n}} }
-        expect_raises(OverflowError) { (1.to_big_i << {{n}}).to_i{{n}} }
-        expect_raises(OverflowError) { (-1.to_big_i << {{n}}).to_i{{n}} }
+        expect_raises(OverflowError) { (Int{{ n }}::MAX.to_big_i + 1).to_i{{ n }} }
+        expect_raises(OverflowError) { (Int{{ n }}::MIN.to_big_i - 1).to_i{{ n }} }
+        expect_raises(OverflowError) { (1.to_big_i << {{ n }}).to_i{{ n }} }
+        expect_raises(OverflowError) { (-1.to_big_i << {{ n }}).to_i{{ n }} }
       end
     end
 
-    describe "#to_u{{n}}!" do
-      it "converts to UInt{{n}}" do
-        (0..{{n - 1}}).each do |i|
-          (1.to_big_i << i).to_u{{n}}!.should eq(UInt{{n}}.new(1) << i)
+    describe "#to_u{{ n }}!" do
+      it "converts to UInt{{ n }}" do
+        (0..{{ n - 1 }}).each do |i|
+          (1.to_big_i << i).to_u{{ n }}!.should eq(UInt{{ n }}.new(1) << i)
         end
 
-        UInt{{n}}::MAX.to_big_i.to_u{{n}}!.should eq(UInt{{n}}::MAX)
+        UInt{{ n }}::MAX.to_big_i.to_u{{ n }}!.should eq(UInt{{ n }}::MAX)
       end
 
-      it "converts modulo (2 ** {{n}})" do
-        (1.to_big_i << {{n}}).to_u{{n}}!.should eq(UInt{{n}}.new(0))
-        (-1.to_big_i).to_u{{n}}!.should eq(UInt{{n}}::MAX)
-        (-1.to_big_i << {{n}}).to_u{{n}}!.should eq(UInt{{n}}.new(0))
-        (123.to_big_i - (1.to_big_i << {{n}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
-        (123.to_big_i + (1.to_big_i << {{n}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
-        (123.to_big_i - (1.to_big_i << {{n + 2}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
-        (123.to_big_i + (1.to_big_i << {{n + 2}})).to_u{{n}}!.should eq(UInt{{n}}.new(123))
+      it "converts modulo (2 ** {{ n }})" do
+        (1.to_big_i << {{ n }}).to_u{{ n }}!.should eq(UInt{{ n }}.new(0))
+        (-1.to_big_i).to_u{{ n }}!.should eq(UInt{{ n }}::MAX)
+        (-1.to_big_i << {{ n }}).to_u{{ n }}!.should eq(UInt{{ n }}.new(0))
+        (123.to_big_i - (1.to_big_i << {{ n }})).to_u{{ n }}!.should eq(UInt{{ n }}.new(123))
+        (123.to_big_i + (1.to_big_i << {{ n }})).to_u{{ n }}!.should eq(UInt{{ n }}.new(123))
+        (123.to_big_i - (1.to_big_i << {{ n + 2 }})).to_u{{ n }}!.should eq(UInt{{ n }}.new(123))
+        (123.to_big_i + (1.to_big_i << {{ n + 2 }})).to_u{{ n }}!.should eq(UInt{{ n }}.new(123))
       end
     end
 
-    describe "#to_i{{n}}!" do
-      it "converts to Int{{n}}" do
+    describe "#to_i{{ n }}!" do
+      it "converts to Int{{ n }}" do
         (0..126).each do |i|
-          (1.to_big_i << i).to_i{{n}}!.should eq(Int{{n}}.new(1) << i)
-          (-1.to_big_i << i).to_i{{n}}!.should eq(Int{{n}}.new(-1) << i)
+          (1.to_big_i << i).to_i{{ n }}!.should eq(Int{{ n }}.new(1) << i)
+          (-1.to_big_i << i).to_i{{ n }}!.should eq(Int{{ n }}.new(-1) << i)
         end
 
-        Int{{n}}::MAX.to_big_i.to_i{{n}}!.should eq(Int{{n}}::MAX)
-        Int{{n}}::MIN.to_big_i.to_i{{n}}!.should eq(Int{{n}}::MIN)
+        Int{{ n }}::MAX.to_big_i.to_i{{ n }}!.should eq(Int{{ n }}::MAX)
+        Int{{ n }}::MIN.to_big_i.to_i{{ n }}!.should eq(Int{{ n }}::MIN)
       end
 
-      it "converts modulo (2 ** {{n}})" do
-        (1.to_big_i << {{n - 1}}).to_i{{n}}!.should eq(Int{{n}}::MIN)
-        (1.to_big_i << {{n}}).to_i{{n}}!.should eq(Int{{n}}.new(0))
-        (-1.to_big_i << {{n}}).to_i{{n}}!.should eq(Int{{n}}.new(0))
-        (123.to_big_i - (1.to_big_i << {{n}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
-        (123.to_big_i + (1.to_big_i << {{n}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
-        (123.to_big_i - (1.to_big_i << {{n + 2}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
-        (123.to_big_i + (1.to_big_i << {{n + 2}})).to_i{{n}}!.should eq(Int{{n}}.new(123))
+      it "converts modulo (2 ** {{ n }})" do
+        (1.to_big_i << {{ n - 1 }}).to_i{{ n }}!.should eq(Int{{ n }}::MIN)
+        (1.to_big_i << {{ n }}).to_i{{ n }}!.should eq(Int{{ n }}.new(0))
+        (-1.to_big_i << {{ n }}).to_i{{ n }}!.should eq(Int{{ n }}.new(0))
+        (123.to_big_i - (1.to_big_i << {{ n }})).to_i{{ n }}!.should eq(Int{{ n }}.new(123))
+        (123.to_big_i + (1.to_big_i << {{ n }})).to_i{{ n }}!.should eq(Int{{ n }}.new(123))
+        (123.to_big_i - (1.to_big_i << {{ n + 2 }})).to_i{{ n }}!.should eq(Int{{ n }}.new(123))
+        (123.to_big_i + (1.to_big_i << {{ n + 2 }})).to_i{{ n }}!.should eq(Int{{ n }}.new(123))
       end
     end
   {% end %}

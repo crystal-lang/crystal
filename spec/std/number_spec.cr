@@ -5,11 +5,11 @@ require "../support/number"
 
 describe "Number" do
   {% for number_type in BUILTIN_NUMBER_TYPES %}
-    it_unchecked_initializes_from_value_to {{number_type}}
-    it_initializes_from_value_to {{number_type}}
+    it_unchecked_initializes_from_value_to {{ number_type }}
+    it_initializes_from_value_to {{ number_type }}
   {% end %}
 
-  it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}})
+  it_can_convert_between({{ BUILTIN_NUMBER_TYPES }}, {{ BUILTIN_NUMBER_TYPES }})
 
   describe "significant" do
     it "10 base" do
@@ -590,15 +590,15 @@ describe "Number" do
     it_iterates "towards limit [max-3, max-1, max)", [Int32::MAX - 3, Int32::MAX - 1], (Int32::MAX - 3).step(to: Int32::MAX, by: 2)
   end
 
-  floor_division_returns_lhs_type {{BUILTIN_NUMBER_TYPES}}, {{BUILTIN_NUMBER_TYPES}}
+  floor_division_returns_lhs_type {{ BUILTIN_NUMBER_TYPES }}, {{ BUILTIN_NUMBER_TYPES }}
 
-  division_between_returns {{BUILTIN_INTEGER_TYPES}}, {{BUILTIN_INTEGER_TYPES}}, Float64
-  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float32], Float32
-  division_between_returns [Float32], {{BUILTIN_INTEGER_TYPES}}, Float32
-  division_between_returns {{BUILTIN_INTEGER_TYPES}}, [Float64], Float64
-  division_between_returns [Float64], {{BUILTIN_INTEGER_TYPES}}, Float64
+  division_between_returns {{ BUILTIN_INTEGER_TYPES }}, {{ BUILTIN_INTEGER_TYPES }}, Float64
+  division_between_returns {{ BUILTIN_INTEGER_TYPES }}, [Float32], Float32
+  division_between_returns [Float32], {{ BUILTIN_INTEGER_TYPES }}, Float32
+  division_between_returns {{ BUILTIN_INTEGER_TYPES }}, [Float64], Float64
+  division_between_returns [Float64], {{ BUILTIN_INTEGER_TYPES }}, Float64
 
   division_between_returns [Float32], [Float32], Float32
-  division_between_returns {{BUILTIN_FLOAT_TYPES}}, [Float64], Float64
-  division_between_returns [Float64], {{BUILTIN_FLOAT_TYPES}}, Float64
+  division_between_returns {{ BUILTIN_FLOAT_TYPES }}, [Float64], Float64
+  division_between_returns [Float64], {{ BUILTIN_FLOAT_TYPES }}, Float64
 end

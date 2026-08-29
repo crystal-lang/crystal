@@ -1161,11 +1161,11 @@ module Crystal
 
     macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative)
       {% if type.stringify.starts_with? "U" %}
-        raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
+        raise "Invalid negative value #{string_range({{ start }}, {{ pos_before_suffix }})} for {{ type }}", @token, (current_pos - {{ start }}) if {{ negative }}
       {% end %}
 
-      if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
-        raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
+      if !@token.value || {{ number_size }} > {{ size }} || ({{ number_size }} == {{ size }} && {{ raw_number_string }}.to_{{ method.id }}? == nil)
+        raise_value_doesnt_fit_in "{{ type }}", {{ start }}, {{ pos_before_suffix }}
       end
     end
 

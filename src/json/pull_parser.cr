@@ -425,13 +425,13 @@ class JSON::PullParser
     {% for int in Int::Primitive.union_types %}
       {% is_large_int = large_ints.includes?(int) %}
 
-      # Reads an `{{int}}` value and returns it.
+      # Reads an `{{ int }}` value and returns it.
       #
-      # If the value is not an integer or does not fit in an `{{int}}`, it
+      # If the value is not an integer or does not fit in an `{{ int }}`, it
       # returns `nil`.
-      def read?(klass : {{int}}.class) : {{int}}?
+      def read?(klass : {{ int }}.class) : {{ int }}?
         if kind.int?
-          {{int}}.new({{ is_large_int ? "raw_value".id : "int_value".id }}).tap { read_next }
+          {{ int }}.new({{ is_large_int ? "raw_value".id : "int_value".id }}).tap { read_next }
         end
       rescue JSON::ParseException | {{ is_large_int ? ArgumentError : OverflowError }}
         nil

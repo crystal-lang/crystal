@@ -136,7 +136,7 @@ end
                          "UInt64"  => "u64",
                          "UInt128" => "u128",
                        } %}
-  def {{type.id}}.new(pull : JSON::PullParser)
+  def {{ type.id }}.new(pull : JSON::PullParser)
     # TODO: use `PullParser#read?` instead
     location = pull.location_i64
     value =
@@ -146,14 +146,14 @@ end
         pull.read_int
       {% end %}
     begin
-      value.to_{{method.id}}
+      value.to_{{ method.id }}
     rescue ex : OverflowError | ArgumentError
-      raise JSON::ParseException.new("Can't read {{type.id}}", *location, ex)
+      raise JSON::ParseException.new("Can't read {{ type.id }}", *location, ex)
     end
   end
 
-  def {{type.id}}.from_json_object_key?(key : String)
-    key.to_{{method.id}}?
+  def {{ type.id }}.from_json_object_key?(key : String)
+    key.to_{{ method.id }}?
   end
 {% end %}
 
@@ -263,7 +263,7 @@ def Tuple.new(pull : JSON::PullParser)
     pull.read_begin_array
     value = Tuple.new(
       {% for i in 0...T.size %}
-        (self[{{i}}].new(pull)),
+        (self[{{ i }}].new(pull)),
       {% end %}
     )
     pull.read_end_array
@@ -287,7 +287,7 @@ def NamedTuple.new(pull : JSON::PullParser)
     pull.read_object do |key|
       case key
         {% for key, type in T %}
-          when {{key.stringify}}
+          when {{ key.stringify }}
             %var{key.id} = self[{{ key.symbolize }}].new(pull)
             {% unless type.nilable? %}
               %found{key.id} = true
@@ -408,13 +408,13 @@ def Union.new(pull : JSON::PullParser)
     when .int?
     {% type_order = [Int128, UInt128, Int64, UInt64, Int32, UInt32, Int16, UInt16, Int8, UInt8, Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
-      value = pull.read?({{type}})
+      value = pull.read?({{ type }})
       return value unless value.nil?
     {% end %}
     when .float?
     {% type_order = [Float64, Float32] %}
     {% for type in type_order.select { |t| T.includes? t } %}
-      value = pull.read?({{type}})
+      value = pull.read?({{ type }})
       return value unless value.nil?
     {% end %}
     else
@@ -429,12 +429,12 @@ def Union.new(pull : JSON::PullParser)
     # If after traversing all the types we are left with just one
     # non-primitive type, we can parse it directly (no need to use `read_raw`)
     {% if non_primitives.size == 1 %}
-      return {{non_primitives[0]}}.new(pull)
+      return {{ non_primitives[0] }}.new(pull)
     {% else %}
       string = pull.read_raw
       {% for type in non_primitives %}
         begin
-          return {{type}}.from_json(string)
+          return {{ type }}.from_json(string)
         rescue JSON::ParseException
           # Ignore
         end

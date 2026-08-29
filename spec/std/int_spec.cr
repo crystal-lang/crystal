@@ -161,96 +161,96 @@ describe "Int" do
 
   describe "#to_signed" do
     {% for n in [8, 16, 32, 64, 128] %}
-      it "does for Int{{n}}" do
-        x = Int{{n}}.new(123).to_signed
-        x.should be_a(Int{{n}})
+      it "does for Int{{ n }}" do
+        x = Int{{ n }}.new(123).to_signed
+        x.should be_a(Int{{ n }})
         x.should eq(123)
 
-        Int{{n}}.new(-123).to_signed.should eq(-123)
-        Int{{n}}::MIN.to_signed.should eq(Int{{n}}::MIN)
-        Int{{n}}::MAX.to_signed.should eq(Int{{n}}::MAX)
+        Int{{ n }}.new(-123).to_signed.should eq(-123)
+        Int{{ n }}::MIN.to_signed.should eq(Int{{ n }}::MIN)
+        Int{{ n }}::MAX.to_signed.should eq(Int{{ n }}::MAX)
       end
 
-      it "does for UInt{{n}}" do
-        x = UInt{{n}}.new(123).to_signed
-        x.should be_a(Int{{n}})
+      it "does for UInt{{ n }}" do
+        x = UInt{{ n }}.new(123).to_signed
+        x.should be_a(Int{{ n }})
         x.should eq(123)
 
-        UInt{{n}}::MIN.to_signed.should eq(0)
-        expect_raises(OverflowError) { UInt{{n}}::MAX.to_signed }
-        expect_raises(OverflowError) { (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed }
+        UInt{{ n }}::MIN.to_signed.should eq(0)
+        expect_raises(OverflowError) { UInt{{ n }}::MAX.to_signed }
+        expect_raises(OverflowError) { (UInt{{ n }}.new(Int{{ n }}::MAX) + 1).to_signed }
       end
     {% end %}
   end
 
   describe "#to_signed!" do
     {% for n in [8, 16, 32, 64, 128] %}
-      it "does for Int{{n}}" do
-        x = Int{{n}}.new(123).to_signed!
-        x.should be_a(Int{{n}})
+      it "does for Int{{ n }}" do
+        x = Int{{ n }}.new(123).to_signed!
+        x.should be_a(Int{{ n }})
         x.should eq(123)
 
-        Int{{n}}.new(-123).to_signed!.should eq(-123)
-        Int{{n}}::MIN.to_signed!.should eq(Int{{n}}::MIN)
-        Int{{n}}::MAX.to_signed!.should eq(Int{{n}}::MAX)
+        Int{{ n }}.new(-123).to_signed!.should eq(-123)
+        Int{{ n }}::MIN.to_signed!.should eq(Int{{ n }}::MIN)
+        Int{{ n }}::MAX.to_signed!.should eq(Int{{ n }}::MAX)
       end
 
-      it "does for UInt{{n}}" do
-        x = UInt{{n}}.new(123).to_signed!
-        x.should be_a(Int{{n}})
+      it "does for UInt{{ n }}" do
+        x = UInt{{ n }}.new(123).to_signed!
+        x.should be_a(Int{{ n }})
         x.should eq(123)
 
-        UInt{{n}}::MIN.to_signed!.should eq(0)
-        UInt{{n}}::MAX.to_signed!.should eq(-1)
-        (UInt{{n}}::MAX - 122).to_signed!.should eq(-123)
-        (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed!.should eq(Int{{n}}::MIN)
+        UInt{{ n }}::MIN.to_signed!.should eq(0)
+        UInt{{ n }}::MAX.to_signed!.should eq(-1)
+        (UInt{{ n }}::MAX - 122).to_signed!.should eq(-123)
+        (UInt{{ n }}.new(Int{{ n }}::MAX) + 1).to_signed!.should eq(Int{{ n }}::MIN)
       end
     {% end %}
   end
 
   describe "#to_unsigned" do
     {% for n in [8, 16, 32, 64, 128] %}
-      it "does for Int{{n}}" do
-        x = Int{{n}}.new(123).to_unsigned
-        x.should be_a(UInt{{n}})
+      it "does for Int{{ n }}" do
+        x = Int{{ n }}.new(123).to_unsigned
+        x.should be_a(UInt{{ n }})
         x.should eq(123)
 
-        Int{{n}}.zero.to_unsigned.should eq(UInt{{n}}::MIN)
-        Int{{n}}::MAX.to_unsigned.should eq(UInt{{n}}.new(Int{{n}}::MAX))
-        expect_raises(OverflowError) { Int{{n}}::MIN.to_unsigned }
+        Int{{ n }}.zero.to_unsigned.should eq(UInt{{ n }}::MIN)
+        Int{{ n }}::MAX.to_unsigned.should eq(UInt{{ n }}.new(Int{{ n }}::MAX))
+        expect_raises(OverflowError) { Int{{ n }}::MIN.to_unsigned }
       end
 
-      it "does for UInt{{n}}" do
-        x = UInt{{n}}.new(123).to_unsigned
-        x.should be_a(UInt{{n}})
+      it "does for UInt{{ n }}" do
+        x = UInt{{ n }}.new(123).to_unsigned
+        x.should be_a(UInt{{ n }})
         x.should eq(123)
 
-        UInt{{n}}::MIN.to_unsigned.should eq(UInt{{n}}::MIN)
-        UInt{{n}}::MAX.to_unsigned.should eq(UInt{{n}}::MAX)
+        UInt{{ n }}::MIN.to_unsigned.should eq(UInt{{ n }}::MIN)
+        UInt{{ n }}::MAX.to_unsigned.should eq(UInt{{ n }}::MAX)
       end
     {% end %}
   end
 
   describe "#to_unsigned!" do
     {% for n in [8, 16, 32, 64, 128] %}
-      it "does for Int{{n}}" do
-        x = Int{{n}}.new(123).to_unsigned!
-        x.should be_a(UInt{{n}})
+      it "does for Int{{ n }}" do
+        x = Int{{ n }}.new(123).to_unsigned!
+        x.should be_a(UInt{{ n }})
         x.should eq(123)
 
-        Int{{n}}.new(-123).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
-        Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
-        Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
-        Int{{n}}.new(-1).to_unsigned!.should eq(UInt{{n}}::MAX)
+        Int{{ n }}.new(-123).to_unsigned!.should eq(UInt{{ n }}::MAX - 122)
+        Int{{ n }}::MIN.to_unsigned!.should eq(UInt{{ n }}::MAX // 2 + 1)
+        Int{{ n }}::MAX.to_unsigned!.should eq(UInt{{ n }}::MAX // 2)
+        Int{{ n }}.new(-1).to_unsigned!.should eq(UInt{{ n }}::MAX)
       end
 
-      it "does for UInt{{n}}" do
-        x = UInt{{n}}.new(123).to_unsigned!
-        x.should be_a(UInt{{n}})
+      it "does for UInt{{ n }}" do
+        x = UInt{{ n }}.new(123).to_unsigned!
+        x.should be_a(UInt{{ n }})
         x.should eq(123)
 
-        UInt{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MIN)
-        UInt{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX)
+        UInt{{ n }}::MIN.to_unsigned!.should eq(UInt{{ n }}::MIN)
+        UInt{{ n }}::MAX.to_unsigned!.should eq(UInt{{ n }}::MAX)
       end
     {% end %}
   end
@@ -530,7 +530,7 @@ describe "Int" do
 
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        {{type}}.new(7).divmod(2).should be_a(Tuple({{type}}, {{type}}))
+        {{ type }}.new(7).divmod(2).should be_a(Tuple({{ type }}, {{ type }}))
       {% end %}
     end
 
@@ -559,7 +559,7 @@ describe "Int" do
 
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        {{type}}.new(7).tdivmod(2).should be_a(Tuple({{type}}, {{type}}))
+        {{ type }}.new(7).tdivmod(2).should be_a(Tuple({{ type }}, {{ type }}))
       {% end %}
     end
 
@@ -792,9 +792,9 @@ describe "Int" do
   describe "floor division //" do
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        ({{type}}.new(7) // 2).should be_a({{type}})
-        ({{type}}.new(7) // 2.0).should be_a({{type}})
-        ({{type}}.new(7) // 2.0_f32).should be_a({{type}})
+        ({{ type }}.new(7) // 2).should be_a({{ type }})
+        ({{ type }}.new(7) // 2.0).should be_a({{ type }})
+        ({{ type }}.new(7) // 2.0_f32).should be_a({{ type }})
       {% end %}
     end
 
@@ -821,7 +821,7 @@ describe "Int" do
 
     it "preserves type of lhs" do
       {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
-        {{type}}.new(7).tdiv(2).should be_a({{type}})
+        {{ type }}.new(7).tdiv(2).should be_a({{ type }})
       {% end %}
     end
 
@@ -887,7 +887,7 @@ describe "Int" do
 
   it "returns 0 when doing IntN::MIN % -1 (#8306)" do
     {% for n in [8, 16, 32, 64, 128] %}
-      (Int{{n}}::MIN % -1.to_i{{n}}).should eq(0)
+      (Int{{ n }}::MIN % -1.to_i{{ n }}).should eq(0)
     {% end %}
   end
 
@@ -901,7 +901,7 @@ describe "Int" do
 
   it "returns 0 when doing IntN::MIN.remainder(-1) (#8306)" do
     {% for n in [8, 16, 32, 64, 128] %}
-      (Int{{n}}::MIN.remainder(-1.to_i{{n}})).should eq(0)
+      (Int{{ n }}::MIN.remainder(-1.to_i{{ n }})).should eq(0)
     {% end %}
   end
 
@@ -1035,8 +1035,8 @@ describe "Int" do
     it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
 
     {% for width in %w(8 16 32 64 128).map(&.id) %}
-      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
-      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+      it { 0.to_i{{ width }}.bit_reverse.should be_a(Int{{ width }}) }
+      it { 0.to_u{{ width }}.bit_reverse.should be_a(UInt{{ width }}) }
     {% end %}
   end
 
@@ -1058,8 +1058,8 @@ describe "Int" do
     it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
 
     {% for width in %w(8 16 32 64 128).map(&.id) %}
-      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
-      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+      it { 0.to_i{{ width }}.byte_swap.should be_a(Int{{ width }}) }
+      it { 0.to_u{{ width }}.byte_swap.should be_a(UInt{{ width }}) }
     {% end %}
   end
 
@@ -1091,17 +1091,17 @@ describe "Int" do
 
   describe "#leading_zeros_count" do
     {% for width in %w(8 16 32 64 128).map(&.id) %}
-      it { -1.to_i{{width}}.leading_zeros_count.should eq(0) }
-      it { 0.to_i{{width}}.leading_zeros_count.should eq({{width}}) }
-      it { 0.to_u{{width}}.leading_zeros_count.should eq({{width}}) }
+      it { -1.to_i{{ width }}.leading_zeros_count.should eq(0) }
+      it { 0.to_i{{ width }}.leading_zeros_count.should eq({{ width }}) }
+      it { 0.to_u{{ width }}.leading_zeros_count.should eq({{ width }}) }
     {% end %}
   end
 
   describe "#trailing_zeros_count" do
     {% for width in %w(8 16 32 64 128).map(&.id) %}
-      it { -2.to_i{{width}}.trailing_zeros_count.should eq(1) }
-      it { 2.to_i{{width}}.trailing_zeros_count.should eq(1) }
-      it { 2.to_u{{width}}.trailing_zeros_count.should eq(1) }
+      it { -2.to_i{{ width }}.trailing_zeros_count.should eq(1) }
+      it { 2.to_i{{ width }}.trailing_zeros_count.should eq(1) }
+      it { 2.to_u{{ width }}.trailing_zeros_count.should eq(1) }
     {% end %}
   end
 
@@ -1123,8 +1123,8 @@ describe "Int" do
       signed_ints.zip(big_signed_ints) do |si, bsi|
         unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
           {% for op in %w(< <= > >=).map(&.id) %}
-            if (si {{op}} ui) != (bsi {{op}} bui)
-              fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
+            if (si {{ op }} ui) != (bsi {{ op }} bui)
+              fail "comparison of #{si} {{ op }} #{ui} (#{si.class} {{ op }} #{ui.class}) gave incorrect result"
             end
           {% end %}
         end

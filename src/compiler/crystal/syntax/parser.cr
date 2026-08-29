@@ -552,15 +552,15 @@ module Crystal
     end
 
     macro parse_operator(name, next_operator, node, *operators, right_associative = false)
-      def parse_{{name.id}}
+      def parse_{{ name.id }}
         location = @token.location
 
-        left = parse_{{next_operator.id}}
+        left = parse_{{ next_operator.id }}
         while true
           case @token.type
           when .space?
             next_token
-          when {{operators.map { |op| ".#{op.id}".id }.splat}}
+          when {{ operators.map { |op| ".#{op.id}".id }.splat }}
             check_void_value left, location
 
             method = @token.type.to_s
@@ -568,8 +568,8 @@ module Crystal
 
             slash_is_regex!
             next_token_skip_space_or_newline
-            right = parse_{{(right_associative ? name : next_operator).id}}
-            left = ({{node.id}}).at(location).at_end(right)
+            right = parse_{{ (right_associative ? name : next_operator).id }}
+            left = ({{ node.id }}).at(location).at_end(right)
             left.name_location = name_location if left.is_a?(Call)
           else
             return left

@@ -361,14 +361,14 @@ describe JSON::PullParser do
       {% type = pair[0] %}
       {% value = pair[1] %}
 
-      it "reads {{type}} when the token is a compatible kind" do
-        pull = JSON::PullParser.new({{value}}.to_json)
-        pull.read?({{type}}).should eq({{value}})
+      it "reads {{ type }} when the token is a compatible kind" do
+        pull = JSON::PullParser.new({{ value }}.to_json)
+        pull.read?({{ type }}).should eq({{ value }})
       end
 
-      it "returns nil instead of {{type}} when the token is not compatible" do
+      it "returns nil instead of {{ type }} when the token is not compatible" do
         pull = JSON::PullParser.new(%({"foo": "bar"}))
-        pull.read?({{type}}).should be_nil
+        pull.read?({{ type }}).should be_nil
       end
     {% end %}
 
@@ -383,14 +383,14 @@ describe JSON::PullParser do
     {% end %}
 
     {% for i in [8, 16, 32, 64, 128] %}
-      it "returns nil in place of Int{{i}} when an overflow occurs" do
-        JSON::PullParser.new(Int{{i}}::MAX.to_s + "0").read?(Int{{i}}).should be_nil
-        JSON::PullParser.new(Int{{i}}::MIN.to_s + "0").read?(Int{{i}}).should be_nil
+      it "returns nil in place of Int{{ i }} when an overflow occurs" do
+        JSON::PullParser.new(Int{{ i }}::MAX.to_s + "0").read?(Int{{ i }}).should be_nil
+        JSON::PullParser.new(Int{{ i }}::MIN.to_s + "0").read?(Int{{ i }}).should be_nil
       end
 
-      it "returns nil in place of UInt{{i}} when an overflow occurs" do
-        JSON::PullParser.new(UInt{{i}}::MAX.to_s + "0").read?(UInt{{i}}).should be_nil
-        JSON::PullParser.new("-1").read?(UInt{{i}}).should be_nil
+      it "returns nil in place of UInt{{ i }} when an overflow occurs" do
+        JSON::PullParser.new(UInt{{ i }}::MAX.to_s + "0").read?(UInt{{ i }}).should be_nil
+        JSON::PullParser.new("-1").read?(UInt{{ i }}).should be_nil
       end
     {% end %}
 

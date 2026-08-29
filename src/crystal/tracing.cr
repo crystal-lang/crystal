@@ -13,8 +13,8 @@ module Crystal
         {% begin %}
           case slice
             {% for name in @type.constants %}
-              when {{name.underscore.stringify}}.to_slice
-                {{name}}
+              when {{ name.underscore.stringify }}.to_slice
+                {{ name }}
             {% end %}
           else
             None
@@ -26,8 +26,8 @@ module Crystal
         {% begin %}
           case self
           {% for name in @type.constants %}
-            when {{name}}
-              {{name.underscore.stringify}}
+            when {{ name }}
+              {{ name.underscore.stringify }}
           {% end %}
           else
             "???"

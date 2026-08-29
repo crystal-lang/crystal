@@ -288,8 +288,8 @@ class XML::Builder
   end
 
   private macro call(name, *args)
-    ret = LibXML.xmlTextWriter{{name}}(@writer, {{args.splat}})
-    check ret, {{@def.name.stringify}}
+    ret = LibXML.xmlTextWriter{{ name }}(@writer, {{ args.splat }})
+    check ret, {{ @def.name.stringify }}
   end
 
   private def check(ret, msg)

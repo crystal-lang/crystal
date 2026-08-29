@@ -47,7 +47,7 @@ class Crystal::ReplReader < Reply::Reader
 
     # `"`, `:`, `'`, are not a delimiter because symbols and strings are treated as one word.
     # '=', !', '?' are not a delimiter because they could make part of method name.
-    self.word_delimiters = {{" \n\t+-*/,;@&%<>^\\[](){}|.~".chars}}
+    self.word_delimiters = {{ " \n\t+-*/,;@&%<>^\\[](){}|.~".chars }}
   end
 
   def prompt(io : IO, line_number : Int32, color : Bool) : Nil

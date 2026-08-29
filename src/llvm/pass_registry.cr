@@ -27,14 +27,14 @@ struct LLVM::PassRegistry
   {% end %}
 
   {% for name in Inits %}
-    def {{name.id}}
-      LibLLVM.{{name.id}} self
+    def {{ name.id }}
+      LibLLVM.{{ name.id }} self
     end
   {% end %}
 
   def initialize_all
     {% for name in Inits %}
-      {{name.id}}
+      {{ name.id }}
     {% end %}
   end
 

@@ -205,8 +205,8 @@ class YAML::Builder
   end
 
   private macro emit(event_name, *args)
-    LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{args.splat}})
-    yaml_emit({{event_name.stringify}})
+    LibYAML.yaml_{{ event_name }}_event_initialize(pointerof(@event), {{ args.splat }})
+    yaml_emit({{ event_name.stringify }})
   end
 
   private def yaml_emit(event_name)

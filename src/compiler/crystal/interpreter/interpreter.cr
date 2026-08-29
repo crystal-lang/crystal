@@ -357,16 +357,16 @@ class Crystal::Repl::Interpreter
             {% operands = instruction[:operands] || [] of Nil %}
             {% pop_values = instruction[:pop_values] || [] of Nil %}
 
-            in .{{name.id}}?
+            in .{{ name.id }}?
               # Read operands for this instruction
               {% for operand in operands %}
-                {{operand.var}} = next_instruction {{operand.type}}
+                {{ operand.var }} = next_instruction {{ operand.type }}
               {% end %}
 
               # Pop any values
               {% for pop_value, i in pop_values %}
                 {% pop = pop_values[pop_values.size - i - 1] %}
-                {{ pop.var }} = stack_pop({{pop.type}})
+                {{ pop.var }} = stack_pop({{ pop.type }})
               {% end %}
 
               begin
@@ -376,9 +376,9 @@ class Crystal::Repl::Interpreter
 
                 # Execute the instruction and push the value to the stack, if needed
                 {% if instruction[:push] %}
-                  stack_push({{instruction[:code]}})
+                  stack_push({{ instruction[:code] }})
                 {% else %}
-                  {{instruction[:code]}}
+                  {{ instruction[:code] }}
                 {% end %}
 
                 {% if instruction[:overflow] %}
@@ -386,7 +386,7 @@ class Crystal::Repl::Interpreter
                     # Compute the overflow offset to make it look like a call
                     overflow_offset = 0
                     {% for operand in operands %}
-                      overflow_offset -= sizeof({{operand.type}})
+                      overflow_offset -= sizeof({{ operand.type }})
                     {% end %}
                     overflow_offset += sizeof(Void*)
 
@@ -398,7 +398,7 @@ class Crystal::Repl::Interpreter
                 raise escaping_exception
               rescue exception : Exception
                 {% for operand in operands %}
-                  ip -= sizeof({{operand.type}})
+                  ip -= sizeof({{ operand.type }})
                 {% end %}
                 ip -= sizeof(OpCode)
 
@@ -541,12 +541,12 @@ class Crystal::Repl::Interpreter
     # After the call, we want the stack to be at the point
     # where it doesn't have the call args, ready to push
     # return call's return value.
-    %stack_before_call_args = stack - {{compiled_def}}.args_bytesize
+    %stack_before_call_args = stack - {{ compiled_def }}.args_bytesize
 
     # Clear the portion after the call args and up to the def local vars
     # because it might contain garbage data from previous block calls or
     # method calls.
-    %size_to_clear = {{compiled_def}}.local_vars.max_bytesize - {{compiled_def}}.args_bytesize
+    %size_to_clear = {{ compiled_def }}.local_vars.max_bytesize - {{ compiled_def }}.args_bytesize
     if %size_to_clear < 0
       raise "OH NO, size to clear DEF is: #{ %size_to_clear }"
     end
@@ -559,17 +559,17 @@ class Crystal::Repl::Interpreter
     )
 
     %call_frame = CallFrame.new(
-      compiled_def: {{compiled_def}},
+      compiled_def: {{ compiled_def }},
       compiled_block: nil,
-      instructions: {{compiled_def}}.instructions,
-      ip: {{compiled_def}}.instructions.instructions.to_unsafe,
+      instructions: {{ compiled_def }}.instructions,
+      ip: {{ compiled_def }}.instructions.instructions.to_unsafe,
       # We need to adjust the call stack to start right
       # after the target def's local variables.
-      stack: %stack_before_call_args + {{compiled_def}}.local_vars.max_bytesize,
+      stack: %stack_before_call_args + {{ compiled_def }}.local_vars.max_bytesize,
       stack_bottom: %stack_before_call_args,
-      block_caller_frame_index: {{block_caller_frame_index}},
+      block_caller_frame_index: {{ block_caller_frame_index }},
       real_frame_index: @call_stack.size,
-      overflow_offset: {{overflow_offset}},
+      overflow_offset: {{ overflow_offset }},
     )
 
     @call_stack << %call_frame
@@ -581,13 +581,13 @@ class Crystal::Repl::Interpreter
   end
 
   private macro call_with_block(compiled_def)
-    call({{compiled_def}}, block_caller_frame_index: @call_stack.size - 1)
+    call({{ compiled_def }}, block_caller_frame_index: @call_stack.size - 1)
   end
 
   private macro call_block(compiled_block)
     # At this point the stack has the yield expressions, so after the call
     # we must go back to before the yield expressions
-    %stack_before_call_args = stack - {{compiled_block}}.args_bytesize
+    %stack_before_call_args = stack - {{ compiled_block }}.args_bytesize
     @call_stack[-1] = @call_stack.last.copy_with(
       ip: ip,
       stack: %stack_before_call_args,
@@ -596,9 +596,9 @@ class Crystal::Repl::Interpreter
     %block_caller_frame_index = @call_stack.last.block_caller_frame_index
 
     copied_call_frame = @call_stack[%block_caller_frame_index].copy_with(
-      compiled_block: {{compiled_block}},
-      instructions: {{compiled_block}}.instructions,
-      ip: {{compiled_block}}.instructions.instructions.to_unsafe,
+      compiled_block: {{ compiled_block }},
+      instructions: {{ compiled_block }}.instructions,
+      ip: {{ compiled_block }}.instructions.instructions.to_unsafe,
       stack: stack,
     )
     @call_stack << copied_call_frame
@@ -607,13 +607,13 @@ class Crystal::Repl::Interpreter
     ip = copied_call_frame.ip
     stack_bottom = copied_call_frame.stack_bottom
 
-    %size_to_clear = {{compiled_block}}.locals_bytesize_end - {{compiled_block}}.locals_bytesize_start - {{compiled_block}}.args_bytesize
+    %size_to_clear = {{ compiled_block }}.locals_bytesize_end - {{ compiled_block }}.locals_bytesize_start - {{ compiled_block }}.args_bytesize
 
     # The size to clear might not always be greater than zero.
     # For example, if all block variables are closured then the only
     # block var is the closure itself.
     if %size_to_clear > 0
-      %offset_to_clear = {{compiled_block}}.locals_bytesize_start + {{compiled_block}}.args_bytesize
+      %offset_to_clear = {{ compiled_block }}.locals_bytesize_start + {{ compiled_block }}.args_bytesize
 
       # Clear the portion after the block args and up to the block local vars
       # because it might contain garbage data from previous block calls or
@@ -663,18 +663,18 @@ class Crystal::Repl::Interpreter
     %old_stack = stack
     %previous_call_frame = @call_stack.pop
 
-    leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{size}})
+    leave_after_pop_call_frame(%old_stack, %previous_call_frame, {{ size }})
   end
 
   private macro leave_def(size)
-    %throw_value = new_returned_value(stack, {{size}}, @call_stack.last.real_frame_index)
+    %throw_value = new_returned_value(stack, {{ size }}, @call_stack.last.real_frame_index)
     throw_value(%throw_value)
   end
 
   private macro break_block(size)
     %throw_value = new_returned_value(
       stack,
-      {{size}},
+      {{ size }},
       # Exiting the current frame... (-1)
       # ...we'll find the method that was given a block (-2)
       # We go to the call frame that called the block (+1)
@@ -697,13 +697,13 @@ class Crystal::Repl::Interpreter
 
   private macro leave_after_pop_call_frame(old_stack, previous_call_frame, size)
     if @call_stack.size == @call_stack_leave_index
-      return_value = Pointer(Void).malloc({{size}}).as(UInt8*)
-      return_value.copy_from(stack_bottom_after_local_vars, {{size}})
-      stack_shrink_by({{size}})
+      return_value = Pointer(Void).malloc({{ size }}).as(UInt8*)
+      return_value.copy_from(stack_bottom_after_local_vars, {{ size }})
+      stack_shrink_by({{ size }})
       break
     else
-      %old_stack = {{old_stack}}
-      %previous_call_frame = {{previous_call_frame}}
+      %old_stack = {{ old_stack }}
+      %previous_call_frame = {{ previous_call_frame }}
       %call_frame = @call_stack.last
 
       # Restore ip, instructions and stack bottom
@@ -713,7 +713,7 @@ class Crystal::Repl::Interpreter
       stack = %call_frame.stack
 
       # Ccopy the return value
-      stack_move_from(%old_stack - {{size}}, {{size}})
+      stack_move_from(%old_stack - {{ size }}, {{ size }})
 
       # TODO: clean up stack
     end
@@ -770,7 +770,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro raise_exception(exception)
-    %exception = {{exception}}
+    %exception = {{ exception }}
 
     while true
       %handlers = instructions.exception_handlers
@@ -830,7 +830,7 @@ class Crystal::Repl::Interpreter
   end
 
   private macro throw_value(throw_value)
-    %throw_value = {{throw_value}}
+    %throw_value = {{ throw_value }}
 
     while true
       %handlers = instructions.exception_handlers
@@ -889,19 +889,19 @@ class Crystal::Repl::Interpreter
   end
 
   private macro set_ip(ip)
-    ip = instructions.instructions.to_unsafe + {{ip}}
+    ip = instructions.instructions.to_unsafe + {{ ip }}
   end
 
   private macro set_local_var(index, size)
-    stack_move_to(stack_bottom + {{index}}, {{size}})
+    stack_move_to(stack_bottom + {{ index }}, {{ size }})
   end
 
   private macro get_local_var(index, size)
-    stack_move_from(stack_bottom + {{index}}, {{size}})
+    stack_move_from(stack_bottom + {{ index }}, {{ size }})
   end
 
   private macro get_local_var_pointer(index)
-    stack_bottom + {{index}}
+    stack_bottom + {{ index }}
   end
 
   private macro get_ivar_pointer(offset)
@@ -910,63 +910,63 @@ class Crystal::Repl::Interpreter
 
   private macro const_initialized?(index)
     # TODO: make this atomic
-    %initialized = @context.constants_memory[{{index}}]
+    %initialized = @context.constants_memory[{{ index }}]
     if %initialized == 1_u8
       true
     else
-      @context.constants_memory[{{index}}] = 1_u8
+      @context.constants_memory[{{ index }}] = 1_u8
       false
     end
   end
 
   private macro get_const(index, size)
-    stack_move_from(get_const_pointer(index), {{size}})
+    stack_move_from(get_const_pointer(index), {{ size }})
   end
 
   private macro get_const_pointer(index)
-    @context.constants_memory + {{index}} + Constants::OFFSET_FROM_INITIALIZED
+    @context.constants_memory + {{ index }} + Constants::OFFSET_FROM_INITIALIZED
   end
 
   private macro set_const(index, size)
-    stack_move_to(get_const_pointer(index), {{size}})
+    stack_move_to(get_const_pointer(index), {{ size }})
   end
 
   private macro class_var_initialized?(index)
     # TODO: make this atomic
-    %initialized = @context.class_vars_memory[{{index}}]
+    %initialized = @context.class_vars_memory[{{ index }}]
     if %initialized == 1_u8
       true
     else
-      @context.class_vars_memory[{{index}}] = 1_u8
+      @context.class_vars_memory[{{ index }}] = 1_u8
       false
     end
   end
 
   private macro get_class_var(index, size)
-    stack_move_from(get_class_var_pointer(index), {{size}})
+    stack_move_from(get_class_var_pointer(index), {{ size }})
   end
 
   private macro set_class_var(index, size)
-    stack_move_to(get_class_var_pointer(index), {{size}})
+    stack_move_to(get_class_var_pointer(index), {{ size }})
   end
 
   private macro get_class_var_pointer(index)
-    @context.class_vars_memory + {{index}} + ClassVars::OFFSET_FROM_INITIALIZED
+    @context.class_vars_memory + {{ index }} + ClassVars::OFFSET_FROM_INITIALIZED
   end
 
   private macro atomicrmw_op(op)
     case element_size
     when 1
-      i8 = Atomic::Ops.atomicrmw({{op}}, ptr, value.to_u8!, :sequentially_consistent, false)
+      i8 = Atomic::Ops.atomicrmw({{ op }}, ptr, value.to_u8!, :sequentially_consistent, false)
       stack_push(i8)
     when 2
-      i16 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt16*), value.to_u16!, :sequentially_consistent, false)
+      i16 = Atomic::Ops.atomicrmw({{ op }}, ptr.as(UInt16*), value.to_u16!, :sequentially_consistent, false)
       stack_push(i16)
     when 4
-      i32 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt32*), value.to_u32!, :sequentially_consistent, false)
+      i32 = Atomic::Ops.atomicrmw({{ op }}, ptr.as(UInt32*), value.to_u32!, :sequentially_consistent, false)
       stack_push(i32)
     when 8
-      i64 = Atomic::Ops.atomicrmw({{op}}, ptr.as(UInt64*), value.to_u64!, :sequentially_consistent, false)
+      i64 = Atomic::Ops.atomicrmw({{ op }}, ptr.as(UInt64*), value.to_u64!, :sequentially_consistent, false)
       stack_push(i64)
     else
       raise "BUG: unhandled element size for store_atomic instruction: #{element_size}"
@@ -987,8 +987,8 @@ class Crystal::Repl::Interpreter
   end
 
   private macro next_instruction(t)
-    value = ip.as({{t}}*).value
-    ip += sizeof({{t}})
+    value = ip.as({{ t }}*).value
+    ip += sizeof({{ t }})
     value
   end
 
@@ -997,15 +997,15 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_pop(t)
-    %aligned_size = align(sizeof({{t}}))
-    %value = uninitialized {{t}}
+    %aligned_size = align(sizeof({{ t }}))
+    %value = uninitialized {{ t }}
     (stack - %aligned_size).copy_to(pointerof(%value).as(UInt8*), sizeof(typeof(%value)))
     stack_shrink_by(%aligned_size)
     %value
   end
 
   private macro stack_push(value)
-    %temp = {{value}}
+    %temp = {{ value }}
     %size = sizeof(typeof(%temp))
 
     stack.copy_from(pointerof(%temp).as(UInt8*), %size)
@@ -1015,38 +1015,38 @@ class Crystal::Repl::Interpreter
   end
 
   private macro stack_copy_to(pointer, size)
-    (stack - {{size}}).copy_to({{pointer}}, {{size}})
+    (stack - {{ size }}).copy_to({{ pointer }}, {{ size }})
   end
 
   private macro stack_move_to(pointer, size)
-    %size = {{size}}
+    %size = {{ size }}
     %aligned_size = align(%size)
-    (stack - %aligned_size).copy_to({{pointer}}, %size)
+    (stack - %aligned_size).copy_to({{ pointer }}, %size)
     stack_shrink_by(%aligned_size)
   end
 
   private macro stack_move_from(pointer, size)
-    %size = {{size}}
+    %size = {{ size }}
     %aligned_size = align(%size)
 
-    stack.copy_from({{pointer}}, %size)
+    stack.copy_from({{ pointer }}, %size)
     stack += %size
     stack_grow_by(%aligned_size - %size)
   end
 
   private macro stack_grow_by(size)
-    stack_clear({{size}})
-    stack += {{size}}
+    stack_clear({{ size }})
+    stack += {{ size }}
   end
 
   private macro stack_shrink_by(size)
-    stack -= {{size}}
-    stack_clear({{size}})
+    stack -= {{ size }}
+    stack_clear({{ size }})
   end
 
   private macro stack_clear(size)
     # TODO: clearing the stack after every step is very slow!
-    stack.clear({{size}})
+    stack.clear({{ size }})
   end
 
   def aligned_sizeof_type(type : Type) : Int32

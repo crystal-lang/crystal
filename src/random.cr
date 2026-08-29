@@ -170,7 +170,7 @@ module Random
   {% for size in [8, 16, 32, 64, 128] %}
     {% utype = "UInt#{size}".id %}
     {% for type in ["Int#{size}".id, utype] %}
-      private def rand_int(max : {{type}}) : {{type}}
+      private def rand_int(max : {{ type }}) : {{ type }}
         unless max > 0
           raise ArgumentError.new "Invalid bound for rand: #{max}"
         end
@@ -225,19 +225,19 @@ module Random
 
             # For a uniform distribution we may need to throw away some numbers
             if result < limit || limit == 0
-              return {{type}}.new!(result % max)
+              return {{ type }}.new!(result % max)
             end
           end
         else
           # We need to find out how many random numbers need to be combined to be able to generate a
           # random number of this magnitude.
-          # All the computations will be based on `{{utype}}` as the larger type.
+          # All the computations will be based on `{{ utype }}` as the larger type.
 
           # `rand_max - 1` is the maximal number we can get from combining `needed_parts` random
           # numbers.
           # Compute *rand_max* as `(typeof(next_u)::MAX + 1) ** needed_parts)`.
-          # If *rand_max* overflows, that means it has reached `high({{utype}}) + 1`.
-          rand_max = {{utype}}.new(1) << (sizeof(typeof(next_u))*8)
+          # If *rand_max* overflows, that means it has reached `high({{ utype }}) + 1`.
+          rand_max = {{ utype }}.new(1) << (sizeof(typeof(next_u))*8)
           needed_parts = 1
           while rand_max < max && rand_max > 0
             rand_max <<= sizeof(typeof(next_u))*8
@@ -249,25 +249,25 @@ module Random
               # `rand_max` didn't overflow, so we can calculate the *limit* the straightforward way.
               rand_max // max &* max
             else
-              # *rand_max* is `{{utype}}::MAX + 1`, need the same wraparound trick. *limit* might
-              # overflow, which means it would've been `{{utype}}::MAX + 1`, but didn't fit into
+              # *rand_max* is `{{ utype }}::MAX + 1`, need the same wraparound trick. *limit* might
+              # overflow, which means it would've been `{{ utype }}::MAX + 1`, but didn't fit into
               # the integer type.
-              {{utype}}.new(0) &- ({{utype}}.new(0) &- max) % max
+              {{ utype }}.new(0) &- ({{ utype }}.new(0) &- max) % max
             end
 
           loop do
-            result = rand_type({{utype}}, needed_parts)
+            result = rand_type({{ utype }}, needed_parts)
 
             # For a uniform distribution we may need to throw away some numbers.
             if result < limit || limit == 0
-              return {{type}}.new(result % max)
+              return {{ type }}.new(result % max)
             end
           end
         end
       end
 
-      private def rand_range(range : Range({{type}}, {{type}})) : {{type}}
-        span = {{utype}}.new!(range.end &- range.begin)
+      private def rand_range(range : Range({{ type }}, {{ type }})) : {{ type }}
+        span = {{ utype }}.new!(range.end &- range.begin)
         if range.excludes_end?
           unless range.begin < range.end
             raise ArgumentError.new "Invalid range for rand: #{range}"
@@ -276,8 +276,8 @@ module Random
           unless range.begin <= range.end
             raise ArgumentError.new "Invalid range for rand: #{range}"
           end
-          if range.begin == {{type}}::MIN && range.end == {{type}}::MAX
-            return rand_type({{type}})
+          if range.begin == {{ type }}::MIN && range.end == {{ type }}::MAX
+            return rand_type({{ type }})
           end
           span += 1
         end
@@ -286,15 +286,15 @@ module Random
         range.begin &+ rand_int(span)
       end
 
-      # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
-      private def rand_type(type : {{type}}.class, needed_parts = sizeof({{type}}) // sizeof(typeof(next_u))) : {{type}}
+      # Generates a random integer in range `{{ type }}::MIN..{{ type }}::MAX`.
+      private def rand_type(type : {{ type }}.class, needed_parts = sizeof({{ type }}) // sizeof(typeof(next_u))) : {{ type }}
         # Build up the number combining multiple outputs from the RNG.
-        result = {{utype}}.new!(next_u)
+        result = {{ utype }}.new!(next_u)
         (needed_parts - 1).times do
           result <<= sizeof(typeof(next_u))*8
-          result |= {{utype}}.new!(next_u)
+          result |= {{ utype }}.new!(next_u)
         end
-        {{type}}.new!(result)
+        {{ type }}.new!(result)
       end
     {% end %}
   {% end %}
@@ -367,21 +367,21 @@ module Random
                            "Int128".id  => %w(-33248638598154624979861619415313153263 7715345987200799268985566794637461715 51883986405785085023723116953594906714 -63505201678563022521901409748929046368),
                            "UInt128".id => %w(209016375821699277802308597707088869733 168739091726124084850659068882871627438 293712757766410232411790495845165436283 15480005665598870938163293877660434201),
                          } %}
-    # Returns a random {{type}}
+    # Returns a random {{ type }}
     #
     # ```
-    # rand({{type}}) # => {{values[0].id}}
+    # rand({{ type }}) # => {{ values[0].id }}
     # ```
-    def rand(type : {{type}}.class) : {{type}}
+    def rand(type : {{ type }}.class) : {{ type }}
       rand_type_from_bytes(type)
     end
 
-    # Returns a StaticArray filled with random {{type}} values.
+    # Returns a StaticArray filled with random {{ type }} values.
     #
     # ```
-    # rand(StaticArray({{type}}, 4)) # => StaticArray[{{values.join(", ").id}}]
+    # rand(StaticArray({{ type }}, 4)) # => StaticArray[{{ values.join(", ").id }}]
     # ```
-    def rand(type : StaticArray({{type}}, _).class)
+    def rand(type : StaticArray({{ type }}, _).class)
       rand_type_from_bytes(type)
     end
   {% end %}

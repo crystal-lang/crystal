@@ -2,7 +2,7 @@ require "./codegen/target"
 
 module Crystal
   module Config
-    class_property path : String = {{env("CRYSTAL_CONFIG_PATH") || ""}}
+    class_property path : String = {{ env("CRYSTAL_CONFIG_PATH") || "" }}
 
     def self.version
       {{ read_file("#{__DIR__}/../../VERSION").chomp }}
@@ -53,7 +53,7 @@ module Crystal
 
     def self.host_target : Crystal::Codegen::Target
       @@host_target ||= begin
-        target = Crystal::Codegen::Target.new({{env("CRYSTAL_CONFIG_TARGET")}} || LLVM.default_target_triple)
+        target = Crystal::Codegen::Target.new({{ env("CRYSTAL_CONFIG_TARGET") }} || LLVM.default_target_triple)
 
         if target.linux?
           # The statically linked linux binary runs as well on linux-gnu as
@@ -115,7 +115,7 @@ module Crystal
     end
 
     def self.library_path
-      {{env("CRYSTAL_CONFIG_LIBRARY_PATH") || ""}}
+      {{ env("CRYSTAL_CONFIG_LIBRARY_PATH") || "" }}
     end
   end
 end

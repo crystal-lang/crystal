@@ -714,37 +714,37 @@ struct BigInt < Int
   end
 
   {% for n in [8, 16, 32, 64, 128] %}
-    def to_i{{n}} : Int{{n}}
-      \{% if Int{{n}} == LibGMP::SI %}
+    def to_i{{ n }} : Int{{ n }}
+      \{% if Int{{ n }} == LibGMP::SI %}
         LibGMP.{{ flag?(:win32) && !flag?(:gnu) ? "fits_si_p".id : "fits_slong_p".id }}(self) != 0 ? LibGMP.get_si(self) : raise OverflowError.new
-      \{% elsif Int{{n}}::MAX.is_a?(NumberLiteral) && Int{{n}}::MAX < LibGMP::SI::MAX %}
-        LibGMP::SI.new(self).to_i{{n}}
+      \{% elsif Int{{ n }}::MAX.is_a?(NumberLiteral) && Int{{ n }}::MAX < LibGMP::SI::MAX %}
+        LibGMP::SI.new(self).to_i{{ n }}
       \{% else %}
-        to_primitive_i(Int{{n}})
+        to_primitive_i(Int{{ n }})
       \{% end %}
     end
 
-    def to_u{{n}} : UInt{{n}}
-      \{% if UInt{{n}} == LibGMP::UI %}
+    def to_u{{ n }} : UInt{{ n }}
+      \{% if UInt{{ n }} == LibGMP::UI %}
         LibGMP.{{ flag?(:win32) && !flag?(:gnu) ? "fits_ui_p".id : "fits_ulong_p".id }}(self) != 0 ? LibGMP.get_ui(self) : raise OverflowError.new
-      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
-        LibGMP::UI.new(self).to_u{{n}}
+      \{% elsif UInt{{ n }}::MAX.is_a?(NumberLiteral) && UInt{{ n }}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new(self).to_u{{ n }}
       \{% else %}
-        to_primitive_u(UInt{{n}})
+        to_primitive_u(UInt{{ n }})
       \{% end %}
     end
 
-    def to_i{{n}}! : Int{{n}}
-      to_u{{n}}!.to_i{{n}}!
+    def to_i{{ n }}! : Int{{ n }}
+      to_u{{ n }}!.to_i{{ n }}!
     end
 
-    def to_u{{n}}! : UInt{{n}}
-      \{% if UInt{{n}} == LibGMP::UI %}
+    def to_u{{ n }}! : UInt{{ n }}
+      \{% if UInt{{ n }} == LibGMP::UI %}
         LibGMP.get_ui(self) &* sign
-      \{% elsif UInt{{n}}::MAX.is_a?(NumberLiteral) && UInt{{n}}::MAX < LibGMP::UI::MAX %}
-        LibGMP::UI.new!(self).to_u{{n}}!
+      \{% elsif UInt{{ n }}::MAX.is_a?(NumberLiteral) && UInt{{ n }}::MAX < LibGMP::UI::MAX %}
+        LibGMP::UI.new!(self).to_u{{ n }}!
       \{% else %}
-        to_primitive_u!(UInt{{n}})
+        to_primitive_u!(UInt{{ n }})
       \{% end %}
     end
   {% end %}

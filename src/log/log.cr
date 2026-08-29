@@ -42,9 +42,9 @@ class Log
     {% severity = method.id.camelcase %}
 
     # Logs the given *exception* if the logger's current severity is lower than
-    # or equal to `Severity::{{severity}}`.
-    def {{method.id}}(*, exception : Exception) : Nil
-      severity = Severity::{{severity}}
+    # or equal to `Severity::{{ severity }}`.
+    def {{ method.id }}(*, exception : Exception) : Nil
+      severity = Severity::{{ severity }}
       if level <= severity && (backend = @backend)
         backend.dispatch Emitter.new(@source, severity, exception).emit("")
       end
@@ -59,14 +59,14 @@ class Log
     # Blocks which return `nil` do not emit anything:
     #
     # ```
-    # Log.{{method.id}} do
+    # Log.{{ method.id }} do
     #   if false
     #     "Nothing will be logged."
     #   end
     # end
     # ```
-    def {{method.id}}(*, exception : Exception? = nil)
-      severity = Severity::{{severity}}
+    def {{ method.id }}(*, exception : Exception? = nil)
+      severity = Severity::{{ severity }}
       return unless level <= severity
 
       return unless backend = @backend

@@ -58,7 +58,7 @@ class Crystal::Digest::SHA1 < ::Digest
     @length_low = 0_u32
     @length_high = 0_u32
     {% for i in 0...20 %}
-      dst[{{i}}] = (@intermediate_hash[{{i >> 2}}] >> 8 * (3 - ({{i & 0x03}}))).to_u8!
+      dst[{{ i }}] = (@intermediate_hash[{{ i >> 2 }}] >> 8 * (3 - ({{ i & 0x03 }}))).to_u8!
     {% end %}
   end
 
@@ -68,14 +68,14 @@ class Crystal::Digest::SHA1 < ::Digest
     w = uninitialized UInt32[80]
 
     {% for t in (0...16) %}
-      w[{{t}}] = @message_block[{{t}} * 4].to_u32 << 24
-      w[{{t}}] |= @message_block[{{t}} * 4 + 1].to_u32 << 16
-      w[{{t}}] |= @message_block[{{t}} * 4 + 2].to_u32 << 8
-      w[{{t}}] |= @message_block[{{t}} * 4 + 3].to_u32
+      w[{{ t }}] = @message_block[{{ t }} * 4].to_u32 << 24
+      w[{{ t }}] |= @message_block[{{ t }} * 4 + 1].to_u32 << 16
+      w[{{ t }}] |= @message_block[{{ t }} * 4 + 2].to_u32 << 8
+      w[{{ t }}] |= @message_block[{{ t }} * 4 + 3].to_u32
     {% end %}
 
     {% for t in (16...80) %}
-      w[{{t}}] = (w[{{t - 3}}] ^ w[{{t - 8}}] ^ w[{{t - 14}}] ^ w[{{t - 16}}]).rotate_left(1)
+      w[{{ t }}] = (w[{{ t - 3 }}] ^ w[{{ t - 8 }}] ^ w[{{ t - 14 }}] ^ w[{{ t - 16 }}]).rotate_left(1)
     {% end %}
 
     a = @intermediate_hash[0]
@@ -86,7 +86,7 @@ class Crystal::Digest::SHA1 < ::Digest
 
     {% for t in (0...20) %}
       temp = a.rotate_left(5) &+
-        ((b & c) | ((~b) & d)) &+ e &+ w[{{t}}] &+ k[0]
+        ((b & c) | ((~b) & d)) &+ e &+ w[{{ t }}] &+ k[0]
       e = d
       d = c
       c = b.rotate_left(30)
@@ -95,7 +95,7 @@ class Crystal::Digest::SHA1 < ::Digest
     {% end %}
 
     {% for t in (20...40) %}
-      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[1]
+      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{ t }}] &+ k[1]
       e = d
       d = c
       c = b.rotate_left(30)
@@ -105,7 +105,7 @@ class Crystal::Digest::SHA1 < ::Digest
 
     {% for t in (40...60) %}
       temp = a.rotate_left(5) &+
-        ((b & c) | (b & d) | (c & d)) &+ e &+ w[{{t}}] &+ k[2]
+        ((b & c) | (b & d) | (c & d)) &+ e &+ w[{{ t }}] &+ k[2]
       e = d
       d = c
       c = b.rotate_left(30)
@@ -114,7 +114,7 @@ class Crystal::Digest::SHA1 < ::Digest
     {% end %}
 
     {% for t in (60...80) %}
-      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{t}}] &+ k[3]
+      temp = a.rotate_left(5) &+ (b ^ c ^ d) &+ e &+ w[{{ t }}] &+ k[3]
       e = d
       d = c
       c = b.rotate_left(30)

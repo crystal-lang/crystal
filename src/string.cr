@@ -594,22 +594,22 @@ class String
 
   private macro gen_to_(int_class, unsigned_int_class, max_positive = nil, max_negative = nil)
     {% unsigned = int_class == unsigned_int_class %}
-    info = to_unsigned_info({{unsigned_int_class}}, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{unsigned}})
+    info = to_unsigned_info({{ unsigned_int_class }}, base, whitespace, underscore, prefix, strict, leading_zero_is_octal, unsigned: {{ unsigned }})
 
     return yield if info.invalid
 
     if info.negative
       {% if max_negative %}
-        return yield if info.value > {{max_negative}}
-        (~info.value &+ 1).unsafe_as({{int_class}})
+        return yield if info.value > {{ max_negative }}
+        (~info.value &+ 1).unsafe_as({{ int_class }})
       {% else %}
         return yield
       {% end %}
     else
       {% if max_positive %}
-        return yield if info.value > {{max_positive}}
+        return yield if info.value > {{ max_positive }}
       {% end %}
-      {{int_class}}.new(info.value)
+      {{ int_class }}.new(info.value)
     end
   end
 
@@ -5895,19 +5895,19 @@ class String
   def self.interpolation(*values : *T) : String forall T
     capacity = 0
     {% for i in 0...T.size %}
-      value{{i}} = values[{{i}}]
-      if value{{i}}.is_a?(String)
-        capacity += value{{i}}.bytesize
+      value{{ i }} = values[{{ i }}]
+      if value{{ i }}.is_a?(String)
+        capacity += value{{ i }}.bytesize
       else
         capacity += 15
       end
     {% end %}
     String.build(capacity) do |io|
       {% for i in 0...T.size %}
-        if value{{i}}.is_a?(String)
-          io.write(value{{i}}.to_slice)
+        if value{{ i }}.is_a?(String)
+          io.write(value{{ i }}.to_slice)
         else
-          io << value{{i}}
+          io << value{{ i }}
         end
       {% end %}
     end

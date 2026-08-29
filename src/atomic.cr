@@ -34,7 +34,7 @@ struct Atomic(T)
 
   # Adds an explicit memory barrier with the specified memory order guarantee.
   macro fence(ordering = :sequentially_consistent)
-    ::Atomic::Ops.fence({{ordering}}, false)
+    ::Atomic::Ops.fence({{ ordering }}, false)
   end
 
   # Creates an Atomic with the given initial value.
@@ -367,15 +367,15 @@ struct Atomic(T)
   private macro atomicrmw(operation, pointer, value, ordering)
     case ordering
     in .relaxed?
-      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :monotonic, false)
+      Ops.atomicrmw({{ operation }}, {{ pointer }}, {{ value }}, :monotonic, false)
     in .acquire?
-      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :acquire, false)
+      Ops.atomicrmw({{ operation }}, {{ pointer }}, {{ value }}, :acquire, false)
     in .release?
-      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :release, false)
+      Ops.atomicrmw({{ operation }}, {{ pointer }}, {{ value }}, :release, false)
     in .acquire_release?
-      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :acquire_release, false)
+      Ops.atomicrmw({{ operation }}, {{ pointer }}, {{ value }}, :acquire_release, false)
     in .sequentially_consistent?
-      Ops.atomicrmw({{operation}}, {{pointer}}, {{value}}, :sequentially_consistent, false)
+      Ops.atomicrmw({{ operation }}, {{ pointer }}, {{ value }}, :sequentially_consistent, false)
     end
   end
 

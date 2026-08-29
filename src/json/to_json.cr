@@ -153,7 +153,7 @@ struct Tuple
   def to_json(json : JSON::Builder) : Nil
     json.array do
       {% for i in 0...T.size %}
-        self[{{i}}].to_json(json)
+        self[{{ i }}].to_json(json)
       {% end %}
     end
   end
@@ -163,8 +163,8 @@ struct NamedTuple
   def to_json(json : JSON::Builder)
     json.object do
       {% for key in T.keys %}
-        json.field {{key.stringify}} do
-          self[{{key.symbolize}}].to_json(json)
+        json.field {{ key.stringify }} do
+          self[{{ key.symbolize }}].to_json(json)
         end
       {% end %}
     end

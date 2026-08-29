@@ -61,19 +61,19 @@
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
   lib LibLLVM
-    IS_LT_90 = {{compare_versions(LibLLVM::VERSION, "9.0.0") < 0}}
-    IS_LT_100 = {{compare_versions(LibLLVM::VERSION, "10.0.0") < 0}}
-    IS_LT_110 = {{compare_versions(LibLLVM::VERSION, "11.0.0") < 0}}
-    IS_LT_120 = {{compare_versions(LibLLVM::VERSION, "12.0.0") < 0}}
-    IS_LT_130 = {{compare_versions(LibLLVM::VERSION, "13.0.0") < 0}}
-    IS_LT_140 = {{compare_versions(LibLLVM::VERSION, "14.0.0") < 0}}
-    IS_LT_150 = {{compare_versions(LibLLVM::VERSION, "15.0.0") < 0}}
-    IS_LT_160 = {{compare_versions(LibLLVM::VERSION, "16.0.0") < 0}}
-    IS_LT_170 = {{compare_versions(LibLLVM::VERSION, "17.0.0") < 0}}
-    IS_LT_180 = {{compare_versions(LibLLVM::VERSION, "18.0.0") < 0}}
-    IS_LT_190 = {{compare_versions(LibLLVM::VERSION, "19.0.0") < 0}}
-    IS_LT_200 = {{compare_versions(LibLLVM::VERSION, "20.0.0") < 0}}
-    IS_LT_210 = {{compare_versions(LibLLVM::VERSION, "21.0.0") < 0}}
+    IS_LT_90 = {{ compare_versions(LibLLVM::VERSION, "9.0.0") < 0 }}
+    IS_LT_100 = {{ compare_versions(LibLLVM::VERSION, "10.0.0") < 0 }}
+    IS_LT_110 = {{ compare_versions(LibLLVM::VERSION, "11.0.0") < 0 }}
+    IS_LT_120 = {{ compare_versions(LibLLVM::VERSION, "12.0.0") < 0 }}
+    IS_LT_130 = {{ compare_versions(LibLLVM::VERSION, "13.0.0") < 0 }}
+    IS_LT_140 = {{ compare_versions(LibLLVM::VERSION, "14.0.0") < 0 }}
+    IS_LT_150 = {{ compare_versions(LibLLVM::VERSION, "15.0.0") < 0 }}
+    IS_LT_160 = {{ compare_versions(LibLLVM::VERSION, "16.0.0") < 0 }}
+    IS_LT_170 = {{ compare_versions(LibLLVM::VERSION, "17.0.0") < 0 }}
+    IS_LT_180 = {{ compare_versions(LibLLVM::VERSION, "18.0.0") < 0 }}
+    IS_LT_190 = {{ compare_versions(LibLLVM::VERSION, "19.0.0") < 0 }}
+    IS_LT_200 = {{ compare_versions(LibLLVM::VERSION, "20.0.0") < 0 }}
+    IS_LT_210 = {{ compare_versions(LibLLVM::VERSION, "21.0.0") < 0 }}
   end
 {% end %}
 

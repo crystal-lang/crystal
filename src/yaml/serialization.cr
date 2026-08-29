@@ -226,7 +226,7 @@ module YAML
 
                 case key
                 {% for name, value in properties %}
-                  when {{value[:key]}}
+                  when {{ value[:key] }}
                     begin
                       {% if value[:has_default] || value[:nilable] %}
                         if ::YAML::Schema::Core.parse_null?(value_node)
@@ -240,7 +240,7 @@ module YAML
 
                       %var{name} =
                         {% if value[:converter] %}
-                          {{value[:converter]}}.from_yaml(ctx, value_node)
+                          {{ value[:converter] }}.from_yaml(ctx, value_node)
                         {% else %}
                           ::Union(typeof(@{{ name }})).new(ctx, value_node)
                         {% end %}
@@ -263,15 +263,15 @@ module YAML
 
             {% for name, value in properties %}
               if %found{name}
-                @{{name}} = %var{name}
+                @{{ name }} = %var{name}
               else
                 {% unless value[:has_default] || value[:nilable] %}
-                  node.raise "Missing YAML attribute: {{value[:key].id}}"
+                  node.raise "Missing YAML attribute: {{ value[:key].id }}"
                 {% end %}
               end
 
               {% if value[:presence] %}
-                @{{name}}_present = %found{name}
+                @{{ name }}_present = %found{name}
               {% end %}
             {% end %}
           {% end %}
@@ -311,26 +311,26 @@ module YAML
 
         yaml.mapping(reference: self) do
           {% for name, value in properties %}
-            _{{name}} = @{{name}}
+            _{{ name }} = @{{ name }}
 
             {% if value[:ignore_serialize] %}
-              unless {{value[:ignore_serialize]}}
+              unless {{ value[:ignore_serialize] }}
             {% end %}
 
               {% unless value[:emit_null] %}
-                unless _{{name}}.nil?
+                unless _{{ name }}.nil?
               {% end %}
 
-                {{value[:key]}}.to_yaml(yaml)
+                {{ value[:key] }}.to_yaml(yaml)
 
                 {% if value[:converter] %}
-                  if _{{name}}
-                    {{ value[:converter] }}.to_yaml(_{{name}}, yaml)
+                  if _{{ name }}
+                    {{ value[:converter] }}.to_yaml(_{{ name }}, yaml)
                   else
                     nil.to_yaml(yaml)
                   end
                 {% else %}
-                  _{{name}}.to_yaml(yaml)
+                  _{{ name }}.to_yaml(yaml)
                 {% end %}
 
               {% unless value[:emit_null] %}
@@ -426,7 +426,7 @@ module YAML
 
         node.each do |key, value|
           next unless key.is_a?(::YAML::Nodes::Scalar) && value.is_a?(::YAML::Nodes::Scalar)
-          next unless key.value == {{field.id.stringify}}
+          next unless key.value == {{ field.id.stringify }}
 
           discriminator_value = value.value
           case discriminator_value
@@ -440,15 +440,15 @@ module YAML
               # TODO: Replace this workaround with NumberLiteral#to_number after the next release
               {% key = key.id.split("_")[0] %}
             {% end %}
-            when {{key.id.stringify}}
-              return {{value.id}}.new(ctx, node)
+            when {{ key.id.stringify }}
+              return {{ value.id }}.new(ctx, node)
           {% end %}
           else
-            node.raise "Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}"
+            node.raise "Unknown '{{ field.id }}' discriminator value: #{discriminator_value.inspect}"
           end
         end
 
-        node.raise "Missing YAML discriminator field '{{field.id}}'"
+        node.raise "Missing YAML discriminator field '{{ field.id }}'"
       end
     end
   end

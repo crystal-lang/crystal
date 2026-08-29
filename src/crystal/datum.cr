@@ -1,24 +1,24 @@
 module Crystal
   # :nodoc:
   macro datum_accessors(short, type, immutable)
-    # Checks that the underlying value is `{{type}}`, and returns its value.
+    # Checks that the underlying value is `{{ type }}`, and returns its value.
     # Raises otherwise.
-    def as_{{short.id}} : {{type}}
+    def as_{{ short.id }} : {{ type }}
       {% if immutable == true %}
-        @raw.as({{type}}).clone
+        @raw.as({{ type }}).clone
       {% else %}
-        @raw.as({{type}})
+        @raw.as({{ type }})
       {% end %}
     end
 
     {% if type.resolve != Nil %}
-      # Checks that the underlying value is `{{type}}`, and returns its value.
+      # Checks that the underlying value is `{{ type }}`, and returns its value.
       # Returns `nil` otherwise.
-      def as_{{short.id}}? : {{type}}?
+      def as_{{ short.id }}? : {{ type }}?
         {% if immutable == true %}
-          @raw.as?({{type}}).clone
+          @raw.as?({{ type }}).clone
         {% else %}
-          @raw.as?({{type}})
+          @raw.as?({{ type }})
         {% end %}
       end
     {% end %}
@@ -35,21 +35,21 @@ module Crystal
   # :nodoc:
   macro datum(*, types, hash_key_type, immutable, target_type)
 
-    # All possible `{{target_type}}` types.
-    alias Type = {% for short, type in types %}{{type}} | {% end %}Array(self) | Hash({{hash_key_type}}, self)
+    # All possible `{{ target_type }}` types.
+    alias Type = {% for short, type in types %}{{ type }} | {% end %}Array(self) | Hash({{ hash_key_type }}, self)
 
     # Returns the raw underlying value, a `Type`.
     getter raw : Type
 
-    # Creates a `{{target_type}}` that wraps the given `Type`.
+    # Creates a `{{ target_type }}` that wraps the given `Type`.
     def initialize(@raw : Type)
     end
 
-    Crystal.datum_accessors a, Array(self), {{immutable}}
-    Crystal.datum_accessors h, Hash({{hash_key_type}}, self), {{immutable}}
+    Crystal.datum_accessors a, Array(self), {{ immutable }}
+    Crystal.datum_accessors h, Hash({{ hash_key_type }}, self), {{ immutable }}
 
     {% for short, type in types %}
-      Crystal.datum_accessors {{short}}, {{type}}, {{immutable}}
+      Crystal.datum_accessors {{ short }}, {{ type }}, {{ immutable }}
     {% end %}
 
     # Assumes the underlying value is an `Array` or `Hash` and returns its size.
@@ -156,12 +156,12 @@ module Crystal
     # See `Object#hash(hasher)`
     def_hash raw
 
-    # Returns a new `{{target_type}}` instance with the `raw` value `dup`ed.
+    # Returns a new `{{ target_type }}` instance with the `raw` value `dup`ed.
     def dup
       self.class.new(raw.dup)
     end
 
-    # Returns a new `{{target_type}}` instance with the `raw` value `clone`ed.
+    # Returns a new `{{ target_type }}` instance with the `raw` value `clone`ed.
     def clone
       self.class.new(raw.clone)
     end

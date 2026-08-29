@@ -2,7 +2,7 @@
 require "./spec_helper"
 
 private macro assert_overflows(code, file = __FILE__, line = __LINE__)
-  it "overflows on {{code}}", file: {{file}}, line: {{line}} do
+  it "overflows on {{ code }}", file: {{ file }}, line: {{ line }} do
     interpret(%(
       class OverflowError < Exception; end
 
@@ -15,7 +15,7 @@ private macro assert_overflows(code, file = __FILE__, line = __LINE__)
       end
 
       begin
-        a = {{code}}
+        a = {{ code }}
         1
       rescue OverflowError
         2
@@ -217,73 +217,73 @@ describe Crystal::Repl::Interpreter do
 
   context "conversion" do
     {% for target_type in %w(u8 i8 u16 i16 u32 i32 u i u64 i64 f32 f64).map(&.id) %}
-      it "interprets Int8::MAX#to_{{target_type}}!" do
-        interpret("#{Int8::MAX}_i8.to_{{target_type}}!").should eq(Int8::MAX.to_{{target_type}}!)
+      it "interprets Int8::MAX#to_{{ target_type }}!" do
+        interpret("#{Int8::MAX}_i8.to_{{ target_type }}!").should eq(Int8::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int8::MIN#to_{{target_type}}!" do
-        interpret("#{Int8::MIN}_i8.to_{{target_type}}!").should eq(Int8::MIN.to_{{target_type}}!)
+      it "interprets Int8::MIN#to_{{ target_type }}!" do
+        interpret("#{Int8::MIN}_i8.to_{{ target_type }}!").should eq(Int8::MIN.to_{{ target_type }}!)
       end
 
-      it "interprets UInt8::MAX#to_{{target_type}}!" do
-        interpret("#{UInt8::MAX}_u8.to_{{target_type}}!").should eq(UInt8::MAX.to_{{target_type}}!)
+      it "interprets UInt8::MAX#to_{{ target_type }}!" do
+        interpret("#{UInt8::MAX}_u8.to_{{ target_type }}!").should eq(UInt8::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int16::MAX#to_{{target_type}}!" do
-        interpret("#{Int16::MAX}_i16.to_{{target_type}}!").should eq(Int16::MAX.to_{{target_type}}!)
+      it "interprets Int16::MAX#to_{{ target_type }}!" do
+        interpret("#{Int16::MAX}_i16.to_{{ target_type }}!").should eq(Int16::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int16::MIN#to_{{target_type}}!" do
-        interpret("#{Int16::MIN}_i16.to_{{target_type}}!").should eq(Int16::MIN.to_{{target_type}}!)
+      it "interprets Int16::MIN#to_{{ target_type }}!" do
+        interpret("#{Int16::MIN}_i16.to_{{ target_type }}!").should eq(Int16::MIN.to_{{ target_type }}!)
       end
 
-      it "interprets UInt16::MAX#to_{{target_type}}!" do
-        interpret("#{UInt16::MAX}_u16.to_{{target_type}}!").should eq(UInt16::MAX.to_{{target_type}}!)
+      it "interprets UInt16::MAX#to_{{ target_type }}!" do
+        interpret("#{UInt16::MAX}_u16.to_{{ target_type }}!").should eq(UInt16::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int32::MAX#to_{{target_type}}!" do
-        interpret("#{Int32::MAX}.to_{{target_type}}!").should eq(Int32::MAX.to_{{target_type}}!)
+      it "interprets Int32::MAX#to_{{ target_type }}!" do
+        interpret("#{Int32::MAX}.to_{{ target_type }}!").should eq(Int32::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int32::MIN#to_{{target_type}}!" do
-        interpret("#{Int32::MIN}.to_{{target_type}}!").should eq(Int32::MIN.to_{{target_type}}!)
+      it "interprets Int32::MIN#to_{{ target_type }}!" do
+        interpret("#{Int32::MIN}.to_{{ target_type }}!").should eq(Int32::MIN.to_{{ target_type }}!)
       end
 
-      it "interprets UInt32::MAX#to_{{target_type}}!" do
-        interpret("#{UInt32::MAX}_u32.to_{{target_type}}!").should eq(UInt32::MAX.to_{{target_type}}!)
+      it "interprets UInt32::MAX#to_{{ target_type }}!" do
+        interpret("#{UInt32::MAX}_u32.to_{{ target_type }}!").should eq(UInt32::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int64::MAX#to_{{target_type}}!" do
-        interpret("#{Int64::MAX}_i64.to_{{target_type}}!").should eq(Int64::MAX.to_{{target_type}}!)
+      it "interprets Int64::MAX#to_{{ target_type }}!" do
+        interpret("#{Int64::MAX}_i64.to_{{ target_type }}!").should eq(Int64::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Int64::MIN#to_{{target_type}}!" do
-        interpret("#{Int64::MIN}_i64.to_{{target_type}}!").should eq(Int64::MIN.to_{{target_type}}!)
+      it "interprets Int64::MIN#to_{{ target_type }}!" do
+        interpret("#{Int64::MIN}_i64.to_{{ target_type }}!").should eq(Int64::MIN.to_{{ target_type }}!)
       end
 
-      it "interprets UInt64::MAX#to_{{target_type}}!" do
-        interpret("#{UInt64::MAX}_u64.to_{{target_type}}!").should eq(UInt64::MAX.to_{{target_type}}!)
+      it "interprets UInt64::MAX#to_{{ target_type }}!" do
+        interpret("#{UInt64::MAX}_u64.to_{{ target_type }}!").should eq(UInt64::MAX.to_{{ target_type }}!)
       end
 
-      it "interprets Float32#to_{{target_type}}! (positive)" do
+      it "interprets Float32#to_{{ target_type }}! (positive)" do
         f = 23.8_f32
-        interpret("23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+        interpret("23.8_f32.to_{{ target_type }}!").should eq(f.to_{{ target_type }}!)
       end
 
-      it "interprets Float64#to_{{target_type}}! (positive)" do
+      it "interprets Float64#to_{{ target_type }}! (positive)" do
         f = 23.8_f64
-        interpret("23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+        interpret("23.8_f64.to_{{ target_type }}!").should eq(f.to_{{ target_type }}!)
       end
 
       {% unless target_type.starts_with?("u") %} # Do not test undefined behavior that might differ (#13736)
-        it "interprets Float32#to_{{target_type}}! (negative)" do
+        it "interprets Float32#to_{{ target_type }}! (negative)" do
           f = -23.8_f32
-          interpret("-23.8_f32.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+          interpret("-23.8_f32.to_{{ target_type }}!").should eq(f.to_{{ target_type }}!)
         end
 
-        it "interprets Float64#to_{{target_type}}! (negative)" do
+        it "interprets Float64#to_{{ target_type }}! (negative)" do
           f = -23.8_f64
-          interpret("-23.8_f64.to_{{target_type}}!").should eq(f.to_{{target_type}}!)
+          interpret("-23.8_f64.to_{{ target_type }}!").should eq(f.to_{{ target_type }}!)
         end
       {% end %}
     {% end %}

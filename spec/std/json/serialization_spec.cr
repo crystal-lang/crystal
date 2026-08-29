@@ -403,8 +403,8 @@ describe "JSON serialization" do
     end
 
     {% for type in Int::Primitive.union_types %}
-      it "deserializes union with {{type}} (fast path)" do
-        Union({{type}}, Array(Int32)).from_json({{type}}::MAX.to_s).should eq({{type}}::MAX)
+      it "deserializes union with {{ type }} (fast path)" do
+        Union({{ type }}, Array(Int32)).from_json({{ type }}::MAX.to_s).should eq({{ type }}::MAX)
       end
     {% end %}
 

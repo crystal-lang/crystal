@@ -400,82 +400,82 @@ class HTTP::Client
   end
 
   {% for method in %w(get post put head delete patch options) %}
-    # Executes a {{method.id.upcase}} request.
+    # Executes a {{ method.id.upcase }} request.
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
     # require "http/client"
     #
     # client = HTTP::Client.new("www.example.com")
-    # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
+    # response = client.{{ method.id }}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
-      exec {{method.upcase}}, path, headers, body
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, body : BodyType = nil) : HTTP::Client::Response
+      exec {{ method.upcase }}, path, headers, body
     end
 
-    # Executes a {{method.id.upcase}} request and yields the response to the block.
+    # Executes a {{ method.id.upcase }} request and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
     # require "http/client"
     #
     # client = HTTP::Client.new("www.example.com")
-    # client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
+    # client.{{ method.id }}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, body : BodyType = nil)
-      exec {{method.upcase}}, path, headers, body do |response|
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, body : BodyType = nil)
+      exec {{ method.upcase }}, path, headers, body do |response|
         yield response
       end
     end
 
-    # Executes a {{method.id.upcase}} request.
+    # Executes a {{ method.id.upcase }} request.
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
     # require "http/client"
     #
-    # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
+    # response = HTTP::Client.{{ method.id }}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
-      exec {{method.upcase}}, url, headers, body, tls
+    def self.{{ method.id }}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil) : HTTP::Client::Response
+      exec {{ method.upcase }}, url, headers, body, tls
     end
 
-    # Executes a {{method.id.upcase}} request and yields the response to the block.
+    # Executes a {{ method.id.upcase }} request and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
     # require "http/client"
     #
-    # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
+    # HTTP::Client.{{ method.id }}("/", headers: HTTP::Headers{"User-Agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
-      exec {{method.upcase}}, url, headers, body, tls do |response|
+    def self.{{ method.id }}(url : String | URI, headers : HTTP::Headers? = nil, body : BodyType = nil, tls : TLSContext = nil)
+      exec {{ method.upcase }}, url, headers, body, tls do |response|
         yield response
       end
     end
 
-    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{ method.id.upcase }} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
     # require "http/client"
     #
     # client = HTTP::Client.new "www.example.com"
-    # response = client.{{method.id}} "/", form: "foo=bar"
+    # response = client.{{ method.id }} "/", form: "foo=bar"
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO) : HTTP::Client::Response
-      request = new_request({{method.upcase}}, path, headers, form)
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, *, form : String | IO) : HTTP::Client::Response
+      request = new_request({{ method.upcase }}, path, headers, form)
       request.headers["Content-Type"] = "application/x-www-form-urlencoded"
       exec request
     end
 
-    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{ method.id.upcase }} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
@@ -483,33 +483,33 @@ class HTTP::Client
     # require "http/client"
     #
     # client = HTTP::Client.new "www.example.com"
-    # client.{{method.id}}("/", form: "foo=bar") do |response|
+    # client.{{ method.id }}("/", form: "foo=bar") do |response|
     #   response.body_io.gets
     # end
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : String | IO)
-      request = new_request({{method.upcase}}, path, headers, form)
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, *, form : String | IO)
+      request = new_request({{ method.upcase }}, path, headers, form)
       request.headers["Content-Type"] = "application/x-www-form-urlencoded"
       exec(request) do |response|
         yield response
       end
     end
 
-    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{ method.id.upcase }} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
     # require "http/client"
     #
     # client = HTTP::Client.new "www.example.com"
-    # response = client.{{method.id}} "/", form: {"foo" => "bar"}
+    # response = client.{{ method.id }} "/", form: {"foo" => "bar"}
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple) : HTTP::Client::Response
       body = URI::Params.encode(form)
-      {{method.id}} path, form: body, headers: headers
+      {{ method.id }} path, form: body, headers: headers
     end
 
-    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{ method.id.upcase }} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-type" header is set to "application/x-www-form-urlencoded".
     #
@@ -517,45 +517,45 @@ class HTTP::Client
     # require "http/client"
     #
     # client = HTTP::Client.new "www.example.com"
-    # client.{{method.id}}("/", form: {"foo" => "bar"}) do |response|
+    # client.{{ method.id }}("/", form: {"foo" => "bar"}) do |response|
     #   response.body_io.gets
     # end
     # ```
-    def {{method.id}}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
+    def {{ method.id }}(path, headers : HTTP::Headers? = nil, *, form : Hash(String, String) | NamedTuple)
       body = URI::Params.encode(form)
-      {{method.id}}(path, form: body, headers: headers) do |response|
+      {{ method.id }}(path, form: body, headers: headers) do |response|
         yield response
       end
     end
 
-    # Executes a {{method.id.upcase}} request with form data and returns a `Response`. The "Content-Type" header is set
+    # Executes a {{ method.id.upcase }} request with form data and returns a `Response`. The "Content-Type" header is set
     # to "application/x-www-form-urlencoded".
     #
     # ```
     # require "http/client"
     #
-    # response = HTTP::Client.{{method.id}} "http://www.example.com", form: "foo=bar"
+    # response = HTTP::Client.{{ method.id }} "http://www.example.com", form: "foo=bar"
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash) : HTTP::Client::Response
+    def self.{{ method.id }}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash) : HTTP::Client::Response
       exec(url, tls) do |client, path|
-        client.{{method.id}}(path, form: form, headers: headers)
+        client.{{ method.id }}(path, form: form, headers: headers)
       end
     end
 
-    # Executes a {{method.id.upcase}} request with form data and yields the response to the block.
+    # Executes a {{ method.id.upcase }} request with form data and yields the response to the block.
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     # The "Content-Type" header is set to "application/x-www-form-urlencoded".
     #
     # ```
     # require "http/client"
     #
-    # HTTP::Client.{{method.id}}("http://www.example.com", form: "foo=bar") do |response|
+    # HTTP::Client.{{ method.id }}("http://www.example.com", form: "foo=bar") do |response|
     #   response.body_io.gets
     # end
     # ```
-    def self.{{method.id}}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash)
+    def self.{{ method.id }}(url, headers : HTTP::Headers? = nil, tls : TLSContext = nil, *, form : String | IO | Hash)
       exec(url, tls) do |client, path|
-        client.{{method.id}}(path, form: form, headers: headers) do |response|
+        client.{{ method.id }}(path, form: form, headers: headers) do |response|
           yield response
         end
       end

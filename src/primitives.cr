@@ -198,9 +198,9 @@ struct Char
                        ">"  => "greater than",
                        ">=" => "greater than or equal to",
                      } %}
-    # Returns `true` if `self`'s codepoint is {{desc.id}} *other*'s codepoint.
+    # Returns `true` if `self`'s codepoint is {{ desc.id }} *other*'s codepoint.
     @[Primitive(:binary)]
-    def {{op.id}}(other : Char) : Bool
+    def {{ op.id }}(other : Char) : Bool
     end
   {% end %}
 end
@@ -432,28 +432,28 @@ end
   {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying"} %}
 
   {% for num in nums %}
-    struct {{num.id}}
+    struct {{ num.id }}
       {% for name, type in {
                              to_i: Int32, to_u: UInt32, to_f: Float64,
                              to_i8: Int8, to_i16: Int16, to_i32: Int32, to_i64: Int64, to_i128: Int128,
                              to_u8: UInt8, to_u16: UInt16, to_u32: UInt32, to_u64: UInt64, to_u128: UInt128,
                              to_f32: Float32, to_f64: Float64,
                            } %}
-        # Returns `self` converted to `{{type}}`.
+        # Returns `self` converted to `{{ type }}`.
         # Raises `OverflowError` in case of overflow.
         @[::Primitive(:convert)]
         @[Raises]
-        def {{name.id}} : {{type}}
+        def {{ name.id }} : {{ type }}
         end
 
-        # Returns `self` converted to `{{type}}`.
+        # Returns `self` converted to `{{ type }}`.
         # In case of overflow
         # {% if ints.includes?(num) %} a wrapping is performed.
         # {% elsif type < Int %} the result is undefined.
         # {% else %} infinity is returned.
         # {% end %}
         @[::Primitive(:unchecked_convert)]
-        def {{name.id}}! : {{type}}
+        def {{ name.id }}! : {{ type }}
         end
       {% end %}
 
@@ -466,10 +466,10 @@ end
                              ">"  => "greater than",
                              ">=" => "greater than or equal to",
                            } %}
-          # Returns `true` if `self` is {{desc.id}} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
+          # Returns `true` if `self` is {{ desc.id }} *other*{% if op == "!=" && (!ints.includes?(num) || !ints.includes?(num2)) %}
           # or if `self` and *other* are unordered{% end %}.
           @[::Primitive(:binary)]
-          def {{op.id}}(other : {{num2.id}}) : Bool
+          def {{ op.id }}(other : {{ num2.id }}) : Bool
           end
         {% end %}
       {% end %}
@@ -477,7 +477,7 @@ end
   {% end %}
 
   {% for int in ints %}
-    struct {{int.id}}
+    struct {{ int.id }}
       # Returns a `Char` that has the unicode codepoint of `self`,
       # without checking if this integer is in the range valid for
       # chars (`0..0xd7ff` and `0xe000..0x10ffff`). In case of overflow
@@ -495,61 +495,61 @@ end
 
       {% for int2 in ints %}
         {% for op, desc in binaries %}
-          # Returns the result of {{desc.id}} `self` and *other*.
+          # Returns the result of {{ desc.id }} `self` and *other*.
           # Raises `OverflowError` in case of overflow.
           @[::Primitive(:binary)]
           @[Raises]
-          def {{op.id}}(other : {{int2.id}}) : self
+          def {{ op.id }}(other : {{ int2.id }}) : self
           end
 
-          # Returns the result of {{desc.id}} `self` and *other*.
+          # Returns the result of {{ desc.id }} `self` and *other*.
           # In case of overflow a wrapping is performed.
           @[::Primitive(:binary)]
-          def &{{op.id}}(other : {{int2.id}}) : self
+          def &{{ op.id }}(other : {{ int2.id }}) : self
           end
         {% end %}
 
         # Returns the result of performing a bitwise OR of `self`'s and *other*'s bits.
         @[::Primitive(:binary)]
-        def |(other : {{int2.id}}) : self
+        def |(other : {{ int2.id }}) : self
         end
 
         # Returns the result of performing a bitwise AND of `self`'s and *other*'s bits.
         @[::Primitive(:binary)]
-        def &(other : {{int2.id}}) : self
+        def &(other : {{ int2.id }}) : self
         end
 
         # Returns the result of performing a bitwise XOR of `self`'s and *other*'s bits.
         @[::Primitive(:binary)]
-        def ^(other : {{int2.id}}) : self
+        def ^(other : {{ int2.id }}) : self
         end
 
         # :nodoc:
         @[::Primitive(:binary)]
-        def unsafe_shl(other : {{int2.id}}) : self
+        def unsafe_shl(other : {{ int2.id }}) : self
         end
 
         # :nodoc:
         @[::Primitive(:binary)]
-        def unsafe_shr(other : {{int2.id}}) : self
+        def unsafe_shr(other : {{ int2.id }}) : self
         end
 
         # :nodoc:
         @[::Primitive(:binary)]
-        def unsafe_div(other : {{int2.id}}) : self
+        def unsafe_div(other : {{ int2.id }}) : self
         end
 
         # :nodoc:
         @[::Primitive(:binary)]
-        def unsafe_mod(other : {{int2.id}}) : self
+        def unsafe_mod(other : {{ int2.id }}) : self
         end
       {% end %}
 
       {% for float in floats %}
         {% for op, desc in binaries %}
-          # Returns the result of {{desc.id}} `self` and *other*.
+          # Returns the result of {{ desc.id }} `self` and *other*.
           @[::Primitive(:binary)]
-          def {{op.id}}(other : {{float.id}}) : {{float.id}}
+          def {{ op.id }}(other : {{ float.id }}) : {{ float.id }}
           end
         {% end %}
       {% end %}
@@ -557,24 +557,24 @@ end
   {% end %}
 
   {% for float in floats %}
-    struct {{float.id}}
+    struct {{ float.id }}
       {% for num in nums %}
         {% for op, desc in binaries %}
-          # Returns the result of {{desc.id}} `self` and *other*.
+          # Returns the result of {{ desc.id }} `self` and *other*.
           @[::Primitive(:binary)]
-          def {{op.id}}(other : {{num.id}}) : self
+          def {{ op.id }}(other : {{ num.id }}) : self
           end
         {% end %}
 
         # Returns the float division of `self` and *other*.
         @[::Primitive(:binary)]
-        def fdiv(other : {{num.id}}) : self
+        def fdiv(other : {{ num.id }}) : self
         end
       {% end %}
 
       # Returns the result of division `self` and *other*.
       @[::Primitive(:binary)]
-      def /(other : {{float.id}}) : {{float.id}}
+      def /(other : {{ float.id }}) : {{ float.id }}
       end
     end
   {% end %}

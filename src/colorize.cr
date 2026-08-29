@@ -364,28 +364,28 @@ struct Colorize::Object(T)
   end
 
   {% for name in COLORS %}
-    def {{name.id}}
-      @fore = ColorANSI::{{name.camelcase.id}}
+    def {{ name.id }}
+      @fore = ColorANSI::{{ name.camelcase.id }}
       self
     end
 
-    def on_{{name.id}}
-      @back = ColorANSI::{{name.camelcase.id}}
+    def on_{{ name.id }}
+      @back = ColorANSI::{{ name.camelcase.id }}
       self
     end
   {% end %}
 
   {% for mode in Mode.constants.reject { |constant| constant == "All" || constant == "None" } %}
     # Apply text decoration `Mode::{{ mode }}`.
-    def {{mode.underscore.id}}
-      mode Mode::{{mode.id}}
+    def {{ mode.underscore.id }}
+      mode Mode::{{ mode.id }}
     end
   {% end %}
 
   def fore(color : Symbol) : self
     {% for name in COLORS %}
-      if color == :{{name.id}}
-        @fore = ColorANSI::{{name.camelcase.id}}
+      if color == :{{ name.id }}
+        @fore = ColorANSI::{{ name.camelcase.id }}
         return self
       end
     {% end %}
@@ -409,8 +409,8 @@ struct Colorize::Object(T)
 
   def back(color : Symbol) : self
     {% for name in COLORS %}
-      if color == :{{name.id}}
-        @back = ColorANSI::{{name.camelcase.id}}
+      if color == :{{ name.id }}
+        @back = ColorANSI::{{ name.camelcase.id }}
         return self
       end
     {% end %}

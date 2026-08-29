@@ -36,14 +36,14 @@ class Log
   private Top = Log.for("")
 
   {% for method in %i(trace debug info notice warn error fatal) %}
-    # See `Log#{{method.id}}`.
-    def self.{{method.id}}(*, exception : Exception) : Nil
-      Top.{{method.id}}(exception: exception)
+    # See `Log#{{ method.id }}`.
+    def self.{{ method.id }}(*, exception : Exception) : Nil
+      Top.{{ method.id }}(exception: exception)
     end
 
-    # See `Log#{{method.id}}`.
-    def self.{{method.id}}(*, exception : Exception? = nil)
-      Top.{{method.id}}(exception: exception) do |dsl|
+    # See `Log#{{ method.id }}`.
+    def self.{{ method.id }}(*, exception : Exception? = nil)
+      Top.{{ method.id }}(exception: exception) do |dsl|
         yield dsl
       end
     end

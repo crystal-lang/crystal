@@ -672,7 +672,7 @@ module Crystal
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MacroVerbatim MultiAssign
                    SizeOf InstanceSizeOf AlignOf InstanceAlignOf OffsetOf Global Require Select) %}
-    class {{name.id}}
+    class {{ name.id }}
       include ExpandableNode
     end
   {% end %}

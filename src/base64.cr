@@ -294,9 +294,9 @@ module Base64
   private macro yield_decoded_chunk_bytes(*bytes, chunk_pos)
     %buffer = 0_u32
     {% for byte, i in bytes %}
-      %decoded = DECODE_TABLE.unsafe_fetch({{byte}})
+      %decoded = DECODE_TABLE.unsafe_fetch({{ byte }})
       %buffer = (%buffer << 6) + %decoded
-      raise Base64::Error.new("Unexpected byte 0x#{{{byte}}.to_s(16)} at #{{{chunk_pos}} + {{i}}}") if %decoded == 255_u8
+      raise Base64::Error.new("Unexpected byte 0x#{{{ byte }}.to_s(16)} at #{{{ chunk_pos }} + {{ i }}}") if %decoded == 255_u8
     {% end %}
 
     # Each byte in the buffer is shifted to rightmost position of the buffer, then casted to a UInt8

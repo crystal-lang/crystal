@@ -126,37 +126,37 @@ macro spawn(call, *, name = nil, same_thread = false, &block)
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
-        __arg{{i}} : typeof({{arg.is_a?(Splat) ? arg.exp : arg}}),
+        __arg{{ i }} : typeof({{ arg.is_a?(Splat) ? arg.exp : arg }}),
       {% end %}
       {% if call.named_args %}
         {% for narg, i in call.named_args %}
-          __narg{{i}} : typeof({{narg.value}}),
+          __narg{{ i }} : typeof({{ narg.value }}),
         {% end %}
       {% end %}
       ) {
-      spawn(name: {{name}}{% if same_thread %}, same_thread: {{same_thread}}{% end %}) do
-        {% if call.receiver %}{{ call.receiver }}.{% end %}{{call.name}}(
+      spawn(name: {{ name }}{% if same_thread %}, same_thread: {{ same_thread }}{% end %}) do
+        {% if call.receiver %}{{ call.receiver }}.{% end %}{{ call.name }}(
           {% for arg, i in call.args %}
-            {% if arg.is_a?(Splat) %}*{% end %}__arg{{i}},
+            {% if arg.is_a?(Splat) %}*{% end %}__arg{{ i }},
           {% end %}
           {% if call.named_args %}
             {% for narg, i in call.named_args %}
-              {{narg.name}}: __narg{{i}},
+              {{ narg.name }}: __narg{{ i }},
             {% end %}
           {% end %}
         )
       end
       }.call(
         {% for arg in call.args %}
-          {{arg.is_a?(Splat) ? arg.exp : arg}},
+          {{ arg.is_a?(Splat) ? arg.exp : arg }},
         {% end %}
         {% if call.named_args %}
-          {{call.named_args.map(&.value).splat}}
+          {{ call.named_args.map(&.value).splat }}
         {% end %}
       )
   {% else %}
     spawn do
-      {{call}}
+      {{ call }}
     end
   {% end %}
 end

@@ -1,10 +1,10 @@
 require "../../spec_helper"
 
 private macro expect_splat(e_arg, e_arg_index, e_obj, e_obj_index)
-  arg.name.should eq({{e_arg}})
-  arg_index.should eq({{e_arg_index}})
-  obj.should eq({{e_obj}})
-  obj_index.should eq({{e_obj_index}})
+  arg.name.should eq({{ e_arg }})
+  arg_index.should eq({{ e_arg_index }})
+  obj.should eq({{ e_obj }})
+  obj_index.should eq({{ e_obj_index }})
 end
 
 describe "Semantic: splat" do

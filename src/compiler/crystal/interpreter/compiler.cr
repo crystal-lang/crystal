@@ -3286,15 +3286,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   {% for name, instruction in Crystal::Repl::Instructions %}
     {% operands = instruction[:operands] || [] of Nil %}
 
-    def {{name.id}}(
-      {{operands.splat(", ")}}*, node : ASTNode?
+    def {{ name.id }}(
+      {{ operands.splat(", ") }}*, node : ASTNode?
     ) : Nil
       node = @node_override || node
       @instructions.nodes[instructions_index] = node if node
 
       append OpCode::{{ name.id.upcase }}
       {% for operand in operands %}
-        append {{operand.var}}
+        append {{ operand.var }}
       {% end %}
     end
   {% end %}

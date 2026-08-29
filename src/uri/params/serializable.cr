@@ -108,11 +108,11 @@ struct URI::Params
                   {% raise "Can't ignore property @#{ivar.name} of #{@type} that is neither nilable nor has a default value" %}
                 {% end %}
               {% else %}
-                %name{idx} = name.nil? ? {{ivar.name.stringify}} : "#{name}[#{{{ivar.name.stringify}}}]"
-                %value{idx} = {{ann && ann["converter"] || ivar.type}}.from_www_form params, %name{idx}
+                %name{idx} = name.nil? ? {{ ivar.name.stringify }} : "#{name}[#{{{ ivar.name.stringify }}}]"
+                %value{idx} = {{ ann && ann["converter"] || ivar.type }}.from_www_form params, %name{idx}
 
                 unless %value{idx}.nil?
-                  @{{ivar.name.id}} = %value{idx}
+                  @{{ ivar.name.id }} = %value{idx}
                 else
                   {% unless ivar.type.resolve.nilable? || ivar.has_default_value? %}
                     raise URI::SerializableError.new "Missing required property: '#{%name{idx}}'."
@@ -131,11 +131,11 @@ struct URI::Params
           {% ann = ivar.annotation(URI::Params::Field) %}
           {% unless ann && ann[:ignore] %}
             {% if ann && ann[:ignore_serialize] %}
-              unless {{ann[:ignore_serialize]}}
-                @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
+              unless {{ ann[:ignore_serialize] }}
+                @{{ ivar.name.id }}.to_www_form form, {{ ivar.name.stringify }}
               end
             {% else %}
-              @{{ivar.name.id}}.to_www_form form, {{ivar.name.stringify}}
+              @{{ ivar.name.id }}.to_www_form form, {{ ivar.name.stringify }}
             {% end %}
           {% end %}
         {% end %}
@@ -148,11 +148,11 @@ struct URI::Params
         {% ann = ivar.annotation(URI::Params::Field) %}
         {% unless ann && ann[:ignore] %}
           {% if ann && ann[:ignore_serialize] %}
-            unless {{ann[:ignore_serialize]}}
-              @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
+            unless {{ ann[:ignore_serialize] }}
+              @{{ ivar.name.id }}.to_www_form builder, "#{name}[#{{{ ivar.name.stringify }}}]"
             end
           {% else %}
-            @{{ivar.name.id}}.to_www_form builder, "#{name}[#{{{ivar.name.stringify}}}]"
+            @{{ ivar.name.id }}.to_www_form builder, "#{name}[#{{{ ivar.name.stringify }}}]"
           {% end %}
         {% end %}
       {% end %}

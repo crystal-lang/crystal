@@ -149,8 +149,8 @@ struct Int
     end
 
     {% begin %}
-      if self < 0 && self == {{@type}}::MIN && other == -1
-        raise ArgumentError.new "Overflow: {{@type}}::MIN / -1"
+      if self < 0 && self == {{ @type }}::MIN && other == -1
+        raise ArgumentError.new "Overflow: {{ @type }}::MIN / -1"
       end
     {% end %}
   end
@@ -201,7 +201,7 @@ struct Int
     {% begin %}
       if other == 0
         raise DivisionByZeroError.new
-      elsif self < 0 && self == {{@type}}::MIN && other == -1
+      elsif self < 0 && self == {{ @type }}::MIN && other == -1
         self.class.new(0)
       elsif (self < 0) == (other < 0)
         self.unsafe_mod(other)
@@ -221,7 +221,7 @@ struct Int
     {% begin %}
       if other == 0
         raise DivisionByZeroError.new
-      elsif self < 0 && self == {{@type}}::MIN && other == -1
+      elsif self < 0 && self == {{ @type }}::MIN && other == -1
         self.class.new(0)
       else
         unsafe_mod other
@@ -2822,21 +2822,21 @@ end
   # All digits must be within 0...base.
   #
   # ```
-  # {{type.id}}.from_digits([5, 4, 3, 2, 1])          # => 12345
-  # {{type.id}}.from_digits([4, 6, 6, 0, 5], base: 7) # => 12345
-  # {{type.id}}.from_digits([45, 23, 1], base: 100)   # => 12345
+  # {{ type.id }}.from_digits([5, 4, 3, 2, 1])          # => 12345
+  # {{ type.id }}.from_digits([4, 6, 6, 0, 5], base: 7) # => 12345
+  # {{ type.id }}.from_digits([45, 23, 1], base: 100)   # => 12345
   #
-  # {{type.id}}.from_digits([1], base: -2) # raises ArgumentError
-  # {{type.id}}.from_digits([-1])          # raises ArgumentError
-  # {{type.id}}.from_digits([3], base: 2)  # raises ArgumentError
+  # {{ type.id }}.from_digits([1], base: -2) # raises ArgumentError
+  # {{ type.id }}.from_digits([-1])          # raises ArgumentError
+  # {{ type.id }}.from_digits([3], base: 2)  # raises ArgumentError
   # ```
-  def {{type.id}}.from_digits(digits : Enumerable(Int), base : Int = 10) : self
+  def {{ type.id }}.from_digits(digits : Enumerable(Int), base : Int = 10) : self
     if base < 2
       raise ArgumentError.new("Invalid base #{base}")
     end
 
-    num : {{type.id}} = 0
-    multiplier : {{type.id}} = 1
+    num : {{ type.id }} = 0
+    multiplier : {{ type.id }} = 1
     first_element = true
 
     digits.each do |digit|

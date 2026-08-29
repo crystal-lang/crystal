@@ -2,12 +2,12 @@ require "../../spec_helper"
 
 describe "Semantic: sizeof" do
   {% for name in %w(sizeof instance_sizeof alignof instance_alignof).map(&.id) %}
-    it "types {{name}}" do
-      assert_type("{{name}}(Reference)") { int32 }
+    it "types {{ name }}" do
+      assert_type("{{ name }}(Reference)") { int32 }
     end
 
-    it "types {{name}} NoReturn (missing type) (#5717)" do
-      assert_type("x = nil; x ? {{name}}(typeof(x)) : 1") { int32 }
+    it "types {{ name }} NoReturn (missing type) (#5717)" do
+      assert_type("x = nil; x ? {{ name }}(typeof(x)) : 1") { int32 }
     end
   {% end %}
 

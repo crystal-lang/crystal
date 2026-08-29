@@ -369,46 +369,46 @@ module Syscall
 
   macro def_syscall(name, return_type, *args)
     @[::AlwaysInline]
-    def self.{{name.id}}({{args.splat}}) : {{return_type}}
-      ret = uninitialized {{return_type}}
+    def self.{{ name.id }}({{ args.splat }}) : {{ return_type }}
+      ret = uninitialized {{ return_type }}
 
       {% if args.size == 0 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 1 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 2 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }}), "{rsi}"({{ args[1].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 3 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }}), "{rsi}"({{ args[1].var.id }}),
+                        "{rdx}"({{ args[2].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 4 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }}), "{rsi}"({{ args[1].var.id }}),
+                        "{rdx}"({{ args[2].var.id }}), "{r10}"({{ args[3].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 5 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }}), "{rsi}"({{ args[1].var.id }}),
+                        "{rdx}"({{ args[2].var.id }}), "{r10}"({{ args[3].var.id }}), "{r8}"({{ args[4].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% elsif args.size == 6 %}
         asm("syscall" : "={rax}"(ret)
-                      : "{rax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{rdi}"({{args[0].var.id}}), "{rsi}"({{args[1].var.id}}),
-                        "{rdx}"({{args[2].var.id}}), "{r10}"({{args[3].var.id}}), "{r8}"({{args[4].var.id}}), "{r9}"({{args[5].var.id}})
+                      : "{rax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{rdi}"({{ args[0].var.id }}), "{rsi}"({{ args[1].var.id }}),
+                        "{rdx}"({{ args[2].var.id }}), "{r10}"({{ args[3].var.id }}), "{r8}"({{ args[4].var.id }}), "{r9}"({{ args[5].var.id }})
                       : "rcx", "r11", "memory"
                       : "volatile")
       {% else %}

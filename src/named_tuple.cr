@@ -90,7 +90,7 @@ struct NamedTuple
   # See also: `#from`.
   def self.from(hash : Hash) : self
     {% begin %}
-    NamedTuple.new(**{{T}}).from(hash)
+    NamedTuple.new(**{{ T }}).from(hash)
     {% end %}
   end
 
@@ -119,7 +119,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash[{{key.stringify}}] }),
+        {{ key.stringify }}: self[{{ key.symbolize }}].cast(hash.fetch({{ key.symbolize }}) { hash[{{ key.stringify }}] }),
       {% end %}
       )
     {% end %}
@@ -299,7 +299,7 @@ struct NamedTuple
   # ```
   def fetch(key : Symbol, &block)
     {% for key in T %}
-      return self[{{key.symbolize}}] if {{key.symbolize}} == key
+      return self[{{ key.symbolize }}] if {{ key.symbolize }} == key
     {% end %}
     yield
   end
@@ -313,7 +313,7 @@ struct NamedTuple
   # ```
   def fetch(key : String, &block)
     {% for key in T %}
-      return self[{{key.symbolize}}] if {{key.stringify}} == key
+      return self[{{ key.symbolize }}] if {{ key.stringify }} == key
     {% end %}
     yield
   end
@@ -334,8 +334,8 @@ struct NamedTuple
   def merge(**other : **U) forall U
     {% begin %}
     NamedTuple.new(
-      {% for k in T %} {% unless U.keys.includes?(k) %} {{k.stringify}}: self[{{k.symbolize}}],{% end %} {% end %}
-      {% for k in U %} {{k.stringify}}: other[{{k.symbolize}}], {% end %}
+      {% for k in T %} {% unless U.keys.includes?(k) %} {{ k.stringify }}: self[{{ k.symbolize }}],{% end %} {% end %}
+      {% for k in U %} {{ k.stringify }}: other[{{ k.symbolize }}], {% end %}
     )
     {% end %}
   end
@@ -363,8 +363,8 @@ struct NamedTuple
   # See `Object#hash(hasher)`
   def hash(hasher)
     {% for key in T.keys.sort %}
-      hasher = {{key.symbolize}}.hash(hasher)
-      hasher = self[{{key.symbolize}}].hash(hasher)
+      hasher = {{ key.symbolize }}.hash(hasher)
+      hasher = self[{{ key.symbolize }}].hash(hasher)
     {% end %}
     hasher
   end
@@ -376,7 +376,7 @@ struct NamedTuple
   # tuple.class.types # => {a: Int32, b: String, c: Char}
   # ```
   def self.types
-    NamedTuple.new(**{{T}})
+    NamedTuple.new(**{{ T }})
   end
 
   # Same as `to_s`.
@@ -394,7 +394,7 @@ struct NamedTuple
     {% begin %}
       Tuple.new(
         {% for key in T %}
-          {{key.symbolize}},
+          {{ key.symbolize }},
         {% end %}
       )
     {% end %}
@@ -410,7 +410,7 @@ struct NamedTuple
     {% begin %}
       Tuple.new(
         {% for key in T.keys.sort %}
-          {{key.symbolize}},
+          {{ key.symbolize }},
         {% end %}
       )
     {% end %}
@@ -426,7 +426,7 @@ struct NamedTuple
     {% begin %}
       Tuple.new(
         {% for key in T %}
-          self[{{key.symbolize}}],
+          self[{{ key.symbolize }}],
         {% end %}
       )
     {% end %}
@@ -441,7 +441,7 @@ struct NamedTuple
   # ```
   def has_key?(key : Symbol) : Bool
     {% for key in T %}
-      return true if {{key.symbolize}} == key
+      return true if {{ key.symbolize }} == key
     {% end %}
     false
   end
@@ -449,7 +449,7 @@ struct NamedTuple
   # :ditto:
   def has_key?(key : String) : Bool
     {% for key in T %}
-      return true if {{key.stringify}} == key
+      return true if {{ key.stringify }} == key
     {% end %}
     false
   end
@@ -466,9 +466,9 @@ struct NamedTuple
       {% if i > 0 %}
         io << ", "
       {% end %}
-      Symbol.quote_for_named_argument io, {{key.stringify}}
+      Symbol.quote_for_named_argument io, {{ key.stringify }}
       io << ": "
-      self[{{key.symbolize}}].inspect(io)
+      self[{{ key.symbolize }}].inspect(io)
     {% end %}
     io << '}'
   end
@@ -480,11 +480,11 @@ struct NamedTuple
           pp.comma
         {% end %}
         pp.group do
-          pp.text Symbol.quote_for_named_argument({{key.stringify}})
+          pp.text Symbol.quote_for_named_argument({{ key.stringify }})
           pp.text ": "
           pp.nest do
             pp.breakable ""
-            self[{{key.symbolize}}].pretty_print(pp)
+            self[{{ key.symbolize }}].pretty_print(pp)
           end
         end
       {% end %}
@@ -508,7 +508,7 @@ struct NamedTuple
   # ```
   def each(&) : Nil
     {% for key in T %}
-      yield {{key.symbolize}}, self[{{key.symbolize}}]
+      yield {{ key.symbolize }}, self[{{ key.symbolize }}]
     {% end %}
   end
 
@@ -529,7 +529,7 @@ struct NamedTuple
   # ```
   def each_key(&) : Nil
     {% for key in T %}
-      yield {{key.symbolize}}
+      yield {{ key.symbolize }}
     {% end %}
   end
 
@@ -550,7 +550,7 @@ struct NamedTuple
   # ```
   def each_value(&) : Nil
     {% for key in T %}
-      yield self[{{key.symbolize}}]
+      yield self[{{ key.symbolize }}]
     {% end %}
   end
 
@@ -623,7 +623,7 @@ struct NamedTuple
     {% else %}
       [
         {% for key in T %}
-          yield({ {{key.symbolize}}, self[{{key.symbolize}}] }),
+          yield({ {{ key.symbolize }}, self[{{ key.symbolize }}] }),
         {% end %}
       ]
     {% end %}
@@ -643,7 +643,7 @@ struct NamedTuple
     {% else %}
       {
         {% for key in T %}
-          {{key.symbolize}} => self[{{key.symbolize}}],
+          {{ key.symbolize }} => self[{{ key.symbolize }}],
         {% end %}
       }
     {% end %}
@@ -656,7 +656,7 @@ struct NamedTuple
   # tuple.size # => 2
   # ```
   def size
-    {{T.size}}
+    {{ T.size }}
   end
 
   # Returns `true` if this named tuple is empty.
@@ -684,7 +684,7 @@ struct NamedTuple
   # ```
   def ==(other : self)
     {% for key in T %}
-      return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]
+      return false unless self[{{ key.symbolize }}] == other[{{ key.symbolize }}]
     {% end %}
     true
   end
@@ -694,7 +694,7 @@ struct NamedTuple
     return false unless sorted_keys == other.sorted_keys
 
     {% for key in T %}
-      return false unless self[{{key.symbolize}}] == other[{{key.symbolize}}]?
+      return false unless self[{{ key.symbolize }}] == other[{{ key.symbolize }}]?
     {% end %}
     true
   end
@@ -704,7 +704,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
         {% for key in T %}
-          {{key.stringify}}: self[{{key.symbolize}}].clone,
+          {{ key.stringify }}: self[{{ key.symbolize }}].clone,
         {% end %}
       )
     {% end %}

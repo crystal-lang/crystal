@@ -21,7 +21,7 @@ lib LibXML
   # assume at least this version is available everywhere.
 
   {% if (version = env("LIBXML_VERSION")) && (version.strip != "") %}
-    VERSION = {{env("LIBXML_VERSION")}}
+    VERSION = {{ env("LIBXML_VERSION") }}
   {% elsif flag?(:msvc) %}
     {% version = nil %}
     {% for dir in Crystal::LIBRARY_PATH.split(Crystal::System::Process::HOST_PATH_DELIMITER) %}
@@ -34,7 +34,7 @@ lib LibXML
     {% end %}
     VERSION = {{ version || "2.9.0" }}
   {% else %}
-    VERSION = {{`sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify}}
+    VERSION = {{ `sh -c "pkg-config libxml-2.0 --silence-errors --modversion 2> /dev/null || echo 2.9.0"`.strip.stringify }}
   {% end %}
 
   alias Int = LibC::Int

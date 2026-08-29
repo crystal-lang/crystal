@@ -5,10 +5,10 @@ private macro parallel(*jobs)
   %channel = Channel(Exception | Nil).new
 
   {% for job, i in jobs %}
-    %ret{i} = uninitialized typeof({{job}})
+    %ret{i} = uninitialized typeof({{ job }})
     spawn do
       begin
-        %ret{i} = {{job}}
+        %ret{i} = {{ job }}
       rescue e : Exception
         %channel.send e
       else

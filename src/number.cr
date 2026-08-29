@@ -60,8 +60,8 @@ struct Number
   macro expand_div(rhs_types, result_type)
     {% for rhs in rhs_types %}
       @[::AlwaysInline]
-      def /(other : {{rhs}}) : {{result_type}}
-        {{result_type}}.new(self) / {{result_type}}.new(other)
+      def /(other : {{ rhs }}) : {{ result_type }}
+        {{ result_type }}.new(self) / {{ result_type }}.new(other)
       end
     {% end %}
   end
@@ -84,11 +84,11 @@ struct Number
   # [1, 2, 3, 4] of Int64 # : Array(Int64)
   # ```
   macro [](*nums)
-    ::Array({{@type}}).build({{nums.size}}) do |%buffer|
+    ::Array({{ @type }}).build({{ nums.size }}) do |%buffer|
       {% for num, i in nums %}
-        %buffer[{{i}}] = {{@type}}.new({{num}})
+        %buffer[{{ i }}] = {{ @type }}.new({{ num }})
       {% end %}
-      {{nums.size}}
+      {{ nums.size }}
     end
   end
 
@@ -113,9 +113,9 @@ struct Number
   # Slice[1_i64, 2_i64, 3_i64, 4_i64] # : Slice(Int64)
   # ```
   macro slice(*nums, read_only = false)
-    %slice = ::Slice({{@type}}).new({{nums.size}}, read_only: {{read_only}})
+    %slice = ::Slice({{ @type }}).new({{ nums.size }}, read_only: {{ read_only }})
     {% for num, i in nums %}
-      %slice.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
+      %slice.to_unsafe[{{ i }}] = {{ @type }}.new!({{ num }})
     {% end %}
     %slice
   end
@@ -139,9 +139,9 @@ struct Number
   # StaticArray[1_i64, 2_i64, 3_i64, 4_i64] # : StaticArray(Int64)
   # ```
   macro static_array(*nums)
-    %array = uninitialized ::StaticArray({{@type}}, {{nums.size}})
+    %array = uninitialized ::StaticArray({{ @type }}, {{ nums.size }})
     {% for num, i in nums %}
-      %array.to_unsafe[{{i}}] = {{@type}}.new!({{num}})
+      %array.to_unsafe[{{ i }}] = {{ @type }}.new!({{ num }})
     {% end %}
     %array
   end

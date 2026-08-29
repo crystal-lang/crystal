@@ -1790,54 +1790,54 @@ require "./repl"
       },
 
       {% for n in [8, 16, 32, 64, 128] %}
-        interpreter_intrinsics_bitreverse{{n}}: {
-          pop_values: [value : UInt{{n}}],
+        interpreter_intrinsics_bitreverse{{ n }}: {
+          pop_values: [value : UInt{{ n }}],
           push:       true,
-          code:       LibIntrinsics.bitreverse{{n}}(value),
+          code:       LibIntrinsics.bitreverse{{ n }}(value),
         },
         {% unless n == 8 %}
-          interpreter_intrinsics_bswap{{n}}: {
-            pop_values: [value : UInt{{n}}],
+          interpreter_intrinsics_bswap{{ n }}: {
+            pop_values: [value : UInt{{ n }}],
             push:       true,
-            code:       LibIntrinsics.bswap{{n}}(value),
+            code:       LibIntrinsics.bswap{{ n }}(value),
           },
         {% end %}
-        interpreter_intrinsics_popcount{{n}}: {
-          pop_values: [value : Int{{n}}],
+        interpreter_intrinsics_popcount{{ n }}: {
+          pop_values: [value : Int{{ n }}],
           push:       true,
-          code:       LibIntrinsics.popcount{{n}}(value),
+          code:       LibIntrinsics.popcount{{ n }}(value),
         },
-        interpreter_intrinsics_countleading{{n}}: {
-          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+        interpreter_intrinsics_countleading{{ n }}: {
+          pop_values: [src : Int{{ n }}, zero_is_undef : Bool],
           push:       true,
           code:       begin
             if zero_is_undef
-              LibIntrinsics.countleading{{n}}(src, true)
+              LibIntrinsics.countleading{{ n }}(src, true)
             else
-              LibIntrinsics.countleading{{n}}(src, false)
+              LibIntrinsics.countleading{{ n }}(src, false)
             end
           end,
         },
-        interpreter_intrinsics_counttrailing{{n}}: {
-          pop_values: [src : Int{{n}}, zero_is_undef : Bool],
+        interpreter_intrinsics_counttrailing{{ n }}: {
+          pop_values: [src : Int{{ n }}, zero_is_undef : Bool],
           push:       true,
           code:       begin
             if zero_is_undef
-              LibIntrinsics.counttrailing{{n}}(src, true)
+              LibIntrinsics.counttrailing{{ n }}(src, true)
             else
-              LibIntrinsics.counttrailing{{n}}(src, false)
+              LibIntrinsics.counttrailing{{ n }}(src, false)
             end
           end,
         },
-        interpreter_intrinsics_fshl{{n}}: {
-          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+        interpreter_intrinsics_fshl{{ n }}: {
+          pop_values: [a : UInt{{ n }}, b : UInt{{ n }}, count : UInt{{ n }}],
           push:       true,
-          code:       LibIntrinsics.fshl{{n}}(a, b, count),
+          code:       LibIntrinsics.fshl{{ n }}(a, b, count),
         },
-        interpreter_intrinsics_fshr{{n}}: {
-          pop_values: [a : UInt{{n}}, b : UInt{{n}}, count : UInt{{n}}],
+        interpreter_intrinsics_fshr{{ n }}: {
+          pop_values: [a : UInt{{ n }}, b : UInt{{ n }}, count : UInt{{ n }}],
           push:       true,
-          code:       LibIntrinsics.fshr{{n}}(a, b, count),
+          code:       LibIntrinsics.fshr{{ n }}(a, b, count),
         },
       {% end %}
 

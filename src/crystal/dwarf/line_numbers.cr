@@ -381,7 +381,7 @@ module Crystal
 
       private macro increment_address_and_op_index(operation_advance)
         if sequence.maximum_operations_per_instruction == 1
-          registers.address += {{operation_advance}} * sequence.minimum_instruction_length
+          registers.address += {{ operation_advance }} * sequence.minimum_instruction_length
         else
           registers.address += sequence.minimum_instruction_length *
             ((registers.op_index + operation_advance) // sequence.maximum_operations_per_instruction)

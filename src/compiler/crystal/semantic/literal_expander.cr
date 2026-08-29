@@ -974,10 +974,10 @@ module Crystal
     end
 
     macro check_implicit_obj(type)
-      if cond.is_a?({{type}})
+      if cond.is_a?({{ type }})
         cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
         if cond_obj.is_a?(ImplicitObj)
-          implicit_call = cond.clone.as({{type}})
+          implicit_call = cond.clone.as({{ type }})
           if implicit_call.is_a?(Not)
             implicit_call.exp = temp_var.clone
           else
