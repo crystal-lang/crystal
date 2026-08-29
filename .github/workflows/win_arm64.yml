@@ -137,8 +137,8 @@ jobs:
         run: |
           cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
           cp dlls/libz.dll "$env:CRYSTAL_DIR/"
-          cp dlls/libcrypto-4-x64.dll "$env:CRYSTAL_DIR/"
-          cp dlls/libssl-4-x64.dll "$env:CRYSTAL_DIR/"
+          cp dlls/libcrypto-4-arm64.dll "$env:CRYSTAL_DIR/"
+          cp dlls/libssl-4-arm64.dll "$env:CRYSTAL_DIR/"
           crystal build --release --cross-compile --target=aarch64-windows-msvc src\compiler\crystal.cr -Di_know_what_im_doing
           cl crystal.obj /Fecrystal /link /LIBPATH:$(pwd)\libs /INCREMENTAL:NO /STACK:0x800000 /ENTRY:wmainCRTStartup `
             kernel32.lib ucrt.lib ole32.lib DbgHelp.lib advapi32.lib ws2_32.lib msvcrt.lib ntdll.lib shell32.lib `
