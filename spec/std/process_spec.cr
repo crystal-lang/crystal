@@ -477,6 +477,24 @@ describe Process do
       value.should eq "#{parent}#{newline}"
     end
 
+    {% unless flag?(:win32) %}
+      it "raises if chdir doesn't exist" do
+        expect_raises(File::NotFoundError, "Error while changing directory: 'doesnotexist'") do
+          Process.run(*exit_code_command(0), chdir: "doesnotexist")
+        end
+      end
+
+      it "raises if command doesn't exist with a valid chdir" do
+        expect_raises(File::NotFoundError, "Error executing process: 'foobarbaz'") do
+          Process.run("foobarbaz", chdir: Dir.current)
+        end
+      end
+
+      it "runs a command with a valid chdir" do
+        Process.run(*exit_code_command(0), chdir: Dir.current).success?.should be_true
+      end
+    {% end %}
+
     pending_win32 "disallows passing arguments to nowhere" do
       expect_raises ArgumentError, /args.+@/ do
         Process.run("foo bar", {"baz"}, shell: true)
