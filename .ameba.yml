@@ -12,7 +12,7 @@
 # * `FIXME`: The rule seems useful, but requires some effort to resolve. That's deferred for later.
 # * `TODO`: The rule might be useful, but we need to investigate whether we want to use it or not.
 
-Version: "1.6.4"
+Version: "1.7.0"
 
 # Lint
 # =========================
@@ -88,6 +88,26 @@ Lint/UselessAssign:
     # Generators assign top-level variables to pass to ECR templates
     - scripts/generate_*
 
+Lint/TopLevelOperatorDefinition:
+  Excluded:
+    - src/process.cr
+
+Lint/EnumMemberNameConflict:
+  Excluded:
+    - src/winerror.cr
+
+Lint/DuplicateEnumValue:
+  Enabled: false
+
+Lint/SignalTrap:
+  Enabled: false
+
+Lint/VoidOutsideLib:
+  Enabled: false
+
+Lint/AssignmentInCallArgument:
+  Enabled: false
+
 # Metrics
 # =========================
 
@@ -135,7 +155,7 @@ Naming/VariableNames:
 # Performance
 # =========================
 
-Performance/AnyInsteadOfEmpty:
+Performance/AnyInsteadOfPresent:
   Excluded:
     # These specs explicitly test `#any?` implementations
     - spec/std/bit_array_spec.cr
@@ -180,4 +200,13 @@ Style/VerboseBlock:
   Enabled: false
 
 Style/WhileTrue:
+  Enabled: false
+
+Style/VerboseNilType:
+  Enabled: false
+
+Style/RedundantNilInControlExpression:
+  Enabled: false
+
+Style/MultilineStringLiteral:
   Enabled: false
