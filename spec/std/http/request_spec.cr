@@ -962,6 +962,10 @@ module HTTP
       it "POST with body and Idempotency-Key header is not replayable" do
         HTTP::Request.new("POST", "/", HTTP::Headers{"Idempotency-Key" => "key"}, "body").replayable?.should be_false
       end
+
+      it "QUERY is replayable" do
+        HTTP::Request.new("QUERY", "/").replayable?.should be_true
+      end
     end
   end
 end
