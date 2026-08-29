@@ -532,13 +532,29 @@ abstract struct Enum
       %}
       buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
       appender = buffer.to_unsafe.appender
-      char_counter = 0
-      string.each_char do |char|
-        next if char == '-' || char == '_'
-        char_counter += 1
-        return nil if char_counter > {{ max_charsize }}
-        char.downcase &.each_byte do |byte|
-          appender << byte
+      byte_counter = 0
+      pos = 0
+      while pos < slice.size
+        byte = slice.unsafe_fetch(pos)
+
+        if byte < 0x80
+          # The byte is ASCII, so it contains the full Char value
+          pos += 1
+          next if byte == '-'.ord || byte == '_'.ord
+          byte_counter += 1
+          return nil if byte_counter > {{ max_bytesize }}
+          # Setting the 6th bit on an alphabetical ASCII byte is a downcase.
+          appender << ('A'.ord <= byte <= 'Z'.ord ? byte | 0x20_u8 : byte)
+        else
+          # Multi-byte characters need to be decoded so `Char#downcase` can
+          # apply the same Unicode case mapping as the compile-time
+          # normalization of the member names.
+          char, width = decode_utf8_char(slice, pos)
+          pos += width
+          downcased = char.downcase
+          byte_counter += downcased.bytesize
+          return nil if byte_counter > {{ max_bytesize }}
+          downcased.each_byte { |b| appender << b }
         end
       end
       # Temporarily map all constants to their normalized value in order to
@@ -571,12 +587,12 @@ abstract struct Enum
   private def self.decode_utf8_char(slice : Bytes, pos : Int) : {Char, Int32}
     first = slice[pos].to_u32!
 
-    second = slice.fetch(pos + 1) { 0u32 }
+    second = slice.fetch(pos + 1) { 0u8 }.to_u32!
     return {Char::REPLACEMENT, 1} if first < 0xc2 || second & 0xc0 != 0x80
 
     return {((first << 6) &+ second &- 0x3080).unsafe_chr, 2} if first < 0xe0
 
-    third = slice.fetch(pos + 2) { 0u32 }
+    third = slice.fetch(pos + 2) { 0u8 }.to_u32!
     if third & 0xc0 != 0x80 ||
        (first == 0xe0 && second < 0xa0) || # overlong encoding
        (first == 0xed && second >= 0xa0)   # UTF-16 surrogate?
@@ -585,7 +601,7 @@ abstract struct Enum
 
     return {((first << 12) &+ (second << 6) &+ third &- 0xe2080).unsafe_chr, 3} if first < 0xf0
 
-    fourth = slice.fetch(pos + 3) { 0u32 }
+    fourth = slice.fetch(pos + 3) { 0u8 }.to_u32!
     if fourth & 0xc0 != 0x80 ||
        (first == 0xf0 && second < 0x90) ||  # overlong encoding
        (first == 0xf4 && second >= 0x90) || # beyond Unicode range?

@@ -50,8 +50,8 @@ private enum SpecEnumWithCaseSensitiveMembers
 end
 
 private enum SpecEnumWithUnicodeMembers
-  Föö = 1
-  Bár = 2
+  Föö             = 1
+  Bár             = 2
 end
 
 describe Enum do
@@ -390,6 +390,11 @@ describe Enum do
     SpecEnum.parse?("Two".to_slice).should eq(SpecEnum::Two)
     SpecEnum.parse?("Four".to_slice).should be_nil
     SpecEnum.parse?("Fo-ur".to_slice).should be_nil
+
+    # invalid UTF-8 never matches a member name
+    SpecEnumWithUnicodeMembers.parse?(Bytes[0xff, 0xfe]).should be_nil
+    SpecEnumWithUnicodeMembers.parse?(Bytes[0xf0, 0x9f]).should be_nil
+    SpecEnumWithUnicodeMembers.parse?(Bytes[0xed, 0xa0, 0x80]).should be_nil
   end
 
   it "clones" do
