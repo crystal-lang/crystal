@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
   abstract class Formatter
-    def initialize(@io : IO = STDOUT)
+    def initialize(@cli : CLI, @io : IO = cli.stdout)
     end
 
     def push(context)
@@ -38,7 +38,7 @@ module Spec
     end
 
     def report(result)
-      @io << Spec.color(LETTERS[result.kind], result.kind)
+      @io << @cli.colorize(result.kind.letter, result.kind)
       split_lines
       @io.flush
     end
@@ -108,7 +108,7 @@ module Spec
     def report(result)
       @io << '\r'
       print_indent
-      @io.puts Spec.color(@last_description, result.kind)
+      @io.puts @cli.colorize(@last_description, result.kind)
     end
 
     def should_print_summary?
@@ -118,18 +118,16 @@ module Spec
 
   # :nodoc:
   class CLI
-    @formatters = [Spec::DotFormatter.new] of Spec::Formatter
-
     def formatters
-      @formatters
+      @formatters ||= [Spec::DotFormatter.new(self)] of Spec::Formatter
     end
 
     def override_default_formatter(formatter)
-      @formatters[0] = formatter
+      formatters[0] = formatter
     end
 
     def add_formatter(formatter)
-      @formatters << formatter
+      formatters << formatter
     end
   end
 

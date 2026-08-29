@@ -195,8 +195,16 @@ describe "Random" do
     values[0].should eq values[1]
   end
 
+  it "splits" do
+    Random.split.should be_a(Random)
+  end
+
   it "gets a random bool" do
-    Random::DEFAULT.next_bool.should be_a(Bool)
+    Random.next_bool.should be_a(Bool)
+  end
+
+  it "gets a random int" do
+    Random.next_int.should be_a(Int32)
   end
 
   it "generates by accumulation" do
@@ -357,5 +365,11 @@ describe "Random" do
       array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{type}}, 4))
       typeof(array).should eq(StaticArray({{type}}, 4))
     {% end %}
+  end
+
+  it "fails to split" do
+    expect_raises(NotImplementedError, "TestRNG(Int32)#split") do
+      TestRNG(Int32).new([0]).split
+    end
   end
 end

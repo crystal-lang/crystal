@@ -3,9 +3,6 @@
 # This helper queries merged pull requests for a given milestone from the GitHub API
 # and creates formatted changelog entries.
 #
-# Pull requests that are already referenced in CHANGELOG.md are omitted, which
-# makes it easy to incrementally add entries.
-#
 # Entries are grouped by topic (based on topic labels) and ordered by merge date.
 # Some annotations are automatically added based on labels.
 #
@@ -17,9 +14,12 @@
 #   GITHUB_TOKEN: Access token for the GitHub API (required)
 require "http/client"
 require "json"
+require "colorize"
 
 abort "Missing GITHUB_TOKEN env variable" unless ENV["GITHUB_TOKEN"]?
 api_token = ENV["GITHUB_TOKEN"]
+
+MISSING_TOPICS = Set(PullRequest).new
 
 case ARGV.size
 when 0
@@ -144,6 +144,10 @@ record PullRequest,
     io << "[#" << number << "]"
   end
 
+  def ==(other : self)
+    number == other.number
+  end
+
   def <=>(other : self)
     sort_tuple <=> other.sort_tuple
   end
@@ -176,7 +180,7 @@ record PullRequest,
 
   def topic
     topics.fetch(0) do
-      STDERR.puts "Missing topic for ##{number}"
+      MISSING_TOPICS.add(self)
       nil
     end
   end
@@ -273,15 +277,21 @@ record PullRequest,
   end
 
   def clean_title
-    title.sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "").sub(/\s*\[Backport [^\]]+\]\s*/, "")
+    title.sub(/\s*\[Backport [^\]]+\]\s*/, "").sub(/^\[?(?:#{type}|#{sub_topic})(?::|\]:?) /i, "")
   end
 
   def backported?
-    labels.any?(&.starts_with?("backport"))
+    # Labels like `backport release/1.20`
+    labels.any?(&.starts_with?("backport "))
   end
 
   def backport?
     title.includes?("[Backport ")
+  end
+
+  def print_ref_label(io)
+    link_ref(io)
+    io << ": " << permalink
   end
 end
 
@@ -328,8 +338,11 @@ class ChangelogEntry
   getter pull_requests : Array(PullRequest)
   property backported_from : PullRequest?
 
-  def initialize(pr : PullRequest)
-    @pull_requests = [pr]
+  def self.new(pr : PullRequest)
+    new [pr]
+  end
+
+  def initialize(@pull_requests : Array(PullRequest))
   end
 
   def pr
@@ -338,7 +351,7 @@ class ChangelogEntry
 
   def to_s(io : IO)
     if sub_topic = pr.sub_topic
-      io << "*(" << pr.sub_topic << ")* "
+      io << "_(" << sub_topic << ")_ "
     end
     if pr.labels.includes?("security")
       io << "**[security]** "
@@ -395,21 +408,11 @@ class ChangelogEntry
 
     authors
   end
-
-  def print_ref_labels(io)
-    pull_requests.each { |pr| print_ref_label(io, pr) }
-    backported_from.try { |pr| print_ref_label(io, pr) }
-  end
-
-  def print_ref_label(io, pr)
-    pr.link_ref(io)
-    io << ": " << pr.permalink
-    io.puts
-  end
 end
 
-entries = milestone.pull_requests.compact_map do |pr|
-  ChangelogEntry.new(pr) unless pr.fixup? || pr.backported?
+entries = milestone.pull_requests.group_by(&.clean_title).compact_map do |_, prs|
+  next if prs.all? { |pr| pr.fixup? || pr.backported? }
+  ChangelogEntry.new(prs)
 end
 
 milestone.pull_requests.each do |pr|
@@ -454,12 +457,10 @@ TOPIC_ORDER = %w[lang stdlib compiler tools other]
 puts "## [#{milestone.title}] (#{milestone.release_date.try(&.to_s("%F")) || "unreleased"})"
 if description = milestone.description.presence
   puts
-  print "_", description
-  puts "_"
+  puts description
 end
 puts
 puts "[#{milestone.title}]: https://github.com/#{repository}/releases/#{milestone.title}"
-puts
 
 def print_entries(entries)
   entries.each do |entry|
@@ -467,12 +468,15 @@ def print_entries(entries)
   end
   puts
 
-  entries.each(&.print_ref_labels(STDOUT))
-  puts
+  all_prs = entries.flat_map(&.pull_requests) + entries.compact_map(&.backported_from)
+  all_prs.sort_by!(&.number)
+  all_prs.join(STDOUT, "\n", &.print_ref_label(STDOUT))
+  STDOUT.puts
 end
 
 SECTION_TITLES.each do |id, title|
   entries = sections[id]? || next
+  puts
   puts "### #{title}"
   puts
 
@@ -484,14 +488,25 @@ SECTION_TITLES.each do |id, title|
 
     topic_titles = topics.keys.sort_by! { |k| TOPIC_ORDER.index(k) || Int32::MAX }
 
+    first = true
     topic_titles.each do |topic_title|
       topic_entries = topics[topic_title]? || next
 
+      puts unless first
+      first = false
       puts "#### #{topic_title}"
       puts
 
       topic_entries.sort_by!(&.pr)
       print_entries topic_entries
     end
+  end
+end
+
+if MISSING_TOPICS.present?
+  Colorize.enabled = true
+  STDERR.puts "Missing topics:"
+  MISSING_TOPICS.each do |pr|
+    STDERR.puts "\e]8;;https://github.com/crystal-lang/crystal/pull/#{pr.number}\e\\#{pr.title.colorize(:white)} (#{pr.number.to_s.colorize(:light_gray)})\e]8;;\e\\ (#{pr.labels.join(", ")})"
   end
 end

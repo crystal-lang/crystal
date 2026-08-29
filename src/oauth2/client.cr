@@ -1,3 +1,5 @@
+require "./error_response"
+
 # An OAuth2 client.
 #
 # For a quick example of how to authenticate an `HTTP::Client` with OAuth2 if
@@ -95,7 +97,7 @@ class OAuth2::Client
 
   # Builds an authorize URI, as specified by
   # [RFC 6749, Section 4.1.1](https://tools.ietf.org/html/rfc6749#section-4.1.1).
-  def get_authorize_uri(scope = nil, state = nil) : String
+  def get_authorize_uri(scope : String? = nil, state : String? = nil) : String
     get_authorize_uri(scope, state) { }
   end
 
@@ -139,7 +141,7 @@ class OAuth2::Client
 
   # Gets an access token using the resource owner credentials, as specified by
   # [RFC 6749, Section 4.3.2](https://tools.ietf.org/html/rfc6749#section-4.3.2).
-  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope = nil) : AccessToken
+  def get_access_token_using_resource_owner_credentials(username : String, password : String, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "password")
       form.add("username", username)
@@ -150,7 +152,7 @@ class OAuth2::Client
 
   # Gets an access token using client credentials, as specified by
   # [RFC 6749, Section 4.4.2](https://tools.ietf.org/html/rfc6749#section-4.4.2).
-  def get_access_token_using_client_credentials(scope = nil) : AccessToken
+  def get_access_token_using_client_credentials(scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "client_credentials")
       form.add("scope", scope) unless scope.nil?
@@ -159,7 +161,7 @@ class OAuth2::Client
 
   # Gets an access token using a refresh token, as specified by
   # [RFC 6749, Section 6](https://tools.ietf.org/html/rfc6749#section-6).
-  def get_access_token_using_refresh_token(refresh_token, scope = nil) : AccessToken
+  def get_access_token_using_refresh_token(refresh_token : String?, scope : String? = nil) : AccessToken
     get_access_token do |form|
       form.add("grant_type", "refresh_token")
       form.add("refresh_token", refresh_token)
@@ -191,11 +193,15 @@ class OAuth2::Client
     response = make_token_request do |form, _headers|
       yield form
     end
-    case response.status
-    when .ok?, .created?
-      OAuth2::AccessToken.from_json(response.body)
-    else
-      raise OAuth2::Error.new(response.body)
+
+    unless response.success?
+      raise Error.new("Unexpected response status: #{response.status.code} #{response.status}")
+    end
+
+    begin
+      AccessToken.from_json(response.body)
+    rescue ex : JSON::SerializableError
+      raise Error.new(ErrorResponse.from_json(response.body).error, cause: ex)
     end
   end
 

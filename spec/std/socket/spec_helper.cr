@@ -1,6 +1,8 @@
 require "spec"
 require "socket"
 
+CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
+
 module SocketSpecHelper
   class_getter?(supports_ipv6 : Bool) { detect_supports_ipv6? }
 
@@ -34,8 +36,18 @@ def each_ip_family(&block : Socket::Family, String, String ->)
   end
 end
 
-def unused_local_port
+def unused_local_tcp_port
   TCPServer.open(Socket::IPAddress::UNSPECIFIED, 0) do |server|
     server.local_address.port
+  end
+end
+
+def unused_local_udp_port
+  socket = UDPSocket.new
+  begin
+    socket.bind(Socket::IPAddress::UNSPECIFIED, 0)
+    socket.local_address.port
+  ensure
+    socket.close
   end
 end

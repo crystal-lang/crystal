@@ -21,6 +21,41 @@ class Crystal::Program
     flags.includes?(name)
   end
 
+  # Returns the value of a flag in the format `"#{key}=#{value}"`.
+  # Or `true` if the flags contain `key`.
+  def flag_value(name : String) : String | Bool
+    self.class.flag_value(flags_ary, name)
+  end
+
+  # Returns the value of a host flag in the format `"#{key}=#{value}"`.
+  # Or `true` if the host flags contain `key`.
+  def host_flag_value(name : String) : String | Bool
+    self.class.flag_value(host_flags_ary, name)
+  end
+
+  private getter flags_ary : Array(String) do
+    flags.to_a
+  end
+  private getter host_flags_ary : Array(String) do
+    host_flags.to_a
+  end
+
+  def self.flag_value(flags, name)
+    flags.reverse_each do |flag|
+      return true if flag == name
+
+      # Easy test to skip items that wouldn't match anyway
+      next unless flag.starts_with?(name)
+
+      key, assign, value = flag.partition("=")
+      if key == name
+        return assign == "=" ? value : true
+      end
+    end
+
+    false
+  end
+
   def bits64?
     codegen_target.pointer_bit_width == 64
   end

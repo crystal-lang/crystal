@@ -27,6 +27,10 @@ spec/std/string/grapheme_break_spec.cr linguist-generated
 # produced by spec/generate_wasm32_spec.sh
 spec/wasm32_std_spec.cr linguist-generated
 
+# devenv
+.devenv.flake.nix -merge linguist-generated
+devenv.lock -merge linguist-generated
+
 ## Syntax highlighting
 
 Makefile.win linguist-language=makefile

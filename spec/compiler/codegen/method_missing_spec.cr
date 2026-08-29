@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: method_missing" do
   it "does method_missing macro without args" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo_something
           1
@@ -14,11 +14,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro with args" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Foo
         macro method_missing(call)
           {{call.args.join(" &+ ").id}}
@@ -26,11 +26,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo(1, 2, 3)
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "does method_missing macro with block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Foo
         def foo_something
           yield 1
@@ -48,11 +48,11 @@ describe "Code gen: method_missing" do
         a &+= x
       end
       a
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "does method_missing macro with block but not using it" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def foo_something
           1 &+ 2
@@ -64,11 +64,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Foococo")
       class Foo
         macro method_missing(call)
           "{{@type.name.id}}{{call.name.id}}"
@@ -80,11 +80,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new || Bar.new
       foo.coco
-      )).to_string.should eq("Foococo")
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Barcoco")
       class Foo
         macro method_missing(call)
           "{{@type.name.id}}{{call.name.id}}"
@@ -96,11 +96,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.coco
-      )).to_string.should eq("Barcoco")
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def lala
           1
@@ -116,11 +116,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (4)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         macro method_missing(call)
           1
@@ -135,11 +135,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (5)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         macro method_missing(call)
           1
@@ -160,11 +160,11 @@ describe "Code gen: method_missing" do
 
       foo = Baz.new || Bar.new || Foo.new
       foo.lala
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (6)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       abstract class Foo
       end
 
@@ -182,11 +182,11 @@ describe "Code gen: method_missing" do
 
       foo = Bar.new || Baz.new
       foo.lala
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (7)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       abstract class Foo
       end
 
@@ -204,11 +204,11 @@ describe "Code gen: method_missing" do
 
       foo = Baz.new || Bar.new
       foo.lala
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "does method_missing macro with virtual type (8)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Bar")
       class Foo
         macro method_missing(call)
           {{@type.name.stringify}}
@@ -223,11 +223,11 @@ describe "Code gen: method_missing" do
 
       bar = Bar.new
       bar.coco
-      )).to_string.should eq("Bar")
+      CRYSTAL
   end
 
   it "does method_missing macro with module involved" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       module Moo
         def lala
           1
@@ -243,11 +243,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.lala
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro with top level method involved" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def lala
         1
       end
@@ -264,11 +264,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro with included module" do
-    run("
+    run(<<-CRYSTAL).to_string.should eq("Foo")
       module Moo
         macro method_missing(call)
           {{@type.name.stringify}}
@@ -280,11 +280,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.coco
-      ").to_string.should eq("Foo")
+      CRYSTAL
   end
 
   it "does method_missing with assignment (bug)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         macro method_missing(call)
           x = {{call.args[0]}}
@@ -294,11 +294,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar(1)
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing with assignment (2) (bug)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil
         def to_i!
           0
@@ -316,11 +316,11 @@ describe "Code gen: method_missing" do
 
       foo = Foo.new
       foo.bar(1).to_i!
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro without args (with call)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo_something
           1
@@ -332,11 +332,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does method_missing macro with args (with call)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Foo
         macro method_missing(call)
           {{call.args.join(" &+ ").id}}
@@ -344,11 +344,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.foo(1, 2, 3)
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "forwards" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       class Wrapped
         def foo(x, y, z)
           x &+ y &+ z
@@ -365,11 +365,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new(Wrapped.new).foo(1, 2, 3)
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "does method_missing generating method" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("bar")
       class Foo
         macro method_missing(call)
           def {{call.name}}
@@ -379,11 +379,11 @@ describe "Code gen: method_missing" do
       end
 
       Foo.new.bar
-      )).to_string.should eq("bar")
+      CRYSTAL
   end
 
   it "works with named arguments (#3654)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       class A
         macro method_missing(call)
           {{call.named_args[0].value}} &+
@@ -393,11 +393,11 @@ describe "Code gen: method_missing" do
 
       a = A.new
       a.b(x: 1, y: 2)
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "works with named arguments that aren't legal variable names (#10381)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       class A
         macro method_missing(call)
           {{call.named_args[0].value}} &+
@@ -407,11 +407,11 @@ describe "Code gen: method_missing" do
 
       a = A.new
       a.b("@x": 1, Y: 2)
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "finds method_missing with 'with ... yield'" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         def initialize(@x : Int32)
         end
@@ -429,6 +429,6 @@ describe "Code gen: method_missing" do
       bar do
         x
       end
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 end

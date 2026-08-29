@@ -118,7 +118,7 @@ describe File do
       file.try &.delete
     end
 
-    it "fails in nonwriteable folder" do
+    it "fails in non-writable folder" do
       err_directory = (datapath("non-existing-folder") + Path::SEPARATORS[0]).inspect_unquoted
       expect_raises(File::NotFoundError, "Error creating temporary file: '#{err_directory}") do
         File.tempfile dir: datapath("non-existing-folder")
@@ -146,7 +146,7 @@ describe File do
         tempfile.path.should eq filepath
         tempfile.closed?.should be_true
 
-        filepath = filepath.not_nil!
+        filepath = filepath.should_not(be_nil)
         File.exists?(filepath).should be_true
       ensure
         File.delete(filepath) if filepath
@@ -197,7 +197,7 @@ describe Crystal::System::File do
     it "creates random file name" do
       with_tempfile "random-path" do |tempdir|
         Dir.mkdir tempdir
-        fd, path = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
+        fd, path, _ = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
         path.should eq Path[tempdir, "A789abcdeZ"].to_s
       ensure
         IO::FileDescriptor.new(fd).close if fd
@@ -209,7 +209,7 @@ describe Crystal::System::File do
         Dir.mkdir tempdir
         existing_path = Path[tempdir, "A789abcdeZ"]
         File.touch existing_path
-        fd, path = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
+        fd, path, _ = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]))
         path.should eq File.join(tempdir, "AfghijklmZ")
       ensure
         IO::FileDescriptor.new(fd).close if fd
@@ -221,7 +221,7 @@ describe Crystal::System::File do
         Dir.mkdir tempdir
         File.touch Path[tempdir, "A789abcdeZ"]
         expect_raises(File::AlreadyExistsError, "Error creating temporary file") do
-          fd, path = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
+          fd, _, _ = Crystal::System::File.mktemp("A", "Z", dir: tempdir, random: TestRNG.new([7, 8, 9, 10, 11, 12, 13, 14]))
         ensure
           IO::FileDescriptor.new(fd).close if fd
         end

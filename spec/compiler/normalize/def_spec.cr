@@ -70,13 +70,13 @@ module Crystal
     it "expands with splat and zero" do
       a_def = parse("def foo(*args); args; end").as(Def)
       actual = a_def.expand_default_arguments(Program.new, 0)
-      actual.to_s.should eq("def foo\n  args = {}\n  args\nend")
+      actual.to_s.should eq("def foo\n  args = ::Tuple.new\n  args\nend")
     end
 
     it "expands with splat and default argument" do
       a_def = parse("def foo(x = 1, *args); args; end").as(Def)
       actual = a_def.expand_default_arguments(Program.new, 0)
-      actual.to_s.should eq("def foo\n  x = 1\n  args = {}\n  args\nend")
+      actual.to_s.should eq("def foo\n  x = 1\n  args = ::Tuple.new\n  args\nend")
     end
 
     it "expands with named argument" do
@@ -155,7 +155,7 @@ module Crystal
     it "expands a def with double splat and no args" do
       a_def = parse("def foo(**options); options; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0)
-      other_def.to_s.should eq("def foo\n  options = {}\n  options\nend")
+      other_def.to_s.should eq("def foo\n  options = ::NamedTuple.new\n  options\nend")
     end
 
     it "expands a def with double splat and two named args" do
@@ -179,7 +179,7 @@ module Crystal
     it "expands arg with default value after splat" do
       a_def = parse("def foo(*args, x = 10); args + x; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0)
-      other_def.to_s.should eq("def foo\n  x = 10\n  args = {}\n  args + x\nend")
+      other_def.to_s.should eq("def foo\n  x = 10\n  args = ::Tuple.new\n  args + x\nend")
     end
 
     it "expands default value after splat index" do
@@ -229,7 +229,7 @@ module Crystal
     it "expands def with reserved external name (#6559)" do
       a_def = parse("def foo(abstract __arg0, **options); @abstract = __arg0; end").as(Def)
       other_def = a_def.expand_default_arguments(Program.new, 0, ["abstract"])
-      other_def.to_s.should eq("def foo:abstract(abstract __arg0)\n  options = {}\n  @abstract = __arg0\nend")
+      other_def.to_s.should eq("def foo:abstract(abstract __arg0)\n  options = ::NamedTuple.new\n  @abstract = __arg0\nend")
     end
 
     describe "gives correct body location with" do
@@ -250,6 +250,56 @@ module Crystal
           end
         end
       end
+    end
+
+    it "normalizes with filename" do
+      a_def = parse("def foo(*args, **options); args + options; end", filename: "foo.cr").as(Def)
+      other_def = a_def.expand_default_arguments(Program.new, 2, ["x", "y"])
+      other_def.to_s.should eq <<-CRYSTAL
+        def foo:x:y(__temp_cd6ae5dd_1, __temp_cd6ae5dd_2, x __temp_cd6ae5dd_3, y __temp_cd6ae5dd_4)
+          args = {__temp_cd6ae5dd_1, __temp_cd6ae5dd_2}
+          options = {x: __temp_cd6ae5dd_3, y: __temp_cd6ae5dd_4}
+          args + options
+        end
+        CRYSTAL
+
+      a_def = parse("def foo(*args, **options); args + options; end", filename: "bar.cr").as(Def)
+      other_def = a_def.expand_default_arguments(Program.new, 2, ["x", "y"])
+      other_def.to_s.should eq <<-CRYSTAL
+        def foo:x:y(__temp_fbcf3d84_1, __temp_fbcf3d84_2, x __temp_fbcf3d84_3, y __temp_fbcf3d84_4)
+          args = {__temp_fbcf3d84_1, __temp_fbcf3d84_2}
+          options = {x: __temp_fbcf3d84_3, y: __temp_fbcf3d84_4}
+          args + options
+        end
+        CRYSTAL
+    end
+
+    it "normalizes `.new` with filename" do
+      a_def = parse("def new(y, **options); end", filename: "foo.cr").as(Def)
+      other_def = a_def.expand_new_default_arguments(Program.new, 0, ["x", "y", "z"])
+      other_def.to_s.should eq <<-CRYSTAL
+        def new:x:y:z(x __temp_cd6ae5dd_1, y __temp_cd6ae5dd_2, z __temp_cd6ae5dd_3)
+          _ = allocate
+          _.initialize(x: __temp_cd6ae5dd_1, y: __temp_cd6ae5dd_2, z: __temp_cd6ae5dd_3)
+          if _.responds_to?(:finalize)
+            ::GC.add_finalizer(_)
+          end
+          _
+        end
+        CRYSTAL
+
+      a_def = parse("def new(y, **options); end", filename: "bar.cr").as(Def)
+      other_def = a_def.expand_new_default_arguments(Program.new, 0, ["x", "y", "z"])
+      other_def.to_s.should eq <<-CRYSTAL
+        def new:x:y:z(x __temp_fbcf3d84_1, y __temp_fbcf3d84_2, z __temp_fbcf3d84_3)
+          _ = allocate
+          _.initialize(x: __temp_fbcf3d84_1, y: __temp_fbcf3d84_2, z: __temp_fbcf3d84_3)
+          if _.responds_to?(:finalize)
+            ::GC.add_finalizer(_)
+          end
+          _
+        end
+        CRYSTAL
     end
   end
 end

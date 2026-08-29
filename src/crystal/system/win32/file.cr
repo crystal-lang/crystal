@@ -14,7 +14,7 @@ module Crystal::System::File
   # write at the end of the file.
   getter? system_append = false
 
-  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : FileDescriptor::Handle
+  def self.open(filename : String, mode : String, perm : Int32 | ::File::Permissions, blocking : Bool?) : {FileDescriptor::Handle, Bool}
     perm = ::File::Permissions.new(perm) if perm.is_a? Int32
     # Only the owner writable bit is used, since windows only supports
     # the read only attribute.
@@ -24,31 +24,15 @@ module Crystal::System::File
       perm = LibC::S_IREAD
     end
 
-    handle, error = open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
-    unless error.error_success?
-      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", error, file: filename)
+    case result = EventLoop.current.open(filename, open_flag(mode), ::File::Permissions.new(perm), blocking != false)
+    in Tuple(FileDescriptor::Handle, Bool)
+      result
+    in WinError
+      raise ::File::Error.from_os_error("Error opening file with mode '#{mode}'", result, file: filename)
     end
-
-    handle
   end
 
-  def self.open(filename : String, flags : Int32, perm : ::File::Permissions, blocking : Bool) : {FileDescriptor::Handle, WinError}
-    access, disposition, attributes = self.posix_to_open_opts flags, perm, blocking
-
-    handle = LibC.CreateFileW(
-      System.to_wstr(filename),
-      access,
-      LibC::DEFAULT_SHARE_MODE, # UNIX semantics
-      nil,
-      disposition,
-      attributes,
-      LibC::HANDLE.null
-    )
-
-    {handle.address, handle == LibC::INVALID_HANDLE_VALUE ? WinError.value : WinError::ERROR_SUCCESS}
-  end
-
-  private def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
+  def self.posix_to_open_opts(flags : Int32, perm : ::File::Permissions, blocking : Bool)
     access = if flags.bits_set? LibC::O_WRONLY
                LibC::FILE_GENERIC_WRITE
              elsif flags.bits_set? LibC::O_RDWR
@@ -104,24 +88,18 @@ module Crystal::System::File
     {access, disposition, attributes}
   end
 
-  protected def system_set_mode(mode : String)
+  protected def system_init(mode : String, blocking : Bool) : Nil
     @system_append = true if mode.starts_with?('a')
+    @system_blocking = blocking
   end
 
   private def write_blocking(handle, slice)
     write_blocking(handle, slice, pos: @system_append ? UInt64::MAX : nil)
   end
 
-  NOT_FOUND_ERRORS = {
-    WinError::ERROR_FILE_NOT_FOUND,
-    WinError::ERROR_PATH_NOT_FOUND,
-    WinError::ERROR_INVALID_NAME,
-    WinError::ERROR_DIRECTORY,
-  }
-
   def self.check_not_found_error(message, path)
     error = WinError.value
-    if NOT_FOUND_ERRORS.includes? error
+    if ::File::NotFoundError.os_error?(error)
       nil
     else
       raise ::File::Error.from_os_error(message, error, file: path)
@@ -237,7 +215,7 @@ module Crystal::System::File
     raise NotImplementedError.new("File.chown")
   end
 
-  def self.fchown(path : String, fd : Int, uid : Int32, gid : Int32) : Nil
+  private def system_chown(uid : Int, gid : Int) : Nil
     raise NotImplementedError.new("File#chown")
   end
 
@@ -268,7 +246,7 @@ module Crystal::System::File
     end
   end
 
-  private def system_chmod(path : String, mode : Int32 | ::File::Permissions) : Nil
+  private def system_chmod(mode : Int32 | ::File::Permissions) : Nil
     mode = ::File::Permissions.new(mode) unless mode.is_a? ::File::Permissions
     handle = windows_handle
 
@@ -440,8 +418,15 @@ module Crystal::System::File
     end
   end
 
-  def self.readlink(path) : String
-    info = symlink_info?(path) || raise ::File::Error.new("Cannot read link", file: path)
+  def self.readlink(path, &) : String
+    info = symlink_info?(path)
+    unless info
+      if ::File::NotFoundError.os_error?(WinError.value) || WinError.value == WinError::ERROR_NOT_A_REPARSE_POINT
+        yield
+      end
+
+      raise ::File::Error.from_winerror("Cannot read link", file: path)
+    end
     path, _is_relative = info
     path
   end
@@ -481,7 +466,7 @@ module Crystal::System::File
     end
   end
 
-  private def system_utime(access_time : ::Time, modification_time : ::Time, path : String) : Nil
+  private def system_utime(access_time : ::Time, modification_time : ::Time) : Nil
     Crystal::System::File.utime(windows_handle, access_time, modification_time, path)
   end
 

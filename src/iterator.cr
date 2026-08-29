@@ -394,12 +394,18 @@ module Iterator(T)
   # iter.next # => Iterator::Stop::INSTANCE
   # ```
   def compact_map(&func : T -> _)
-    CompactMapIterator(typeof(self), T, typeof(func.call(first).not_nil!)).new(self, func)
+    CompactMapIterator(typeof(self), T, typeof(func.call(_x = uninitialized T).not_nil!)).new(self, func)
   end
 
   private struct CompactMapIterator(I, T, U)
     include Iterator(U)
     include IteratorWrapper
+
+    # If `func` outputs a non-nilable type, we can skip compaction and return the
+    # original iterator directly.
+    def self.new(iterator, func : T -> U)
+      MapIterator(I, T, U).new(iterator, func)
+    end
 
     def initialize(@iterator : I, @func : T -> U?)
     end
@@ -1457,13 +1463,13 @@ module Iterator(T)
     def next
       {% begin %}
         {% for i in 0...Is.size %}
-          %v{i} = @iterators[{{ i }}].next
-          return stop if %v{i}.is_a?(Stop)
+          %value{i} = @iterators[{{ i }}].next
+          return stop if %value{i}.is_a?(Stop)
         {% end %}
 
         Tuple.new(
           {% for i in 0...Is.size %}
-            %v{i},
+            %value{i},
           {% end %}
         )
       {% end %}

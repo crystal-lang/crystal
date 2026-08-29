@@ -82,7 +82,7 @@ struct Complex
   # ```
   def to_s(io : IO) : Nil
     io << @real
-    io << (@imag.nan? || Math.copysign(1.0, @imag) > 0 ? " + " : " - ")
+    io << (@imag.nan? || @imag.sign_bit > 0 ? " + " : " - ")
     io << Math.copysign(@imag, 1.0)
     io << 'i'
   end

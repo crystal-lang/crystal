@@ -1,6 +1,6 @@
 class LLVM::Context
-  def self.new
-    new(LibLLVM.create_context)
+  def self.new(*, dispose_on_finalize : Bool = true)
+    new(LibLLVM.create_context, dispose_on_finalize)
   end
 
   def initialize(@unwrap : LibLLVM::ContextRef, @dispose_on_finalize = true)
@@ -108,10 +108,14 @@ class LLVM::Context
   end
 
   def const_string(string : String) : Value
+    const_bytes(string.unsafe_byte_slice(0, string.bytesize + 1))
+  end
+
+  def const_bytes(bytes : Bytes) : Value
     {% if LibLLVM::IS_LT_190 %}
-      Value.new LibLLVM.const_string_in_context(self, string, string.bytesize, 0)
+      Value.new LibLLVM.const_string_in_context(self, bytes, bytes.size, 1)
     {% else %}
-      Value.new LibLLVM.const_string_in_context2(self, string, string.bytesize, 0)
+      Value.new LibLLVM.const_string_in_context2(self, bytes, bytes.size, 1)
     {% end %}
   end
 

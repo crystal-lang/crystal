@@ -2,7 +2,8 @@ require "spec"
 
 private def build_report(&)
   String.build do |io|
-    formatter = Spec::TAPFormatter.new(io)
+    cli = Spec::CLI.new(io)
+    formatter = Spec::TAPFormatter.new(cli)
     yield formatter
     formatter.finish(Time::Span.zero, false)
   end

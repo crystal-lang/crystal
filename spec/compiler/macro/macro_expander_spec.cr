@@ -67,6 +67,14 @@ describe "MacroExpander" do
     assert_macro %({{{1, 2, 3}}}), %({1, 2, 3})
   end
 
+  it "expands macro with empty tuple" do
+    assert_macro "{{x}}", "::Tuple.new", {x: TupleLiteral.new([] of ASTNode)}
+  end
+
+  it "expands macro with empty named tuple" do
+    assert_macro "{{x}}", "::NamedTuple.new", {x: NamedTupleLiteral.new([] of NamedTupleLiteral::Entry)}
+  end
+
   it "expands macro with range" do
     assert_macro %({{1..3}}), %(1..3)
   end
@@ -152,6 +160,10 @@ describe "MacroExpander" do
 
     it "expands macro with for over range literal, evaluating elements (exclusive)" do
       assert_macro "{%for e in x...y %}{{e}}{%end%}", "345", {x: 3.int32, y: 6.int32}
+    end
+
+    it "expands macro with for over char range literal" do
+      assert_macro "{%for e in 'a'..'c' %}{{e}}{%end%}", "'a''b''c'"
     end
   end
 

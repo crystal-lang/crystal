@@ -4,12 +4,6 @@ require "http/client"
 require "../../../support/ssl"
 require "../../../support/channel"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending HTTP::Server
-  {% skip_file %}
-{% end %}
-
 # TODO: replace with `HTTP::Client.get` once it supports connecting to Unix socket (#2735)
 private def unix_request(path)
   UNIXSocket.open(path) do |io|
@@ -117,7 +111,7 @@ describe HTTP::Server do
 
   it "handles Expect: 100-continue correctly when body is read" do
     server = HTTP::Server.new do |context|
-      context.response << context.request.body.not_nil!.gets_to_end
+      context.response << context.request.body.should_not(be_nil).gets_to_end
     end
 
     address = server.bind_unused_port
@@ -274,7 +268,6 @@ describe HTTP::Server do
         server = HTTP::Server.new { }
 
         private_key = datapath("openssl", "openssl.key")
-        certificate = datapath("openssl", "openssl.crt")
 
         begin
           expect_raises(ArgumentError, "missing private key") { server.bind "tls://127.0.0.1:8081" }
@@ -413,6 +406,11 @@ describe HTTP::Server do
   end
 
   it "can process simultaneous SSL handshakes" do
+    {% if flag?(:win32) && flag?(:gnu) && flag?(:x86_64) %}
+      # FIXME: why does the spec causes the process to die with status code 67?
+      pending! "process dies with exit code 67 on msys2-ucrt-x86_64 on CI"
+    {% end %}
+
     server = HTTP::Server.new do |context|
       context.response.print "ok"
     end
@@ -619,6 +617,33 @@ describe HTTP::Server do
       server.@processor.process(io, io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
+    end
+  end
+
+  describe "request smuggling/splitting mitigations (RFC 9112, Section 6.1)" do
+    it "rejects when content-length and transfer-encoding are both defined then closes the connection" do
+      channel = Channel({String, String, String?}).new(4)
+      response = nil
+
+      server = HTTP::Server.new do |ctx|
+        channel.send({ctx.request.method, ctx.request.path, ctx.request.body.try(&.gets_to_end)})
+      end
+
+      with_tempfile("socket") do |path|
+        server.bind_unix(path)
+        spawn { server.listen }
+
+        UNIXSocket.open(path) do |socket|
+          socket << "GET /one HTTP/1.1\r\nhost: example.org\r\ncontent-length: 4\r\ntransfer-encoding: chunked\r\n\r\n2a\r\nGET /admin HTTP/1.1\r\nhost: example.org\r\n\r\n\r\n0\r\n\r\nGET /two HTTP/1.1\r\nhost: example.org\r\n\r\n"
+          socket.close_write
+          response = socket.gets_to_end
+        end
+
+        channel.close
+      end
+
+      channel.receive?.should be_nil
+      response.not_nil!.should start_with("HTTP/1.1 400 ")
     end
   end
 

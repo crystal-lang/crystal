@@ -81,7 +81,7 @@ class CSV::Builder
   end
 
   # :nodoc:
-  def quote_cell(value : String)
+  def quote_cell(value : String) : Nil
     append_cell do
       @io << @quote_char
       value.each_char do |char|

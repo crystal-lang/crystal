@@ -1282,7 +1282,10 @@ require "./repl"
         push:       true,
         code:       begin
           pointer.clear(size)
-          pointer.as(Int32*).value = type_id
+          unless type_id == 0
+            # 0 stands for any non-reference type
+            pointer.as(Int32*).value = type_id
+          end
           pointer
         end,
       },
@@ -1645,6 +1648,23 @@ require "./repl"
       # >>> ARGV (2)
 
       # <<< Overrides (6)
+      interpreter_proc_new: {
+        operands:   [proc_type_id : Int32],
+        pop_values: [pointer : Void*, closure_data : Void*],
+        push:       true,
+        code:       begin
+          if @context.compiled_procs.includes?(pointer.address)
+            {pointer, closure_data}
+          else
+            raise "BUG: closure_data not nil but pointer is not a CompiledDef" if closure_data
+
+            proc_type = type_from_type_id(proc_type_id).as(ProcInstanceType)
+            compiled_def = @context.extern_proc_wrapper(proc_type, pointer)
+
+            {compiled_def.as(Void*), Pointer(Void).null}
+          end
+        end,
+      },
       interpreter_call_stack_unwind: {
         push:       true,
         code:       backtrace,

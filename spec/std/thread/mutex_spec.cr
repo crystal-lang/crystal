@@ -8,7 +8,7 @@ pending_interpreted describe: Thread::Mutex do
     mutex = Thread::Mutex.new
 
     threads = Array.new(10) do
-      new_thread do
+      Thread.new do
         mutex.synchronize { a += 1 }
       end
     end
@@ -23,7 +23,7 @@ pending_interpreted describe: Thread::Mutex do
     mutex.try_lock.should be_false
     expect_raises(RuntimeError) { mutex.lock }
     mutex.unlock
-    new_thread { mutex.synchronize { } }.join
+    Thread.new { mutex.synchronize { } }.join
   end
 
   it "won't unlock from another thread" do
@@ -31,7 +31,7 @@ pending_interpreted describe: Thread::Mutex do
     mutex.lock
 
     expect_raises(RuntimeError) do
-      new_thread { mutex.unlock }.join
+      Thread.new { mutex.unlock }.join
     end
 
     mutex.unlock

@@ -527,9 +527,9 @@ module XML
         reader.expand?.should be_nil
         reader.read # <root id="1">
         node = reader.expand?
-        node.should be_a(XML::Node)
-        node.not_nil!.attributes["id"].content.should eq("1")
-        node.not_nil!.xpath_node("child").should be_a(XML::Node)
+        node = node.should be_a(XML::Node)
+        node.attributes["id"].content.should eq("1")
+        node.xpath_node("child").should be_a(XML::Node)
       end
 
       it "is only available until the next read" do
@@ -537,11 +537,11 @@ module XML
         reader.read # <root>
         reader.read # <child>
         node = reader.expand?
-        node.should be_a(XML::Node)
-        node.not_nil!.xpath_node("subchild").should be_a(XML::Node)
+        node = node.should be_a(XML::Node)
+        node.xpath_node("subchild").should be_a(XML::Node)
         reader.read # <subchild/>
         reader.read # </child>
-        node.not_nil!.xpath_node("subchild").should be_nil
+        node.xpath_node("subchild").should be_nil
       end
     end
 
@@ -567,15 +567,16 @@ module XML
         reader.to_unsafe.should be_a(LibXML::XMLTextReader)
       end
     end
-  end
 
-  describe "#errors" do
-    it "makes errors accessible" do
-      reader = XML::Reader.new(%(<people></foo>))
-      reader.read
-      reader.expand?
+    describe "#errors" do
+      it "makes errors accessible" do
+        options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
+        reader = XML::Reader.new(%(<people></foo>), options)
+        reader.read
+        reader.expand?
 
-      reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+        reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      end
     end
   end
 end

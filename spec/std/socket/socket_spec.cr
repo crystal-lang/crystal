@@ -1,12 +1,7 @@
 require "./spec_helper"
+require "../spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
-
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending Socket
-  {% skip_file %}
-{% end %}
 
 describe Socket, tags: "network" do
   describe ".unix" do
@@ -51,7 +46,7 @@ describe Socket, tags: "network" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
 
     begin
-      port = unused_local_port
+      port = unused_local_tcp_port
       server.bind("0.0.0.0", port)
       server.listen
 
@@ -66,9 +61,7 @@ describe Socket, tags: "network" do
         client.family.should eq(Socket::Family::INET)
         client.type.should eq(Socket::Type::STREAM)
         client.protocol.should eq(Socket::Protocol::TCP)
-        {% unless flag?(:win32) %}
-          client.close_on_exec?.should be_true
-        {% end %}
+        client.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
       ensure
         client.close
       end
@@ -80,7 +73,7 @@ describe Socket, tags: "network" do
 
   it "accept raises timeout error if read_timeout is specified" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
-    port = unused_local_port
+    port = unused_local_tcp_port
     server.bind("0.0.0.0", port)
     server.read_timeout = 0.1.seconds
     server.listen
@@ -92,13 +85,13 @@ describe Socket, tags: "network" do
   end
 
   it "sends messages" do
-    port = unused_local_port
+    port = unused_local_tcp_port
     server = Socket.tcp(Socket::Family::INET)
     server.bind("127.0.0.1", port)
     server.listen
     address = Socket::IPAddress.new("127.0.0.1", port)
     spawn do
-      client = server.not_nil!.accept
+      client = server.accept
       client.gets.should eq "foo"
       client.puts "bar"
     ensure
@@ -158,7 +151,7 @@ describe Socket, tags: "network" do
 
       it "binds to port using default IP" do
         socket = TCPSocket.new family
-        socket.bind unused_local_port
+        socket.bind unused_local_tcp_port
         socket.listen
 
         address = socket.local_address.as(Socket::IPAddress)
@@ -168,28 +161,45 @@ describe Socket, tags: "network" do
         socket.close
 
         socket = UDPSocket.new family
-        socket.bind unused_local_port
+        socket.bind unused_local_udp_port
         socket.close
       end
     end
   end
 
-  {% unless flag?(:win32) %}
-    it "closes on exec by default" do
-      socket = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
-      socket.close_on_exec?.should be_true
-    end
-  {% end %}
+  it "closes on exec by default" do
+    socket = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
+    socket.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
+  end
+
+  it ".set_blocking and .get_blocking" do
+    socket = Socket.tcp(Socket::Family::INET)
+    fd = socket.fd
+
+    Socket.set_blocking(fd, true)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_true
+    {% end %}
+
+    Socket.set_blocking(fd, false)
+    {% if flag?(:win32) %}
+      expect_raises(NotImplementedError) { IO::FileDescriptor.get_blocking(fd) }
+    {% else %}
+      Socket.get_blocking(fd).should be_false
+    {% end %}
+  end
 
   describe "#finalize" do
     it "does not flush" do
-      port = unused_local_port
+      port = unused_local_tcp_port
       server = Socket.tcp(Socket::Family::INET)
       server.bind("127.0.0.1", port)
       server.listen
 
       spawn do
-        client = server.not_nil!.accept
+        client = server.accept
         client.sync = false
         client << "foo"
         client.flush
@@ -206,6 +216,76 @@ describe Socket, tags: "network" do
     ensure
       socket.try &.close
       server.try &.close
+    end
+  end
+
+  describe "#sendfile" do
+    sendfile_test = ->(file : File, offset : Int32, count : Int32, expected : Int64) {
+      begin
+        port = unused_local_tcp_port
+        server = Socket.tcp(:inet)
+        server.bind("127.0.0.1", port)
+        server.listen
+        actual = nil
+
+        spawn do
+          client = server.not_nil!.accept
+          actual = client.sendfile(file, offset, count)
+        ensure
+          client.try(&.close)
+        end
+
+        socket = Socket.tcp(:inet)
+        socket.connect("localhost", port)
+        string = socket.gets_to_end
+
+        actual.should eq(expected)
+
+        string
+      ensure
+        server.try(&.close)
+        socket.try(&.close)
+      end
+    }
+
+    it "rejects negative offset and count arguments" do
+      File.open(datapath("test_file.txt")) do |file|
+        sock = Socket.tcp(:inet)
+        expect_raises(ArgumentError, "Negative offset") { sock.sendfile(file, -1, 10) }
+        expect_raises(ArgumentError, "Negative count") { sock.sendfile(file, 1, -10) }
+      end
+    end
+
+    it "writes file range to socket" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 0, 11, 11_i64)
+        received.should eq("Hello World")
+      end
+    end
+
+    it "uses absolute range (unbuffered)" do
+      buf = uninitialized UInt8[3]
+
+      File.open(datapath("test_file.txt")) do |file|
+        file.read_buffering = false
+        file.read(buf.to_slice)
+
+        received = sendfile_test.call(file, 17, 11, 11_i64)
+        received.should eq(" World\nHell")
+        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
+      end
+    end
+
+    it "uses absolute range (buffered)" do
+      buf = uninitialized UInt8[9]
+
+      File.open(datapath("test_file.txt")) do |file|
+        file.read(buf.to_slice)
+
+        received = sendfile_test.call(file, 3, 10, 10_i64)
+        received.should eq("lo World\nH")
+        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
+      end
     end
   end
 end

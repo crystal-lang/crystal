@@ -1,13 +1,23 @@
 require "./libevent/event"
+require "./libevent/evented"
+require "./lock"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
-  private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
-
-  def after_fork_before_exec : Nil
+  def self.default_file_blocking?
+    false
   end
 
-  {% unless flag?(:preview_mt) %}
+  def self.default_socket_blocking?
+    false
+  end
+
+  private getter(event_base) { Crystal::EventLoop::LibEvent::Event::Base.new }
+
+  def initialize(parallelism : Int32)
+  end
+
+  {% if flag?(:without_mt) %}
     # Reinitializes the event loop after a fork.
     def after_fork : Nil
       event_base.reinit
@@ -20,20 +30,24 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop(flags)
   end
 
-  {% if flag?(:execution_context) %}
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      Crystal.trace :evloop, "run", fiber: fiber, blocking: blocking
-      @runnables = queue
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    # the evloop has a single poll instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include Lock
+
+    def run(blocking : Bool, &callback : Fiber ->) : Nil
+      Crystal.trace :evloop, "run", blocking: blocking
+      @callback = callback
       run(blocking)
     ensure
-      @runnables = nil
+      @callback = nil
     end
 
     def callback_enqueue(fiber : Fiber) : Nil
-      if queue = @runnables
-        queue.value.push(fiber)
+      if callback = @callback
+        callback.call(fiber)
       else
-        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+        raise "BUG: libevent callback executed outside of #run(blocking, &) call"
       end
     end
   {% end %}
@@ -51,7 +65,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      {% if flag?(:execution_context) %}
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(f)
       {% else %}
@@ -67,7 +81,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       if select_action = f.timeout_select_action
         f.timeout_select_action = nil
         if select_action.time_expired?
-          {% if flag?(:execution_context) %}
+          {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
             event_loop.callback_enqueue(f)
           {% else %}
@@ -79,7 +93,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -94,7 +108,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : IO::Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_read_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -108,6 +122,35 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+    r, w = System::FileDescriptor.system_pipe
+    System::FileDescriptor.set_blocking(r, false) unless read_blocking
+    System::FileDescriptor.set_blocking(w, false) unless write_blocking
+    {
+      IO::FileDescriptor.new(handle: r),
+      IO::FileDescriptor.new(handle: w),
+    }
+  end
+
+  def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno
+    path.check_no_null_byte
+
+    fd, errno = ::Fiber.syscall do
+      ret = LibC.open(path, flags | LibC::O_CLOEXEC, permissions)
+      {ret, Errno.value}
+    end
+    return errno if fd == -1
+
+    {% if flag?(:darwin) %}
+      # FIXME: poll of non-blocking fifo fd on darwin appears to be broken, so
+      # we default to blocking for the time being
+      blocking = true if blocking.nil?
+    {% end %}
+
+    System::FileDescriptor.set_blocking(fd, false) unless blocking
+    {fd, !!blocking}
+  end
+
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_read(file_descriptor, "Error reading file_descriptor") do
       LibC.read(file_descriptor.fd, slice, slice.size).tap do |return_code|
@@ -115,6 +158,12 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           raise IO::Error.new "File not open for reading", target: file_descriptor
         end
       end
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    evented_read(file_descriptor, "Error reading file descriptor") do
+      LibC.pread(file_descriptor.fd, slice, slice.size, offset)
     end
   end
 
@@ -144,11 +193,24 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     file_descriptor.evented_close
   end
 
-  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
+  def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     file_descriptor.evented_close
+  end
+
+  def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
     file_descriptor.file_descriptor_close
+  end
+
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+    socket = System::Socket.socket(family, type, protocol, !!blocking)
+    {socket, !!blocking}
+  end
+
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+    socket = System::Socket.socketpair(type, protocol, blocking: false)
+    {socket, false}
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
@@ -216,11 +278,34 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno
+    loop do
+      ret, sent_bytes = System::Socket.sendfile(socket.fd, fd, offset, count, flags)
+      return sent_bytes unless ret == -1
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        # Darwin/BSD may have written bytes before blocking
+        return sent_bytes if sent_bytes > 0
+
+        socket.evented_wait_writable(timeout: socket.@write_timeout) do
+          return Errno::ETIMEDOUT
+        end
+      when Errno::EINTR, Errno::EBUSY
+        # Darwin/BSD may have written bytes before being interrupted (zero
+        # doesn't necessarily means EOF)
+        return sent_bytes if sent_bytes > 0
+      else
+        return errno
+      end
+    end
+  end
+
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     loop do
       client_fd =
         {% if LibC.has_method?(:accept4) %}
-          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
+          LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC | LibC::SOCK_NONBLOCK)
         {% else %}
           # we may fail to set FD_CLOEXEC between `accept` and `fcntl` but we
           # can't call `Crystal::System::Socket.lock_read` because the socket
@@ -231,7 +316,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           # could change the socket back to blocking mode between the condition
           # check and the `accept` call.
           fd = LibC.accept(socket.fd, nil, nil)
-          Crystal::System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC) unless fd == -1
+          unless fd == -1
+            System::Socket.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
+            System::Socket.fcntl(fd, LibC::F_SETFL, System::Socket.fcntl(fd, LibC::F_GETFL) | LibC::O_NONBLOCK)
+          end
           fd
         {% end %}
 
@@ -247,15 +335,18 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
           raise ::Socket::Error.from_errno("accept")
         end
       else
-        return client_fd
+        return {client_fd, false}
       end
     end
   end
 
-  def close(socket : ::Socket) : Nil
+  def shutdown(socket : ::Socket) : Nil
     # perform cleanup before LibC.close. Using a file descriptor after it has
     # been closed is never defined and can always lead to undefined results
     socket.evented_close
+  end
+
+  def close(socket : ::Socket) : Nil
     socket.socket_close
   end
 
@@ -275,28 +366,22 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         raise IO::Error.from_errno(errno_msg, target: target)
       end
     end
-  ensure
-    target.evented_resume_pending_readers
   end
 
   def evented_write(target, errno_msg : String, &) : Int32
-    begin
-      loop do
-        bytes_written = yield
-        if bytes_written != -1
-          return bytes_written.to_i32
-        end
-
-        if Errno.value == Errno::EAGAIN
-          target.evented_wait_writable do
-            raise IO::TimeoutError.new("Write timed out")
-          end
-        else
-          raise IO::Error.from_errno(errno_msg, target: target)
-        end
+    loop do
+      bytes_written = yield
+      if bytes_written != -1
+        return bytes_written.to_i32
       end
-    ensure
-      target.evented_resume_pending_writers
+
+      if Errno.value == Errno::EAGAIN
+        target.evented_wait_writable do
+          raise IO::TimeoutError.new("Write timed out")
+        end
+      else
+        raise IO::Error.from_errno(errno_msg, target: target)
+      end
     end
   end
 end

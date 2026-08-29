@@ -1,6 +1,8 @@
 require "lib_c"
 
 lib LibC
+  alias NTSTATUS = ULONG
+
   STATUS_SUCCESS                 = 0x00000000_u32
   STATUS_FATAL_APP_EXIT          = 0x40000015_u32
   STATUS_DATATYPE_MISALIGNMENT   = 0x80000002_u32

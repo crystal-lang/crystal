@@ -12,11 +12,11 @@ Setup-Git -Path $BuildTree -Url https://github.com/PCRE2Project/pcre2.git -Ref p
 Run-InDirectory $BuildTree {
     & $git submodule update --init
 
-    $args = "-DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
+    $args = "-DPCRE2_BUILD_PCRE2GREP=OFF -DPCRE2_BUILD_TESTS=OFF -DPCRE2_SUPPORT_UNICODE=ON -DPCRE2_SUPPORT_JIT=ON -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
     if ($Dynamic) {
         $args = "-DBUILD_STATIC_LIBS=OFF -DBUILD_SHARED_LIBS=ON $args"
     } else {
-        $args = "-DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DPCRE2_STATIC_RUNTIME=ON $args"
+        $args = "-DBUILD_STATIC_LIBS=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded $args"
     }
     & $cmake . $args.split(' ')
     & $cmake --build . --config Release

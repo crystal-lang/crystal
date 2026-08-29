@@ -42,9 +42,9 @@ describe IO::ARGF do
     argf = IO::ARGF.new [datapath("argf_test_file_3.xml")], IO::Memory.new
     argf.read(Bytes.new(4))
     buf = Bytes.new(4096)
-    z = argf.read(buf)
-    z = argf.read(buf)
-    z = argf.read(buf)
+    argf.read(buf)
+    argf.read(buf)
+    argf.read(buf)
     z = argf.read(buf)
     z.should_not eq 0
     String.new(buf[0...z]).should_not be_empty

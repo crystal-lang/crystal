@@ -36,7 +36,7 @@ class Log
   module DirectDispatcher
     extend Dispatcher
 
-    def self.dispatch(entry : Entry, backend : Backend)
+    def self.dispatch(entry : Entry, backend : Backend) : Nil
       backend.write(entry)
     end
   end
@@ -72,7 +72,7 @@ class Log
       end
     end
 
-    def finalize
+    def finalize : Nil
       close
     end
   end
@@ -83,7 +83,7 @@ class Log
     include Dispatcher
 
     def initialize
-      @mutex = Mutex.new(:unchecked)
+      @mutex = Sync::Mutex.new(:unchecked)
     end
 
     def dispatch(entry : Entry, backend : Backend)

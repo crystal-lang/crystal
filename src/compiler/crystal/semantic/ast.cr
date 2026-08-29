@@ -1,12 +1,6 @@
 require "../syntax/ast"
 
 module Crystal
-  def self.check_type_can_be_stored(node, type, msg)
-    return if type.can_be_stored?
-
-    node.raise "#{msg} yet, use a more specific type"
-  end
-
   class ASTNode
     def raise(message, inner = nil, exception_type = Crystal::TypeException)
       ::raise exception_type.for_node(self, message, inner)
@@ -47,8 +41,6 @@ module Crystal
   class Var
     def initialize(@name : String, @type : Type)
     end
-
-    def_equals name, type?
   end
 
   # Fictitious node to represent primitives
@@ -116,8 +108,15 @@ module Crystal
   class Arg
     include Annotatable
 
+    # Name of the original arg if its def has been expanded (default arguments)
+    property? original_name : String?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
       @external_name = external_name || @name
+    end
+
+    def original_name
+      @original_name || @name
     end
 
     def clone_without_location
@@ -126,6 +125,9 @@ module Crystal
       # An arg's type can sometimes be used as a restriction,
       # and must be preserved when cloned
       arg.set_type @type
+
+      arg.annotations = @annotations.dup
+      arg.original_name = original_name
 
       arg
     end
@@ -157,11 +159,20 @@ module Crystal
     # `true` if this def has the `@[ReturnsTwice]` annotation
     property? returns_twice = false
 
+    # Set to the value of the `@[TargetFeature("+sve,+sve2")]` annotation
+    property target_features : String? = nil
+
+    # Set to the value of the `@[TargetFeature(cpu: "apple-m4")]` annotation
+    property target_cpu : String? = nil
+
     # `true` if this def has the `@[Naked]` annotation
     property? naked = false
 
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
+
+    # Name of the original def if this def has been expanded (default arguments)
+    property? original_name : String?
 
     @macro_owner : Type?
 
@@ -177,6 +188,10 @@ module Crystal
 
     def macro_owner?
       @macro_owner
+    end
+
+    def original_name
+      @original_name || @name
     end
 
     def add_special_var(name)
@@ -213,9 +228,12 @@ module Crystal
       a_def.no_inline = no_inline?
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
+      a_def.target_features = target_features
+      a_def.target_cpu = target_cpu
       a_def.naked = naked?
       a_def.annotations = annotations
       a_def.new = new?
+      a_def.original_name = original_name?
       a_def
     end
 

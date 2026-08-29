@@ -6,10 +6,6 @@ require "termios"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  {% if IO.has_constant?(:Evented) %}
-    include IO::Evented
-  {% end %}
-
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   alias Handle = Int32
@@ -19,32 +15,49 @@ module Crystal::System::FileDescriptor
   STDERR_HANDLE = 2
 
   private def system_blocking?
-    flags = fcntl(LibC::F_GETFL)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
   private def system_blocking=(value)
-    current_flags = fcntl(LibC::F_GETFL)
+    FileDescriptor.set_blocking(fd, value)
+  end
+
+  protected def self.get_blocking(fd : Handle)
+    fcntl(fd, LibC::F_GETFL) & LibC::O_NONBLOCK == 0
+  end
+
+  protected def self.set_blocking(fd : Handle, value : Bool)
+    current_flags = fcntl(fd, LibC::F_GETFL)
     new_flags = current_flags
     if value
       new_flags &= ~LibC::O_NONBLOCK
     else
       new_flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::F_SETFL, new_flags) unless new_flags == current_flags
+    fcntl(fd, LibC::F_SETFL, new_flags) unless new_flags == current_flags
   end
 
-  private def system_blocking_init(value)
-    self.system_blocking = false unless value
+  protected def system_blocking_init(blocking : Bool?)
+    if blocking.nil?
+      blocking = EventLoop.default_file_blocking? ||
+                 case system_info.type
+                 when .pipe?, .socket?, .character_device?
+                   false
+                 else
+                   true
+                 end
+    end
+    self.system_blocking = blocking
   end
 
   private def system_close_on_exec?
-    flags = fcntl(LibC::F_GETFD)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFD)
     flags.bits_set? LibC::FD_CLOEXEC
   end
 
   private def system_close_on_exec=(arg : Bool)
-    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    system_fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
@@ -56,6 +69,10 @@ module Crystal::System::FileDescriptor
     r = LibC.fcntl(fd, cmd, arg)
     raise IO::Error.from_errno("fcntl() failed") if r == -1
     r
+  end
+
+  private def system_fcntl(cmd, arg = 0)
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.system_info(fd)
@@ -70,7 +87,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    FileDescriptor.system_info fd
+    FileDescriptor.system_info(fd)
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
@@ -112,10 +129,6 @@ module Crystal::System::FileDescriptor
     event_loop.reopened(self)
   end
 
-  private def system_close
-    event_loop.close(self)
-  end
-
   def file_descriptor_close(&) : Nil
     # It would usually be set by IO::Buffered#unbuffered_close but we sometimes
     # close file descriptors directly (i.e. signal/process pipes) and the IO
@@ -149,41 +162,39 @@ module Crystal::System::FileDescriptor
     fd unless fd == -1
   end
 
-  private def system_flock_shared(blocking)
-    flock LibC::FlockOp::SH, blocking
-  end
+  private def system_lock(blocking : Bool, exclusive : Bool) : Nil
+    flags = exclusive ? LibC::FlockOp::EX : LibC::FlockOp::SH
 
-  private def system_flock_exclusive(blocking)
-    flock LibC::FlockOp::EX, blocking
-  end
+    # 1st attempt (always non-blocking)
+    ret = LibC.flock(fd, flags | LibC::FlockOp::NB)
+    errno = Errno.value
 
-  private def system_flock_unlock
-    flock LibC::FlockOp::UN
-  end
+    while true
+      return if ret == 0
 
-  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
-    op |= LibC::FlockOp::NB
-
-    if retry
-      until flock(op)
-        sleep 0.1.seconds
-      end
-    else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
-    end
-  end
-
-  private def flock(op) : Bool
-    if 0 == LibC.flock(fd, op)
-      true
-    else
-      errno = Errno.value
-      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
-        false
+      case errno
+      when Errno::EINTR
+        # retry
+      when Errno::EWOULDBLOCK, Errno::EAGAIN
+        raise IO::Error.from_os_error("Error applying file lock: file is already locked", errno, target: self) unless blocking
       else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
+        raise IO::Error.from_os_error("Error applying file lock", errno, target: self)
       end
+
+      ret, errno =
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          ::Fiber.syscall { {LibC.flock(fd, flags), Errno.value} }
+        {% else %}
+          # poll at regular intervals (no unlock event)
+          sleep 100.milliseconds
+          {LibC.flock(fd, flags | LibC::FlockOp::NB), Errno.value}
+        {% end %}
     end
+  end
+
+  private def system_unlock : Nil
+    ret = LibC.flock(fd, LibC::FlockOp::UN)
+    raise IO::Error.from_errno("Error removing file lock", target: self) unless ret == 0
   end
 
   private def system_fsync(flush_metadata = true) : Nil
@@ -201,14 +212,6 @@ module Crystal::System::FileDescriptor
     if ret != 0
       raise IO::Error.from_errno("Error syncing file", target: self)
     end
-  end
-
-  def self.pipe(read_blocking, write_blocking)
-    pipe_fds = system_pipe
-    r = IO::FileDescriptor.new(pipe_fds[0], read_blocking)
-    w = IO::FileDescriptor.new(pipe_fds[1], write_blocking)
-    w.sync = true
-    {r, w}
   end
 
   def self.system_pipe : StaticArray(LibC::Int, 2)
@@ -229,16 +232,6 @@ module Crystal::System::FileDescriptor
     {% end %}
 
     pipe_fds
-  end
-
-  def self.pread(file, buffer, offset)
-    bytes_read = LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
-
-    if bytes_read == -1
-      raise IO::Error.from_errno("Error reading file", target: file)
-    end
-
-    bytes_read
   end
 
   def self.from_stdio(fd)
@@ -275,10 +268,10 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_echo(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     flags = LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL
     new_mode.c_lflag = enable ? (new_mode.c_lflag | flags) : (new_mode.c_lflag & ~flags)
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -291,7 +284,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_raw(enable : Bool, mode = nil)
-    new_mode = mode || FileDescriptor.tcgetattr(fd)
+    new_mode = mode || system_tcgetattr
     if enable
       new_mode = FileDescriptor.cfmakeraw(new_mode)
     else
@@ -299,7 +292,7 @@ module Crystal::System::FileDescriptor
       new_mode.c_oflag |= LibC::OPOST
       new_mode.c_lflag |= LibC::ECHO | LibC::ECHOE | LibC::ECHOK | LibC::ECHONL | LibC::ICANON | LibC::ISIG | LibC::IEXTEN
     end
-    if FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(new_mode)) != 0
+    if system_tcsetattr(LibC::TCSANOW, pointerof(new_mode)) != 0
       raise IO::Error.from_errno("tcsetattr")
     end
   end
@@ -313,16 +306,16 @@ module Crystal::System::FileDescriptor
 
   @[AlwaysInline]
   private def system_console_mode(&)
-    before = FileDescriptor.tcgetattr(fd)
+    before = system_tcgetattr
     begin
       yield before
     ensure
-      FileDescriptor.tcsetattr(fd, LibC::TCSANOW, pointerof(before))
+      system_tcsetattr(LibC::TCSANOW, pointerof(before))
     end
   end
 
   @[AlwaysInline]
-  def self.tcgetattr(fd)
+  private def system_tcgetattr
     termios = uninitialized LibC::Termios
     {% if LibC.has_method?(:tcgetattr) %}
       ret = LibC.tcgetattr(fd, pointerof(termios))
@@ -335,9 +328,9 @@ module Crystal::System::FileDescriptor
   end
 
   @[AlwaysInline]
-  def self.tcsetattr(fd, optional_actions, termios_p)
+  private def system_tcsetattr(optional_actions, termios_p)
     {% if LibC.has_method?(:tcsetattr) %}
-      LibC.tcsetattr(fd, optional_actions, termios_p)
+      @fd_lock.reference { LibC.tcsetattr(fd, optional_actions, termios_p) }
     {% else %}
       optional_actions = optional_actions.value if optional_actions.is_a?(Termios::LineControl)
       cmd = case optional_actions
@@ -352,7 +345,7 @@ module Crystal::System::FileDescriptor
               return LibC::Int.new(-1)
             end
 
-      LibC.ioctl(fd, cmd, termios_p)
+      @fd_lock.reference { LibC.ioctl(fd, cmd, termios_p) }
     {% end %}
   end
 

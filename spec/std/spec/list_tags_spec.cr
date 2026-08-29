@@ -12,28 +12,28 @@ describe Spec do
         end
         it "untagged #3" do
         end
-      
+
         it "slow #1", tags: "slow" do
         end
         it "slow #2", tags: "slow" do
         end
-      
+
         it "untagged #4" do
         end
-      
+
         it "flakey #1", tags: "flakey" do
         end
         it "flakey #2, slow #3", tags: ["flakey", "slow"] do
         end
-      
+
         it "untagged #5" do
         end
-      
+
         pending "untagged #6"
-      
+
         pending "untagged #7" do
         end
-      
+
         pending "slow #5", tags: "slow"
 
         describe "describe specs", tags: "describe" do
@@ -64,30 +64,30 @@ describe Spec do
         end
         it "untagged #3" do
         end
-      
+
         it "slow #1", tags: "slow" do
         end
         it "slow #2", tags: "slow" do
         end
-      
+
         it "untagged #4" do
         end
-      
+
         it "flakey #1", tags: "flakey" do
         end
         it "flakey #2, slow #3", tags: ["flakey", "slow"] do
         end
-      
+
         it "untagged #5" do
         end
-      
+
         pending "untagged #6"
-      
+
         pending "untagged #7" do
         end
 
         pending "slow #5", tags: "slow"
-      
+
         describe "describe specs", tags: "describe" do
           it "describe #1" do
           end

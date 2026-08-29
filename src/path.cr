@@ -164,6 +164,8 @@ struct Path
     windows("").join(parts)
   end
 
+  getter kind : Kind
+
   # :nodoc:
   protected def initialize(@name : String, @kind : Kind)
   end
@@ -534,7 +536,6 @@ struct Path
 
   private def each_part_separator_index(&)
     reader = Char::Reader.new(@name)
-    start_pos = reader.pos
 
     if anchor = self.anchor
       reader.pos = anchor.@name.bytesize
@@ -762,7 +763,9 @@ struct Path
       end
     end
 
-    unless new_instance(name).absolute?
+    if new_instance(name).absolute?
+      expanded = name
+    else
       unless base.absolute? || !expand_base
         base = base.expand
       end
@@ -805,8 +808,6 @@ struct Path
       else
         expanded = base.join(name)
       end
-    else
-      expanded = name
     end
 
     expanded = new_instance(expanded) unless expanded.is_a?(Path)
@@ -979,18 +980,18 @@ struct Path
   # to the same roots (e.g. `\\.\C:\foo` and `C:\foo` are not equivalent, nor
   # are `\\?\UNC\server\share\foo` and `\\server\share\foo`).
   def relative_to?(base : Path) : Path?
+    # work on normalized paths otherwise we would need to backtrack on `..` parts
+    base = base.normalize
+    target = self.normalize
+
     base_anchor = base.anchor
-    target_anchor = self.anchor
+    target_anchor = target.anchor
 
     # if paths have a different anchors, there can't be a relative path between
     # them.
     if base_anchor != target_anchor
       return nil
     end
-
-    # work on normalized paths otherwise we would need to backtrack on `..` parts
-    base = base.normalize
-    target = self.normalize
 
     # check for trivial case of equal paths
     if base == target
@@ -1362,6 +1363,13 @@ struct Path
     else
       separators.includes?(@name[0]?)
     end
+  end
+
+  # Returns `true` if this path is relative.
+  #
+  # See `#absolute?`
+  def relative? : Bool
+    !absolute?
   end
 
   # :nodoc:

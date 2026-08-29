@@ -172,6 +172,42 @@ describe "URI" do
     it { URI.new(path: "/foo").hostname.should be_nil }
   end
 
+  describe "#host" do
+    it "works with IPv6 address literals" do
+      uri = URI.new("http", "[::1]", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "[::1]"
+      uri.to_s.should eq "http://[::1]/foo"
+
+      uri = URI.new("http", "::1", path: "foo")
+      uri.hostname.should eq("::1")
+      uri.host.should eq("[::1]")
+      uri.to_s.should eq "http://[::1]/foo"
+      uri.host = "::1"
+      uri.to_s.should eq "http://[::1]/foo"
+    end
+
+    it "works with IPv4 addresses" do
+      uri = URI.new("http", "192.168.0.2", path: "foo")
+      uri.hostname.should eq("192.168.0.2")
+      uri.host.should eq("192.168.0.2")
+      uri.to_s.should eq "http://192.168.0.2/foo"
+      uri.host = "192.168.0.2"
+      uri.to_s.should eq "http://192.168.0.2/foo"
+    end
+
+    it "works with domain names" do
+      uri = URI.new("http", "test.domain", path: "foo")
+      uri.hostname.should eq("test.domain")
+      uri.host.should eq("test.domain")
+      uri.to_s.should eq "http://test.domain/foo"
+      uri.host = "test.domain"
+      uri.to_s.should eq "http://test.domain/foo"
+    end
+  end
+
   describe "#authority" do
     it { URI.new.authority.should be_nil }
     it { URI.new(scheme: "scheme").authority.should be_nil }
@@ -401,7 +437,7 @@ describe "URI" do
     end
 
     it "returns nil for unknown schemes" do
-      URI.default_port("xyz").should eq(nil)
+      URI.default_port("xyz").should be_nil
     end
 
     it "treats scheme case insensitively" do
@@ -422,7 +458,7 @@ describe "URI" do
       old_port = URI.default_port("ftp")
       begin
         URI.set_default_port("ftp", nil)
-        URI.default_port("ftp").should eq(nil)
+        URI.default_port("ftp").should be_nil
       ensure
         URI.set_default_port("ftp", old_port)
       end
@@ -615,6 +651,14 @@ describe "URI" do
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/./.././../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/dotdot/./../../.././././tail").should eq URI.parse("http://foo.com/bar/quux/tail")
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/../dotdot/../dot/./tail/..").should eq URI.parse("http://foo.com/bar/quux/dot/")
+
+      URI.new(path: "foo").resolve("bar").should eq URI.new(path: "bar")
+      URI.new(path: "").resolve("bar").should eq URI.new(path: "bar")
+      URI.new(path: "foo").resolve("").should eq URI.new(path: "foo")
+      URI.new(path: "foo/baz").resolve("").should eq URI.new(path: "foo/baz")
+      URI.new(path: "/").resolve("bar").should eq URI.new(path: "/bar")
+      URI.new(path: "foo/").resolve("bar").should eq URI.new(path: "foo/bar")
+      URI.new(path: "foo/baz").resolve("bar").should eq URI.new(path: "foo/bar")
     end
 
     it "removes dot-segments" do

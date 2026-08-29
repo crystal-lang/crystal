@@ -89,7 +89,7 @@ describe "File .match? bash tests" do
     assert_file_matches "**/fo[oz]", "foz"
     refute_file_matches "**/fo[oz]", "fog"
 
-    # []: Match a character range and RegExp 'g' (regresion)
+    # []: Match a character range and RegExp 'g' (regression)
     assert_file_matches "**/fo[oz]", "foo"
     assert_file_matches "**/fo[oz]", "foz"
     refute_file_matches "**/fo[oz]", "fog"
@@ -112,7 +112,7 @@ describe "File .match? bash tests" do
     refute_file_matches "?o[oz].b*z.com/{*.js,*.html}", "moz.bar.com/index.html"
     refute_file_matches "?o[oz].b*z.com/{*.js,*.html}", "flozz.buzz.com/index.html"
 
-    # More complex extended matches and RegExp 'g' (regresion)
+    # More complex extended matches and RegExp 'g' (regression)
     assert_file_matches "?o[oz].b*z.com/{*.js,*.html}", "foo.baaz.com/jquery.min.js"
     assert_file_matches "?o[oz].b*z.com/{*.js,*.html}", "moz.buzz.com/index.html"
     refute_file_matches "?o[oz].b*z.com/{*.js,*.html}", "moz.buzz.com/index.htm"

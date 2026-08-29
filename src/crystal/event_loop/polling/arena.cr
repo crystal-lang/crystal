@@ -1,6 +1,6 @@
 # Generational Arena.
 #
-# The arena allocates objects `T` at a predefined index. The object iself is
+# The arena allocates objects `T` at a predefined index. The object itself is
 # uninitialized (outside of having its memory initialized to zero). The object
 # can be allocated and later retrieved using the generation index (Arena::Index)
 # that contains both the actual index (Int32) and the generation number
@@ -148,11 +148,9 @@ class Crystal::EventLoop::Polling::Arena(T, BLOCK_BYTESIZE)
   # *index* is out of bounds.
   def free(index : Index, &) : Nil
     at?(index) do |entry|
-      begin
-        yield entry.value.pointer
-      ensure
-        entry.value.free
-      end
+      yield entry.value.pointer
+    ensure
+      entry.value.free
     end
   end
 

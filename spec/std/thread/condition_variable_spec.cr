@@ -8,7 +8,7 @@ pending_interpreted describe: Thread::ConditionVariable do
     cond = Thread::ConditionVariable.new
 
     mutex.synchronize do
-      new_thread do
+      Thread.new do
         mutex.synchronize { cond.signal }
       end
 
@@ -23,7 +23,7 @@ pending_interpreted describe: Thread::ConditionVariable do
     waiting = 0
 
     5.times do
-      new_thread do
+      Thread.new do
         mutex.synchronize do
           waiting += 1
           cv1.wait(mutex)
@@ -79,7 +79,7 @@ pending_interpreted describe: Thread::ConditionVariable do
     cond = Thread::ConditionVariable.new
 
     mutex.synchronize do
-      new_thread do
+      Thread.new do
         mutex.synchronize { cond.signal }
       end
 

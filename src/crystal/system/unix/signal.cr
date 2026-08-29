@@ -12,17 +12,24 @@ module Crystal::System::Signal
 
   alias Handler = ::Signal ->
 
-  @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
+  @@pipe : {IO::FileDescriptor, IO::FileDescriptor} = begin
+    IO.pipe(read_blocking: false, write_blocking: true).tap do |reader, writer|
+      # This avoids accidentally closing the pipe from the interpreter.
+      # See https://github.com/crystal-lang/crystal/issues/16040 for details.
+      writer.close_on_finalize = false
+    end
+  end
+
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
   class_property child_handler : Handler?
-  @@mutex = Mutex.new(:unchecked)
+  @@mutex = Sync::Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
       unless @@handlers[signal]?
         @@sigset << signal
-        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+        {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
           Crystal::Interpreter.signal(signal.value, 2)
         {% else %}
           action = LibC::Sigaction.new
@@ -66,7 +73,7 @@ module Crystal::System::Signal
     else
       @@mutex.synchronize do
         @@handlers.delete(signal)
-        {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+        {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
           h = case handler
               when LibC::SIG_DFL then 0
               when LibC::SIG_IGN then 1
@@ -134,14 +141,14 @@ module Crystal::System::Signal
     ::Signal.each do |signal|
       next unless @@sigset.includes?(signal)
 
-      {% if flag?(:interpreted) && Crystal::Interpreter.has_method?(:signal) %}
+      {% if flag?(:interpreted) && Crystal::Interpreter.class.has_method?(:signal) %}
         Crystal::Interpreter.signal(signal.value, 0)
       {% else %}
         LibC.signal(signal, LibC::SIG_DFL)
       {% end %}
     end
   ensure
-    {% unless flag?(:preview_mt) %}
+    {% if flag?(:without_mt) %}
       @@pipe.each(&.file_descriptor_close)
     {% end %}
   end
@@ -168,8 +175,8 @@ module Crystal::System::Signal
     LibC._exit(1)
   end
 
-  @@setup_default_handlers = Atomic::Flag.new
-  @@setup_segfault_handler = Atomic::Flag.new
+  @@setup_default_handlers = Atomic(Bool).new(false)
+  @@setup_segfault_handler = Atomic(Bool).new(false)
   @@segfault_handler = LibC::SigactionHandlerT.new { |sig, info, data|
     # Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
 
@@ -181,15 +188,21 @@ module Crystal::System::Signal
     # amount larger than a typical stack frame, 4096 bytes here.
     addr = info.value.si_addr
 
-    is_stack_overflow =
-      begin
-        stack_top = ::Fiber.current.@stack.pointer - 4096
-        stack_bottom = ::Fiber.current.@stack.bottom
-        stack_top <= addr < stack_bottom
-      rescue e
-        Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
-        false
-      end
+    current_fiber = ::Fiber.current?
+
+    is_stack_overflow = false
+
+    if current_fiber
+      is_stack_overflow =
+        begin
+          stack_top = current_fiber.@stack.pointer - 4096
+          stack_bottom = current_fiber.@stack.bottom
+          stack_top <= addr < stack_bottom
+        rescue e
+          Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+          false
+        end
+    end
 
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
@@ -202,11 +215,11 @@ module Crystal::System::Signal
   }
 
   def self.setup_default_handlers : Nil
-    return unless @@setup_default_handlers.test_and_set
+    return if @@setup_default_handlers.swap(true, :relaxed)
     @@sigset.clear
     start_loop
 
-    {% if flag?(:interpreted) && Interpreter.has_method?(:signal_descriptor) %}
+    {% if flag?(:interpreted) && Interpreter.class.has_method?(:signal_descriptor) %}
       # replace the interpreter's writer pipe with the interpreted, so signals
       # will be received by the interpreter, but handled by the interpreted
       # signal loop
@@ -219,7 +232,7 @@ module Crystal::System::Signal
   end
 
   def self.setup_segfault_handler
-    return unless @@setup_segfault_handler.test_and_set
+    return if @@setup_segfault_handler.swap(true, :relaxed)
 
     altstack = LibC::StackT.new
     altstack.ss_sp = LibC.malloc(LibC::SIGSTKSZ)
@@ -274,7 +287,7 @@ module Crystal::System::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel(Int32)
-  @@mutex = Mutex.new(:unchecked)
+  @@mutex = Sync::Mutex.new(:unchecked)
 
   def self.wait(pid : LibC::PidT) : Channel(Int32)
     channel = Channel(Int32).new(1)

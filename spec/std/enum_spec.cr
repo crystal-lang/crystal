@@ -316,6 +316,8 @@ describe Enum do
     SpecEnum.parse("TWO").should eq(SpecEnum::Two)
     SpecEnum.parse("TwO").should eq(SpecEnum::Two)
     SpecEnum2.parse("FORTY_TWO").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO").should eq(SpecEnum2::FortyTwo)
+    SpecEnum2.parse("FORTY___TWO_").should eq(SpecEnum2::FortyTwo)
 
     SpecEnum2.parse("FORTY_FOUR").should eq(SpecEnum2::FORTY_FOUR)
     SpecEnum2.parse("forty_four").should eq(SpecEnum2::FORTY_FOUR)

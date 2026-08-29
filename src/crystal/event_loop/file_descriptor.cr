@@ -1,5 +1,23 @@
 abstract class Crystal::EventLoop
   module FileDescriptor
+    # Opens an unidirectional pipe.
+    #
+    # The implementation shall respect the specified blocking arguments for each
+    # end of the pipe, and follow its internal blocking requirements when a
+    # blocking arg is nil.
+    #
+    # Returns a tuple with the reader and writer IO objects.
+    abstract def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
+
+    # Opens a file at *path*.
+    #
+    # Blocks the current fiber until the file has been opened. Avoids blocking
+    # the current thread if possible, especially when *blocking* is `false` or
+    # `nil`.
+    #
+    # Returns the system file descriptor or handle, or a system error.
+    abstract def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
+
     # Reads at least one byte from the file descriptor into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
@@ -8,6 +26,10 @@ abstract class Crystal::EventLoop
     # Returns the number of bytes read (up to `slice.size`).
     # Returns 0 when EOF is reached.
     abstract def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
+
+    # Identical to `#read` but takes an *offset* into the file to read at,
+    # instead of the current position. Doesn't affect the current position.
+    abstract def pread(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
 
     # Blocks the current fiber until the file descriptor is ready for read.
     abstract def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
@@ -28,7 +50,15 @@ abstract class Crystal::EventLoop
     # file descriptor.
     abstract def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
 
-    # Closes the file descriptor resource.
+    # Internal shutdown of the file descriptor. Called after the
+    # `IO::FileDescriptor` has been marked closed but before calling `#close` to
+    # actually close the system fd or handle.
+    #
+    # Implementations shall resume all pending waiters and let them fail because
+    # the IO has been closed.
+    abstract def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+
+    # Closes the system fd or handle.
     abstract def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
   end
 

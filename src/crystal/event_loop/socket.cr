@@ -4,6 +4,14 @@
 
 abstract class Crystal::EventLoop
   module Socket
+    # Creates a new socket file descriptor or handle and returns it, along with
+    # whether the blocking flag has been set.
+    abstract def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool?) : {::Socket::Handle, Bool}
+
+    # Creates a pair of UNIX socket file descriptors or handles and returns
+    # them, along with whether the blocking mode has been set.
+    abstract def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
+
     # Reads at least one byte from the socket into *slice*.
     #
     # Blocks the current fiber if no data is available for reading, continuing
@@ -37,7 +45,7 @@ abstract class Crystal::EventLoop
     # becomes available. Otherwise returns immediately.
     #
     # Returns a handle to the socket for the new connection.
-    abstract def accept(socket : ::Socket) : ::Socket::Handle?
+    abstract def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
 
     # Opens a connection on *socket* to the target *address*.
     #
@@ -66,7 +74,22 @@ abstract class Crystal::EventLoop
     # and the source address.
     abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
-    # Closes the socket.
+    # Writes up to *count* bytes from the input file *fd* to *socket* starting
+    # from the byte at *offset*, avoiding copying data between the kernel and
+    # user spaces (aka zerocopy).
+    #
+    # Returns the number of bytes sent (up to *count*).
+    abstract def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
+
+    # Internal shutdown of the socket. Called after the `Socket` has been marked
+    # closed but before calling `#close` to actually close the system socket fd
+    # or handle.
+    #
+    # Implementations shall resume all pending waiters and let them fail because
+    # the IO has been closed. They don't have to call the `shutdown` syscall.
+    abstract def shutdown(socket : ::Socket) : Nil
+
+    # Closes the system socket fd or handle.
     abstract def close(socket : ::Socket) : Nil
   end
 

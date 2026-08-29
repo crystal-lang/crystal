@@ -1,10 +1,10 @@
 #! /usr/bin/env sh
 
-git tag --list | \
-grep -v -E '0\.1?[0-9]\.' | \
-grep '^[0-9]' | \
-sort -rV | \
-awk '
+git tag --list |
+  grep -v -E '0\.1?[0-9]\.' |
+  grep '^[0-9]' |
+  sort -rV |
+  awk '
   BEGIN {
     print "{"
     print "  \"versions\": ["

@@ -119,7 +119,8 @@ struct Slice(T)
   # slice # => Slice[10, 10, 10]
   # ```
   def self.new(size : Int, value : T, *, read_only = false)
-    new(size, read_only: read_only) { value }
+    pointer = Pointer(T).malloc(size, value)
+    new(pointer, size, read_only: read_only)
   end
 
   # Returns a deep copy of this slice.
@@ -358,7 +359,7 @@ struct Slice(T)
   # :inherit:
   #
   # Raises if this slice is read-only.
-  def shuffle!(random : Random = Random::DEFAULT) : self
+  def shuffle!(random : Random? = nil) : self
     check_writable
     super
   end
@@ -445,19 +446,9 @@ struct Slice(T)
   def fill(value : T) : self
     check_writable
 
-    {% if T == UInt8 %}
-      Intrinsics.memset(to_unsafe.as(Void*), value, size, false)
-      self
-    {% else %}
-      {% if Number::Primitive.union_types.includes?(T) %}
-        if value == 0
-          to_unsafe.clear(size)
-          return self
-        end
-      {% end %}
+    to_unsafe.fill(size, value)
 
-      fill { value }
-    {% end %}
+    self
   end
 
   # :inherit:

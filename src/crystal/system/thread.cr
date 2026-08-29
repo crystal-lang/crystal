@@ -33,6 +33,19 @@ module Crystal::System::Thread
   # private def system_wait_suspended : Nil
 
   # private def system_resume : Nil
+
+  # Called to initialize the object (usually a semaphore) for #wait and #wake.
+  # protected def init_semaphore : Nil
+
+  # Suspend a thread until #wake is called. Synchronizes with #wake so it won't
+  # block if #wake was called before (race).
+  #
+  # WARNING: must only be called on the current thread.
+  # def wait : Nil
+
+  # Wake a waiting thread. Synchronizes with #wait so it won't block if #wake
+  # has been called before (race).
+  # def wake : Nil
 end
 
 {% if flag?(:wasi) %}
@@ -63,7 +76,7 @@ class Thread
 
   @system_handle : Crystal::System::Thread::Handle
   @exception : Exception?
-  @detached = Atomic::Flag.new
+  @detached = Atomic(Bool).new(false)
 
   # Returns the Fiber representing the thread's main stack.
   getter! main_fiber : Fiber
@@ -79,16 +92,19 @@ class Thread
 
   getter name : String?
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
 
     # :nodoc:
-    property! scheduler : Fiber::ExecutionContext::Scheduler
+    def execution_context=(@execution_context : Fiber::ExecutionContext?)
+    end
 
     # :nodoc:
-    def execution_context=(@execution_context : Fiber::ExecutionContext) : Fiber::ExecutionContext
-      main_fiber.execution_context = execution_context
+    getter! scheduler : Fiber::ExecutionContext::Scheduler
+
+    # :nodoc:
+    def scheduler=(@scheduler : Fiber::ExecutionContext::Scheduler?)
     end
 
     # When a fiber terminates we can't release its stack until we swap context
@@ -142,6 +158,7 @@ class Thread
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
     init_handle
+    init_semaphore
   end
 
   # Used once to initialize the thread object representing the main thread of
@@ -150,12 +167,28 @@ class Thread
     @func = ->(t : Thread) { }
     @system_handle = Crystal::System::Thread.current_handle
     @current_fiber = @main_fiber = Fiber.new(stack_address, self)
+    init_semaphore
 
     Thread.threads.push(self)
   end
 
+  def inspect(io : IO) : Nil
+    to_s(io)
+  end
+
+  def to_s(io : IO) : Nil
+    io << "#<" << self.class.name << ":0x"
+    object_id.to_s(io, 16)
+    io << " @system_handle="
+    @system_handle.inspect io
+    io << ','
+    io << " @name="
+    @name.inspect io
+    io << '>'
+  end
+
   private def detach(&)
-    if @detached.test_and_set
+    unless @detached.swap(true, :relaxed)
       yield
     end
   end

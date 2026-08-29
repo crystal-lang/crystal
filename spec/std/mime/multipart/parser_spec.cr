@@ -92,7 +92,7 @@ describe MIME::Multipart::Parser do
     parser = MIME::Multipart::Parser.new(IO::Memory.new(input.gsub('\n', "\r\n")), "AaB03x")
 
     parser.next { }
-    parser.has_next?.should eq(false)
+    parser.has_next?.should be_false
 
     expect_raises(MIME::Multipart::Error, "Multipart parser already finished parsing") do
       parser.next { }
@@ -106,7 +106,7 @@ describe MIME::Multipart::Parser do
       parser.next { }
     end
 
-    parser.has_next?.should eq(false)
+    parser.has_next?.should be_false
 
     expect_raises(MIME::Multipart::Error, "Multipart parser is in an errored state") do
       parser.next { }
@@ -145,6 +145,6 @@ describe MIME::Multipart::Parser do
     end
 
     parser.@state.finished?.should be_true
-    ios.each(&.closed?.should(eq(true)))
+    ios.each(&.closed?.should(be_true))
   end
 end

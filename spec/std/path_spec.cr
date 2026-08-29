@@ -160,6 +160,11 @@ describe Path do
     Path["/foo", "bar", "baz"].should eq Path.new("/foo", "bar", "baz")
   end
 
+  describe "#kind" do
+    it { Path.posix.kind.should eq(Path::Kind::POSIX) }
+    it { Path.windows.kind.should eq(Path::Kind::WINDOWS) }
+  end
+
   describe "#parent" do
     assert_paths("/Users/foo/bar.cr", "/Users/foo", &.parent)
     assert_paths("Users/foo/bar.cr", "Users/foo", &.parent)
@@ -966,6 +971,7 @@ describe Path do
       it_relativizes("C:\\Projects", "c:\\projects\\src", "../c:\\projects\\src", "src")
       it_relativizes("C:\\Projects", "c:\\projects", "../c:\\projects", ".")
       it_relativizes("C:\\Projects\\a\\..", "c:\\projects", "../c:\\projects", ".")
+      it_relativizes("C:\\foo", "C:/bar", "../C:/bar", "..\\bar")
     end
   end
 

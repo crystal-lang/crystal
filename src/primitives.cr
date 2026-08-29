@@ -58,11 +58,12 @@ class Reference
   # overloads. It zeroes the memory, sets up the type ID (necessary for dynamic
   # dispatch), and then runs all inline instance variable initializers.
   #
-  # *address* must point to a suitably aligned buffer of at least
-  # `instance_sizeof(self)` bytes.
+  # *address* must point to a buffer of at least `instance_sizeof(self)` bytes
+  # with an alignment of `instance_alignof(self)` or above. `ReferenceStorage`
+  # fulfils both requirements.
   #
-  # WARNING: This method is unsafe, as it assumes the caller is responsible for
-  # managing the memory at the given *address* manually.
+  # WARNING: The caller is responsible for managing the memory at the given
+  # *address*, in particular if the memory is not garbage-collectable.
   #
   # ```
   # class Foo
@@ -88,7 +89,7 @@ class Reference
   # foo.i # => 123
   # ```
   #
-  # See also: `Reference.unsafe_construct`.
+  # See also: `Reference.unsafe_construct`, `Struct.pre_initialize`.
   @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
   @[Primitive(:pre_initialize)]
   {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
@@ -102,6 +103,50 @@ class Reference
   {% else %}
     # Primitives cannot have a body until 1.2.0 (#11147)
     def self.pre_initialize(address : Pointer)
+    end
+  {% end %}
+end
+
+struct Struct
+  # Performs basic initialization so that the given *address* is ready for use
+  # as an object's instance data.
+  #
+  # More specifically, this is the part of object initialization that occurs
+  # after memory allocation and before calling one of the `#initialize`
+  # overloads. It zeroes the memory, and then runs all inline instance variable
+  # initializers.
+  #
+  # *address* must point to a buffer of at least `sizeof(self)` bytes with an
+  # alignment of `alignof(self)` or above. This can for example be a pointer to
+  # an uninitialized instance.
+  #
+  # This method only works for non-virtual constructions. Neither the struct
+  # type nor *address*'s pointee type can be an abstract struct.
+  #
+  # ```
+  # struct Foo
+  #   getter i : Int64
+  #   getter str = "abc"
+  #
+  #   def initialize(@i)
+  #   end
+  # end
+  #
+  # foo = uninitialized Foo
+  # pointerof(foo).to_slice(1).to_unsafe_bytes.fill(0xFF)
+  # Foo.pre_initialize(pointerof(foo))
+  # foo # => Foo(@i=0, @str="abc")
+  # ```
+  #
+  # See also: `Reference.pre_initialize`.
+  @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
+  @[Primitive(:pre_initialize)]
+  {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
+    def self.pre_initialize(address : Pointer) : Nil
+      \{% @type %}
+    end
+  {% else %}
+    def self.pre_initialize(address : Pointer) : Nil
     end
   {% end %}
 end

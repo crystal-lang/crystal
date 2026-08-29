@@ -63,7 +63,7 @@ describe Log::Metadata do
 
   it "json" do
     m({a: 1}).to_json.should eq(%({"a":1}))
-    m({a: 1, b: 1}).extend({b: 2}).to_json.should eq(%({"b":2,"a":1}))
+    m({a: 1, b: 1}).extend({b: 2}).to_json.should eq(%({"a":1,"b":2}))
   end
 
   it "defrags" do
@@ -72,15 +72,35 @@ describe Log::Metadata do
 
     md.@size.should eq(1)
     md.@max_total_size.should eq(4)
-    md.@overridden_size.should eq(1)
     md.@parent.should be(parent)
 
     md.should eq(m({a: 3, b: 2}))
 
     md.@size.should eq(2)
     md.@max_total_size.should eq(2)
-    md.@overridden_size.should eq(1)
     md.@parent.should be_nil
+  end
+
+  it "defrags deep" do
+    grandparent = m({x: 100, y: 200, z: 300})
+    parent = grandparent.extend({x: 101, a: 1, b: 2})
+    md = parent.extend({x: 102, b: 22, c: 3})
+
+    md.should eq(m({x: 102, y: 200, z: 300, a: 1, b: 22, c: 3}))
+  end
+
+  it "[] find parent entry after defrag" do
+    grandparent = m({x: 100, y: 200, z: 300})
+    parent = grandparent.extend({x: 101, a: 1, b: 2})
+    md = parent.extend({x: 102, b: 22, c: 3})
+
+    _ = md.to_a
+
+    md[:y].should eq(200)
+    md[:z].should eq(300)
+    md[:x].should eq(102)
+    md[:a].should eq(1)
+    md[:b].should eq(22)
   end
 
   it "[]" do
@@ -118,14 +138,24 @@ describe Log::Metadata::Value do
     v("a").as_s.should eq("a")
     v(1).as_s?.should be_nil
 
-    v(true).as_bool.should eq(true)
-    v(false).as_bool.should eq(false)
-    v(true).as_bool?.should eq(true)
-    v(false).as_bool?.should eq(false)
+    v(true).as_bool.should be_true
+    v(false).as_bool.should be_false
+    v(true).as_bool?.should be_true
+    v(false).as_bool?.should be_false
     v(nil).as_bool?.should be_nil
   end
 
   it "json" do
     v({a: 1}).to_json.should eq(%({"a":1}))
+  end
+
+  describe "#==" do
+    it "compares with String" do
+      v("foo").should eq "foo"
+      "foo".should eq v("foo")
+
+      v("foo").should_not eq "bar"
+      "foo".should_not eq v("bar")
+    end
   end
 end

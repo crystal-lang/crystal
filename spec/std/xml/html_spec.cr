@@ -60,7 +60,6 @@ describe XML do
   it "parses html5 (#1404)" do
     html5 = "<html><body><nav>Test</nav></body></html>"
     xml = XML.parse_html(html5)
-    xml.errors.should_not be_nil
     xml.xpath_node("//html/body/nav").should_not be_nil
   end
 

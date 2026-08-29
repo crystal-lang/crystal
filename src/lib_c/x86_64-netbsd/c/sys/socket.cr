@@ -27,6 +27,7 @@ lib LibC
   SHUT_WR        =          1
   SHUT_RDWR      =          2
   SOCK_CLOEXEC   = 0x10000000
+  SOCK_NONBLOCK  = 0x20000000
 
   alias SocklenT = UInt
   alias SaFamilyT = UInt8

@@ -1,0 +1,31 @@
+version = 1
+
+[[annotations]]
+path = "ansi_up-*/**"
+precedence = "override"
+SPDX-FileCopyrightText = "Copyright (c) 2011 Dru Nelson"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "codemirror-*/**"
+precedence = "override"
+SPDC-FileCopyrightText = "Copyright (C) 2016 by Marijn Haverbeke <marijnh@gmail.com> and others"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "jquery-*.js"
+precedence = "override"
+SPDC-FileCopyrightText = "Copyright JS Foundation and other contributors, https://js.foundation/"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "materialize-*/**"
+precedence = "override"
+SPDC-FileCopyrightText = "Copyright (c) 2014-2015 Materialize"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "octicons-*/**"
+precedence = "override"
+SPDC-FileCopyrightText = "(c) 2023 GitHub Inc."
+SPDX-License-Identifier = "MIT"

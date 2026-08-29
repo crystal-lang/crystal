@@ -1,6 +1,7 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "./spec_helper"
 require "../loader/spec_helper"
+require "../../support/env"
 
 private def ldflags
   {% if flag?(:msvc) %}
@@ -19,18 +20,16 @@ private def ldflags_with_backtick
 end
 
 describe Crystal::Repl::Interpreter do
-  before_all do
+  around_all do |example|
     FileUtils.mkdir_p(SPEC_CRYSTAL_LOADER_LIB_PATH)
     build_c_dynlib(compiler_datapath("interpreter", "sum.c"))
 
     {% if flag?(:win32) %}
-      ENV["PATH"] = "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"
-    {% end %}
-  end
-
-  after_all do
-    {% if flag?(:win32) %}
-      ENV["PATH"] = ENV["PATH"].delete_at(0, ENV["PATH"].index!(Process::PATH_DELIMITER) + 1)
+      with_env({"PATH" => "#{SPEC_CRYSTAL_LOADER_LIB_PATH}#{Process::PATH_DELIMITER}#{ENV["PATH"]}"}) do
+        example.run
+      end
+    {% else %}
+      example.run
     {% end %}
 
     FileUtils.rm_rf(SPEC_CRYSTAL_LOADER_LIB_PATH)
@@ -88,6 +87,29 @@ describe Crystal::Repl::Interpreter do
         end
 
         LibSum.simple_sum_int(2, 2)
+        CRYSTAL
+    end
+  end
+
+  context "proc pointer" do
+    it "calls extern fun" do
+      interpret(<<-CRYSTAL).should eq 6
+        @[Link(ldflags: #{ldflags_with_backtick.inspect})]
+        lib LibSum
+          fun simple_sum_int(a : Int32, b : Int32) : Int32
+        end
+
+        class Foo
+          def initialize(@method : Proc(Int32, Int32, Int32))
+          end
+
+          def call(a, b)
+            @method.call(a, b)
+          end
+        end
+
+        foo = Foo.new(->LibSum.simple_sum_int)
+        foo.call(1, 5)
         CRYSTAL
     end
   end

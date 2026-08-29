@@ -214,6 +214,7 @@ struct Range(B, E)
     if current.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
@@ -244,6 +245,7 @@ struct Range(B, E)
     if start.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
@@ -344,11 +346,13 @@ struct Range(B, E)
   # the method simply calls `random.rand(self)`.
   #
   # Raises `ArgumentError` if `self` is an open range.
-  def sample(random : Random = Random::DEFAULT)
+  def sample(random : Random? = nil)
+    rng = random || Random.thread_default
+
     {% if B < Int && E < Int %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B < Float && E < Float %}
-      random.rand(self)
+      rng.rand(self)
     {% elsif B.nilable? || E.nilable? %}
       b = self.begin
       e = self.end
@@ -357,9 +361,9 @@ struct Range(B, E)
         raise ArgumentError.new("Can't sample an open range")
       end
 
-      Range.new(b, e, @exclusive).sample(random)
+      Range.new(b, e, @exclusive).sample(rng)
     {% else %}
-      super
+      super(rng)
     {% end %}
   end
 
@@ -368,7 +372,9 @@ struct Range(B, E)
   # If `self` is not empty and `n` is equal to 1, calls `sample(random)` exactly
   # once. Thus, *random* will be left in a different state compared to the
   # implementation in `Enumerable`.
-  def sample(n : Int, random = Random::DEFAULT)
+  def sample(n : Int, random : Random? = nil)
+    rng = random || Random.thread_default
+
     if self.begin.nil? || self.end.nil?
       raise ArgumentError.new("Can't sample an open range")
     end
@@ -394,7 +400,7 @@ struct Range(B, E)
       # faster to just traverse the entire range than hitting
       # a lot of duplicates because or random.
       if n >= available // 4
-        return super
+        return super(n, rng)
       end
 
       possible = Math.min(n, available)
@@ -402,11 +408,11 @@ struct Range(B, E)
       # If we must return all values in the range...
       if possible == available
         result = Array(B).new(possible) { |i| min + i }
-        result.shuffle!(random)
+        result.shuffle!(rng)
         return result
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% elsif B < Float && E < Float %}
       min = self.begin
       max = self.end
@@ -419,15 +425,15 @@ struct Range(B, E)
         return [min]
       end
 
-      range_sample(n, random)
+      range_sample(n, rng)
     {% else %}
       case n
       when 0
         [] of B
       when 1
-        [sample(random)]
+        [sample(rng)]
       else
-        super
+        super(n, rng)
       end
     {% end %}
   end
@@ -491,14 +497,14 @@ struct Range(B, E)
     if b.is_a?(Int) && e.is_a?(Int)
       return 0 if e < b
 
-      # Convert `e` to `Int32` in order to ensure that `e &- b` doesn't get
+      # Convert `e` to `Int32` in order to ensure that `e - b` doesn't get
       # truncated due to the smaller type of `e`.
       if e.is_a?(UInt8 | Int8 | UInt16 | Int16)
         e = e.to_i32!
       end
 
-      diff = (e &- b).to_i32.abs
-      diff &+= 1 unless @exclusive
+      diff = (e - b).to_i32.abs
+      diff += 1 unless @exclusive
       diff
     else
       if b.nil? || e.nil?

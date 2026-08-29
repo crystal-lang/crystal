@@ -80,7 +80,7 @@ describe HTTP::Status do
     end
 
     it "returns nil on non-existent status" do
-      HTTP::Status.new(999).description.should eq(nil)
+      HTTP::Status.new(999).description.should be_nil
     end
   end
 end

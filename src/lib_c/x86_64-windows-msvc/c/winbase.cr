@@ -79,6 +79,15 @@ lib LibC
 
   fun GetFileInformationByHandleEx(hFile : HANDLE, fileInformationClass : FILE_INFO_BY_HANDLE_CLASS, lpFileInformation : Void*, dwBufferSize : DWORD) : BOOL
 
+  fun ReOpenFile(hOriginalFile : HANDLE, dwDesiredAccess : DWORD, dwShareMode : DWORD, dwFlagsAndAttributes : DWORD) : HANDLE
+
   fun LookupAccountNameW(lpSystemName : LPWSTR, lpAccountName : LPWSTR, sid : SID*, cbSid : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
   fun LookupAccountSidW(lpSystemName : LPWSTR, sid : SID*, name : LPWSTR, cchName : DWORD*, referencedDomainName : LPWSTR, cchReferencedDomainName : DWORD*, peUse : SID_NAME_USE*) : BOOL
+
+  fun GetProcessAffinityMask(hProcess : HANDLE, lpProcessAffinityMask : DWORD_PTR*, lpSystemAffinityMask : DWORD_PTR*) : BOOL
+
+  alias WAITORTIMERCALLBACK = (Void*, BOOLEAN) ->
+
+  fun RegisterWaitForSingleObject(phNewWaitObject : HANDLE*, hObject : HANDLE, callback : WAITORTIMERCALLBACK, context : Void*, dwMilliseconds : ULong, dwFlags : ULong) : BOOL
+  fun UnregisterWaitEx(waitHandle : HANDLE, completionEvent : HANDLE) : BOOL
 end

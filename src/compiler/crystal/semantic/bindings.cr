@@ -642,10 +642,13 @@ module Crystal
             node.raise "can't use constant as type for NamedTuple"
           end
 
-          Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
+          unless node_type.can_be_stored?
+            node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
+          end
+
           node_type = node_type.virtual_type
 
-          entries << NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type, named_arg.location)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)
@@ -702,7 +705,9 @@ module Crystal
                 end
               end
             else
-              Crystal.check_type_can_be_stored(node, node_type, "can't use #{node_type} as generic type argument")
+              unless node_type.can_be_stored?
+                node.raise "can't use #{node_type} as generic type argument yet, use a more specific type"
+              end
               type_var = node_type.virtual_type
             end
           end
@@ -737,6 +742,16 @@ module Crystal
 
   class TupleLiteral
     property! program : Program
+
+    def validate_splats!
+      elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            element.raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+    end
 
     def update(from = nil)
       types = [] of TypeVar

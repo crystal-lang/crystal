@@ -2,9 +2,14 @@ require "spec"
 require "../support/number"
 require "../support/interpreted"
 
+private module Foo
+  def self.foo
+    Slice.literal(1)
+  end
+end
+
 describe "Primitives: Slice" do
   describe ".literal" do
-    # TODO: implement in the interpreter
     {% for num in BUILTIN_NUMBER_TYPES %}
       it {{ "creates a read-only Slice(#{num})" }} do
         slice = Slice({{ num }}).literal(0, 1, 4, 9, 16, 25)
@@ -29,5 +34,9 @@ describe "Primitives: Slice" do
         slice.read_only?.should be_true
       end
     {% end %}
+
+    it "links against slice literal from a different LLVM module" do
+      Foo.foo.should eq(Slice.literal(1))
+    end
   end
 end

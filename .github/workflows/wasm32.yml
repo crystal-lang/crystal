@@ -14,13 +14,15 @@ env:
 jobs:
   wasm32-test:
     runs-on: ubuntu-24.04
-    container: crystallang/crystal:1.16.1-build
+    container: crystallang/crystal:1.21.0-build
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install wasmtime
-        uses: mwilliamson/setup-wasmtime-action@v2
+        uses: mwilliamson/setup-wasmtime-action@1a0a4a9f366dd556ae5793e06ba39f960631f9b9 # v3
         with:
           wasmtime-version: "2.0.0"
 
@@ -43,7 +45,7 @@ jobs:
           rm wasm32-wasi-libs.tar.gz
 
       - name: Build spec/wasm32_std_spec.cr
-        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl
+        run: bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi -Dwithout_iconv -Dwithout_openssl -Dwithout_mt
         env:
           CRYSTAL_LIBRARY_PATH: ${{ github.workspace }}/wasm32-wasi-libs
 

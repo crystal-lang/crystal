@@ -32,7 +32,7 @@ describe "Base64" do
 
   context "\n in multiple places" do
     eqs = {"abcd" => "YWJj\nZA==\n", "abcde" => "YWJj\nZGU=\n", "abcdef" => "YWJj\nZGVm\n",
-           "abcdefg" => "YWJj\nZGVmZw==\n", "abcdefg" => "YWJj\nZGVm\nZw==\n",
+           "abcdefg" => "YWJj\nZGVmZw==\n",
     }
     eqs.each do |a, b|
       it "decode from #{b.inspect} to #{a.inspect}" do

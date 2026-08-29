@@ -345,7 +345,7 @@ describe "select" do
         when m = ch2.receive
           w.check
           typeof(m).should eq(Bool)
-          m.should eq(true)
+          m.should be_true
         end
       end
     end
@@ -414,7 +414,7 @@ describe "select" do
         when m = ch2.receive
           w.check
           typeof(m).should eq(Bool)
-          m.should eq(true)
+          m.should be_true
         else
         end
       end
@@ -527,7 +527,7 @@ describe "select" do
         when m = ch2.receive?
           w.check
           typeof(m).should eq(Bool?)
-          m.should eq(true)
+          m.should be_true
         end
       end
     end
@@ -662,7 +662,7 @@ describe "select" do
         when m = ch2.receive?
           w.check
           typeof(m).should eq(Bool?)
-          m.should eq(true)
+          m.should be_true
         else
         end
       end

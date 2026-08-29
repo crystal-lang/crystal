@@ -2,29 +2,33 @@ require "./scheduler"
 require "../list"
 
 module Fiber::ExecutionContext
-  # Isolated execution context. Runs a single thread with a single fiber.
+  # Isolated execution context to run a single fiber.
   #
-  # Concurrency is disabled within the thread: the fiber owns the thread and the
-  # thread can only run this fiber. Keep in mind that the fiber will still run
-  # in parallel to other fibers running in other execution contexts.
+  # Concurrency and parallelism are disabled. The context guarantees that the
+  # fiber will always run on the same system thread until it terminates; the
+  # fiber owns the system thread for its whole lifetime.
   #
-  # The fiber can still spawn fibers into other execution contexts. Since it can
+  # Keep in mind that the fiber will still run in parallel to other fibers
+  # running in other execution contexts at the same time.
+  #
+  # Concurrency is disabled, so an isolated fiber can't spawn fibers into the
+  # context, but it can spawn fibers into other execution contexts. Since it can
   # be inconvenient to pass an execution context around, calls to `::spawn` will
-  # spawn a fiber into the specified *spawn_context* that defaults to the
-  # default execution context.
+  # spawn a fiber into the specified *spawn_context* during initialization,
+  # which defaults to `Fiber::ExecutionContext.default`.
   #
   # Isolated fibers can normally communicate with other fibers running in other
-  # execution contexts using `Channel(T)`, `WaitGroup` or `Mutex` for example.
-  # They can also execute IO operations or sleep just like any other fiber.
+  # execution contexts using `Channel`, `WaitGroup` or `Sync` for example. They
+  # can also execute `IO` operations or `sleep` just like any other fiber.
   #
   # Calls that result in waiting (e.g. sleep, or socket read/write) will block
   # the thread since there are no other fibers to switch to. This in turn allows
   # to call anything that would block the thread without blocking any other
   # fiber.
   #
-  # You can for example use an isolated fiber to run a blocking GUI loop,
-  # transparently forward `::spawn` to the default context, and eventually only
-  # block the current fiber while waiting for the GUI application to quit:
+  # For example you can start an isolated fiber to run a blocking GUI loop,
+  # transparently forward `::spawn` to the default context, then keep the main
+  # fiber to wait until the GUI application quit:
   #
   # ```
   # gtk = Fiber::ExecutionContext::Isolated.new("Gtk") do
@@ -38,12 +42,17 @@ module Fiber::ExecutionContext
 
     getter name : String
 
-    @mutex : Thread::Mutex
+    @mutex = Thread::Mutex.new
+    @condition = Thread::ConditionVariable.new
     protected getter thread : Thread
-    @main_fiber : Fiber
+    protected getter main_fiber : Fiber
 
     # :nodoc:
-    getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
+    getter(event_loop : Crystal::EventLoop) do
+      evloop = Crystal::EventLoop.create(parallelism: 1)
+      evloop.register(self, index: 0)
+      evloop
+    end
 
     getter? running : Bool = true
     @enqueued = false
@@ -55,27 +64,34 @@ module Fiber::ExecutionContext
     # Starts a new thread named *name* to execute *func*. Once *func* returns
     # the thread will terminate.
     def initialize(@name : String, @spawn_context : ExecutionContext = ExecutionContext.default, &@func : ->)
-      @mutex = Thread::Mutex.new
       @thread = uninitialized Thread
       @main_fiber = uninitialized Fiber
+      @main_fiber = Fiber.new(@name, allocate_stack, self) { run }
       @thread = start_thread
       ExecutionContext.execution_contexts.push(self)
     end
 
+    private def allocate_stack : Stack
+      # no stack pool: we directly allocate a stack; it will be automatically
+      # released when the thread is returned to the thread pool
+      pointer = Crystal::System::Fiber.allocate_stack(StackPool::STACK_SIZE, protect: true)
+      Stack.new(pointer, StackPool::STACK_SIZE, reusable: true)
+    end
+
     private def start_thread : Thread
-      Thread.new(name: @name) do |thread|
-        @thread = thread
-        thread.execution_context = self
-        thread.scheduler = self
-        thread.main_fiber.name = @name
-        @main_fiber = thread.main_fiber
-        run
-      end
+      ExecutionContext.thread_pool.checkout(self)
+    end
+
+    protected def thread=(@thread)
     end
 
     # :nodoc:
     def execution_context : Isolated
       self
+    end
+
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      yield self
     end
 
     # :nodoc:
@@ -99,6 +115,15 @@ module Fiber::ExecutionContext
 
     # :nodoc:
     def enqueue(fiber : Fiber) : Nil
+      enqueue_impl(fiber)
+    end
+
+    # :nodoc:
+    def external_enqueue(fiber : Fiber) : Nil
+      enqueue_impl(fiber)
+    end
+
+    private def enqueue_impl(fiber)
       Crystal.trace :sched, "enqueue", fiber: fiber, context: self
 
       unless fiber == @main_fiber
@@ -113,7 +138,12 @@ module Fiber::ExecutionContext
         if @waiting
           # wake up the blocked thread
           @waiting = false
-          @event_loop.interrupt
+
+          if event_loop = @event_loop
+            event_loop.interrupt
+          else
+            @condition.signal
+          end
         else
           # race: enqueued before the other thread started waiting
         end
@@ -123,28 +153,52 @@ module Fiber::ExecutionContext
     protected def reschedule : Nil
       Crystal.trace :sched, "reschedule"
 
+      if @main_fiber.dead?
+        ExecutionContext.thread_pool.checkin
+        return # actually unreachable
+      end
+
+      if event_loop = @event_loop
+        wait_for(event_loop)
+      else
+        park_thread
+      end
+
+      Crystal.trace :sched, "resume"
+    end
+
+    private def park_thread
+      @mutex.synchronize do
+        loop do
+          return if check_enqueued?
+          @waiting = true
+          @condition.wait(@mutex)
+        end
+      end
+    end
+
+    private def wait_for(event_loop) : Nil
       loop do
         @mutex.synchronize do
-          # race: another thread already re-enqueued the fiber
-          if @enqueued
-            Crystal.trace :sched, "resume"
-            @enqueued = false
-            @waiting = false
-            return
-          end
+          return if check_enqueued?
           @waiting = true
         end
 
-        # wait on the event loop
-        list = Fiber::List.new
-        @event_loop.run(pointerof(list), blocking: true)
+        done = true
 
-        if fiber = list.pop?
-          break if fiber == @main_fiber && list.empty?
-          raise RuntimeError.new("Concurrency is disabled in isolated contexts")
+        # wait on the event loop
+        event_loop.run(blocking: true) do |fiber|
+          # sanity check
+          unless fiber == @main_fiber
+            raise RuntimeError.new("Concurrency is disabled in isolated contexts")
+          end
+
+          # can't just return because EventLoop::LibEvent#run captures the block
+          done = true
         end
 
-        # the evloop got interrupted: restart
+        # the evloop got interrupted: retry
+        break if done
       end
 
       # cleanup
@@ -152,8 +206,16 @@ module Fiber::ExecutionContext
         @waiting = false
         @enqueued = false
       end
+    end
 
-      Crystal.trace :sched, "resume"
+    private def check_enqueued?
+      if @enqueued
+        @enqueued = false
+        @waiting = false
+        true
+      else
+        false
+      end
     end
 
     protected def resume(fiber : Fiber) : Nil
@@ -173,7 +235,12 @@ module Fiber::ExecutionContext
         @running = false
         @wait_list.consume_each(&.value.enqueue)
       end
-      ExecutionContext.execution_contexts.delete(self)
+
+      begin
+        @event_loop.try(&.unregister(self))
+      ensure
+        ExecutionContext.execution_contexts.delete(self)
+      end
     end
 
     # Blocks the calling fiber until the isolated context fiber terminates.
@@ -191,9 +258,11 @@ module Fiber::ExecutionContext
     def wait : Nil
       if @running
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
-        @mutex.synchronize do
+        running = @mutex.synchronize do
           @wait_list.push(pointerof(node)) if @running
+          @running
         end
+        Fiber.suspend if running
       end
 
       if exception = @exception
@@ -221,11 +290,30 @@ module Fiber::ExecutionContext
     def status : String
       if @waiting
         "event-loop"
+      elsif @syscall == SYSCALL_FLAG
+        "syscall"
       elsif @running
         "running"
       else
         "shutdown"
       end
+    end
+
+    # :nodoc:
+    #
+    # An isolated fiber is locked to its system thread and we expect blocking
+    # syscalls to block the fiber and the thread.
+    def syscall(& : -> U) : U forall U
+      yield
+    end
+
+    protected def enter_syscall : UInt32
+      @syscall.lazy_set(SYSCALL_FLAG)
+    end
+
+    protected def leave_syscall?(value : UInt32) : Bool
+      @syscall.lazy_set(0_u32)
+      true
     end
   end
 end

@@ -5,9 +5,9 @@
 class Crystal::PointerPairingHeap(T)
   module Node
     macro included
-      property? heap_previous : Pointer(self)?
-      property? heap_next : Pointer(self)?
-      property? heap_child : Pointer(self)?
+      property? heap_previous : self* = Pointer(self).null
+      property? heap_next : self* = Pointer(self).null
+      property? heap_child : self* = Pointer(self).null
     end
 
     # Compare self with other. For example:
@@ -17,27 +17,29 @@ class Crystal::PointerPairingHeap(T)
     abstract def heap_compare(other : Pointer(self)) : Bool
   end
 
-  @head : Pointer(T)?
+  @head : T* = Pointer(T).null
 
   private def head=(head)
     @head = head
-    head.value.heap_previous = nil if head
+    head.value.heap_previous = null if head
     head
   end
 
   def empty?
-    @head.nil?
+    @head.null?
   end
 
-  def first? : Pointer(T)?
+  def first? : Pointer(T)
     @head
   end
 
-  def shift? : Pointer(T)?
+  def shift? : Pointer(T)
     if node = @head
       self.head = merge_pairs(node.value.heap_child?)
-      node.value.heap_child = nil
+      node.value.heap_child = null
       node
+    else
+      null
     end
   end
 
@@ -68,14 +70,14 @@ class Crystal::PointerPairingHeap(T)
     else
       # removing head
       self.head = merge_pairs(node.value.heap_child?)
-      node.value.heap_child = nil
+      node.value.heap_child = null
     end
   end
 
   def clear : Nil
     if node = @head
       clear_recursive(node)
-      @head = nil
+      @head = null
     end
   end
 
@@ -89,22 +91,15 @@ class Crystal::PointerPairingHeap(T)
   end
 
   private def meld(a : Pointer(T), b : Pointer(T)) : Pointer(T)
-    if a.value.heap_compare(b)
-      add_child(a, b)
+    if a && b
+      if a.value.heap_compare(b)
+        add_child(a, b)
+      else
+        add_child(b, a)
+      end
     else
-      add_child(b, a)
+      a || b
     end
-  end
-
-  private def meld(a : Pointer(T), b : Nil) : Pointer(T)
-    a
-  end
-
-  private def meld(a : Nil, b : Pointer(T)) : Pointer(T)
-    b
-  end
-
-  private def meld(a : Nil, b : Nil) : Nil
   end
 
   private def add_child(parent : Pointer(T), node : Pointer(T)) : Pointer(T)
@@ -118,11 +113,11 @@ class Crystal::PointerPairingHeap(T)
     parent
   end
 
-  private def merge_pairs(node : Pointer(T)?) : Pointer(T)?
-    return unless node
+  private def merge_pairs(node : Pointer(T)) : Pointer(T)
+    return null unless node
 
     # 1st pass: meld children into pairs (left to right)
-    tail = nil
+    tail = null
 
     while a = node
       if b = a.value.heap_next?
@@ -138,7 +133,7 @@ class Crystal::PointerPairingHeap(T)
     end
 
     # 2nd pass: meld the pairs back into a single tree (right to left)
-    root = nil
+    root = null
 
     while tail
       node = tail.value.heap_previous?
@@ -146,13 +141,17 @@ class Crystal::PointerPairingHeap(T)
       tail = node
     end
 
-    root.value.heap_next = nil if root
+    root.value.heap_next = null if root
     root
   end
 
   private def clear(node) : Nil
-    node.value.heap_previous = nil
-    node.value.heap_next = nil
-    node.value.heap_child = nil
+    node.value.heap_previous = null
+    node.value.heap_next = null
+    node.value.heap_child = null
+  end
+
+  private macro null
+    Pointer(T).null
   end
 end

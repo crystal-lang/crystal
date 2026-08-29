@@ -140,7 +140,7 @@ describe Doc::Type do
     generator = Doc::Generator.new program, [""]
     macros_module = program.types["Crystal"].types["Macros"]
     astnode = generator.type(macros_module.types["ASTNode"])
-    astnode.superclass.should eq(nil)
+    astnode.superclass.should be_nil
     # Sanity check: subclasses of ASTNode has the right superclass
     generator.type(macros_module.types["Arg"]).superclass.should eq(astnode)
   end

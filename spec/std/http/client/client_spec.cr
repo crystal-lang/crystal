@@ -6,12 +6,6 @@ require "http/server"
 require "http/log"
 require "log/spec"
 
-# TODO: Windows networking in the interpreter requires #12495
-{% if flag?(:interpreted) && flag?(:win32) %}
-  pending HTTP::Client
-  {% skip_file %}
-{% end %}
-
 private def test_server(host, port, read_time = 0.seconds, content_type = "text/plain", write_response = true, &)
   server = TCPServer.new(host, port)
   begin
@@ -34,6 +28,25 @@ end
 private class TestClient < HTTP::Client
   def set_defaults(request)
     super
+  end
+end
+
+private def close_connection(context, bypass_shutdown = false)
+  io = context.response.@io.as(Socket)
+  io.linger = 0 # with linger 0 the socket will be RST on close
+
+  if bypass_shutdown
+    io.socket_close
+  else
+    io.close
+  end
+end
+
+private def client_for(server, &)
+  address = server.bind_unused_port "127.0.0.1"
+  run_server(server) do
+    client = HTTP::Client.new("127.0.0.1", address.port)
+    yield client
   end
 end
 
@@ -188,10 +201,8 @@ module HTTP
 
     it "ensures closing the response when breaking out of block" do
       server = HTTP::Server.new { }
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
-        client = HTTP::Client.new(address.address, address.port)
+      client_for(server) do |client|
         response = nil
 
         exc = Exception.new("")
@@ -210,14 +221,10 @@ module HTTP
       server = HTTP::Server.new do |context|
         context.response.output.print "foo"
         context.response.output.close
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
-      end
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+        close_connection(context, bypass_shutdown: {{ flag?(:win32) }})
+      end
+      client_for(server) do |client|
         client.get(path: "/").body.should eq "foo"
         client.get(path: "/").body.should eq "foo"
         client.get(path: "/") do |resp|
@@ -226,22 +233,171 @@ module HTTP
       end
     end
 
-    it "will retry once on connection error" do
+    it "does not retry on initial connection error" do
       requests = 0
       server = HTTP::Server.new do |context|
         requests += 1
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+        close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         expect_raises(IO::Error) do
           client.get(path: "/")
         end
+        requests.should eq 1
+      end
+    end
+
+    it "retries when re-using connection with error (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/")
+        requests.should eq 3
+      end
+    end
+
+    it "retries when re-using connection with error (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.get(path: "/") { }
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "retries only once when re-using connection with error (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests > 1
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "no retry unless request is replayable (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/")
+        end
         requests.should eq 2
+      end
+    end
+
+    it "no retry unless request is replayable (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::Error) do
+          client.post(path: "/") { }
+        end
+        requests.should eq 2
+      end
+    end
+
+    it "retry if request is replayable (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"}) { }
+        requests.should eq 3
+      end
+    end
+
+    it "retry if request is replayable (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        close_connection(context) if requests == 2
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        client.post(path: "/", headers: HTTP::Headers{"Idempotency-Key" => "123"})
+        requests.should eq 3
+      end
+    end
+
+    it "retries on unexpected EOF when re-using connection (non-yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/")
+        end
+        requests.should eq 3
+      end
+    end
+
+    it "retries on unexpected EOF when re-using connection (yielding)" do
+      requests = 0
+      server = HTTP::Server.new do |context|
+        requests += 1
+        next if requests == 1 # first request must go through
+        context.response.@io.as(Socket).close
+      end
+      client_for(server) do |client|
+        client.get(path: "/") { } # first request to establish connection
+        requests.should eq 1
+        expect_raises(IO::EOFError) do
+          client.get(path: "/") { }
+        end
+        requests.should eq 3
       end
     end
 
@@ -251,10 +407,8 @@ module HTTP
         requests += 1
         context.response.puts "foo"
       end
-      address = server.bind_unused_port "127.0.0.1"
 
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         expect_raises(IO::Error) do
           client.get(path: "/") do
             raise IO::Error.new
@@ -299,14 +453,9 @@ module HTTP
         context.response.headers["Content-Encoding"] = "gzip"
         context.response.output.print "\u001F\x8B\b\u0000\u0000\u0000\u0000\u0000\u0004\u0003+\xCFH,I-K-\u0002\u0000\xB3C\u0011N\b\u0000\u0000\u0000"
         context.response.output.close
-        io = context.response.@io.as(Socket)
-        io.linger = 0 # with linger 0 the socket will be RST on close
-        io.close
+        close_connection(context)
       end
-      address = server.bind_unused_port "127.0.0.1"
-
-      run_server(server) do
-        client = HTTP::Client.new("127.0.0.1", address.port)
+      client_for(server) do |client|
         # First request establishes the server connection, but the server
         # immediately closes it after sending the response.
         client.get(path: "/")
@@ -314,6 +463,23 @@ module HTTP
         # Second request tries to re-use the connection which fails (due to the
         # server's hang up) and then it retries by establishing a new connection.
         client.get(path: "/").body.should eq "whatever"
+      end
+    end
+
+    it "retry does not call before_request callback again" do
+      server = HTTP::Server.new do |context|
+        close_connection(context)
+      end
+
+      client_for(server) do |client|
+        callback_counts = 0
+        client.before_request do
+          callback_counts += 1
+        end
+        expect_raises(IO::Error) do
+          client.get(path: "/")
+        end
+        callback_counts.should eq 1
       end
     end
 
@@ -421,7 +587,7 @@ module HTTP
 
       io_request.rewind
       request = HTTP::Request.from_io(io_request).as(HTTP::Request)
-      request.hostname.should eq("")
+      request.hostname.should be_nil
     end
 
     it "can specify host and port when initialized with IO" do
@@ -483,7 +649,6 @@ module HTTP
   class SubClient < HTTP::Client
     def around_exec(request, &)
       raise "from subclass"
-      yield
     end
   end
 end

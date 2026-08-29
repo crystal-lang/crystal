@@ -6,43 +6,20 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   INTERRUPT_IDENTIFIER =  9
   TIMER_IDENTIFIER     = 10
 
-  {% unless LibC.has_constant?(:EVFILT_USER) %}
-    @pipe = uninitialized LibC::Int[2]
-  {% end %}
-
-  def initialize
+  def initialize(parallelism : Int32)
     # the kqueue instance
     @kqueue = System::Kqueue.new
 
     # notification to interrupt a run
-    @interrupted = Atomic::Flag.new
+    @interrupted = Atomic(Bool).new(false)
 
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      @kqueue.kevent(
-        INTERRUPT_IDENTIFIER,
-        LibC::EVFILT_USER,
-        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-    {% else %}
-      @pipe = System::FileDescriptor.system_pipe
-      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-    {% end %}
+    @kqueue.kevent(
+      INTERRUPT_IDENTIFIER,
+      LibC::EVFILT_USER,
+      LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
   end
 
-  def after_fork_before_exec : Nil
-    super
-
-    # O_CLOEXEC would close these automatically but we don't want to mess with
-    # the parent process fds (that would mess the parent evloop)
-
-    # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
-    @kqueue.close
-
-    {% unless LibC.has_constant?(:EVFILT_USER) %}
-      @pipe.each { |fd| LibC.close(fd) }
-    {% end %}
-  end
-
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
       super
 
@@ -50,18 +27,12 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       @kqueue.close
       @kqueue = System::Kqueue.new
 
-      @interrupted.clear
+      @interrupted.set(false, :relaxed)
 
-      {% if LibC.has_constant?(:EVFILT_USER) %}
-        @kqueue.kevent(
-          INTERRUPT_IDENTIFIER,
-          LibC::EVFILT_USER,
-          LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-      {% else %}
-        @pipe.each { |fd| LibC.close(fd) }
-        @pipe = System::FileDescriptor.system_pipe
-        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-      {% end %}
+      @kqueue.kevent(
+        INTERRUPT_IDENTIFIER,
+        LibC::EVFILT_USER,
+        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
 
       system_set_timer(@timers.next_ready?)
 
@@ -98,20 +69,10 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def process_interrupt?(kevent)
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      if kevent.value.filter == LibC::EVFILT_USER
-        @interrupted.clear if kevent.value.ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% else %}
-      if kevent.value.filter == LibC::EVFILT_READ && kevent.value.ident == @pipe[0]
-        ident = 0
-        ret = LibC.read(@pipe[0], pointerof(ident), sizeof(Int32))
-        raise RuntimeError.from_errno("read") if ret == -1
-        @interrupted.clear if ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% end %}
+    if kevent.value.filter == LibC::EVFILT_USER
+      @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
+      return true
+    end
     false
   end
 
@@ -156,15 +117,9 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   def interrupt : Nil
-    return unless @interrupted.test_and_set
-
-    {% if LibC.has_constant?(:EVFILT_USER) %}
+    unless @interrupted.swap(true, :relaxed)
       @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)
-    {% else %}
-      ident = INTERRUPT_IDENTIFIER
-      ret = LibC.write(@pipe[1], pointerof(ident), sizeof(Int32))
-      raise RuntimeError.from_errno("write") if ret == -1
-    {% end %}
+    end
   end
 
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
@@ -212,21 +167,19 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
   end
 
-  private def system_set_timer(time : Time::Span?) : Nil
+  private def system_set_timer(time : Time::Instant?) : Nil
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
-      seconds, nanoseconds = System::Time.monotonic
-      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-      t = time - now
+      # Cannot use `::Time.instant` here because it could be mocked.
+      t = time.duration_since(Crystal::System::Time.instant)
 
-      data =
-        {% if LibC.has_constant?(:NOTE_NSECONDS) %}
-          t.total_nanoseconds.to_i64!.clamp(0..)
-        {% else %}
-          # legacy BSD (and DragonFly) only have millisecond precision
-          t.positive? ? t.total_milliseconds.to_i64!.clamp(1..) : 0
-        {% end %}
+      data = t.to_nanoseconds.to_i64!
+      {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
+        # legacy BSD (and DragonFly) only have millisecond precision, so we
+        # round up to the next millisecond.
+        data = (data + 999_999) // 1_000_000
+      {% end %}
     else
       flags = LibC::EV_DELETE
       data = 0_u64

@@ -5,12 +5,6 @@ require "c/stdio"
 require "c/string"
 require "../lib_unwind"
 
-{% if flag?(:darwin) || flag?(:bsd) || flag?(:linux) || flag?(:solaris) || flag?(:win32) %}
-  require "./dwarf"
-{% else %}
-  require "./null"
-{% end %}
-
 struct Exception::CallStack
   skip(__FILE__)
 
@@ -116,7 +110,7 @@ struct Exception::CallStack
 
   private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
-      if @@dwarf_loaded
+      if @@loaded
         pc = CallStack.decode_address(repeated_frame.ip)
         if name = decode_function_name(pc)
           file, line, column = Exception::CallStack.decode_line_number(pc)

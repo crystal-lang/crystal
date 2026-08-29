@@ -167,7 +167,7 @@ class RedBlackTree
     y
   end
 
-  def inorder_walk(x = root, &)
+  def inorder_walk(&)
     x = self.minimum
     while !x.nil_node?
       yield x.key
@@ -179,7 +179,7 @@ class RedBlackTree
     inorder_walk(x) { |k| yield k }
   end
 
-  def reverse_inorder_walk(x = root, &)
+  def reverse_inorder_walk(&)
     x = self.maximum
     while !x.nil_node?
       yield x.key

@@ -409,9 +409,17 @@ module Crystal
         assert_macro %({{'a'.ord}}), %(97)
         assert_macro %({{'龍'.ord}}), %(40845)
       end
+
+      it "executes zero?" do
+        assert_macro "{{0.zero?}}", "true"
+        assert_macro "{{1.zero?}}", "false"
+
+        assert_macro "{{0.0.zero?}}", "true"
+        assert_macro "{{0.1.zero?}}", "false"
+      end
     end
 
-    describe "string methods" do
+    describe StringLiteral do
       it "executes string == string" do
         assert_macro %({{"foo" == "foo"}}), %(true)
         assert_macro %({{"foo" == "bar"}}), %(false)
@@ -422,16 +430,26 @@ module Crystal
         assert_macro %({{"foo" != "bar"}}), %(true)
       end
 
-      it "executes split without arguments" do
-        assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
+      it "executes string * number" do
+        assert_macro %({{"odelay" * 3}}), "\"odelayodelayodelay\""
       end
 
-      it "executes split with argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
-      end
+      describe "#split" do
+        it "works without arguments" do
+          assert_macro %({{"1 2 3".split}}), %(["1", "2", "3"] of ::String)
+        end
 
-      it "executes split with char argument" do
-        assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        it "works with string argument" do
+          assert_macro %({{"1-2-3".split("-")}}), %(["1", "2", "3"] of ::String)
+        end
+
+        it "works with char argument" do
+          assert_macro %({{"1-2-3".split('-')}}), %(["1", "2", "3"] of ::String)
+        end
+
+        it "works with regex argument" do
+          assert_macro %({{"123-456-789".split(/-(.)/)}}), %(["123", "4", "56", "7", "89"] of ::String)
+        end
       end
 
       it "executes strip" do
@@ -460,6 +478,11 @@ module Crystal
 
       it "executes size" do
         assert_macro %({{"hello".size}}), "5"
+      end
+
+      it "executes bytesize" do
+        assert_macro %({{"hello".bytesize}}), "5"
+        assert_macro %({{"hellö".bytesize}}), "6"
       end
 
       it "executes count" do
@@ -569,6 +592,21 @@ module Crystal
 
       it "executes gsub" do
         assert_macro %({{"hello".gsub(/e|o/, "a")}}), %("halla")
+      end
+
+      it "executes gsub with a block" do
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { "biz" } }}), %("foo biz biz")                                                                  # No block args
+        assert_macro %q({{ "foo bar baz".gsub(/ba./) { |match| match.upcase } }}), %("foo BAR BAZ")                                                   # full matched string
+        assert_macro %q({{ "Name: Alice, Name: Bob".gsub(/Name: (\w+)/) { |full, matches| "User(#{matches[1].id})" } }}), %("User(Alice), User(Bob)") # single capture group
+        assert_macro %q({{ "5x10, 3x7".gsub(/(\d+)x(\d+)/) { |full, matches| "#{matches[1].to_i * matches[2].to_i}" } }}), %("50, 21")                # multiple capture groups
+        assert_macro %q({{ "bar baz".gsub /bar (foo)?/ { |_, matches| matches[1].nil? ? "" : "BUG" } }}), %("baz")                                    # Capture group no match
+        assert_macro %q({{ "bar".gsub /(foo)/ { "STR" } }}), %("bar")                                                                                 # No match at all
+      end
+
+      it "executes match" do
+        assert_macro %({{ "hello world".match(/x/) }}), %(nil)
+        assert_macro %({{ "hello world".match(/o.*o/) }}), %({0 => "o wo"} of ::Int32 | ::String => ::String | ::Nil)
+        assert_macro %({{ "hello world".match(/(?:(x)|e)(?<name>\\S+)/) }}), %({0 => "ello", 1 => nil, "name" => "llo"} of ::Int32 | ::String => ::String | ::Nil)
       end
 
       it "executes scan" do
@@ -766,6 +804,10 @@ module Crystal
 
       it "executes map" do
         assert_macro %({{[1, 2, 3].map { |e| e == 2 }}}), "[false, true, false]"
+      end
+
+      it "executes *" do
+        assert_macro %({{["na"] * 5}}), %(["na", "na", "na", "na", "na"])
       end
 
       it "executes reduce with no initial value" do
@@ -1006,8 +1048,18 @@ module Crystal
         assert_macro %({{ [1, 2, 3, 4][nil..nil] }}), %([1, 2, 3, 4])
       end
 
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5..] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5..] }}), %(nil)
+      end
+
       it "executes [] with two numbers" do
         assert_macro %({{ [1, 2, 3, 4, 5][1, 3] }}), %([2, 3, 4])
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ [1, 2, 3, 4][5, 1] }}), %(nil)
+        assert_macro %({{ [1, 2, 3, 4][-5, 4] }}), %(nil)
       end
 
       it "executes []=" do
@@ -1159,6 +1211,22 @@ module Crystal
           end
         end
       end
+
+      it "executes select with block" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.select { |k, v| v > 1 }}}), "{:b => 2, :c => 3}"
+      end
+
+      it "executes select with keys" do
+        assert_macro %({{{:a => 1, :b => 2, "c" => 3}.select(:a, "c")}}), "{:a => 1, \"c\" => 3}"
+      end
+
+      it "executes reject with block" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.reject { |k, v| v > 1 }}}), "{:a => 1}"
+      end
+
+      it "executes reject with keys" do
+        assert_macro %({{{:a => 1, :b => 2, :c => 3}.reject(:b)}}), "{:a => 1, :c => 3}"
+      end
     end
 
     describe NamedTupleLiteral do
@@ -1272,6 +1340,22 @@ module Crystal
           end
         end
       end
+
+      it "executes select with block" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.select { |k, v| v > 1 } }}), "{b: 2, c: 3}"
+      end
+
+      it "executes select with keys" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.select("a", "c") }}), "{a: 1, c: 3}"
+      end
+
+      it "executes reject with block" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.reject { |k, v| v > 1 } }}), "{a: 1}"
+      end
+
+      it "executes reject with keys" do
+        assert_macro %({{ {a: 1, b: 2, c: 3}.reject(:b) }}), "{a: 1, c: 3}"
+      end
     end
 
     describe TupleLiteral do
@@ -1302,6 +1386,20 @@ module Crystal
         assert_macro %({{ {1, 2, 3, 4}[nil...2] }}), %({1, 2})
         assert_macro %({{ {1, 2, 3, 4}[..] }}), %({1, 2, 3, 4})
         assert_macro %({{ {1, 2, 3, 4}[nil..nil] }}), %({1, 2, 3, 4})
+      end
+
+      it "executes [] with range, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5..] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5..] }}), %(nil)
+      end
+
+      it "executes [] with two numbers" do
+        assert_macro %({{ {1, 2, 3, 4, 5}[1, 3] }}), %({2, 3, 4})
+      end
+
+      it "executes [] with two numbers, start is out of bounds" do
+        assert_macro %({{ {1, 2, 3, 4}[5, 1] }}), %(nil)
+        assert_macro %({{ {1, 2, 3, 4}[-5, 4] }}), %(nil)
       end
 
       it "executes size" do
@@ -1529,6 +1627,10 @@ module Crystal
           end
         end
       end
+
+      it "executes *" do
+        assert_macro %({{ {"na"} * 5}}), %({"na", "na", "na", "na", "na"})
+      end
     end
 
     describe "regex methods" do
@@ -1593,7 +1695,7 @@ module Crystal
     describe TypeNode do
       describe "#includers" do
         it "returns an array of types `self` is directly included in" do
-          assert_type(%(
+          assert_type(<<-CRYSTAL) { tuple_of([int32, int32, int32]) }
             module Foo
             end
 
@@ -1648,7 +1750,7 @@ module Crystal
               {% if Enumt.includers.map(&.stringify).sort == %w(ChildT(String) ChildT(T) Str) %} 1 {% else %} 'a' {% end %},
               {% if Enumt(String).includers.map(&.stringify).sort == %w(ChildT(String) Str) %} 1 {% else %} 'a' {% end %},
             }
-            )) { tuple_of([int32, int32, int32]) }
+            CRYSTAL
         end
       end
 
@@ -1773,7 +1875,7 @@ module Crystal
         it "does not include trailing + for virtual type" do
           assert_macro("{{klass.id}}", "Foo") do |program|
             foo = NonGenericClassType.new(program, program, "Foo", program.reference)
-            bar = NonGenericClassType.new(program, program, "Bar", foo)
+            NonGenericClassType.new(program, program, "Bar", foo)
             {klass: TypeNode.new(foo.virtual_type)}
           end
         end
@@ -1867,12 +1969,55 @@ module Crystal
         end
       end
 
-      it "executes methods" do
-        assert_macro("{{x.methods.map &.name}}", %([foo])) do |program|
-          klass = NonGenericClassType.new(program, program, "SomeType", program.reference)
-          a_def = Def.new "foo"
-          klass.add_def a_def
-          {x: TypeNode.new(klass)}
+      describe "#methods" do
+        it "only includes methods defined on the type itself, excluding descendants and ancestors" do
+          assert_macro("{{x.methods.map &.name}}", %([parent_method])) do |program|
+            mixin = NonGenericModuleType.new(program, program, "Mixin")
+            mixin.add_def Def.new "mixin_method"
+
+            ancestor_type = NonGenericClassType.new(program, program, "AncestorType", program.reference)
+            ancestor_type.add_def Def.new "parent_method"
+            ancestor_type.include mixin
+
+            some_type = NonGenericClassType.new(program, program, "SomeType", ancestor_type)
+            some_type.add_def Def.new "foo"
+
+            {x: TypeNode.new(ancestor_type)}
+          end
+        end
+      end
+
+      describe "#all_methods" do
+        it "includes methods defined on a type and its ancestors" do
+          assert_macro("{{x.all_methods.map &.name}}", %([child_method, parent_method, mixin_method])) do |program|
+            mixin = NonGenericModuleType.new(program, program, "Mixin")
+            mixin.add_def Def.new "mixin_method"
+
+            ancestor_type = NonGenericClassType.new(program, program, "AncestorType", program.reference)
+            ancestor_type.add_def Def.new "parent_method"
+            ancestor_type.include mixin
+
+            some_type = NonGenericClassType.new(program, program, "SomeType", ancestor_type)
+            some_type.add_def Def.new "child_method"
+
+            {x: TypeNode.new(some_type)}
+          end
+        end
+
+        it "only includes methods defined on the type itself and ancestors, but excludes descendants" do
+          assert_macro("{{x.all_methods.map &.name}}", %([parent_method, mixin_method])) do |program|
+            mixin = NonGenericModuleType.new(program, program, "Mixin")
+            mixin.add_def Def.new "mixin_method"
+
+            ancestor_type = NonGenericClassType.new(program, program, "AncestorType", program.reference)
+            ancestor_type.add_def Def.new "parent_method"
+            ancestor_type.include mixin
+
+            some_type = NonGenericClassType.new(program, program, "SomeType", ancestor_type)
+            some_type.add_def Def.new "foo"
+
+            {x: TypeNode.new(ancestor_type)}
+          end
         end
       end
 
@@ -1977,7 +2122,7 @@ module Crystal
       end
 
       it "== and != devirtualize generic type arguments (#10730)" do
-        assert_type(%(
+        assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
           class A
           end
 
@@ -1994,7 +2139,7 @@ module Crystal
           end
 
           Foo(A).foo
-          )) { tuple_of([int32, char]) }
+          CRYSTAL
       end
 
       it "executes <" do
@@ -3327,9 +3472,16 @@ module Crystal
         assert_macro %({{x.excludes_end?}}), "true", {x: RangeLiteral.new(1.int32, 2.int32, true)}
       end
 
-      it "executes map" do
-        assert_macro %({{x.map(&.stringify)}}), %(["1", "2", "3"]), {x: RangeLiteral.new(1.int32, 3.int32, false)}
-        assert_macro %({{x.map(&.stringify)}}), %(["1", "2"]), {x: RangeLiteral.new(1.int32, 3.int32, true)}
+      describe "#map" do
+        it "with NumberLiteral" do
+          assert_macro %({{x.map(&.stringify)}}), %(["1", "2", "3"]), {x: RangeLiteral.new(1.int32, 3.int32, false)}
+          assert_macro %({{x.map(&.stringify)}}), %(["1", "2"]), {x: RangeLiteral.new(1.int32, 3.int32, true)}
+        end
+
+        it "with CharLiteral" do
+          assert_macro %({{x.map(&.stringify)}}), %(["'a'", "'b'", "'c'"]), {x: RangeLiteral.new(CharLiteral.new('a'), CharLiteral.new('c'), false)}
+          assert_macro %({{x.map(&.stringify)}}), %(["'a'", "'b'"]), {x: RangeLiteral.new(CharLiteral.new('a'), CharLiteral.new('c'), true)}
+        end
       end
 
       it "executes to_a" do
@@ -3417,6 +3569,14 @@ module Crystal
           x: Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
+      end
+    end
+
+    describe NumberLiteral do
+      describe "#chr" do
+        it "executes chr" do
+          assert_macro %({{x.chr}}), %('a'), {x: 97.int32}
+        end
       end
     end
 
@@ -3760,12 +3920,52 @@ module Crystal
     end
 
     describe "flag?" do
-      it "has flag" do
+      it "has simple flag" do
         assert_macro %({{flag?(:foo)}}), %(true), flags: "foo"
       end
 
       it "doesn't have flag" do
         assert_macro %({{flag?(:foo)}}), %(false)
+      end
+
+      it "has flag value" do
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: "foo=bar"
+      end
+
+      it "has empty flag value" do
+        assert_macro %({{flag?(:foo)}}), %(""), flags: "foo="
+      end
+
+      it "uses last one of multiple values" do
+        assert_macro %({{flag?(:foo)}}), %("baz"), flags: %w[foo=bar foo=baz]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo=baz foo=bar]
+      end
+
+      describe "presents `name=value` as simple flag" do
+        it "foo=bar" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: "foo=bar"
+        end
+
+        it "foo=" do
+          assert_macro %({{flag?(:foo=)}}), %(true), flags: "foo="
+        end
+
+        it "multiple values" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=baz foo=bar]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo=baz]
+          assert_macro %({{flag?(:"foo=baz")}}), %(true), flags: %w[foo=baz foo=bar]
+        end
+
+        it "multiple values and simple flag" do
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo=bar foo]
+          assert_macro %({{flag?(:"foo=bar")}}), %(true), flags: %w[foo foo=bar]
+        end
+      end
+
+      it "uses last one of multiple values and simple" do
+        assert_macro %({{flag?(:foo)}}), %(true), flags: %w[foo=bar foo]
+        assert_macro %({{flag?(:foo)}}), %("bar"), flags: %w[foo foo=bar]
       end
     end
 
@@ -4022,11 +4222,11 @@ module Crystal
     end
 
     it "reports unexpected named argument" do
-      assert_macro_error %({{"".starts_with?(other: "")}}), "named arguments are not allowed here"
+      assert_macro_error %({{"".starts_with?(other: "")}}), "no parameter named 'other'"
     end
 
     it "reports unexpected named argument (2)" do
-      assert_macro_error %({{"".camelcase(foo: "")}}), "no named parameter 'foo'"
+      assert_macro_error %({{"".camelcase(foo: "")}}), "no parameter named 'foo'"
     end
 
     # there are no macro methods with required named parameters

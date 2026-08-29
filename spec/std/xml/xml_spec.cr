@@ -1,6 +1,7 @@
 require "spec"
 require "xml"
 require "spec/helpers/string"
+require "semantic_version"
 
 describe XML do
   it "parses" do
@@ -18,7 +19,7 @@ describe XML do
     doc.attributes.should be_empty
     doc.namespace.should be_nil
 
-    people = doc.root.not_nil!
+    people = doc.root.should_not(be_nil)
     people.name.should eq("people")
     people.type.should eq(XML::Node::Type::ELEMENT_NODE)
 
@@ -135,14 +136,14 @@ describe XML do
       XML
     )
 
-    people = doc.first_element_child.not_nil!
+    people = doc.first_element_child.should_not(be_nil)
     people.name.should eq("people")
 
-    person = people.first_element_child.not_nil!
+    person = people.first_element_child.should_not(be_nil)
     person.name.should eq("person")
     person["id"].should eq("1")
 
-    text = person.next.not_nil!
+    text = person.next.should_not(be_nil)
     text.content.should eq("\n  ")
 
     text.previous.should eq(person)
@@ -150,7 +151,7 @@ describe XML do
 
     person.next_sibling.should eq(text)
 
-    person2 = text.next.not_nil!
+    person2 = text.next.should_not(be_nil)
     person2.name.should eq("person")
     person2["id"].should eq("2")
 
@@ -158,13 +159,35 @@ describe XML do
     person2.previous_element.should eq(person)
   end
 
-  it "#errors" do
-    xml = XML.parse(%(<people></foo>))
-    xml.root.not_nil!.name.should eq("people")
-    xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+  describe "#errors" do
+    it do
+      options = XML::ParserOptions::RECOVER | XML::ParserOptions::NONET
 
-    xml = XML.parse(%(<foo></foo>))
-    xml.errors.should be_nil
+      xml = XML.parse(%(<people></foo>), options)
+      xml.root.should_not(be_nil).name.should eq("people")
+      xml.errors.try(&.map(&.to_s)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+
+      xml = XML.parse(%(<foo></foo>))
+      xml.errors.should be_nil
+    end
+
+    describe "NOERROR option (https://github.com/crystal-lang/crystal/issues/16090)" do
+      it "is unset by default" do
+        XML.parse("<people></foo>").errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      end
+
+      it "if set, may suppress context-error handler" do
+        if SemanticVersion.parse(XML.libxml2_version) < SemanticVersion.parse("2.13.0")
+          XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+        else
+          XML.parse("<people></foo>", XML::ParserOptions[RECOVER, NOERROR]).errors.try(&.map(&.message)).should be_nil
+        end
+      end
+
+      it "explicitly unset" do
+        XML.parse("<people></foo>", XML::ParserOptions[RECOVER]).errors.try(&.map(&.message)).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
+      end
+    end
   end
 
   describe "#namespace" do
@@ -176,7 +199,7 @@ describe XML do
             <openSearch:feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
             XML
 
-          namespace = doc.root.not_nil!.namespace.should be_a XML::Namespace
+          namespace = doc.root.should_not(be_nil).namespace.should be_a XML::Namespace
           namespace.href.should eq "http://a9.com/-/spec/opensearchrss/1.0/"
           namespace.prefix.should eq "openSearch"
         end
@@ -189,7 +212,7 @@ describe XML do
             <feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
             XML
 
-          namespace = doc.root.not_nil!.namespace.should be_a XML::Namespace
+          namespace = doc.root.should_not(be_nil).namespace.should be_a XML::Namespace
           namespace.href.should eq "http://a9.com/-/spec/opensearchrss/1.0/"
           namespace.prefix.should be_nil
         end
@@ -205,7 +228,7 @@ describe XML do
             </feed>
             XML
 
-          root = doc.root.not_nil!
+          root = doc.root.should_not(be_nil)
 
           namespace = root.children[1].namespace.should be_a XML::Namespace
           namespace.href.should eq "http://www.w3.org/2005/Atom"
@@ -225,7 +248,7 @@ describe XML do
           <feed></feed>
           XML
 
-        doc.root.not_nil!.namespace.should be_nil
+        doc.root.should_not(be_nil).namespace.should be_nil
       end
     end
 
@@ -236,7 +259,7 @@ describe XML do
           <feed xmlns:foo="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/"></feed>
           XML
 
-        doc.root.not_nil!.namespace.should be_nil
+        doc.root.should_not(be_nil).namespace.should be_nil
       end
     end
   end
@@ -250,7 +273,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespace_definitions
+      namespaces = doc.root.should_not(be_nil).first_element_child.should_not(be_nil).namespace_definitions
 
       namespaces.size.should eq(1)
       namespaces[0].href.should eq("http://c")
@@ -265,7 +288,7 @@ describe XML do
         </feed>
         XML
 
-      doc.root.not_nil!.first_element_child.not_nil!.namespace_definitions.should be_empty
+      doc.root.should_not(be_nil).first_element_child.should_not(be_nil).namespace_definitions.should be_empty
     end
   end
 
@@ -277,7 +300,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.namespace_scopes
+      namespaces = doc.root.should_not(be_nil).namespace_scopes
 
       namespaces.size.should eq(2)
       namespaces[0].href.should eq("http://www.w3.org/2005/Atom")
@@ -292,7 +315,7 @@ describe XML do
         <name>John</name>
         XML
 
-      namespaces = doc.root.not_nil!.namespace_scopes
+      namespaces = doc.root.should_not(be_nil).namespace_scopes
 
       namespaces.size.should eq(0)
     end
@@ -305,7 +328,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespace_scopes
+      namespaces = doc.root.should_not(be_nil).first_element_child.should_not(be_nil).namespace_scopes
 
       namespaces.size.should eq(3)
       namespaces[0].href.should eq("http://c")
@@ -325,7 +348,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.namespaces
+      namespaces = doc.root.should_not(be_nil).namespaces
       namespaces.should eq({
         "xmlns"            => "http://www.w3.org/2005/Atom",
         "xmlns:openSearch" => "http://a9.com/-/spec/opensearchrss/1.0/",
@@ -340,7 +363,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespaces
+      namespaces = doc.root.should_not(be_nil).first_element_child.should_not(be_nil).namespaces
       namespaces.should eq({
         "xmlns:c"          => "http://c",
         "xmlns"            => "http://www.w3.org/2005/Atom",
@@ -356,7 +379,7 @@ describe XML do
         </feed>
         XML
 
-      namespaces = doc.root.not_nil!.first_element_child.not_nil!.namespaces
+      namespaces = doc.root.should_not(be_nil).first_element_child.should_not(be_nil).namespaces
       namespaces.should eq({} of String => String?)
     end
   end
@@ -365,7 +388,7 @@ describe XML do
     content = "." * 20_000
     string = %(<?xml version="1.0"?><root>#{content}</root>)
     parsed = XML.parse(IO::Memory.new(string))
-    parsed.root.not_nil!.children[0].text.should eq(content)
+    parsed.root.should_not(be_nil).children[0].text.should eq(content)
   end
 
   it "sets node text/content" do
@@ -374,7 +397,7 @@ describe XML do
       <name>John</name>
       XML
 
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
     root.text = "Peter"
     root.text.should eq("Peter")
 
@@ -388,7 +411,7 @@ describe XML do
       <name>John</name>
       XML
 
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
     expect_raises(Exception, "Cannot escape") do
       root.content = "\0"
     end
@@ -400,7 +423,7 @@ describe XML do
       <name>John</name>
       XML
 
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
     root.text = "<foo>"
     root.text.should eq("<foo>")
 
@@ -462,7 +485,7 @@ describe XML do
       <name>John</name>
       XML
     )
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
     root.name = "last-name"
     root.name.should eq("last-name")
   end
@@ -473,7 +496,7 @@ describe XML do
       <name>John</name>
       XML
     )
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
 
     expect_raises(XML::Error, "Invalid node name") do
       root.name = " foo bar"
@@ -531,10 +554,10 @@ describe XML do
         XML
     document = XML.parse(xml)
 
-    node = document.xpath_node("//lastname").not_nil!
+    node = document.xpath_node("//lastname").should_not(be_nil)
     node.unlink
 
-    document.xpath_node("//lastname").should eq(nil)
+    document.xpath_node("//lastname").should be_nil
   end
 
   it "does to_s with correct encoding (#2319)" do
@@ -551,7 +574,7 @@ describe XML do
 
   it "sets an attribute" do
     doc = XML.parse(%{<foo />})
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
 
     root["bar"] = "baz"
     root["bar"].should eq("baz")
@@ -560,7 +583,7 @@ describe XML do
 
   it "changes an attribute" do
     doc = XML.parse(%{<foo bar="baz"></foo>})
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
 
     root["bar"] = "baz"
     root["bar"].should eq("baz")
@@ -572,7 +595,7 @@ describe XML do
 
   it "deletes an attribute" do
     doc = XML.parse(%{<foo bar="baz"></foo>})
-    root = doc.root.not_nil!
+    root = doc.root.should_not(be_nil)
 
     res = root.delete("bar")
     root["bar"]?.should be_nil
@@ -585,7 +608,7 @@ describe XML do
 
   it "shows content when inspecting attribute" do
     doc = XML.parse(%{<foo bar="baz"></foo>})
-    attr = doc.root.not_nil!.attributes.first
+    attr = doc.root.should_not(be_nil).attributes.first
     attr.inspect.should contain(%(content="baz"))
   end
 
@@ -612,5 +635,39 @@ describe XML do
 
   it ".libxml2_version" do
     XML.libxml2_version.should match /2\.\d+\.\d+/
+  end
+
+  describe "#line_number" do
+    it "returns the line number of a node in the source document" do
+      doc = XML.parse(<<-XML)
+        <?xml version='1.0' encoding='UTF-8'?>
+        <people>
+          <person/>
+        </people>
+        XML
+
+      root = doc.root.should_not(be_nil)
+      root.line_number.should eq(2)
+      root.first_element_child.should_not(be_nil).line_number.should eq(3)
+    end
+
+    it "reports line numbers greater than 65535 with the BIG_LINES option" do
+      newlines = 70_000
+      # libxml2 stores big line numbers in the PSVI field of text nodes, so the
+      # element needs some text content for `xmlGetLineNo` to recover the value.
+      xml = "#{"\n" * (newlines - 1)}<root>x</root>"
+
+      # Without BIG_LINES the raw 16-bit `line` field saturates at 65535, which
+      # is exactly why `#line_number` must go through `xmlGetLineNo`.
+      XML.parse(xml).root.should_not(be_nil).line_number.should eq(65_535)
+
+      doc = XML.parse(xml, XML::ParserOptions.default | XML::ParserOptions::BIG_LINES)
+      doc.root.should_not(be_nil).line_number.should eq(newlines)
+    end
+
+    it "returns nil when the line number is not available" do
+      # The document node itself carries no source line.
+      XML.parse("<root/>").line_number.should be_nil
+    end
   end
 end

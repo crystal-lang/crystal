@@ -19,7 +19,7 @@ describe "x.to_s.to_f32 == x" do
           val.nan?.should be_true
         else
           val.should eq(float)
-          Math.copysign(1, val).should eq(Math.copysign(1, float))
+          val.sign_bit.should eq(float.sign_bit)
         end
       end
     end

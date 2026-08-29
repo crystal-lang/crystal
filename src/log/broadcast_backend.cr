@@ -35,7 +35,7 @@ class Log::BroadcastBackend < Log::Backend
   end
 
   # :nodoc:
-  def single_backend?
+  def single_backend? : Tuple(Log::Backend, Log::Severity)?
     if @backends.size == 1
       @backends.first
     end

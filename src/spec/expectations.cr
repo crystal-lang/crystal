@@ -333,7 +333,7 @@ module Spec
       Spec::BeFalseyExpectation.new
     end
 
-    # Creates an `Expectation` that passes if actual is nil (`== nil`).
+    # Creates an `Expectation` that passes if actual is nil (`Object#nil?`).
     def be_nil
       Spec::BeNilExpectation.new
     end
@@ -410,19 +410,17 @@ module Spec
           raise ex
         end
 
-        ex_to_s = ex.to_s
+        exception_as_string = ex.to_s
         case message
         when Regex
-          unless (ex_to_s =~ message)
-            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-            fail "Expected #{klass} with message matching #{message.pretty_inspect}, " \
-                 "got #<#{ex.class}: #{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          unless exception_as_string =~ message
+            expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
+            fail expectation_failed_message, file, line
           end
         when String
-          unless ex_to_s.includes?(message)
-            backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-            fail "Expected #{klass} with #{message.pretty_inspect}, got #<#{ex.class}: " \
-                 "#{ex_to_s}> with backtrace:\n#{backtrace}", file, line
+          unless exception_as_string.includes?(message)
+            expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
+            fail expectation_failed_message, file, line
           end
         when Nil
           # No need to check the message
@@ -430,11 +428,44 @@ module Spec
 
         ex
       rescue ex
-        backtrace = ex.backtrace.join('\n') { |f| "  # #{f}" }
-        fail "Expected #{klass}, got #<#{ex.class}: #{ex}> with backtrace:\n" \
-             "#{backtrace}", file, line
+        expectation_failed_message = build_expectation_failed_message(klass, ex)
+        fail expectation_failed_message, file, line
       else
         fail "Expected #{klass} but nothing was raised", file, line
+      end
+
+      private def build_expectation_failed_message(klass : Class, message : String, exception : Exception, exception_as_string : String)
+        backtrace = "  # #{exception.backtrace.join("\n  # ")}"
+
+        <<-MESSAGE
+        Expected #{klass} with message containing: #{message.inspect}
+             got #{exception.class} with message: #{exception_as_string.inspect}
+        Backtrace:
+        #{backtrace}
+        MESSAGE
+      end
+
+      private def build_expectation_failed_message(klass : Class, message : Regex, exception : Exception, exception_as_string : String)
+        backtrace = "  # #{exception.backtrace.join("\n  # ")}"
+
+        <<-MESSAGE
+        Expected #{klass} with message matching: #{message.inspect}
+             got #{exception.class} with message: #{exception_as_string.inspect}
+        Backtrace:
+        #{backtrace}
+        MESSAGE
+      end
+
+      private def build_expectation_failed_message(klass : Class, exception : Exception)
+        exception_as_string = exception.to_s
+        backtrace = "  # #{exception.backtrace.join("\n  # ")}"
+
+        <<-MESSAGE
+        Expected #{klass}
+             got #{exception.class} with message: #{exception_as_string.inspect}
+        Backtrace:
+        #{backtrace}
+        MESSAGE
       end
     {% end %}
   end
@@ -465,7 +496,10 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
-      unless expectation.match self
+      # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
+      if expectation.match self
+        self
+      else
         failure_message ||= expectation.failure_message(self)
         fail(failure_message, file, line)
       end
@@ -485,6 +519,7 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
+      # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -521,6 +556,8 @@ module Spec
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
+      else
+        self
       end
     end
   end

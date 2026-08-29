@@ -82,7 +82,15 @@ module Crystal
           write value.name || '?'
         end
 
-        {% if flag?(:execution_context) %}
+        def write(value : Thread) : Nil
+          {% if flag?(:linux) %}
+            write Pointer(Void).new(value.@system_handle)
+          {% else %}
+            write value.@system_handle
+          {% end %}
+        end
+
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
           def write(value : Fiber::ExecutionContext) : Nil
             write value.name
           end
@@ -106,7 +114,7 @@ module Crystal
         end
 
         def write(value : Time::Span) : Nil
-          write(value.seconds * Time::NANOSECONDS_PER_SECOND + value.nanoseconds)
+          write(value.seconds &* Time::NANOSECONDS_PER_SECOND &+ value.nanoseconds)
         end
 
         def write(value : Bool) : Nil
@@ -147,11 +155,11 @@ module Crystal
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
 
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           parse_sections(buf.to_slice[0...len]) if len > 0
 
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE_FILE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE_FILE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           if len > 0
             @@handle = open_trace_file(buf.to_slice[0...len])

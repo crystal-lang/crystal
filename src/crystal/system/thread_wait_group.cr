@@ -17,4 +17,12 @@ class Thread::WaitGroup
       @condition.wait(@mutex) unless @count == 0
     end
   end
+
+  def wait(time : Time::Span, &) : Nil
+    @mutex.synchronize do
+      unless @count == 0
+        @condition.wait(@mutex, time) { yield }
+      end
+    end
+  end
 end

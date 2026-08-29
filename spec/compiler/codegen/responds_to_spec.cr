@@ -30,25 +30,25 @@ describe "Codegen: responds_to?" do
   end
 
   it "codegens responds_to? with generic class (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo(T)
         def foo
         end
       end
 
       Foo(Int32).new.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens responds_to? with generic class (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Foo(T)
         def foo
         end
       end
 
       Foo(Int32).new.responds_to?(:bar)
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "doesn't error if result is discarded (#14113)" do
@@ -64,7 +64,7 @@ describe "Codegen: responds_to?" do
   end
 
   it "works with virtual type" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo
       end
 
@@ -76,11 +76,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar.new || Foo.new
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with two virtual types" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo
       end
 
@@ -110,11 +110,11 @@ describe "Codegen: responds_to?" do
 
       foo = Sub2.new || Bar.new || Bar2.new || Sub.new || Sub2.new
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with virtual class type (1) (#1926)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo
       end
 
@@ -126,11 +126,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar || Foo
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with virtual class type (2) (#1926)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Foo
       end
 
@@ -142,11 +142,11 @@ describe "Codegen: responds_to?" do
 
       foo = Foo || Bar
       foo.responds_to?(:foo)
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "works with generic virtual superclass (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo(T)
       end
 
@@ -159,11 +159,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar.new.as(Foo(Int32))
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with generic virtual superclass (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo(T)
       end
 
@@ -176,11 +176,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar(Int32).new.as(Foo(Int32))
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with module" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       module Moo
       end
 
@@ -206,11 +206,11 @@ describe "Codegen: responds_to?" do
 
       moo = ptr.value
       moo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with generic virtual module (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       module Foo(T)
       end
 
@@ -224,11 +224,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar.new.as(Foo(Int32))
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "works with generic virtual module (2) (#8334)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       module Foo(T)
       end
 
@@ -242,11 +242,11 @@ describe "Codegen: responds_to?" do
 
       foo = Bar(Int32).new.as(Foo(Int32))
       foo.responds_to?(:foo)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "does for generic instance type metaclass (#4353)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class MyGeneric(T)
         def self.hallo
           1
@@ -254,6 +254,6 @@ describe "Codegen: responds_to?" do
       end
 
       MyGeneric(String).responds_to? :hallo
-      )).to_b.should be_true
+      CRYSTAL
   end
 end

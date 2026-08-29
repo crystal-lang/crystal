@@ -92,7 +92,7 @@ class IO::FileDescriptor < IO
   @[Deprecated]
   macro noecho_from_tc_mode!
     mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
-    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    system_tcsetattr(Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   @[Deprecated]
@@ -109,12 +109,12 @@ class IO::FileDescriptor < IO
                      Termios::LocalMode::ICANON |
                      Termios::LocalMode::ISIG |
                      Termios::LocalMode::IEXTEN).value
-    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    system_tcsetattr(Termios::LineControl::TCSANOW, pointerof(mode))
   end
 
   @[Deprecated]
   macro raw_from_tc_mode!
     Crystal::System::FileDescriptor.cfmakeraw(pointerof(mode))
-    Crystal::System::FileDescriptor.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+    system_tcsetattr(Termios::LineControl::TCSANOW, pointerof(mode))
   end
 end

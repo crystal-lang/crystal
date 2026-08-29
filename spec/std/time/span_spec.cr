@@ -30,6 +30,9 @@ describe Time::Span do
     t1 = Time::Span.new days: -1, hours: 2, minutes: -3, seconds: 4, nanoseconds: -5_000_000
     t1.to_s.should eq("-22:02:56.005000000")
 
+    t1 = Time::Span.new weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+    t1.to_s.should eq("9.03:04:05.006000000")
+
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
   end
@@ -374,5 +377,51 @@ describe Time::Span do
     delta = (past - jan_1_2k).total_milliseconds.to_i64
     past2 = jan_1_2k + delta.milliseconds
     past2.should eq(past)
+  end
+
+  describe "int conversions" do
+    it "#to_nanoseconds" do
+      Time::Span::ZERO.to_nanoseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_nanoseconds.should eq 9_223_372_036_854_775_807_999_999_999_i128
+        Time::Span::MIN.to_nanoseconds.should eq -9_223_372_036_854_775_808_999_999_999_i128
+      {% else %}
+        Time::Span::MAX.to_nanoseconds.to_s.should eq "9223372036854775807999999999"
+        Time::Span::MIN.to_nanoseconds.to_s.should eq "-9223372036854775808999999999"
+      {% end %}
+    end
+
+    it "#to_microseconds" do
+      Time::Span::ZERO.to_microseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_microseconds.should eq 9_223_372_036_854_775_807_999_999_i128
+        Time::Span::MIN.to_microseconds.should eq -9_223_372_036_854_775_808_999_999_i128
+      {% else %}
+        Time::Span::MAX.to_microseconds.to_s.should eq "9223372036854775807999999"
+        Time::Span::MIN.to_microseconds.to_s.should eq "-9223372036854775808999999"
+      {% end %}
+    end
+
+    it "#to_milliseconds" do
+      Time::Span::ZERO.to_milliseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_milliseconds.should eq 9_223_372_036_854_775_807_999_i128
+        Time::Span::MIN.to_milliseconds.should eq -9_223_372_036_854_775_808_999_i128
+      {% else %}
+        Time::Span::MAX.to_milliseconds.to_s.should eq "9223372036854775807999"
+        Time::Span::MIN.to_milliseconds.to_s.should eq "-9223372036854775808999"
+      {% end %}
+    end
+
+    it "#to_seconds" do
+      Time::Span::ZERO.to_seconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_seconds.should eq 9_223_372_036_854_775_807_i128
+        Time::Span::MIN.to_seconds.should eq -9_223_372_036_854_775_808_i128
+      {% else %}
+        Time::Span::MAX.to_seconds.to_s.should eq "9223372036854775807"
+        Time::Span::MIN.to_seconds.to_s.should eq "-9223372036854775808"
+      {% end %}
+    end
   end
 end

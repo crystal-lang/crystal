@@ -80,12 +80,12 @@ describe Time::Format do
         assert_prints zoned.to_s("%^Z"), "CET"
         assert_prints zoned.to_s("%Z"), "Europe/Berlin"
 
-        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Buenos_Aires"))
+        zoned = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.load("America/Argentina/Buenos_Aires"))
         assert_prints zoned.to_s("%z"), "-0300"
         assert_prints zoned.to_s("%:z"), "-03:00"
         assert_prints zoned.to_s("%::z"), "-03:00:00"
         assert_prints zoned.to_s("%^Z"), "-03"
-        assert_prints zoned.to_s("%Z"), "America/Buenos_Aires"
+        assert_prints zoned.to_s("%Z"), "America/Argentina/Buenos_Aires"
       end
 
       offset = Time.local(2017, 11, 24, 13, 5, 6, location: Time::Location.fixed(9000))
@@ -137,8 +137,8 @@ describe Time::Format do
       # TODO %U
       # TODO %W
       # TODO %s
-      # TODO %n
-      # TODO %t
+      assert_prints t.to_s("%n"), "\n"
+      assert_prints t.to_s("%t"), "\t"
       # TODO %%
 
       assert_prints t.to_s("%%"), "%"
@@ -506,9 +506,7 @@ describe Time::Format do
 
       with_zoneinfo do
         time = Time.parse!("CET", pattern)
-        time.offset.should eq 3600
-        time.utc?.should be_false
-        time.location.fixed?.should be_false
+        time.location.should eq Time::Location.load("CET")
 
         time = Time.parse!("Europe/Berlin", pattern)
         time.location.should eq Time::Location.load("Europe/Berlin")
@@ -567,8 +565,26 @@ describe Time::Format do
   # TODO %U
   # TODO %W
   # TODO %s
-  # TODO %n
-  # TODO %t
+
+  it "parses whitespace" do
+    [" ", "\t", "\n", "\v", "\f", "\r", "%n", "%t"].each do |space|
+      parse_time("20250530", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+      parse_time("2025  05  30", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+      parse_time("2025 \t\n\v\f\r05 \t\n\v\f\r30", "%Y#{space}%m#{space}%d").should eq(Time.utc(2025, 5, 30))
+    end
+
+    parse_time("20250530", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+    parse_time("2025  05  30", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+    parse_time("2025 \t\n\v\f\r05 \t\n\v\f\r30", "%Y \t\n\v\f\r%n%t%m \t\n\v\f\r%n%t%d").should eq(Time.utc(2025, 5, 30))
+
+    parse_time("Fri  Oct  31  23:00:24  2014", "%c").should eq(Time.utc(2014, 10, 31, 23, 0, 24))
+    parse_time("Fri\tOct\n31\v23:00:24\f\r 2014", "%c").should eq(Time.utc(2014, 10, 31, 23, 0, 24))
+
+    parse_time("11:14:01PM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+    parse_time("11:14:01  PM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+    parse_time("11:14:01 \t\n\v\f\rPM", "%r").should eq(Time.utc(1, 1, 1, 23, 14, 1))
+  end
+
   # TODO %%
   # TODO %v
 

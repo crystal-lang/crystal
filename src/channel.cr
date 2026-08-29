@@ -24,6 +24,8 @@ require "channel/select"
 # will be indistinguishable from a closed channel.
 #
 class Channel(T)
+  include Iterator(T)
+
   @lock = Crystal::SpinLock.new
   @queue : Deque(T)?
 
@@ -90,11 +92,15 @@ class Channel(T)
   end
 
   # Closes the channel.
-  # The method prevents any new value from being sent to / received from the channel.
-  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`
+  # The method prevents any new value from being sent to the channel.
   #
-  # Both awaiting and subsequent calls to `#send` will consider the channel closed.
-  # All items successfully sent to the channel can be received, before `#receive` considers the channel closed.
+  # If the channel has buffered values, then subsequent calls to `receive` will succeed
+  # and consume the buffer until it is empty.
+  #
+  # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`.
+  # All subsequent calls to `#send` will consider the channel closed.
+  # Subsequent calls to `#receive` will consider the channel closed if the buffer is empty.
+  #
   # Calling `#close` on a closed channel does not have any effect.
   #
   # It returns `true` when the channel was successfully closed, or `false` if it was already closed.
@@ -280,6 +286,10 @@ class Channel(T)
     end
 
     sender_ptr
+  end
+
+  def next : T | Stop
+    receive_impl { stop }
   end
 
   def inspect(io : IO) : Nil

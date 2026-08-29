@@ -91,7 +91,7 @@ end
 describe YAML::Any do
   it ".new" do
     YAML::Any.new(nil).raw.should be_nil
-    YAML::Any.new(true).raw.should eq true
+    YAML::Any.new(true).raw.should be_true
     YAML::Any.new(1_i64).raw.should eq 1_i64
     YAML::Any.new(1).raw.should eq 1
     YAML::Any.new(1_u8).raw.should eq 1
@@ -253,6 +253,25 @@ describe YAML::Any do
       end
     end
 
+    it "splats anchor" do
+      value = YAML::Any.from_yaml <<-YAML
+      map: &an
+        inner: 4
+      aliased: *an
+      splatted:
+        <<: *an
+        extra: 5
+      YAML
+      h = value["splatted"].as_h
+      h.keys.should eq(["inner", "extra"])
+      h["inner"].should eq(4)
+      h["extra"].should eq(5)
+
+      h = value["aliased"].as_h
+      h.keys.should eq(["inner"])
+      h["inner"].should eq(4)
+    end
+
     it "gets yes/no unquoted booleans" do
       YAML.parse("yes").as_bool.should be_true
       YAML.parse("no").as_bool.should be_false
@@ -355,7 +374,7 @@ describe YAML::Any do
 
   describe "#[]?" do
     it "of array" do
-      YAML.parse("- foo\n- bar\n")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("- foo\n- bar\n")[1]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("- foo\n- bar\n")[3]?.should be_nil
 
       any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
@@ -380,12 +399,12 @@ describe YAML::Any do
     end
 
     it "of hash" do
-      YAML.parse("foo: bar")["foo"]?.not_nil!.raw.should eq("bar")
+      YAML.parse("foo: bar")["foo"]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("foo: bar")["fox"]?.should be_nil
     end
 
     it "of hash with integer keys" do
-      YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("1: bar")[1]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("1: bar")[2]?.should be_nil
     end
 
@@ -453,10 +472,20 @@ describe YAML::Any do
     obj["foo"]["bar"]["baz"][1].as_s.should eq("fox")
   end
 
-  it "compares to other objects" do
-    obj = YAML.parse("- foo\n- bar \n")
-    obj.should eq(%w(foo bar))
-    obj[0].should eq("foo")
+  describe "#==" do
+    it "compares to other objects" do
+      obj = YAML.parse("- foo\n- bar \n")
+      obj.should eq(%w(foo bar))
+      obj[0].should eq("foo")
+    end
+
+    it "compares with Set" do
+      Set{1, 2, 3}.should eq YAML.parse("!!set { 1, 2, 3 }")
+      YAML.parse("!!set { 1, 2, 3 }").should eq Set{1, 2, 3}
+
+      Set{1, 2}.should_not eq YAML.parse("!!set { 1, 2, 3 }")
+      YAML.parse("!!set { 1, 2 }").should_not eq Set{1, 2, 3}
+    end
   end
 
   it "returns array of any when doing parse all" do

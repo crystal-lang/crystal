@@ -26,35 +26,41 @@ class XML::Reader
   # Returns the errors reported while parsing.
   getter errors = [] of XML::Error
 
+  @io : IO?
+
   # Creates a new reader from a string.
   #
   # See `XML::ParserOptions.default` for default options.
   def initialize(str : String, options : XML::ParserOptions = XML::ParserOptions.default)
     @reader = LibXML.xmlReaderForMemory(str, str.bytesize, nil, nil, options)
-    LibXML.xmlTextReaderSetErrorHandler @reader, ->(arg, msg, severity, locator) do
-      msg_str = String.new(msg).chomp
-      line_number = LibXML.xmlTextReaderLocatorLineNumber(locator)
-      raise Error.new(msg_str, line_number)
-    end
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
   end
 
   # Creates a new reader from an IO.
   #
   # See `XML::ParserOptions.default` for default options.
-  def initialize(io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
-    @reader = LibXML.xmlReaderForIO(
-      ->(context, buffer, length) { Box(IO).unbox(context).read(Slice.new(buffer, length)).to_i },
-      ->(context) { Box(IO).unbox(context).close; 0 },
-      Box(IO).box(io),
-      nil,
-      nil,
-      options
-    )
+  def initialize(@io : IO, options : XML::ParserOptions = XML::ParserOptions.default)
+    @reader = LibXML.xmlReaderForIO(->Reader.read_callback, ->Reader.close_callback, Box(IO).box(io), nil, nil, options)
+    LibXML.xmlTextReaderSetStructuredErrorHandler(@reader, ->Error.structured_callback, Box.box(@errors))
+  end
+
+  protected def self.read_callback(data : Void*, buffer : UInt8*, length : Int32) : Int32
+    Box(IO).unbox(data).read(Slice.new(buffer, length)).to_i
+  end
+
+  protected def self.close_callback(data : Void*) : Int32
+    Box(IO).unbox(data).close
+    0
+  end
+
+  # :nodoc:
+  def finalize
+    LibXML.xmlFreeTextReader(@reader)
   end
 
   # Moves the reader to the next node.
   def read : Bool
-    collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
+    LibXML.xmlTextReaderRead(@reader) == 1
   end
 
   # Moves the reader to the next node while skipping subtrees.
@@ -70,7 +76,7 @@ class XML::Reader
     if result == -1
       node = LibXML.xmlTextReaderCurrentNode(@reader)
       if node.null?
-        collect_errors { LibXML.xmlTextReaderRead(@reader) == 1 }
+        LibXML.xmlTextReaderRead(@reader) == 1
       elsif !node.value.next.null?
         LibXML.xmlTextReaderNext(@reader) == 1
       else
@@ -149,7 +155,7 @@ class XML::Reader
 
   # Returns the node's XML content including subtrees.
   def read_inner_xml : String
-    xml = collect_errors { LibXML.xmlTextReaderReadInnerXml(@reader) }
+    xml = LibXML.xmlTextReaderReadInnerXml(@reader)
     xml ? String.new(xml) : ""
   end
 
@@ -165,7 +171,7 @@ class XML::Reader
     # to avoid doing an extra C call each time.
     return "" if node_type.none?
 
-    xml = collect_errors { LibXML.xmlTextReaderReadOuterXml(@reader) }
+    xml = LibXML.xmlTextReaderReadOuterXml(@reader)
     xml ? String.new(xml) : ""
   end
 
@@ -183,7 +189,15 @@ class XML::Reader
   # Returns `nil` if the node could not be expanded.
   def expand? : XML::Node?
     xml = LibXML.xmlTextReaderExpand(@reader)
-    XML::Node.new(xml) if xml
+    XML::Node.new(xml, document) if xml
+  end
+
+  def document : Document
+    @document ||= if doc = LibXML.xmlTextReaderCurrentDoc(@reader)
+                    Document.new(doc)
+                  else
+                    raise XML::Error.new("Failed to get current doc for XML::Reader", 0)
+                  end
   end
 
   # Returns the text content of the node.
@@ -192,13 +206,9 @@ class XML::Reader
     value ? String.new(value) : ""
   end
 
-  # Returns a reference to the underlying `LibXML::XMLTextReader`.
+  # :nodoc:
   def to_unsafe
     @reader
-  end
-
-  private def collect_errors(&)
-    Error.collect(@errors) { yield }
   end
 
   private def check_no_null_byte(attribute)

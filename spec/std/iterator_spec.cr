@@ -122,6 +122,11 @@ describe Iterator do
       it "empty iterator stops immediately" do
         (1..0).each.accumulate { raise "" }.next.should be_a(Iterator::Stop)
       end
+
+      it "works with empty iterator" do
+        iter = Iterator(Int32).empty.accumulate { |x, y| x * 10 + y }
+        iter.next.should be_a(Iterator::Stop)
+      end
     end
 
     context "generic cumulative fold, with init" do
@@ -149,6 +154,12 @@ describe Iterator do
         iter.next.should eq(7)
         iter.next.should be_a(Iterator::Stop)
       end
+
+      it "works with empty iterator" do
+        iter = Iterator(Int32).empty.accumulate(7) { |x, y| x * y }
+        iter.next.should eq(7)
+        iter.next.should be_a(Iterator::Stop)
+      end
     end
   end
 
@@ -159,6 +170,14 @@ describe Iterator do
 
     it "sums after compact_map to_a" do
       (1..3).each.compact_map { |e| e.odd? ? e : nil }.to_a.sum.should eq(4)
+    end
+
+    it "works with empty iterator (#16922)" do
+      assert_iterates_iterator ([] of Int32), Iterator(Int32).empty.compact_map { |e| e.odd? ? e : nil }
+    end
+
+    it "works with non-nilable block output" do
+      assert_iterates_iterator ["1", "2", "3"], (1..3).each.compact_map(&.to_s)
     end
   end
 
@@ -218,6 +237,12 @@ describe Iterator do
         iter.next.should eq 4.0_f64
         iter.next.should be_a Iterator::Stop
       end
+    end
+  end
+
+  describe ".chain" do
+    it "works with empty array" do
+      assert_iterates_iterator ([] of Iterator(Int32)), Iterator.chain [Iterator(Int32).empty]
     end
   end
 
@@ -451,6 +476,10 @@ describe Iterator do
       iter.next.should eq(6)
       iter.next.should be_a(Iterator::Stop)
     end
+
+    it "works with empty iterator" do
+      assert_iterates_iterator ([] of Int32), Iterator(Int32).empty.map { |e| e * 2 }
+    end
   end
 
   describe "reject" do
@@ -471,6 +500,14 @@ describe Iterator do
       ary = [1, false, 3, true].each.reject(Bool).to_a
       ary.should eq([1, 3])
       ary.should be_a(Array(Int32))
+    end
+
+    it "works with empty iterator" do
+      assert_iterates_iterator ([] of Int32), Iterator(Int32).empty.reject { |e| e >= 2 }
+    end
+
+    it "works with empty iterator" do
+      assert_iterates_iterator ([] of Int32), Iterator(Int32 | UInt8).empty.reject(UInt8)
     end
   end
 
@@ -663,7 +700,7 @@ describe Iterator do
 
   describe "uniq" do
     it "without block" do
-      iter = (1..8).each.map { |x| x % 3 }.uniq
+      iter = (1..8).each.map { |x| x % 3 }.uniq # ameba:disable Performance/ChainedCallWithNoBang
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(0)
@@ -724,6 +761,12 @@ describe Iterator do
       iter.next.should eq({2, 'b', "V"})
       iter.next.should eq({3, 'c', "W"})
       iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "works with empty iterators" do
+      r1 = (1..3).each
+      r2 = Iterator(Int32).empty
+      assert_iterates_iterator ([] of {Int32, Int32}), r1.zip(r2)
     end
   end
 
@@ -806,7 +849,7 @@ describe Iterator do
     end
 
     it "flattens nested struct iterators with internal state being value types" do
-      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten
+      iter = (1..2).each.map { |i| StructIter.new(10 * i + 1, 10 * i + 3) }.flatten # ameba:disable Performance/FlattenAfterMap
 
       iter.next.should eq(11)
       iter.next.should eq(12)
@@ -821,6 +864,10 @@ describe Iterator do
       iter = [1, [2, 3], 4].each.flatten
 
       iter.to_a.should eq([1, 2, 3, 4])
+    end
+
+    it "works with empty iterator" do
+      assert_iterates_iterator ([] of Int32), Iterator(Array(Array(Int32))).empty.flatten
     end
   end
 
@@ -890,6 +937,10 @@ describe Iterator do
         end
       end
       iter.to_a.should eq([1, 'a', 'a', "", ""])
+    end
+
+    it "works with empty iterator" do
+      assert_iterates_iterator ([] of String), Iterator(Array(Array(Int32))).empty.flat_map(&.to_s)
     end
   end
 

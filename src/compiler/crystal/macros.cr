@@ -14,12 +14,16 @@ private macro def_string_methods(klass)
   def [](range : RangeLiteral) : {{klass}}
   end
 
-  # Similar to `String#=~`.
+  # Similar to `String#matches?`.
   def =~(range : RegexLiteral) : BoolLiteral
   end
 
   # Similar to `String#+`.
   def +(other : StringLiteral | CharLiteral) : {{klass}}
+  end
+
+  # Similar to `String#bytesize`.
+  def bytesize : NumberLiteral
   end
 
   # Similar to `String#camelcase`.
@@ -54,6 +58,12 @@ private macro def_string_methods(klass)
   def ends_with?(other : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Similar to `String#gsub(pattern, options, &)`.
+  #
+  # NOTE: The special variables `$~` and `$1`, `$2`, ... are not supported.
+  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
+  end
+
   # Similar to `String#gsub`.
   def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{klass}}
   end
@@ -62,10 +72,17 @@ private macro def_string_methods(klass)
   def includes?(search : StringLiteral | CharLiteral) : BoolLiteral
   end
 
+  # Matches the given *regex* against this string and returns a capture hash, or
+  # `nil` if a match cannot be found.
+  #
+  # The capture hash has the same form as `Regex::MatchData#to_h`.
+  def match(regex : RegexLiteral) : HashLiteral(NumberLiteral | StringLiteral, StringLiteral | NilLiteral)
+  end
+
   # Returns an array of capture hashes for each match of *regex* in this string.
   #
   # Capture hashes have the same form as `Regex::MatchData#to_h`.
-  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral), StringLiteral | NilLiteral)
+  def scan(regex : RegexLiteral) : ArrayLiteral(HashLiteral(NumberLiteral | StringLiteral, StringLiteral | NilLiteral))
   end
 
   # Similar to `String#size`.
@@ -76,11 +93,24 @@ private macro def_string_methods(klass)
   def lines : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split()`.
   def split : ArrayLiteral(StringLiteral)
   end
 
-  # Similar to `String#split`.
+  # Similar to `String#split(String)`.
+  def split(node : StringLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Char)`.
+  def split(node : CharLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(Regex)`.
+  def split(node : RegexLiteral) : ArrayLiteral(StringLiteral)
+  end
+
+  # Similar to `String#split(String)`.
+  @[Deprecated("Use `#split(StringLiteral)` instead")]
   def split(node : ASTNode) : ArrayLiteral(StringLiteral)
   end
 
@@ -98,6 +128,20 @@ private macro def_string_methods(klass)
 
   # Similar to `String#to_i`.
   def to_i(base = 10)
+  end
+
+  # Returns an expression that evaluates to a slice literal containing the
+  # UTF-16 code units of this string, plus an extra trailing null character.
+  # This null character is not part of the slice, but ensures that calling
+  # `#to_unsafe` always results in a properly null-terminated C string.
+  #
+  # ```
+  # {{ "abc😂".to_utf16 }} # => ::Slice(::UInt16).literal(97, 98, 99, 55357, 56834, 0)[0, 5]
+  # ```
+  #
+  # WARNING: The return value is not necessarily a literal node.
+  @[Experimental("Slice literals are still under development. Join the discussion at [#2886](https://github.com/crystal-lang/crystal/issues/2886).")]
+  def to_utf16 : ASTNode
   end
 
   # Similar to `String#tr`.
@@ -526,6 +570,10 @@ module Crystal::Macros
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    # Returns `true` if value is 0, `false` otherwise.
+    def zero? : BoolLiteral
+    end
+
     # Compares this node's value to another node's value.
     def <(other : NumberLiteral) : BoolLiteral
     end
@@ -608,6 +656,10 @@ module Crystal::Macros
     def ~ : NumberLiteral
     end
 
+    # Same as `Int#chr`
+    def chr : CharLiteral
+    end
+
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.
     def kind : SymbolLiteral
     end
@@ -638,6 +690,10 @@ module Crystal::Macros
 
     # Similar to `String#<`
     def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#*`.
+    def *(other : NumberLiteral) : StringLiteral
     end
   end
 
@@ -717,11 +773,11 @@ module Crystal::Macros
     end
 
     # Similar to `Array#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Enumerable#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `Enumerable#select`
@@ -756,12 +812,16 @@ module Crystal::Macros
     def uniq : ArrayLiteral
     end
 
-    # Similar to `Array#[]`, but returns `NilLiteral` on out of bounds.
+    # Similar to `Array#[]?(Int)`.
     def [](index : NumberLiteral) : ASTNode
     end
 
-    # Similar to `Array#[]`.
-    def [](index : RangeLiteral) : ArrayLiteral(ASTNode)
+    # Similar to `Array#[]?(Range)`.
+    def [](index : RangeLiteral) : ArrayLiteral(ASTNode) | NilLiteral
+    end
+
+    # Similar to `Array#[]?(Int, Int)`.
+    def [](start : NumberLiteral, count : NumberLiteral) : ArrayLiteral(ASTNode) | NilLiteral
     end
 
     # Similar to `Array#[]=`.
@@ -788,6 +848,10 @@ module Crystal::Macros
     def -(other : ArrayLiteral) : ArrayLiteral
     end
 
+    # Similar to `Array#*`
+    def *(other : NumberLiteral) : ArrayLiteral
+    end
+
     # Returns the type specified at the end of the array literal, if any.
     #
     # This refers to the part after brackets in `[] of String`.
@@ -808,7 +872,7 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Hash#empty?`
@@ -832,7 +896,23 @@ module Crystal::Macros
     end
 
     # Similar to `Hash#map`
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
+    end
+
+    # Similar to `Hash#select`
+    def select(&) : HashLiteral
+    end
+
+    # Returns a new `HashLiteral` with only the provided *keys*.
+    def select(*keys : ASTNode) : HashLiteral
+    end
+
+    # Similar to `Hash#reject`
+    def reject(&) : HashLiteral
+    end
+
+    # Returns a new `HashLiteral` without the provided *keys*.
+    def reject(*keys : ASTNode) : HashLiteral
     end
 
     # Similar to `Hash#[]?`
@@ -879,11 +959,11 @@ module Crystal::Macros
   # A named tuple literal.
   class NamedTupleLiteral < ASTNode
     # Similar to `NamedTuple#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `NamedTuple#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `NamedTuple#empty?`
@@ -907,7 +987,23 @@ module Crystal::Macros
     end
 
     # Similar to `NamedTuple#map`
-    def map : ArrayLiteral
+    def map(&) : ArrayLiteral
+    end
+
+    # Similar to `Hash#select`
+    def select(&) : NamedTupleLiteral
+    end
+
+    # Returns a new `NamedTupleLiteral` with only the provided *keys*.
+    def select(*keys : SymbolLiteral | StringLiteral | MacroId) : NamedTupleLiteral
+    end
+
+    # Similar to `Hash#reject`
+    def reject(&) : NamedTupleLiteral
+    end
+
+    # Returns a new `NamedTupleLiteral` without the provided *keys*.
+    def reject(*keys : SymbolLiteral | StringLiteral | MacroId) : NamedTupleLiteral
     end
 
     # Similar to `HashLiteral#double_splat`
@@ -934,7 +1030,7 @@ module Crystal::Macros
     end
 
     # Similar to `Range#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Range#end`
@@ -1027,11 +1123,11 @@ module Crystal::Macros
     end
 
     # Similar to `Tuple#each`
-    def each(&) : Nil
+    def each(&) : NilLiteral
     end
 
     # Similar to `Enumerable#each_with_index`
-    def each_with_index(&) : Nil
+    def each_with_index(&) : NilLiteral
     end
 
     # Similar to `Enumerable#select`
@@ -1066,12 +1162,17 @@ module Crystal::Macros
     def uniq : TupleLiteral
     end
 
-    # Similar to `Tuple#[]`, but returns `NilLiteral` on out of bounds.
+    # Similar to `Tuple#[]?(Int)`.
     def [](index : NumberLiteral) : ASTNode
     end
 
-    # Similar to `Tuple#[]`.
-    def [](index : RangeLiteral) : TupleLiteral(ASTNode)
+    # Similar to `Tuple#[]?(Range)`.
+    def [](index : RangeLiteral) : TupleLiteral | NilLiteral
+    end
+
+    # Similar to `Array#[]?(Int, Int)`, but returns another `TupleLiteral`
+    # instead of an `ArrayLiteral`.
+    def [](start : NumberLiteral, count : NumberLiteral) : TupleLiteral | NilLiteral
     end
 
     # Similar to `Array#[]=`.
@@ -1096,6 +1197,10 @@ module Crystal::Macros
 
     # Similar to `Array#-`.
     def -(other : TupleLiteral) : TupleLiteral
+    end
+
+    # Similar to `Tuple#*`
+    def *(other : NumberLiteral) : TupleLiteral
     end
   end
 
@@ -2806,6 +2911,10 @@ module Crystal::Macros
     def methods : ArrayLiteral(Def)
     end
 
+    # Returns the instance methods defined by this type, including those inherited from ancestors and base types (`Reference`, `Value`, and `Object`).
+    def all_methods : ArrayLiteral(Def)
+    end
+
     # Returns `true` if this type has a method. For example `default_options`
     # (the name you pass to this method is `"default_options"` or `:default_options`
     # in this cases).
@@ -2874,7 +2983,7 @@ module Crystal::Macros
     # {{ Bar.overrides?(Foo, "one") }} # => true
     # {{ Bar.overrides?(Foo, "two") }} # => false
     # ```
-    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : Bool
+    def overrides?(type : TypeNode, method : StringLiteral | SymbolLiteral | MacroId) : BoolLiteral
     end
 
     # Returns `self`. This method exists so you can safely call `resolve` on a node and resolve it to a type, even if it's a type already.

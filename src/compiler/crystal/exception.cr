@@ -136,14 +136,14 @@ module Crystal
 
         decorator = line_number_decorator(line_number)
         lstripped_line = line.lstrip
-        space_delta = line.chars.size - lstripped_line.chars.size
+        space_delta = line.size - lstripped_line.size
         # Column number should start at `1`. We're using `0` to track bogus passed
         # `column_number`.
         final_column_number = (column_number - space_delta).clamp(0..)
 
         io << "\n\n"
         io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
-        append_error_indicator(io, decorator.chars.size, final_column_number, size || 0)
+        append_error_indicator(io, decorator.size, final_column_number, size || 0)
       end
     end
 
@@ -259,7 +259,7 @@ module Crystal
         source_slice, spaces_removed = minimize_indentation(source_slice)
 
         io << Crystal.with_line_numbers(source_slice, line_number, @color, from_index + 1)
-        offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.chars.size - spaces_removed
+        offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
       end
     end

@@ -18,7 +18,7 @@ module GC
     {% else %}
       # libc malloc is not guaranteed to return cleared memory, so we need to
       # explicitly clear it. Ref: https://github.com/crystal-lang/crystal/issues/14678
-      LibC.malloc(size).tap(&.clear)
+      LibC.malloc(size).tap(&.clear(size))
     {% end %}
   end
 
@@ -136,7 +136,7 @@ module GC
   end
 
   # :nodoc:
-  {% if flag?(:preview_mt) %}
+  {% if !flag?(:without_mt) %}
     def self.set_stackbottom(thread : Thread, stack_bottom : Void*)
       # NOTE we could store stack_bottom per thread,
       #      and return it in `#current_thread_stack_bottom`,
@@ -218,5 +218,10 @@ module GC
 
     # finally, we can release the lock
     Thread.unlock
+  end
+
+  # :nodoc:
+  def self.syscall(&proc : ->) : Nil
+    proc.call
   end
 end

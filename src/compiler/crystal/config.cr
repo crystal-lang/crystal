@@ -2,9 +2,7 @@ require "./codegen/target"
 
 module Crystal
   module Config
-    def self.path
-      {{env("CRYSTAL_CONFIG_PATH") || ""}}
-    end
+    class_property path : String = {{env("CRYSTAL_CONFIG_PATH") || ""}}
 
     def self.version
       {{ read_file("#{__DIR__}/../../VERSION").chomp }}

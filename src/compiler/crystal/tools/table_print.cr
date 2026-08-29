@@ -34,13 +34,11 @@ module Crystal
 
         case cell.align
         in .left?
-          "%-#{available_width}s" % cell.text
+          cell.text.ljust(available_width)
         in .right?
-          "%+#{available_width}s" % cell.text
+          cell.text.rjust(available_width)
         in .center?
-          left = " " * ((available_width - cell.text.size) // 2)
-          right = " " * (available_width - cell.text.size - left.size)
-          "#{left}#{cell.text}#{right}"
+          cell.text.center(available_width)
         end
       end
     end

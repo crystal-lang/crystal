@@ -11,7 +11,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "put and remove from union, together with is_a? (falsey case)" do
-      interpret(<<-CRYSTAL).should eq(true)
+      interpret(<<-CRYSTAL).should be_true
         a = 1 == 2 ? 2 : true
         a.is_a?(Int32) ? true : a
         CRYSTAL

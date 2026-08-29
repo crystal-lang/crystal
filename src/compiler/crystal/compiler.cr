@@ -5,11 +5,25 @@ require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
 {% end %}
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   require "wait_group"
 {% end %}
 
 module Crystal
+  # This exception describes an error in the compiler.
+  # It usually leads to an unsuccessful process exit.
+  class CompilerError < Exception
+    getter status
+
+    def self.new(message, exit : Command::Exit)
+      new message, status: exit.to_i
+    end
+
+    def initialize(message, *, @status : Int32 = 1)
+      super message
+    end
+  end
+
   @[Flags]
   enum Debug
     LineNumbers
@@ -83,8 +97,8 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+    property n_threads : Int32 = {% if Fiber.has_constant?(:ExecutionContext) %}
+      Fiber::ExecutionContext.default_workers_count
     {% elsif flag?(:win32) %}
       1
     {% else %}
@@ -213,10 +227,24 @@ module Crystal
     # Raises `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
     def compile(source : Source | Array(Source), output_filename : String) : Result
+      compile_configure_program(source, output_filename) { }
+    end
+
+    # :ditto:
+    #
+    # Yields a `Program` instance before compiling.
+    def compile_configure_program(source : Source | Array(Source), output_filename : String, & : Program -> Nil) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
+      yield program
       node = parse program, source
-      node = program.semantic node, cleanup: !no_cleanup?
+
+      begin
+        node = program.semantic node, cleanup: !no_cleanup?
+      rescue ex : SkipMacroCodeCoverageException
+        program.macro_expansion_error_hook.try &.call(ex.cause)
+      end
+
       units = codegen program, node, source, output_filename unless @no_codegen
 
       @progress_tracker.clear
@@ -240,7 +268,7 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.top_level_semantic(node)
+      node, _ = program.top_level_semantic(node)
 
       @progress_tracker.clear
       print_macro_run_stats(program)
@@ -268,12 +296,14 @@ module Crystal
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
       program.flags.concat @flags
+      program.define_crystal_constants
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
+      program.optimization_mode = @optimization_mode
       program
     end
 
@@ -321,6 +351,13 @@ module Crystal
     end
 
     private def codegen(program, node : ASTNode, sources, output_filename)
+      {% if LibLLVM::IS_LT_130 %}
+        if @codegen_target.architecture == "aarch64"
+          stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
+          exit 1
+        end
+      {% end %}
+
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, frame_pointers: frame_pointers,
           single_module: @single_module || @cross_compile || !@emit_targets.none?
@@ -444,7 +481,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}", :FAILURE)
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -477,6 +514,7 @@ module Crystal
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
         link_flags += " -Wl,--stack,0x800000"
+        link_flags = use_modern_linker(link_flags)
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
         cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags}).gsub('\n', ' ')
@@ -507,7 +545,25 @@ module Crystal
           link_flags += " -L/usr/local/lib"
         end
 
+        link_flags = use_modern_linker(link_flags)
+
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      end
+    end
+
+    # Tests if `mold` or `lld` are available and prefers them as linkers over
+    # the default `ld`. Only works when `cc` is the linker driver and can be
+    # disabled with `--link-flags=-fuse-ld=bfd`.
+    private def use_modern_linker(link_flags)
+      return link_flags unless DEFAULT_LINKER == "cc"
+      return link_flags if link_flags.includes?("-fuse-ld=")
+
+      if Process.find_executable("mold")
+        link_flags + " -fuse-ld=mold"
+      elsif Process.find_executable("ld.lld")
+        link_flags + " -fuse-ld=lld"
+      else
+        link_flags
       end
     end
 
@@ -528,18 +584,17 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}", :FAILURE)
           end
           output.chomp
         rescue exc
-          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}", :FAILURE)
         end
       end
     end
 
     private def codegen(program, units : Array(CompilationUnit), output_filename, output_dir)
       object_names = units.map &.object_filename
-      target_triple = target_machine.triple
 
       @progress_tracker.stage("Codegen (bc+obj)") do
         @progress_tracker.stage_progress_total = units.size
@@ -559,7 +614,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        error "can't use `#{output_filename}` as output filename because it's a directory"
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR)
       end
 
       output_filename = File.expand_path(output_filename)
@@ -581,7 +636,7 @@ module Crystal
     end
 
     private def parallel_codegen(units, n_threads)
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
       {% elsif LibC.has_method?("fork") %}
@@ -594,7 +649,7 @@ module Crystal
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
-      mutex = Mutex.new
+      mutex = Sync::Mutex.new
 
       n_threads.times do
         wg.spawn do
@@ -677,7 +732,7 @@ module Crystal
           input.close
           output.close
 
-          Process.new(pid).wait
+          Process.new(Crystal::System::Process.new(pid)).wait
           completed.send(nil)
         end
       end
@@ -699,7 +754,7 @@ module Crystal
         if @progress_tracker.stats?
           if result["reused"].as_bool
             name = result["name"].as_s
-            unit = units.find { |unit| unit.name == name }.not_nil!
+            unit = units.find! { |unit| unit.name == name }
             unit.reused_previous_compilation = true
           end
         end
@@ -843,15 +898,11 @@ module Crystal
       {% if LibLLVM::IS_LT_130 %}
         optimize_with_pass_manager(llvm_mod)
       {% else %}
-        {% if LibLLVM::IS_LT_170 %}
-          # PassBuilder doesn't support Os and Oz before LLVM 17
-          if @optimization_mode.os? || @optimization_mode.oz?
-            return optimize_with_pass_manager(llvm_mod)
-          end
-        {% end %}
+        optimization_mode = @optimization_mode
+        optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
     end
@@ -886,7 +937,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        error "execution of command failed with exit status #{status}: #{command}", exit_code: exit_code
+        raise CompilerError.new("execution of command failed with exit status #{status}: #{command}", status: exit_code)
       end
     end
 
@@ -894,14 +945,10 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}", :FAILURE)
       else
-        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}", :FAILURE)
       end
-    end
-
-    private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)
@@ -983,24 +1030,22 @@ module Crystal
       private def must_compile?
         memory_buffer = generate_bitcode
 
-        can_reuse_previous_compilation =
-          compiler.emit_targets.none? && !@bc_flags_changed && File.exists?(bc_name) && File.exists?(object_name)
+        return true unless compiler.emit_targets.none?
+        return true if @bc_flags_changed
+        return true unless File.exists?(bc_name)
+        return true unless File.exists?(object_name)
 
-        if can_reuse_previous_compilation
-          memory_io = IO::Memory.new(memory_buffer.to_slice)
-          changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+        # If the user cancelled a previous compilation
+        # it might be that the .o file is empty
+        return true if File.size(object_name) == 0
 
-          # If the user cancelled a previous compilation
-          # it might be that the .o file is empty
-          if !changed && File.size(object_name) > 0
-            memory_buffer.dispose
-            return false
-          else
-            # We need to compile, so we'll write the memory buffer to file
-          end
-        end
+        memory_io = IO::Memory.new(memory_buffer.to_slice)
 
-        true
+        changed = File.open(bc_name) { |bc_file| !IO.same_content?(bc_file, memory_io) }
+
+        memory_buffer.dispose unless changed
+
+        changed
       end
 
       # Parse the previously generated bitcode into the LLVM module using a

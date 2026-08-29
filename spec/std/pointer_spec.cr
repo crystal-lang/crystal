@@ -1,5 +1,10 @@
 require "spec"
 
+private lib LibPointerSpec
+  type A = Void
+  type B = Void
+end
+
 private def reset(p1, p2)
   p1.value = 10
   p2.value = 20
@@ -189,6 +194,11 @@ describe "Pointer" do
     Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@0x4d2")
   end
 
+  it "doesn't confuse lib typedefs (#16686)" do
+    Pointer(LibPointerSpec::A).null.inspect.should eq "Pointer(LibPointerSpec::A).null"
+    Pointer(LibPointerSpec::B).null.inspect.should eq "Pointer(LibPointerSpec::B).null"
+  end
+
   it "creates from int" do
     Pointer(Int32).new(1234).address.should eq(1234)
   end
@@ -244,6 +254,40 @@ describe "Pointer" do
     a[0].should eq(11)
     a[1].should eq(13)
     a[2].should eq(15)
+  end
+
+  describe "#fill" do
+    it "int" do
+      slice = Slice[0, 1, 2, 3, 4]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, 7)
+      slice.should eq Slice[0, 7, 7, 7, 4]
+    end
+
+    it "string" do
+      slice = Slice["a", "b", "c", "d", "e"]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, " ")
+      slice.should eq Slice["a", " ", " ", " ", "e"]
+    end
+
+    it "pointer" do
+      slice = Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x2_u64), Pointer(Void).new(0x3_u64), Pointer(Void).new(0x4_u64), Pointer(Void).new(0x5_u64)]
+      ptr = slice.to_unsafe + 1
+      ptr.fill(3, Pointer(Void).new(0x10_u64))
+      slice.should eq Slice[Pointer(Void).new(0x1_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x10_u64), Pointer(Void).new(0x5_u64)]
+    end
+
+    describe "yielding" do
+      it "int" do
+        slice = Slice[1, 1, 1, 1, 1]
+        ptr = slice.to_unsafe + 1
+        ptr.fill(3) { |i| i * i }
+        slice.should eq Slice[1, 0, 1, 4, 1]
+        ptr.fill(3, offset: 3) { |i| i * i }
+        slice.should eq Slice[1, 9, 16, 25, 1]
+      end
+    end
   end
 
   it "raises if mallocs negative size" do
@@ -360,6 +404,76 @@ describe "Pointer" do
     ptr = Pointer(Int32).new(123)
     ptr.clone.should eq(ptr)
   end
+
+  it "aligns small pointers using #align_down and #align_up" do
+    ptr = Pointer(Void).new(0x30_u64)
+    ptr.align_down(16).should eq(Pointer(Void).new(0x30_u64))
+    ptr.align_down(32).should eq(Pointer(Void).new(0x20_u64))
+
+    ptr = Pointer(Void).new(0x30_u64)
+    ptr.align_up(16).should eq(Pointer(Void).new(0x30_u64))
+    ptr.align_up(32).should eq(Pointer(Void).new(0x40_u64))
+
+    ptr = Pointer(Void).new(1_u64)
+    ptr.align_up(1024).should eq(Pointer(Void).new(1024_u64))
+    ptr.align_down(1024).should eq(Pointer(Void).new(0_u64))
+
+    ptr = Pointer(Void).new(0xDEADC0DE_u64)
+    ptr.align_up(1u64 << 29).address.should eq(0xE0000000_u64)
+    ptr.align_down(1u64 << 29).address.should eq(0xC0000000_u64)
+
+    ptr = Pointer(Void).new(0xBADCAB1E_u64)
+    ptr.align_up(1u64 << 32).address.should eq({% if flag?(:bits32) %} 0u64 {% else %} 1u64 << 32 {% end %})
+    ptr.align_down(1u64 << 32).address.should eq(0_u64)
+    ptr.align_up(1u64 << 40).address.should eq({% if flag?(:bits32) %} 0u64 {% else %} 1u64 << 40 {% end %})
+    ptr.align_down(1u64 << 40).address.should eq(0_u64)
+  end
+
+  it "only aligns pointers on byte boundaries using #align_down and #align_up" do
+    ptr = Pointer(UInt128).new(10_u64)
+
+    ptr.align_up(4).should eq(Pointer(UInt128).new(12_u64))
+    ptr.align_down(4).should eq(Pointer(UInt128).new(8_u64))
+
+    ptr.align_up(16).should eq(Pointer(UInt128).new(16_u64))
+    ptr.align_down(16).should eq(Pointer(UInt128).new(0_u64))
+
+    ptr = Pointer(UInt32).new(3_u64)
+    ptr.align_down(2).should eq(Pointer(UInt32).new(2_u64))
+
+    ptr = Pointer(UInt32).new(1_u64)
+    ptr.align_up(2).should eq(Pointer(UInt32).new(2_u64))
+  end
+
+  it "correctly wraps around zero using #align_up" do
+    # On 32 bit platforms, this results in a Pointer with address UInt32::MAX (truncated)
+    ptr = Pointer(Void*).new(&-1_u64)
+
+    ptr.align_up(1).address.should eq({% if flag?(:bits32) %} (&-1u32).to_u64 {% else %} &-1u64 {% end %})
+
+    ptr.align_up(2).address.should eq(0_u64)
+
+    ptr.align_up(1u64 << 16).address.should eq(0_u64)
+  end
+
+  {% if flag?(:bits64) %}
+    it "correctly aligns pointers using operands exceeding 32-bit range using #align_down and #align_up" do
+      ptr = Pointer(Void).new(0xDECAFFEDC0FFEEEE_u64)
+
+      # align to 48 bits (281_474_976_710_656 byte boundary)
+      ptr.align_down(1u64 << 48).address.should eq(0xDECA000000000000_u64)
+      ptr.align_up(1u64 << 48).address.should eq(0xDECB000000000000_u64)
+
+      # align to 63 bits
+      ptr = Pointer(Void).new((1u64 << 63) + 1)
+      ptr.align_down(1u64 << 63).address.should eq(1u64 << 63)
+      ptr.align_up(1u64 << 63).address.should eq(0_u64)
+
+      ptr = Pointer(Void).new((1u64 << 63) - 1)
+      ptr.align_down(1u64 << 63).address.should eq(0_u64)
+      ptr.align_up(1u64 << 63).address.should eq(1u64 << 63)
+    end
+  {% end %}
 
   {% if flag?(:bits32) %}
     it "raises on copy_from with size bigger than UInt32::MAX" do

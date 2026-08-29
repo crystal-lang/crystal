@@ -38,6 +38,24 @@ def with_tempfile(*paths, file = __FILE__, &)
   end
 end
 
+# Creates a temporary directory and exposes it as working directory in the
+# block.
+#
+# Use the `name` parameter to specify the name of the directory.
+# It should be unique per spec file. If nil, a random name is chosen
+# (`File.tempname`).
+#
+# The lifetime of the temporary directory is the same was for `.with_tempfile`.
+def with_tempdir(name : String? = nil, *, file = __FILE__, &)
+  name ||= File.tempname(dir: ".")
+  with_tempfile(name, file: file) do |path|
+    Dir.mkdir_p(path)
+    Dir.cd(path) do
+      yield
+    end
+  end
+end
+
 def with_temp_executable(name, file = __FILE__, &)
   {% if flag?(:win32) %}
     name += ".exe"
@@ -62,7 +80,7 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
         if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
           # we won't be cross-compiling the specs binaries, so host and target
           # bits are identical
-          bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+          bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
           cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, cl).to_s)
         end
       end

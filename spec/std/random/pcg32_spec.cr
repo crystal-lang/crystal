@@ -232,6 +232,40 @@ describe "Random::PCG32" do
     m1.next_u.should eq m2.next_u
   end
 
+  it "#split" do
+    rng0 = Random::PCG32.new
+    rng1 = rng0.split
+    rng2 = rng0.split
+    rng3 = rng1.split # split of split
+
+    seq0 = Array.new(5) { rng0.next_u }
+    seq1 = Array.new(5) { rng1.next_u }
+    seq2 = Array.new(5) { rng2.next_u }
+    seq3 = Array.new(5) { rng3.next_u }
+
+    seq1.should_not eq(seq0)
+    seq1.should_not eq(seq2)
+    seq1.should_not eq(seq3)
+    seq2.should_not eq(seq0)
+    seq2.should_not eq(seq3)
+    seq3.should_not eq(seq0)
+  end
+
+  it "#split_internal" do
+    rng0 = Random::PCG32.new(123_u64, 456_u64)
+    rng1 =
+      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+        buf = uninitialized ReferenceStorage(Random::PCG32)
+        Random::PCG32.unsafe_construct(pointerof(buf), rng0)
+        buf.to_reference
+      {% else %}
+        rng0.dup
+      {% end %}
+    rng0.split_internal(rng1)
+    rng0.next_u.should eq(3152259133_u64)
+    rng1.next_u.should eq(2489095755_u64)
+  end
+
   it "can be initialized without explicit seed" do
     Random::PCG32.new.should be_a Random::PCG32
   end

@@ -84,6 +84,14 @@ describe BigRational do
     r.to_s(36).should eq("4woiz/9b3djm")
   end
 
+  it "#to_i" do
+    br(10, 3).to_i.should eq(3)
+    br(90, 3).to_i.should eq(30)
+    br(1, 98).to_i.should eq(0)
+    br(-10, 3).to_i.should eq(-3)
+    expect_raises(OverflowError) { br(Int64::MAX, 1).to_i }
+  end
+
   it "#to_f64" do
     r = br(10, 3)
     f = 10.to_f64 / 3.to_f64
@@ -191,6 +199,21 @@ describe BigRational do
       typeof(Float32::NAN <=> 1.to_big_r).should eq(Int32?)
 
       typeof(1.to_big_r <=> 1.to_big_f).should eq(Int32)
+    end
+
+    it "compares against infinities" do
+      (1.to_big_r <=> Float64::INFINITY).should eq(-1)
+      (1.to_big_r <=> -Float64::INFINITY).should eq(1)
+      (1.to_big_r <=> Float32::INFINITY).should eq(-1)
+      (1.to_big_r <=> -Float32::INFINITY).should eq(1)
+
+      (Float64::INFINITY <=> 1.to_big_r).should eq(1)
+      (-Float64::INFINITY <=> 1.to_big_r).should eq(-1)
+      (Float32::INFINITY <=> 1.to_big_r).should eq(1)
+      (-Float32::INFINITY <=> 1.to_big_r).should eq(-1)
+
+      typeof(1.to_big_r <=> Float64::INFINITY).should eq(Int32?)
+      typeof(Float64::INFINITY <=> 1.to_big_r).should eq(Int32?)
     end
   end
 

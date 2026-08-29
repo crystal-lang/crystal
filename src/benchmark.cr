@@ -131,9 +131,9 @@ module Benchmark
 
   # Returns the time used to execute the given block.
   def measure(label = "", &) : BM::Tms
-    t0, r0 = Process.times, Time.monotonic
+    t0, r0 = Process.times, Time.instant
     yield
-    t1, r1 = Process.times, Time.monotonic
+    t1, r1 = Process.times, Time.instant
     BM::Tms.new(t1.utime - t0.utime,
       t1.stime - t0.stime,
       t1.cutime - t0.cutime,

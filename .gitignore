@@ -1,6 +1,10 @@
 # Environment configuration
 /Makefile.local
 /Makefile.win.local
+.env
+.env.*
+.envrc
+.envrc.*
 
 # Build artifacts
 *.o
@@ -14,9 +18,20 @@
 /.build/
 /samples/.build/
 /docs/
-/man/*.gz
+/man/
 
 # CI
 /coverage/
 /tmp/
 /.junit/
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

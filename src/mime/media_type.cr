@@ -1,5 +1,3 @@
-require "uri"
-require "http"
 require "mime"
 
 module MIME
@@ -64,7 +62,7 @@ module MIME
     # mime_type["foo"] = "bar"
     # mime_type["foo"] # => "bar"
     # ```
-    def []=(key : String, value : String)
+    def []=(key : String, value : String) : String
       raise Error.new("Invalid parameter name") unless MIME::MediaType.token? key
       @params[key] = value
     end
@@ -371,10 +369,9 @@ module MIME
       value = String.build do |io|
         # Set positions for copying data from reader string to `io` in bulk.
         value_start = reader.pos
-        value_end = reader.pos
 
         while reader.has_next?
-          case char = reader.current_char
+          case reader.current_char
           when ';'
             break unless quoted
 
@@ -385,9 +382,8 @@ module MIME
             waiting_for_closing_quote = false
             break
           when '\\'
-            reader.next_char
+            char = reader.next_char
 
-            char = reader.current_char
             # Escape `\\` and `\"`
             if char == '\\' || (quoted && char == '"')
               # Write everything before the escaping backslash to io, then set
@@ -488,12 +484,12 @@ module MIME
     end
 
     # :nodoc:
-    def self.token?(string) : Bool
+    def self.token?(string : String) : Bool
       string.each_char.all? { |char| token? char }
     end
 
     # :nodoc:
-    def self.quote_string(string, io) : Nil
+    def self.quote_string(string : String, io : IO) : Nil
       string.each_char do |char|
         case char
         when '"', '\\'

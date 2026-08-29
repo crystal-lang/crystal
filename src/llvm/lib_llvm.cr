@@ -50,13 +50,13 @@
   {% end %}
   lib LibLLVM
     VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") }}
-    BUILT_TARGETS = {{ llvm_targets.strip.downcase.split(' ').map(&.id.symbolize) }}
+    BUILT_TARGETS = {{ llvm_targets.strip.downcase.gsub(/;|,/, " ").split(' ').map(&.id.symbolize) }}
   end
 {% end %}
 
 # Supported library versions:
 #
-# * LLVM (8-20; aarch64 requires 13+)
+# * LLVM (8-22; aarch64 requires 13+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
@@ -73,6 +73,7 @@
     IS_LT_180 = {{compare_versions(LibLLVM::VERSION, "18.0.0") < 0}}
     IS_LT_190 = {{compare_versions(LibLLVM::VERSION, "19.0.0") < 0}}
     IS_LT_200 = {{compare_versions(LibLLVM::VERSION, "20.0.0") < 0}}
+    IS_LT_210 = {{compare_versions(LibLLVM::VERSION, "21.0.0") < 0}}
   end
 {% end %}
 
@@ -86,4 +87,5 @@ lib LibLLVM
   alias SizeT = LibC::SizeT
 end
 
+require "./lib_llvm/config"
 require "./lib_llvm/**"

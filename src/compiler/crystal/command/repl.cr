@@ -40,7 +40,7 @@ class Crystal::Command
     else
       filename = options.shift
       unless File.file?(filename)
-        error "File '#{filename}' doesn't exist"
+        abort! "File '#{filename}' doesn't exist", :USAGE_ERROR
       end
 
       show_banner

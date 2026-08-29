@@ -3,7 +3,7 @@ lib Foo
 end
 
 def raise(msg)
-  while true
+  while true # ameba:disable Lint/EmptyLoop
   end
 end
 

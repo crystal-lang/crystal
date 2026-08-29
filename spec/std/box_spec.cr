@@ -57,6 +57,32 @@ describe "Box" do
     Box(Nil).unbox(box).should be_nil
   end
 
+  describe "unboxing a null pointer" do
+    it "returns nil if nilable" do
+      Box(Nil).unbox(Pointer(Void).null).should be_nil
+      Box(String?).unbox(Pointer(Void).null).should be_nil
+      Box(UInt8*).unbox(Pointer(Void).null).should eq Pointer(UInt8).null
+    end
+
+    it "raises if non-nilable" do
+      expect_raises(NilAssertionError, "Unboxing null pointer") do
+        Box(String).unbox(Pointer(Void).null)
+      end
+      expect_raises(NilAssertionError, "Unboxing null pointer") do
+        Box(Int32).unbox(Pointer(Void).null)
+      end
+    end
+
+    it "raises for mixed union" do
+      expect_raises(NilAssertionError, "Unboxing null pointer in mixed union") do
+        Box(Int32 | String?).unbox(Pointer(Void).null)
+      end
+      expect_raises(NilAssertionError, "Unboxing null pointer in mixed union") do
+        Box(Int32?).unbox(Pointer(Void).null)
+      end
+    end
+  end
+
   it "boxing nil in a reference-like union returns a null pointer (#11839)" do
     box = Box.box(nil.as(String?))
     box.address.should eq(0)

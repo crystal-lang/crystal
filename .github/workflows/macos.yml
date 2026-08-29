@@ -15,24 +15,29 @@ env:
 jobs:
   darwin-test:
     runs-on: ${{ matrix.runs-on }}
-    name: ${{ matrix.arch }}
+    name: "${{ matrix.runs-on }} (${{ matrix.arch }})"
     strategy:
+      fail-fast: false
       matrix:
         include:
-        - runs-on: macos-13
+        - runs-on: macos-26-intel
           arch: x86_64-darwin
         - runs-on: macos-14
           arch: aarch64-darwin
+        - runs-on: macos-26
+          arch: aarch64-darwin
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
         with:
           extra_nix_config: |
             experimental-features = nix-command
 
-      - uses: cachix/cachix-action@v16
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
@@ -48,3 +53,36 @@ jobs:
 
       - name: Test interpreter
         run: bin/ci with_build_env 'make interpreter_spec'
+
+  test-std:
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        opts:
+          - flags: "-Dwithout_mt"
+          - workers: 4 # execution_context: parallel
+    steps:
+      - name: Download Crystal source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command
+
+      - uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: crystal-ci
+          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+
+      - name: Prepare System
+        run: bin/ci prepare_system
+
+      - name: Prepare Build
+        run: bin/ci prepare_build
+
+      - name: Test
+        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'

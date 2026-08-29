@@ -1,3 +1,5 @@
+{% skip_file if flag?(:win32) %}
+
 require "c/termios"
 
 @[Deprecated]

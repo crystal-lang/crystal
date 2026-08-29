@@ -547,8 +547,8 @@ describe "Regex" do
   describe ".union" do
     it "constructs a Regex that matches things any of its arguments match" do
       re = Regex.union(/skiing/i, "sledding")
-      re.match("Skiing").not_nil![0].should eq "Skiing"
-      re.match("sledding").not_nil![0].should eq "sledding"
+      re.match!("Skiing")[0].should eq "Skiing"
+      re.match!("sledding")[0].should eq "sledding"
     end
 
     it "returns a regular expression that will match passed arguments" do

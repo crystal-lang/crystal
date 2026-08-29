@@ -70,7 +70,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets while, returns nil" do
-      interpret(<<-CRYSTAL).should eq(nil)
+      interpret(<<-CRYSTAL).should be_nil
         a = 0
         while a < 10
           a = a + 1

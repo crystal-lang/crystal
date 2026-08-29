@@ -10,20 +10,19 @@ class HTTP::LogHandler
   def initialize(@log = Log.for("http.server"))
   end
 
-  def call(context) : Nil
-    start = Time.monotonic
+  def call(context : HTTP::Server::Context) : Nil
+    start = Time.instant
 
     begin
       call_next(context)
     ensure
-      elapsed = Time.monotonic - start
-      elapsed_text = elapsed_text(elapsed)
+      elapsed_text = elapsed_text(start.elapsed)
 
       req = context.request
       res = context.response
 
       addr =
-        case remote_address = req.remote_address
+        case remote_address = context.remote_address
         when nil
           "-"
         when Socket::IPAddress

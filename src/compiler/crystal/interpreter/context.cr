@@ -4,7 +4,14 @@ require "./repl"
 # program. For example, it includes the memory region to store constants
 # and class variables, what are all the know symbols, and a few more things.
 class Crystal::Repl::Context
-  record MultidispatchKey, obj_type : Type, call_signature : CallSignature
+  # The cache key for synthetic dispatch methods. `target_def_ids` must be
+  # part of the key because two call sites with the same `obj_type` and
+  # signature can resolve to different `target_defs` when intervening code
+  # instantiates new types that fall under the union — without it, the
+  # second site reuses the first's dispatch chain and any newly resolved
+  # type falls through the `else` branch into "Reached the unreachable"
+  # (#16810).
+  record MultidispatchKey, obj_type : Type, call_signature : CallSignature, target_def_ids : Array(UInt64)
 
   getter program : Program
 
@@ -20,7 +27,7 @@ class Crystal::Repl::Context
   getter! class_vars : ClassVars
 
   # libffi information about external functions.
-  getter lib_functions : Hash(External, LibFunction)
+  getter lib_functions : Hash(Void*, LibFunction)
 
   # Cache of multidispatch expansions.
   getter multidispatchs : Hash(MultidispatchKey, Def)
@@ -49,16 +56,27 @@ class Crystal::Repl::Context
   # (e.g. `$Slice:0`).
   @const_slice_buffers = {} of String => UInt8*
 
+  # A cache of object IDs of the `CompiledDef`s corresponding to `ProcLiteral`s.
+  # Used to determine whether such an object ID or a raw function pointer is
+  # passed to `Proc.new`.
+  getter compiled_procs = Set(UInt64).new
+
+  # A cache from C proc pointers to `CompiledDef`s, formed using `Proc.new`.
+  getter extern_proc_wrappers = {} of Void* => CompiledDef
+
   def initialize(@program : Program)
     @program.flags << "interpreted"
+    @program.define_crystal_constants
+
+    # TODO: interpreter should be capable to start threads (eventually)
+    @program.flags << "without_mt"
 
     @gc_references = [] of Void*
 
     @defs = {} of Def => CompiledDef
     @defs.compare_by_identity
 
-    @lib_functions = {} of External => LibFunction
-    @lib_functions.compare_by_identity
+    @lib_functions = {} of Void* => LibFunction
 
     @symbol_to_index = {} of String => Int32
     @symbols = [] of String
@@ -80,7 +98,7 @@ class Crystal::Repl::Context
     end
 
     # This is a stack pool, for checkout_stack.
-    @stack_pool = Fiber::StackPool.new(protect: false)
+    @stack_pool = Fiber::StackPool.new(protect: false, reuse_dead_fiber_stack: false)
 
     # Mapping of types to numeric ids
     @type_to_id = {} of Type => Int32
@@ -253,6 +271,23 @@ class Crystal::Repl::Context
     end
   end
 
+  def extern_proc_wrapper(proc_type : ProcInstanceType, symbol : Void*) : CompiledDef
+    extern_proc_wrappers.put_if_absent(symbol) do
+      crystal_args_bytesize = proc_type.arg_types.sum { |arg| aligned_sizeof_type(arg) }
+      target_def = proc_type.lookup_first_def("call", false).not_nil!
+      compiled_def = CompiledDef.new(self, target_def, proc_type, crystal_args_bytesize)
+
+      proc_type.arg_types.each_with_index do |arg_type, i|
+        compiled_def.local_vars.declare("arg#{i}", arg_type)
+      end
+
+      compiler = Compiler.new(self, compiled_def, top_level: false)
+      compiler.compile_extern_proc_wrapper(target_def, proc_type, symbol)
+
+      compiled_def
+    end
+  end
+
   def ffi_closure_context(interpreter : Interpreter, compiled_def : CompiledDef)
     # Keep the closure contexts in a Hash by the compiled def so we don't
     # lose a reference to it in the GC.
@@ -293,33 +328,7 @@ class Crystal::Repl::Context
   end
 
   def const_slice_buffer(info : Program::ConstSliceInfo) : UInt8*
-    @const_slice_buffers.put_if_absent(info.name) do
-      kind = info.element_type
-      element_size = kind.bytesize // 8
-      buffer = Pointer(UInt8).malloc(info.args.size * element_size)
-      ptr = buffer
-
-      info.args.each do |arg|
-        num = arg.as(NumberLiteral)
-        case kind
-        in .i8?   then ptr.as(Int8*).value = num.value.to_i8
-        in .i16?  then ptr.as(Int16*).value = num.value.to_i16
-        in .i32?  then ptr.as(Int32*).value = num.value.to_i32
-        in .i64?  then ptr.as(Int64*).value = num.value.to_i64
-        in .i128? then ptr.as(Int128*).value = num.value.to_i128
-        in .u8?   then ptr.as(UInt8*).value = num.value.to_u8
-        in .u16?  then ptr.as(UInt16*).value = num.value.to_u16
-        in .u32?  then ptr.as(UInt32*).value = num.value.to_u32
-        in .u64?  then ptr.as(UInt64*).value = num.value.to_u64
-        in .u128? then ptr.as(UInt128*).value = num.value.to_u128
-        in .f32?  then ptr.as(Float32*).value = num.value.to_f32
-        in .f64?  then ptr.as(Float64*).value = num.value.to_f64
-        end
-        ptr += element_size
-      end
-
-      buffer
-    end
+    @const_slice_buffers.put_if_absent(info.name) { info.to_bytes.to_unsafe }
   end
 
   def aligned_sizeof_type(node : ASTNode) : Int32

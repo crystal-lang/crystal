@@ -1,9 +1,6 @@
 require "../event_loop/socket"
 
 module Crystal::System::Socket
-  # Creates a file descriptor / socket handle
-  # private def create_handle(family, type, protocol, blocking) : Handle
-
   # Initializes a file descriptor / socket handle for use with Crystal Socket
   # private def initialize_handle(fd)
 
@@ -12,12 +9,13 @@ module Crystal::System::Socket
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  # private def system_bind(addr, addrstr)
+  # Returns a `Socket::BindError` on failure.
+  # private def system_bind(addr, addrstr) : ::Socket::BindError?
 
-  # private def system_listen(backlog)
+  # Returns a `Socket::Error` on failure.
+  # private def system_listen(backlog) : ::Socket::Error?
 
-  private def system_accept
+  private def system_accept : {Handle, Bool}?
     event_loop.accept(self)
   end
 
@@ -27,6 +25,10 @@ module Crystal::System::Socket
 
   private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
     event_loop.receive_from(self, bytes)
+  end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    event_loop.sendfile(self, file.fd, offset, count, 0)
   end
 
   # private def system_close_read
@@ -61,11 +63,11 @@ module Crystal::System::Socket
 
   # private def system_linger=(val)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET, &)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
 
-  # private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
-  # private def system_setsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
+  # private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
 
   # private def system_blocking?
 
@@ -77,9 +79,11 @@ module Crystal::System::Socket
 
   # private def system_close_on_exec=(arg : Bool)
 
+  # private def system_fcntl(cmd, arg = 0)
+
   # def self.fcntl(fd, cmd, arg = 0)
 
-  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
+  # def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
 
   private def system_read(slice : Bytes) : Int32
     event_loop.read(self, slice)
@@ -126,6 +130,12 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count
 
   # private def system_tcp_keepalive_count=(val : Int)
+
+  # IPAddress:
+
+  # def self.network_interface_to_index(name : String, & : Errno | WinError | WasiError ->) : Int
+
+  # def self.network_interface_from_index(index : Int, & : Errno | WinError | WasiError ->) : String
 end
 
 {% if flag?(:wasi) %}

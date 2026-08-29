@@ -22,7 +22,7 @@ class HTTP::Server::RequestProcessor
     @wants_close = true
   end
 
-  def process(input, output) : Nil
+  def process(input : IO, output : IO) : Nil
     response = Response.new(output)
 
     begin
@@ -43,9 +43,24 @@ class HTTP::Server::RequestProcessor
           return
         end
 
+        # RFC 9112, Section 6.1: reject & close on ambiguous body content to
+        # prevent request smuggling
+        if request.headers.has_key?("Content-Length") && request.headers.has_key?("Transfer-Encoding")
+          response.respond_with_status(HTTP::Status::BAD_REQUEST)
+          return
+        end
+
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        context = Context.new(request, response)
+        if input.responds_to?(:remote_address)
+          remote_address = input.remote_address
+        end
+
+        if input.responds_to?(:local_address)
+          local_address = input.local_address
+        end
+        context = Context.new(request, response,
+          remote_address: remote_address, local_address: local_address)
 
         Log.with_context do
           @handler.call(context)

@@ -509,7 +509,30 @@ abstract struct Enum
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
-      case string.gsub('-', '_').camelcase.downcase
+      # The following is an optimized normalization. It is equivalent to
+      # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
+      {%
+        max_charsize = @type.constants.map(&.size).sort.last
+        max_bytesize = if compare_versions(Crystal::VERSION, "1.22.0") >= 0
+                         @type.constants.map(&.bytesize).sort.last
+                       else
+                         # Without `StringLiteral#bytesize` we have no means to figure out how
+                         # much space we actually need. So we calculate the worst case based on
+                         # char size.
+                         max_charsize * 4
+                       end
+      %}
+      buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
+      appender = buffer.to_unsafe.appender
+      char_counter = 0
+      string.each_char do |char|
+        next if char == '-' || char == '_'
+        char_counter += 1
+        return nil if char_counter > {{ max_charsize }}
+        char.downcase &.each_byte do |byte|
+          appender << byte
+        end
+      end
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
       # `FOO` and `Foo` members would both generate `when "foo"` which creates a compile time error.
@@ -520,8 +543,10 @@ abstract struct Enum
         {% key = member.stringify.camelcase.downcase %}
         {% constants[key] = member unless constants[key] %}
       {% end %}
+
+      case appender.to_slice
       {% for name, member in constants %}
-        when {{name}}
+        when {{name}}.to_slice
           new({{@type.constant(member)}})
       {% end %}
       else

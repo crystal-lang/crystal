@@ -173,6 +173,14 @@ struct LLVM::Type
     Value.new LibLLVM.const_array(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
+  def const_data_array(buffer : Bytes) : Value
+    {% if LibLLVM::IS_LT_210 %}
+      raise NotImplementedError.new("LLVM::Type#const_data_array")
+    {% else %}
+      Value.new LibLLVM.const_data_array(self, buffer, buffer.bytesize)
+    {% end %}
+  end
+
   def inline_asm(asm_string, constraints, has_side_effects = false, is_align_stack = false, can_throw = false, dialect : InlineAsmDialect = InlineAsmDialect::ATT)
     value =
       {% if LibLLVM::IS_LT_130 %}

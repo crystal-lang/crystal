@@ -1781,13 +1781,17 @@ module Crystal
     end
 
     def solve(instance)
+      solve?(instance).not_nil!
+    end
+
+    def solve?(instance)
       if instance.is_a?(GenericInstanceType) && instance.generic_type == @owner
         ancestor = instance
       else
-        ancestor = instance.ancestors.find { |ancestor| ancestor.is_a?(GenericInstanceType) && ancestor.generic_type == owner }.as(GenericInstanceType)
+        ancestor = instance.ancestors.find { |ancestor| ancestor.is_a?(GenericInstanceType) && ancestor.generic_type == owner }.as?(GenericInstanceType)
       end
 
-      ancestor.type_vars[name]
+      ancestor.try &.type_vars[name]?
     end
 
     def unbound?
@@ -2095,6 +2099,8 @@ module Crystal
               type_var_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
             end
           else
+            # `type_var` could only be a non-type such as `NumberLiteral`, no
+            # need to use `#to_s_with_options` here
             io << ", " unless first
             first = false
             type_var.to_s(io)
@@ -2288,7 +2294,11 @@ module Crystal
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
         end
 
-        value = n.value.to_i
+        value = n.value.to_i?
+        unless value
+          raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{n} (N must be an integer)"
+        end
+
         if value < 0
           raise TypeException.new "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
         end
@@ -2616,7 +2626,7 @@ module Crystal
 
     def replace_type_parameters(instance)
       new_entries = entries.map do |entry|
-        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance))
+        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance), entry.loc)
       end
       program.named_tuple_of(new_entries)
     end
@@ -3014,7 +3024,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3068,7 +3078,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s(io)
+      instance_type.to_s_with_options(io, codegen: codegen)
       io << ".class"
     end
 
@@ -3310,6 +3320,12 @@ module Crystal
   # saved under a type types like any other type.
   class Const < NamedType
     property value : ASTNode
+
+    # Type restriction declared with `FOO : Int64 = 123` syntax. The value's
+    # inferred type must conform to this and number/symbol literals autocast
+    # to it.
+    property declared_type : ASTNode?
+
     property fake_def : Def?
     property? used = false
     property? visited = false
@@ -3466,7 +3482,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      base_type.to_s(io)
+      base_type.to_s_with_options(io, codegen: codegen)
       io << '+'
     end
 

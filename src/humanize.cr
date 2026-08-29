@@ -56,10 +56,23 @@ struct Number
       integer, _, decimals = string.partition('.')
     end
 
+    is_negative = number.responds_to?(:sign_bit) ? number.sign_bit < 0 : number < 0
+
+    format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant)
+  end
+
+  # :ditto:
+  def format(separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : String
+    String.build do |io|
+      format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
+    end
+  end
+
+  private def format_impl(io, is_negative, integer, decimals, separator, delimiter, decimal_places, group, only_significant) : Nil
     int_size = integer.size
     dec_size = decimals.size
 
-    io << '-' if number.is_a?(Float::Primitive) ? Math.copysign(1, number) < 0 : number < 0
+    io << '-' if is_negative
 
     start = int_size % group
     start += group if start == 0
@@ -88,13 +101,6 @@ struct Number
           io << '0'
         end
       end
-    end
-  end
-
-  # :ditto:
-  def format(separator = '.', delimiter = ',', decimal_places : Int? = nil, *, group : Int = 3, only_significant : Bool = false) : String
-    String.build do |io|
-      format(io, separator, delimiter, decimal_places, group: group, only_significant: only_significant)
     end
   end
 
@@ -293,7 +299,7 @@ end
 struct Int
   enum BinaryPrefixFormat
     # The IEC standard prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`, `Ri`, `Qi`)
-    # based on powers of 1000.
+    # based on powers of 1024.
     IEC
 
     # Extended range of the JEDEC units (`K`, `M`, `G`, `T`, `P`, `E`, `Z`, `Y`, `R`, `Q`)
@@ -309,7 +315,7 @@ struct Int
   # typically expressed using unit prefixes based on 1024 (instead of multiples
   # of 1000 as per SI standard). This method by default uses the IEC standard
   # prefixes (`Ki`, `Mi`, `Gi`, `Ti`, `Pi`, `Ei`, `Zi`, `Yi`, `Ri`, `Qi`) based
-  # on powers of 1000 (see `BinaryPrefixFormat::IEC`).
+  # on powers of 1024 (see `BinaryPrefixFormat::IEC`).
   #
   # *format* can be set to use the extended range of JEDEC units (`K`, `M`, `G`,
   # `T`, `P`, `E`, `Z`, `Y`, `R`, `Q`) which equals to the prefixes of the SI
@@ -318,9 +324,9 @@ struct Int
   #
   # ```
   # 1.humanize_bytes                        # => "1B"
-  # 1024.humanize_bytes                     # => "1.0kiB"
-  # 1536.humanize_bytes                     # => "1.5kiB"
-  # 524288.humanize_bytes                   # => "512kiB"
+  # 1024.humanize_bytes                     # => "1.0KiB"
+  # 1536.humanize_bytes                     # => "1.5KiB"
+  # 524288.humanize_bytes                   # => "512KiB"
   # 1073741824.humanize_bytes(format: :IEC) # => "1.0GiB"
   # ```
   #
@@ -334,7 +340,7 @@ struct Int
         unit = "B"
       else
         if format.iec?
-          unit = "#{prefix}iB"
+          unit = "#{prefix.upcase}iB"
         else
           unit = "#{prefix.upcase}B"
         end

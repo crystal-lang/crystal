@@ -1,4 +1,3 @@
-require "set"
 require "../program"
 require "../syntax/transformer"
 
@@ -309,8 +308,8 @@ module Crystal
       #     tmp2 = exp2
       #     ...
       #     tmp.[]=(tmp1, tmp2, ..., tmp[tmp1, tmp2, ...] + b)
-      tmp_args = target.args.map { program.new_temp_var.as(ASTNode) }
-      tmp = program.new_temp_var
+      tmp_args = target.args.map { program.new_temp_var(node).as(ASTNode) }
+      tmp = program.new_temp_var(node)
 
       # (1) = tmp1 = exp1; tmp2 = exp2; ...; tmp = a
       tmp_assigns = Array(ASTNode).new(tmp_args.size + 1)
@@ -509,6 +508,15 @@ module Crystal
       end
       values = [Var.new(var_name).at(expressions)] of ASTNode
       MultiAssign.new(targets, values).at(expressions)
+    end
+
+    def transform(node : Union)
+      if node.singleton?
+        # If the union has just one type, return that instead of a union
+        node.types.first
+      else
+        super
+      end
     end
   end
 end

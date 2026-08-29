@@ -2,19 +2,19 @@ require "../../spec_helper"
 
 describe "Code gen: void" do
   it "codegens void assignment" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       fun foo : Void
       end
 
       a = foo
       a
       1
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens void assignment in case" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
 
       fun foo : Void
       end
@@ -24,19 +24,19 @@ describe "Code gen: void" do
         when 1
           foo
         when 2
-          raise \"oh no\"
+          raise "oh no"
         else
         end
       end
 
       bar
       1
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens void assignment in case with local variable" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
 
       fun foo : Void
       end
@@ -47,38 +47,38 @@ describe "Code gen: void" do
           a = 1
           foo
         when 2
-          raise \"oh no\"
+          raise "oh no"
         else
         end
       end
 
       bar
       1
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens unreachable code" do
-    run(%(
+    run(<<-CRYSTAL)
       a = nil
       if a
         b = a.foo
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens no return assignment" do
-    codegen("
+    codegen(<<-CRYSTAL)
       lib LibC
         fun exit : NoReturn
       end
 
       a = LibC.exit
       a
-      ")
+      CRYSTAL
   end
 
   it "allows passing void as argument to method" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibC
         fun foo
       end
@@ -91,11 +91,11 @@ describe "Code gen: void" do
       end
 
       bar(baz)
-    ))
+      CRYSTAL
   end
 
   it "returns void from nil functions, doesn't crash when passing value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       def baz(x)
         1
       end
@@ -112,6 +112,6 @@ describe "Code gen: void" do
       end
 
       foo.bar
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 end

@@ -6,7 +6,7 @@ describe "Semantic: c enum" do
   end
 
   it "allows using an enum as a type in a fun" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["LibC"].types["Foo"] }
       lib LibC
         enum Foo
           A
@@ -15,11 +15,11 @@ describe "Semantic: c enum" do
       end
 
       LibC.my_mega_function(LibC::Foo::A)
-    ") { types["LibC"].types["Foo"] }
+      CRYSTAL
   end
 
   it "allows using an enum as a type in a struct" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { types["LibC"].types["Foo"] }
       lib LibC
         enum Foo
           A
@@ -32,7 +32,7 @@ describe "Semantic: c enum" do
       f = LibC::Bar.new
       f.x = LibC::Foo::A
       f.x
-    ") { types["LibC"].types["Foo"] }
+      CRYSTAL
   end
 
   it "types enum value with base type" do

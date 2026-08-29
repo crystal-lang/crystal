@@ -1,12 +1,31 @@
-# This annotation marks methods, classes, constants, and macros as deprecated.
+# This annotation marks features as deprecated.
 #
-# It receives an optional `StringLiteral` as single argument containing a deprecation notice.
+# It can annotate methods, macros, types, constants, aliases and method parameters.
+#
+# It receives an optional `StringLiteral` as single argument containing a
+# deprecation notice.
 #
 # ```
 # @[Deprecated("Use `#bar` instead")]
 # def foo
 # end
+#
+# @[Deprecated("Here may be dragons")]
+# class Foo
+# end
+#
+# def foo(bar, @[Deprecated("Do not try this at home")] baz)
+# end
 # ```
+#
+# Deprecations are shown in the API docs and the compiler prints a warning when
+# using a deprecated feature.
+#
+# Deprecated types only trigger a warning when they are actually _used_ (e.g.
+# calling a class method), not when they're just part of type restriction, for
+# example.
+# Deprecated parameters only trigger a warning when the particular parameter is
+# passed in a call. Calls without this parameter are unaffected.
 annotation Deprecated
 end
 
@@ -70,4 +89,47 @@ end
 # end
 # ```
 annotation Experimental
+end
+
+# The annotation allows to assume special CPU model/features for a method.
+#
+# It is similar to the `--cpu` and `--mattr` build arguments, but where the
+# scope is limited to the annotated `def` or `fun`. It allows to compile a single
+# executable, yet allow some optimized functions that will only run when
+# available, such as specific SIMD instructions for example.
+#
+# CPU feature and model selections only accept values valid for the current
+# target platform architecture.
+#
+# It is a semantic error to call a method with a feature requirement that is
+# invalid for the current target architecture. Calls typically require macro
+# guard clauses on top of runtime feature tests.
+#
+# For example:
+#
+# ```
+# {% if flag?(:x86_64) %}
+#   @[TargetFeature("+avx2")]
+#   private def foo_avx2
+#   end
+#
+#   private def cpu_supports_avx2?
+#   end
+# {% end %}
+#
+# private def foo_portable
+# end
+#
+# def foo
+#   {% if flag?(:x86_64) %}
+#     return foo_avx2 if cpu_supports_avx2?
+#   {% end %}
+#   foo_portable
+# end
+# ```
+#
+# WARNING: When a method has been compiled with a feature and that feature is
+# not supported at runtime, calling this method will result in an illegal
+# instruction, and is undefined behaviour.
+annotation TargetFeature
 end

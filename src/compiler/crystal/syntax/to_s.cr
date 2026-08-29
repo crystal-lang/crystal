@@ -3,12 +3,8 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io : IO) : Nil
-      to_s(io)
-    end
-
-    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false) : Nil
-      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc)
+    def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false, emit_location_pragmas : Bool = false) : Nil
+      visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc, emit_location_pragmas: emit_location_pragmas)
       self.accept visitor
     end
   end
@@ -17,7 +13,9 @@ module Crystal
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
-    @write_trailing_newline : Bool = true
+
+    # Represents the root level `Expressions` instance within a `MacroExpression`.
+    @root_level_macro_expressions : Expressions? = nil
 
     # Inside a comma-separated list of parameters or args, this becomes true and
     # the outermost pair of parentheses are removed from type restrictions that
@@ -33,7 +31,7 @@ module Crystal
       BLOCK_ARG
     end
 
-    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false)
+    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false, @emit_location_pragmas : Bool = false)
       @indent = 0
       @inside_macro = 0
     end
@@ -134,13 +132,16 @@ module Crystal
     end
 
     def visit_interpolation(node, &)
-      node.expressions.each do |exp|
-        if exp.is_a?(StringLiteral)
-          @str << yield exp.value
+      node.expressions.chunks(&.is_a?(StringLiteral)).each do |(is_string, exps)|
+        if is_string
+          value = exps.join(&.as(StringLiteral).value)
+          @str << yield value
         else
-          @str << "\#{"
-          exp.accept(self)
-          @str << '}'
+          exps.each do |exp|
+            @str << "\#{"
+            exp.accept(self)
+            @str << '}'
+          end
         end
       end
     end
@@ -201,13 +202,13 @@ module Crystal
     end
 
     def visit(node : NamedTupleLiteral)
-      @str << '{'
-
       # short-circuit to handle empty named tuple context
       if node.entries.empty?
-        @str << '}'
+        @str << "::NamedTuple.new"
         return false
       end
+
+      @str << '{'
 
       # A node starts multiline when its starting brace is on a different line than the staring line of it's first entry
       start_multiline = (start_loc = node.location) && (first_entry_loc = node.entries.first?.try &.value.location) && first_entry_loc.line_number > start_loc.line_number
@@ -267,9 +268,13 @@ module Crystal
     end
 
     def visit(node : Expressions)
+      is_multiline = false
+
       case node.keyword
       in .paren?
-        @str << '('
+        # Handled via dedicated #in_parenthesis call below
+        is_multiline = (loc = node.location) && (first_loc = node.expressions.first?.try &.location) && (first_loc.line_number > loc.line_number)
+        append_indent if is_multiline
       in .begin?
         @str << "begin"
         @indent += 1
@@ -278,32 +283,35 @@ module Crystal
         # Not a special condition
       end
 
-      if @inside_macro > 0
-        node.expressions.each &.accept self
-      else
-        last_node = nil
+      in_parenthesis node.keyword.paren?, is_multiline do
+        if @inside_macro > 0
+          node.expressions.each &.accept self
+        else
+          last_node = nil
 
-        node.expressions.each_with_index do |exp, i|
-          unless exp.nop?
-            write_extra_newlines (last_node || exp).end_location, exp.location
+          node.expressions.each_with_index do |exp, i|
+            unless exp.nop?
+              write_extra_newlines (last_node || exp).end_location, exp.location
 
-            append_indent unless node.keyword.paren? && i == 0
-            exp.accept self
+              append_indent unless node.keyword.paren? && i == 0
+              exp.accept self
 
-            if !@write_trailing_newline && i == node.expressions.size - 1
-              # no-op
-            else
-              newline unless node.keyword.paren? && i == node.expressions.size - 1
+              if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
+                # Do not add a trailing newline after the last node in the root `Expressions` within a `MacroExpression`.
+                # This is handled by the `MacroExpression` logic.
+              elsif !(node.keyword.paren? && i == node.expressions.size - 1)
+                newline
+              end
+
+              last_node = exp
             end
-
-            last_node = exp
           end
         end
       end
 
       case node.keyword
       in .paren?
-        @str << ')'
+        # Handled via dedicated #in_parenthesis call above
       in .begin?
         @indent -= 1
         append_indent
@@ -313,6 +321,12 @@ module Crystal
       end
 
       false
+    end
+
+    private def emit_loc_pragma(for location : Location?) : Nil
+      if @emit_location_pragmas && (loc = location) && (filename = loc.filename).is_a?(String)
+        @str << %(#<loc:"#{filename}",#{loc.line_number},#{loc.column_number}>)
+      end
     end
 
     def visit(node : If)
@@ -325,27 +339,68 @@ module Crystal
         return false
       end
 
-      visit_if_or_unless "if", node
+      self.emit_loc_pragma node.location
+
+      while true
+        @str << "if "
+        node.cond.accept self
+        newline
+
+        self.emit_loc_pragma node.then.location
+
+        accept_with_indent(node.then)
+        append_indent
+
+        # combine `else if` into `elsif` (does not apply to `unless` or `? :`)
+        if (else_node = node.else).is_a?(If) && !else_node.ternary?
+          @str << "els"
+          node = else_node
+        else
+          break
+        end
+      end
+
+      unless else_node.nop?
+        @str << "else"
+        newline
+
+        self.emit_loc_pragma node.else.location
+
+        accept_with_indent(node.else)
+        append_indent
+      end
+
+      self.emit_loc_pragma node.end_location
+
+      @str << "end"
+      false
     end
 
     def visit(node : Unless)
-      visit_if_or_unless "unless", node
-    end
+      self.emit_loc_pragma node.location
 
-    def visit_if_or_unless(prefix, node)
-      @str << prefix
-      @str << ' '
+      @str << "unless "
       node.cond.accept self
       newline
+
+      self.emit_loc_pragma node.then.location
+
       accept_with_indent(node.then)
       unless node.else.nop?
         append_indent
         @str << "else"
         newline
+
+        self.emit_loc_pragma node.else.location
+
         accept_with_indent(node.else)
       end
       append_indent
+
+      self.emit_loc_pragma node.end_location
+
       @str << "end"
+
       false
     end
 
@@ -439,6 +494,7 @@ module Crystal
       end
 
       need_parens = need_parens(node_obj)
+      is_multiline = false
 
       @str << "::" if node.global?
       if node_obj.is_a?(ImplicitObj)
@@ -490,7 +546,17 @@ module Crystal
         in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
+          # A call is multiline if the call's name is on a diff line than the obj it's being called on.
+          is_multiline = (node_obj_end_loc = node_obj.end_location) && (name_loc = node.name_end_location) && (name_loc.line_number > node_obj_end_loc.line_number)
+
           in_parenthesis(need_parens, node_obj)
+
+          if is_multiline
+            newline
+            @indent += 1
+            append_indent
+          end
+
           @str << '.'
         end
         if Lexer.setter?(node.name)
@@ -515,6 +581,8 @@ module Crystal
         @str << ' '
         block.accept self
       end
+
+      @indent -= 1 if is_multiline
 
       false
     end
@@ -556,9 +624,16 @@ module Crystal
             true
           end
         end
+      when Not
+        case exp = obj.exp
+        when Call
+          exp.obj.nil?
+        else
+          !obj.exp.is_a? Call
+        end
       when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
            StringInterpolation, Path, Generic, InstanceVar, ClassVar, Global,
-           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA, Not
+           ImplicitObj, TupleLiteral, NamedTupleLiteral, IsA
         false
       when ArrayLiteral
         !!obj.of
@@ -569,18 +644,28 @@ module Crystal
       end
     end
 
-    def in_parenthesis(need_parens, &)
-      if need_parens
-        @str << '('
-        yield
-        @str << ')'
-      else
-        yield
+    def in_parenthesis(need_parens, is_multiline = false, &)
+      @str << '(' if need_parens
+
+      if is_multiline
+        newline
+        @indent += 1
+        append_indent
       end
+
+      yield
+
+      if is_multiline
+        newline
+        @indent -= 1
+        append_indent
+      end
+
+      @str << ')' if need_parens
     end
 
-    def in_parenthesis(need_parens, node)
-      in_parenthesis(need_parens) do
+    def in_parenthesis(need_parens, node, is_multiline = false)
+      in_parenthesis(need_parens, is_multiline) do
         if node.is_a?(Expressions) && node.expressions.size == 1
           node.expressions.first.accept self
         else
@@ -814,6 +899,10 @@ module Crystal
         @indent += 1
       end
 
+      if (exp = node.exp).is_a? Expressions
+        @root_level_macro_expressions = exp
+      end
+
       outside_macro do
         write_extra_newlines node.location, node.exp.location
 
@@ -823,11 +912,7 @@ module Crystal
           append_indent
         end
 
-        # Only skip writing trailing newlines when the macro expressions' expression is not an Expressions.
-        # This allow Expressions that may be nested deeper in the AST to include trailing newlines.
-        @write_trailing_newline = !node.exp.is_a?(Expressions)
         node.exp.accept self
-        @write_trailing_newline = true
       end
 
       write_extra_newlines node.exp.end_location, node.end_location
@@ -846,18 +931,42 @@ module Crystal
     end
 
     def visit(node : MacroIf)
-      @str << "{% if "
-      node.cond.accept self
-      @str << " %}"
-      inside_macro do
-        node.then.accept self
-      end
-      unless node.else.nop?
-        @str << "{% else %}"
+      else_node = nil
+
+      while true
+        if node.is_unless?
+          @str << "{% unless "
+          then_node = node.else
+          else_node = node.then
+        else
+          @str << (else_node ? "{% elsif " : "{% if ")
+          then_node = node.then
+          else_node = node.else
+        end
+        node.cond.accept self
+        @str << " %}"
+
         inside_macro do
-          node.else.accept self
+          then_node.accept self
+        end
+
+        # combine `{% else %}{% if %}` into `{% elsif %}` (does not apply to
+        # `{% unless %}`, nor when there is whitespace inbetween, as that would
+        # show up as a `MacroLiteral`)
+        if !node.is_unless? && else_node.is_a?(MacroIf) && !else_node.is_unless?
+          node = else_node
+        else
+          break
         end
       end
+
+      unless else_node.nop?
+        @str << "{% else %}"
+        inside_macro do
+          else_node.accept self
+        end
+      end
+
       @str << "{% end %}"
       false
     end
@@ -990,8 +1099,6 @@ module Crystal
     end
 
     def visit(node : Generic)
-      name = node.name
-
       node.name.accept self
 
       printed_arg = false
@@ -1038,15 +1145,20 @@ module Crystal
     end
 
     def visit(node : Union)
-      node.types.join(@str, " | ", &.accept self)
+      @str << "(" if node.parens?
+
+      if node.singleton?
+        drop_parens_for_proc_notation(node.types.first, &.accept(self))
+      else
+        node.types.join(@str, " | ", &.accept self)
+      end
+
+      @str << ")" if node.parens?
       false
     end
 
     def visit(node : Metaclass)
-      needs_parens = node.name.is_a?(Union)
-      @str << '(' if needs_parens
       node.name.accept self
-      @str << ')' if needs_parens
       @str << ".class"
       false
     end
@@ -1131,9 +1243,14 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
+      first = node.elements.first?
+      unless first
+        @str << "::Tuple.new"
+        return false
+      end
+
       @str << '{'
 
-      first = node.elements.first?
       space = first.is_a?(TupleLiteral) || first.is_a?(NamedTupleLiteral) || first.is_a?(HashLiteral)
       @str << ' ' if space
       node.elements.join(@str, ", ", &.accept self)
@@ -1166,7 +1283,7 @@ module Crystal
 
       @str << "do"
 
-      unless node.args.empty?
+      if node.has_any_args?
         @str << " |"
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -1181,6 +1298,8 @@ module Crystal
         end
         @str << '|'
       end
+
+      write_extra_newlines node.location, node.body.location
 
       if single_line_block
         @str << ' '
@@ -1251,14 +1370,23 @@ module Crystal
 
     def to_s_binary(node, op)
       left_needs_parens = need_parens(node.left)
-      in_parenthesis(left_needs_parens, node.left)
+      left_parens_multiline = left_needs_parens && (begin_loc = node.left.location) && (end_loc = node.left.end_location) && (end_loc.line_number > begin_loc.line_number)
+      in_parenthesis(left_needs_parens, node.left, left_parens_multiline)
 
       @str << ' '
       @str << op
-      @str << ' '
+
+      if (right_loc = node.right.location) && (left_end_loc = node.left.end_location) && (right_loc.line_number > left_end_loc.line_number)
+        newline
+        append_indent
+      else
+        @str << ' '
+      end
 
       right_needs_parens = need_parens(node.right)
-      in_parenthesis(right_needs_parens, node.right)
+      right_parens_multiline = right_needs_parens && (begin_loc = node.right.location) && (end_loc = node.right.end_location) && (end_loc.line_number > begin_loc.line_number)
+      in_parenthesis(right_needs_parens, node.right, right_parens_multiline)
+
       false
     end
 
@@ -1744,7 +1872,7 @@ module Crystal
           # call arguments
           node.declared_type.is_a?(ProcNotation)
         else
-          false
+          node.is_a?(ProcNotation)
         end
 
       drop_parens_for_proc_notation(outermost_type_is_proc_notation) { yield node }

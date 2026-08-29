@@ -69,4 +69,14 @@ describe "Semantic: ReferenceStorage" do
       MyRef(Foo).new.u
       CRYSTAL
   end
+
+  it "adds ReferenceStorage to Value.subclasses once (#15677)" do
+    assert_type(<<-CRYSTAL) { bool }
+      @[Primitive(:ReferenceStorageType)]
+      struct ReferenceStorage(T) < Value
+      end
+
+      {{ Value.subclasses.select(&.<=(ReferenceStorage)).size == 1 ? true : nil }}
+      CRYSTAL
+  end
 end

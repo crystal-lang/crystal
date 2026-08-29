@@ -138,9 +138,9 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 6 }.should eq 2
       (0...ary.size).bsearch { |i| ary[i] >= 8 }.should eq 3
       (0...ary.size).bsearch { |i| ary[i] >= 10 }.should eq 4
-      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq nil
+      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should be_nil
       (0...ary.size).bsearch { |i| true }.should eq 0
-      (0...ary.size).bsearch { |i| false }.should eq nil
+      (0...ary.size).bsearch { |i| false }.should be_nil
 
       (0...ary.size).bsearch { |i| ary[i] >= 10 ? 1 : nil }.should eq 4
 
@@ -148,13 +148,13 @@ describe "Range" do
       (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
 
       (0_i8..10_i8).bsearch { |x| x >= 10 }.should eq 10_i8
-      (0_i8...10_i8).bsearch { |x| x >= 10 }.should eq nil
+      (0_i8...10_i8).bsearch { |x| x >= 10 }.should be_nil
       (-10_i8...10_i8).bsearch { |x| x >= -5 }.should eq -5_i8
 
       (0_u8..10_u8).bsearch { |x| x >= 10 }.should eq 10_u8
-      (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
+      (0_u8...10_u8).bsearch { |x| x >= 10 }.should be_nil
       (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
-      (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+      (0_u32...10_u32).bsearch { |x| x >= 10 }.should be_nil
     end
 
     it "BigInt" do
@@ -163,13 +163,13 @@ describe "Range" do
 
     it "Float" do
       inf = Float64::INFINITY
-      (0.0...100.0).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
-      (0.0...inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
-      (-inf..100.0).bsearch { |x| x >= 0 || Math.log(-x / 10) < 0 }.not_nil!.should be_close(-10.0, 0.0001)
-      (-inf..inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (0.0...100.0).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
+      (0.0...inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
+      (-inf..100.0).bsearch { |x| x >= 0 || Math.log(-x / 10) < 0 }.should_not(be_nil).should be_close(-10.0, 0.0001)
+      (-inf..inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
       (-inf..5).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
 
-      (-inf..10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (-inf..10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should_not(be_nil).should be_close(10.0, 0.0001)
       (inf...10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
 
       (-inf..inf).bsearch { false }.should be_nil
@@ -178,22 +178,22 @@ describe "Range" do
       (0..inf).bsearch { |x| x == inf }.should eq inf
       (0...inf).bsearch { |x| x == inf }.should be_nil
 
-      v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
+      v = (0.0..1.0).bsearch { |x| x > 0 }.should_not(be_nil)
       v.should be_close(0, 0.0001)
       v.should be > 0
 
       (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
       (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
 
-      (0.0..inf).bsearch { |x| Math.log(x) >= 0 }.not_nil!.should be_close(1.0, 0.0001)
+      (0.0..inf).bsearch { |x| Math.log(x) >= 0 }.should_not(be_nil).should be_close(1.0, 0.0001)
 
-      (0.0..10).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
-      (0..10.0).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
+      (0.0..10).bsearch { |x| x >= 3.5 }.should_not(be_nil).should be_close(3.5, 0.0001)
+      (0..10.0).bsearch { |x| x >= 3.5 }.should_not(be_nil).should be_close(3.5, 0.0001)
 
-      (0_f32..5_f32).bsearch { |x| x >= 5_f32 }.not_nil!.should be_close(5_f32, 0.0001_f32)
+      (0_f32..5_f32).bsearch { |x| x >= 5_f32 }.should_not(be_nil).should be_close(5_f32, 0.0001_f32)
       (0_f32...5_f32).bsearch { |x| x >= 5_f32 }.should be_nil
-      (0_f32..5.0).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
-      (0..5.0_f32).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
+      (0_f32..5.0).bsearch { |x| x >= 5.0 }.should_not(be_nil).should be_close(5.0, 0.0001)
+      (0..5.0_f32).bsearch { |x| x >= 5.0 }.should_not(be_nil).should be_close(5.0, 0.0001)
 
       inf32 = Float32::INFINITY
       (0..inf32).bsearch { |x| x == inf32 }.should eq inf32
@@ -222,7 +222,7 @@ describe "Range" do
       range = 0..-1
       any = false
       range.each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "endless" do
@@ -274,7 +274,7 @@ describe "Range" do
       range = 0..-1
       any = false
       range.reverse_each { any = true }
-      any.should eq(false)
+      any.should be_false
     end
 
     it "raises on endless range" do
@@ -440,19 +440,38 @@ describe "Range" do
     end
 
     it "samples a range with nilable types" do
-      r = ((true ? 1 : nil)..(true ? 4 : nil))
+      r = (1.as(Int32?)..4.as(Int32?))
       x = r.sample
       r.should contain(x)
 
-      ((true ? 1 : nil)...(true ? 2 : nil)).sample.should eq(1)
+      (1.as(Int32?)...2.as(Int32?)).sample.should eq(1)
 
-      r = ((true ? 1.2 : nil)..(true ? 3.4 : nil))
+      r = (1.2.as(Float64?)..3.4.as(Float64?))
       x = r.sample
       r.should contain(x)
     end
 
     it "samples with n = 0" do
       (1..3).sample(0).empty?.should be_true
+    end
+
+    describe "doesn't lose randomness when delegating to Enumerable#sample (#16480)" do
+      it do
+        results = Array(Int32).new(100) { (0..9.0).sample }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
+
+      it do
+        results = Array(Array(Int32)).new
+        100.times { results << (0..9).sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
+
+      it do
+        results = Array(Array(Char)).new
+        100.times { results << ('0'..'9').sample(10) }
+        results[-10..].uniq!.size.should_not eq(1)
+      end
     end
 
     context "for an integer range" do
@@ -654,6 +673,21 @@ describe "Range" do
         [RangeSpecIntWrapper.new(Int32::MAX - 2)],
         (RangeSpecIntWrapper.new(Int32::MAX - 2)..RangeSpecIntWrapper.new(Int32::MAX - 1)).step(by: 2)
     end
+
+    it "raises on invalid step size" do
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0)
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0)
+      end
+    end
   end
 
   describe "map" do
@@ -697,6 +731,11 @@ describe "Range" do
       it { (Int32::MAX...Int32::MAX).size.should eq(0) }
       it { (-Int32::MAX..-Int32::MAX).size.should eq(1) }
       it { (-Int32::MAX...-Int32::MAX).size.should eq(0) }
+
+      it { (0...Int32::MAX).size.should eq(Int32::MAX) }
+      it { expect_raises(OverflowError) { (0..Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN...Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN..Int32::MAX).size } }
 
       it { (5_u8..12_u8).size.should eq(8) }
       it { (5_u8...12_u8).size.should eq(7) }

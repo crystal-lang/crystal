@@ -148,7 +148,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if *extension* is not registered.
-  def self.from_extension(extension : String, default) : String
+  def self.from_extension(extension : String, default : String) : String
     from_extension(extension) { default }
   end
 
@@ -182,7 +182,7 @@ module MIME
   #
   # A case-sensitive search is tried first, if this yields no result, it is
   # matched case-insensitive. Returns *default* if extension is not registered.
-  def self.from_filename(filename : String | Path, default) : String
+  def self.from_filename(filename : String | Path, default : String) : String
     from_extension(File.extname(filename.to_s), default)
   end
 
@@ -258,7 +258,7 @@ module MIME
         sub_type_start = reader.pos
         reader.next_char
       else
-        if TSPECIAL_CHARACTERS.includes?(char) || 0x20 > char.ord > 0x7F
+        if TSPECIAL_CHARACTERS.includes?(char) || char.ascii_control? || char.ord > 126
           return nil
         end
 

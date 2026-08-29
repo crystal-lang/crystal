@@ -2,31 +2,31 @@ require "../../spec_helper"
 
 describe "Code gen: nilable cast" do
   it "does nilable cast (true)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       x = 42 || "hello"
       y = x.as?(Int32)
       y || 84
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "does nilable cast (false)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(84)
       x = "hello" || 42
       y = x.as?(Int32)
       y || 84
-      )).to_i.should eq(84)
+      CRYSTAL
   end
 
   it "does nilable cast (always true)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       x = 42
       y = x.as?(Int32)
       y || 84
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "does upcast" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def bar
           1
@@ -45,34 +45,34 @@ describe "Code gen: nilable cast" do
       else
         3
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does cast to nil (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       x = 1
       y = x.as?(Nil)
       y ? 2 : 3
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "does cast to nil (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       x = nil
       y = x.as?(Nil)
       y ? 2 : 3
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "types as? with wrong type (#2775)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(20)
       x = 1.as?(String)
       x ? 10 : 20
-      )).to_i.should eq(20)
+      CRYSTAL
   end
 
   it "codegens with NoReturn" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibC
         fun exit : NoReturn
       end
@@ -83,11 +83,11 @@ describe "Code gen: nilable cast" do
       end
 
       foo
-      ))
+      CRYSTAL
   end
 
   it "upcasts type to virtual (#3304)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -102,11 +102,11 @@ describe "Code gen: nilable cast" do
 
       f = Foo.new.as?(Foo)
       f ? f.foo : 10
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "upcasts type to virtual (2) (#3304)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -127,11 +127,11 @@ describe "Code gen: nilable cast" do
 
       f = Gen(Foo).cast(Foo.new)
       f ? f.foo : 10
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "casts with block var that changes type (#3341)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       class Object
@@ -145,11 +145,11 @@ describe "Code gen: nilable cast" do
 
       x = Foo.new.as(Int32 | Foo)
       x.try &.as?(Foo)
-      ))
+      CRYSTAL
   end
 
   it "casts union type to nilable type (#9342)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       struct Nil
         def foo
           0
@@ -167,6 +167,6 @@ describe "Code gen: nilable cast" do
 
       a = Gen(String).new(10) || Gen(Int32).new(20)
       a.as?(Gen).foo
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 end

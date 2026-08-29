@@ -128,21 +128,13 @@ module Crystal
 
     def create_debug_type(type : EnumType, original_type : Type)
       elements = type.types.map do |name, item|
-        str_value = item.as?(Const).try &.value.as?(NumberLiteral).try &.value
-
-        value =
-          if type.base_type.kind.unsigned_int?
-            str_value.try(&.to_u64?) || 0_u64
-          else
-            str_value.try(&.to_i64?) || 0_i64
-          end
-
-        di_builder.create_enumerator(name, value)
+        value = item.as?(Const).try &.value.as?(NumberLiteral).try &.integer_value
+        di_builder.create_enumerator(name, value || 0)
       end
 
       size_in_bits = type.base_type.kind.bytesize
       align_in_bits = align_of(type.base_type)
-      di_builder.create_enumeration_type(nil, original_type.to_s, nil, 1, size_in_bits, align_in_bits, elements, get_debug_type(type.base_type))
+      di_builder.create_enumeration_type(nil, original_type.to_s, nil, 0, size_in_bits, align_in_bits, elements, get_debug_type(type.base_type))
     end
 
     def create_debug_type(type : InstanceVarContainer, original_type : Type)
@@ -150,7 +142,7 @@ module Crystal
       element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 0)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |(name, ivar), idx|
@@ -159,16 +151,16 @@ module Crystal
           offset = type.extern_union? ? 0_u64 : @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
-          member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, name[1..-1], nil, 0, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
       if type.extern_union?
-        debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, element_types)
+        debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 0, size, size, LLVM::DIFlags::Zero, element_types)
       else
-        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, element_types)
+        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 0, size, size, LLVM::DIFlags::Zero, nil, element_types)
         unless type.struct?
           debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
         end
@@ -189,7 +181,7 @@ module Crystal
       struct_type_size = @program.target_machine.data_layout.size_in_bits(struct_type)
       is_struct = struct_type.struct_element_types.size == 1
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 0)
       debug_type_cache[original_type] = tmp_debug_type
 
       type.expand_union_types.each do |ivar_type|
@@ -198,19 +190,19 @@ module Crystal
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
           align = align_of(ivar_type)
-          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, align, 0, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 0, size, align, 0, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type.struct_element_types[is_struct ? 0 : 1])
       offset = @program.target_machine.data_layout.offset_of_element(struct_type, 1) * 8u64
-      debug_type = di_builder.create_union_type(nil, "", current_debug_file, 1, size, size, LLVM::DIFlags::Zero, element_types)
+      debug_type = di_builder.create_union_type(nil, "", current_debug_file, 0, size, size, LLVM::DIFlags::Zero, element_types)
       unless is_struct
         element_types.clear
-        element_types << di_builder.create_member_type(nil, "type_id", nil, 1, 32, 32, 0, LLVM::DIFlags::Zero, get_debug_type(@program.uint32))
-        element_types << di_builder.create_member_type(nil, "union", nil, 1, size, size, offset, LLVM::DIFlags::Zero, debug_type)
-        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, struct_type_size, struct_type_size, LLVM::DIFlags::Zero, nil, element_types)
+        element_types << di_builder.create_member_type(nil, "type_id", nil, 0, 32, 32, 0, LLVM::DIFlags::Zero, get_debug_type(@program.uint32))
+        element_types << di_builder.create_member_type(nil, "union", nil, 0, size, size, offset, LLVM::DIFlags::Zero, debug_type)
+        debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 0, struct_type_size, struct_type_size, LLVM::DIFlags::Zero, nil, element_types)
       end
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
@@ -219,7 +211,7 @@ module Crystal
     def create_debug_type(type : NilableReferenceUnionType | ReferenceUnionType, original_type : Type)
       element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_type(type)
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 0)
       debug_type_cache[original_type] = tmp_debug_type
 
       type.expand_union_types.each do |ivar_type|
@@ -227,13 +219,13 @@ module Crystal
         if ivar_debug_type = get_debug_type(ivar_type)
           embedded_type = llvm_type(ivar_type)
           size = @program.target_machine.data_layout.size_in_bits(embedded_type)
-          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 1, size, size, 0, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, ivar_type.to_s, nil, 0, size, size, 0, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 1, size, size, LLVM::DIFlags::Zero, element_types)
+      debug_type = di_builder.create_union_type(nil, original_type.to_s, current_debug_file, 0, size, size, LLVM::DIFlags::Zero, element_types)
       di_builder.replace_temporary(tmp_debug_type, debug_type)
       debug_type
     end
@@ -258,7 +250,7 @@ module Crystal
       element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 0)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |ivar_type, idx|
@@ -267,13 +259,13 @@ module Crystal
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
-          member = di_builder.create_member_type(nil, "[#{idx}]", nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, "[#{idx}]", nil, 0, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, element_types)
+      debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 0, size, size, LLVM::DIFlags::Zero, nil, element_types)
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
       end
@@ -286,7 +278,7 @@ module Crystal
       element_types = [] of LibLLVM::MetadataRef
       struct_type = llvm_struct_type(type)
 
-      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 1)
+      tmp_debug_type = di_builder.create_replaceable_composite_type(nil, original_type.to_s, nil, 0)
       debug_type_cache[original_type] = tmp_debug_type
 
       ivars.each_with_index do |ivar, idx|
@@ -295,13 +287,13 @@ module Crystal
           offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx &+ (type.struct? ? 0 : 1))
           size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
 
-          member = di_builder.create_member_type(nil, ivar.name, nil, 1, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
+          member = di_builder.create_member_type(nil, ivar.name, nil, 0, size, size, 8u64 * offset, LLVM::DIFlags::Zero, ivar_debug_type)
           element_types << member
         end
       end
 
       size = @program.target_machine.data_layout.size_in_bits(struct_type)
-      debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 1, size, size, LLVM::DIFlags::Zero, nil, element_types)
+      debug_type = di_builder.create_struct_type(nil, original_type.to_s, nil, 0, size, size, LLVM::DIFlags::Zero, nil, element_types)
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, 8u64 * llvm_typer.pointer_size, 8u64 * llvm_typer.pointer_size, original_type.to_s)
       end
@@ -309,8 +301,56 @@ module Crystal
       debug_type
     end
 
+    def create_debug_type(type : ProcInstanceType, original_type : Type)
+      # `Proc` is lowered as `{pointer, closure_data}`. Exposing that shape in
+      # DWARF lets debuggers inspect proc values instead of treating them as an
+      # opaque unsupported type.
+      element_types = [] of LibLLVM::MetadataRef
+      struct_type = llvm_typer.proc_type
+      size_ptr = 8u64 * llvm_typer.pointer_size
+      di_builder = di_builder()
+
+      arg_types = type.arg_types.compact_map { |arg_type| get_debug_type(arg_type).as(LibLLVM::MetadataRef?) }
+      return_type = get_debug_type(type.return_type)
+
+      func_ptr_type =
+        if arg_types.size == type.arg_types.size && return_type
+          subroutine_type = di_builder.create_subroutine_type(nil, [return_type] + arg_types)
+          di_builder.create_pointer_type(subroutine_type, size_ptr, size_ptr, "#{original_type}*")
+        else
+          di_builder.create_basic_type("Void", size_ptr, size_ptr, LLVM::DwarfTypeEncoding::Address)
+        end
+
+      offset_func = @program.target_machine.data_layout.offset_of_element(struct_type, 0)
+      element_types << di_builder.create_member_type(
+        nil, "func", nil, 0,
+        size_ptr, size_ptr, 8u64 * offset_func,
+        LLVM::DIFlags::Zero, func_ptr_type
+      )
+
+      void_type = di_builder.create_basic_type("Void", 8, 8, LLVM::DwarfTypeEncoding::Address)
+      ctx_ptr_type = di_builder.create_pointer_type(void_type, size_ptr, size_ptr, "Void*")
+      offset_ctx = @program.target_machine.data_layout.offset_of_element(struct_type, 1)
+      element_types << di_builder.create_member_type(
+        nil, "closure_data", nil, 0,
+        size_ptr, size_ptr, 8u64 * offset_ctx,
+        LLVM::DIFlags::Zero, ctx_ptr_type
+      )
+
+      total_size = @program.target_machine.data_layout.size_in_bits(struct_type)
+      di_builder.create_struct_type(
+        nil, original_type.to_s, nil, 0,
+        total_size, total_size,
+        LLVM::DIFlags::Zero, nil, element_types
+      )
+    end
+
+    def create_debug_type(type : NilableProcType, original_type : Type)
+      get_debug_type(type.proc_type, original_type)
+    end
+
     # This is a sinkhole for debug types that most likely does not need to be implemented
-    def create_debug_type(type : NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | NilableProcType | VirtualMetaclassType, original_type : Type)
+    def create_debug_type(type : NonGenericModuleType | GenericClassInstanceMetaclassType | MetaclassType | VirtualMetaclassType, original_type : Type)
     end
 
     def create_debug_type(type, original_type : Type)
@@ -329,9 +369,9 @@ module Crystal
       end
     end
 
-    def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil)
+    def declare_variable(var_name, var_type, alloca, location, basic_block : LLVM::BasicBlock? = nil, offset : Int = 0)
       return false unless @debug.variables?
-      declare_local(var_type, alloca, location, basic_block) do |scope, file, line_number, debug_type|
+      declare_local(var_type, alloca, location, basic_block, offset) do |scope, file, line_number, debug_type|
         di_builder.create_auto_variable scope, var_name, file, line_number, debug_type, align_of(var_type)
       end
     end
@@ -340,7 +380,11 @@ module Crystal
       @program.target_machine.data_layout.abi_alignment(llvm_type(type)) * 8
     end
 
-    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, &)
+    # see also the other DWARF enums in `crystal/dwarf/abbrev.cr` (note that
+    # LLVM defines several custom opcodes outside the user extension range)
+    DW_OP_plus_uconst = 0x23
+
+    private def declare_local(type, alloca, location, basic_block : LLVM::BasicBlock? = nil, offset : Int = 0, &)
       location = location.try &.expanded_location
       return false unless location
 
@@ -354,7 +398,18 @@ module Crystal
       return false unless scope
 
       var = yield scope, file, location.line_number, debug_type
-      expr = di_builder.create_expression(nil, 0)
+
+      if offset != 0
+        expr =
+          {% if LibLLVM::IS_LT_140 %}
+            di_builder.create_expression(Int64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% else %}
+            di_builder.create_expression(UInt64.static_array(DW_OP_plus_uconst, offset), 2)
+          {% end %}
+      else
+        expr = di_builder.create_expression(nil, 0)
+      end
+
       if basic_block
         block = basic_block
       else
@@ -363,16 +418,6 @@ module Crystal
       old_debug_location = @current_debug_location
       set_current_debug_location location
       if builder.current_debug_location != llvm_nil && (ptr = alloca)
-        # FIXME: When debug records are used instead of debug intrinsics, it
-        # seems inserting them into an empty BasicBlock will instead place them
-        # in a totally different (next?) function where the variable doesn't
-        # exist, leading to a "function-local metadata used in wrong function"
-        # validation error. This might happen when e.g. all variables inside a
-        # block are closured. Ideally every debug record should immediately
-        # follow the variable it declares.
-        {% unless LibLLVM::IS_LT_190 %}
-          call(do_nothing_fun) if block.instructions.empty?
-        {% end %}
         di_builder.insert_declare_at_end(ptr, var, expr, builder.current_debug_location_metadata, block)
         set_current_debug_location old_debug_location
         true

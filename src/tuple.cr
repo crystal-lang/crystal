@@ -587,9 +587,24 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io : IO) : Nil
+    needs_padding = curly_like?(self.first?)
+
     io << '{'
+    io << ' ' if needs_padding
+
     join io, ", ", &.inspect(io)
+
+    io << ' ' if needs_padding
     io << '}'
+  end
+
+  private def curly_like?(object)
+    case object
+    when Hash, Tuple, NamedTuple
+      true
+    else
+      false
+    end
   end
 
   def pretty_print(pp) : Nil

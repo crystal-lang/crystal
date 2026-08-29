@@ -251,17 +251,29 @@ module Indexable::Mutable(T)
     self
   end
 
-  # Modifies `self` by randomizing the order of elements in the collection
-  # using the given *random* number generator. Returns `self`.
+  # Modifies `self` by randomizing the order of elements in the collection.
+  # Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a.shuffle! # => [3, 5, 2, 4, 1]
+  # a          # => [3, 5, 2, 4, 1]
+  # ```
+  #
+  # Uses the *random* instance when provided if the randomness needs to be
+  # controlled or to follow some traits. For example the following shuffle will
+  # always result in the same order:
   #
   # ```
   # a = [1, 2, 3, 4, 5]
   # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
+  # a.shuffle!(Random.new(42)) # => [3, 2, 4, 5, 1]
   # a                          # => [3, 2, 4, 5, 1]
   # ```
-  def shuffle!(random : Random = Random::DEFAULT) : self
+  def shuffle!(random : Random? = nil) : self
+    rng = random || Random.thread_default
     (size - 1).downto(1) do |i|
-      j = random.rand(i + 1)
+      j = rng.rand(i + 1)
       swap(i, j)
     end
     self

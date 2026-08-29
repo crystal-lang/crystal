@@ -56,7 +56,7 @@ lib LibC
     si_signo : Int
     si_errno : Int
     si_code : Int
-    si_addr : Void*              # Assuming the sigfault form of siginfo_t
+    si_addr : Void*              # Assuming the segfault form of siginfo_t
     __pad : StaticArray(Int, 25) # __SI_PAD_SIZE (29) - sizeof(void*) (4) = 25
   end
 

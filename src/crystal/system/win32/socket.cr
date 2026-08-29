@@ -40,8 +40,10 @@ module Crystal::System::Socket
 
   class_getter connect_ex
   class_getter accept_ex
+  class_getter transmit_file
   @@connect_ex = uninitialized LibC::ConnectEx
   @@accept_ex = uninitialized LibC::AcceptEx
+  @@transmit_file = uninitialized LibC::TransmitFile
 
   # Some overlapped socket functions are not part of the Winsock specification.
   # The implementation is provider-specific and needs to be queried at runtime
@@ -62,6 +64,7 @@ module Crystal::System::Socket
 
     @@connect_ex = load_extension_function(socket, LibC::WSAID_CONNECTEX, LibC::ConnectEx)
     @@accept_ex = load_extension_function(socket, LibC::WSAID_ACCEPTEX, LibC::AcceptEx)
+    @@transmit_file = load_extension_function(socket, LibC::WSAID_TRANSMITFILE, LibC::TransmitFile)
 
     result = LibC.closesocket(socket)
     unless result.zero?
@@ -71,22 +74,24 @@ module Crystal::System::Socket
 
   initialize_extension_functions
 
-  private def create_handle(family, type, protocol, blocking) : Handle
+  def self.socket(family, type, protocol, blocking) : Handle
+    # the overlapped flag is distinct from the blocking mode in winsock (the
+    # latter acts like non-blocking BSD sockets); there's no downside to set the
+    # overlapped flag, we can do sync or async calls, and we can still change
+    # the blocking mode
     socket = LibC.WSASocketW(family, type, protocol, nil, 0, LibC::WSA_FLAG_OVERLAPPED)
-    if socket == LibC::INVALID_SOCKET
-      raise ::Socket::Error.from_wsa_error("WSASocketW")
-    end
-
-    Crystal::EventLoop.current.create_completion_port LibC::HANDLE.new(socket)
-
+    raise ::Socket::Error.from_wsa_error("WSASocketW") if socket == LibC::INVALID_SOCKET
+    set_blocking(socket, blocking) unless blocking
     socket
   end
 
-  private def initialize_handle(handle)
+  protected def initialize_handle(handle, blocking = nil)
+    @blocking = blocking unless blocking.nil?
+
     unless @family.unix?
-      system_getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
+      Socket.getsockopt(handle, LibC::SO_REUSEADDR, 0) do |value|
         if value == 0
-          system_setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
+          Socket.setsockopt(handle, LibC::SO_EXCLUSIVEADDRUSE, 1)
         end
       end
     end
@@ -127,38 +132,6 @@ module Crystal::System::Socket
     end
   end
 
-  # :nodoc:
-  def overlapped_connect(socket, method, timeout, &)
-    IOCP::WSAOverlappedOperation.run(socket) do |operation|
-      result = yield operation
-
-      if result == 0
-        case error = WinError.wsa_value
-        when .wsa_io_pending?
-          # the operation is running asynchronously; do nothing
-        when .wsaeaddrnotavail?
-          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
-        else
-          return ::Socket::Error.from_os_error("ConnectEx", error)
-        end
-      else
-        return nil
-      end
-
-      operation.wait_for_result(timeout) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaeconnrefused?
-          return ::Socket::ConnectError.from_os_error(method, error)
-        when .error_operation_aborted?
-          # FIXME: Not sure why this is necessary
-          return ::Socket::ConnectError.from_os_error(method, error)
-        end
-      end
-
-      nil
-    end
-  end
-
   private def system_connect_connectionless(addr, timeout)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
@@ -166,57 +139,20 @@ module Crystal::System::Socket
     end
   end
 
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
+      ::Socket::BindError.from_wsa_error("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_wsa_error("Listen failed")
+      ::Socket::Error.from_wsa_error("Listen failed")
     end
   end
 
-  def system_accept(& : Handle -> Bool) : Handle?
-    client_socket = create_handle(family, type, protocol, blocking)
-    initialize_handle(client_socket)
-
-    if yield client_socket
-      client_socket
-    else
-      LibC.closesocket(client_socket)
-
-      nil
-    end
-  end
-
-  def overlapped_accept(socket, method, &)
-    IOCP::WSAOverlappedOperation.run(socket) do |operation|
-      result = yield operation
-
-      if result == 0
-        case error = WinError.wsa_value
-        when .wsa_io_pending?
-          # the operation is running asynchronously; do nothing
-        else
-          return false
-        end
-      else
-        return true
-      end
-
-      operation.wait_for_result(read_timeout) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaenotsock?
-          return false
-        when .error_operation_aborted?
-          raise IO::TimeoutError.new("#{method} timed out")
-        end
-      end
-
-      true
-    end
+  private def system_accept : {Handle, Bool}?
+    event_loop.accept(self)
   end
 
   private def system_close_read
@@ -308,20 +244,28 @@ module Crystal::System::Socket
     val
   end
 
-  private def system_getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
+    Socket.getsockopt(fd, optname, optval, level) { |value| yield value }
+  end
+
+  private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.getsockopt(fd, optname, optval, level) { |value| return value }
+    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
+  end
+
+  private def system_setsockopt(optname, optval, level = LibC::SOL_SOCKET)
+    Socket.setsockopt(fd, optname, optval, level)
+  end
+
+  protected def self.getsockopt(handle, optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = sizeof(typeof(optval))
     ret = LibC.getsockopt(handle, level, optname, pointerof(optval).as(UInt8*), pointerof(optsize))
     yield optval if ret == 0
     ret
   end
 
-  private def system_getsockopt(fd, optname, optval, level = LibC::SOL_SOCKET)
-    system_getsockopt(fd, optname, optval, level) { |value| return value }
-    raise ::Socket::Error.from_wsa_error("getsockopt #{optname}")
-  end
-
   # :nodoc:
-  def system_setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
+  protected def self.setsockopt(handle, optname, optval, level = LibC::SOL_SOCKET)
     optsize = sizeof(typeof(optval))
 
     ret = LibC.setsockopt(handle, level, optname, pointerof(optval).as(UInt8*), optsize)
@@ -329,7 +273,7 @@ module Crystal::System::Socket
     ret
   end
 
-  @blocking = true
+  @blocking : Bool = true
 
   # WSA does not provide a direct way to query the blocking mode of a file descriptor.
   # The best option seems to be just keeping track in an instance variable.
@@ -340,8 +284,18 @@ module Crystal::System::Socket
   end
 
   private def system_blocking=(@blocking)
-    mode = blocking ? 1_u32 : 0_u32
-    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out bytes_returned, nil, nil)
+    Socket.set_blocking(fd, blocking)
+  end
+
+  def self.get_blocking(fd : Handle)
+    raise NotImplementedError.new("Cannot query the blocking mode of a `Socket`")
+  end
+
+  # Changes the blocking mode as per BSD sockets, has no effect on the
+  # overlapped flag.
+  def self.set_blocking(fd : Handle, value : Bool)
+    mode = value ? 1_u32 : 0_u32
+    ret = LibC.WSAIoctl(fd, LibC::FIONBIO, pointerof(mode), sizeof(UInt32), nil, 0, out _, nil, nil)
     raise ::Socket::Error.from_wsa_error("WSAIoctl") unless ret.zero?
   end
 
@@ -357,16 +311,12 @@ module Crystal::System::Socket
     raise NotImplementedError.new "Crystal::System::Socket.fcntl"
   end
 
-  def self.socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : {Handle, Handle}
-    raise NotImplementedError.new("Crystal::System::Socket.socketpair")
+  private def system_fcntl(cmd, arg = 0)
+    raise NotImplementedError.new "Crystal::System::Socket#system_fcntl"
   end
 
   private def system_tty?
     LibC.GetConsoleMode(LibC::HANDLE.new(fd), out _) != 0
-  end
-
-  def system_close
-    socket_close
   end
 
   private def socket_close(&)
@@ -443,5 +393,43 @@ module Crystal::System::Socket
   private def system_tcp_keepalive_count=(val : Int)
     setsockopt LibC::TCP_KEEPCNT, val, level: ::Socket::Protocol::TCP
     val
+  end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    # clamp offset and count to be within file size so TransmitFile won't fail
+    # on out of bounds
+    file_size = file.info.size.to_i64
+    return 0_i64 if offset > file_size
+
+    max_count = file_size - offset
+    count = max_count if count > max_count
+    return 0_i64 if count == 0
+
+    event_loop.sendfile(self, file.fd, offset, count, 0)
+  end
+
+  def self.network_interface_to_index(name : String, & : WinError ->) : Int
+    err = LibC.ConvertInterfaceNameToLuidW(System.to_wstr(name), out luid)
+    if err == 0
+      err = LibC.ConvertInterfaceLuidToIndex(pointerof(luid), out index)
+      if err == 0
+        return index
+      end
+    end
+
+    yield WinError.new(err)
+  end
+
+  def self.network_interface_from_index(index : Int, & : WinError ->) : String
+    err = LibC.ConvertInterfaceIndexToLuid(index, out luid)
+    if err == 0
+      buf = uninitialized LibC::WCHAR[LibC::IF_NAMESIZE]
+      err = LibC.ConvertInterfaceLuidToNameW(pointerof(luid), buf, buf.size)
+      if err == 0
+        return String.from_utf16(buf.to_slice, truncate_at_null: true)
+      end
+    end
+
+    yield WinError.new(err)
   end
 end

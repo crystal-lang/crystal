@@ -5,7 +5,8 @@ require "c/winnt"
 module Crystal::System::Fiber
   # stack size in bytes needed for last-minute error handling in case of a stack
   # overflow
-  RESERVED_STACK_SIZE = LibC::DWORD.new(0x10000)
+  # FIXME: use `LibC::DWORD` explicitly (#15820)
+  RESERVED_STACK_SIZE = 0x10000_u32
 
   def self.allocate_stack(stack_size, protect) : Void*
     if stack_top = LibC.VirtualAlloc(nil, stack_size, LibC::MEM_RESERVE, LibC::PAGE_READWRITE)

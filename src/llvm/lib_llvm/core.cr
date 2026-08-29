@@ -136,6 +136,9 @@ lib LibLLVM
   {% end %}
   fun const_struct_in_context = LLVMConstStructInContext(c : ContextRef, constant_vals : ValueRef*, count : UInt, packed : Bool) : ValueRef
   fun const_array = LLVMConstArray(element_ty : TypeRef, constant_vals : ValueRef*, length : UInt) : ValueRef
+  {% unless LibLLVM::IS_LT_210 %}
+    fun const_data_array = LLVMConstDataArray(element_ty : TypeRef, data : Char*, size_in_bytes : SizeT) : ValueRef
+  {% end %}
 
   fun align_of = LLVMAlignOf(ty : TypeRef) : ValueRef
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
@@ -159,6 +162,7 @@ lib LibLLVM
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Bool)
   fun is_global_constant = LLVMIsGlobalConstant(global_var : ValueRef) : Bool
   fun set_global_constant = LLVMSetGlobalConstant(global_var : ValueRef, is_constant : Bool)
+  fun global_set_metadata = LLVMGlobalSetMetadata(global_var : ValueRef, kind : UInt, md : MetadataRef)
 
   fun delete_function = LLVMDeleteFunction(fn : ValueRef)
   fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)
