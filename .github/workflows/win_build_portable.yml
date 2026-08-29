@@ -20,6 +20,7 @@ permissions: {}
 
 env:
   CI_SSL_VERSION: "4.0.2"
+  CI_SSL_MAJOR: "4"
 
 jobs:
   build:
@@ -95,8 +96,8 @@ jobs:
           path: |
             libs/crypto-dynamic.lib
             libs/ssl-dynamic.lib
-            dlls/libcrypto-4-x64.dll
-            dlls/libssl-4-x64.dll
+            dlls/libcrypto-${{ env.CI_SSL_MAJOR }}-x64.dll
+            dlls/libssl-${{ env.CI_SSL_MAJOR }}-x64.dll
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs

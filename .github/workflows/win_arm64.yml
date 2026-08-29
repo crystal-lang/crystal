@@ -14,6 +14,7 @@ concurrency:
 env:
   SPEC_SPLIT_DOTS: 160
   CI_SSL_VERSION: "4.0.2"
+  CI_SSL_MAJOR: "4"
   CI_LLVM_VERSION: "23.1.0"
   CI_LLVM_TARGETS: "X86,AArch64"
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
@@ -105,8 +106,8 @@ jobs:
           path: |
             libs/crypto-dynamic.lib
             libs/ssl-dynamic.lib
-            dlls/libcrypto-3-arm64.dll
-            dlls/libssl-3-arm64.dll
+            dlls/libcrypto-${{ env.CI_SSL_MAJOR }}-arm64.dll
+            dlls/libssl-${{ env.CI_SSL_MAJOR }}-arm64.dll
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-aarch64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
