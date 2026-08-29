@@ -936,6 +936,12 @@ module HTTP
           request.resource
         end
       end
+
+      it "always yields a valid resource for arbitrary query_params" do
+        request = Request.new "GET", "/"
+        request.query_params["x a"] = "foo\rbar"
+        request.resource.should eq "/?x+a=foo%0Dbar"
+      end
     end
 
     describe "#if_none_match" do
