@@ -28,11 +28,7 @@ struct Exception::CallStack
   #
   # See https://en.wikipedia.org/wiki/Address_space_layout_randomization
   protected def self.decode_address(ip)
-    if ip.null?
-      ip.address
-    else
-      ip.address &- @@base_address
-    end
+    ip.address &- @@base_address
   end
 
   # Searches the companion dSYM bundle with the DWARF sections for the

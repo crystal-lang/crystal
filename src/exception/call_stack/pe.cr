@@ -22,10 +22,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_address(ip)
-    if ip.null?
-      ip.address
-    else
-      ip.address &- @@base_address
-    end
+    ip.address &- @@base_address
   end
 end

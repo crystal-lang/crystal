@@ -47,7 +47,9 @@ struct Exception::CallStack
            {% else %}
              Pointer(Void).new(LibUnwind.get_ip(context))
            {% end %}
-      bt << ip
+      # the last IP is often a NULL pointer on linux-gnu, or maybe it's
+      # libunwind; in any case it's invalid, so we we skip it
+      bt << ip unless ip.null?
 
       {% if flag?(:gnu) && flag?(:i386) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
