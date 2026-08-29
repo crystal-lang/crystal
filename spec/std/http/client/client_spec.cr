@@ -484,7 +484,7 @@ module HTTP
     end
 
     it "closes if an IO::Error occurs while the request is in-flight (non-yielding)" do
-      server = HTTP::Server.new {}
+      server = HTTP::Server.new { }
 
       client_for server do |client|
         client.get "/"
@@ -497,7 +497,7 @@ module HTTP
     end
 
     it "closes if an IO::Error occurs while the request is in-flight (yielding)" do
-      server = HTTP::Server.new {}
+      server = HTTP::Server.new { }
 
       client_for server do |client|
         client.get "/"
