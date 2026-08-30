@@ -228,6 +228,8 @@ describe Socket, tags: "network" do
         server.listen
         actual = nil
 
+        pos = file.pos
+
         spawn do
           client = server.not_nil!.accept
           actual = client.sendfile(file, offset, count)
@@ -238,6 +240,8 @@ describe Socket, tags: "network" do
         socket = Socket.tcp(:inet)
         socket.connect("localhost", port)
         string = socket.gets_to_end
+
+        file.pos.should eq(pos), "`Socket#sendfile` should not affect `File#pos`, but it moved by #{file.pos - pos}"
 
         actual.should eq(expected)
 
@@ -272,7 +276,6 @@ describe Socket, tags: "network" do
 
         received = sendfile_test.call(file, 17, 11, 11_i64)
         received.should eq(" World\nHell")
-        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
 
@@ -284,7 +287,6 @@ describe Socket, tags: "network" do
 
         received = sendfile_test.call(file, 3, 10, 10_i64)
         received.should eq("lo World\nH")
-        file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
 
