@@ -287,5 +287,28 @@ describe Socket, tags: "network" do
         file.pos.should eq(buf.size), "expected Socket#sendfile to not affect File#pos"
       end
     end
+
+    it "writes full file if count > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 0, (file.size + 10).to_i32, file.size)
+        received.bytesize.should eq file.size
+        file.rewind
+        received.should eq file.gets_to_end
+      end
+    end
+
+    it "writes nothing when offset > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 500, 11, 0_i64)
+        received.should eq("")
+      end
+    end
+
+    it "writes remainder if offset + count > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, (file.size - 13).to_i32, 20, 13_i64)
+        received.should eq "\nHello World\n"
+      end
+    end
   end
 end
