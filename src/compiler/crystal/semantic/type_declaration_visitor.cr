@@ -93,7 +93,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
   end
 
   def visit(node : ExternalVar)
-    thread_local = check_class_var_annotations
+    thread_local, tls_unsafe = check_class_var_annotations
 
     var_type = lookup_type(node.type_spec)
     var_type = check_allowed_in_lib node.type_spec, var_type
@@ -107,6 +107,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     setter.set_type(var_type)
     setter.external_var = true
     setter.thread_local = thread_local
+    setter.thread_local_unsafe = tls_unsafe
     setter.doc = node.doc || @annotations.try(&.first?).try(&.doc)
 
     getter = External.new(
@@ -116,6 +117,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     getter.set_type(var_type)
     getter.external_var = true
     getter.thread_local = thread_local
+    setter.thread_local_unsafe = tls_unsafe
     getter.doc = node.doc || @annotations.try(&.first?).try(&.doc)
 
     type.add_def setter
