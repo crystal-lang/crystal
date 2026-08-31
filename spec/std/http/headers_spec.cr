@@ -196,7 +196,7 @@ describe HTTP::Headers do
       new_headers.should eq HTTP::Headers{
         "foo" => "baz",
         "boo" => "baz",
-        "qux" => "quux"
+        "qux" => "quux",
       }
     end
 
