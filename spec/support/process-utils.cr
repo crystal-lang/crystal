@@ -16,8 +16,8 @@
 
 module ProcessUtils
   EXE = {% if flag?(:interpreted) %}
-    "#{Process.executable_path.not_nil!.rchop(".exe")}-pu#{".exe" if {{ flag?(:win32) }}}"
-  {% else %}
+          "#{Process.executable_path.not_nil!.rchop(".exe")}-pu#{".exe" if {{ flag?(:win32) }}}"
+        {% else %}
           Process.executable_path.not_nil!
         {% end %}
 end
