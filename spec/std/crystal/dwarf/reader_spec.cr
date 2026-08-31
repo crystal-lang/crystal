@@ -82,29 +82,31 @@ describe Crystal::DWARF::Reader do
     end
   end
 
-  describe "#read_u128" do
-    it do
-      bytes = Bytes[
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
-      ]
-      reader = Crystal::DWARF::Reader.new(bytes)
-      if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian
-        reader.read_u128.should eq(0x100F0E0D0C0B0A090807060504030201_u128)
-      else
-        reader.read_u128.should eq(0x0102030405060708090A0B0C0D0E0F10_u128)
+  {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+    describe "#read_u128" do
+      it do
+        bytes = Bytes[
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
+        ]
+        reader = Crystal::DWARF::Reader.new(bytes)
+        if IO::ByteFormat::SystemEndian == IO::ByteFormat::LittleEndian
+          reader.read_u128.should eq(0x100F0E0D0C0B0A090807060504030201_u128)
+        else
+          reader.read_u128.should eq(0x0102030405060708090A0B0C0D0E0F10_u128)
+        end
+      end
+
+      it "raises when insufficient bytes" do
+        bytes = Bytes[
+          0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+          0x09, 0x0A, 0x0B, 0x0C, 0x0D,
+        ]
+        reader = Crystal::DWARF::Reader.new(bytes)
+        expect_raises(IO::EOFError) { reader.read_u128 }
       end
     end
-
-    it "raises when insufficient bytes" do
-      bytes = Bytes[
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x0A, 0x0B, 0x0C, 0x0D,
-      ]
-      reader = Crystal::DWARF::Reader.new(bytes)
-      expect_raises(IO::EOFError) { reader.read_u128 }
-    end
-  end
+  {% end %}
 
   describe "#read_ulong" do
     it "reads u32" do
