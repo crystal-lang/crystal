@@ -840,7 +840,7 @@ class HTTP::Client
       if tls = @tls
         tcp_socket = io
         begin
-          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host.rchop('.'))
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: hostname.rchop('.'))
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
