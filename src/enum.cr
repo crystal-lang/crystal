@@ -201,12 +201,12 @@ abstract struct Enum
     remaining_value = self.value
     {% for member in @type.constants %}
       {% if member.stringify != "All" %}
-        if {{@type.constant(member)}} != 0 && remaining_value.bits_set? {{@type.constant(member)}}
+        if {{ @type.constant(member) }} != 0 && remaining_value.bits_set? {{ @type.constant(member) }}
           unless remaining_value == self.value
             io << separator
           end
-          io << {{member.stringify}}
-          remaining_value &= ~{{@type.constant(member)}}
+          io << {{ member.stringify }}
+          remaining_value &= ~{{ @type.constant(member) }}
         end
       {% end %}
     {% end %}
@@ -230,8 +230,8 @@ abstract struct Enum
     # Can't use `case` here because case with duplicate values do
     # not compile, but enums can have duplicates (such as `enum Foo; FOO = 1; BAR = 1; end`).
     {% for member in @type.constants %}
-      if value == {{@type.constant(member)}}
-        return {{member.stringify}}
+      if value == {{ @type.constant(member) }}
+        return {{ member.stringify }}
       end
     {% end %}
   end
@@ -251,14 +251,14 @@ abstract struct Enum
   {% for name in %w(i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64) %}
     {% prefix = name.starts_with?('i') ? "Int".id : (name.starts_with?('u') ? "UInt".id : "Float".id) %}
     {% type = "#{prefix}#{name[1..-1].id}".id %}
-    # Returns the value of this enum member as a `{{type}}`
-    def to_{{name.id}} : {{type}}
-      value.to_{{name.id}}
+    # Returns the value of this enum member as a `{{ type }}`
+    def to_{{ name.id }} : {{ type }}
+      value.to_{{ name.id }}
     end
 
-    # Returns the value of this enum member as a `{{type}}`
-    def to_{{name.id}}! : {{type}}
-      value.to_{{name.id}}!
+    # Returns the value of this enum member as a `{{ type }}`
+    def to_{{ name.id }}! : {{ type }}
+      value.to_{{ name.id }}!
     end
   {% end %}
 
@@ -381,8 +381,8 @@ abstract struct Enum
       return if value == 0
       {% for member in @type.constants %}
         {% if member.stringify != "All" && member.stringify != "None" %}
-          if includes?(self.class.new({{@type.constant(member)}}))
-            yield self.class.new({{@type.constant(member)}}), {{@type.constant(member)}}
+          if includes?(self.class.new({{ @type.constant(member) }}))
+            yield self.class.new({{ @type.constant(member) }}), {{ @type.constant(member) }}
           end
         {% end %}
       {% end %}
@@ -428,12 +428,12 @@ abstract struct Enum
   # ```
   def self.from_value?(value : Int) : self?
     {% if @type.annotation(Flags) %}
-      all_mask = {{@type}}::All.value
+      all_mask = {{ @type }}::All.value
       return if all_mask & value != value
       return new(all_mask.class.new(value))
     {% else %}
       {% for member in @type.constants %}
-        return new({{@type.constant(member)}}) if {{@type.constant(member)}} == value
+        return new({{ @type.constant(member) }}) if {{ @type.constant(member) }} == value
       {% end %}
     {% end %}
     nil
@@ -546,8 +546,8 @@ abstract struct Enum
 
       case appender.to_slice
       {% for name, member in constants %}
-        when {{name}}.to_slice
-          new({{@type.constant(member)}})
+        when {{ name }}.to_slice
+          new({{ @type.constant(member) }})
       {% end %}
       else
         nil
@@ -589,7 +589,7 @@ abstract struct Enum
       {% if value.is_a?(Path) %} \
         {{ @type }}::{{ value }} \
       {% else %} \
-        {{ @type }}.new({{value}}) \
+        {{ @type }}.new({{ value }}) \
       {% end %} \
     {% end %}\
   end
@@ -607,7 +607,7 @@ abstract struct Enum
   def self.each(& : self ->)
     {% for member in @type.constants %}
       {% unless @type.annotation(Flags) && %w(none all).includes?(member.stringify.downcase) %}
-        yield new({{@type.constant(member)}}), {{@type.constant(member)}}
+        yield new({{ @type.constant(member) }}), {{ @type.constant(member) }}
       {% end %}
     {% end %}
   end

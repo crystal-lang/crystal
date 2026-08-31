@@ -17,7 +17,7 @@ private macro pp_option(pp, name, comma = true, default = nil)
   if %value {% if default %}!= {{ default }}{% end %}
     {{ pp }}.comma if {{ comma }}
     {{ pp }}.group do
-      {{ pp }}.text "#{{{name.id.stringify}}.rchop('?').lchop("self.")}: "
+      {{ pp }}.text "#{{{ name.id.stringify }}.rchop('?').lchop("self.")}: "
       %value.pretty_print({{ pp }})
     end
     true
@@ -124,7 +124,7 @@ module Crystal
     end
 
     def self.class_desc : String
-      {{@type.name.split("::").last.id.stringify}}
+      {{ @type.name.split("::").last.id.stringify }}
     end
 
     def class_desc

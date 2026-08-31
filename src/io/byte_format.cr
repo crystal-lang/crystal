@@ -121,43 +121,43 @@ module IO::ByteFormat
   alias NetworkEndian = BigEndian
 
   {% for mod in %w(LittleEndian BigEndian) %}
-    module {{mod.id}}
+    module {{ mod.id }}
       {% for type, i in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64 Int128 UInt128) %}
         {% bytesize = 2 ** (i // 2) %}
 
-        def self.encode(int : {{type.id}}, io : IO)
-          buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
+        def self.encode(int : {{ type.id }}, io : IO)
+          buffer = int.unsafe_as(StaticArray(UInt8, {{ bytesize }}))
           buffer.reverse! unless SystemEndian == self
           io.write(buffer.to_slice)
         end
 
-        def self.encode(int : {{type.id}}, bytes : Bytes)
-          buffer = int.unsafe_as(StaticArray(UInt8, {{bytesize}}))
+        def self.encode(int : {{ type.id }}, bytes : Bytes)
+          buffer = int.unsafe_as(StaticArray(UInt8, {{ bytesize }}))
           buffer.reverse! unless SystemEndian == self
           buffer.to_slice.copy_to(bytes)
         end
 
-        def self.decode(int : {{type.id}}.class, io : IO)
-          buffer = uninitialized UInt8[{{bytesize}}]
+        def self.decode(int : {{ type.id }}.class, io : IO)
+          buffer = uninitialized UInt8[{{ bytesize }}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
-          buffer.unsafe_as({{type.id}})
+          buffer.unsafe_as({{ type.id }})
         end
 
-        def self.decode(int : {{type.id}}.class, bytes : Bytes)
-          buffer = uninitialized UInt8[{{bytesize}}]
-          bytes.copy_to(buffer.to_unsafe, {{bytesize}})
+        def self.decode(int : {{ type.id }}.class, bytes : Bytes)
+          buffer = uninitialized UInt8[{{ bytesize }}]
+          bytes.copy_to(buffer.to_unsafe, {{ bytesize }})
           buffer.reverse! unless SystemEndian == self
-          buffer.unsafe_as({{type.id}})
+          buffer.unsafe_as({{ type.id }})
         end
 
-        @[Deprecated("Use `.decode(int : {{type.id}}.class, io : IO)` instead")]
-        def self.decode(*, type : {{type.id}}.class, io : IO)
+        @[Deprecated("Use `.decode(int : {{ type.id }}.class, io : IO)` instead")]
+        def self.decode(*, type : {{ type.id }}.class, io : IO)
           decode(type, io)
         end
 
-        @[Deprecated("Use `.decode(int : {{type.id}}.class, bytes : Bytes)` instead")]
-        def self.decode(*, type : {{type.id}}.class, bytes : Bytes)
+        @[Deprecated("Use `.decode(int : {{ type.id }}.class, bytes : Bytes)` instead")]
+        def self.decode(*, type : {{ type.id }}.class, bytes : Bytes)
           decode(type, bytes)
         end
       {% end %}

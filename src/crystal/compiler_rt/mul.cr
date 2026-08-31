@@ -2,34 +2,34 @@
 private macro __mul_impl(name, type, n)
   # :nodoc:
   # Ported from https://github.com/llvm/llvm-project/blob/ce59ccd04023cab3a837da14079ca2dcbfebb70c/compiler-rt/lib/builtins/int_mulo_impl.inc
-  fun {{name}}(a : {{type}}, b : {{type}}, overflow : Int32*) : {{type}}
+  fun {{ name }}(a : {{ type }}, b : {{ type }}, overflow : Int32*) : {{ type }}
     overflow.value = 0
     result = a &* b
-    if a == {{type}}::MIN
+    if a == {{ type }}::MIN
       if b != 0 && b != 1
         overflow.value = 1
       end
       return result
     end
-    if b == {{type}}::MIN
+    if b == {{ type }}::MIN
       if a != 0 && a != 1
         overflow.value = 1
       end
       return result
     end
-    sa = a.unsafe_shr({{n - 1}})
+    sa = a.unsafe_shr({{ n - 1 }})
     abs_a = (a ^ sa) &- sa
-    sb = b.unsafe_shr({{n - 1}})
+    sb = b.unsafe_shr({{ n - 1 }})
     abs_b = (b ^ sb) &- sb
     if abs_a < 2 || abs_b < 2
       return result
     end
     if sa == sb
-      if abs_a > {{type}}::MAX.unsafe_div(abs_b)
+      if abs_a > {{ type }}::MAX.unsafe_div(abs_b)
         overflow.value = 1
       end
     else
-      if abs_a > {{type}}::MIN.unsafe_div({{type}}.new!(0) &- abs_b)
+      if abs_a > {{ type }}::MIN.unsafe_div({{ type }}.new!(0) &- abs_b)
         overflow.value = 1
       end
     end

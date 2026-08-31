@@ -1188,7 +1188,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # we need to go from A(Int32) to A(X) to go up the hierarchy.
       if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)
         run_hooks(type_with_hooks.instance_type.generic_type.metaclass, current_type, kind, node)
-      elsif (superclass = type_with_hooks.instance_type.superclass)
+      elsif superclass = type_with_hooks.instance_type.superclass
         run_hooks(superclass.metaclass, current_type, kind, node)
       end
     end
@@ -1346,7 +1346,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         else
           base_type = check_type_is_type_container(base_type, path)
           next_type = NonGenericModuleType.new(@program, base_type.as(ModuleType), name)
-          if (location = path.location)
+          if location = path.location
             next_type.add_location(location)
           end
           base_type.types[name] = next_type

@@ -355,15 +355,15 @@ describe "Random" do
 
   it "returns a random integer" do
     {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
-      value = TestRNG.new(RNG_DATA_32).rand({{type}})
-      typeof(value).should eq({{type}})
+      value = TestRNG.new(RNG_DATA_32).rand({{ type }})
+      typeof(value).should eq({{ type }})
     {% end %}
   end
 
   it "returns a random static array" do
     {% for type in %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).map(&.id) %}
-      array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{type}}, 4))
-      typeof(array).should eq(StaticArray({{type}}, 4))
+      array = TestRNG.new(RNG_DATA_32).rand(StaticArray({{ type }}, 4))
+      typeof(array).should eq(StaticArray({{ type }}, 4))
     {% end %}
   end
 

@@ -142,7 +142,7 @@ module Crystal
 
       # check superclass for deprecation if the node isn't deprecated
       if (type = node.type.lookup_type?(node.name)) && !type.annotation(@program.deprecated_annotation)
-        if ((superclass = node.superclass).is_a?(Path) && (stype = superclass.type? || node.type.lookup_type?(superclass)))
+        if (superclass = node.superclass).is_a?(Path) && (stype = superclass.type? || node.type.lookup_type?(superclass))
           @program.check_deprecated_type(stype, superclass)
         end
       end
@@ -537,7 +537,7 @@ module Crystal
       end
 
       # Check if we have an untyped expression in this call. Replace it with raise.
-      if (obj && !obj_type)
+      if obj && !obj_type
         return untyped_expression(node, "`#{obj}` has no type")
       end
 

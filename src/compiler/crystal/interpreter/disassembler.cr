@@ -41,27 +41,27 @@ module Crystal::Repl::Disassembler
     io.print ip.to_s.rjust(4, '0')
     io.print ' '
 
-    node = instructions.nodes[ip]?
+    node = instructions.nodes[ip]? # ameba:disable Lint/UselessAssign
     op_code, ip = next_instruction instructions, ip, OpCode
 
     {% begin %}
       case op_code
         {% for name, instruction in Crystal::Repl::Instructions %}
-          in .{{name.id}}?
-            io.print "{{name}}"
+          in .{{ name.id }}?
+            io.print "{{ name }}"
             {% for operand in instruction[:operands] || [] of Nil %}
-              {{operand.var}}, ip = next_instruction instructions, ip, {{operand.type}}
+              {{ operand.var }}, ip = next_instruction instructions, ip, {{ operand.type }}
             {% end %}
 
             {% if instruction[:disassemble] %}
               {% for name, disassemble in instruction[:disassemble] %}
-                {{name.id}} = {{disassemble}}
+                {{ name.id }} = {{ disassemble }}
               {% end %}
             {% end %}
 
             {% for operand in instruction[:operands] || [] of Nil %}
               io.print " "
-              io.print {{operand.var}}
+              io.print {{ operand.var }}
             {% end %}
             io.puts
         {% end %}

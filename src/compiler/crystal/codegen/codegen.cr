@@ -1599,7 +1599,7 @@ module Crystal
           location ? cast_to_void_pointer(build_string_constant(location.expanded_location.to_s)) : llvm_context.void_pointer.null,
         ] of LLVM::Value
 
-        if (rescue_block = @rescue_block)
+        if rescue_block = @rescue_block
           invoke_out_block = new_block "invoke_out"
           invoke func, call_args, invoke_out_block, rescue_block
           position_at_end invoke_out_block

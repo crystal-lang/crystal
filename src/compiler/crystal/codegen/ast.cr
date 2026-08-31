@@ -117,7 +117,7 @@ module Crystal
       # - at least one argument type, or the return type, is an extern struct
       found_extern = false
 
-      if (type = self.type?)
+      if type = self.type?
         type = type.remove_alias
         if type.extern?
           found_extern = true

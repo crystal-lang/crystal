@@ -17,7 +17,7 @@ enum Errno
                     ECANCELED EIDRM ENOMSG EILSEQ EBADMSG EMULTIHOP ENODATA ENOLINK ENOSR ENOSTR
                     EPROTO ETIME EOPNOTSUPP ENOTRECOVERABLE EOWNERDEAD) %}
     {% if LibC.has_constant?(value) %}
-      {{value.id}} = LibC::{{value.id}}
+      {{ value.id }} = LibC::{{ value.id }}
     {% end %}
   {% end %}
 

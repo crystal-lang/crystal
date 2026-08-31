@@ -47,7 +47,7 @@ struct Exception::CallStack
     Crystal::System::ELF.open(data.program) do |image|
       read_dwarf_sections(image, data.base_address)
     end
-  rescue ex
+  rescue
     @@dwarf_line_numbers = nil
     @@dwarf_function_names = nil
   end

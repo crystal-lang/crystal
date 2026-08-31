@@ -34,7 +34,7 @@ module ECR
   # ```
   macro def_to_s(filename)
     def to_s(__io__ : IO) : Nil
-      ::ECR.embed {{filename}}, "__io__"
+      ::ECR.embed {{ filename }}, "__io__"
     end
   end
 
@@ -67,7 +67,7 @@ module ECR
   # io << '!'
   # ```
   macro embed(filename, io_name)
-    \{{ run("ecr/process", {{filename}}, {{io_name.id.stringify}}) }}
+    \{{ run("ecr/process", {{ filename }}, {{ io_name.id.stringify }}) }}
   end
 
   # Embeds an ECR file *filename* into the program and renders it to a string.
@@ -100,7 +100,7 @@ module ECR
   # ```
   macro render(filename)
     ::String.build do |%io|
-      ::ECR.embed({{filename}}, %io)
+      ::ECR.embed({{ filename }}, %io)
     end
   end
 end

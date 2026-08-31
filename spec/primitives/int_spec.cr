@@ -3,33 +3,33 @@ require "../support/number"
 require "big"
 
 {% for i in Int::Signed.union_types %}
-  struct {{i}}
-    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, -2, -1, 0, 1, 2, MAX &- 2, MAX &- 1, MAX] of {{i}}
+  struct {{ i }}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, -2, -1, 0, 1, 2, MAX &- 2, MAX &- 1, MAX] of {{ i }}
   end
 {% end %}
 
 {% for i in Int::Unsigned.union_types %}
-  struct {{i}}
-    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, MAX // 2 &- 1, MAX // 2, MAX // 2 &+ 1, MAX &- 2, MAX &- 1, MAX] of {{i}}
+  struct {{ i }}
+    TEST_CASES = [MIN, MIN &+ 1, MIN &+ 2, MAX // 2 &- 1, MAX // 2, MAX // 2 &+ 1, MAX &- 2, MAX &- 1, MAX] of {{ i }}
   end
 {% end %}
 
 macro run_op_tests(t, u, op)
-  it "overflow test #{{{t}}} #{{{op}}} #{{{u}}}" do
-    {{t}}::TEST_CASES.each do |lhs|
-      {{u}}::TEST_CASES.each do |rhs|
-        result = lhs.to_big_i {{op.id}} rhs.to_big_i
-        passes = {{t}}::MIN <= result <= {{t}}::MAX
+  it "overflow test #{{{ t }}} #{{{ op }}} #{{{ u }}}" do
+    {{ t }}::TEST_CASES.each do |lhs|
+      {{ u }}::TEST_CASES.each do |rhs|
+        result = lhs.to_big_i {{ op.id }} rhs.to_big_i
+        passes = {{ t }}::MIN <= result <= {{ t }}::MAX
         begin
           if passes
-            (lhs {{op.id}} rhs).should eq(lhs &{{op.id}} rhs)
+            (lhs {{ op.id }} rhs).should eq(lhs &{{ op.id }} rhs)
           else
-            expect_raises(OverflowError) { lhs {{op.id}} rhs }
+            expect_raises(OverflowError) { lhs {{ op.id }} rhs }
           end
         rescue e : Spec::AssertionFailed
-          raise Spec::AssertionFailed.new("#{e.message}: #{lhs} #{{{op}}} #{rhs}", e.file, e.line)
+          raise Spec::AssertionFailed.new("#{e.message}: #{lhs} #{{{ op }}} #{rhs}", e.file, e.line)
         rescue e : OverflowError
-          raise OverflowError.new("#{e.message}: #{lhs} #{{{op}}} #{rhs}")
+          raise OverflowError.new("#{e.message}: #{lhs} #{{{ op }}} #{rhs}")
         end
       end
     end

@@ -5,11 +5,11 @@ lib LibLLVM
 
   {% for target in ALL_TARGETS %}
     {% name = target.downcase.id %}
-    fun initialize_{{name}}_target_info = LLVMInitialize{{target.id}}TargetInfo
-    fun initialize_{{name}}_target = LLVMInitialize{{target.id}}Target
-    fun initialize_{{name}}_target_mc = LLVMInitialize{{target.id}}TargetMC
-    fun initialize_{{name}}_asm_printer = LLVMInitialize{{target.id}}AsmPrinter
-    fun initialize_{{name}}_asm_parser = LLVMInitialize{{target.id}}AsmParser
+    fun initialize_{{ name }}_target_info = LLVMInitialize{{ target.id }}TargetInfo
+    fun initialize_{{ name }}_target = LLVMInitialize{{ target.id }}Target
+    fun initialize_{{ name }}_target_mc = LLVMInitialize{{ target.id }}TargetMC
+    fun initialize_{{ name }}_asm_printer = LLVMInitialize{{ target.id }}AsmPrinter
+    fun initialize_{{ name }}_asm_parser = LLVMInitialize{{ target.id }}AsmParser
   {% end %}
 
   fun set_module_data_layout = LLVMSetModuleDataLayout(m : ModuleRef, dl : TargetDataRef)

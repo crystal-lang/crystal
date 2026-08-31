@@ -1161,11 +1161,11 @@ module Crystal
 
     macro gen_check_int_fits_in_size(type, method, size, number_size, raw_number_string, start, pos_before_suffix, negative)
       {% if type.stringify.starts_with? "U" %}
-        raise "Invalid negative value #{string_range({{start}}, {{pos_before_suffix}})} for {{type}}", @token, (current_pos - {{start}}) if {{negative}}
+        raise "Invalid negative value #{string_range({{ start }}, {{ pos_before_suffix }})} for {{ type }}", @token, (current_pos - {{ start }}) if {{ negative }}
       {% end %}
 
-      if !@token.value || {{number_size}} > {{size}} || ({{number_size}} == {{size}} && {{raw_number_string}}.to_{{method.id}}? == nil)
-        raise_value_doesnt_fit_in "{{type}}", {{start}}, {{pos_before_suffix}}
+      if !@token.value || {{ number_size }} > {{ size }} || ({{ number_size }} == {{ size }} && {{ raw_number_string }}.to_{{ method.id }}? == nil)
+        raise_value_doesnt_fit_in "{{ type }}", {{ start }}, {{ pos_before_suffix }}
       end
     end
 
@@ -2834,13 +2834,13 @@ module Crystal
     end
 
     def skip_space_or_newline
-      while (@token.type.space? || @token.type.newline?)
+      while @token.type.space? || @token.type.newline?
         next_token
       end
     end
 
     def skip_statement_end
-      while (@token.type.space? || @token.type.newline? || @token.type.op_semicolon?)
+      while @token.type.space? || @token.type.newline? || @token.type.op_semicolon?
         next_token
       end
     end

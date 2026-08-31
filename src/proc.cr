@@ -145,13 +145,13 @@ struct Proc
       {% remaining = (T.size - U.size) %}
       ->(
           {% for i in 0...remaining %}
-            arg{{i}} : {{T[i + U.size]}},
+            arg{{ i }} : {{ T[i + U.size] }},
           {% end %}
         ) {
         call(
           *args,
           {% for i in 0...remaining %}
-            arg{{i}},
+            arg{{ i }},
           {% end %}
         )
       }
@@ -168,7 +168,7 @@ struct Proc
   # neg.arity # => 1
   # ```
   def arity
-    {{T.size}}
+    {{ T.size }}
   end
 
   def pointer : Void*
@@ -212,7 +212,7 @@ struct Proc
 
   def to_s(io : IO) : Nil
     io << "#<"
-    io << {{@type.name.stringify}}
+    io << {{ @type.name.stringify }}
     io << ":0x"
     pointer.address.to_s(io, 16)
     if closure?

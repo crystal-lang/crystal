@@ -383,7 +383,7 @@ module Spec
 
     # Creates an `Expectation` that passes if actual is of type *type* (`is_a?`).
     macro be_a(type)
-      ::Spec::BeAExpectation({{type}}).new
+      ::Spec::BeAExpectation({{ type }}).new
     end
 
     # Runs the block and passes if it raises an exception of type *klass* and the error message matches.

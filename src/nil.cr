@@ -124,7 +124,7 @@ struct Nil
   # config["missing"]?.presence # => nil
   # ```
   def presence : Nil
-    self
+    nil
   end
 
   def clone

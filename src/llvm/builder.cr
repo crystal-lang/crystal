@@ -156,53 +156,53 @@ class LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
-    def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+    def {{ method_name.id }}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
       # check_value(value)
 
-      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
-    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
-      # check_type({{method_name}}, type)
+    def {{ method_name.id }}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+      # check_type({{ method_name }}, type)
       # check_value(value)
 
-      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
-    end
-
-    @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
-    def {{method_name.id}}(value : LLVM::Value, index : LLVM::Value, name = "")
-      # check_value(value)
-
-      indices = pointerof(index).as(LibLLVM::ValueRef*)
-      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices, 1, name)
-    end
-
-    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
-      # check_type({{method_name}}, type)
-      # check_value(value)
-
-      indices = pointerof(index).as(LibLLVM::ValueRef*)
-      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices, 1, name)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
     @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
-    def {{method_name.id}}(value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+    def {{ method_name.id }}(value : LLVM::Value, index : LLVM::Value, name = "")
+      # check_value(value)
+
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, value.type, value, indices, 1, name)
+    end
+
+    def {{ method_name.id }}(type : LLVM::Type, value : LLVM::Value, index : LLVM::Value, name = "")
+      # check_type({{ method_name }}, type)
+      # check_value(value)
+
+      indices = pointerof(index).as(LibLLVM::ValueRef*)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, type, value, indices, 1, name)
+    end
+
+    @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
+    def {{ method_name.id }}(value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
       # check_value(value)
 
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
 
-    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
-      # check_type({{method_name}}, type)
+    def {{ method_name.id }}(type : LLVM::Type, value : LLVM::Value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
+      # check_type({{ method_name }}, type)
       # check_value(value)
 
       indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
+      Value.new LibLLVM.build_{{ method_name.id }}2(self, type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
@@ -213,37 +213,37 @@ class LLVM::Builder
   end
 
   {% for name in %w(bit_cast zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
-    def {{name.id}}(value, type, name = "")
-      # check_type({{name}}, type)
+    def {{ name.id }}(value, type, name = "")
+      # check_type({{ name }}, type)
       # check_value(value)
 
-      Value.new LibLLVM.build_{{name.id}}(self, value, type, name)
+      Value.new LibLLVM.build_{{ name.id }}(self, value, type, name)
     end
   {% end %}
 
   {% for name in %w(add sub mul sdiv exact_sdiv udiv srem urem shl ashr lshr or and xor fadd fsub fmul fdiv) %}
-    def {{name.id}}(lhs, rhs, name = "")
+    def {{ name.id }}(lhs, rhs, name = "")
       # check_value(lhs)
       # check_value(rhs)
 
-      Value.new LibLLVM.build_{{name.id}}(self, lhs, rhs, name)
+      Value.new LibLLVM.build_{{ name.id }}(self, lhs, rhs, name)
     end
   {% end %}
 
   {% for name in %w(icmp fcmp) %}
-    def {{name.id}}(op, lhs, rhs, name = "")
+    def {{ name.id }}(op, lhs, rhs, name = "")
       # check_value(lhs)
       # check_value(rhs)
 
-      Value.new LibLLVM.build_{{name.id}}(self, op, lhs, rhs, name)
+      Value.new LibLLVM.build_{{ name.id }}(self, op, lhs, rhs, name)
     end
   {% end %}
 
   {% for name in %w(not neg fneg) %}
-    def {{name.id}}(value, name = "")
+    def {{ name.id }}(value, name = "")
       # check_value(value)
 
-      Value.new LibLLVM.build_{{name.id}}(self, value, name)
+      Value.new LibLLVM.build_{{ name.id }}(self, value, name)
     end
   {% end %}
 

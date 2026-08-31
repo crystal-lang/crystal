@@ -405,7 +405,7 @@ class Crystal::CodeGenVisitor
     func = crystal_raise_overflow_fun
     call_args = [] of LLVM::Value
 
-    if (rescue_block = @rescue_block)
+    if rescue_block = @rescue_block
       invoke_out_block = new_block "invoke_out"
       invoke func, call_args, invoke_out_block, rescue_block
       position_at_end invoke_out_block
@@ -921,7 +921,7 @@ class Crystal::CodeGenVisitor
     original_call_arg = call_arg
 
     # Check if we need to do a numeric conversion
-    if (extra = node.extra)
+    if extra = node.extra
       existing_value = context.vars["value"]?
       context.vars["value"] = LLVMVar.new(call_arg, node.type, true)
       request_value(extra)

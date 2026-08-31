@@ -5,10 +5,10 @@ private macro parallel(*jobs)
   %channel = Channel(Exception | Nil).new
 
   {% for job, i in jobs %}
-    %ret{i} = uninitialized typeof({{job}})
+    %ret{i} = uninitialized typeof({{ job }})
     spawn do
       begin
-        %ret{i} = {{job}}
+        %ret{i} = {{ job }}
       rescue e : Exception
         %channel.send e
       else
@@ -722,7 +722,7 @@ describe "unbuffered" do
     Sync::CONCURRENT.spawn do
       state = :ready
       ch.send 1
-    rescue ex
+    rescue
       state = :raised
     else
       state = :done
@@ -847,7 +847,7 @@ describe "buffered" do
       ch.send 1
       state = :ready
       ch.send 2
-    rescue ex
+    rescue
       state = :raised
     else
       state = :done

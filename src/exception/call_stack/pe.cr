@@ -20,7 +20,7 @@ struct Exception::CallStack
       @@coff_symbols = image.read_coff_symbols
       read_dwarf_sections(image, hmodule.address - image.original_image_base)
     end
-  rescue ex
+  rescue
     @@dwarf_line_numbers = nil
     @@dwarf_function_names = nil
   end

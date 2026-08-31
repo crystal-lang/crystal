@@ -320,7 +320,6 @@ class URI
         byte.to_s(io, 16, upcase: true)
       end
     end
-    io
   end
 
   # :nodoc:

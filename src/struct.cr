@@ -67,7 +67,7 @@ struct Struct
     # TODO: This is a workaround for https://github.com/crystal-lang/crystal/issues/5249
     if other.is_a?(self)
       {% for ivar in @type.instance_vars %}
-        return false unless @{{ivar.id}} == other.@{{ivar.id}}
+        return false unless @{{ ivar.id }} == other.@{{ ivar.id }}
       {% end %}
       true
     else
@@ -78,7 +78,7 @@ struct Struct
   # See `Object#hash(hasher)`
   def hash(hasher)
     {% for ivar in @type.instance_vars %}
-      hasher = @{{ivar.id}}.hash(hasher)
+      hasher = @{{ ivar.id }}.hash(hasher)
     {% end %}
     hasher
   end
@@ -97,13 +97,13 @@ struct Struct
   # p1.inspect # "Point(@x=1, @y=2)"
   # ```
   def inspect(io : IO) : Nil
-    io << {{@type.name.id.stringify}} << '('
+    io << {{ @type.name.id.stringify }} << '('
     {% for ivar, i in @type.instance_vars %}
       {% if i > 0 %}
         io << ", "
       {% end %}
-      io << "@{{ivar.id}}="
-      @{{ivar.id}}.inspect(io)
+      io << "@{{ ivar.id }}="
+      @{{ ivar.id }}.inspect(io)
     {% end %}
     io << ')'
   end
@@ -112,17 +112,17 @@ struct Struct
     {% if @type.overrides?(Struct, "inspect") %}
       pp.text inspect
     {% else %}
-      prefix = "#{{{@type.name.id.stringify}}}("
+      prefix = "#{{{ @type.name.id.stringify }}}("
       pp.surround(prefix, ")", left_break: "", right_break: nil) do
         {% for ivar, i in @type.instance_vars.map(&.name).sort %}
           {% if i > 0 %}
             pp.comma
           {% end %}
           pp.group do
-            pp.text "@{{ivar.id}}="
+            pp.text "@{{ ivar.id }}="
             pp.nest do
               pp.breakable ""
-              @{{ivar.id}}.pretty_print(pp)
+              @{{ ivar.id }}.pretty_print(pp)
             end
           end
         {% end %}

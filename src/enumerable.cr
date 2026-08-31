@@ -2227,31 +2227,31 @@ module Enumerable(T)
   def self.zip(main, others : U, &) forall U
     {% begin %}
       {% for type, type_index in U %}
-        other{{type_index}} = others[{{type_index}}]
+        other{{ type_index }} = others[{{ type_index }}]
       {% end %}
 
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        case other{{type_index}}
+        case other{{ type_index }}
         when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
         when Iterable
-          iter{{type_index}} = other{{type_index}}.each
+          iter{{ type_index }} = other{{ type_index }}.each
         else
-          iter{{type_index}} = other{{type_index}}
+          iter{{ type_index }} = other{{ type_index }}
         end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          if other{{type_index}}.is_a?(Indexable)
+          if other{{ type_index }}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = other{{type_index}}[i]
+            other_elem{{ type_index }} = other{{ type_index }}[i]
           else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
-            if other_elem{{type_index}}.is_a?(Iterator::Stop)
+            other_elem{{ type_index }} = iter{{ type_index }}.not_nil!.next
+            if other_elem{{ type_index }}.is_a?(Iterator::Stop)
               raise IndexError.new
             end
           end
@@ -2261,7 +2261,7 @@ module Enumerable(T)
         yield({
           elem,
           {% for _t, type_index in U %}
-            other_elem{{type_index}},
+            other_elem{{ type_index }},
           {% end %}
         })
       end
@@ -2272,32 +2272,32 @@ module Enumerable(T)
   def self.zip?(main, others : U, &) forall U
     {% begin %}
       {% for type, type_index in U %}
-        other{{type_index}} = others[{{type_index}}]
+        other{{ type_index }} = others[{{ type_index }}]
       {% end %}
 
       # Try to see if we need to create iterators (or treat as iterators)
       # for every element in `others`.
       {% for type, type_index in U %}
-        case other{{type_index}}
+        case other{{ type_index }}
         when Indexable
           # Nothing to do, but needed because many Indexables are Iterable/Iterator
         when Iterable
-          iter{{type_index}} = other{{type_index}}.each
+          iter{{ type_index }} = other{{ type_index }}.each
         else
-          iter{{type_index}} = other{{type_index}}
+          iter{{ type_index }} = other{{ type_index }}
         end
       {% end %}
 
       main.each_with_index do |elem, i|
         {% for type, type_index in U %}
-          if other{{type_index}}.is_a?(Indexable)
+          if other{{ type_index }}.is_a?(Indexable)
             # Index into those we can
-            other_elem{{type_index}} = other{{type_index}}[i]?
+            other_elem{{ type_index }} = other{{ type_index }}[i]?
           else
             # Otherwise advance the iterator
-            other_elem{{type_index}} = iter{{type_index}}.not_nil!.next
-            if other_elem{{type_index}}.is_a?(Iterator::Stop)
-              other_elem{{type_index}} = nil
+            other_elem{{ type_index }} = iter{{ type_index }}.not_nil!.next
+            if other_elem{{ type_index }}.is_a?(Iterator::Stop)
+              other_elem{{ type_index }} = nil
             end
           end
         {% end %}
@@ -2306,7 +2306,7 @@ module Enumerable(T)
         yield({
           elem,
           {% for _t, type_index in U %}
-            other_elem{{type_index}},
+            other_elem{{ type_index }},
           {% end %}
         })
       end

@@ -100,9 +100,9 @@ class Crystal::ABI
 
       describe "abi_info" do
         {% for bits in [1, 8, 16, 32, 64] %}
-          test "int{{bits}}" do |abi, ctx|
-            arg_type = ArgType.direct(ctx.int{{bits}})
-            info = abi.abi_info([ctx.int{{bits}}], ctx.int{{bits}}, true, ctx)
+          test "int{{ bits }}" do |abi, ctx|
+            arg_type = ArgType.direct(ctx.int{{ bits }})
+            info = abi.abi_info([ctx.int{{ bits }}], ctx.int{{ bits }}, true, ctx)
             info.arg_types.size.should eq(1)
             info.arg_types[0].should eq(arg_type)
             info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)

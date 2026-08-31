@@ -446,46 +446,46 @@ module Syscall
 
   macro def_syscall(name, return_type, *args)
     @[::AlwaysInline]
-    def self.{{name.id}}({{args.splat}}) : {{return_type}}
-      ret = uninitialized {{return_type}}
+    def self.{{ name.id }}({{ args.splat }}) : {{ return_type }}
+      ret = uninitialized {{ return_type }}
 
       {% if args.size == 0 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 1 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 2 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }}), "{ecx}"({{ args[1].var.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 3 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
-                          "{edx}"({{args[2].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }}), "{ecx}"({{ args[1].var.id }}),
+                          "{edx}"({{ args[2].var.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 4 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
-                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }}), "{ecx}"({{ args[1].var.id }}),
+                          "{edx}"({{ args[2].var.id }}), "{esi}"({{ args[3].var.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 5 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
-                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}}), "{edi}"({{args[4].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }}), "{ecx}"({{ args[1].var.id }}),
+                          "{edx}"({{ args[2].var.id }}), "{esi}"({{ args[3].var.id }}), "{edi}"({{ args[4].var.id }})
                         : "memory"
                         : "volatile")
       {% elsif args.size == 6 %}
         asm("int $$0x80" : "={eax}"(ret)
-                        : "{eax}"(::Syscall::Code::{{name.stringify.upcase.id}}), "{ebx}"({{args[0].var.id}}), "{ecx}"({{args[1].var.id}}),
-                          "{edx}"({{args[2].var.id}}), "{esi}"({{args[3].var.id}}), "{edi}"({{args[4].var.id}}), "{ebp}"({{args[5].var.id}})
+                        : "{eax}"(::Syscall::Code::{{ name.stringify.upcase.id }}), "{ebx}"({{ args[0].var.id }}), "{ecx}"({{ args[1].var.id }}),
+                          "{edx}"({{ args[2].var.id }}), "{esi}"({{ args[3].var.id }}), "{edi}"({{ args[4].var.id }}), "{ebp}"({{ args[5].var.id }})
                         : "memory"
                         : "volatile")
       {% else %}

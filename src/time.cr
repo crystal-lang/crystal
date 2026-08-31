@@ -1415,18 +1415,18 @@ struct Time
   end
 
   private macro def_at_beginning(interval)
-    # Returns a copy of this `Time` representing the beginning of the {{interval.id}}.
-    def at_beginning_of_{{interval.id}} : Time
+    # Returns a copy of this `Time` representing the beginning of the {{ interval.id }}.
+    def at_beginning_of_{{ interval.id }} : Time
       year, month, day, day_year = year_month_day_day_year
-      {{yield}}
+      {{ yield }}
     end
   end
 
   private macro def_at_end(interval)
-    # Returns a copy of this `Time` representing the end of the {{interval.id}}.
-    def at_end_of_{{interval.id}} : Time
+    # Returns a copy of this `Time` representing the end of the {{ interval.id }}.
+    def at_end_of_{{ interval.id }} : Time
       year, month, day, day_year = year_month_day_day_year
-      {{yield}}
+      {{ yield }}
     end
   end
 
@@ -1518,11 +1518,11 @@ struct Time
   end
 
   {% for name in DayOfWeek.constants %}
-    # Returns `true` if the day of week is {{name.id}}.
+    # Returns `true` if the day of week is {{ name.id }}.
     #
     # See `#day_of_week` for details.
-    def {{name.id.downcase}}? : Bool
-      day_of_week.{{name.id.downcase}}?
+    def {{ name.id.downcase }}? : Bool
+      day_of_week.{{ name.id.downcase }}?
     end
   {% end %}
 

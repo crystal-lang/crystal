@@ -280,7 +280,7 @@ module Crystal
         knows_count = true
         node.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
-            if (type_var_type = type_var.type?)
+            if type_var_type = type_var.type?
               unless type_var_type.is_a?(TupleInstanceType)
                 type_var.raise "argument to splat must be a tuple type, not #{type_var_type}"
               end

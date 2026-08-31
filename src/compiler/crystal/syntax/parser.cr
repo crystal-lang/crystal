@@ -451,7 +451,6 @@ module Crystal
 
             atomic = Assign.new(atomic, atomic_value).at(location)
             atomic.doc = doc
-            atomic
           end
         when .assignment_operator?
           unexpected_token unless allow_ops
@@ -552,15 +551,15 @@ module Crystal
     end
 
     macro parse_operator(name, next_operator, node, *operators, right_associative = false)
-      def parse_{{name.id}}
+      def parse_{{ name.id }}
         location = @token.location
 
-        left = parse_{{next_operator.id}}
+        left = parse_{{ next_operator.id }}
         while true
           case @token.type
           when .space?
             next_token
-          when {{operators.map { |op| ".#{op.id}".id }.splat}}
+          when {{ operators.map { |op| ".#{op.id}".id }.splat }}
             check_void_value left, location
 
             method = @token.type.to_s
@@ -568,8 +567,8 @@ module Crystal
 
             slash_is_regex!
             next_token_skip_space_or_newline
-            right = parse_{{(right_associative ? name : next_operator).id}}
-            left = ({{node.id}}).at(location).at_end(right)
+            right = parse_{{ (right_associative ? name : next_operator).id }}
+            left = ({{ node.id }}).at(location).at_end(right)
             left.name_location = name_location if left.is_a?(Call)
           else
             return left
@@ -800,7 +799,6 @@ module Crystal
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
-            atomic
           end
         when .op_lsquare_rsquare?
           check_void_value atomic, location
@@ -813,7 +811,6 @@ module Crystal
           atomic.name_location = name_location
           atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
-          atomic
         when .op_lsquare?
           check_void_value atomic, location
 
@@ -857,7 +854,6 @@ module Crystal
           atomic.end_location = end_location
           atomic.name_size = 0
           atomic.args_in_brackets = true
-          atomic
         else
           break
         end
@@ -4546,7 +4542,7 @@ module Crystal
               # local variable afterwards.)
               push_var declare_var unless @call_args_start_locations.includes?(location)
               declare_var
-            elsif (!force_call && is_var)
+            elsif !force_call && is_var
               if @block_arg_name && !@uses_block_arg && name == @block_arg_name
                 @uses_block_arg = true
               end

@@ -346,12 +346,12 @@ struct LibC::IoUringSqe
                       {"optval", "__u6"},
                       {"cmd", "__u6"},
                     ] %}
-    def {{mapping[0].id}}
-      {{mapping[1].id}}.{{mapping[0].id}}
+    def {{ mapping[0].id }}
+      {{ mapping[1].id }}.{{ mapping[0].id }}
     end
 
-    def {{mapping[0].id}}=(value)
-      {{mapping[1].id}}.{{mapping[0].id}} = value
+    def {{ mapping[0].id }}=(value)
+      {{ mapping[1].id }}.{{ mapping[0].id }} = value
     end
   {% end %}
 end

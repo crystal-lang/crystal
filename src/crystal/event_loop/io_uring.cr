@@ -179,7 +179,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   DEFAULT_CQ_ENTRIES = 128
 
   # how long the poll thread should idle (in milliseconds)
-  DEFAULT_SQ_THREAD_IDLE = {{(value = flag?("io_uring_sq_thread_idle")).is_a?(StringLiteral) && !value.empty? && value.to_i || nil}}
+  DEFAULT_SQ_THREAD_IDLE = {{ (value = flag?("io_uring_sq_thread_idle")).is_a?(StringLiteral) && !value.empty? && value.to_i || nil }}
 
   # SQPOLL without fixed files was added in Linux 5.11 with CAP_SYS_NICE
   # privilege and Linux 5.13 unprivileged.

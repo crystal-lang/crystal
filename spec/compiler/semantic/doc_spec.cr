@@ -231,28 +231,28 @@ describe "Semantic: doc" do
   end
 
   {% for def_type in %w[def macro].map &.id %}
-    it "overwrites doc for {{def_type}} when redefining" do
+    it "overwrites doc for {{ def_type }} when redefining" do
       result = semantic <<-CRYSTAL, wants_doc: true
         module Foo
           # Doc 1
-          {{def_type}} bar
+          {{ def_type }} bar
           end
         end
 
         module Foo
           # Doc 2
-          {{def_type}} bar
+          {{ def_type }} bar
           end
         end
 
         module Foo
-          {{def_type}} bar
+          {{ def_type }} bar
           end
         end
         CRYSTAL
       program = result.program
       foo = program.types["Foo"]
-      bar = foo.lookup_{{def_type}}s("bar").as(Array).first
+      bar = foo.lookup_{{ def_type }}s("bar").as(Array).first
       bar.doc.should eq("Doc 2")
     end
   {% end %}
@@ -452,14 +452,14 @@ describe "Semantic: doc" do
   end
 
   {% for module_type in %w[class struct module enum].map &.id %}
-    it "stores doc for {{module_type}} when reopening" do
+    it "stores doc for {{ module_type }} when reopening" do
       result = semantic <<-CRYSTAL, wants_doc: true
-        {{module_type}} Foo
+        {{ module_type }} Foo
           A = 1
         end
 
         # Hello
-        {{module_type}} Foo
+        {{ module_type }} Foo
         end
         CRYSTAL
       program = result.program
@@ -468,18 +468,18 @@ describe "Semantic: doc" do
       foo.locations.should_not(be_nil).size.should eq(2)
     end
 
-    it "overwrites doc for {{module_type}} when reopening" do
+    it "overwrites doc for {{ module_type }} when reopening" do
       result = semantic <<-CRYSTAL, wants_doc: true
         # Doc 1
-        {{module_type}} Foo
+        {{ module_type }} Foo
           A = 1
         end
 
         # Doc 2
-        {{module_type}} Foo
+        {{ module_type }} Foo
         end
 
-        {{module_type}} Foo
+        {{ module_type }} Foo
         end
         CRYSTAL
       program = result.program

@@ -172,7 +172,7 @@ module Crystal
           flags << flag
         elsif (lib_name = ann.lib) && (flag = pkg_config(lib_name, static_build))
           flags << flag
-        elsif (lib_name = ann.lib)
+        elsif lib_name = ann.lib
           flags << quote_flag("-l#{lib_name}", cross_compiling)
         end
 

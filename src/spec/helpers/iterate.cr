@@ -46,7 +46,7 @@ module Spec::Methods
   #
   # See `.it_iterates` for details.
   macro assert_iterates_yielding(expected, method, *, infinite = false, tuple = false)
-    %remaining = ({{expected}}).size
+    %remaining = ({{ expected }}).size
     %ary = [] of typeof(::Enumerable.element_type({{ expected }}))
     {{ method.id }} do |{% if tuple %}*{% end %}x|
       if %remaining == 0

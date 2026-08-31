@@ -35,13 +35,13 @@ struct Slice(T)
     # TODO: there should be a better way to check this, probably
     # asking if @type was instantiated or if T is defined
     {% if @type.name != "Slice(T)" && T < ::Number %}
-      {{T}}.slice({{args.splat(", ")}}read_only: {{read_only}})
+      {{ T }}.slice({{ args.splat(", ") }}read_only: {{ read_only }})
     {% else %}
-      %ptr = ::Pointer(typeof({{args.splat}})).malloc({{args.size}})
+      %ptr = ::Pointer(typeof({{ args.splat }})).malloc({{ args.size }})
       {% for arg, i in args %}
-        %ptr[{{i}}] = {{arg}}
+        %ptr[{{ i }}] = {{ arg }}
       {% end %}
-      ::Slice.new(%ptr, {{args.size}}, read_only: {{read_only}})
+      ::Slice.new(%ptr, {{ args.size }}, read_only: {{ read_only }})
     {% end %}
   end
 

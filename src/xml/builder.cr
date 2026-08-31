@@ -288,8 +288,8 @@ class XML::Builder
   end
 
   private macro call(name, *args)
-    ret = LibXML.xmlTextWriter{{name}}(@writer, {{args.splat}})
-    check ret, {{@def.name.stringify}}
+    ret = LibXML.xmlTextWriter{{ name }}(@writer, {{ args.splat }})
+    check ret, {{ @def.name.stringify }}
   end
 
   private def check(ret, msg)
@@ -377,12 +377,11 @@ module XML
     xml = XML::Builder.new(io)
     xml.indent = indent if indent
     xml.quote_char = quote_char if quote_char
-    v = yield xml
+    yield xml
 
     # EndDocument is still necessary to ensure all elements are closed, even
     # when StartDocument is omitted.
     xml.end_document
     xml.flush
-    v
   end
 end

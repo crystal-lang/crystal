@@ -166,7 +166,7 @@ class Log
   # See `Log::StaticFormatter` for the available methods that can
   # be called within the interpolations.
   macro define_formatter(name, pattern)
-    struct {{name}} < ::Log::StaticFormatter
+    struct {{ name }} < ::Log::StaticFormatter
       def run
         {% for part in pattern.expressions %}
           {% if part.is_a?(StringLiteral) %}

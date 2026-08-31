@@ -63,8 +63,8 @@ struct NamedTuple
   def to_yaml(yaml : YAML::Nodes::Builder)
     yaml.mapping do
       {% for key in T.keys %}
-        {{key.symbolize}}.to_yaml(yaml)
-        self[{{key.symbolize}}].to_yaml(yaml)
+        {{ key.symbolize }}.to_yaml(yaml)
+        self[{{ key.symbolize }}].to_yaml(yaml)
       {% end %}
     end
   end

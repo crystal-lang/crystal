@@ -20,11 +20,11 @@ end
 describe "Complex" do
   describe "as numbers" do
     it_can_convert_between([Complex], [Complex])
-    it_can_convert_between({{BUILTIN_NUMBER_TYPES}}, [Complex])
-    it_can_convert_between([Complex], {{BUILTIN_NUMBER_TYPES}})
+    it_can_convert_between({{ BUILTIN_NUMBER_TYPES }}, [Complex])
+    it_can_convert_between([Complex], {{ BUILTIN_NUMBER_TYPES }})
 
-    division_between_returns {{BUILTIN_NUMBER_TYPES}}, [Complex], Complex
-    division_between_returns [Complex], {{BUILTIN_NUMBER_TYPES}}, Complex
+    division_between_returns {{ BUILTIN_NUMBER_TYPES }}, [Complex], Complex
+    division_between_returns [Complex], {{ BUILTIN_NUMBER_TYPES }}, Complex
 
     division_between_returns [Complex], [Complex], Complex
   end

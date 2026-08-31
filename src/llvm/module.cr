@@ -107,7 +107,6 @@ class LLVM::Module
 
   def to_s(io : IO) : Nil
     LLVM.to_io(LibLLVM.print_module_to_string(self), io)
-    self
   end
 
   def to_unsafe

@@ -14,28 +14,28 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @{{name}}
+          @{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @{{name}}
+        @{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}} {% if type %} : {{type}} {% end %}
+      def {{ var_name }} {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @{{var_name}}).nil?
-            @{{var_name}} = {{yield}}
+          if (%value = @{{ var_name }}).nil?
+            @{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @{{var_name}}
+          @{{ var_name }}
         {% end %}
       end
 
@@ -69,28 +69,28 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @{{name}}
+          @{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @{{name}}
+        @{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}}? {% if type %} : {{type}} {% end %}
+      def {{ var_name }}? {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @{{var_name}}).nil?
-            @{{var_name}} = {{yield}}
+          if (%value = @{{ var_name }}).nil?
+            @{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @{{var_name}}
+          @{{ var_name }}
         {% end %}
       end
 
@@ -134,19 +134,19 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @{{name}}?
+        @{{ name }}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}}? {% if type %} : {{type}}? {% end %}
-        @{{var_name}}
+      def {{ var_name }}? {% if type %} : {{ type }}? {% end %}
+        @{{ var_name }}
       end
 
-      def {{var_name}} {% if type %} : {{type}} {% end %}
-        if (%value = @{{var_name}}).nil?
-          ::raise ::NilAssertionError.new("{{@type.id}}{{"#".id}}{{var_name}} cannot be nil")
+      def {{ var_name }} {% if type %} : {{ type }} {% end %}
+        if (%value = @{{ var_name }}).nil?
+          ::raise ::NilAssertionError.new("{{ @type.id }}{{ "#".id }}{{ var_name }} cannot be nil")
         else
           %value
         end
@@ -163,17 +163,17 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @{{name}}
+        @{{ name }}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @{{name}}
+        @{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}}=(@{{var_name}}{% if type %} : {{type}} {% end %})
+      def {{ var_name }}=(@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -189,32 +189,32 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @{{name}}
+          @{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @{{name}}
+        @{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}} {% if type %} : {{type}} {% end %}
+      def {{ var_name }} {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @{{var_name}}).nil?
-            @{{var_name}} = {{yield}}
+          if (%value = @{{ var_name }}).nil?
+            @{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @{{var_name}}
+          @{{ var_name }}
         {% end %}
       end
 
-      def {{var_name}}=(@{{var_name}}{% if type %} : {{type}} {% end %})
+      def {{ var_name }}=(@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -230,32 +230,32 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @{{name}}
+          @{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @{{name}}
+        @{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}}? {% if type %} : {{type}} {% end %}
+      def {{ var_name }}? {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @{{var_name}}).nil?
-            @{{var_name}} = {{yield}}
+          if (%value = @{{ var_name }}).nil?
+            @{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @{{var_name}}
+          @{{ var_name }}
         {% end %}
       end
 
-      def {{var_name}}=(@{{var_name}}{% if type %} : {{type}} {% end %})
+      def {{ var_name }}=(@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -270,25 +270,25 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @{{name}}?
+        @{{ name }}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def {{var_name}}? {% if type %} : {{type}}? {% end %}
-        @{{var_name}}
+      def {{ var_name }}? {% if type %} : {{ type }}? {% end %}
+        @{{ var_name }}
       end
 
-      def {{var_name}} {% if type %} : {{type}} {% end %}
-        if (%value = @{{var_name}}).nil?
-          ::raise ::NilAssertionError.new("{{@type.id}}{{"#".id}}{{var_name}} cannot be nil")
+      def {{ var_name }} {% if type %} : {{ type }} {% end %}
+        if (%value = @{{ var_name }}).nil?
+          ::raise ::NilAssertionError.new("{{ @type.id }}{{ "#".id }}{{ var_name }} cannot be nil")
         else
           %value
         end
       end
 
-      def {{var_name}}=(@{{var_name}}{% if type %} : {{type}} {% end %})
+      def {{ var_name }}=(@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -321,28 +321,28 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @@{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @@{{name}}
+          @@{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @@{{name}}
+        @@{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}} {% if type %} : {{type}} {% end %}
+      def self.{{ var_name }} {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@{{ var_name }}).nil?
+            @@{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @@{{var_name}}
+          @@{{ var_name }}
         {% end %}
       end
 
@@ -376,28 +376,28 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @@{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @@{{name}}
+          @@{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @@{{name}}
+        @@{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}}? {% if type %} : {{type}} {% end %}
+      def self.{{ var_name }}? {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@{{ var_name }}).nil?
+            @@{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @@{{var_name}}
+          @@{{ var_name }}
         {% end %}
       end
 
@@ -441,19 +441,19 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @@{{name}}?
+        @@{{ name }}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}}? {% if type %} : {{type}}? {% end %}
-        @@{{var_name}}
+      def self.{{ var_name }}? {% if type %} : {{ type }}? {% end %}
+        @@{{ var_name }}
       end
 
-      def self.{{var_name}} {% if type %} : {{type}} {% end %}
-        if (%value = @@{{var_name}}).nil?
-          ::raise ::NilAssertionError.new("{{@type.id}}{{".".id}}{{var_name}} cannot be nil")
+      def self.{{ var_name }} {% if type %} : {{ type }} {% end %}
+        if (%value = @@{{ var_name }}).nil?
+          ::raise ::NilAssertionError.new("{{ @type.id }}{{ ".".id }}{{ var_name }} cannot be nil")
         else
           %value
         end
@@ -489,17 +489,17 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @@{{name}}
+        @@{{ name }}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @@{{name}}
+        @@{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}}=(@@{{var_name}}{% if type %} : {{type}} {% end %})
+      def self.{{ var_name }}=(@@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -515,32 +515,32 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @@{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @@{{name}}
+          @@{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @@{{name}}
+        @@{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}} {% if type %} : {{type}} {% end %}
+      def self.{{ var_name }} {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@{{ var_name }}).nil?
+            @@{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @@{{var_name}}
+          @@{{ var_name }}
         {% end %}
       end
 
-      def self.{{var_name}}=(@@{{var_name}}{% if type %} : {{type}} {% end %})
+      def self.{{ var_name }}=(@@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -556,32 +556,32 @@ class Object
         {% var_name = name.var.id %}
         {% type = name.type %}
         {% if block %}
-          @@{{var_name}} : {{type}}? {% if name.value %} = {{name.value}} {% end %}
+          @@{{ var_name }} : {{ type }}? {% if name.value %} = {{ name.value }} {% end %}
         {% else %}
-          @@{{name}}
+          @@{{ name }}
         {% end %}
       {% elsif name.is_a?(Assign) %}
         {% var_name = name.target %}
         {% type = nil %}
-        @@{{name}}
+        @@{{ name }}
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}}? {% if type %} : {{type}} {% end %}
+      def self.{{ var_name }}? {% if type %} : {{ type }} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@{{ var_name }}).nil?
+            @@{{ var_name }} = {{ yield }}
           else
             %value
           end
         {% else %}
-          @@{{var_name}}
+          @@{{ var_name }}
         {% end %}
       end
 
-      def self.{{var_name}}=(@@{{var_name}}{% if type %} : {{type}} {% end %})
+      def self.{{ var_name }}=(@@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}
@@ -596,25 +596,25 @@ class Object
       {% if name.is_a?(TypeDeclaration) %}
         {% var_name = name.var.id %}
         {% type = name.type %}
-        @@{{name}}?
+        @@{{ name }}?
       {% else %}
         {% var_name = name.id %}
         {% type = nil %}
       {% end %}
 
-      def self.{{var_name}}? {% if type %} : {{type}}? {% end %}
-        @@{{var_name}}
+      def self.{{ var_name }}? {% if type %} : {{ type }}? {% end %}
+        @@{{ var_name }}
       end
 
-      def self.{{var_name}} {% if type %} : {{type}} {% end %}
-        if (%value = @@{{var_name}}).nil?
-          ::raise ::NilAssertionError.new("{{@type.id}}{{".".id}}{{var_name}} cannot be nil")
+      def self.{{ var_name }} {% if type %} : {{ type }} {% end %}
+        if (%value = @@{{ var_name }}).nil?
+          ::raise ::NilAssertionError.new("{{ @type.id }}{{ ".".id }}{{ var_name }} cannot be nil")
         else
           %value
         end
       end
 
-      def self.{{var_name}}=(@@{{var_name}}{% if type %} : {{type}} {% end %})
+      def self.{{ var_name }}=(@@{{ var_name }}{% if type %} : {{ type }} {% end %})
       end
 
     {% end %}

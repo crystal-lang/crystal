@@ -58,13 +58,13 @@ def Bool.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 end
 
 {% for type in %w(Int8 Int16 Int32 Int64 Int128 UInt8 UInt16 UInt32 UInt64 UInt128) %}
-  def {{type.id}}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
-    ctx.read_alias(node, {{type.id}}) do |obj|
+  def {{ type.id }}.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+    ctx.read_alias(node, {{ type.id }}) do |obj|
       return obj
     end
 
     if node.is_a?(YAML::Nodes::Scalar)
-      value = YAML::Schema::Core.parse_int(node, {{type.id}})
+      value = YAML::Schema::Core.parse_int(node, {{ type.id }})
       ctx.record_anchor(node, value)
       value
     else
@@ -179,14 +179,14 @@ def Tuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     node.raise "Expected sequence, not #{node.kind}"
   end
 
-  if node.nodes.size != {{T.size}}
-    node.raise "Expected #{{{T.size}}} elements, not #{node.nodes.size}"
+  if node.nodes.size != {{ T.size }}
+    node.raise "Expected #{{{ T.size }}} elements, not #{node.nodes.size}"
   end
 
   {% begin %}
     Tuple.new(
       {% for i in 0...T.size %}
-        (self[{{i}}].new(ctx, node.nodes[{{i}}])),
+        (self[{{ i }}].new(ctx, node.nodes[{{ i }}])),
       {% end %}
     )
  {% end %}
@@ -211,7 +211,7 @@ def NamedTuple.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       key = String.new(ctx, key)
       case key
         {% for key, type in T %}
-          when {{key.stringify}}
+          when {{ key.stringify }}
             %var{key.id} = self[{{ key.symbolize }}].new(ctx, value)
             {% unless type.nilable? %}
               %found{key.id} = true
@@ -284,7 +284,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   if node.is_a?(YAML::Nodes::Alias)
     {% for type in T %}
       {% if type < ::Reference %}
-        ctx.read_alias?(node, {{type}}) do |obj|
+        ctx.read_alias?(node, {{ type }}) do |obj|
           return obj
         end
       {% end %}
@@ -308,7 +308,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {% for type in T %}
       {% unless type == string_type %}
         begin
-          return {{type}}.new(ctx, node)
+          return {{ type }}.new(ctx, node)
         rescue YAML::ParseException
           # Ignore
         end
@@ -317,7 +317,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
 
     {% if string_type %}
       begin
-        return {{string_type}}.new(ctx, node)
+        return {{ string_type }}.new(ctx, node)
       rescue YAML::ParseException
         # Ignore
       end

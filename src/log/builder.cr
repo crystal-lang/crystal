@@ -129,7 +129,7 @@ class Log::Builder
       raise ArgumentError.new("Trying to remove backend of a log without one")
     when BroadcastBackend
       current_backend.remove(backend)
-      if (single_backend = current_backend.single_backend?)
+      if single_backend = current_backend.single_backend?
         log.backend = single_backend[0]
         log.initial_level = single_backend[1]
       else

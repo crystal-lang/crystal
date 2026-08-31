@@ -221,7 +221,7 @@ module JSON
               key = pull.read_object_key
               case key
               {% for name, value in properties %}
-                when {{value[:key]}}
+                when {{ value[:key] }}
                   begin
                     {% if value[:has_default] || value[:nilable] || value[:root] %}
                       if pull.read_null?
@@ -237,13 +237,13 @@ module JSON
                       {% if value[:root] %}
                         {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
                         {% for root in roots %}
-                          pull.on_key!({{root}}) do
+                          pull.on_key!({{ root }}) do
                         {% end %}
                       {% else %}
                         begin
                       {% end %}
                         {% if value[:converter] %}
-                          {{value[:converter]}}.from_json(pull)
+                          {{ value[:converter] }}.from_json(pull)
                         {% else %}
                           ::Union(typeof(@{{ name }})).new(pull)
                         {% end %}
@@ -257,7 +257,7 @@ module JSON
                       {% end %}
                     %found{name} = true
                   rescue exc : ::JSON::ParseException
-                    raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
+                    raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{ value[:key] }}, *%key_location, exc)
                   end
               {% end %}
               else
@@ -268,15 +268,15 @@ module JSON
 
             {% for name, value in properties %}
               if %found{name}
-                @{{name}} = %var{name}
+                @{{ name }} = %var{name}
               else
                 {% unless value[:has_default] || value[:nilable] %}
-                  raise ::JSON::SerializableError.new("Missing JSON attribute: {{value[:key].id}}", self.class.to_s, {{value[:key]}}, *%location, nil)
+                  raise ::JSON::SerializableError.new("Missing JSON attribute: {{ value[:key].id }}", self.class.to_s, {{ value[:key] }}, *%location, nil)
                 {% end %}
               end
 
               {% if value[:presence] %}
-                @{{name}}_present = %found{name}
+                @{{ name }}_present = %found{name}
               {% end %}
             {% end %}
           {% end %}
@@ -318,20 +318,20 @@ module JSON
 
         json.object do
           {% for name, value in properties %}
-            _{{name}} = @{{name}}
+            _{{ name }} = @{{ name }}
 
             {% if value[:ignore_serialize] %}
               unless {{ value[:ignore_serialize] }}
             {% end %}
 
               {% unless value[:emit_null] %}
-                unless _{{name}}.nil?
+                unless _{{ name }}.nil?
               {% end %}
 
-                json.field({{value[:key]}}) do
+                json.field({{ value[:key] }}) do
                   {% if value[:root] %}
                     {% if value[:emit_null] %}
-                      if _{{name}}.nil?
+                      if _{{ name }}.nil?
                         nil.to_json(json)
                       else
                     {% end %}
@@ -339,18 +339,18 @@ module JSON
                     {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
                     {% for root in roots %}
                       json.object do
-                        json.field({{root}}) do
+                        json.field({{ root }}) do
                     {% end %}
                   {% end %}
 
                   {% if value[:converter] %}
-                    if _{{name}}
-                      {{ value[:converter] }}.to_json(_{{name}}, json)
+                    if _{{ name }}
+                      {{ value[:converter] }}.to_json(_{{ name }}, json)
                     else
                       nil.to_json(json)
                     end
                   {% else %}
-                    _{{name}}.to_json(json)
+                    _{{ name }}.to_json(json)
                   {% end %}
 
                   {% if value[:root] %}
@@ -452,7 +452,7 @@ module JSON
           ::JSON.build(io) do |builder|
             builder.start_object
             pull.read_object do |key|
-              if key == {{field.id.stringify}}
+              if key == {{ field.id.stringify }}
                 value_kind = pull.kind
                 case value_kind
                 when .string?
@@ -462,7 +462,7 @@ module JSON
                 when .bool?
                   discriminator_value = pull.bool_value
                 else
-                  raise ::JSON::SerializableError.new("JSON discriminator field '{{field.id}}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
+                  raise ::JSON::SerializableError.new("JSON discriminator field '{{ field.id }}' has an invalid value type of #{value_kind.to_s}", to_s, nil, *location, nil)
                 end
                 builder.field(key, discriminator_value)
                 pull.read_next
@@ -475,28 +475,28 @@ module JSON
         end
 
         if discriminator_value.nil?
-          raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{field.id}}'", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Missing JSON discriminator field '{{ field.id }}'", to_s, nil, *location, nil)
         end
 
         case discriminator_value
         {% for key, value in mapping %}
           {% if mapping.is_a?(NamedTupleLiteral) %}
-            when {{key.id.stringify}}
+            when {{ key.id.stringify }}
           {% else %}
             {% if key.is_a?(StringLiteral) %}
-              when {{key}}
+              when {{ key }}
             {% elsif key.is_a?(NumberLiteral) || key.is_a?(BoolLiteral) %}
-              when {{key.id}}
+              when {{ key.id }}
             {% elsif key.is_a?(Path) %}
-              when {{key.resolve}}
+              when {{ key.resolve }}
             {% else %}
               {% key.raise "Mapping keys must be one of StringLiteral, NumberLiteral, BoolLiteral, or Path, not #{key.class_name.id}" %}
             {% end %}
           {% end %}
-          {{value.id}}.from_json(json)
+          {{ value.id }}.from_json(json)
         {% end %}
         else
-          raise ::JSON::SerializableError.new("Unknown '{{field.id}}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
+          raise ::JSON::SerializableError.new("Unknown '{{ field.id }}' discriminator value: #{discriminator_value.inspect}", to_s, nil, *location, nil)
         end
       end
     end

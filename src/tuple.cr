@@ -138,7 +138,7 @@ struct Tuple
   # See also: `#from`.
   def self.from(array : Array) : self
     {% begin %}
-    Tuple.new(*{{T}}).from(array)
+    Tuple.new(*{{ T }}).from(array)
     {% end %}
   end
 
@@ -165,7 +165,7 @@ struct Tuple
     {% begin %}
     Tuple.new(
     {% for i in 0...@type.size %}
-      self[{{i}}].cast(array[{{i}}]),
+      self[{{ i }}].cast(array[{{ i }}]),
     {% end %}
     )
     {% end %}
@@ -342,7 +342,7 @@ struct Tuple
   def at(index : Int, &)
     index += size if index < 0
     {% for i in 0...T.size %}
-      return self[{{i}}] if {{i}} == index
+      return self[{{ i }}] if {{ i }} == index
     {% end %}
     yield
   end
@@ -365,7 +365,7 @@ struct Tuple
   # ```
   def each(& : Union(*T) ->) : Nil
     {% for i in 0...T.size %}
-      yield self[{{i}}]
+      yield self[{{ i }}]
     {% end %}
   end
 
@@ -382,7 +382,7 @@ struct Tuple
   # ```
   def ==(other : self)
     {% for i in 0...T.size %}
-      return false unless self[{{i}}] == other[{{i}}]
+      return false unless self[{{ i }}] == other[{{ i }}]
     {% end %}
     true
   end
@@ -411,7 +411,7 @@ struct Tuple
   # See also: `Object#===`.
   def ===(other : self)
     {% for i in 0...T.size %}
-      return false unless self[{{i}}] === other[{{i}}]
+      return false unless self[{{ i }}] === other[{{ i }}]
     {% end %}
     true
   end
@@ -454,7 +454,7 @@ struct Tuple
   # ```
   def <=>(other : self)
     {% for i in 0...T.size %}
-      cmp = self[{{i}}] <=> other[{{i}}]
+      cmp = self[{{ i }}] <=> other[{{ i }}]
       return cmp unless cmp == 0
     {% end %}
     0
@@ -473,7 +473,7 @@ struct Tuple
   # See `Object#hash(hasher)`
   def hash(hasher)
     {% for i in 0...T.size %}
-      hasher = self[{{i}}].hash(hasher)
+      hasher = self[{{ i }}].hash(hasher)
     {% end %}
     hasher
   end
@@ -483,7 +483,7 @@ struct Tuple
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          self[{{i}}].clone,
+          self[{{ i }}].clone,
         {% end %}
       )
     {% end %}
@@ -506,10 +506,10 @@ struct Tuple
     {% begin %}
       Tuple.new(
         {% for i in 0...@type.size %}
-          self[{{i}}],
+          self[{{ i }}],
         {% end %}
         {% for i in 0...U.size %}
-          other[{{i}}],
+          other[{{ i }}],
         {% end %}
       )
     {% end %}
@@ -521,7 +521,7 @@ struct Tuple
   # {'a', 'b'}.size # => 2
   # ```
   def size
-    {{T.size}}
+    {{ T.size }}
   end
 
   # Returns the types of this tuple type.
@@ -531,7 +531,7 @@ struct Tuple
   # tuple.class.types # => {Int32, String, Char}
   # ```
   def self.types
-    Tuple.new(*{{T}})
+    Tuple.new(*{{ T }})
   end
 
   # Same as `to_s`.
@@ -556,7 +556,7 @@ struct Tuple
   def to_a(& : Union(*T) -> U) forall U
     Array(U).build(size) do |buffer|
       {% for i in 0...T.size %}
-        buffer[{{i}}] = yield self[{{i}}]
+        buffer[{{ i }}] = yield self[{{ i }}]
       {% end %}
       size
     end
@@ -621,7 +621,7 @@ struct Tuple
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}]),
+          (yield self[{{ i }}]),
         {% end %}
       )
    {% end %}
@@ -640,7 +640,7 @@ struct Tuple
     {% begin %}
       Tuple.new(
         {% for i in 0...T.size %}
-          (yield self[{{i}}], offset + {{i}}),
+          (yield self[{{ i }}], offset + {{ i }}),
         {% end %}
       )
     {% end %}
@@ -656,7 +656,7 @@ struct Tuple
     {% begin %}
       Tuple.new(
         {% for i in 1..T.size %}
-          self[{{T.size - i}}],
+          self[{{ T.size - i }}],
         {% end %}
       )
     {% end %}
@@ -680,7 +680,7 @@ struct Tuple
   # ```
   def reverse_each(& : Union(*T) ->)
     {% for i in 1..T.size %}
-      yield self[{{T.size - i}}]
+      yield self[{{ T.size - i }}]
     {% end %}
     nil
   end
@@ -751,7 +751,7 @@ struct Tuple
   # ```
   def last
     {% begin %}
-      self[{{T.size - 1}}]
+      self[{{ T.size - 1 }}]
     {% end %}
   end
 
@@ -769,7 +769,7 @@ struct Tuple
     {% if T.size == 0 %}
       nil
     {% else %}
-      self[{{T.size - 1}}]
+      self[{{ T.size - 1 }}]
     {% end %}
   end
 

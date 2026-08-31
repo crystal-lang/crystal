@@ -211,7 +211,7 @@ class StringScanner
       @last_match = StringMatchData.new(result)
       @byte_offset += pattern.bytesize if advance
       result
-    elsif (found = @str.byte_index(pattern, @byte_offset))
+    elsif found = @str.byte_index(pattern, @byte_offset)
       finish = found + pattern.bytesize
       result = @str.byte_slice(@byte_offset, finish - @byte_offset)
       @byte_offset = finish if advance

@@ -1556,7 +1556,7 @@ module Crystal
     end
 
     private def format_parameter_annotations(node)
-      return unless (anns = node.parsed_annotations)
+      return unless anns = node.parsed_annotations
 
       anns.each do |ann|
         ann.accept self
@@ -1724,7 +1724,7 @@ module Crystal
       write_indent
       write "end"
       next_token
-    rescue ex : Crystal::SyntaxException
+    rescue Crystal::SyntaxException
       format_macro_body node
     end
 
@@ -1999,7 +1999,6 @@ module Crystal
         check :MACRO_CONTROL_START
         next_token_skip_space_or_newline
 
-        check_end
         next_token_skip_space_or_newline
         check :OP_PERCENT_RCURLY
 

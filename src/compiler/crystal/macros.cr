@@ -11,7 +11,7 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#[]`.
-  def [](range : RangeLiteral) : {{klass}}
+  def [](range : RangeLiteral) : {{ klass }}
   end
 
   # Similar to `String#matches?`.
@@ -19,7 +19,7 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#+`.
-  def +(other : StringLiteral | CharLiteral) : {{klass}}
+  def +(other : StringLiteral | CharLiteral) : {{ klass }}
   end
 
   # Similar to `String#bytesize`.
@@ -27,11 +27,11 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#camelcase`.
-  def camelcase(*, lower : BoolLiteral = false) : {{klass}}
+  def camelcase(*, lower : BoolLiteral = false) : {{ klass }}
   end
 
   # Similar to `String#capitalize`.
-  def capitalize : {{klass}}
+  def capitalize : {{ klass }}
   end
 
   # Similar to `String#chars`.
@@ -39,7 +39,7 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#chomp`.
-  def chomp : {{klass}}
+  def chomp : {{ klass }}
   end
 
   # Similar to `String#count`.
@@ -47,7 +47,7 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#downcase`.
-  def downcase : {{klass}}
+  def downcase : {{ klass }}
   end
 
   # Similar to `String#empty?`.
@@ -61,11 +61,11 @@ private macro def_string_methods(klass)
   # Similar to `String#gsub(pattern, options, &)`.
   #
   # NOTE: The special variables `$~` and `$1`, `$2`, ... are not supported.
-  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{klass}}
+  def gsub(regex : RegexLiteral, & : StringLiteral, ArrayLiteral(StringLiteral | NilLiteral) -> _) : {{ klass }}
   end
 
   # Similar to `String#gsub`.
-  def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{klass}}
+  def gsub(regex : RegexLiteral, replacement : StringLiteral) : {{ klass }}
   end
 
   # Similar to `String#includes?`.
@@ -119,11 +119,11 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#strip`.
-  def strip : {{klass}}
+  def strip : {{ klass }}
   end
 
   # Similar to `String#titleize`.
-  def titleize : {{klass}}
+  def titleize : {{ klass }}
   end
 
   # Similar to `String#to_i`.
@@ -145,15 +145,15 @@ private macro def_string_methods(klass)
   end
 
   # Similar to `String#tr`.
-  def tr(from : StringLiteral, to : StringLiteral) : {{klass}}
+  def tr(from : StringLiteral, to : StringLiteral) : {{ klass }}
   end
 
   # Similar to `String#underscore`.
-  def underscore : {{klass}}
+  def underscore : {{ klass }}
   end
 
   # Similar to `String#upcase`.
-  def upcase : {{klass}}
+  def upcase : {{ klass }}
   end
 end
 

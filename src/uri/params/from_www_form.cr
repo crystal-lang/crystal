@@ -51,7 +51,7 @@ def Union.from_www_form(params : URI::Params, name : String)
   # Process non nilable types first as they are more likely to work.
   {% for type in T.sort_by { |t| t.nilable? ? 1 : 0 } %}
     begin
-      return {{type}}.from_www_form params, name
+      return {{ type }}.from_www_form params, name
     rescue
       # Noop to allow next T to be tried.
     end
