@@ -572,7 +572,11 @@ class Crystal::Command
         @progress_tracker.stats = true
       end
 
-      opts.on("-n", "--no-progress", "Disable progress output") do
+      opts.on("-p", "--progress", "Enable progress output") do
+        @progress_tracker.progress = true
+      end
+
+      opts.on("--no-progress", "Disable progress output") do
         @progress_tracker.progress = false
       end
 

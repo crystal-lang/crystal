@@ -5,7 +5,7 @@ module Crystal
     STAGE_PADDING = 34
 
     property? stats = false
-    property? progress = true
+    property? progress : Bool = STDOUT.tty?
 
     getter current_stage = 1
     getter current_stage_name : String?
