@@ -48,29 +48,63 @@ class Thread
       end
     end
 
+    # Removes a node from the tail of the list. The operation is thread-safe.
+    def pop? : T | Nil
+      @mutex.synchronize do
+        if node = @tail
+          unsafe_delete(node)
+          node
+        end
+      end
+    end
+
+    # Removes a node from the head of the list. The operation is thread-safe.
+    def shift? : T | Nil
+      @mutex.synchronize do
+        if node = @head
+          unsafe_delete(node)
+          node
+        end
+      end
+    end
+
     # Removes a node from the list. The operation is thread-safe.
     #
     # There are no guarantees that a node being deleted won't be iterated by
     # `#unsafe_each` until the method has returned.
     def delete(node : T) : Nil
       @mutex.synchronize do
-        previous = node.previous
-        _next = node.next
-
-        if previous
-          node.previous = nil
-          previous.next = _next
-        else
-          @head = _next
-        end
-
-        if _next
-          node.next = nil
-          _next.previous = previous
-        else
-          @tail = previous
-        end
+        unsafe_delete(node)
       end
+    end
+
+    # Identical to `#delete` but returns true if the node was unlinked from the
+    # list, and false otherwise.
+    def delete?(node : T) : Bool
+      @mutex.synchronize do
+        unsafe_delete(node)
+      end
+    end
+
+    private def unsafe_delete(node)
+      previous = node.previous
+      _next = node.next
+
+      if previous
+        node.previous = nil
+        previous.next = _next
+      else
+        @head = _next
+      end
+
+      if _next
+        node.next = nil
+        _next.previous = previous
+      else
+        @tail = previous
+      end
+
+      !previous.nil? || !_next.nil?
     end
   end
 end

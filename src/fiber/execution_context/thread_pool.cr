@@ -7,10 +7,10 @@ class Fiber
     # :nodoc:
     class ThreadPool
       # :nodoc:
-      struct Parked
-        include Crystal::PointerLinkedList::Node
-
+      class Parked
         getter thread : Thread
+        property next : Parked?
+        property previous : Parked?
 
         def initialize(@thread : Thread)
           @mutex = Thread::Mutex.new
@@ -32,27 +32,21 @@ class Fiber
         def wait(timeout, &)
           @condition_variable.wait(@mutex, timeout) { yield }
         end
-
-        def linked?
-          !@previous.null?
-        end
       end
 
       def initialize
-        @mutex = Thread::Mutex.new
-        @condition_variable = Thread::ConditionVariable.new
-        @pool = Crystal::PointerLinkedList(Parked).new
+        @pool = Thread::LinkedList(Parked).new
         @main_thread = Thread.current
       end
 
       protected def checkout(scheduler)
         thread =
-          if parked = @mutex.synchronize { @pool.shift? }
-            parked.value.synchronize do
-              attach(parked.value.thread, scheduler)
-              parked.value.wake
+          if parked = @pool.shift?
+            parked.synchronize do
+              attach(parked.thread, scheduler)
+              parked.wake
             end
-            parked.value.thread
+            parked.thread
           else
             # OPTIMIZE: start thread with minimum stack size
             Thread.new do |thread|
@@ -108,6 +102,7 @@ class Fiber
       # isolated context).
       private def enter_thread_loop(thread)
         parked = Parked.new(thread)
+
         parked.synchronize do
           loop do
             if scheduler = thread.scheduler?
@@ -127,9 +122,7 @@ class Fiber
               {% end %}
             end
 
-            @mutex.synchronize do
-              @pool.push pointerof(parked)
-            end
+            @pool.push(parked)
 
             if thread == @main_thread || {% flag?(:win32) && Crystal::EventLoop.has_constant?(:IOCP) %}
               # never shutdown the main thread: the main fiber is running on its
@@ -144,17 +137,8 @@ class Fiber
                 # reached timeout: try to shutdown thread, but another thread
                 # might dequeue from @pool in parallel: run checks to avoid any
                 # race condition:
-                if !thread.scheduler? && parked.linked?
-                  deleted = false
-
-                  @mutex.synchronize do
-                    if parked.linked?
-                      @pool.delete pointerof(parked)
-                      deleted = true
-                    end
-                  end
-
-                  if deleted
+                unless thread.scheduler?
+                  if @pool.delete?(parked)
                     # no attached scheduler and we removed ourselves from the
                     # pool: we can safely shutdown (no races)
                     Crystal.trace :sched, "thread.shutdown"
@@ -173,8 +157,19 @@ class Fiber
               class: exception.class.name,
               message: exception.message
 
-            Crystal.print_error_buffered("BUG: %s#enter_thread_loop crashed",
-              self.class.name, exception: exception)
+            Crystal.print_error_buffered("BUG: %s#enter_thread_loop crashed (main_thread=%d)",
+              self.class.name, thread == @main_thread ? 1 : 0, exception: exception)
+
+            # The crash should never happen and is complex to recover.
+            #
+            # The main thread can't terminate before its main fiber (it could be
+            # put to sleep, however), and another might be associating it to a
+            # scheduler, and we lack the means to reassociate the scheduler to
+            # another thread.
+            #
+            # For the time being, we panic.
+            Crystal::System.print_error "Fatal: can't recover from crashing thread loop (yet)."
+            LibC.exit(1)
           end
         end
       end
