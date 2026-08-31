@@ -11,6 +11,9 @@ concurrency:
 env:
   SPEC_SPLIT_DOTS: 160
   CI_NIX_SHELL: true
+  CRYSTAL_OPTS: -Dtracing
+  CRYSTAL_TRACE: sched
+  CRYSTAL_TRACE_FILE: trace.log
 
 jobs:
   darwin-test:
@@ -54,6 +57,13 @@ jobs:
       - name: Test interpreter
         run: bin/ci with_build_env 'make interpreter_spec'
 
+      - name: Upload trace
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tracing
+          path: trace.log
+
   test-std:
     runs-on: macos-26
     strategy:
@@ -86,3 +96,10 @@ jobs:
 
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
+
+      - name: Upload trace
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tracing
+          path: trace.log
