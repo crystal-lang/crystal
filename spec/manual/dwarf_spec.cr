@@ -1,3 +1,28 @@
+# Downloads many executable and object files from the test suites of external
+# DWARF libraries, then goes to open every file supported by the current
+# architecture (endianness, CPU bit size) and try to scan through the
+# .debug_abbrev, .debug_info and .debug_line sections that contain the
+# information to decode backtraces (function names and file, line and column).
+#
+# We do not assert the validity of the yielded information. There are too many
+# files to write actual expectations, and comparing with the results from
+# dwarfdump or another tool, while very interesting, would require quite a lot
+# of work, especially since we're only interested in a subset of the
+# information that the tool would return.
+#
+# We still verify that we can properly open the ELF, Mach-O or PE files, and
+# that we can scan the DWARF sections without failing. We verify, for instance,
+# that we support all the documented DW_FORM_* attributes, can read or skip over
+# the attributes, without crashing (unknown FORM), or that we can properly run
+# the line program's state machine.
+#
+# While running the spec is quite fast, this downloads several megabytes worth
+# of data that we don't want to commit into the Crystal repository, nor want to
+# download on everytime. Hence, the manual spec.
+#
+# TODO: Determine the low and high PC and verify that the addresses are within
+# the range.
+
 require "spec"
 require "crystal/dwarf"
 
@@ -63,7 +88,7 @@ module Crystal::DWARF
         end
       end
 
-      # test: skip over attributes
+      # test: skip over attributes (no unknown DW_FORM_*)
       DWARF.each_info(debug_info) do |info|
         abbrev_table = debug_abbrev + info.debug_abbrev_offset
         abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
@@ -79,7 +104,7 @@ module Crystal::DWARF
         end
       end
 
-      # test: read attribute values
+      # test: read attribute values (no unknown DW_FORM_*)
       DWARF.each_info(debug_info) do |info|
         abbrev_table = debug_abbrev + info.debug_abbrev_offset
         abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
@@ -93,7 +118,12 @@ module Crystal::DWARF
 
               case attr.form
               when DWARF::DW_FORM_string, DWARF::DW_FORM_strp, DWARF::DW_FORM_line_strp
+                # string values are valid, for example the offset correctly
+                # points within the .debug_str or .debug_str_line sections or it
+                # was correctly inlined
                 assert_debug_str.call(attr.form, value)
+              when DWARF::DW_AT_low_pc, DWARF::DW_AT_high_pc
+                # TODO: verify that the PC is valid (points within the .text section)
               end
             end
           end
@@ -107,6 +137,7 @@ module Crystal::DWARF
         directories = 1
 
         seq.each_directory do |form, value|
+          # verify that the string exists
           assert_debug_str.call(form, value)
           directories += 1
         end
@@ -114,6 +145,7 @@ module Crystal::DWARF
         # file table
         files = 1
         seq.each_file do |(form, value), directory_index|
+          # verify that the directory exists, and that the string exists
           directory_index.should be <= directories
           assert_debug_str.call(form, value)
           files += 1
@@ -122,6 +154,7 @@ module Crystal::DWARF
         # iterate file:line:column
         registers = DWARF::Line::Registers.new(seq.default_is_stmt?)
         seq.read_statement_program(pointerof(registers)) do
+          # verify that the file exists
           registers.file.should be <= files
         end
       end
@@ -158,8 +191,8 @@ describe Crystal::DWARF do
   ]
 
   skip_files = [
-    # FIXME: Crystal::System::ELF segfaults!
-    "many_sections.o.elf",
+    # doesn't parse: .debug_info reports unit_length=0 and header_length=0 (?)
+    "loongarch64-relocs.o.elf",
 
     # compressed ELF sections aren't supported
     "compressed_unknown_type.o",
