@@ -6,7 +6,7 @@
 
 require "http/client"
 require "xml"
-require "../src/compiler/crystal/formatter"
+require "compiler/crystal/formatter"
 require "ecr"
 
 # CLDR-18479 Update CLDR data to TZDB 2025b. (#4593)

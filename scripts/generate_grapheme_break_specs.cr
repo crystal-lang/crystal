@@ -7,7 +7,7 @@
 # http://www.unicode.org/Public/x.y.z/ucd/auxiliary/GraphemeBreakTest.txt
 
 require "http/client"
-require "../src/compiler/crystal/formatter"
+require "compiler/crystal/formatter"
 
 UCD_ROOT = "http://www.unicode.org/Public/#{Unicode::VERSION}/ucd/"
 

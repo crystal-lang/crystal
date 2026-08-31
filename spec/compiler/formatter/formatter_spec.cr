@@ -1,5 +1,5 @@
 require "spec"
-require "../../../src/compiler/crystal/formatter"
+require "compiler/crystal/formatter"
 
 private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
   it "formats #{input.inspect}", file, line, focus: focus do
