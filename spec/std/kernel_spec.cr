@@ -352,4 +352,27 @@ describe "SIGPIPE emulation" do
       result.status.success?.should be_true
     end
   end
+
+  context "with exit_on_epipe: false" do
+    it "exits cleanly when stdout is closed" do
+      IO.pipe do |reader, writer|
+        reader.close
+        result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--no-exit-on-epipe", "foobar", output: writer)
+        result.output.should eq ""
+        result.error.should contain "Unhandled exception: write"
+        result.error.should contain "Broken pipe (IO::Error)"
+        result.status.should eq Process::Status[1]
+      end
+    end
+
+    it "exits cleanly when stderr is closed" do
+      IO.pipe do |reader, writer|
+        reader.close
+        result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "--no-exit-on-epipe", "foobar", error: writer)
+        result.output.should eq ""
+        result.error.should eq ""
+        result.status.should eq Process::Status[1]
+      end
+    end
+  end
 end
