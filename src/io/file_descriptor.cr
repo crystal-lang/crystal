@@ -341,6 +341,12 @@ class IO::FileDescriptor < IO
     until slice.empty?
       slice += @fd_lock.write { system_write(slice) }
     end
+  rescue exc : IO::Error
+    if exc.os_error == Errno::EPIPE && exit_on_epipe?
+      LibC.exit 141
+    else
+      raise exc
+    end
   end
 
   private def unbuffered_rewind : Nil

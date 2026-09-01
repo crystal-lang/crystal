@@ -327,9 +327,8 @@ describe "SIGPIPE emulation" do
       reader.close
       result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "foobar", output: writer)
       result.output.should eq ""
-      result.error.should contain "Unhandled exception: write"
-      result.error.should contain "Broken pipe (IO::Error)"
-      result.status.should eq Process::Status[1]
+      result.error.should eq ""
+      result.status.should eq Process::Status[141]
     end
   end
 
@@ -339,7 +338,7 @@ describe "SIGPIPE emulation" do
       result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "foobar", error: writer)
       result.output.should eq ""
       result.error.should eq ""
-      result.status.should eq Process::Status[1]
+      result.status.should eq Process::Status[141]
     end
   end
 
