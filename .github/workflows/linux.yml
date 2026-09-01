@@ -34,11 +34,7 @@ jobs:
         include:
           - arch: x86_64
             env:
-              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
-              # libffi is only available starting from the 1.2.2 build images
-              FLAGS: "-Dwithout_ffi"
-              # pcre2 is only available starting from the 1.7.0 build images
-              USE_PCRE1: true
+              CRYSTAL_BOOTSTRAP_VERSION: 1.13.3
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v7
