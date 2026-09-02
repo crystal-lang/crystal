@@ -37,13 +37,13 @@ rm -f src/SOURCE_DATE_EPOCH
 
 previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' bin/ci)
 if [ "${minor_branch}" != "${previous_release%.*}" ]; then
+  min_forward_compat_version=$(grep -o -P '(?<=crystal_bootstrap_version: \[)[0-9.]+(?=,)' .github/workflows/forward-compatibility.yml)
+  sed -i -E "s/CRYSTAL_BOOTSTRAP_VERSION: [0-9.]+/CRYSTAL_BOOTSTRAP_VERSION: ${min_forward_compat_version}/" .github/workflows/linux.yml
+
   sed -i -E "/crystal_bootstrap_version:/ {
       s/\[[0-9.]+, /[/
       s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/
     }" .github/workflows/forward-compatibility.yml
-
-  min_forward_compat_version=$(grep -o -P '(?<=crystal_bootstrap_version: \[)[0-9.]+(?=,)' .github/workflows/forward-compatibility.yml)
-  sed -i -E "s/CRYSTAL_BOOTSTRAP_VERSION: [0-9.]+/CRYSTAL_BOOTSTRAP_VERSION: ${min_forward_compat_version}/" .github/workflows/linux.yml
 fi
 
 ##

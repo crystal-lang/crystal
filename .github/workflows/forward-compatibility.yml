@@ -34,7 +34,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.14.1, 1.15.1, 1.16.3, 1.17.1, 1.18.2, 1.19.2, 1.20.3]
+        # We ensure forward compatibility with the previous 8 releases.
+        # Releases n-1 and n-8 are already covered in`linux.yml#x86_64-gnu-test`,
+        # so we only need to test releases n-2 through n-7 here.
+        crystal_bootstrap_version: [1.15.1, 1.16.3, 1.17.1, 1.18.2, 1.19.2, 1.20.3]
         env: [{}]
     steps:
       - name: Download Crystal source
