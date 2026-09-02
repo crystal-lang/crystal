@@ -34,7 +34,7 @@ jobs:
         include:
           - arch: x86_64
             env:
-              CRYSTAL_BOOTSTRAP_VERSION: 1.13.3
+              CRYSTAL_BOOTSTRAP_VERSION: 1.14.1
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v7
