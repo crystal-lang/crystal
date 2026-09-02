@@ -3,6 +3,12 @@ require "crystal/system/unix/elf"
   require "c/link"
 {% end %}
 
+{% if flag?(:musl) %}
+  lib LibC
+    $__ehdr_start : Char
+  end
+{% end %}
+
 struct Exception::CallStack
   DEBUG_LINE_STR = ".debug_line_str"
   DEBUG_STR      = ".debug_str"
@@ -45,6 +51,17 @@ struct Exception::CallStack
     LibC.dl_iterate_phdr(phdr_callback, pointerof(data))
 
     Crystal::System::ELF.open(data.program) do |image|
+      {% if flag?(:musl) %}
+        # musl-libc when linked with -static-pie correctly loads the program at
+        # a random address, but dl_iterate_phdr reports the base address as
+        # zero; musl-libc doesn't implement dladdr1 (RTLD_DL_LINKMAP) or
+        # populate the _r_debug symbol either, so we fallback to use the address
+        # at which the ELF file has been loaded
+        if data.base_address == 0 && image.pie?
+          data.base_address = LibC::Elf_Addr.new(pointerof(LibC.__ehdr_start).address)
+        end
+      {% end %}
+
       read_dwarf_sections(image, data.base_address)
     end
   rescue ex

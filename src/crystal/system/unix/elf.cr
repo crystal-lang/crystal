@@ -16,6 +16,8 @@ class Crystal::System::ELF
     ENDIAN_LITTLE = 1
     ENDIAN_BIG    = 2
 
+    ET_DYN = 3
+
     SHN_UNDEF  =      0
     SHN_XINDEX = 0xffff
 
@@ -88,6 +90,10 @@ class Crystal::System::ELF
       header.value.ei_version == 1 &&
       header.value.e_version == 1 &&
       header.value.e_ehsize == sizeof(LibELF::Header)
+  end
+
+  def pie?
+    header.value.e_type == LibELF::ET_DYN
   end
 
   def section?(name : String, &)
