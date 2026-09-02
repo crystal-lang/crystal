@@ -358,8 +358,13 @@ describe "SIGPIPE emulation" do
         reader.close
         result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--no-exit-on-epipe", "foobar", output: writer)
         result.output.should eq ""
-        result.error.should contain "Unhandled exception: write"
-        result.error.should contain "Broken pipe (IO::Error)"
+        {% if flag?(:win32) %}
+          result.error.should contain "Unhandled exception: Error writing file"
+          result.error.should contain "The pipe is being closed. (IO::Error)"
+        {% else %}
+          result.error.should contain "Unhandled exception: write"
+          result.error.should contain "Broken pipe (IO::Error)"
+        {% end %}
         result.status.should eq Process::Status[1]
       end
     end

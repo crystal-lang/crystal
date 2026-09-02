@@ -342,7 +342,7 @@ class IO::FileDescriptor < IO
       slice += @fd_lock.write { system_write(slice) }
     end
   rescue exc : IO::Error
-    if exc.os_error == Errno::EPIPE && exit_on_epipe?
+    if (exc.os_error == Errno::EPIPE || exc.os_error.in?(WinError::ERROR_BROKEN_PIPE, WinError::ERROR_NO_DATA)) && exit_on_epipe?
       LibC.exit 141
     else
       raise exc
