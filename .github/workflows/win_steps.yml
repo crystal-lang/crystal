@@ -25,6 +25,10 @@ env:
   SPEC_SPLIT_DOTS: 160
   WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   build-deps:
     name: Build dependencies

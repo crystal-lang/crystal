@@ -31,6 +31,10 @@ env:
   CI_SSL_VERSION: "3.5.0"
   WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
 
+defaults:
+  run:
+    shell: pwsh
+
 jobs:
   build:
     runs-on: ${{ inputs.runs-on }}
