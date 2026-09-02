@@ -483,6 +483,32 @@ module HTTP
       end
     end
 
+    it "closes if an IO::Error occurs while the request is in-flight (non-yielding)" do
+      server = HTTP::Server.new { }
+
+      client_for server do |client|
+        client.get "/"
+        client.@io.not_nil!.close
+        expect_raises(IO::Error) { client.get "/" }
+
+        client.@io.should be_nil
+        client.get "/"
+      end
+    end
+
+    it "closes if an IO::Error occurs while the request is in-flight (yielding)" do
+      server = HTTP::Server.new { }
+
+      client_for server do |client|
+        client.get "/"
+        client.@io.not_nil!.close
+        expect_raises(IO::Error) { client.get "/" { } }
+
+        client.@io.should be_nil
+        client.get "/"
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = test_server("localhost", 0, 0.seconds) do |server|
         client = Client.new("localhost", server.local_address.port)
