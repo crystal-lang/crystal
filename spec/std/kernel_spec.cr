@@ -54,12 +54,12 @@ describe "exit" do
     status.exit_code.should eq(42)
   end
 
-  it "exists with Process::Status", tags: %w[slow] do
+  it "exits with Process::Status", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit Process::Status.new(system_exit_status: 0)"
     status.success?.should be_true
   end
 
-  it "exists with abnormal status", tags: %w[slow] do
+  it "exits with abnormal status", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit Process::Status.new(system_exit_status: {% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %})"
     status.exit_reason.should eq Process::ExitReason::Interrupted
   end
