@@ -3,6 +3,12 @@ name: Windows CI / Build Portable Package
 on:
   workflow_call:
     inputs:
+      arch:
+        required: true
+        type: string
+      runs-on:
+        required: true
+        type: string
       release:
         required: true
         type: boolean
@@ -15,15 +21,23 @@ on:
       llvm_ldflags:
         required: true
         type: string
+      compiler_artifact_id:
+        required: false
+        type: string
 
 permissions: {}
 
 env:
   CI_SSL_VERSION: "3.5.0"
+  WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
+
+defaults:
+  run:
+    shell: pwsh
 
 jobs:
   build:
-    runs-on: windows-2025-vs2026
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -31,17 +45,34 @@ jobs:
 
       - name: Enable Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-
-      - name: Install Crystal
-        uses: crystal-lang/install-crystal@v1
-        id: install-crystal
         with:
-          crystal: "1.21.0"
+          arch: ${{ env.WIN_ARCH }}
 
       - name: Download Crystal source
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        if: ${{ inputs.arch == 'x86_64' }}
+        id: install-crystal
+        with:
+          crystal: "1.21.0"
+
+      - name: Install Crystal (ARM64 stage-1 compiler)
+        uses: actions/download-artifact@v8
+        if: ${{ inputs.arch == 'aarch64' }}
+        id: install-aarch64-stage1-compiler
+        with:
+          name: crystal-aarch64-stage1
+          path: crystal-aarch64-stage1
+
+      - name: Add Crystal to PATH
+        if: ${{ inputs.arch == 'aarch64' }}
+        run: Add-Content $env:GITHUB_PATH "$env:INPUTS_CRYSTAL"
+        env:
+          INPUTS_CRYSTAL: ${{ steps.install-aarch64-stage1-compiler.outputs.download-path }}
 
       - name: Restore libraries
         uses: actions/cache/restore@v6
@@ -56,7 +87,7 @@ jobs:
             libs/yaml.lib
             libs/xml2.lib
             libs/libxml_VERSION
-          key: libs-x86_64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+          key: libs-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL
         uses: actions/cache/restore@v6
@@ -65,7 +96,7 @@ jobs:
             libs/crypto.lib
             libs/ssl.lib
             libs/openssl_VERSION
-          key: libs-openssl-${{ env.CI_SSL_VERSION }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+          key: libs-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore DLLs
         uses: actions/cache/restore@v6
@@ -87,7 +118,7 @@ jobs:
             dlls/mpir.dll
             dlls/yaml.dll
             dlls/libxml2.dll
-          key: dlls-x86_64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+          key: dlls-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL DLLs
         uses: actions/cache/restore@v6
@@ -95,9 +126,9 @@ jobs:
           path: |
             libs/crypto-dynamic.lib
             libs/ssl-dynamic.lib
-            dlls/libcrypto-3-x64.dll
-            dlls/libssl-3-x64.dll
-          key: dlls-openssl-${{ env.CI_SSL_VERSION }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+            dlls/libcrypto-3-${{ env.WIN_ARCH }}.dll
+            dlls/libssl-3-${{ env.WIN_ARCH }}.dll
+          key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
         uses: actions/cache/restore@v6
@@ -106,16 +137,18 @@ jobs:
             libs/llvm_VERSION
             libs/llvm-dynamic.lib
             dlls/LLVM-C.dll
-          key: dlls-llvm-${{ inputs.llvm_version }}-x86_64-windows-msvc-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}
+          key: dlls-llvm-${{ inputs.llvm_version }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}
           fail-on-cache-miss: true
 
       - name: Set up environment
         run: |
           Add-Content $env:GITHUB_ENV "CRYSTAL_LIBRARY_PATH=$(pwd)\libs"
+          Add-Content $env:GITHUB_ENV "LLVM_HOST_TARGET=$env:INPUTS_LLVM_HOST_TARGET"
           Add-Content $env:GITHUB_ENV "LLVM_VERSION=$env:INPUTS_LLVM_VERSION"
           Add-Content $env:GITHUB_ENV "LLVM_TARGETS=$env:INPUTS_LLVM_TARGETS"
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=$env:INPUTS_LLVM_LDFLAGS"
         env:
+          INPUTS_LLVM_HOST_TARGET: ${{ inputs.arch }}-windows-msvc
           INPUTS_LLVM_VERSION: ${{ inputs.llvm_version }}
           INPUTS_LLVM_TARGETS: ${{ inputs.llvm_targets }}
           INPUTS_LLVM_LDFLAGS: ${{ inputs.llvm_ldflags }}
@@ -129,7 +162,7 @@ jobs:
           bin/crystal.bat env
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
         env:
-          CRYSTAL_DIR: ${{ steps.install-crystal.outputs.path }}
+          CRYSTAL_DIR: ${{ inputs.arch == 'aarch64' && steps.install-aarch64-stage1-compiler.outputs.download-path || steps.install-crystal.outputs.path }}
 
       - name: Download shards release
         uses: actions/checkout@v7
@@ -155,6 +188,13 @@ jobs:
 
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v7
+        with:
+          name: crystal-${{ inputs.arch }}-windows-msvc
+          path: crystal
+
+      - name: Upload Crystal binaries (compatibility)
+        uses: actions/upload-artifact@v7
+        if: ${{ inputs.arch == 'x86_64' }}
         with:
           name: crystal
           path: crystal
