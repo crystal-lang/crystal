@@ -353,7 +353,7 @@ describe "SIGPIPE emulation" do
   end
 
   context "with exit_on_epipe: false" do
-    it "exits cleanly when stdout is closed" do
+    it "raises IO::Error when stdout is closed" do
       IO.pipe do |reader, writer|
         reader.close
         result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--no-exit-on-epipe", "foobar", output: writer)
@@ -364,7 +364,7 @@ describe "SIGPIPE emulation" do
       end
     end
 
-    it "exits cleanly when stderr is closed" do
+    it "raises IO::Error when stderr is closed" do
       IO.pipe do |reader, writer|
         reader.close
         result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "--no-exit-on-epipe", "foobar", error: writer)
