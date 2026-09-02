@@ -487,7 +487,7 @@ module HTTP
     {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
       Slice(UInt8).literal({{ table.splat }})
     {% else %}
-      {{table}}.to_slice
+      Slice.new({{table}}.to_unsafe, {{table.size}})
     {% end %}
   {% else %}
                            table = Slice(UInt8).new(256)
