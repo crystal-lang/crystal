@@ -32,6 +32,51 @@ describe "Float" do
     it { (11.5.modulo -4.0).should eq(-0.5) }
     it { (-11.5.modulo 4.0).should eq(0.5) }
     it { (-11.5.modulo -4.0).should eq(-3.5) }
+
+    # 1e17 is exactly the integer 100000000000000000, and
+    # 100000000000000000 = 3 * 33333333333333333 + 1 = 7 * 14285714285714285 + 5
+    it "is exact when the quotient is large" do
+      (1e17.modulo 3.0).should eq(1.0)
+      (1e17.modulo 7.0).should eq(5.0)
+      (-1e17.modulo 7.0).should eq(2.0)
+      (1e17.modulo 1024.0).should eq(0.0)
+    end
+
+    # 1e10_f32 is exactly the integer 10000000000, and 10000000000 = 7 * 1428571428 + 4
+    it "is exact when the quotient is large (Float32)" do
+      (1e10_f32.modulo 7.0_f32).should eq(4.0_f32)
+      (-1e10_f32.modulo 7.0_f32).should eq(3.0_f32)
+    end
+
+    it "does not overflow with a divisor much smaller than the dividend" do
+      (1.0.modulo 5e-324).should eq(0.0)
+      (-1.0.modulo 5e-324).should eq(0.0)
+    end
+
+    it "returns a result with the sign of the divisor" do
+      (-3.7702231914821416e-103.modulo 1e300).should eq(1e300)
+      (3.7702231914821416e-103.modulo -1e300).should eq(-1e300)
+    end
+
+    it "returns a zero with the sign of the divisor" do
+      (6.0.modulo 3.0).sign_bit.should eq(1)
+      (6.0.modulo -3.0).sign_bit.should eq(-1)
+      (-6.0.modulo 3.0).sign_bit.should eq(1)
+      (-6.0.modulo -3.0).sign_bit.should eq(-1)
+    end
+
+    it "supports an infinite divisor (#17222)" do
+      (5.0.modulo Float64::INFINITY).should eq(5.0)
+      (-5.0.modulo Float64::INFINITY).should eq(Float64::INFINITY)
+      (5.0.modulo -Float64::INFINITY).should eq(-Float64::INFINITY)
+      (-5.0.modulo -Float64::INFINITY).should eq(-5.0)
+    end
+
+    it "returns NaN for an infinite dividend or a NaN operand" do
+      (Float64::INFINITY.modulo 5.0).nan?.should be_true
+      (5.0.modulo Float64::NAN).nan?.should be_true
+      (Float64::NAN.modulo 5.0).nan?.should be_true
+    end
   end
 
   describe "remainder" do
@@ -51,6 +96,35 @@ describe "Float" do
     it "preserves type" do
       r = 1.5_f32.remainder(1)
       typeof(r).should eq(Float32)
+    end
+
+    it "is exact when the quotient is large" do
+      1e17.remainder(7.0).should eq(5.0)
+      (-1e17).remainder(7.0).should eq(-5.0)
+      1e10_f32.remainder(7.0_f32).should eq(4.0_f32)
+    end
+
+    it "returns a value with the same magnitude as the dividend when the divisor is larger" do
+      (-1.2348533312932808e+48).remainder(1e300).should eq(-1.2348533312932808e+48)
+      (-0.06607380836084875).remainder(1e17).should eq(-0.06607380836084875)
+    end
+
+    it "returns a zero with the sign of the dividend" do
+      6.0.remainder(3.0).sign_bit.should eq(1)
+      6.0.remainder(-3.0).sign_bit.should eq(1)
+      (-6.0).remainder(3.0).sign_bit.should eq(-1)
+      (-6.0).remainder(-3.0).sign_bit.should eq(-1)
+    end
+
+    it "supports an infinite divisor (#17222)" do
+      5.0.remainder(Float64::INFINITY).should eq(5.0)
+      (-5.0).remainder(Float64::INFINITY).should eq(-5.0)
+      5.0.remainder(-Float64::INFINITY).should eq(5.0)
+    end
+
+    it "returns NaN for an infinite dividend or a NaN operand" do
+      Float64::INFINITY.remainder(5.0).nan?.should be_true
+      5.0.remainder(Float64::NAN).nan?.should be_true
     end
   end
 

@@ -78,6 +78,33 @@ struct Float
     !nan? && !infinite?
   end
 
+  # Returns `self` modulo *other*, using floored division.
+  #
+  # The result has the same sign as *other*.
+  #
+  # ```
+  # 13.0.modulo(4.0)   # => 1.0
+  # -13.0.modulo(4.0)  # => 3.0
+  # 13.0.modulo(-4.0)  # => -3.0
+  # -13.0.modulo(-4.0) # => -1.0
+  # ```
+  #
+  # Raises `DivisionByZeroError` if *other* is zero.
+  def modulo(other : Number::Primitive) : self
+    raise DivisionByZeroError.new if other == 0
+
+    mod = LibM.fmod_f64(to_f64, other.to_f64)
+    if mod == 0
+      # `fmod` returns a zero with the sign of `self`, but a floored modulo
+      # must carry the sign of *other*
+      mod = other < 0 ? -0.0 : 0.0
+    elsif (mod < 0) != (other < 0)
+      mod += other
+    end
+    self.class.new(mod)
+  end
+
+  # :ditto:
   def modulo(other)
     if other == 0.0
       raise DivisionByZeroError.new
@@ -86,6 +113,25 @@ struct Float
     end
   end
 
+  # Returns `self` remainder *other*, using truncated division.
+  #
+  # The result has the same sign as `self`.
+  #
+  # ```
+  # 13.0.remainder(4.0)   # => 1.0
+  # -13.0.remainder(4.0)  # => -1.0
+  # 13.0.remainder(-4.0)  # => 1.0
+  # -13.0.remainder(-4.0) # => -1.0
+  # ```
+  #
+  # Raises `DivisionByZeroError` if *other* is zero.
+  def remainder(other : Number::Primitive) : self
+    raise DivisionByZeroError.new if other == 0
+
+    self.class.new(LibM.fmod_f64(to_f64, other.to_f64))
+  end
+
+  # :ditto:
   def remainder(other)
     if other == 0.0
       raise DivisionByZeroError.new
