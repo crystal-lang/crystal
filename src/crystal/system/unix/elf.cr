@@ -17,7 +17,7 @@ class Crystal::System::ELF
     ENDIAN_BIG    = 2
 
     ET_DYN = 3
-  
+
     SHN_UNDEF  =      0
     SHN_XINDEX = 0xffff
 
