@@ -3154,14 +3154,10 @@ class String
         # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
-        elsif byte1 >= 0x80
-          return 1 if byte2 < 0x80
         end
 
         if 65 <= byte2 <= 90
           byte2 += 32
-        elsif byte2 >= 0x80
-          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2
