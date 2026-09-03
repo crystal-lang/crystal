@@ -136,8 +136,7 @@ describe "Char::Reader" do
       reader = Char::Reader.new("")
       reader.error.should be_nil
 
-      # FIXME: current_char_width on an empty string should always be 0. There is no current char.
-      reader.current_char_width.should eq 1
+      reader.current_char_width.should eq 0
       assert_at_end(reader)
       assert_at_start(reader)
 
