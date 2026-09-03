@@ -34,11 +34,7 @@ jobs:
         include:
           - arch: x86_64
             env:
-              CRYSTAL_BOOTSTRAP_VERSION: 1.0.0
-              # libffi is only available starting from the 1.2.2 build images
-              FLAGS: "-Dwithout_ffi"
-              # pcre2 is only available starting from the 1.7.0 build images
-              USE_PCRE1: true
+              CRYSTAL_BOOTSTRAP_VERSION: 1.14.1
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v7
@@ -125,7 +121,7 @@ jobs:
         persist-credentials: false
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@8a48f81b6c64dcfea44b3633223084c4be58ac5f # v1.49.0
+      uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
       env:
         CLICOLOR: 1
 
