@@ -82,14 +82,14 @@ struct Char
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
       @pos = pos.to_i
-      decode_current_char
+      decode_current_char unless @string.empty?
     end
 
     # Creates a reader that will be positioned at the last char
     # of the given string.
     def initialize(*, at_end @string : String)
       @pos = @string.bytesize
-      decode_previous_char
+      decode_previous_char unless @string.empty?
     end
 
     # Returns the current character.
@@ -219,7 +219,7 @@ struct Char
         raise IndexError.new
       end
 
-      decode_previous_char.as(Char)
+      decode_previous_char
     end
 
     # Sets `#pos` to *pos*.
@@ -416,8 +416,6 @@ struct Char
 
     @[AlwaysInline]
     private def decode_previous_char
-      return nil if @pos == 0
-
       decode_char_before(@pos) do |code_point, width, error|
         @current_char_width = width
         @pos -= width
