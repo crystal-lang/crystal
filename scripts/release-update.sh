@@ -31,12 +31,19 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 rm -f src/SOURCE_DATE_EPOCH
 
 ##
-## 2. Add previous release to forward compatibility tests (if new minor branch)
+## 2. Add previous release to forward compatibility tests and drop oldest
+##    release to keep restricted compatibility window (if new minor branch)
 ##
 
 previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' bin/ci)
 if [ "${minor_branch}" != "${previous_release%.*}" ]; then
-  sed -i -E "/crystal_bootstrap_version:/ s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/" .github/workflows/forward-compatibility.yml
+  min_forward_compat_version=$(grep -o -P '(?<=crystal_bootstrap_version: \[)[0-9.]+(?=,)' .github/workflows/forward-compatibility.yml)
+  sed -i -E "s/CRYSTAL_BOOTSTRAP_VERSION: [0-9.]+/CRYSTAL_BOOTSTRAP_VERSION: ${min_forward_compat_version}/" .github/workflows/linux.yml
+
+  sed -i -E "/crystal_bootstrap_version:/ {
+      s/\[[0-9.]+, /[/
+      s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/
+    }" .github/workflows/forward-compatibility.yml
 fi
 
 ##
