@@ -123,9 +123,15 @@ describe "Code gen: return" do
       CRYSTAL
   end
 
-  it "returns large StaticArray through an sret pointer" do
+  it "returns large aggregates through an sret pointer" do
     mod = codegen(<<-CRYSTAL)
       struct StaticArray(T, N)
+      end
+
+      struct Big
+        def initialize
+          @x = uninitialized StaticArray(Int32, 20)
+        end
       end
 
       def make_arr
@@ -133,17 +139,50 @@ describe "Code gen: return" do
         arr
       end
 
-      def make_small
-        arr = uninitialized StaticArray(Int32, 16)
+      def make_big
+        Big.new
+      end
+
+      def make_nilable(x)
+        x ? make_arr : nil
+      end
+
+      def make_tuple
+        {make_arr, 1_i64}
+      end
+
+      def make_nine
+        arr = uninitialized StaticArray(Int64, 9)
         arr
       end
 
+      def make_small_arr
+        arr = uninitialized StaticArray(Int64, 8)
+        arr
+      end
+
+      def make_small_tuple
+        {1_i64, 2_i64, 3_i64}
+      end
+
       make_arr
-      make_small
+      make_big
+      make_nilable(true)
+      make_tuple
+      make_nine
+      make_small_arr
+      make_small_tuple
       CRYSTAL
     str = mod.to_s
+    nilable = %q(%"(StaticArray(Int32, 20) | Nil)")
+    tuple = %q(%"Tuple(StaticArray(Int32, 20), Int64)")
     str.should contain(%(#{fun_name "*make_arr:StaticArray(Int32, 20)"}(#{sret_param "[20 x i32]"} %0)))
-    str.should contain(%([16 x i32] #{fun_name "*make_small:StaticArray(Int32, 16)"}()))
+    str.should contain(%(#{fun_name "*make_big:Big"}(#{sret_param "%Big"} %0)))
+    str.should contain(%(#{fun_name "*make_nilable<Bool>:(StaticArray(Int32, 20) | Nil)"}(#{sret_param nilable} %0, i1 %x)))
+    str.should contain(%(#{fun_name "*make_tuple:Tuple(StaticArray(Int32, 20), Int64)"}(#{sret_param tuple} %0)))
+    str.should contain(%(#{fun_name "*make_nine:StaticArray(Int64, 9)"}(#{sret_param "[9 x i64]"} %0)))
+    str.should contain(%([8 x i64] #{fun_name "*make_small_arr:StaticArray(Int64, 8)"}()))
+    str.should contain(%(%"Tuple(Int64, Int64, Int64)" #{fun_name "*make_small_tuple:Tuple(Int64, Int64, Int64)"}()))
   end
 
   it "executes method returning large StaticArray" do
