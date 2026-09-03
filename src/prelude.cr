@@ -1,3 +1,18 @@
+{%
+  shard_yml = read_file("shard.yml")
+  min_compiler_version = if compare_versions(Crystal::VERSION, "1.19.0") > 0
+                           shard_yml.match(/crystal:\s*">=\s*([^"]+)"/)[1]
+                         else
+                           shard_yml.lines.find(&.starts_with?("crystal:")).split(">=")[1].gsub(/[" ]/, "")
+                         end
+  if compare_versions(Crystal::VERSION, min_compiler_version) < 0
+    @type.warning <<-TXT
+      This compiler release at version #{Crystal::VERSION.id} is too old and no longer supported.
+      Please upgrade to at least Crystal #{min_compiler_version.id}.
+      TXT
+  end
+%}
+
 # Entries to this file should only be ordered if macros are involved -
 # macros need to be defined before they are used.
 # A first compiler pass gathers all classes and methods, removing the
