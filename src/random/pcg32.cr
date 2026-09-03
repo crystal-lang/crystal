@@ -43,6 +43,12 @@ class Random::PCG32
     new(Random::Secure.rand(UInt64::MIN..UInt64::MAX), Random::Secure.rand(UInt64::MIN..UInt64::MAX))
   end
 
+  # :nodoc:
+  def initialize(other : self)
+    @state = other.@state
+    @inc = other.@inc
+  end
+
   def initialize(initstate : UInt64, initseq = 0_u64)
     # initialize to zeros to prevent compiler complains
     @state = 0_u64
@@ -67,7 +73,7 @@ class Random::PCG32
     @state = oldstate &* PCG_DEFAULT_MULTIPLIER_64 &+ @inc
     xorshifted = UInt32.new!(((oldstate >> 18) ^ oldstate) >> 27)
     rot = UInt32.new!(oldstate >> 59)
-    return UInt32.new!((xorshifted >> rot) | (xorshifted << ((~rot &+ 1) & 31)))
+    UInt32.new!(xorshifted.rotate_right(rot))
   end
 
   def jump(delta)
@@ -86,5 +92,10 @@ class Random::PCG32
       deltau64 //= 2
     end
     @state = acc_mult &* @state &+ acc_plus
+  end
+
+  def split_internal(other : self) : Nil
+    @inc = ((@inc &+ 1) << 1) | 1
+    other.next_u
   end
 end

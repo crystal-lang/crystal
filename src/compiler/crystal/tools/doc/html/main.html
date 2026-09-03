@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <%- if base_path = self.base_path -%>
+  <base href="<%= base_path %>" />
+  <%- end -%>
   <%= HeadTemplate.new(project_info, nil) %>
   <meta name="repository-name" content="<%= project_info.name %>">
   <title><%= project_info.name %> <%= project_info.version %></title>
@@ -11,6 +14,7 @@
 <body>
 
 <%= Crystal::Doc::SVG_DEFS %>
+<%= Crystal::Doc::SIDEBAR_BUTTON %>
 <%= SidebarTemplate.new(project_info, types, nil) %>
 
 <div class="main-content">

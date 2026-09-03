@@ -35,5 +35,20 @@ describe MIME::Multipart do
         io.gets_to_end.should eq("body")
       end
     end
+
+    it "parses multipart messages from HTTP client responses" do
+      headers = HTTP::Headers{"Content-Type" => "multipart/byteranges; boundary=aA40"}
+      body = "--aA40\r\nContent-Type: text/plain\r\n\r\nbody\r\n--aA40--"
+      response = HTTP::Client::Response.new(
+        status: :ok,
+        headers: headers,
+        body: body,
+      )
+
+      MIME::Multipart.parse(response) do |headers, io|
+        headers["Content-Type"].should eq("text/plain")
+        io.gets_to_end.should eq("body")
+      end
+    end
   end
 end

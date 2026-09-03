@@ -173,8 +173,8 @@ module Markd
     end
 
     def paragraph(node : Node, entering : Bool)
-      if (grand_parant = node.parent?.try &.parent?) && grand_parant.type.list?
-        return if grand_parant.data["tight"]
+      if (grand_parent = node.parent?.try &.parent?) && grand_parent.type.list?
+        return if grand_parent.data["tight"]
       end
 
       if entering

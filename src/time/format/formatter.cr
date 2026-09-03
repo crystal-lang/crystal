@@ -211,7 +211,7 @@ struct Time::Format
     end
 
     def time_zone_gmt_or_rfc2822(**options) : Nil
-      if time.utc? || time.location.name == "UT" || time.location.name == "GMT"
+      if time.utc? || time.location.name.in?("UT", "GMT")
         time_zone_gmt
       else
         time_zone_rfc2822

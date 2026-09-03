@@ -3,13 +3,15 @@ require "openssl"
 
 # A class which can be used to encrypt and decrypt data using a specified cipher.
 #
+# NOTE: The ciphers available to an application are determined by the linked version of the system SSL library.
+#       A comprehensive list of ciphers can be found in the
+#       [OpenSSL Cipher documentation](https://www.openssl.org/docs/man3.0/man1/openssl-ciphers.html#CIPHER-STRINGS).
+#
 # ```
 # require "random/secure"
+# require "openssl"
 #
-# key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
-# iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
-#
-# def encrypt(data)
+# def encrypt(data, key, iv)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.encrypt
 #   cipher.key = key
@@ -23,7 +25,7 @@ require "openssl"
 #   io.to_slice
 # end
 #
-# def decrypt(data)
+# def decrypt(data, key, iv)
 #   cipher = OpenSSL::Cipher.new("aes-256-cbc")
 #   cipher.decrypt
 #   cipher.key = key
@@ -36,6 +38,12 @@ require "openssl"
 #
 #   io.gets_to_end
 # end
+#
+# key = Random::Secure.random_bytes(64) # You can also use OpenSSL::Cipher#random_key to do this same thing
+# iv = Random::Secure.random_bytes(32)  # You can also use OpenSSL::Cipher#random_iv to do this same thing
+#
+# encrypted_data = encrypt("Encrypted", key, iv)    # => Bytes[95, 182, 21, 86, 193, 155, 149, 164, 82, 102, 171, 182, 56, 153, 223, 33]
+# decrypted_data = decrypt(encrypted_data, key, iv) # => "Encrypted"
 # ```
 class OpenSSL::Cipher
   class Error < OpenSSL::Error
@@ -70,7 +78,7 @@ class OpenSSL::Cipher
   end
 
   def iv=(iv)
-    raise ArgumentError.new "iv length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
+    raise ArgumentError.new "IV length too short: wanted #{iv_len}, got #{iv.bytesize}" if iv.bytesize < iv_len
     cipherinit iv: iv
     iv
   end
@@ -151,6 +159,29 @@ class OpenSSL::Cipher
 
   def authenticated? : Bool
     LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
+  end
+
+  # Returns the authentication tag for an AEAD cipher (e.g. AES-GCM).
+  # Must be called after `#final` during encryption.
+  # Raises `Error` if the cipher is not authenticated.
+  def gcm_tag : Bytes
+    raise Error.new("Cipher is not authenticated") unless authenticated?
+    tag = Bytes.new(LibCrypto::EVP_GCM_TLS_TAG_LEN)
+    if LibCrypto.evp_cipher_ctx_ctrl(@ctx, LibCrypto::EVP_CTRL_GCM_GET_TAG, tag.size, tag.to_unsafe.as(Void*)) != 1
+      raise Error.new "EVP_CIPHER_CTX_ctrl GET_TAG"
+    end
+    tag
+  end
+
+  # Sets the authentication tag for an AEAD cipher (e.g. AES-GCM).
+  # Must be called before `#final` during decryption.
+  # Raises `Error` if the cipher is not authenticated.
+  def gcm_tag=(tag : Bytes) : Bytes
+    raise Error.new("Cipher is not authenticated") unless authenticated?
+    if LibCrypto.evp_cipher_ctx_ctrl(@ctx, LibCrypto::EVP_CTRL_GCM_SET_TAG, tag.size, tag.to_unsafe.as(Void*)) != 1
+      raise Error.new "EVP_CIPHER_CTX_ctrl SET_TAG"
+    end
+    tag
   end
 
   private def cipherinit(cipher = nil, engine = nil, key = nil, iv = nil, enc = -1)

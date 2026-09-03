@@ -1,12 +1,12 @@
 require "./spec_helper"
 
-# Commonmark spec exapmles
+# Commonmark spec examples
 describe_spec("fixtures/spec.txt")
 
-# Smart punctuation exapmles
+# Smart punctuation examples
 describe_spec("fixtures/smart_punct.txt", smart: true)
 
-# Regression exapmles
+# Regression examples
 describe_spec("fixtures/regression.txt")
 
 describe Markd do

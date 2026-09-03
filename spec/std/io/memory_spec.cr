@@ -18,6 +18,17 @@ describe IO::Memory do
     io.gets_to_end.should eq(s)
   end
 
+  it "write raises EOFError" do
+    io = IO::Memory.new
+    initial_capacity = io.@capacity
+    expect_raises(IO::EOFError) do
+      io.write Slice.new(Pointer(UInt8).null, Int32::MAX)
+    end
+    # nothing get's written
+    io.bytesize.should eq 0
+    io.@capacity.should eq initial_capacity
+  end
+
   it "reads byte" do
     io = IO::Memory.new("abc")
     io.read_byte.should eq('a'.ord)
@@ -61,6 +72,67 @@ describe IO::Memory do
       # Ensure that the buffer is resized, otherwise the spec doesn't work
       io.@capacity.should_not eq old_capacity
     end
+
+    it "appends to itself even when messing with pos" do
+      io = IO::Memory.new(8)
+      io << "ABCDEF"
+      io.pos = 7
+      io.to_s(io)
+      io.to_s.should eq "ABCDEF\0ABCDEF"
+    end
+
+    it "can't append to itself when read-only" do
+      io = IO::Memory.new(Bytes[1, 2, 3], writable: false)
+      expect_raises(IO::Error, "Read-only stream") { io << io }
+    end
+
+    {% if flag?(:without_iconv) %}
+      pending "encoding"
+    {% else %}
+      describe "encoding" do
+        it "returns String" do
+          io = IO::Memory.new
+          io.set_encoding "UTF-16LE"
+          io << "abc"
+          io.to_s.should eq "abc"
+          io.to_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0]
+        end
+
+        it "writes to IO" do
+          io1 = IO::Memory.new
+          io1.set_encoding "UTF-32LE"
+
+          io2 = IO::Memory.new
+          io2.set_encoding "UTF-16LE"
+
+          io1.write_string "abc😂".to_slice
+          io1.to_s io2
+          byte_slice = io2.to_slice
+          utf16_slice = byte_slice.unsafe_slice_of(UInt16)
+
+          String.from_utf16(utf16_slice).should eq "abc😂"
+          byte_slice.should eq Bytes[0x61, 0, 0x62, 0, 0x63, 0, 0x3D, 0xD8, 0x02, 0xDE]
+          utf16_slice.should eq Slice[0x0061, 0x0062, 0x0063, 0xD83D, 0xDE02]
+        end
+      end
+    {% end %}
+  end
+
+  describe "#writable?" do
+    it "returns false if underlying buffer is read only" do
+      buffer = Bytes.new(10, read_only: true)
+      IO::Memory.new(buffer).writable?.should be_false
+    end
+
+    it "returns true if underlying buffer isn't read only" do
+      buffer = Bytes.new(10, read_only: false)
+      IO::Memory.new(buffer).writable?.should be_true
+    end
+
+    it "returns false if writable is explicitly set to false" do
+      buffer = Bytes.new(10, read_only: false) # buffer writable
+      IO::Memory.new(buffer, writable: false).writable?.should be_false
+    end
   end
 
   it "reads single line content" do
@@ -72,14 +144,14 @@ describe IO::Memory do
     io = IO::Memory.new("foo\r\nbar\n")
     io.gets.should eq("foo")
     io.gets.should eq("bar")
-    io.gets.should eq(nil)
+    io.gets.should be_nil
   end
 
   it "reads each line with chomp = false" do
     io = IO::Memory.new("foo\r\nbar\r\n")
     io.gets(chomp: false).should eq("foo\r\n")
     io.gets(chomp: false).should eq("bar\r\n")
-    io.gets(chomp: false).should eq(nil)
+    io.gets(chomp: false).should be_nil
   end
 
   it "gets with char as delimiter" do
@@ -87,7 +159,7 @@ describe IO::Memory do
     io.gets('w').should eq("hello w")
     io.gets('r').should eq("or")
     io.gets('r').should eq("ld")
-    io.gets('r').should eq(nil)
+    io.gets('r').should be_nil
   end
 
   it "does gets with char and limit" do
@@ -284,7 +356,16 @@ describe IO::Memory do
     end
   end
 
-  it "creates from slice, non-writeable" do
+  it "creates from slice, non-writable" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice, writable: false
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
+  it "creates from slice, non-writable (deprecated)" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 
@@ -306,14 +387,14 @@ describe IO::Memory do
     io = IO::Memory.new
     io.pos = 1000
     io.print 'a'
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "writes past end with write_byte" do
     io = IO::Memory.new
     io.pos = 1000
     io.write_byte 'a'.ord.to_u8
-    io.to_slice.to_a.should eq([0] * 1000 + [97])
+    io.to_slice.should eq(Bytes.new(1001).tap { |bytes| bytes[-1] = 97 })
   end
 
   it "reads at offset" do
@@ -356,6 +437,23 @@ describe IO::Memory do
     io = IO::Memory.new("hello world")
     io.gets_to_end.should eq("hello world")
     io.gets_to_end.should eq("")
+  end
+
+  it "consumes with getb_to_end" do
+    io = IO::Memory.new(Bytes[0, 1, 3, 6, 10, 15])
+    io.getb_to_end.should eq(Bytes[0, 1, 3, 6, 10, 15])
+    io.getb_to_end.should eq(Bytes[])
+    io.seek(3)
+    bytes = io.getb_to_end
+    bytes.should eq(Bytes[6, 10, 15])
+    bytes.read_only?.should be_false
+
+    io.seek(3)
+    io.write(Bytes[2, 4, 5])
+    bytes.should eq(Bytes[6, 10, 15])
+
+    io.seek(10)
+    io.getb_to_end.should eq(Bytes[])
   end
 
   it "peeks" do
@@ -446,4 +544,26 @@ describe IO::Memory do
       end
     end
   {% end %}
+
+  it "allocates for > 1 GB", tags: %w[slow] do
+    io = IO::Memory.new
+    mbstring = "a" * 1024 * 1024
+    1024.times { io << mbstring }
+
+    io.bytesize.should eq(1 << 30)
+    io.@capacity.should eq 1 << 30
+
+    io << mbstring
+
+    io.bytesize.should eq (1 << 30) + (1 << 20)
+    io.@capacity.should eq Int32::MAX
+
+    1022.times { io << mbstring }
+
+    io.write mbstring.to_slice[0..-4]
+    io << "a"
+    expect_raises(IO::EOFError) do
+      io << "a"
+    end
+  end
 end

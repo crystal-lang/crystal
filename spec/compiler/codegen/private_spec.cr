@@ -2,88 +2,56 @@ require "../../spec_helper"
 
 describe "Codegen: private" do
   it "codegens private def in same file" do
-    compiler = create_spec_compiler
-    sources = [
-      Compiler::Source.new("foo.cr", %(
-                                        private def foo
-                                          1
-                                        end
+    compile(<<-CRYSTAL)
+      private def foo
+        1
+      end
 
-                                        foo
-                                      )),
-    ]
-    compiler.prelude = "empty"
-
-    with_temp_executable "crystal-spec-output" do |output_filename|
-      compiler.compile sources, output_filename
-    end
+      foo
+      CRYSTAL
   end
 
   it "codegens overloaded private def in same file" do
-    compiler = create_spec_compiler
-    sources = [
-      Compiler::Source.new("foo.cr", %(
-                                        private def foo(x : Int32)
-                                          1
-                                        end
+    compile(<<-CRYSTAL)
+      private def foo(x : Int32)
+        1
+      end
 
-                                        private def foo(x : Char)
-                                          2
-                                        end
+      private def foo(x : Char)
+        2
+      end
 
-                                        a = 3 || 'a'
-                                        foo a
-                                      )),
-    ]
-    compiler.prelude = "empty"
-
-    with_temp_executable "crystal-spec-output" do |output_filename|
-      compiler.compile sources, output_filename
-    end
+      a = 3 || 'a'
+      foo a
+      CRYSTAL
   end
 
   it "codegens class var of private type with same name as public type (#11620)" do
-    src1 = Compiler::Source.new("foo.cr", <<-CR)
+    compile(<<-CRYSTAL, <<-CRYSTAL)
       module Foo
         @@x = true
       end
-      CR
-
-    src2 = Compiler::Source.new("foo_private.cr", <<-CR)
+    CRYSTAL
       private module Foo
         @@x = 1
       end
-      CR
-
-    compiler = create_spec_compiler
-    compiler.prelude = "empty"
-    with_temp_executable "crystal-spec-output" do |output_filename|
-      compiler.compile [src1, src2], output_filename
-    end
+    CRYSTAL
   end
 
   it "codegens class vars of private types with same name (#11620)" do
-    src1 = Compiler::Source.new("foo1.cr", <<-CR)
+    compile(<<-CRYSTAL, <<-CRYSTAL)
       private module Foo
         @@x = true
       end
-      CR
-
-    src2 = Compiler::Source.new("foo2.cr", <<-CR)
+    CRYSTAL
       private module Foo
         @@x = 1
       end
-      CR
-
-    compiler = create_spec_compiler
-    compiler.prelude = "empty"
-    with_temp_executable "crystal-spec-output" do |output_filename|
-      compiler.compile [src1, src2], output_filename
-    end
+    CRYSTAL
   end
 
   it "doesn't include filename for private types" do
-    run(%(
+    run(<<-CRYSTAL, filename: "foo").to_string.should eq("Foo")
       private class Foo
         def foo
           {{@type.stringify}}
@@ -91,6 +59,6 @@ describe "Codegen: private" do
       end
 
       Foo.new.foo
-      ), filename: "foo").to_string.should eq("Foo")
+      CRYSTAL
   end
 end

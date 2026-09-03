@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: op assign" do
   it "evaluates exps once (#3398)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Global
         @@value = 0
 
@@ -31,11 +31,11 @@ describe "Code gen: op assign" do
       foo.bar &+= 2
 
       Global.value
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "evaluates exps once, [] (#3398)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(11)
       class Global
         @@value = 0
 
@@ -69,6 +69,6 @@ describe "Code gen: op assign" do
       foo[bar] &+= 2
 
       Global.value
-      )).to_i.should eq(11)
+      CRYSTAL
   end
 end

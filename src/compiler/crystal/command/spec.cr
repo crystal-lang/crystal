@@ -16,15 +16,18 @@ class Crystal::Command
   private def spec
     compiler = new_compiler
     link_flags = [] of String
-    OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal spec [options] [files] [runtime_options]\n\nOptions:"
+    parse_with_crystal_opts do |opts|
+      opts.banner = "Usage: crystal spec [options] [files] [-- runtime_options]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
         puts
 
-        runtime_options = Spec.option_parser
+        # Short flag `-p` might collied with the same parser flag (short for `--progress`),
+        # so we don't show it here. It still works when passed as an explicit argument to the
+        # runner process (e.g. `crystal spec -- -p`).
+        runtime_options = Spec::CLI.new.build_option_parser(without_p: true)
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
         exit
@@ -54,17 +57,18 @@ class Crystal::Command
         if filename =~ /\A(.+?)\:(\d+)\Z/
           file, line = $1, $2
           unless File.file?(file)
-            error "'#{file}' is not a file"
+            abort! "'#{file}' is not a file", :USAGE_ERROR
           end
           target_filenames << file
           locations << {file, line}
         else
           if Dir.exists?(filename)
+            filename = ::Path[filename].to_posix
             target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
           elsif File.file?(filename)
             target_filenames << filename
           else
-            error "'#{filename}' is not a file"
+            abort! "'#{filename}' is not a file", :USAGE_ERROR
           end
         end
       end
@@ -87,15 +91,20 @@ class Crystal::Command
 
     source_filename = File.expand_path("spec")
 
-    source = target_filenames.map { |filename|
-      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix}")
-    }.join('\n')
+    source = target_filenames.join('\n') do |filename|
+      %(require "./#{::Path[filename].relative_to(Dir.current).to_posix.to_s.inspect_unquoted}")
+    end
     sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = Crystal.temp_executable "spec"
 
-    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= Process.executable_path
-    result = compiler.compile sources, output_filename
+    ENV["CRYSTAL_SPEC_COMPILER_BIN"] ||= if crystal_exec_path = ENV["CRYSTAL_EXEC_PATH"]?
+                                           File.join(crystal_exec_path, "crystal")
+                                         else
+                                           Process.executable_path
+                                         end
+
+    compiler.compile sources, output_filename
     report_warnings
     execute output_filename, options, compiler, error_on_exit: warnings_fail_on_exit?
   end

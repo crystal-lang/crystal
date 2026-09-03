@@ -50,7 +50,29 @@ require "random/pcg32"
 # slower but cryptographically secure, so a third party can't deduce incoming
 # numbers.
 module Random
+  @[Deprecated("Use `#rand`, `Random.next_int` or `Random::Secure.random_bytes` for example, or create a local instance with `Random.new` instead.")]
   DEFAULT = PCG32.new
+
+  # :nodoc:
+  thread_local(thread_default : ::Random::PCG32) do
+    ::Random::PCG32.new
+  end
+
+  # :nodoc:
+  #
+  # Same as `Random.thread_default#split` but allocates the dup on the stack
+  # when possible (hence the macro).
+  macro split_on_stack
+    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+      %thread_rng = ::Random.thread_default.as(::Random::PCG32)
+      %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+      %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+      %thread_rng.split_internal(%copy)
+      %copy
+    {% else %}
+      ::Random.thread_default.split
+    {% end %}
+  end
 
   # Initializes an instance with the given *seed* and *sequence*.
   def self.new(seed, sequence = 0_u64)
@@ -62,11 +84,44 @@ module Random
     PCG32.new
   end
 
+  # Reseed the generator.
+  def new_seed
+    raise NotImplementedError.new("{{@type}}#new_seed")
+  end
+
   # Generates a random unsigned integer.
   #
   # The integers must be uniformly distributed between `0` and
   # the maximal value for the chosen type.
   abstract def next_u
+
+  # Splits the current instance into two seemingly independent instances that
+  # will return distinct sequences of random numbers. Returns a new instance.
+  #
+  # ```
+  # random = Random.new
+  # split1 = random.split
+  # split2 = random.split
+  #
+  # Array.new(5) { random.rand(99) } # => [79, 42, 54, 17, 52]
+  # Array.new(5) { split1.rand(99) } # => [90, 37, 15, 74, 61]
+  # Array.new(5) { split2.rand(99) } # => [6, 87, 5, 73, 71]
+  # ```
+  def split : self
+    copy = dup
+    split_internal(copy)
+    copy
+  end
+
+  # The internal implementation for `#split` where *self* is the original
+  # instance and *other* the duplicated instance to be returned.
+  #
+  # The default `Random` implementation in stdlib is splittable, but not every
+  # PRNG algorithm is splittable, so the method raises a `NotImplementedError`
+  # exception by default.
+  def split_internal(other : self) : Nil
+    raise NotImplementedError.new("#{self.class}#split")
+  end
 
   # Generates a random `Bool`.
   #
@@ -112,7 +167,7 @@ module Random
     rand_int(max)
   end
 
-  {% for size in [8, 16, 32, 64] %}
+  {% for size in [8, 16, 32, 64, 128] %}
     {% utype = "UInt#{size}".id %}
     {% for type in ["Int#{size}".id, utype] %}
       private def rand_int(max : {{type}}) : {{type}}
@@ -226,7 +281,9 @@ module Random
           end
           span += 1
         end
-        range.begin + {{type}}.new!(rand_int(span))
+        # this addition never overflows because `rand_int` is unsigned and
+        # `rand_int <= range.end - range.begin <= type::MAX - range.begin`
+        range.begin &+ rand_int(span)
       end
 
       # Generates a random integer in range `{{type}}::MIN..{{type}}::MAX`.
@@ -299,14 +356,16 @@ module Random
   end
 
   {% for type, values in {
-                           "Int8".id   => %w(20 -66 89 19),
-                           "UInt8".id  => %w(186 221 127 245),
-                           "Int16".id  => %w(-32554 32169 -20152 -7686),
-                           "UInt16".id => %w(39546 44091 2874 17348),
-                           "Int32".id  => %w(1870830079 -1043532158 -867180637 -1216773590),
-                           "UInt32".id => %w(3147957137 4245108745 2207809043 3184391838),
-                           "Int64".id  => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
-                           "UInt64".id => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                           "Int8".id    => %w(20 -66 89 19),
+                           "UInt8".id   => %w(186 221 127 245),
+                           "Int16".id   => %w(-32554 32169 -20152 -7686),
+                           "UInt16".id  => %w(39546 44091 2874 17348),
+                           "Int32".id   => %w(1870830079 -1043532158 -867180637 -1216773590),
+                           "UInt32".id  => %w(3147957137 4245108745 2207809043 3184391838),
+                           "Int64".id   => %w(4438449217673515190 8514493061600538358 -4874671083204037318 -7825896160729246667),
+                           "UInt64".id  => %w(15004487597684511003 12027825265648206103 11303949506191212698 6228566501671148658),
+                           "Int128".id  => %w(-33248638598154624979861619415313153263 7715345987200799268985566794637461715 51883986405785085023723116953594906714 -63505201678563022521901409748929046368),
+                           "UInt128".id => %w(209016375821699277802308597707088869733 168739091726124084850659068882871627438 293712757766410232411790495845165436283 15480005665598870938163293877660434201),
                          } %}
     # Returns a random {{type}}
     #
@@ -422,14 +481,29 @@ module Random
     random_bytes(n).hexstring
   end
 
+  # See `#split`.
+  def self.split : Random
+    thread_default.split.as(Random)
+  end
+
+  # See `#next_bool`.
+  def self.next_bool : Bool
+    thread_default.next_bool
+  end
+
+  # See `#next_int`.
+  def self.next_int : Int32
+    thread_default.next_int
+  end
+
   # See `#rand`.
   def self.rand : Float64
-    DEFAULT.rand
+    thread_default.rand
   end
 
   # See `#rand(x)`.
   def self.rand(x)
-    DEFAULT.rand(x)
+    thread_default.rand(x)
   end
 end
 

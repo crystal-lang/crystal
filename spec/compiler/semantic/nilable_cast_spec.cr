@@ -2,31 +2,31 @@ require "../../spec_helper"
 
 describe "Semantic: nilable cast" do
   it "types as?" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable float64 }
       1.as?(Float64)
-      )) { nilable float64 }
+      CRYSTAL
   end
 
   it "types as? with union" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable int32 }
       (1 || 'a').as?(Int32)
-      )) { nilable int32 }
+      CRYSTAL
   end
 
   it "types as? with nil" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       1.as?(Nil)
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "types as? with NoReturn" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       1.as?(NoReturn)
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "does upcast" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nilable types["Foo"].virtual_type! }
       class Foo
         def bar
           1
@@ -40,22 +40,22 @@ describe "Semantic: nilable cast" do
       end
 
       Bar.new.as?(Foo)
-      )) { nilable types["Foo"].virtual_type! }
+      CRYSTAL
   end
 
   it "doesn't crash with typeof no-type (#7441)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { string }
       a = 1
       if a.is_a?(Char)
         1.as?(typeof(a))
       else
         ""
       end
-      )) { string }
+      CRYSTAL
   end
 
   it "casts to module" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { union_of([types["Foo"], types["Bar"], nil_type] of Type) }
       module Moo
       end
 
@@ -72,6 +72,18 @@ describe "Semantic: nilable cast" do
 
       base = (Foo.new || Bar.new)
       base.as?(Moo)
-      )) { union_of([types["Foo"], types["Bar"], nil_type] of Type) }
+      CRYSTAL
+  end
+
+  it "doesn't introduce type filter for nilable cast object (#12661)" do
+    assert_type(<<-CRYSTAL) { union_of(int32, bool) }
+      val = 1 || false
+
+      if val.as?(Char)
+        true
+      else
+        val
+      end
+      CRYSTAL
   end
 end

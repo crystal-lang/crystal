@@ -61,7 +61,6 @@ class YAML::Schema::Core::Parser < YAML::Parser
       key = parse_node
       raw_key = key.raw
 
-      location = @pull_parser.location
       value = parse_node
 
       if raw_key == "<<" && tag != "tag:yaml.org,2002:str"
@@ -87,7 +86,7 @@ class YAML::Schema::Core::Parser < YAML::Parser
     mapping
   end
 
-  def process_tag(tag)
+  def process_tag(tag, &)
     if value = process_collection_tag(@pull_parser, tag)
       yield value
     end

@@ -9,7 +9,13 @@ struct LLVM::GlobalCollection
   end
 
   def []?(name)
-    global = LibLLVM.get_named_global(@mod, name)
+    global =
+      {% if LibLLVM::IS_LT_200 %}
+        LibLLVM.get_named_global(@mod, name)
+      {% else %}
+        LibLLVM.get_named_global_with_length(@mod, name, name.bytesize)
+      {% end %}
+
     global ? Value.new(global) : nil
   end
 

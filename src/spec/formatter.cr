@@ -1,7 +1,7 @@
 module Spec
   # :nodoc:
   abstract class Formatter
-    def initialize(@io : IO = STDOUT)
+    def initialize(@cli : CLI, @io : IO = cli.stdout)
     end
 
     def push(context)
@@ -19,7 +19,8 @@ module Spec
     def finish(elapsed_time, aborted)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
+    def should_print_summary?
+      false
     end
   end
 
@@ -37,7 +38,7 @@ module Spec
     end
 
     def report(result)
-      @io << Spec.color(LETTERS[result.kind], result.kind)
+      @io << @cli.colorize(result.kind.letter, result.kind)
       split_lines
       @io.flush
     end
@@ -54,8 +55,8 @@ module Spec
       @io.puts
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.root_context.print_results(elapsed_time, aborted)
+    def should_print_summary?
+      true
     end
   end
 
@@ -107,26 +108,36 @@ module Spec
     def report(result)
       @io << '\r'
       print_indent
-      @io.puts Spec.color(@last_description, result.kind)
+      @io.puts @cli.colorize(@last_description, result.kind)
     end
 
-    def print_results(elapsed_time : Time::Span, aborted : Bool)
-      Spec.root_context.print_results(elapsed_time, aborted)
+    def should_print_summary?
+      true
     end
   end
-
-  @@formatters = [Spec::DotFormatter.new] of Spec::Formatter
 
   # :nodoc:
-  def self.formatters
-    @@formatters
+  class CLI
+    def formatters
+      @formatters ||= [Spec::DotFormatter.new(self)] of Spec::Formatter
+    end
+
+    def override_default_formatter(formatter)
+      formatters[0] = formatter
+    end
+
+    def add_formatter(formatter)
+      formatters << formatter
+    end
   end
 
+  @[Deprecated("This is an internal API.")]
   def self.override_default_formatter(formatter)
-    @@formatters[0] = formatter
+    @@cli.override_default_formatter(formatter)
   end
 
+  @[Deprecated("This is an internal API.")]
   def self.add_formatter(formatter)
-    @@formatters << formatter
+    @@cli.add_formatter(formatter)
   end
 end

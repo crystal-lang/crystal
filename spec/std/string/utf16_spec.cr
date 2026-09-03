@@ -75,8 +75,14 @@ describe "String UTF16" do
       pointer = input.to_unsafe
       string, pointer = String.from_utf16(pointer)
       string.should eq("")
-      string, pointer = String.from_utf16(pointer)
+      string, _ = String.from_utf16(pointer)
       string.should eq("hello\u{d7ff}")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.from_utf16(Slice(UInt16).empty, truncate_at_null: true).should eq("")
+      String.from_utf16(UInt16.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.from_utf16(UInt16.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
     end
   end
 end

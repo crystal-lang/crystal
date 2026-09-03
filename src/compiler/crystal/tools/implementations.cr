@@ -53,7 +53,9 @@ module Crystal
         @line = macro_location.line_number + loc.line_number
         @column = loc.column_number
       else
-        raise "not implemented"
+        @line = loc.line_number
+        @column = loc.column_number
+        @filename = "<unknown>"
       end
     end
 
@@ -98,11 +100,11 @@ module Crystal
       result.node.accept(self)
 
       if @locations.empty?
-        return ImplementationResult.new("failed", "no implementations or method call found")
+        ImplementationResult.new("failed", "no implementations or method call found")
       else
         res = ImplementationResult.new("ok", "#{@locations.size} implementation#{@locations.size > 1 ? "s" : ""} found")
         res.implementations = @locations.map { |loc| ImplementationTrace.build(loc) }
-        return res
+        res
       end
     end
 
@@ -111,9 +113,10 @@ module Crystal
 
       if target_defs = node.target_defs
         target_defs.each do |target_def|
-          @locations << target_def.location.not_nil!
+          @locations << (target_def.location || Location.new(nil, 0, 0))
         end
       end
+      false
     end
 
     def visit(node : Path)
@@ -123,6 +126,7 @@ module Crystal
       target.try &.locations.try &.each do |loc|
         @locations << loc
       end
+      false
     end
 
     def visit(node)

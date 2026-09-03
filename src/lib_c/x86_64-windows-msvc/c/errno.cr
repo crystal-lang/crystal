@@ -1,4 +1,7 @@
 lib LibC
+  fun _get_errno(value : Int*) : ErrnoT
+  fun _set_errno(value : Int) : ErrnoT
+
   # source https://docs.microsoft.com/en-us/cpp/c-runtime-library/errno-doserrno-sys-errlist-and-sys-nerr
   EPERM        =   1
   ENOENT       =   2
@@ -46,6 +49,7 @@ lib LibC
   ECONNRESET   = 108
   EINPROGRESS  = 112
   EISCONN      = 113
+  ELOOP        = 114
   ENOPROTOOPT  = 123
 
   alias ErrnoT = Int

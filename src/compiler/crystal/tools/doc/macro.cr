@@ -20,7 +20,7 @@ class Crystal::Doc::Macro
   end
 
   def doc
-    @macro.doc
+    @macro.doc.try &.strip.lchop(":showdoc:").strip
   end
 
   def doc_copied_from
@@ -52,6 +52,19 @@ class Crystal::Doc::Macro
 
   def abstract?
     false
+  end
+
+  def visibility
+    case @macro.visibility
+    in .public?
+    in .protected?
+      "protected"
+    in .private?
+      "private"
+    end
+  end
+
+  def real_name
   end
 
   def kind
@@ -107,14 +120,11 @@ class Crystal::Doc::Macro
   def arg_to_html(arg : Arg, io, html : HTMLOption = :all)
     if arg.external_name != arg.name
       if name = arg.external_name.presence
-        if Symbol.needs_quotes_for_named_argument? name
-          if html.none?
-            name.inspect io
-          else
-            HTML.escape name.inspect, io
-          end
-        else
+        name = Symbol.quote_for_named_argument(name)
+        if html.none?
           io << name
+        else
+          HTML.escape name, io
         end
       else
         io << "_"

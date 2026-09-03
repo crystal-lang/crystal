@@ -1,6 +1,7 @@
 require "./spec_helper"
-require "spec/helpers/iterate"
 require "../support/string"
+require "spec/helpers/iterate"
+require "spec/helpers/string"
 
 describe "String" do
   describe "[]" do
@@ -36,6 +37,10 @@ describe "String" do
 
     it "gets with range without end" do
       "há日本語"[1..nil].should eq("á日本語")
+    end
+
+    it "gets with exclusive range without end" do
+      "há日本語"[1...nil].should eq("á日本語")
     end
 
     it "gets with range without beginning" do
@@ -203,9 +208,10 @@ describe "String" do
     end
   end
 
-  describe "byte_slice" do
+  describe "#byte_slice" do
     it "gets byte_slice" do
       "hello".byte_slice(1, 3).should eq("ell")
+      "hello".byte_slice(1..3).should eq("ell")
     end
 
     it "gets byte_slice with negative count" do
@@ -224,14 +230,19 @@ describe "String" do
       expect_raises(IndexError) do
         "hello".byte_slice(10, 3)
       end
+      expect_raises(IndexError) do
+        "hello".byte_slice(10..13)
+      end
     end
 
     it "gets byte_slice with large count" do
       "hello".byte_slice(1, 10).should eq("ello")
+      "hello".byte_slice(1..10).should eq("ello")
     end
 
     it "gets byte_slice with negative index" do
       "hello".byte_slice(-2, 3).should eq("lo")
+      "hello".byte_slice(-2..-1).should eq("lo")
     end
 
     it "gets byte_slice(Int) with start out of bounds" do
@@ -241,6 +252,45 @@ describe "String" do
       expect_raises(IndexError) do
         "hello".byte_slice(-10)
       end
+    end
+  end
+
+  describe "#byte_slice?" do
+    it "gets byte_slice" do
+      "hello".byte_slice?(1, 3).should eq("ell")
+      "hello".byte_slice?(1..3).should eq("ell")
+    end
+
+    it "gets byte_slice with negative count" do
+      expect_raises(ArgumentError) do
+        "hello".byte_slice?(1, -10)
+      end
+    end
+
+    it "gets byte_slice with negative count at last" do
+      expect_raises(ArgumentError) do
+        "hello".byte_slice?(5, -1)
+      end
+    end
+
+    it "gets byte_slice with start out of bounds" do
+      "hello".byte_slice?(10, 3).should be_nil
+      "hello".byte_slice?(10..13).should be_nil
+    end
+
+    it "gets byte_slice with large count" do
+      "hello".byte_slice?(1, 10).should eq("ello")
+      "hello".byte_slice?(1..11).should eq("ello")
+    end
+
+    it "gets byte_slice with negative index" do
+      "hello".byte_slice?(-2, 3).should eq("lo")
+      "hello".byte_slice?(-2..-1).should eq("lo")
+    end
+
+    it "gets byte_slice(Int) with start out of bounds" do
+      "hello".byte_slice?(10).should be_nil
+      "hello".byte_slice?(-10).should be_nil
     end
   end
 
@@ -256,10 +306,13 @@ describe "String" do
     it { "1101".to_i(base: 2).should eq(13) }
     it { "12ab".to_i(16).should eq(4779) }
     it { "0x123abc".to_i(prefix: true).should eq(1194684) }
+    it { "0X123abc".to_i(prefix: true).should eq(1194684) }
     it { "0b1101".to_i(prefix: true).should eq(13) }
+    it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
+    it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
     it { "123".to_i(leading_zero_is_octal: true).should eq(123) }
     it { "0o755".to_i(prefix: true, leading_zero_is_octal: true).should eq(493) }
@@ -275,6 +328,7 @@ describe "String" do
     it { expect_raises(ArgumentError) { "1__234".to_i } }
     it { expect_raises(ArgumentError) { "1_234".to_i } }
     it { expect_raises(ArgumentError) { "   1234   ".to_i(whitespace: false) } }
+    it { expect_raises(ArgumentError) { "".to_i(whitespace: false) } }
     it { expect_raises(ArgumentError) { "0x123".to_i } }
     it { expect_raises(ArgumentError) { "0b123".to_i } }
     it { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
@@ -390,12 +444,12 @@ describe "String" do
     end
 
     describe "to_u64" do
-      it { "18446744073709551615".to_u64.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64.should eq(18446744073709551615u64) }
       it { "0".to_u64.should eq(0) }
       it { expect_raises(ArgumentError) { "18446744073709551616".to_u64 } }
       it { expect_raises(ArgumentError) { "-1".to_u64 } }
 
-      it { "18446744073709551615".to_u64?.should eq(18446744073709551615) }
+      it { "18446744073709551615".to_u64?.should eq(18446744073709551615u64) }
       it { "18446744073709551616".to_u64?.should be_nil }
       it { "18446744073709551616".to_u64 { 0 }.should eq(0) }
     end
@@ -435,6 +489,7 @@ describe "String" do
     it { "1Y2P0IJ32E8E7".to_i64(36).should eq(9223372036854775807) }
   end
 
+  # more specs are available in `spec/manual/string_to_f_supplemental_spec.cr`
   it "does to_f" do
     expect_raises(ArgumentError) { "".to_f }
     "".to_f?.should be_nil
@@ -456,6 +511,7 @@ describe "String" do
     "  1234.56  ".to_f?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f }
     "  1234.56foo".to_f?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
@@ -466,10 +522,17 @@ describe "String" do
     " NaN".to_f?.try(&.nan?).should be_true
     "NaN".to_f?.try(&.nan?).should be_true
     "-NaN".to_f?.try(&.nan?).should be_true
+    "nan".to_f?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f?(whitespace: false).should be_nil
+    "nan ".to_f?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "".to_f(whitespace: false) }
+    "nani".to_f?(strict: true).should be_nil
     " INF".to_f?.should eq Float64::INFINITY
     "INF".to_f?.should eq Float64::INFINITY
     "-INF".to_f?.should eq -Float64::INFINITY
     " +INF".to_f?.should eq Float64::INFINITY
+    "inf".to_f?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f?(strict: true).should be_nil
   end
 
   it "does to_f32" do
@@ -493,6 +556,7 @@ describe "String" do
     "  1234.56  ".to_f32?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f32 }
     "  1234.56foo".to_f32?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f32.should eq(1234.56_f32)
     "123.45 x".to_f32(strict: false).should eq(123.45_f32)
     expect_raises(ArgumentError) { "x1.2".to_f32 }
     "x1.2".to_f32?.should be_nil
@@ -503,10 +567,16 @@ describe "String" do
     " NaN".to_f32?.try(&.nan?).should be_true
     "NaN".to_f32?.try(&.nan?).should be_true
     "-NaN".to_f32?.try(&.nan?).should be_true
+    "nan".to_f32?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f32?(whitespace: false).should be_nil
+    "nan ".to_f32?(whitespace: false).should be_nil
+    "nani".to_f32?(strict: true).should be_nil
     " INF".to_f32?.should eq Float32::INFINITY
     "INF".to_f32?.should eq Float32::INFINITY
     "-INF".to_f32?.should eq -Float32::INFINITY
     " +INF".to_f32?.should eq Float32::INFINITY
+    "inf".to_f32?(whitespace: false).should eq Float32::INFINITY
+    "info".to_f32?(strict: true).should be_nil
   end
 
   it "does to_f64" do
@@ -530,6 +600,7 @@ describe "String" do
     "  1234.56  ".to_f64?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f64 }
     "  1234.56foo".to_f64?.should be_nil
+    "\u{A0}\u{2028}\u{2029}1234.56\u{A0}\u{2028}\u{2029}".to_f64.should eq(1234.56_f64)
     "123.45 x".to_f64(strict: false).should eq(123.45_f64)
     expect_raises(ArgumentError) { "x1.2".to_f64 }
     "x1.2".to_f64?.should be_nil
@@ -540,10 +611,16 @@ describe "String" do
     " NaN".to_f64?.try(&.nan?).should be_true
     "NaN".to_f64?.try(&.nan?).should be_true
     "-NaN".to_f64?.try(&.nan?).should be_true
+    "nan".to_f64?(whitespace: false).try(&.nan?).should be_true
+    " nan".to_f64?(whitespace: false).should be_nil
+    "nan ".to_f64?(whitespace: false).should be_nil
+    "nani".to_f64?(strict: true).should be_nil
     " INF".to_f64?.should eq Float64::INFINITY
     "INF".to_f64?.should eq Float64::INFINITY
     "-INF".to_f64?.should eq -Float64::INFINITY
     " +INF".to_f64?.should eq Float64::INFINITY
+    "inf".to_f64?(whitespace: false).should eq Float64::INFINITY
+    "info".to_f64?(strict: true).should be_nil
   end
 
   it "compares strings: different size" do
@@ -590,28 +667,21 @@ describe "String" do
   end
 
   describe "#downcase" do
-    it { "HELLO!".downcase.should eq("hello!") }
-    it { "HELLO MAN!".downcase.should eq("hello man!") }
-    it { "ÁÉÍÓÚĀ".downcase.should eq("áéíóúā") }
-    it { "AEIİOU".downcase(Unicode::CaseOptions::Turkic).should eq("aeıiou") }
-    it { "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII).should eq("ÁeÍoÚ") }
-    it { "İ".downcase.should eq("i̇") }
-    it { "Baﬄe".downcase(Unicode::CaseOptions::Fold).should eq("baffle") }
-    it { "ﬀ".downcase(Unicode::CaseOptions::Fold).should eq("ff") }
-    it { "tschüß".downcase(Unicode::CaseOptions::Fold).should eq("tschüss") }
-    it { "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold).should eq("σίσυφοσfiæ") }
+    it { assert_prints "HELLO!".downcase, "hello!" }
+    it { assert_prints "HELLO MAN!".downcase, "hello man!" }
+    it { assert_prints "ÁÉÍÓÚĀ".downcase, "áéíóúā" }
+    it { assert_prints "AEIİOU".downcase(Unicode::CaseOptions::Turkic), "aeıiou" }
+    it { assert_prints "ÁEÍOÚ".downcase(Unicode::CaseOptions::ASCII), "ÁeÍoÚ" }
+    it { assert_prints "İ".downcase, "i̇" }
+    it { assert_prints "Baﬄe".downcase(Unicode::CaseOptions::Fold), "baffle" }
+    it { assert_prints "ﬀ".downcase(Unicode::CaseOptions::Fold), "ff" }
+    it { assert_prints "tschüß".downcase(Unicode::CaseOptions::Fold), "tschüss" }
+    it { assert_prints "ΣίσυφοςﬁÆ".downcase(Unicode::CaseOptions::Fold), "σίσυφοσfiæ" }
+    it { assert_prints "ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
+    it { assert_prints "Ꭰ".downcase(Unicode::CaseOptions::Fold), "Ꭰ" }
 
-    describe "with IO" do
-      it { String.build { |io| "HELLO!".downcase io }.should eq "hello!" }
-      it { String.build { |io| "HELLO MAN!".downcase io }.should eq "hello man!" }
-      it { String.build { |io| "ÁÉÍÓÚĀ".downcase io }.should eq "áéíóúā" }
-      it { String.build { |io| "AEIİOU".downcase io, Unicode::CaseOptions::Turkic }.should eq "aeıiou" }
-      it { String.build { |io| "ÁEÍOÚ".downcase io, Unicode::CaseOptions::ASCII }.should eq "ÁeÍoÚ" }
-      it { String.build { |io| "İ".downcase io }.should eq "i̇" }
-      it { String.build { |io| "Baﬄe".downcase io, Unicode::CaseOptions::Fold }.should eq "baffle" }
-      it { String.build { |io| "ﬀ".downcase io, Unicode::CaseOptions::Fold }.should eq "ff" }
-      it { String.build { |io| "tschüß".downcase io, Unicode::CaseOptions::Fold }.should eq "tschüss" }
-      it { String.build { |io| "ΣίσυφοςﬁÆ".downcase io, Unicode::CaseOptions::Fold }.should eq "σίσυφοσfiæ" }
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".downcase.should eq("\xB5!\xE0\xC1\xB5?")
     end
   end
 
@@ -625,6 +695,10 @@ describe "String" do
     it { "baﬄe".upcase.should eq("BAFFLE") }
     it { "ﬀ".upcase.should eq("FF") }
     it { "ňž".upcase.should eq("ŇŽ") } # #7922
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".upcase.should eq("\xB5!\xE0\xC1\xB5?")
+    end
 
     describe "with IO" do
       it { String.build { |io| "hello!".upcase io }.should eq "HELLO!" }
@@ -640,38 +714,63 @@ describe "String" do
   end
 
   describe "#capitalize" do
-    it { "HELLO!".capitalize.should eq("Hello!") }
-    it { "HELLO MAN!".capitalize.should eq("Hello man!") }
-    it { "".capitalize.should eq("") }
-    it { "ﬄİ".capitalize.should eq("FFLi̇") }
-    it { "iO".capitalize(Unicode::CaseOptions::Turkic).should eq("İo") }
+    it { assert_prints "HELLO!".capitalize, "Hello!" }
+    it { assert_prints "HELLO MAN!".capitalize, "Hello man!" }
+    it { assert_prints "".capitalize, "" }
+    it { assert_prints "iO".capitalize(Unicode::CaseOptions::Turkic), "İo" }
 
-    describe "with IO" do
-      it { String.build { |io| "HELLO!".capitalize io }.should eq "Hello!" }
-      it { String.build { |io| "HELLO MAN!".capitalize io }.should eq "Hello man!" }
-      it { String.build { |io| "".capitalize io }.should be_empty }
-      it { String.build { |io| "ﬄİ".capitalize io }.should eq "FFLi̇" }
-      it { String.build { |io| "iO".capitalize io, Unicode::CaseOptions::Turkic }.should eq "İo" }
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄİ".capitalize, "Ffli̇"
+    end
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".capitalize.should eq("\xB5!\xE0\xC1\xB5?")
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".capitalize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
     end
   end
 
   describe "#titleize" do
-    it { "hEllO tAb\tworld".titleize.should eq("Hello Tab\tWorld") }
-    it { "  spaces before".titleize.should eq("  Spaces Before") }
-    it { "testa-se muito".titleize.should eq("Testa-se Muito") }
-    it { "hÉllÕ tAb\tworld".titleize.should eq("Héllõ Tab\tWorld") }
-    it { "  spáçes before".titleize.should eq("  Spáçes Before") }
-    it { "testá-se múitô".titleize.should eq("Testá-se Múitô") }
-    it { "iO iO".titleize(Unicode::CaseOptions::Turkic).should eq("İo İo") }
+    it { assert_prints "hEllO tAb\tworld".titleize, "Hello Tab\tWorld" }
+    it { assert_prints "  spaces before".titleize, "  Spaces Before" }
+    it { assert_prints "testa-se muito".titleize, "Testa-se Muito" }
+    it { assert_prints "hÉllÕ tAb\tworld".titleize, "Héllõ Tab\tWorld" }
+    it { assert_prints "  spáçes before".titleize, "  Spáçes Before" }
+    it { assert_prints "testá-se múitô".titleize, "Testá-se Múitô" }
+    it { assert_prints "iO iO".titleize(Unicode::CaseOptions::Turkic), "İo İo" }
+    it { assert_prints "foo_Bar".titleize, "Foo_bar" }
+    it { assert_prints "foo_bar".titleize, "Foo_bar" }
+    it { assert_prints "testá_se múitô".titleize(underscore_to_space: true), "Testá Se Múitô" }
+    it { assert_prints "foo_bar".titleize(underscore_to_space: true), "Foo Bar" }
+
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄİ İﬄ ǳ Ǳ".titleize, "Ffli̇ İﬄ ǲ ǲ"
+    end
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      "\xB5!\xE0\xC1\xB5?".titleize.should eq("\xB5!\xE0\xC1\xB5?")
+      "a\xA0b".titleize.should eq("A\xA0b")
+      String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
+      String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
+    end
+
+    it "handles consecutive spaces (#17199)" do
+      assert_prints "a  b".titleize, "A  B"
+      assert_prints "a  b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a _b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a_ b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a__b".titleize(underscore_to_space: true), "A  B"
+
+      assert_prints "á  é".titleize, "Á  É"
+      assert_prints "á  é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á _é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á_ é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á__é".titleize(underscore_to_space: true), "Á  É"
+    end
 
     describe "with IO" do
-      it { String.build { |io| "hEllO tAb\tworld".titleize io }.should eq "Hello Tab\tWorld" }
-      it { String.build { |io| "  spaces before".titleize io }.should eq "  Spaces Before" }
-      it { String.build { |io| "testa-se muito".titleize io }.should eq "Testa-se Muito" }
-      it { String.build { |io| "hÉllÕ tAb\tworld".titleize io }.should eq "Héllõ Tab\tWorld" }
-      it { String.build { |io| "  spáçes before".titleize io }.should eq "  Spáçes Before" }
-      it { String.build { |io| "testá-se múitô".titleize io }.should eq "Testá-se Múitô" }
-      it { String.build { |io| "iO iO".titleize io, Unicode::CaseOptions::Turkic }.should eq "İo İo" }
+      it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }
+      it { String.build { |io| "foo_bar".titleize(io, underscore_to_space: true) }.should eq "Foo Bar" }
     end
   end
 
@@ -699,6 +798,24 @@ describe "String" do
     it { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
 
     it { "hello\r\n".chomp("\n").should eq("hello") }
+
+    it "pre-computes string size if possible" do
+      {"!hello!", "\u{1f602}hello\u{1f602}", "\xFEhello\xFF"}.each do |str|
+        {"", "\n", "\r", "\r\n"}.each do |newline|
+          x = str + newline
+          x.size_known?.should be_true
+          y = x.chomp
+          y.@length.should eq(7)
+        end
+      end
+    end
+
+    it "does not pre-compute string size if not possible" do
+      x = String.build &.<< "abc\n"
+      x.size_known?.should be_false
+      y = x.chomp
+      y.size_known?.should be_false
+    end
   end
 
   describe "lchop" do
@@ -788,8 +905,7 @@ describe "String" do
     it { "\n\t  ".strip.should eq("") }
     it { "\u00A0".strip.should eq("") }
 
-    # TODO: add spec tags so this can be run with tag:slow
-    # it { (" " * 167772160).strip.should eq("") }
+    it(tags: %w[slow]) { (" " * 167772160).strip.should eq("") }
 
     it { "".strip("xyz").should eq("") }
     it { "foobar".strip("").should eq("foobar") }
@@ -807,7 +923,7 @@ describe "String" do
     it { "bcdaaa".strip('a').should eq("bcd") }
     it { "aaabcd".strip('a').should eq("bcd") }
 
-    it { "ababcdaba".strip { |c| c == 'a' || c == 'b' }.should eq("cd") }
+    it { "ababcdaba".strip(&.in?('a', 'b')).should eq("cd") }
   end
 
   describe "rstrip" do
@@ -828,7 +944,11 @@ describe "String" do
     it { "foobarrrr".rstrip('r').should eq("fooba") }
     it { "foobar".rstrip('x').should eq("foobar") }
 
-    it { "foobar".rstrip { |c| c == 'a' || c == 'r' }.should eq("foob") }
+    it { "foobar".rstrip(&.in?('a', 'r')).should eq("foob") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".rstrip.should eq(" \xA0")
+    end
   end
 
   describe "lstrip" do
@@ -848,12 +968,22 @@ describe "String" do
     it { "bbbbarfoo".lstrip('b').should eq("arfoo") }
     it { "barfoo".lstrip('x').should eq("barfoo") }
 
-    it { "barfoo".lstrip { |c| c == 'a' || c == 'b' }.should eq("rfoo") }
+    it { "barfoo".lstrip(&.in?('a', 'b')).should eq("rfoo") }
+
+    it "does not touch invalid code units in an otherwise ascii string" do
+      " \xA0 ".lstrip.should eq("\xA0 ")
+    end
   end
 
   describe "empty?" do
     it { "a".empty?.should be_false }
     it { "".empty?.should be_true }
+  end
+
+  describe "present?" do
+    it { "a".present?.should be_true }
+    it { "".present?.should be_false }
+    it { " \t\n".present?.should be_false }
   end
 
   describe "blank?" do
@@ -876,6 +1006,8 @@ describe "String" do
       it { "日本語".index('本').should eq(1) }
       it { "bar".index('あ').should be_nil }
       it { "あいう_えお".index('_').should eq(3) }
+      it { "xyz\xFFxyz".index('\u{FFFD}').should eq(3) }
+      it { "日\xFF語".index('\u{FFFD}').should eq(1) }
 
       describe "with offset" do
         it { "foobarbaz".index('a', 5).should eq(7) }
@@ -883,6 +1015,10 @@ describe "String" do
         it { "foo".index('g', 1).should be_nil }
         it { "foo".index('g', -20).should be_nil }
         it { "日本語日本語".index('本', 2).should eq(4) }
+        it { "xyz\xFFxyz".index('\u{FFFD}', 2).should eq(3) }
+        it { "xyz\xFFxyz".index('\u{FFFD}', 4).should be_nil }
+        it { "日本\xFF語".index('\u{FFFD}', 2).should eq(2) }
+        it { "日本\xFF語".index('\u{FFFD}', 3).should be_nil }
 
         # Check offset type
         it { "foobarbaz".index('a', 5_i64).should eq(7) }
@@ -926,6 +1062,7 @@ describe "String" do
     describe "by regex" do
       it { "string 12345".index(/\d+/).should eq(7) }
       it { "12345".index(/\d/).should eq(0) }
+      it { "Hello\xFF".index(/l/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
       it { "Hello, world!".index(/\d/).should be_nil }
       it { "abcdef".index(/[def]/).should eq(3) }
       it { "日本語日本語".index(/本語/).should eq(1) }
@@ -933,11 +1070,86 @@ describe "String" do
       describe "with offset" do
         it { "abcDef".index(/[A-Z]/).should eq(3) }
         it { "foobarbaz".index(/ba/, -5).should eq(6) }
+        it { "Hello\xFF".index(/l/, 3, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
         it { "Foo".index(/[A-Z]/, 1).should be_nil }
         it { "foo".index(/o/, 2).should eq(2) }
         it { "foo".index(//, 3).should eq(3) }
         it { "foo".index(//, 4).should be_nil }
         it { "日本語日本語".index(/本語/, 2).should eq(4) }
+      end
+    end
+  end
+
+  describe "#index!" do
+    describe "by char" do
+      it { "foo".index!('o').should eq(1) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo".index!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!('a', 5).should eq(7) }
+        it { "foobarbaz".index!('a', -4).should eq(7) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!('f', 1)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!('g', -20)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "foo bar".index!("o b").should eq(2) }
+      it { "foo".index!("").should eq(0) }
+      it { "foo".index!("foo").should eq(0) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo".index!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "foobarbaz".index!("ba", 4).should eq(6) }
+        it { "foobarbaz".index!("ba", -5).should eq(6) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!("ba", 1)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "foo".index!("ba", -20)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "string 12345".index!(/\d+/).should eq(7) }
+      it { "12345".index!(/\d/).should eq(0) }
+      it { "Hello\xFF".index!(/l/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "Hello, world!".index!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "abcDef".index!(/[A-Z]/).should eq(3) }
+        it { "foobarbaz".index!(/ba/, -5).should eq(6) }
+        it { "Hello\xFF".index!(/l/, 3, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "Foo".index!(/[A-Z]/, 1)
+          end
+        end
       end
     end
   end
@@ -949,6 +1161,8 @@ describe "String" do
       it { "foobar".rindex('g').should be_nil }
       it { "日本語日本語".rindex('本').should eq(4) }
       it { "あいう_えお".rindex('_').should eq(3) }
+      it { "xyz\xFFxyz".rindex('\u{FFFD}').should eq(3) }
+      it { "日\xFF語".rindex('\u{FFFD}').should eq(1) }
 
       describe "with offset" do
         it { "bbbb".rindex('b', 2).should eq(2) }
@@ -961,6 +1175,10 @@ describe "String" do
         it { "faobar".rindex('a', 3).should eq(1) }
         it { "faobarbaz".rindex('a', -3).should eq(4) }
         it { "日本語日本語".rindex('本', 3).should eq(1) }
+        it { "xyz\xFFxyz".rindex('\u{FFFD}', 4).should eq(3) }
+        it { "xyz\xFFxyz".rindex('\u{FFFD}', 2).should be_nil }
+        it { "日本\xFF語".rindex('\u{FFFD}', 2).should eq(2) }
+        it { "日本\xFF語".rindex('\u{FFFD}', 1).should be_nil }
 
         # Check offset type
         it { "bbbb".rindex('b', 2_i64).should eq(2) }
@@ -1001,6 +1219,7 @@ describe "String" do
 
     describe "by regex" do
       it { "bbbb".rindex(/b/).should eq(3) }
+      it { "\xFFbbb".rindex(/b/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
       it { "a43b53".rindex(/\d+/).should eq(4) }
       it { "bbbb".rindex(/\d/).should be_nil }
 
@@ -1012,12 +1231,79 @@ describe "String" do
 
       describe "with offset" do
         it { "bbbb".rindex(/b/, 2).should eq(2) }
+        it { "\xFFbbb".rindex(/b/, 2, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
         it { "abbbb".rindex(/b/, 0).should be_nil }
         it { "abbbb".rindex(/a/, 0).should eq(0) }
         it { "bbbb".rindex(/b/, -2).should eq(2) }
         it { "bbbb".rindex(/b/, -5).should be_nil }
         it { "bbbb".rindex(/b/, -4).should eq(0) }
         it { "日本語日本語".rindex(/日本/, 2).should eq(0) }
+      end
+    end
+  end
+
+  describe "#rindex!" do
+    describe "by char" do
+      it { "bbbb".rindex!('b').should eq(3) }
+      it { "foobar".rindex!('a').should eq(4) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foobar".rindex!('g')
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!('b', 2).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!('b', 0)
+          end
+        end
+      end
+    end
+
+    describe "by string" do
+      it { "bbbb".rindex!("b").should eq(3) }
+      it { "foo baro baz".rindex!("o b").should eq(7) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "foo baro baz".rindex!("fg")
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!("b", 2).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!("b", 0)
+          end
+        end
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "bbbb".rindex!("b", -5)
+          end
+        end
+      end
+    end
+
+    describe "by regex" do
+      it { "bbbb".rindex!(/b/).should eq(3) }
+      it { "\xFFbbb".rindex!(/b/, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(3) }
+      it { "a43b53".rindex!(/\d+/).should eq(4) }
+      it do
+        expect_raises(Enumerable::NotFoundError) do
+          "bbbb".rindex!(/\d/)
+        end
+      end
+
+      describe "with offset" do
+        it { "bbbb".rindex!(/b/, 2).should eq(2) }
+        it { "\xFFbbb".rindex!(/b/, 2, options: Regex::MatchOptions::NO_UTF_CHECK).should eq(2) }
+        it do
+          expect_raises(Enumerable::NotFoundError) do
+            "abbbb".rindex!(/b/, 0)
+          end
+        end
       end
     end
   end
@@ -1091,6 +1377,19 @@ describe "String" do
       "Dizzy Miss Lizzy".byte_index('z'.ord, -17).should be_nil
     }
 
+    it { "foo".byte_index('o').should eq(1) }
+    it { "foo bar booz".byte_index('o', 3).should eq(9) }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('a').should be_nil }
+    it { "foo".byte_index('o', 3).should be_nil }
+    it { "Hi, 💣".byte_index('💣').should eq(4) }
+    it {
+      "Dizzy Miss Lizzy".byte_index('z').should eq(2)
+      "Dizzy Miss Lizzy".byte_index('z', 3).should eq(3)
+      "Dizzy Miss Lizzy".byte_index('z', -4).should eq(13)
+      "Dizzy Miss Lizzy".byte_index('z', -17).should be_nil
+    }
+
     it "gets byte index of string" do
       "hello world".byte_index("he").should eq(0)
       "hello world".byte_index("lo").should eq(3)
@@ -1098,6 +1397,27 @@ describe "String" do
       "foo foo".byte_index("oo").should eq(1)
       "foo foo".byte_index("oo", 2).should eq(5)
       "こんにちは世界".byte_index("ちは").should eq(9)
+    end
+
+    it "gets byte index of regex" do
+      str = "0123x"
+      pattern = /x/
+
+      str.byte_index(pattern).should eq(4)
+      str.byte_index(pattern, offset: 4).should eq(4)
+      str.byte_index(pattern, offset: 5).should be_nil
+      str.byte_index(pattern, offset: -1).should eq(4)
+      str.byte_index(/y/).should be_nil
+
+      str = "012abc678"
+      pattern = /[abc]/
+
+      str.byte_index(pattern).should eq(3)
+      str.byte_index(pattern, offset: 2).should eq(3)
+      str.byte_index(pattern, offset: 5).should eq(5)
+      str.byte_index(pattern, offset: -4).should eq(5)
+      str.byte_index(pattern, offset: -1).should be_nil
+      str.byte_index(/y/).should be_nil
     end
   end
 
@@ -1199,10 +1519,13 @@ describe "String" do
       it { "=".split(/\=/, 2).should eq(["", ""]) }
       it { "=".split(/\=/, 2, remove_empty: true).should eq([] of String) }
       it { ",".split(/(?:(x)|(,))/).should eq(["", ",", ""]) }
+      it { "ba".split(/a/, options: :anchored).should eq ["ba"] }
 
       it "keeps groups" do
         s = "split on the word on okay?"
         s.split(/(on)/).should eq(["split ", "on", " the word ", "on", " okay?"])
+        s.split(/o(?:(n)|(r))/).should eq(["split ", "n", " the w", "r", "d ", "n", " okay?"])
+        s.split(/()/, limit: 4, remove_empty: true).should eq(["s", "", "p", "", "l", "", "it on the word on okay?"])
       end
     end
   end
@@ -1218,6 +1541,11 @@ describe "String" do
     it { "foobar".starts_with?('g').should be_false }
     it { "よし".starts_with?('よ').should be_true }
     it { "よし!".starts_with?("よし").should be_true }
+
+    it "treats first char as replacement char if invalid in an otherwise ascii string" do
+      "\xEEfoo".starts_with?('\u{EE}').should be_false
+      "\xEEfoo".starts_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "ends_with?" do
@@ -1232,6 +1560,11 @@ describe "String" do
     it { "よし".ends_with?('し').should be_true }
     it { "よし".ends_with?('な').should be_false }
     it { "あいう_".ends_with?('_').should be_true }
+
+    it "treats last char as replacement char if invalid in an otherwise ascii string" do
+      "foo\xEE".ends_with?('\u{EE}').should be_false
+      "foo\xEE".ends_with?(Char::REPLACEMENT).should be_true
+    end
   end
 
   describe "=~" do
@@ -1268,16 +1601,23 @@ describe "String" do
     end
   end
 
-  it "reverses string" do
-    "foobar".reverse.should eq("raboof")
-  end
+  describe "#reverse" do
+    it "reverses string" do
+      "foobar".reverse.should eq("raboof")
+    end
 
-  it "reverses utf-8 string" do
-    "こんにちは".reverse.should eq("はちにんこ")
-  end
+    it "reverses utf-8 string" do
+      "こんにちは".reverse.should eq("はちにんこ")
+    end
 
-  it "reverses taking grapheme clusters into account" do
-    "noël".reverse.should eq("lëon")
+    it "reverses taking grapheme clusters into account" do
+      "noël".reverse.should eq("lëon")
+    end
+
+    pending "converts invalid code units to replacement char" do
+      "!\xB0\xC2?".reverse.chars.should eq("?\uFFFD!".chars)
+      "\xC2\xB0\xB0\xC2?".reverse.chars.should eq("?\uFFFD\xC2\xB0".chars)
+    end
   end
 
   describe "sub" do
@@ -1290,7 +1630,7 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub do |char|
+      "foobar".sub do |char|
         char.should eq 'f'
         "some"
       end.should eq("someoobar")
@@ -1458,6 +1798,18 @@ describe "String" do
       "あいうえお".sub(2, "けくこ").should eq("あいけくこえお")
     end
 
+    it "raises if index is out of bounds" do
+      expect_raises(IndexError) { "hello".sub(5, 'x') }
+      expect_raises(IndexError) { "hello".sub(6, "") }
+      expect_raises(IndexError) { "hello".sub(-6, 'x') }
+      expect_raises(IndexError) { "hello".sub(-7, "") }
+
+      expect_raises(IndexError) { "あいうえお".sub(5, 'x') }
+      expect_raises(IndexError) { "あいうえお".sub(6, "") }
+      expect_raises(IndexError) { "あいうえお".sub(-6, 'x') }
+      expect_raises(IndexError) { "あいうえお".sub(-7, "") }
+    end
+
     it "subs range with char" do
       "hello".sub(1..2, 'a').should eq("halo")
     end
@@ -1511,7 +1863,7 @@ describe "String" do
     end
   end
 
-  describe "gsub" do
+  describe "#gsub" do
     it "gsubs char with char" do
       "foobar".gsub('o', 'e').should eq("feebar")
     end
@@ -1687,6 +2039,23 @@ describe "String" do
     it "ignores if backreferences: false" do
       "foo".gsub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xx\\0x")
     end
+
+    it "empty match" do
+      "a  b".gsub(/\B/, "-").should eq "a - b"
+      "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
+    end
+
+    it "empty match + advanced offset" do
+      "a  b".gsub(/(?= )/, "-").should eq "a- - b"
+      "┬  7".gsub(/(?= )/, "-").should eq "┬- - 7"
+      "a  ".gsub(/(?<= )/, "-").should eq "a - -"
+      "┬  ".gsub(/(?<= )/, "-").should eq "┬ - -"
+    end
+
+    it "empty string" do
+      "ab".gsub("", "-").should eq "-a-b-"
+      "┬7".gsub("", "-").should eq "-┬-7-"
+    end
   end
 
   it "scans using $~" do
@@ -1815,120 +2184,6 @@ describe "String" do
     end
   end
 
-  it "does %" do
-    ("foo" % 1).should eq("foo")
-    ("foo %d" % 1).should eq("foo 1")
-    ("%d" % 123).should eq("123")
-    ("%+d" % 123).should eq("+123")
-    ("%+d" % -123).should eq("-123")
-    ("% d" % 123).should eq(" 123")
-    ("%i" % 123).should eq("123")
-    ("%+i" % 123).should eq("+123")
-    ("%+i" % -123).should eq("-123")
-    ("% i" % 123).should eq(" 123")
-    ("%20d" % 123).should eq("                 123")
-    ("%20d" % -123).should eq("                -123")
-    ("%20d" % 0).should eq("                   0")
-    ("%+20d" % 123).should eq("                +123")
-    ("%+20d" % -123).should eq("                -123")
-    ("%+20d" % 0).should eq("                  +0")
-    ("% 20d" % 123).should eq("                 123")
-    ("%020d" % 123).should eq("00000000000000000123")
-    ("%020d" % -123).should eq("0000000000000000-123")
-    ("%020d" % 0).should eq("00000000000000000000")
-    ("%+020d" % 123).should eq("+0000000000000000123")
-    ("%+020d" % -123).should eq("-0000000000000000123")
-    ("%+020d" % 0).should eq("+0000000000000000000")
-    ("% 020d" % 123).should eq(" 0000000000000000123")
-    ("% 020d" % 0).should eq(" 0000000000000000000")
-    ("%-d" % 123).should eq("123")
-    ("%-d" % 0).should eq("0")
-    ("%-20d" % 123).should eq("123                 ")
-    ("%-20d" % -123).should eq("-123                ")
-    ("%-20d" % 0).should eq("0                   ")
-    ("%-+20d" % 123).should eq("+123                ")
-    ("%-+20d" % -123).should eq("-123                ")
-    ("%-+20d" % 0).should eq("+0                  ")
-    ("%- 20d" % 123).should eq(" 123                ")
-    ("%- 20d" % -123).should eq("-123                ")
-    ("%- 20d" % 0).should eq(" 0                  ")
-    ("%s" % 'a').should eq("a")
-    ("%-s" % 'a').should eq("a")
-    ("%20s" % 'a').should eq("                   a")
-    ("%-20s" % 'a').should eq("a                   ")
-    ("%*s" % [10, 123]).should eq("       123")
-    ("%*s" % [-10, 123]).should eq("123       ")
-    ("%.5s" % "foo bar baz").should eq("foo b")
-    ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
-    ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
-    ("%-*.*s" % [20, 5, "foo bar baz"]).should eq("foo b               ")
-
-    ("%%%d" % 1).should eq("%1")
-    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
-
-    ("%b" % 123).should eq("1111011")
-    ("%+b" % 123).should eq("+1111011")
-    ("% b" % 123).should eq(" 1111011")
-    ("%-b" % 123).should eq("1111011")
-    ("%10b" % 123).should eq("   1111011")
-    ("%-10b" % 123).should eq("1111011   ")
-
-    ("%o" % 123).should eq("173")
-    ("%+o" % 123).should eq("+173")
-    ("% o" % 123).should eq(" 173")
-    ("%-o" % 123).should eq("173")
-    ("%6o" % 123).should eq("   173")
-    ("%-6o" % 123).should eq("173   ")
-
-    ("%x" % 123).should eq("7b")
-    ("%+x" % 123).should eq("+7b")
-    ("% x" % 123).should eq(" 7b")
-    ("%-x" % 123).should eq("7b")
-    ("%6x" % 123).should eq("    7b")
-    ("%-6x" % 123).should eq("7b    ")
-
-    ("%X" % 123).should eq("7B")
-    ("%+X" % 123).should eq("+7B")
-    ("% X" % 123).should eq(" 7B")
-    ("%-X" % 123).should eq("7B")
-    ("%6X" % 123).should eq("    7B")
-    ("%-6X" % 123).should eq("7B    ")
-
-    ("こんに%xちは" % 123).should eq("こんに7bちは")
-    ("こんに%Xちは" % 123).should eq("こんに7Bちは")
-
-    span = 1.second
-    ("%s" % span).should eq(span.to_s)
-  end
-
-  pending_win32 "does % with floats" do
-    ("%f" % 123).should eq("123.000000")
-
-    ("%g" % 123).should eq("123")
-    ("%12f" % 123.45).should eq("  123.450000")
-    ("%-12f" % 123.45).should eq("123.450000  ")
-    ("% f" % 123.45).should eq(" 123.450000")
-    ("%+f" % 123).should eq("+123.000000")
-    ("%012f" % 123).should eq("00123.000000")
-    ("%.f" % 1234.56).should eq("1235")
-    ("%.2f" % 1234.5678).should eq("1234.57")
-    ("%10.2f" % 1234.5678).should eq("   1234.57")
-    ("%*.2f" % [10, 1234.5678]).should eq("   1234.57")
-    ("%0*.2f" % [10, 1234.5678]).should eq("0001234.57")
-    ("%e" % 123.45).should eq("1.234500e+02")
-    ("%E" % 123.45).should eq("1.234500E+02")
-    ("%G" % 12345678.45).should eq("1.23457E+07")
-    ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
-    ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
-    ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
-
-    ("%.2f" % 2.536_f32).should eq("2.54")
-    ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
-    expect_raises(ArgumentError, "Expected dynamic value '*' to be an Int - \"not a number\" (String)") do
-      "%*f" % ["not a number", 2.536_f32]
-    end
-  end
-
   it "escapes chars" do
     "\a"[0].should eq('\a')
     "\b"[0].should eq('\b')
@@ -2015,6 +2270,16 @@ describe "String" do
     it "allows creating from an empty slice" do
       String.new(Bytes.empty).should eq("")
     end
+
+    it "allows creating from a non-empty slice" do
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114)).should eq("foo\0bar")
+    end
+
+    it "allows creating from a null-terminated slice" do
+      String.new(Bytes.empty, truncate_at_null: true).should eq("")
+      String.new(UInt8.slice(102, 111, 111, 98, 97, 114), truncate_at_null: true).should eq("foobar")
+      String.new(UInt8.slice(102, 111, 111, 0, 98, 97, 114), truncate_at_null: true).should eq("foo")
+    end
   end
 
   describe "tr" do
@@ -2047,76 +2312,51 @@ describe "String" do
     end
 
     it "compares with == when different strings same contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{1}"
-      s1.should eq(s2)
+      ("fo" + "o").should eq("fo" + "o")
     end
 
     it "compares with == when different contents" do
-      s1 = "foo#{1}"
-      s2 = "foo#{2}"
-      s1.should_not eq(s2)
+      ("fo" + "o").should_not eq("bo" + "o")
     end
 
     it "sorts strings" do
-      s1 = "foo1"
-      s2 = "foo"
-      s3 = "bar"
-      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+      ["foo1", "foo", "bar"].sort.should eq(["bar", "foo", "foo1"])
     end
   end
 
   describe "#underscore" do
-    it { "Foo".underscore.should eq "foo" }
-    it { "FooBar".underscore.should eq "foo_bar" }
-    it { "ABCde".underscore.should eq "ab_cde" }
-    it { "FOO_bar".underscore.should eq "foo_bar" }
-    it { "Char_S".underscore.should eq "char_s" }
-    it { "Char_".underscore.should eq "char_" }
-    it { "C_".underscore.should eq "c_" }
-    it { "HTTP".underscore.should eq "http" }
-    it { "HTTP_CLIENT".underscore.should eq "http_client" }
-    it { "CSS3".underscore.should eq "css3" }
-    it { "HTTP1.1".underscore.should eq "http1.1" }
-    it { "3.14IsPi".underscore.should eq "3.14_is_pi" }
-    it { "I2C".underscore.should eq "i2_c" }
+    it { assert_prints "Foo".underscore, "foo" }
+    it { assert_prints "FooBar".underscore, "foo_bar" }
+    it { assert_prints "ABCde".underscore, "ab_cde" }
+    it { assert_prints "FOO_bar".underscore, "foo_bar" }
+    it { assert_prints "Char_S".underscore, "char_s" }
+    it { assert_prints "Char_".underscore, "char_" }
+    it { assert_prints "C_".underscore, "c_" }
+    it { assert_prints "HTTP".underscore, "http" }
+    it { assert_prints "HTTP_CLIENT".underscore, "http_client" }
+    it { assert_prints "CSS3".underscore, "css3" }
+    it { assert_prints "HTTP1.1".underscore, "http1.1" }
+    it { assert_prints "3.14IsPi".underscore, "3.14_is_pi" }
+    it { assert_prints "I2C".underscore, "i2_c" }
 
-    describe "with IO" do
-      it { String.build { |io| "Foo".underscore io }.should eq "foo" }
-      it { String.build { |io| "FooBar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "ABCde".underscore io }.should eq "ab_cde" }
-      it { String.build { |io| "FOO_bar".underscore io }.should eq "foo_bar" }
-      it { String.build { |io| "Char_S".underscore io }.should eq "char_s" }
-      it { String.build { |io| "Char_".underscore io }.should eq "char_" }
-      it { String.build { |io| "C_".underscore io }.should eq "c_" }
-      it { String.build { |io| "HTTP".underscore io }.should eq "http" }
-      it { String.build { |io| "HTTP_CLIENT".underscore io }.should eq "http_client" }
-      it { String.build { |io| "CSS3".underscore io }.should eq "css3" }
-      it { String.build { |io| "HTTP1.1".underscore io }.should eq "http1.1" }
-      it { String.build { |io| "3.14IsPi".underscore io }.should eq "3.14_is_pi" }
-      it { String.build { |io| "I2C".underscore io }.should eq "i2_c" }
+    it "handles multi-character mappings correctly" do
+      assert_prints "İxİİ0İİxİ0".underscore, "i̇x_i̇i̇0_i̇_i̇x_i̇0"
     end
   end
 
   describe "#camelcase" do
-    it { "foo".camelcase.should eq "Foo" }
-    it { "foo_bar".camelcase.should eq "FooBar" }
-    it { "foo".camelcase(lower: true).should eq "foo" }
-    it { "foo_bar".camelcase(lower: true).should eq "fooBar" }
-    it { "Foo".camelcase.should eq "Foo" }
-    it { "Foo_bar".camelcase.should eq "FooBar" }
-    it { "Foo".camelcase(lower: true).should eq "foo" }
-    it { "Foo_bar".camelcase(lower: true).should eq "fooBar" }
+    it { assert_prints "foo".camelcase, "Foo" }
+    it { assert_prints "foo_bar".camelcase, "FooBar" }
+    it { assert_prints "foo".camelcase(lower: true), "foo" }
+    it { assert_prints "foo_bar".camelcase(lower: true), "fooBar" }
+    it { assert_prints "Foo".camelcase, "Foo" }
+    it { assert_prints "Foo_bar".camelcase, "FooBar" }
+    it { assert_prints "Foo".camelcase(lower: true), "foo" }
+    it { assert_prints "Foo_bar".camelcase(lower: true), "fooBar" }
 
-    describe "with IO" do
-      it { String.build { |io| "foo".camelcase io }.should eq "Foo" }
-      it { String.build { |io| "foo_bar".camelcase io }.should eq "FooBar" }
-      it { String.build { |io| "foo".camelcase io, lower: true }.should eq "foo" }
-      it { String.build { |io| "foo_bar".camelcase io, lower: true }.should eq "fooBar" }
-      it { String.build { |io| "Foo".camelcase io }.should eq "Foo" }
-      it { String.build { |io| "Foo_bar".camelcase io }.should eq "FooBar" }
-      it { String.build { |io| "Foo".camelcase io, lower: true }.should eq "foo" }
-      it { String.build { |io| "Foo_bar".camelcase io, lower: true }.should eq "fooBar" }
+    it "handles multi-character mappings correctly (#13533)" do
+      assert_prints "ﬄ_xﬄ".camelcase, "FflXﬄ"
+      assert_prints "İ_xﬄ".camelcase(lower: true), "i̇Xﬄ"
     end
   end
 
@@ -2147,7 +2387,7 @@ describe "String" do
     end
   end
 
-  describe "scan" do
+  describe "#scan" do
     it "does without block" do
       a = "cruel world"
       a.scan(/\w+/).map(&.[0]).should eq(["cruel", "world"])
@@ -2185,6 +2425,11 @@ describe "String" do
       "hello world".scan(/\w+|(?= )/).map(&.[0]).should eq(["hello", "", "world"])
     end
 
+    it "works when match is empty, multibyte char" do
+      "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
+      " Äa".scan(/(?=(\S))/).map(&.[1]).should eq(["Ä", "a"])
+    end
+
     it "works with strings with block" do
       res = [] of String
       "bla bla ablf".scan("bl") { |s| res << s }
@@ -2206,25 +2451,64 @@ describe "String" do
     it "does with number and string" do
       "1ab4".scan(/\d+/).map(&.[0]).should eq(["1", "4"])
     end
+
+    it "options parameter" do
+      "ba".scan(/a/, options: :anchored).map(&.[0]).should eq [] of String
+    end
   end
 
-  it "has match" do
-    "FooBar".match(/oo/).not_nil![0].should eq("oo")
-  end
+  describe "#match" do
+    it "has match" do
+      match = "FooBar".match(/oo/).should_not be_nil
+      match[0].should eq("oo")
+    end
 
-  it "matches with position" do
-    "こんにちは".match(/./, 1).not_nil![0].should eq("ん")
-  end
+    it "matches with position" do
+      match = "こんにちは".match(/./, 1).should_not be_nil
+      match[0].should eq("ん")
+    end
 
-  it "matches empty string" do
-    match = "".match(/.*/).not_nil!
-    match.group_size.should eq(0)
-    match[0].should eq("")
+    it "matches empty string" do
+      match = "".match(/.*/).should_not be_nil
+      match.group_size.should eq(0)
+      match[0].should eq("")
+    end
+
+    it "returns nil" do
+      "foo".match(/bar/).should be_nil
+    end
   end
 
   it "matches, but returns Bool" do
-    "foo".matches?(/foo/).should eq(true)
-    "foo".matches?(/bar/).should eq(false)
+    "foo".matches?(/foo/).should be_true
+    "foo".matches?(/bar/).should be_false
+  end
+
+  it "#matches_full?" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".matches_full?(/foo/).should be_true
+    "fooo".matches_full?(/foo/).should be_false
+    "ofoo".matches_full?(/foo/).should be_false
+    "pattern".matches_full?(/(\A)?pattern(\z)?/).should be_true
+    "_pattern_".matches_full?(/(\A)?pattern(\z)?/).should be_false
+  end
+
+  it "#match_full" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full(/foo/).should_not(be_nil)[0].should eq "foo"
+    "fooo".match_full(/foo/).should be_nil
+    "ofoo".match_full(/foo/).should be_nil
+    "pattern".match_full(/(\A)?pattern(\z)?/).should_not(be_nil)[0].should eq "pattern"
+    "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
+  end
+
+  it "#match_full!" do
+    pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
+    "foo".match_full!(/foo/).should_not(be_nil)[0].should eq "foo"
+    expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
+    expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
+    "pattern".match_full!(/(\A)?pattern(\z)?/).should_not(be_nil)[0].should eq "pattern"
+    expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
   end
 
   it "has size (same as size)" do
@@ -2345,15 +2629,37 @@ describe "String" do
     end
   end
 
-  it "uses sprintf from top-level" do
-    sprintf("Hello %d world", 123).should eq("Hello 123 world")
-    sprintf("Hello %d world", [123]).should eq("Hello 123 world")
+  describe "match!" do
+    it "returns matchdata" do
+      md = "Crystal".match! /(?<bar>.)(?<foo>.)/
+      md[0].should eq "Cr"
+      md.captures.should eq [] of String
+      md.named_captures.should eq({"bar" => "C", "foo" => "r"})
+    end
+
+    it "assigns captures" do
+      md = "foo".match! /foo/
+      $~.should eq md
+    end
+
+    it "raises on non-match" do
+      expect_raises(Regex::Error, "Match not found") { "foo".match! /Crystal/ }
+      expect_raises(NilAssertionError) { $~ }
+    end
+
+    context "with options" do
+      it "Regex::Match options" do
+        expect_raises(Regex::Error, "Match not found") do
+          ".foo".match!(/foo/, options: :anchored)
+        end
+        "foo".match!(/foo/, options: :anchored)
+      end
+    end
   end
 
-  pending_win32 "formats floats (#1562)" do
-    sprintf("%12.2f %12.2f %6.2f %.2f" % {2.0, 3.0, 4.0, 5.0}).should eq("        2.00         3.00   4.00 5.00")
-
-    sprintf("%f", 1e15).should eq("1000000000000000.000000")
+  it "does %" do
+    ("Hello %d world" % 123).should eq("Hello 123 world")
+    ("Hello %d world" % [123]).should eq("Hello 123 world")
   end
 
   it "does each_char" do
@@ -2431,8 +2737,28 @@ describe "String" do
     lines.should eq(["foo\n", "\n", "bar\r\n", "baz\r\n"])
   end
 
+  it "gets each_line with remove_empty = true" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\nbaz\n\n".each_line(remove_empty: true) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo", "bar", "baz"])
+  end
+
+  it "gets each_line with remove_empty = true and chomp = false" do
+    lines = [] of String
+    "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false) do |line|
+      lines << line
+    end.should be_nil
+    lines.should eq(["foo\n", "bar\r\n", "baz"])
+  end
+
   it_iterates "#each_line", ["foo", "bar", "baz"], "foo\nbar\r\nbaz\r\n".each_line
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
+  it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
+  it_iterates "#each_line(remove_empty: true)", [] of String, "\n\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", [] of String, ("\n" * 100_000).each_line(remove_empty: true)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
@@ -2479,79 +2805,66 @@ describe "String" do
     end
   end
 
-  context "%" do
-    it "substitutes one placeholder" do
-      res = "change %{this}" % {"this" => "nothing"}
-      res.should eq "change nothing"
-
-      res = "change %{this}" % {this: "nothing"}
-      res.should eq "change nothing"
+  describe "String.new(&)" do
+    it "creates with matching capacity" do
+      String.new(3) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
     end
 
-    it "substitutes multiple placeholder" do
-      res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
-      res.should eq "change nothing and something"
-
-      res = "change %{this} and %{more}" % {this: "nothing", more: "something"}
-      res.should eq "change nothing and something"
+    it "creates with excess capacity" do
+      String.new(5) { |buf|
+        buf[0] = 'f'.ord.to_u8
+        buf[1] = 'o'.ord.to_u8
+        buf[2] = 'o'.ord.to_u8
+        {3, 3}
+      }.should eq "foo"
     end
 
-    it "throws an error when the key is not found" do
-      expect_raises KeyError do
-        "change %{this}" % {"that" => "wrong key"}
-      end
-
-      expect_raises KeyError do
-        "change %{this}" % {that: "wrong key"}
+    it "raises if string capacity is negative" do
+      expect_raises(ArgumentError, "Negative capacity") do
+        String.new(-1) { |buf| {0, 0} }
       end
     end
 
-    it "raises if expecting hash or named tuple but not given" do
-      expect_raises(ArgumentError, "One hash or named tuple required") do
-        "change %{this}" % "this"
+    it "raises if capacity too big with UInt32::MAX" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt32::MAX) { {0, 0} }
       end
     end
 
-    it "raises on unbalanced curly" do
-      expect_raises(ArgumentError, "Malformed name - unmatched parenthesis") do
-        "change %{this" % {"this" => 1}
+    it "raises if capacity too big with UInt32::MAX - String::HEADER_SIZE - 1" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
       end
     end
 
-    it "applies formatting to %<...> placeholder" do
-      res = "change %<this>.2f" % {"this" => 23.456}
-      res.should eq "change 23.46"
+    it "raises if capacity too big with UInt64::MAX" do
+      expect_raises(ArgumentError, "Capacity too big") do
+        String.new(UInt64::MAX) { {0, 0} }
+      end
+    end
 
-      res = "change %<this>.2f" % {this: 23.456}
-      res.should eq "change 23.46"
+    pending_wasm32 "allocates buffer of correct size (#3332)" do
+      String.new(255_u8) do |buffer|
+        LibGC.size(buffer).should be > 255
+        {255, 0}
+      end
+    end
+
+    it "raises if returned bytesize is greater than capacity" do
+      expect_raises ArgumentError, "Bytesize out of capacity bounds" do
+        String.new(123) do |buffer|
+          {124, 0}
+        end
+      end
     end
   end
 
-  it "raises if string capacity is negative" do
-    expect_raises(ArgumentError, "Negative capacity") do
-      String.new(-1) { |buf| {0, 0} }
-    end
-  end
-
-  it "raises if capacity too big on new with UInt32::MAX" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt32::MAX) { {0, 0} }
-    end
-  end
-
-  it "raises if capacity too big on new with UInt32::MAX - String::HEADER_SIZE - 1" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt32::MAX - String::HEADER_SIZE) { {0, 0} }
-    end
-  end
-
-  it "raises if capacity too big on new with UInt64::MAX" do
-    expect_raises(ArgumentError, "Capacity too big") do
-      String.new(UInt64::MAX) { {0, 0} }
-    end
-  end
-
-  describe "compare" do
+  describe "#compare" do
     it "compares case-sensitive" do
       "fo".compare("foo").should eq(-1)
       "foo".compare("fo").should eq(1)
@@ -2583,6 +2896,19 @@ describe "String" do
       "abc".compare("", case_insensitive: true).should eq(1)
       "abcA".compare("abca", case_insensitive: true).should eq(0)
     end
+
+    it "compares case-insensitive, multiple chars after case conversion (#4513)" do
+      "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+    end
+
+    it "treats invalid code units as replacement char in an otherwise ascii string" do
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("a", case_insensitive: true).should eq(1)
+      "a".compare("\xC0", case_insensitive: true).should eq(-1)
+    end
   end
 
   it "builds with write_byte" do
@@ -2612,8 +2938,24 @@ describe "String" do
     describe "encode" do
       it "encodes" do
         bytes = "Hello".encode("UCS-2LE")
-        bytes.to_a.should eq([72, 0, 101, 0, 108, 0, 108, 0, 111, 0])
+        bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
+
+      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+        it "flushes the shift state (#11992)" do
+          "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
+
+      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+        it "flushes the shift state (#11992)" do
+          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+        end
+      {% end %}
 
       it "raises if wrong encoding" do
         expect_raises ArgumentError, "Invalid encoding: FOO" do
@@ -2634,7 +2976,7 @@ describe "String" do
       end
 
       it "doesn't raise on invalid byte sequence" do
-        "好\xff是".encode("EUC-JP", invalid: :skip).to_a.should eq([185, 165, 192, 167])
+        "好\xff是".encode("EUC-JP", invalid: :skip).should eq(Bytes[185, 165, 192, 167])
       end
 
       it "raises if incomplete byte sequence" do
@@ -2644,13 +2986,29 @@ describe "String" do
       end
 
       it "doesn't raise if incomplete byte sequence" do
-        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).to_a.should eq([192, 167])
+        ("好".byte_slice(0, 1) + "是").encode("EUC-JP", invalid: :skip).should eq(Bytes[192, 167])
       end
 
       it "decodes" do
         bytes = "Hello".encode("UTF-16LE")
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
+
+      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
+        end
+      {% end %}
+
+      # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
+      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+        it "decodes with shift state" do
+          String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
+          String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
+        end
+      {% end %}
 
       it "decodes with skip" do
         bytes = Bytes[186, 195, 255, 202, 199]
@@ -2719,21 +3077,6 @@ describe "String" do
     string.should be(clone)
   end
 
-  it "allocates buffer of correct size when UInt8 is given to new (#3332)" do
-    String.new(255_u8) do |buffer|
-      LibGC.size(buffer).should be >= 255
-      {255, 0}
-    end
-  end
-
-  it "raises on String.new if returned bytesize is greater than capacity" do
-    expect_raises ArgumentError, "Bytesize out of capacity bounds" do
-      String.new(123) do |buffer|
-        {124, 0}
-      end
-    end
-  end
-
   describe "invalid UTF-8 byte sequence" do
     it "gets size" do
       string = String.new(Bytes[255, 0, 0, 0, 65])
@@ -2757,7 +3100,15 @@ describe "String" do
 
     it "valid_encoding?" do
       "hello".valid_encoding?.should be_true
-      String.new(Bytes[255, 0]).valid_encoding?.should be_false
+      "hello\u{80}\u{7FF}\u{800}\u{FFFF}\u{10000}\u{10FFFF}".valid_encoding?.should be_true
+
+      {% for bytes in VALID_UTF8_BYTE_SEQUENCES %}
+        String.new(Bytes{{ bytes }}).valid_encoding?.should be_true
+      {% end %}
+
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        String.new(Bytes{{ bytes }}).valid_encoding?.should be_false
+      {% end %}
     end
 
     it "scrubs" do
@@ -2860,6 +3211,80 @@ describe "String" do
       it { "セキロ：シャドウズ ダイ トゥワイス".delete_at(4...10).should eq("セキロ：ダイ トゥワイス") }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(19..1) } }
       it { expect_raises(IndexError) { "セキロ：シャドウズ ダイ トゥワイス".delete_at(-19..1) } }
+    end
+  end
+
+  describe "ensure_suffix" do
+    context "with string suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix("bar").should eq("foobar")
+        "foo".ensure_suffix("FOO").should eq("fooFOO")
+        "foo".ensure_suffix("").should eq("foo")
+        "foobar".ensure_suffix("arr").should eq("foobararr")
+      end
+
+      it "does not add suffix if already present" do
+        "foobar".ensure_suffix("bar").should eq("foobar")
+        "FOOBAR".ensure_suffix("BAR").should eq("FOOBAR")
+      end
+    end
+
+    context "with char suffix" do
+      it "adds suffix if not present" do
+        "foo".ensure_suffix('b').should eq("foob")
+        "foo".ensure_suffix('O').should eq("fooO")
+      end
+
+      it "does not add suffix if already present" do
+        "foob".ensure_suffix('b').should eq("foob")
+        "FOOB".ensure_suffix('B').should eq("FOOB")
+      end
+    end
+  end
+
+  describe "ensure_prefix" do
+    context "with string prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix("bar").should eq("barfoo")
+        "foo".ensure_prefix("FOO").should eq("FOOfoo")
+        "foo".ensure_prefix("").should eq("foo")
+        "foo".ensure_prefix("barf").should eq("barffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "foobar".ensure_prefix("foo").should eq("foobar")
+        "FOOBAR".ensure_prefix("FOO").should eq("FOOBAR")
+      end
+    end
+
+    context "with char prefix" do
+      it "adds prefix if not present" do
+        "foo".ensure_prefix('b').should eq("bfoo")
+        "foo".ensure_prefix('F').should eq("Ffoo")
+      end
+
+      it "does not add prefix if already present" do
+        "bfoo".ensure_prefix('b').should eq("bfoo")
+        "BFOO".ensure_prefix('B').should eq("BFOO")
+      end
+    end
+  end
+
+  it ".additive_identity" do
+    String.additive_identity.should be ""
+  end
+end
+
+class String
+  describe String do
+    it ".char_bytesize_at" do
+      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        String.char_bytesize_at(Bytes[{{ bytes.splat }}, 0].to_unsafe).should eq({{ bytes.size }})
+      {% end %}
+
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        String.char_bytesize_at(Bytes[{{ bytes.splat }}, 0].to_unsafe).should eq 1
+      {% end %}
     end
   end
 end

@@ -14,8 +14,8 @@ module OpenSSL::X509
     # ```
     def self.parse(string : String) : Name
       new.tap do |name|
-        string.split('/').each do |entry|
-          oid, value = entry.split('=')
+        string.split('/') do |entry|
+          oid, _, value = entry.partition('=')
           name.add_entry(oid, value)
         end
       end
@@ -86,7 +86,7 @@ module OpenSSL::X509
         end
 
         asn1 = LibCrypto.x509_name_entry_get_data(entry)
-        str = LibCrypto.asn1_string_data(asn1)
+        str = LibCrypto.asn1_string_get0_data(asn1)
         str_len = LibCrypto.asn1_string_length(asn1)
 
         {oid, String.new(str, str_len)}

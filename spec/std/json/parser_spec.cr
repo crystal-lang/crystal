@@ -22,6 +22,7 @@ describe JSON::Parser do
   it_parses "true", true
   it_parses "false", false
   it_parses "null", nil
+  it_parses %("\\nПривет, мир!"), "\nПривет, мир!"
 
   it_parses "[]", [] of Int32
   it_parses "[1]", [1]

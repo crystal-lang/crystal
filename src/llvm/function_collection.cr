@@ -4,14 +4,22 @@ struct LLVM::FunctionCollection
 
   def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false)
     # check_types_context(name, arg_types, ret_type)
+    add(name, LLVM::Type.function(arg_types, ret_type, varargs))
+  end
 
-    fun_type = LLVM::Type.function(arg_types, ret_type, varargs)
+  def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false, &)
+    func = add(name, arg_types, ret_type, varargs)
+    yield func
+    func
+  end
+
+  def add(name, fun_type : LLVM::Type)
     func = LibLLVM.add_function(@mod, name, fun_type)
     Function.new(func)
   end
 
-  def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false)
-    func = add(name, arg_types, ret_type, varargs)
+  def add(name, fun_type : LLVM::Type, &)
+    func = add(name, fun_type)
     yield func
     func
   end
@@ -22,11 +30,17 @@ struct LLVM::FunctionCollection
   end
 
   def []?(name)
-    func = LibLLVM.get_named_function(@mod, name)
+    func =
+      {% if LibLLVM::IS_LT_200 %}
+        LibLLVM.get_named_function(@mod, name)
+      {% else %}
+        LibLLVM.get_named_function_with_length(@mod, name, name.bytesize)
+      {% end %}
+
     func ? Function.new(func) : nil
   end
 
-  def each : Nil
+  def each(&) : Nil
     f = LibLLVM.get_first_function(@mod)
     while f
       yield LLVM::Function.new f

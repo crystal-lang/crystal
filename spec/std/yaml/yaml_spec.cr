@@ -8,7 +8,7 @@ describe "YAML" do
     it { YAML.parse_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
     it { YAML.parse("foo: bar").should eq({"foo" => "bar"}) }
     it { YAML.parse("--- []\n").should eq([] of YAML::Any) }
-    it { YAML.parse("---\n...").should eq nil }
+    it { YAML.parse("---\n...").should eq YAML::Any.new(nil) }
 
     it "parses recursive sequence" do
       doc = YAML.parse("--- &foo\n- *foo\n")
@@ -101,47 +101,43 @@ describe "YAML" do
       end
 
       it "has correct line/number info (#2585)" do
-        begin
-          YAML.parse <<-YAML
+        YAML.parse <<-YAML
             ---
             level_one:
             - name: "test"
                attributes:
                  one: "broken"
             YAML
-          fail "expected YAML.parse to raise"
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(4)
-          ex.column_number.should eq(4)
-        end
+        fail "expected YAML.parse to raise"
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(4)
+        ex.column_number.should eq(4)
       end
 
       it "has correct line/number info (2)" do
-        begin
-          parser = YAML::PullParser.new <<-MSG
+        parser = YAML::PullParser.new <<-MSG
 
               authors:
                 - [foo] bar
             MSG
 
-          parser.read_stream do
-            parser.read_document do
-              parser.read_scalar
-            end
+        parser.read_stream do
+          parser.read_document do
+            parser.read_scalar
           end
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(2)
-          ex.column_number.should eq(3)
         end
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(2)
+        ex.column_number.should eq(3)
       end
 
       it "has correct message (#4006)" do
         expect_raises YAML::ParseException, "could not find expected ':' at line 4, column 1, while scanning a simple key at line 3, column 5" do
-          YAML.parse <<-END
+          YAML.parse <<-YAML
             a:
               - "b": >
                 c
-            END
+            YAML
         end
       end
 

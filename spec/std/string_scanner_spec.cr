@@ -1,276 +1,685 @@
 require "spec"
 require "string_scanner"
 
-describe StringScanner, "#scan" do
-  it "returns the string matched and advances the offset" do
-    s = StringScanner.new("this is a string")
-    s.scan(/\w+\s/).should eq("this ")
-    s.scan(/\w+\s/).should eq("is ")
-    s.scan(/\w+\s/).should eq("a ")
-    s.scan(/\w+/).should eq("string")
+describe StringScanner do
+  describe "#scan" do
+    it "returns the string matched and advances the offset" do
+      s = StringScanner.new("this is a string")
+      s.scan(/\w+/).should eq("this")
+      s.scan(' ').should eq(" ")
+      s.scan("is ").should eq("is ")
+      s.scan(/\w+\s/).should eq("a ")
+      s.scan(2).should eq("st")
+      s.scan(/\w+/).should eq("ring")
+    end
+
+    it "returns nil if it can't match from the offset" do
+      s = StringScanner.new("test string")
+      s.scan(/\w+/).should_not be_nil # => "test"
+      s.scan(/\w+/).should be_nil
+      s.scan('s').should be_nil
+      s.scan("string").should be_nil
+      s.scan(/\s\w\w/).should_not be_nil # => " string"
+      s.scan(4).should eq("ring")
+      s.scan(/.*/).should_not be_nil # => ""
+      s.scan(1).should be_nil
+    end
+
+    it "errors on negative ints" do
+      s = StringScanner.new("testy mctesterson")
+      s.scan(10)
+      expect_raises(ArgumentError, "Negative lookahead count: -10") { s.scan(-10) }
+    end
+
+    it "works on multi-byte strings" do
+      s = StringScanner.new("テストの文字列")
+      s.scan(/\w\w\w/).should eq("テスト")
+      s.scan(/[a-z]+/).should be_nil
+      s.scan('ト').should be_nil
+      s.scan('の').should eq("の")
+      s.scan(10).should be_nil
+      s.scan(2).should eq("文字")
+      s.scan("不在").should be_nil
+      s.scan("列").should eq("列")
+    end
   end
 
-  it "returns nil if it can't match from the offset" do
-    s = StringScanner.new("test string")
-    s.scan(/\w+/).should_not be_nil # => "test"
-    s.scan(/\w+/).should be_nil
-    s.scan(/\s\w+/).should_not be_nil # => " string"
-    s.scan(/.*/).should_not be_nil    # => ""
-  end
-end
+  describe "#scan_until" do
+    it "returns the string matched and advances the offset" do
+      s = StringScanner.new("test string")
+      s.scan_until(/t /).should eq("test ")
+      s.offset.should eq(5)
+      s.scan_until("tr").should eq("str")
+      s.offset.should eq(8)
+      s.scan_until('n').should eq("in")
+      s.offset.should eq(10)
+    end
 
-describe StringScanner, "#scan_until" do
-  it "returns the string matched and advances the offset" do
-    s = StringScanner.new("test string")
-    s.scan_until(/tr/).should eq("test str")
-    s.offset.should eq(8)
-    s.scan_until(/g/).should eq("ing")
-  end
-
-  it "returns nil if it can't match from the offset" do
-    s = StringScanner.new("test string")
-    s.offset = 8
-    s.scan_until(/tr/).should be_nil
-  end
-end
-
-describe StringScanner, "#skip" do
-  it "advances the offset but does not returns the string matched" do
-    s = StringScanner.new("this is a string")
-
-    s.skip(/\w+\s/).should eq(5)
-    s.offset.should eq(5)
-    s[0]?.should_not be_nil
-
-    s.skip(/\d+/).should eq(nil)
-    s.offset.should eq(5)
-
-    s.skip(/\w+\s/).should eq(3)
-    s.offset.should eq(8)
-
-    s.skip(/\w+\s/).should eq(2)
-    s.offset.should eq(10)
-
-    s.skip(/\w+/).should eq(6)
-    s.offset.should eq(16)
-  end
-end
-
-describe StringScanner, "#skip_until" do
-  it "advances the offset but does not returns the string matched" do
-    s = StringScanner.new("this is a string")
-
-    s.skip_until(/not/).should eq(nil)
-    s.offset.should eq(0)
-    s[0]?.should be_nil
-
-    s.skip_until(/a\s/).should eq(10)
-    s.offset.should eq(10)
-    s[0]?.should_not be_nil
-
-    s.skip_until(/ng/).should eq(6)
-    s.offset.should eq(16)
-  end
-end
-
-describe StringScanner, "#eos" do
-  it "it is true when the offset is at the end" do
-    s = StringScanner.new("this is a string")
-    s.eos?.should eq(false)
-    s.skip(/(\w+\s?){4}/)
-    s.eos?.should eq(true)
-  end
-end
-
-describe StringScanner, "#check" do
-  it "returns the string matched but does not advances the offset" do
-    s = StringScanner.new("this is a string")
-    s.offset = 5
-
-    s.check(/\w+\s/).should eq("is ")
-    s.offset.should eq(5)
-    s.check(/\w+\s/).should eq("is ")
-    s.offset.should eq(5)
+    it "returns nil if it can't match from the offset" do
+      s = StringScanner.new("test string")
+      s.offset = 8
+      s.scan_until(/tr/).should be_nil
+      s.scan_until('r').should be_nil
+      s.scan_until("tr").should be_nil
+    end
   end
 
-  it "returns nil if it can't match from the offset" do
-    s = StringScanner.new("test string")
-    s.check(/\d+/).should be_nil
-  end
-end
+  describe "#skip" do
+    describe "with single byte strings" do
+      it "advances the offset but does not return the string matched" do
+        s = StringScanner.new("this is a string")
 
-describe StringScanner, "#check_until" do
-  it "returns the string matched and advances the offset" do
-    s = StringScanner.new("test string")
-    s.check_until(/tr/).should eq("test str")
-    s.offset.should eq(0)
-    s.check_until(/g/).should eq("test string")
-    s.offset.should eq(0)
-  end
+        s.skip(/\w+\s/).should eq(5)
+        s.offset.should eq(5)
+        s[0]?.should eq("this ")
 
-  it "returns nil if it can't match from the offset" do
-    s = StringScanner.new("test string")
-    s.offset = 8
-    s.check_until(/tr/).should be_nil
-  end
-end
+        s.skip(/\d+/).should be_nil
+        s.offset.should eq(5)
+        s[0]?.should be_nil
 
-describe StringScanner, "#rest" do
-  it "returns the remainder of the string from the offset" do
-    s = StringScanner.new("this is a string")
-    s.rest.should eq("this is a string")
+        s.skip('i').should eq(1)
+        s.offset.should eq(6)
+        s[0]?.should eq("i")
 
-    s.scan(/this is a /)
-    s.rest.should eq("string")
+        s.skip("s ").should eq(2)
+        s.offset.should eq(8)
+        s[0]?.should eq("s ")
 
-    s.scan(/string/)
-    s.rest.should eq("")
-  end
-end
+        s.skip(/\w+\s/).should eq(2)
+        s.offset.should eq(10)
+        s[0]?.should eq("a ")
 
-describe StringScanner, "#[]" do
-  it "allows access to subgroups of the last match" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
-    s.scan(regex).should eq("Fri Dec 12")
-    s[0].should eq("Fri Dec 12")
-    s[1].should eq("Fri")
-    s[2].should eq("Dec")
-    s[3].should eq("12")
-    s["wday"].should eq("Fri")
-    s["month"].should eq("Dec")
-    s["day"].should eq("12")
-  end
+        s.skip(5).should eq(5)
+        s.offset.should eq(15)
+        s[0]?.should eq("strin")
 
-  it "raises when there is no last match" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    s.scan(/this is not there/)
+        s.skip(100).should be_nil
+        s.skip(2).should be_nil
+        s.skip(1).should eq(1)
+        s.skip(1).should be_nil
+        s.skip(0).should eq(0)
+      end
+    end
 
-    expect_raises(Exception, "Nil assertion failed") { s[0] }
-  end
+    describe "with multibyte strings" do
+      it "advances the offset but does not return the string matched" do
+        s = StringScanner.new("これは文字列である")
 
-  it "raises when there is no subgroup" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
-    s.scan(regex)
+        s.skip(/\w\w\w/).should eq(3)
+        s.offset.should eq(3)
+        s[0]?.should eq("これは")
 
-    s[0].should_not be_nil
-    expect_raises(IndexError) { s[5] }
-    expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
-  end
-end
+        s.skip(/\d+/).should be_nil
+        s.offset.should eq(3)
 
-describe StringScanner, "#[]?" do
-  it "allows access to subgroups of the last match" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    result = s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
+        s.skip(100).should be_nil
 
-    result.should eq("Fri Dec 12")
-    s[0]?.should eq("Fri Dec 12")
-    s[1]?.should eq("Fri")
-    s[2]?.should eq("Dec")
-    s[3]?.should eq("12")
-    s["wday"]?.should eq("Fri")
-    s["month"]?.should eq("Dec")
-    s["day"]?.should eq("12")
+        s.skip("文字").should eq(2)
+        s.offset.should eq(5)
+        s[0]?.should eq("文字")
+
+        s.skip('列').should eq(1)
+        s.offset.should eq(6)
+        s[0]?.should eq("列")
+
+        s.skip(2).should eq(2)
+        s.offset.should eq(8)
+        s[0]?.should eq("であ")
+
+        s.skip(2).should be_nil
+        s.skip(0).should eq(0)
+        s[0]?.should eq("")
+
+        s.skip(1).should eq(1)
+        s[0]?.should eq("る")
+
+        s.eos?.should be_true
+        s.skip(1).should be_nil
+        s.skip(0).should eq(0)
+        s[0]?.should eq("")
+      end
+    end
   end
 
-  it "returns nil when there is no last match" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    s.scan(/this is not there/)
+  describe "#skip_until" do
+    it "advances the offset but does not return the string matched" do
+      s = StringScanner.new("this is a string")
 
-    s[0]?.should be_nil
+      s.skip_until(/not/).should be_nil
+      s.offset.should eq(0)
+      s[0]?.should be_nil
+
+      s.skip_until(/\sis\s/).should eq(8)
+      s.offset.should eq(8)
+      s[0]?.should_not be_nil
+
+      s.skip_until("st").should eq(4)
+      s.offset.should eq(12)
+      s[0]?.should_not be_nil
+
+      s.skip_until("ng").should eq(4)
+      s.offset.should eq(16)
+      s[0]?.should_not be_nil
+    end
   end
 
-  it "raises when there is no subgroup" do
-    s = StringScanner.new("Fri Dec 12 1975 14:39")
-    s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
-
-    s[0].should_not be_nil
-    s[5]?.should be_nil
-    s["something"]?.should be_nil
+  describe "#eos" do
+    it "it is true when the offset is at the end" do
+      s = StringScanner.new("this is a string")
+      s.eos?.should be_false
+      s.skip(/(\w+\s?){4}/)
+      s.eos?.should be_true
+    end
   end
-end
 
-describe StringScanner, "#string" do
-  it { StringScanner.new("foo").string.should eq("foo") }
-end
+  describe "#check" do
+    it "returns the string matched but does not advances the offset" do
+      s = StringScanner.new("this is a string")
+      s.offset = 5
 
-describe StringScanner, "#offset" do
-  it "returns the current position" do
-    s = StringScanner.new("this is a string")
-    s.offset.should eq(0)
+      s.check(/\w+\s/).should eq("is ")
+      s.offset.should eq(5)
+      s[0].should eq("is ")
+
+      s.check(/\w+\s/).should eq("is ")
+      s.offset.should eq(5)
+      s[0].should eq("is ")
+
+      s.check('i').should eq("i")
+      s.offset.should eq(5)
+      s[0].should eq("i")
+
+      s.check("is a str").should eq("is a str")
+      s.offset.should eq(5)
+      s[0].should eq("is a str")
+
+      s.check(4).should eq("is a")
+      s.offset.should eq(5)
+      s[0].should eq("is a")
+
+      s.check(100).should be_nil
+      s.offset.should eq(5)
+      s[0]?.should be_nil
+    end
+
+    it "returns nil if it can't match from the offset" do
+      s = StringScanner.new("test string")
+      s.check(/\d+/).should be_nil
+      s.check('0').should be_nil
+      s.check("01").should be_nil
+      s.check(100).should be_nil
+    end
+  end
+
+  describe "#check_until" do
+    it "returns the string matched and advances the offset" do
+      s = StringScanner.new("test string")
+      s.check_until(/tr/).should eq("test str")
+      s.offset.should eq(0)
+      s.check_until('r').should eq("test str")
+      s.offset.should eq(0)
+      s.check_until("tr").should eq("test str")
+      s.offset.should eq(0)
+      s.check_until(/g/).should eq("test string")
+      s.offset.should eq(0)
+      s.check_until('g').should eq("test string")
+      s.offset.should eq(0)
+      s.check_until("ng").should eq("test string")
+      s.offset.should eq(0)
+    end
+
+    it "returns nil if it can't match from the offset" do
+      s = StringScanner.new("test string")
+      s.offset = 8
+      s.check_until(/tr/).should be_nil
+      s.check_until('r').should be_nil
+      s.check_until("tr").should be_nil
+    end
+  end
+
+  describe "#rest" do
+    it "returns the remainder of the string from the offset" do
+      s = StringScanner.new("this is a string")
+      s.rest.should eq("this is a string")
+
+      s.scan(/this is a /)
+      s.rest.should eq("string")
+
+      s.scan(/string/)
+      s.rest.should eq("")
+    end
+  end
+
+  describe "#[]" do
+    it "allows access to subgroups of the last match" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+      regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+      s.scan(regex).should eq("Fri Dec 12")
+      s[0].should eq("Fri Dec 12")
+      s[1].should eq("Fri")
+      s[2].should eq("Dec")
+      s[3].should eq("12")
+      s["wday"].should eq("Fri")
+      s["month"].should eq("Dec")
+      s["day"].should eq("12")
+
+      s.scan(' ').should eq(" ")
+      s[0].should eq(" ")
+      s.scan("1975").should eq("1975")
+      s[0].should eq("1975")
+    end
+
+    it "raises when there is no last match" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+
+      s.scan(/this is not there/)
+      expect_raises(Exception, "Nil assertion failed") { s[0] }
+
+      s.scan('t')
+      expect_raises(Exception, "Nil assertion failed") { s[0] }
+
+      s.scan("this is not there")
+      expect_raises(Exception, "Nil assertion failed") { s[0] }
+    end
+
+    it "raises when there is no subgroup" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+      regex = /(?<wday>\w+) (?<month>\w+) (?<day>\d+)/
+
+      s.scan(regex)
+
+      s[0].should_not be_nil
+      expect_raises(IndexError) { s[5] }
+      expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
+
+      s.scan(' ')
+
+      s[0].should_not be_nil
+      expect_raises(IndexError) { s[1] }
+      expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
+
+      s.scan("1975")
+
+      s[0].should_not be_nil
+      expect_raises(IndexError) { s[1] }
+      expect_raises(KeyError, "Capture group 'something' does not exist") { s["something"] }
+    end
+  end
+
+  describe "#[]?" do
+    it "allows access to subgroups of the last match" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+      result = s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
+
+      result.should eq("Fri Dec 12")
+      s[0]?.should eq("Fri Dec 12")
+      s[1]?.should eq("Fri")
+      s[2]?.should eq("Dec")
+      s[3]?.should eq("12")
+      s["wday"]?.should eq("Fri")
+      s["month"]?.should eq("Dec")
+      s["day"]?.should eq("12")
+
+      s.scan(' ').should eq(" ")
+      s[0]?.should eq(" ")
+      s.scan("1975").should eq("1975")
+      s[0]?.should eq("1975")
+    end
+
+    it "returns nil when there is no last match" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+      s.scan(/this is not there/)
+
+      s[0]?.should be_nil
+
+      s.scan('t')
+      s[0]?.should be_nil
+
+      s.scan("this is not there")
+      s[0]?.should be_nil
+    end
+
+    it "raises when there is no subgroup" do
+      s = StringScanner.new("Fri Dec 12 1975 14:39")
+
+      s.scan(/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/)
+
+      s[0]?.should_not be_nil
+      s[5]?.should be_nil
+      s["something"]?.should be_nil
+
+      s.scan(' ')
+
+      s[0]?.should_not be_nil
+      s[1]?.should be_nil
+      s["something"]?.should be_nil
+
+      s.scan("1975")
+
+      s[0]?.should_not be_nil
+      s[1]?.should be_nil
+      s["something"]?.should be_nil
+    end
+  end
+
+  describe "#string" do
+    it { StringScanner.new("foo").string.should eq("foo") }
+  end
+
+  describe "#offset" do
+    it "returns the current position" do
+      s = StringScanner.new("this is a string")
+      s.offset.should eq(0)
+      s.scan(/\w+/)
+      s.offset.should eq(4)
+    end
+  end
+
+  describe "#offset=" do
+    it "sets the current position" do
+      s = StringScanner.new("this is a string")
+      s.offset = 5
+      s.scan(/\w+/).should eq("is")
+    end
+
+    it "raises on negative positions" do
+      s = StringScanner.new("this is a string")
+      expect_raises(IndexError) { s.offset = -2 }
+    end
+  end
+
+  describe "#inspect" do
+    it "has information on the scanner" do
+      s = StringScanner.new("this is a string")
+      s.inspect.should eq(%(#<StringScanner 0/16 "‣this …>))
+      s.scan(/\w+\s/)
+      s.inspect.should eq(%(#<StringScanner 5/16 …s ‣is …>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 6/16 … i‣s a…>))
+      s.scan(/\w+\s/)
+      s.inspect.should eq(%(#<StringScanner 8/16 …s ‣a s…>))
+      s.scan(/\w+\s\w+/)
+      s.inspect.should eq(%(#<StringScanner 16/16 …tring‣">))
+    end
+
+    it "works with small strings" do
+      s = StringScanner.new("hi")
+      s.inspect.should eq(%(#<StringScanner 0/2 "‣hi">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 1/2 "h‣i">))
+      s.scan(/\w/)
+      s.inspect.should eq(%(#<StringScanner 2/2 "hi‣">))
+
+      s = StringScanner.new(" a\n\t ")
+      s.skip(1)
+      s.inspect.should eq(%(#<StringScanner 1/5 " ‣a\\n\\t ">))
+
+      s = StringScanner.new("\0\e")
+      s.skip(1)
+      s.inspect.should eq(%(#<StringScanner 1/2 "\\u0000‣\\e">))
+    end
+
+    it "works with multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.inspect.should eq(%(#<StringScanner 0/9 "‣これは文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 1/9 "こ‣れは文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 2/9 "これ‣は文字…>))
+      s.scan(1)
+      s.inspect.should eq(%(#<StringScanner 3/9 …れは‣文字列…>))
+      s.scan(3)
+      s.inspect.should eq(%(#<StringScanner 6/9 …字列‣である">))
+      s.terminate
+      s.inspect.should eq(%(#<StringScanner 9/9 …字列である‣">))
+    end
+
+    it "works with empty string" do
+      s = StringScanner.new("")
+      s.inspect.should eq(%(#<StringScanner 0/0 "‣">))
+    end
+  end
+
+  describe "#peek" do
+    it "shows the next len characters without advancing the offset" do
+      s = StringScanner.new("this is a string")
+      s.offset.should eq(0)
+      s.peek(4).should eq("this")
+      s.offset.should eq(0)
+      s.peek(7).should eq("this is")
+      s.offset.should eq(0)
+    end
+
+    it "shows the next len characters for multi-byte strings" do
+      s = StringScanner.new("これは文字列である")
+      s.offset.should eq(0)
+      s.peek(3).should eq("これは")
+      s.offset.should eq(0)
+      s.peek(6).should eq("これは文字列")
+      s.offset.should eq(0)
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(2)
+      expect_raises(ArgumentError, "Negative lookahead count: -1") { s.peek(-1) }
+    end
+  end
+
+  describe "#peek_behind" do
+    it "shows characters behind the scan head" do
+      s = StringScanner.new("abcdefg")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("abc")
+      s.peek_behind(2).should eq("bc")
+    end
+
+    it "shows characters behind the scan head for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.peek_behind(10).should eq("")
+      s.scan(3)
+      s.peek_behind(10).should eq("あいう")
+      s.peek_behind(2).should eq("いう")
+    end
+
+    it "errors on negative input" do
+      s = StringScanner.new("abcde")
+      s.scan(3)
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.peek_behind(-1) }
+    end
+  end
+
+  describe "#rewind" do
+    it "rewinds a single byte optimizable string" do
+      s = StringScanner.new("abcde")
+
+      expect_raises(IndexError, "Index out of range") { s.rewind(10) }
+
+      s.offset.should eq(0)
+
+      expect_raises(ArgumentError, "Negative lookbehind count") { s.rewind(-1) }
+
+      s.skip(3)
+      s.current_char.should eq('d')
+      s.offset.should eq(3)
+
+      s.rewind(0)
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      expect_raises(IndexError, "Index out of range") { s.rewind(1000) }
+      s.offset.should eq(1)
+    end
+
+    it "rewinds a multibyte char string" do
+      s = StringScanner.new("あいうえお")
+      expect_raises(IndexError, "Index out of range") { s.rewind(10) }
+      s.offset.should eq(0)
+
+      s.skip(3)
+      s.current_char.should eq('え')
+      s.offset.should eq(3)
+
+      s.rewind(2)
+      s.offset.should eq(1)
+
+      expect_raises(IndexError, "Index out of range") { s.rewind(1000) }
+      s.offset.should eq(1)
+    end
+  end
+
+  describe "#previous_char? and #previous_byte?" do
+    it "finds the previous byte or char for single-byte strings" do
+      s = StringScanner.new("abcde")
+      s.previous_byte?.should be_nil
+      expect_raises(IndexError, "No previous byte") { s.previous_byte }
+      s.previous_char?.should be_nil
+      expect_raises(IndexError) { s.previous_char }
+
+      s.scan(1)
+      s.previous_byte?.should eq('a'.ord)
+      s.previous_byte.should eq('a'.ord)
+      s.previous_char?.should eq('a')
+      s.previous_char.should eq('a')
+    end
+
+    it "finds the previous byte or char for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.previous_byte?.should be_nil
+      expect_raises(IndexError, "No previous byte") { s.previous_byte }
+      s.previous_char?.should be_nil
+      expect_raises(IndexError) { s.previous_char }
+
+      s.scan(1)
+      s.previous_byte?.should eq('あ'.bytes.last)
+      s.previous_byte.should eq('あ'.bytes.last)
+      s.previous_char?.should eq('あ')
+      s.previous_char.should eq('あ')
+    end
+  end
+
+  describe "#current_char and #current_byte" do
+    it "finds the current byte and char for single-byte strings" do
+      s = StringScanner.new("abcde")
+      s.current_char.should eq('a')
+      s.current_char?.should eq('a')
+      s.current_byte.should eq('a'.ord)
+      s.current_byte?.should eq('a'.ord)
+
+      s.scan(2)
+      s.current_char.should eq('c')
+      s.current_char?.should eq('c')
+      s.current_byte.should eq('c'.ord)
+      s.current_byte?.should eq('c'.ord)
+
+      s.terminate
+      s.current_char?.should be_nil
+      expect_raises(IndexError) { s.current_char }
+      s.current_byte?.should be_nil
+      expect_raises(IndexError) { s.current_byte }
+    end
+
+    it "finds the current byte and char for multi-byte strings" do
+      s = StringScanner.new("あいうえお")
+      s.current_char.should eq('あ')
+      s.current_char?.should eq('あ')
+      s.current_byte.should eq('あ'.bytes.first)
+      s.current_byte?.should eq('あ'.bytes.first)
+
+      s.scan(2)
+      s.current_char.should eq('う')
+      s.current_char?.should eq('う')
+      s.current_byte.should eq('う'.bytes.first)
+      s.current_byte?.should eq('う'.bytes.first)
+
+      s.terminate
+      s.current_char?.should be_nil
+      expect_raises(IndexError) { s.current_char }
+      s.current_byte?.should be_nil
+      expect_raises(IndexError) { s.current_byte }
+    end
+  end
+
+  describe "#beginning_of_line?" do
+    it "checks backwards for a newline or start of string" do
+      s = StringScanner.new("a\nb\nc\n")
+      s.beginning_of_line?.should be_true
+      s.skip(1)
+      s.beginning_of_line?.should be_false
+      s.skip(1)
+      s.beginning_of_line?.should be_true
+      s.terminate
+      s.beginning_of_line?.should be_false
+    end
+  end
+
+  describe "#reset" do
+    it "resets the scan offset to the beginning and clears the last match" do
+      s = StringScanner.new("this is a string")
+      s.scan_until(/str/)
+      s[0]?.should_not be_nil
+      s.offset.should_not eq(0)
+
+      s.reset
+      s[0]?.should be_nil
+      s.offset.should eq(0)
+    end
+  end
+
+  describe "#terminate" do
+    it "moves the scan offset to the end of the string and clears the last match" do
+      s = StringScanner.new("this is a string")
+      s.scan_until(/str/)
+      s[0]?.should_not be_nil
+      s.eos?.should be_false
+
+      s.terminate
+      s[0]?.should be_nil
+      s.eos?.should be_true
+    end
+  end
+
+  describe "#matched?" do
+    s = StringScanner.new("sphinx of black quartz, judge my vow")
+    s.matched?.should eq(false)
+
+    s.check(1000)
+    s.matched?.should eq(false)
+    s.check(10)
+    s.matched?.should eq(true)
+
+    s.check(/Sphinx/)
+    s.matched?.should eq(false)
+    s.check(/sphinx/)
+    s.matched?.should eq(true)
+
+    s.skip("nonsense")
+    s.matched?.should eq(false)
+    s.skip("sphinx ")
+    s.matched?.should eq(true)
+
+    s.skip(1000)
+    s.matched?.should eq(false)
+    s.skip(3)
+    s.matched?.should eq(true)
+
+    s.scan(/\d+/)
+    s.matched?.should eq(false)
     s.scan(/\w+/)
-    s.offset.should eq(4)
-  end
-end
+    s.matched?.should eq(true)
 
-describe StringScanner, "#offset=" do
-  it "sets the current position" do
-    s = StringScanner.new("this is a string")
-    s.offset = 5
-    s.scan(/\w+/).should eq("is")
-  end
+    s.scan('b')
+    s.matched?.should eq(false)
+    s.scan(' ')
+    s.matched?.should eq(true)
 
-  it "raises on negative positions" do
-    s = StringScanner.new("this is a string")
-    expect_raises(IndexError) { s.offset = -2 }
-  end
-end
-
-describe StringScanner, "#inspect" do
-  it "has information on the scanner" do
-    s = StringScanner.new("this is a string")
-    s.inspect.should eq(%(#<StringScanner 0/16 "this " >))
-    s.scan(/\w+\s/)
-    s.inspect.should eq(%(#<StringScanner 5/16 "s is " >))
-    s.scan(/\w+\s/)
-    s.inspect.should eq(%(#<StringScanner 8/16 "s a s" >))
-    s.scan(/\w+\s\w+/)
-    s.inspect.should eq(%(#<StringScanner 16/16 "tring" >))
-  end
-
-  it "works with small strings" do
-    s = StringScanner.new("hi")
-    s.inspect.should eq(%(#<StringScanner 0/2 "hi" >))
-    s.scan(/\w\w/)
-    s.inspect.should eq(%(#<StringScanner 2/2 "hi" >))
-  end
-end
-
-describe StringScanner, "#peek" do
-  it "shows the next len characters without advancing the offset" do
-    s = StringScanner.new("this is a string")
-    s.offset.should eq(0)
-    s.peek(4).should eq("this")
-    s.offset.should eq(0)
-    s.peek(7).should eq("this is")
-    s.offset.should eq(0)
-  end
-end
-
-describe StringScanner, "#reset" do
-  it "resets the scan offset to the beginning and clears the last match" do
-    s = StringScanner.new("this is a string")
-    s.scan_until(/str/)
-    s[0]?.should_not be_nil
-    s.offset.should_not eq(0)
-
-    s.reset
-    s[0]?.should be_nil
-    s.offset.should eq(0)
-  end
-end
-
-describe StringScanner, "#terminate" do
-  it "moves the scan offset to the end of the string and clears the last match" do
-    s = StringScanner.new("this is a string")
-    s.scan_until(/str/)
-    s[0]?.should_not be_nil
-    s.eos?.should eq(false)
-
-    s.terminate
-    s[0]?.should be_nil
-    s.eos?.should eq(true)
+    # unaffected by #peek
+    s.scan(1000)
+    s.matched?.should eq(false)
+    s.peek(10)
+    s.matched?.should eq(false)
   end
 end

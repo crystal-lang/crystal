@@ -7,6 +7,11 @@ private def requestize(string)
   string.gsub('\n', "\r\n")
 end
 
+private class MemoryIOWithAddresses < IO::Memory
+  property local_address : Socket::Address?
+  property remote_address : Socket::Address?
+end
+
 describe HTTP::Server::RequestProcessor do
   it "works" do
     processor = HTTP::Server::RequestProcessor.new do |context|
@@ -18,14 +23,14 @@ describe HTTP::Server::RequestProcessor do
     output = IO::Memory.new
     processor.process(input, output)
     output.rewind
-    output.gets_to_end.should eq(requestize(<<-RESPONSE
+    output.gets_to_end.should eq(requestize(<<-HTTP
       HTTP/1.1 200 OK
       Connection: keep-alive
       Content-Type: text/plain
       Content-Length: 11
 
       Hello world
-      RESPONSE
+      HTTP
     ))
   end
 
@@ -33,11 +38,11 @@ describe HTTP::Server::RequestProcessor do
     it "when body is consumed" do
       processor = HTTP::Server::RequestProcessor.new do |context|
         context.response.content_type = "text/plain"
-        context.response << context.request.body.not_nil!.gets(chomp: true)
+        context.response << context.request.body.should_not(be_nil).gets(chomp: true)
         context.response << "\r\n"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 7
 
@@ -46,12 +51,12 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: keep-alive
         Content-Type: text/plain
@@ -65,7 +70,7 @@ describe HTTP::Server::RequestProcessor do
 
         hello
 
-        RESPONSE
+        HTTP
       ))
     end
 
@@ -75,19 +80,19 @@ describe HTTP::Server::RequestProcessor do
         context.response.puts "Hello world\r"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
 
         POST / HTTP/1.1
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: keep-alive
         Content-Type: text/plain
@@ -101,7 +106,7 @@ describe HTTP::Server::RequestProcessor do
 
         Hello world
 
-        RESPONSE
+        HTTP
       ))
     end
 
@@ -111,7 +116,7 @@ describe HTTP::Server::RequestProcessor do
         context.response.puts "Hello world\r"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
 
         hello
@@ -119,12 +124,12 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: keep-alive
         Content-Type: text/plain
@@ -136,7 +141,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 16
 
         400 Bad Request\\n
-        RESPONSE
+        HTTP
       ).gsub("\\n", "\n"))
     end
 
@@ -145,7 +150,7 @@ describe HTTP::Server::RequestProcessor do
         context.response.headers["Connection"] = "close"
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 7
 
@@ -154,18 +159,18 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: close
         Content-Length: 0
 
 
-        RESPONSE
+        HTTP
       ))
     end
 
@@ -173,7 +178,7 @@ describe HTTP::Server::RequestProcessor do
       processor = HTTP::Server::RequestProcessor.new do |context|
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 4
 
@@ -182,28 +187,28 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: keep-alive
         Content-Length: 0
 
 
-        RESPONSE
+        HTTP
       ))
     end
 
     it "continues when request body is entirely consumed" do
       processor = HTTP::Server::RequestProcessor.new do |context|
-        io = context.request.body.not_nil!
+        io = context.request.body.should_not(be_nil)
         io.gets_to_end
       end
 
-      input = IO::Memory.new(requestize(<<-REQUEST
+      input = IO::Memory.new(requestize(<<-HTTP
         POST / HTTP/1.1
         Content-Length: 16387
 
@@ -212,12 +217,12 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 7
 
         hello
-        REQUEST
+        HTTP
       ))
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(requestize(<<-RESPONSE
+      output.gets_to_end.should eq(requestize(<<-HTTP
         HTTP/1.1 200 OK
         Connection: keep-alive
         Content-Length: 0
@@ -227,7 +232,7 @@ describe HTTP::Server::RequestProcessor do
         Content-Length: 0
 
 
-        RESPONSE
+        HTTP
       ))
     end
   end
@@ -237,7 +242,7 @@ describe HTTP::Server::RequestProcessor do
     input = RaiseIOError.new
     output = IO::Memory.new
     processor.process(input, output)
-    output.rewind.gets_to_end.empty?.should be_true
+    output.rewind.gets_to_end.should be_empty
   end
 
   it "handles IO::Error while writing" do
@@ -348,5 +353,29 @@ describe HTTP::Server::RequestProcessor do
     logs.entry.context.should be_empty
     logs.check :info, "after"
     logs.entry.context[:foo].should eq "bar"
+  end
+
+  it "sets local_address and remote_address" do
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.print context.local_address
+      context.response.print "\r\n"
+      context.response.print context.remote_address
+    end
+
+    input = MemoryIOWithAddresses.new("GET / HTTP/1.1\r\n\r\n")
+    input.local_address = Socket::IPAddress.new("0.0.0.0", 12345)
+    input.remote_address = Socket::IPAddress.new("1.2.3.4", 5678)
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.rewind
+    output.gets_to_end.should eq(requestize(<<-HTTP
+      HTTP/1.1 200 OK
+      Connection: keep-alive
+      Content-Length: 27
+
+      0.0.0.0:12345
+      1.2.3.4:5678
+      HTTP
+    ))
   end
 end

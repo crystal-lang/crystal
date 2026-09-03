@@ -20,20 +20,27 @@ describe "Code gen: c enum" do
   end
 
   [
+    {"+1", 1},
+    {"-1", -1},
+    {"~1", -2},
     {"1 + 2", 3},
     {"3 - 2", 1},
     {"3 * 2", 6},
+    {"1 &+ 2", 3},
+    {"3 &- 2", 1},
+    {"3 &* 2", 6},
     # {"10 / 2", 5}, # MathInterpreter only works with Integer and 10 / 2 : Float
     {"10 // 2", 5},
     {"1 << 3", 8},
     {"100 >> 3", 12},
     {"10 & 3", 2},
     {"10 | 3", 11},
+    {"10 ^ 3", 9},
     {"(1 + 2) * 3", 9},
     {"10 % 3", 1},
   ].each do |(code, expected)|
     it "codegens enum with #{code} " do
-      run("
+      run(<<-CRYSTAL).to_i.should eq(expected)
         lib LibFoo
           enum Bar
             X = #{code}
@@ -41,12 +48,12 @@ describe "Code gen: c enum" do
         end
 
         LibFoo::Bar::X
-        ").to_i.should eq(expected)
+        CRYSTAL
     end
   end
 
   it "codegens enum that refers to another enum constant" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       lib LibFoo
         enum Bar
           A = 1
@@ -56,11 +63,11 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens enum that refers to another constant" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(12)
       lib LibFoo
         X = 10
         enum Bar
@@ -71,6 +78,6 @@ describe "Code gen: c enum" do
       end
 
       LibFoo::Bar::C
-      ").to_i.should eq(12)
+      CRYSTAL
   end
 end

@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var openTypes = typesList.querySelectorAll('.current');
     if (openTypes.length > 0) {
       var lastOpenType = openTypes[openTypes.length - 1];
-      lastOpenType.scrollIntoView();
+      lastOpenType.scrollIntoView(!(window.matchMedia('only screen and (max-width: 635px)')).matches);
     }
   }
 
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // TODO: Add OpenSearch description
     var searchQuery = location.hash.substring(3);
     history.pushState({searchQuery: searchQuery}, "Search for " + searchQuery, location.href.replace(/#q=.*/, ""));
-    searchInput.value = searchQuery;
+    searchInput.value = decodeURIComponent(searchQuery);
     document.addEventListener('CrystalDocs:loaded', performSearch);
   }
 

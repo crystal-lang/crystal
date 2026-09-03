@@ -1,4 +1,3 @@
-require "levenshtein"
 require "../syntax/ast"
 require "../types"
 require "./type_lookup"
@@ -11,9 +10,11 @@ class Crystal::Call
   property expanded : ASTNode?
   property expanded_macro : Macro?
   property? uses_with_scope = false
-  getter? raises = false
 
   class RetryLookupWithLiterals < ::Exception
+    def initialize
+      self.callstack = Exception::CallStack.empty
+    end
   end
 
   def program
@@ -101,11 +102,6 @@ class Crystal::Call
     bind_to block.break if block
 
     if (parent_visitor = @parent_visitor) && matches
-      if parent_visitor.typed_def? && matches.any?(&.raises?)
-        @raises = true
-        parent_visitor.typed_def.raises = true
-      end
-
       matches.each do |match|
         match.special_vars.try &.each do |special_var_name|
           special_var = match.vars.not_nil![special_var_name]
@@ -162,7 +158,7 @@ class Crystal::Call
 
             named_args_types ||= [] of NamedArgumentType
             raise "duplicate key: #{name}" if named_args_types.any? &.name.==(name)
-            named_args_types << NamedArgumentType.new(name, type)
+            named_args_types << NamedArgumentType.new(name, type, entry.loc)
           end
         when UnionType
           arg.raise "double splatting a union #{arg_type} is not yet supported"
@@ -183,6 +179,7 @@ class Crystal::Call
         named_args_types << NamedArgumentType.new(
           named_arg.name,
           named_arg.value.type(with_autocast: with_autocast),
+          named_arg.location,
         )
       end
     end
@@ -287,15 +284,20 @@ class Crystal::Call
       end
     end
 
-    if matches.empty?
-      # If the owner is abstract type without subclasses,
-      # or if the owner is an abstract generic instance type,
-      # don't give error. This is to allow small code comments without giving
-      # compile errors, which will anyway appear once you add concrete
-      # subclasses and instances.
-      if def_name == "new" || !(!owner.metaclass? && owner.abstract_leaf?)
-        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
-      end
+    # Reject partial matches. Lookup in this method is intentionally
+    # restricted to a single owner, so it requires full type coverage.
+    partial_match = !matches.cover_all? && !owner.abstract_leaf?
+
+    # If the owner is abstract type without subclasses,
+    # or if the owner is an abstract generic instance type,
+    # don't give error on empty matches. This is to allow small code comments
+    # without giving compile errors, which will anyway appear once you add
+    # concrete subclasses and instances.
+    empty_match = matches.empty? &&
+                  (def_name == "new" || owner.metaclass? || !owner.abstract_leaf?)
+
+    if partial_match || empty_match
+      raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches, with_autocast: with_autocast, number_autocast: !program.has_flag?("no_number_autocast"))
     end
 
     # If this call is an implicit call to self
@@ -402,8 +404,8 @@ class Crystal::Call
           check_return_type(typed_def, typed_def_return_type, match, match_owner)
         end
 
-        check_recursive_splat_call match.def, typed_def_args do
-          bubbling_exception do
+        bubbling_exception do
+          check_recursive_splat_call match.def, typed_def_args do
             visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
             visitor.match_context = match.context
@@ -494,8 +496,23 @@ class Crystal::Call
     end
   end
 
-  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
+  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
+    index = tuple_indexer_helper_index(owner, instance_type, nilable)
+    return unless index
+
+    indexer_def = yield instance_type, index
+    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
+    Matches.new([indexer_match] of Match, true)
+  end
+
+  private def tuple_indexer_helper_index(owner, instance_type, nilable)
     arg = args.first
+
+    # Make it work with constants too
+    while arg.is_a?(Path) && (target_const = arg.target_const)
+      arg = target_const.value
+    end
+
     if arg.is_a?(NumberLiteral) && arg.kind.i32?
       index = arg.value.to_i
       index += instance_type.size if index < 0
@@ -547,20 +564,25 @@ class Crystal::Call
       return nil
     end
 
-    indexer_def = yield instance_type, index
-    indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-    Matches.new([indexer_match] of Match, true)
+    index
   end
 
-  def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
-    case arg = args.first
+  def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable, &)
+    arg = args.first
+
+    # Make it work with constants too
+    while arg.is_a?(Path) && (target_const = arg.target_const)
+      arg = target_const.value
+    end
+
+    case arg
     when SymbolLiteral, StringLiteral
       name = arg.value
       index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-        return Matches.new([indexer_match] of Match, true)
+        Matches.new([indexer_match] of Match, true)
       else
         raise "missing key '#{name}' for named tuple #{owner}"
       end
@@ -646,11 +668,11 @@ class Crystal::Call
       parents = lookup.base_type.ancestors
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index(lookup).not_nil!
+      index_of_ancestor = ancestors.index!(lookup)
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
-      index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }.not_nil!
+      index_of_ancestor = ancestors.index! { |ancestor| ancestor.is_a?(GenericModuleInstanceType) && ancestor.generic_type == lookup }
       parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
@@ -740,7 +762,7 @@ class Crystal::Call
     end
   end
 
-  def in_macro_target
+  def in_macro_target(&)
     if with_scope = @with_scope
       macros = yield with_scope
       return macros if macros
@@ -770,7 +792,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil unless match.def.yields || match.def.uses_block_arg?
+    return nil, nil unless match.def.block_arity || match.def.uses_block_arg?
 
     yield_vars = nil
     block_arg_type = nil
@@ -817,7 +839,11 @@ class Crystal::Call
       # is valid too only if Foo is an alias/typedef that refers to a FunctionType
       block_arg_restriction_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_restriction_type.is_a?(ProcInstanceType)
-        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
+        if block_arg_restriction_type.is_a?(ProcType)
+          block_arg_restriction.raise "can't create an instance of generic class #{block_arg_restriction_type} without specifying its type vars"
+        else
+          block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_restriction_type}"
+        end
         return nil, nil
       end
 
@@ -872,7 +898,9 @@ class Crystal::Call
         output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
-          Crystal.check_type_can_be_stored(output, output_type, "can't use #{output_type} as a block return type")
+          unless output_type.can_be_stored?
+            output.raise "can't use #{output_type} as a block return type yet, use a more specific type"
+          end
           output_type = output_type.virtual_type
         end
       end
@@ -994,8 +1022,7 @@ class Crystal::Call
         if !block.type?
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
-              block_type = lookup_node_type(match.context, output).virtual_type
-              block_type = program.nil if block_type.void?
+              lookup_node_type(match.context, output).virtual_type
             rescue ex : Crystal::CodeError
               cant_infer_block_return_type
             end
@@ -1022,7 +1049,7 @@ class Crystal::Call
                             when Self
                               match.context.instantiated_type
                             when Crystal::Path
-                              match.context.defining_type.lookup_path(output)
+                              match.context.defining_type.lookup_type_var(output, match.context.bound_free_vars)
                             else
                               output
                             end
@@ -1073,30 +1100,39 @@ class Crystal::Call
 
   private def lookup_node_type(context, node)
     bubbling_exception do
-      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
     end
   end
 
   private def lookup_node_type?(context, node)
-    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars, allow_typeof: false)
+    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.bound_free_vars, allow_typeof: false)
   end
 
-  def bubbling_exception
-    begin
-      yield
-    rescue ex : Crystal::CodeError
-      if obj = @obj
-        if name == "initialize"
-          # Avoid putting 'initialize' in the error trace
-          # because it's most likely that this is happening
-          # inside a generated 'new' method
-          ::raise ex
-        else
-          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
-        end
-      else
-        raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+  def bubbling_exception(&)
+    yield
+  rescue ex : Crystal::TopLevelMacroRaiseException
+    # Sets the last frame to the method call that includes the top level macro raise re-raised within `SemanticVisitor#eval_macro`.
+    # The first frame will be the actual actual `#raise` method call.
+    ex.inner = Crystal::MacroRaiseException.for_node self, ex.message
+
+    ::raise ex
+  rescue ex : Crystal::MacroRaiseException
+    # Raise another exception on this node, keeping the original as the inner exception.
+    # This will insert this node into the trace as the new first frame.
+    self.raise ex.message, ex, exception_type: Crystal::MacroRaiseException
+  rescue ex : Crystal::CodeError
+    if @obj && name == "initialize"
+      # Avoid putting 'initialize' in the error trace
+      # because it's most likely that this is happening
+      # inside a generated 'new' method
+      ::raise ex
+    else
+      msg = String.build do |io|
+        io << "instantiating '"
+        signature(io)
+        io << "'"
       end
+      raise msg, ex
     end
   end
 
@@ -1150,12 +1186,12 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && (body.name == "proc_call" || body.name == "pointer_set")
+    strict_check = body.is_a?(Primitive) && body.name.in?("proc_call", "pointer_set")
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
       type = arg_types[index]
-      var = MetaVar.new(arg.name, type).at(arg.location)
+      var = MetaVar.new(arg.name, type).at(arg)
       var.bind_to(var)
       args[arg.name] = var
 
@@ -1185,21 +1221,21 @@ class Crystal::Call
       arg = typed_def.args[index]
       default_value = arg.default_value.as(MagicConstant)
       case default_value.name
-      when :__LINE__, :__END_LINE__
+      when .magic_line?, .magic_end_line?
         type = program.int32
-      when :__FILE__, :__DIR__
+      when .magic_file?, .magic_dir?
         type = program.string
       else
         default_value.raise "BUG: unknown magic constant: #{default_value.name}"
       end
-      var = MetaVar.new(arg.name, type).at(arg.location)
+      var = MetaVar.new(arg.name, type).at(arg)
       var.bind_to(var)
       args[arg.name] = var
       arg.type = type
     end
 
     named_args_types.try &.each do |named_arg|
-      arg = typed_def.args.find { |arg| arg.external_name == named_arg.name }.not_nil!
+      arg = typed_def.args.find! { |arg| arg.external_name == named_arg.name }
 
       type = named_arg.type
       var = MetaVar.new(arg.name, type)
@@ -1223,21 +1259,16 @@ class Crystal::Call
 
   def attach_subclass_observer(type : Type)
     if subclass_notifier = @subclass_notifier
+      # If the new notifier is a subtype of (or equal to) the current one,
+      # keep observing the wider type. Migrating to the narrower type would
+      # stop us from being woken when sibling subtypes are later added to
+      # the wider one — leaving the dispatch table stale (#16947).
+      return if type.implements?(subclass_notifier)
       subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
     end
 
     type.as(SubclassObservable).add_subclass_observer(self)
     @subclass_notifier = type
-  end
-
-  def raises=(value)
-    if @raises != value
-      @raises = value
-      typed_def = parent_visitor.typed_def?
-      if typed_def
-        typed_def.raises = value
-      end
-    end
   end
 
   def super?

@@ -48,6 +48,7 @@ lib LibC
   end
 
   fun chmod(x0 : Char*, x1 : ModeT) : Int
+  fun fchmod(x0 : Int, x1 : ModeT) : Int
   fun fstat = fstat64(x0 : Int, x1 : Stat*) : Int
   fun lstat = lstat64(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int

@@ -240,7 +240,7 @@ describe "Lexer string" do
     expect_raises Crystal::SyntaxException, "Unterminated heredoc" do
       loop do
         token = lexer.next_string_token state
-        break if token.type == :DELIMITER_END
+        break if token.type.delimiter_end?
       end
     end
   end

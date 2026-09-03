@@ -1,7 +1,7 @@
 require "spec"
 require "spec/helpers/iterate"
 
-private def expect_overflow
+private def expect_overflow(&)
   expect_raises ArgumentError, "Time::Span too big or too small" do
     yield
   end
@@ -30,8 +30,28 @@ describe Time::Span do
     t1 = Time::Span.new days: -1, hours: 2, minutes: -3, seconds: 4, nanoseconds: -5_000_000
     t1.to_s.should eq("-22:02:56.005000000")
 
+    t1 = Time::Span.new weeks: 1, days: 2, hours: 3, minutes: 4, seconds: 5, nanoseconds: 6_000_000
+    t1.to_s.should eq("9.03:04:05.006000000")
+
     t1 = Time::Span.new hours: 25
     t1.to_s.should eq("1.01:00:00")
+  end
+
+  it "initializes with type restrictions" do
+    t = Time::Span.new seconds: 1_u8, nanoseconds: 1_u8
+    t.should eq(Time::Span.new seconds: 1, nanoseconds: 1)
+
+    t = Time::Span.new seconds: 127_i8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 128)
+
+    t = Time::Span.new seconds: -128_i8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -129)
+
+    t = Time::Span.new seconds: 255_u8, nanoseconds: 1_000_000_000
+    t.should eq(Time::Span.new seconds: 256)
+
+    t = Time::Span.new seconds: 0_u8, nanoseconds: -1_000_000_000
+    t.should eq(Time::Span.new seconds: -1)
   end
 
   it "initializes with big seconds value" do
@@ -341,5 +361,67 @@ describe Time::Span do
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
     1.1.weeks.should eq(7.7.days)
+  end
+
+  it "can subtract big amount using microseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_microseconds.to_i64
+    past2 = jan_1_2k + delta.microseconds
+    past2.should eq(past)
+  end
+
+  it "can subtract big amount using milliseconds" do
+    jan_1_2k = Time.utc(2000, 1, 1)
+    past = Time.utc(5, 2, 3, 0, 0, 0)
+    delta = (past - jan_1_2k).total_milliseconds.to_i64
+    past2 = jan_1_2k + delta.milliseconds
+    past2.should eq(past)
+  end
+
+  describe "int conversions" do
+    it "#to_nanoseconds" do
+      Time::Span::ZERO.to_nanoseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_nanoseconds.should eq 9_223_372_036_854_775_807_999_999_999_i128
+        Time::Span::MIN.to_nanoseconds.should eq -9_223_372_036_854_775_808_999_999_999_i128
+      {% else %}
+        Time::Span::MAX.to_nanoseconds.to_s.should eq "9223372036854775807999999999"
+        Time::Span::MIN.to_nanoseconds.to_s.should eq "-9223372036854775808999999999"
+      {% end %}
+    end
+
+    it "#to_microseconds" do
+      Time::Span::ZERO.to_microseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_microseconds.should eq 9_223_372_036_854_775_807_999_999_i128
+        Time::Span::MIN.to_microseconds.should eq -9_223_372_036_854_775_808_999_999_i128
+      {% else %}
+        Time::Span::MAX.to_microseconds.to_s.should eq "9223372036854775807999999"
+        Time::Span::MIN.to_microseconds.to_s.should eq "-9223372036854775808999999"
+      {% end %}
+    end
+
+    it "#to_milliseconds" do
+      Time::Span::ZERO.to_milliseconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_milliseconds.should eq 9_223_372_036_854_775_807_999_i128
+        Time::Span::MIN.to_milliseconds.should eq -9_223_372_036_854_775_808_999_i128
+      {% else %}
+        Time::Span::MAX.to_milliseconds.to_s.should eq "9223372036854775807999"
+        Time::Span::MIN.to_milliseconds.to_s.should eq "-9223372036854775808999"
+      {% end %}
+    end
+
+    it "#to_seconds" do
+      Time::Span::ZERO.to_seconds.should eq 0_i128
+      {% if compare_versions(Crystal::VERSION, "1.3.0") >= 0 %}
+        Time::Span::MAX.to_seconds.should eq 9_223_372_036_854_775_807_i128
+        Time::Span::MIN.to_seconds.should eq -9_223_372_036_854_775_808_i128
+      {% else %}
+        Time::Span::MAX.to_seconds.to_s.should eq "9223372036854775807"
+        Time::Span::MIN.to_seconds.to_s.should eq "-9223372036854775808"
+      {% end %}
+    end
   end
 end

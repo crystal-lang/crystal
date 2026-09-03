@@ -1,4 +1,6 @@
 lib LibC
+  fun __errno_location : Int*
+
   E2BIG           =   7
   EACCES          =  13
   EADDRINUSE      =  98
@@ -8,6 +10,7 @@ lib LibC
   EALREADY        = 114
   EBADF           =   9
   EBADMSG         =  74
+  EBADR           =  53
   EBUSY           =  16
   ECANCELED       = 125
   ECHILD          =  10

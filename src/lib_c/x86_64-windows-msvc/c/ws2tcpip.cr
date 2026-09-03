@@ -17,4 +17,24 @@ lib LibC
   fun getaddrinfo(pNodeName : Char*, pServiceName : Char*, pHints : Addrinfo*, ppResult : Addrinfo**) : Int
   fun inet_ntop(family : Int, pAddr : Void*, pStringBuf : Char*, stringBufSize : SizeT) : Char*
   fun inet_pton(family : Int, pszAddrString : Char*, pAddrBuf : Void*) : Int
+
+  fun FreeAddrInfoExW(pAddrInfoEx : ADDRINFOEXW*)
+
+  alias LPLOOKUPSERVICE_COMPLETION_ROUTINE = DWORD, DWORD, WSAOVERLAPPED* ->
+
+  fun GetAddrInfoExW(
+    pName : LPWSTR,
+    pServiceName : LPWSTR,
+    dwNameSpace : DWORD,
+    lpNspId : GUID*,
+    hints : ADDRINFOEXW*,
+    ppResult : ADDRINFOEXW**,
+    timeout : Timeval*,
+    lpOverlapped : OVERLAPPED*,
+    lpCompletionRoutine : LPLOOKUPSERVICE_COMPLETION_ROUTINE,
+    lpHandle : HANDLE*,
+  ) : Int
+
+  fun GetAddrInfoExOverlappedResult(lpOverlapped : OVERLAPPED*) : Int
+  fun GetAddrInfoExCancel(lpHandle : HANDLE*) : Int
 end

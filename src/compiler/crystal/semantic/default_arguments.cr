@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = block_arity || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = self.splat_index
     double_splat = self.double_splat
@@ -53,18 +53,28 @@ class Crystal::Def
     end
 
     # Splat arg
-    if splat_index && !args[splat_index].external_name.empty?
-      splat_names = [] of String
+    splat_size = 0
 
-      splat_size = args_size - splat_index
-      splat_size = 0 if splat_size < 0
-      splat_size.times do |index|
-        splat_name = program.new_temp_var_name
-        splat_names << splat_name
-        new_args << Arg.new(splat_name)
+    if splat_index
+      arg = args[splat_index]
+
+      unless arg.external_name.empty?
+        splat_names = [] of String
+
+        splat_size = args_size - splat_index
+        splat_size = 0 if splat_size < 0
+
+        splat_size.times do |index|
+          splat_name = program.new_temp_var_name(self)
+          splat_names << splat_name
+
+          splat_arg = Arg.new(splat_name)
+          splat_arg.annotations = arg.annotations.dup
+          splat_arg.original_name = arg.original_name
+
+          new_args << splat_arg
+        end
       end
-    else
-      splat_size = 0
     end
 
     if named_args
@@ -78,15 +88,23 @@ class Crystal::Def
           str << ':'
           str << named_arg
 
-          temp_name = program.new_temp_var_name
+          temp_name = program.new_temp_var_name(self)
           named_args_temp_names << temp_name
 
           # If a named argument matches an argument's external name, use the internal name
           matching_arg = args.find { |arg| arg.external_name == named_arg }
           if matching_arg
-            new_args << Arg.new(matching_arg.name, external_name: named_arg)
+            new_arg = Arg.new(matching_arg.name, external_name: named_arg)
+            new_arg.annotations = matching_arg.annotations.dup
+            new_arg.original_name = matching_arg.original_name
+            new_args << new_arg
           else
-            new_args << Arg.new(temp_name, external_name: named_arg)
+            new_arg = Arg.new(temp_name, external_name: named_arg)
+            if double_splat = self.double_splat
+              new_arg.annotations = double_splat.annotations.dup
+              new_arg.original_name = double_splat.original_name
+            end
+            new_args << new_arg
           end
         end
       end
@@ -94,13 +112,13 @@ class Crystal::Def
       new_name = name
     end
 
-    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields).at(self)
+    expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, block_arity).at(self)
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super?
     expansion.calls_initialize = calls_initialize?
     expansion.calls_previous_def = calls_previous_def?
     expansion.uses_block_arg = uses_block_arg?
-    expansion.yields = yields
+    expansion.block_arity = block_arity
     expansion.raises = raises?
     expansion.free_vars = free_vars
     expansion.annotations = annotations
@@ -108,6 +126,7 @@ class Crystal::Def
     if owner = self.owner?
       expansion.owner = owner
     end
+    expansion.original_name = original_name
 
     if retain_body
       new_body = [] of ASTNode
@@ -200,7 +219,7 @@ class Crystal::Def
         end
       end
 
-      call = Call.new(nil, name, new_args).at(self)
+      call = Call.new(name, new_args).at(self)
       call.expansion = true
       body << call
 

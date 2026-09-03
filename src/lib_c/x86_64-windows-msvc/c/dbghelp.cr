@@ -122,6 +122,7 @@ lib LibC
   end
 
   IMAGE_FILE_MACHINE_AMD64 = DWORD.new!(0x8664)
+  IMAGE_FILE_MACHINE_ARM64 = DWORD.new!(0xAA64)
 
   alias PREAD_PROCESS_MEMORY_ROUTINE64 = HANDLE, DWORD64, Void*, DWORD, DWORD* -> BOOL
   alias PFUNCTION_TABLE_ACCESS_ROUTINE64 = HANDLE, DWORD64 -> Void*
@@ -131,6 +132,6 @@ lib LibC
   fun StackWalk64(
     machineType : DWORD, hProcess : HANDLE, hThread : HANDLE, stackFrame : STACKFRAME64*, contextRecord : Void*,
     readMemoryRoutine : PREAD_PROCESS_MEMORY_ROUTINE64, functionTableAccessRoutine : PFUNCTION_TABLE_ACCESS_ROUTINE64,
-    getModuleBaseRoutine : PGET_MODULE_BASE_ROUTINE64, translateAddress : PTRANSLATE_ADDRESS_ROUTINE64
+    getModuleBaseRoutine : PGET_MODULE_BASE_ROUTINE64, translateAddress : PTRANSLATE_ADDRESS_ROUTINE64,
   ) : BOOL
 end

@@ -7,6 +7,10 @@ describe "https requests" do
     HTTP::Client.get("https://google.com")
   end
 
+  it "can fetch from google.com. FQDN with trailing dot (#12777)" do
+    HTTP::Client.get("https://google.com.")
+  end
+
   it "can close request before consuming body" do
     HTTP::Client.get("https://crystal-lang.org") do
       break

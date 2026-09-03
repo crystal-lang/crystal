@@ -22,11 +22,9 @@ describe "Exception" do
   it "inspects with cause" do
     cause = Exception.new("inner")
     ex = expect_raises(Exception, "wrapper") do
-      begin
-        raise cause
-      rescue ex
-        raise Exception.new("wrapper", cause: ex)
-      end
+      raise cause
+    rescue ex
+      raise Exception.new("wrapper", cause: ex)
     end
 
     ex.cause.should be(cause)
@@ -35,12 +33,12 @@ describe "Exception" do
     ex.inspect_with_backtrace.should contain("inner")
   end
 
-  it "collect memory within ensure block" do
+  it "collect memory within ensure block", tags: %w[slow] do
     sample = datapath("collect_within_ensure")
 
     _, output, error = compile_and_run_file(sample, ["--release"])
 
-    output.to_s.empty?.should be_true
+    output.to_s.should be_empty
     error.to_s.should contain("Unhandled exception: Oh no! (Exception)")
     error.to_s.should_not contain("Invalid memory access")
     error.to_s.should_not contain("Illegal instruction")

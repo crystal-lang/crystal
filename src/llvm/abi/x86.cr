@@ -1,6 +1,7 @@
 require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86.rs
+@[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 class LLVM::ABI::X86 < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)
     ret_ty = compute_return_type(rty, ret_def, context)
@@ -30,11 +31,11 @@ class LLVM::ABI::X86 < LLVM::ABI
 
       if osx? || windows?
         case target_data.abi_size(rty)
-        when 1 then ret_ty = ret_value(rty, context.int8)
-        when 2 then ret_ty = ret_value(rty, context.int16)
-        when 4 then ret_ty = ret_value(rty, context.int32)
-        when 8 then ret_ty = ret_value(rty, context.int64)
-        else        ret_ty = ret_pointer(rty)
+        when 1 then ret_value(rty, context.int8)
+        when 2 then ret_value(rty, context.int16)
+        when 4 then ret_value(rty, context.int32)
+        when 8 then ret_value(rty, context.int64)
+        else        ret_pointer(rty)
         end
       else
         ret_pointer(rty)

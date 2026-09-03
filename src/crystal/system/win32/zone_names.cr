@@ -5,141 +5,615 @@
 # DO NOT EDIT
 
 module Crystal::System::Time
-  # These mappings for windows time zone names are based on
-  # http://unicode.org/cldr/data/common/supplemental/windowsZones.xml
-  WINDOWS_ZONE_NAMES = {
-    "Egypt Standard Time"             => {"EET", "EET"},     # Africa/Cairo
-    "Morocco Standard Time"           => {"WET", "WEST"},    # Africa/Casablanca
-    "South Africa Standard Time"      => {"SAST", "SAST"},   # Africa/Johannesburg
-    "W. Central Africa Standard Time" => {"WAT", "WAT"},     # Africa/Lagos
-    "E. Africa Standard Time"         => {"EAT", "EAT"},     # Africa/Nairobi
-    "Libya Standard Time"             => {"EET", "EET"},     # Africa/Tripoli
-    "Namibia Standard Time"           => {"WAT", "WAST"},    # Africa/Windhoek
-    "Aleutian Standard Time"          => {"HST", "HDT"},     # America/Adak
-    "Alaskan Standard Time"           => {"AKST", "AKDT"},   # America/Anchorage
-    "Tocantins Standard Time"         => {"BRT", "BRT"},     # America/Araguaina
-    "Paraguay Standard Time"          => {"PYT", "PYST"},    # America/Asuncion
-    "Bahia Standard Time"             => {"BRT", "BRT"},     # America/Bahia
-    "SA Pacific Standard Time"        => {"COT", "COT"},     # America/Bogota
-    "Argentina Standard Time"         => {"ART", "ART"},     # America/Buenos_Aires
-    "Eastern Standard Time (Mexico)"  => {"EST", "EST"},     # America/Cancun
-    "Venezuela Standard Time"         => {"VET", "VET"},     # America/Caracas
-    "SA Eastern Standard Time"        => {"GFT", "GFT"},     # America/Cayenne
-    "Central Standard Time"           => {"CST", "CDT"},     # America/Chicago
-    "Mountain Standard Time (Mexico)" => {"MST", "MDT"},     # America/Chihuahua
-    "Central Brazilian Standard Time" => {"AMT", "AMST"},    # America/Cuiaba
-    "Mountain Standard Time"          => {"MST", "MDT"},     # America/Denver
-    "Greenland Standard Time"         => {"WGT", "WGST"},    # America/Godthab
-    "Turks And Caicos Standard Time"  => {"AST", "AST"},     # America/Grand_Turk
-    "Central America Standard Time"   => {"CST", "CST"},     # America/Guatemala
-    "Atlantic Standard Time"          => {"AST", "ADT"},     # America/Halifax
-    "Cuba Standard Time"              => {"CST", "CDT"},     # America/Havana
-    "US Eastern Standard Time"        => {"EST", "EDT"},     # America/Indianapolis
-    "SA Western Standard Time"        => {"BOT", "BOT"},     # America/La_Paz
-    "Pacific Standard Time"           => {"PST", "PDT"},     # America/Los_Angeles
-    "Central Standard Time (Mexico)"  => {"CST", "CDT"},     # America/Mexico_City
-    "Saint Pierre Standard Time"      => {"PMST", "PMDT"},   # America/Miquelon
-    "Montevideo Standard Time"        => {"UYT", "UYT"},     # America/Montevideo
-    "Eastern Standard Time"           => {"EST", "EDT"},     # America/New_York
-    "US Mountain Standard Time"       => {"MST", "MST"},     # America/Phoenix
-    "Haiti Standard Time"             => {"EST", "EST"},     # America/Port-au-Prince
-    "Canada Central Standard Time"    => {"CST", "CST"},     # America/Regina
-    "Pacific SA Standard Time"        => {"CLT", "CLST"},    # America/Santiago
-    "E. South America Standard Time"  => {"BRT", "BRST"},    # America/Sao_Paulo
-    "Newfoundland Standard Time"      => {"NST", "NDT"},     # America/St_Johns
-    "Pacific Standard Time (Mexico)"  => {"PST", "PDT"},     # America/Tijuana
-    "Central Asia Standard Time"      => {"+06", "+06"},     # Asia/Almaty
-    "Jordan Standard Time"            => {"EET", "EEST"},    # Asia/Amman
-    "Arabic Standard Time"            => {"AST", "AST"},     # Asia/Baghdad
-    "Azerbaijan Standard Time"        => {"+04", "+04"},     # Asia/Baku
-    "SE Asia Standard Time"           => {"ICT", "ICT"},     # Asia/Bangkok
-    "Altai Standard Time"             => {"+07", "+07"},     # Asia/Barnaul
-    "Middle East Standard Time"       => {"EET", "EEST"},    # Asia/Beirut
-    "India Standard Time"             => {"IST", "IST"},     # Asia/Calcutta
-    "Transbaikal Standard Time"       => {"+09", "+09"},     # Asia/Chita
-    "Sri Lanka Standard Time"         => {"+0530", "+0530"}, # Asia/Colombo
-    "Syria Standard Time"             => {"EET", "EEST"},    # Asia/Damascus
-    "Bangladesh Standard Time"        => {"BDT", "BDT"},     # Asia/Dhaka
-    "Arabian Standard Time"           => {"GST", "GST"},     # Asia/Dubai
-    "West Bank Standard Time"         => {"EET", "EEST"},    # Asia/Hebron
-    "W. Mongolia Standard Time"       => {"HOVT", "HOVST"},  # Asia/Hovd
-    "North Asia East Standard Time"   => {"+08", "+08"},     # Asia/Irkutsk
-    "Israel Standard Time"            => {"IST", "IDT"},     # Asia/Jerusalem
-    "Afghanistan Standard Time"       => {"AFT", "AFT"},     # Asia/Kabul
-    "Russia Time Zone 11"             => {"+12", "+12"},     # Asia/Kamchatka
-    "Pakistan Standard Time"          => {"PKT", "PKT"},     # Asia/Karachi
-    "Nepal Standard Time"             => {"NPT", "NPT"},     # Asia/Katmandu
-    "North Asia Standard Time"        => {"+07", "+07"},     # Asia/Krasnoyarsk
-    "Magadan Standard Time"           => {"+11", "+11"},     # Asia/Magadan
-    "N. Central Asia Standard Time"   => {"+07", "+07"},     # Asia/Novosibirsk
-    "Omsk Standard Time"              => {"+06", "+06"},     # Asia/Omsk
-    "North Korea Standard Time"       => {"KST", "KST"},     # Asia/Pyongyang
-    "Myanmar Standard Time"           => {"MMT", "MMT"},     # Asia/Rangoon
-    "Arab Standard Time"              => {"AST", "AST"},     # Asia/Riyadh
-    "Sakhalin Standard Time"          => {"+11", "+11"},     # Asia/Sakhalin
-    "Korea Standard Time"             => {"KST", "KST"},     # Asia/Seoul
-    "China Standard Time"             => {"CST", "CST"},     # Asia/Shanghai
-    "Singapore Standard Time"         => {"SGT", "SGT"},     # Asia/Singapore
-    "Russia Time Zone 10"             => {"+11", "+11"},     # Asia/Srednekolymsk
-    "Taipei Standard Time"            => {"CST", "CST"},     # Asia/Taipei
-    "West Asia Standard Time"         => {"+05", "+05"},     # Asia/Tashkent
-    "Georgian Standard Time"          => {"+04", "+04"},     # Asia/Tbilisi
-    "Iran Standard Time"              => {"IRST", "IRDT"},   # Asia/Tehran
-    "Tokyo Standard Time"             => {"JST", "JST"},     # Asia/Tokyo
-    "Tomsk Standard Time"             => {"+07", "+07"},     # Asia/Tomsk
-    "Ulaanbaatar Standard Time"       => {"ULAT", "ULAST"},  # Asia/Ulaanbaatar
-    "Vladivostok Standard Time"       => {"+10", "+10"},     # Asia/Vladivostok
-    "Yakutsk Standard Time"           => {"+09", "+09"},     # Asia/Yakutsk
-    "Ekaterinburg Standard Time"      => {"+05", "+05"},     # Asia/Yekaterinburg
-    "Caucasus Standard Time"          => {"+04", "+04"},     # Asia/Yerevan
-    "Azores Standard Time"            => {"AZOT", "AZOST"},  # Atlantic/Azores
-    "Cape Verde Standard Time"        => {"CVT", "CVT"},     # Atlantic/Cape_Verde
-    "Greenwich Standard Time"         => {"GMT", "GMT"},     # Atlantic/Reykjavik
-    "Cen. Australia Standard Time"    => {"ACST", "ACDT"},   # Australia/Adelaide
-    "E. Australia Standard Time"      => {"AEST", "AEST"},   # Australia/Brisbane
-    "AUS Central Standard Time"       => {"ACST", "ACST"},   # Australia/Darwin
-    "Aus Central W. Standard Time"    => {"ACWST", "ACWST"}, # Australia/Eucla
-    "Tasmania Standard Time"          => {"AEST", "AEDT"},   # Australia/Hobart
-    "Lord Howe Standard Time"         => {"LHST", "LHDT"},   # Australia/Lord_Howe
-    "W. Australia Standard Time"      => {"AWST", "AWST"},   # Australia/Perth
-    "AUS Eastern Standard Time"       => {"AEST", "AEDT"},   # Australia/Sydney
-    "UTC"                             => {"GMT", "GMT"},     # Etc/GMT
-    "UTC-11"                          => {"-11", "-11"},     # Etc/GMT+11
-    "Dateline Standard Time"          => {"-12", "-12"},     # Etc/GMT+12
-    "UTC-02"                          => {"-02", "-02"},     # Etc/GMT+2
-    "UTC-08"                          => {"-08", "-08"},     # Etc/GMT+8
-    "UTC-09"                          => {"-09", "-09"},     # Etc/GMT+9
-    "UTC+12"                          => {"+12", "+12"},     # Etc/GMT-12
-    "UTC+13"                          => {"+13", "+13"},     # Etc/GMT-13
-    "Astrakhan Standard Time"         => {"+04", "+04"},     # Europe/Astrakhan
-    "W. Europe Standard Time"         => {"CET", "CEST"},    # Europe/Berlin
-    "GTB Standard Time"               => {"EET", "EEST"},    # Europe/Bucharest
-    "Central Europe Standard Time"    => {"CET", "CEST"},    # Europe/Budapest
-    "E. Europe Standard Time"         => {"EET", "EEST"},    # Europe/Chisinau
-    "Turkey Standard Time"            => {"+03", "+03"},     # Europe/Istanbul
-    "Kaliningrad Standard Time"       => {"EET", "EET"},     # Europe/Kaliningrad
-    "FLE Standard Time"               => {"EET", "EEST"},    # Europe/Kiev
-    "GMT Standard Time"               => {"GMT", "BST"},     # Europe/London
-    "Belarus Standard Time"           => {"+03", "+03"},     # Europe/Minsk
-    "Russian Standard Time"           => {"MSK", "MSK"},     # Europe/Moscow
-    "Romance Standard Time"           => {"CET", "CEST"},    # Europe/Paris
-    "Russia Time Zone 3"              => {"+04", "+04"},     # Europe/Samara
-    "Saratov Standard Time"           => {"+04", "+04"},     # Europe/Saratov
-    "Central European Standard Time"  => {"CET", "CEST"},    # Europe/Warsaw
-    "Mauritius Standard Time"         => {"MUT", "MUT"},     # Indian/Mauritius
-    "Samoa Standard Time"             => {"WSST", "WSDT"},   # Pacific/Apia
-    "New Zealand Standard Time"       => {"NZST", "NZDT"},   # Pacific/Auckland
-    "Bougainville Standard Time"      => {"BST", "BST"},     # Pacific/Bougainville
-    "Chatham Islands Standard Time"   => {"CHAST", "CHADT"}, # Pacific/Chatham
-    "Easter Island Standard Time"     => {"EAST", "EASST"},  # Pacific/Easter
-    "Fiji Standard Time"              => {"FJT", "FJST"},    # Pacific/Fiji
-    "Central Pacific Standard Time"   => {"SBT", "SBT"},     # Pacific/Guadalcanal
-    "Hawaiian Standard Time"          => {"HST", "HST"},     # Pacific/Honolulu
-    "Line Islands Standard Time"      => {"LINT", "LINT"},   # Pacific/Kiritimati
-    "Marquesas Standard Time"         => {"MART", "MART"},   # Pacific/Marquesas
-    "Norfolk Standard Time"           => {"NFT", "NFT"},     # Pacific/Norfolk
-    "West Pacific Standard Time"      => {"PGT", "PGT"},     # Pacific/Port_Moresby
-    "Tonga Standard Time"             => {"+13", "+14"},     # Pacific/Tongatapu
+  # These mappings from IANA to Windows time zone names and tzdata abbreviations
+  # are based on
+  # https://raw.githubusercontent.com/unicode-org/cldr/f8369ba0795c79f3bac8eb89967eea359f77835e/common/supplemental/windowsZones.xml
+  private class_getter iana_to_windows : Hash(String, {String, String, String}) do
+    data = Hash(String, {String, String, String}).new(initial_capacity: 445)
+    put(data, "Africa/Abidjan", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Accra", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Addis_Ababa", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Algiers", "W. Central Africa Standard Time", "CET", "CET")
+    put(data, "Africa/Asmera", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Bamako", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Bangui", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Banjul", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Bissau", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Blantyre", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Brazzaville", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Bujumbura", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Cairo", "Egypt Standard Time", "EET", "EEST")
+    put(data, "Africa/Casablanca", "Morocco Standard Time", "+01", "+01")
+    put(data, "Africa/Ceuta", "Romance Standard Time", "CET", "CEST")
+    put(data, "Africa/Conakry", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Dakar", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Dar_es_Salaam", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Djibouti", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Douala", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/El_Aaiun", "Morocco Standard Time", "+01", "+01")
+    put(data, "Africa/Freetown", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Gaborone", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Harare", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Johannesburg", "South Africa Standard Time", "SAST", "SAST")
+    put(data, "Africa/Juba", "South Sudan Standard Time", "CAT", "CAT")
+    put(data, "Africa/Kampala", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Khartoum", "Sudan Standard Time", "CAT", "CAT")
+    put(data, "Africa/Kigali", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Kinshasa", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Lagos", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Libreville", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Lome", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Luanda", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Lubumbashi", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Lusaka", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Malabo", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Maputo", "South Africa Standard Time", "CAT", "CAT")
+    put(data, "Africa/Maseru", "South Africa Standard Time", "SAST", "SAST")
+    put(data, "Africa/Mbabane", "South Africa Standard Time", "SAST", "SAST")
+    put(data, "Africa/Mogadishu", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Monrovia", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Nairobi", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Africa/Ndjamena", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Niamey", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Nouakchott", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Ouagadougou", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Africa/Porto-Novo", "W. Central Africa Standard Time", "WAT", "WAT")
+    put(data, "Africa/Sao_Tome", "Sao Tome Standard Time", "GMT", "GMT")
+    put(data, "Africa/Tripoli", "Libya Standard Time", "EET", "EET")
+    put(data, "Africa/Tunis", "W. Central Africa Standard Time", "CET", "CET")
+    put(data, "Africa/Windhoek", "Namibia Standard Time", "CAT", "CAT")
+    put(data, "America/Adak", "Aleutian Standard Time", "HST", "HDT")
+    put(data, "America/Anchorage", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "America/Anguilla", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Antigua", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Araguaina", "Tocantins Standard Time", "-03", "-03")
+    put(data, "America/Argentina/La_Rioja", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/Rio_Gallegos", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/Salta", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/San_Juan", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/San_Luis", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/Tucuman", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Argentina/Ushuaia", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Aruba", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Asuncion", "Paraguay Standard Time", "-03", "-03")
+    put(data, "America/Bahia", "Bahia Standard Time", "-03", "-03")
+    put(data, "America/Bahia_Banderas", "Central Standard Time (Mexico)", "CST", "CST")
+    put(data, "America/Barbados", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Belem", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Belize", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Blanc-Sablon", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Boa_Vista", "SA Western Standard Time", "-04", "-04")
+    put(data, "America/Bogota", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "America/Boise", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Buenos_Aires", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Cambridge_Bay", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Campo_Grande", "Central Brazilian Standard Time", "-04", "-04")
+    put(data, "America/Cancun", "Eastern Standard Time (Mexico)", "EST", "EST")
+    put(data, "America/Caracas", "Venezuela Standard Time", "-04", "-04")
+    put(data, "America/Catamarca", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Cayenne", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Cayman", "SA Pacific Standard Time", "EST", "EST")
+    put(data, "America/Chicago", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Chihuahua", "Central Standard Time (Mexico)", "CST", "CST")
+    put(data, "America/Ciudad_Juarez", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Coral_Harbour", "SA Pacific Standard Time", "EST", "EST")
+    put(data, "America/Cordoba", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Costa_Rica", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Coyhaique", "Magallanes Standard Time", "-03", "-03")
+    put(data, "America/Creston", "US Mountain Standard Time", "MST", "MST")
+    put(data, "America/Cuiaba", "Central Brazilian Standard Time", "-04", "-04")
+    put(data, "America/Curacao", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Danmarkshavn", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "America/Dawson", "Yukon Standard Time", "MST", "MST")
+    put(data, "America/Dawson_Creek", "US Mountain Standard Time", "MST", "MST")
+    put(data, "America/Denver", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Detroit", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Dominica", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Edmonton", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Eirunepe", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "America/El_Salvador", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Fort_Nelson", "US Mountain Standard Time", "MST", "MST")
+    put(data, "America/Fortaleza", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Glace_Bay", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "America/Godthab", "Greenland Standard Time", "-02", "-01")
+    put(data, "America/Goose_Bay", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "America/Grand_Turk", "Turks And Caicos Standard Time", "EST", "EDT")
+    put(data, "America/Grenada", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Guadeloupe", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Guatemala", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Guayaquil", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "America/Guyana", "SA Western Standard Time", "-04", "-04")
+    put(data, "America/Halifax", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "America/Havana", "Cuba Standard Time", "CST", "CDT")
+    put(data, "America/Hermosillo", "US Mountain Standard Time", "MST", "MST")
+    put(data, "America/Indiana/Knox", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Indiana/Marengo", "US Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Indiana/Petersburg", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Indiana/Tell_City", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Indiana/Vevay", "US Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Indiana/Vincennes", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Indiana/Winamac", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Indianapolis", "US Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Inuvik", "Mountain Standard Time", "MST", "MDT")
+    put(data, "America/Iqaluit", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Jamaica", "SA Pacific Standard Time", "EST", "EST")
+    put(data, "America/Jujuy", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Juneau", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "America/Kentucky/Monticello", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Kralendijk", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/La_Paz", "SA Western Standard Time", "-04", "-04")
+    put(data, "America/Lima", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "America/Los_Angeles", "Pacific Standard Time", "PST", "PDT")
+    put(data, "America/Louisville", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Lower_Princes", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Maceio", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Managua", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Manaus", "SA Western Standard Time", "-04", "-04")
+    put(data, "America/Marigot", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Martinique", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Matamoros", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Mazatlan", "Mountain Standard Time (Mexico)", "MST", "MST")
+    put(data, "America/Mendoza", "Argentina Standard Time", "-03", "-03")
+    put(data, "America/Menominee", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Merida", "Central Standard Time (Mexico)", "CST", "CST")
+    put(data, "America/Metlakatla", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "America/Mexico_City", "Central Standard Time (Mexico)", "CST", "CST")
+    put(data, "America/Miquelon", "Saint Pierre Standard Time", "-03", "-02")
+    put(data, "America/Moncton", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "America/Monterrey", "Central Standard Time (Mexico)", "CST", "CST")
+    put(data, "America/Montevideo", "Montevideo Standard Time", "-03", "-03")
+    put(data, "America/Montserrat", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Nassau", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/New_York", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Nome", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "America/Noronha", "UTC-02", "-02", "-02")
+    put(data, "America/North_Dakota/Beulah", "Central Standard Time", "CST", "CDT")
+    put(data, "America/North_Dakota/Center", "Central Standard Time", "CST", "CDT")
+    put(data, "America/North_Dakota/New_Salem", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Ojinaga", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Panama", "SA Pacific Standard Time", "EST", "EST")
+    put(data, "America/Paramaribo", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Phoenix", "US Mountain Standard Time", "MST", "MST")
+    put(data, "America/Port-au-Prince", "Haiti Standard Time", "EST", "EDT")
+    put(data, "America/Port_of_Spain", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Porto_Velho", "SA Western Standard Time", "-04", "-04")
+    put(data, "America/Puerto_Rico", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Punta_Arenas", "Magallanes Standard Time", "-03", "-03")
+    put(data, "America/Rankin_Inlet", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Recife", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Regina", "Canada Central Standard Time", "CST", "CST")
+    put(data, "America/Resolute", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Rio_Branco", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "America/Santarem", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "America/Santiago", "Pacific SA Standard Time", "-04", "-03")
+    put(data, "America/Santo_Domingo", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Sao_Paulo", "E. South America Standard Time", "-03", "-03")
+    put(data, "America/Scoresbysund", "Azores Standard Time", "-02", "-01")
+    put(data, "America/Sitka", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "America/St_Barthelemy", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/St_Johns", "Newfoundland Standard Time", "NST", "NDT")
+    put(data, "America/St_Kitts", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/St_Lucia", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/St_Thomas", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/St_Vincent", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Swift_Current", "Canada Central Standard Time", "CST", "CST")
+    put(data, "America/Tegucigalpa", "Central America Standard Time", "CST", "CST")
+    put(data, "America/Thule", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "America/Tijuana", "Pacific Standard Time (Mexico)", "PST", "PDT")
+    put(data, "America/Toronto", "Eastern Standard Time", "EST", "EDT")
+    put(data, "America/Tortola", "SA Western Standard Time", "AST", "AST")
+    put(data, "America/Vancouver", "Pacific Standard Time", "PST", "PDT")
+    put(data, "America/Whitehorse", "Yukon Standard Time", "MST", "MST")
+    put(data, "America/Winnipeg", "Central Standard Time", "CST", "CDT")
+    put(data, "America/Yakutat", "Alaskan Standard Time", "AKST", "AKDT")
+    put(data, "Antarctica/Casey", "Central Pacific Standard Time", "+08", "+08")
+    put(data, "Antarctica/Davis", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Antarctica/DumontDUrville", "West Pacific Standard Time", "+10", "+10")
+    put(data, "Antarctica/Macquarie", "Tasmania Standard Time", "AEST", "AEDT")
+    put(data, "Antarctica/Mawson", "West Asia Standard Time", "+05", "+05")
+    put(data, "Antarctica/McMurdo", "New Zealand Standard Time", "NZST", "NZDT")
+    put(data, "Antarctica/Palmer", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "Antarctica/Rothera", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "Antarctica/Syowa", "E. Africa Standard Time", "+03", "+03")
+    put(data, "Antarctica/Vostok", "Central Asia Standard Time", "+05", "+05")
+    put(data, "Arctic/Longyearbyen", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Asia/Aden", "Arab Standard Time", "+03", "+03")
+    put(data, "Asia/Almaty", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Amman", "Jordan Standard Time", "+03", "+03")
+    put(data, "Asia/Anadyr", "Russia Time Zone 11", "+12", "+12")
+    put(data, "Asia/Aqtau", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Aqtobe", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Ashgabat", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Atyrau", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Baghdad", "Arabic Standard Time", "+03", "+03")
+    put(data, "Asia/Bahrain", "Arab Standard Time", "+03", "+03")
+    put(data, "Asia/Baku", "Azerbaijan Standard Time", "+04", "+04")
+    put(data, "Asia/Bangkok", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Barnaul", "Altai Standard Time", "+07", "+07")
+    put(data, "Asia/Beirut", "Middle East Standard Time", "EET", "EEST")
+    put(data, "Asia/Bishkek", "Central Asia Standard Time", "+06", "+06")
+    put(data, "Asia/Brunei", "Singapore Standard Time", "+08", "+08")
+    put(data, "Asia/Calcutta", "India Standard Time", "IST", "IST")
+    put(data, "Asia/Chita", "Transbaikal Standard Time", "+09", "+09")
+    put(data, "Asia/Colombo", "Sri Lanka Standard Time", "+0530", "+0530")
+    put(data, "Asia/Damascus", "Syria Standard Time", "+03", "+03")
+    put(data, "Asia/Dhaka", "Bangladesh Standard Time", "+06", "+06")
+    put(data, "Asia/Dili", "Tokyo Standard Time", "+09", "+09")
+    put(data, "Asia/Dubai", "Arabian Standard Time", "+04", "+04")
+    put(data, "Asia/Dushanbe", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Famagusta", "GTB Standard Time", "EET", "EEST")
+    put(data, "Asia/Gaza", "West Bank Standard Time", "EET", "EEST")
+    put(data, "Asia/Hebron", "West Bank Standard Time", "EET", "EEST")
+    put(data, "Asia/Hong_Kong", "China Standard Time", "HKT", "HKT")
+    put(data, "Asia/Hovd", "W. Mongolia Standard Time", "+07", "+07")
+    put(data, "Asia/Irkutsk", "North Asia East Standard Time", "+08", "+08")
+    put(data, "Asia/Jakarta", "SE Asia Standard Time", "WIB", "WIB")
+    put(data, "Asia/Jayapura", "Tokyo Standard Time", "WIT", "WIT")
+    put(data, "Asia/Jerusalem", "Israel Standard Time", "IST", "IDT")
+    put(data, "Asia/Kabul", "Afghanistan Standard Time", "+0430", "+0430")
+    put(data, "Asia/Kamchatka", "Russia Time Zone 11", "+12", "+12")
+    put(data, "Asia/Karachi", "Pakistan Standard Time", "PKT", "PKT")
+    put(data, "Asia/Katmandu", "Nepal Standard Time", "+0545", "+0545")
+    put(data, "Asia/Khandyga", "Yakutsk Standard Time", "+09", "+09")
+    put(data, "Asia/Krasnoyarsk", "North Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Kuala_Lumpur", "Singapore Standard Time", "+08", "+08")
+    put(data, "Asia/Kuching", "Singapore Standard Time", "+08", "+08")
+    put(data, "Asia/Kuwait", "Arab Standard Time", "+03", "+03")
+    put(data, "Asia/Macau", "China Standard Time", "CST", "CST")
+    put(data, "Asia/Magadan", "Magadan Standard Time", "+11", "+11")
+    put(data, "Asia/Makassar", "Singapore Standard Time", "WITA", "WITA")
+    put(data, "Asia/Manila", "Singapore Standard Time", "PST", "PST")
+    put(data, "Asia/Muscat", "Arabian Standard Time", "+04", "+04")
+    put(data, "Asia/Nicosia", "GTB Standard Time", "EET", "EEST")
+    put(data, "Asia/Novokuznetsk", "North Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Novosibirsk", "N. Central Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Omsk", "Omsk Standard Time", "+06", "+06")
+    put(data, "Asia/Oral", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Phnom_Penh", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Pontianak", "SE Asia Standard Time", "WIB", "WIB")
+    put(data, "Asia/Pyongyang", "North Korea Standard Time", "KST", "KST")
+    put(data, "Asia/Qatar", "Arab Standard Time", "+03", "+03")
+    put(data, "Asia/Qostanay", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Qyzylorda", "Qyzylorda Standard Time", "+05", "+05")
+    put(data, "Asia/Rangoon", "Myanmar Standard Time", "+0630", "+0630")
+    put(data, "Asia/Riyadh", "Arab Standard Time", "+03", "+03")
+    put(data, "Asia/Saigon", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Sakhalin", "Sakhalin Standard Time", "+11", "+11")
+    put(data, "Asia/Samarkand", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Seoul", "Korea Standard Time", "KST", "KST")
+    put(data, "Asia/Shanghai", "China Standard Time", "CST", "CST")
+    put(data, "Asia/Singapore", "Singapore Standard Time", "+08", "+08")
+    put(data, "Asia/Srednekolymsk", "Russia Time Zone 10", "+11", "+11")
+    put(data, "Asia/Taipei", "Taipei Standard Time", "CST", "CST")
+    put(data, "Asia/Tashkent", "West Asia Standard Time", "+05", "+05")
+    put(data, "Asia/Tbilisi", "Georgian Standard Time", "+04", "+04")
+    put(data, "Asia/Tehran", "Iran Standard Time", "+0330", "+0330")
+    put(data, "Asia/Thimphu", "Bangladesh Standard Time", "+06", "+06")
+    put(data, "Asia/Tokyo", "Tokyo Standard Time", "JST", "JST")
+    put(data, "Asia/Tomsk", "Tomsk Standard Time", "+07", "+07")
+    put(data, "Asia/Ulaanbaatar", "Ulaanbaatar Standard Time", "+08", "+08")
+    put(data, "Asia/Urumqi", "Central Asia Standard Time", "+06", "+06")
+    put(data, "Asia/Ust-Nera", "Vladivostok Standard Time", "+10", "+10")
+    put(data, "Asia/Vientiane", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Asia/Vladivostok", "Vladivostok Standard Time", "+10", "+10")
+    put(data, "Asia/Yakutsk", "Yakutsk Standard Time", "+09", "+09")
+    put(data, "Asia/Yekaterinburg", "Ekaterinburg Standard Time", "+05", "+05")
+    put(data, "Asia/Yerevan", "Caucasus Standard Time", "+04", "+04")
+    put(data, "Atlantic/Azores", "Azores Standard Time", "-01", "+00")
+    put(data, "Atlantic/Bermuda", "Atlantic Standard Time", "AST", "ADT")
+    put(data, "Atlantic/Canary", "GMT Standard Time", "WET", "WEST")
+    put(data, "Atlantic/Cape_Verde", "Cape Verde Standard Time", "-01", "-01")
+    put(data, "Atlantic/Faeroe", "GMT Standard Time", "WET", "WEST")
+    put(data, "Atlantic/Madeira", "GMT Standard Time", "WET", "WEST")
+    put(data, "Atlantic/Reykjavik", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Atlantic/South_Georgia", "UTC-02", "-02", "-02")
+    put(data, "Atlantic/St_Helena", "Greenwich Standard Time", "GMT", "GMT")
+    put(data, "Atlantic/Stanley", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "Australia/Adelaide", "Cen. Australia Standard Time", "ACST", "ACDT")
+    put(data, "Australia/Brisbane", "E. Australia Standard Time", "AEST", "AEST")
+    put(data, "Australia/Broken_Hill", "Cen. Australia Standard Time", "ACST", "ACDT")
+    put(data, "Australia/Darwin", "AUS Central Standard Time", "ACST", "ACST")
+    put(data, "Australia/Eucla", "Aus Central W. Standard Time", "+0845", "+0845")
+    put(data, "Australia/Hobart", "Tasmania Standard Time", "AEST", "AEDT")
+    put(data, "Australia/Lindeman", "E. Australia Standard Time", "AEST", "AEST")
+    put(data, "Australia/Lord_Howe", "Lord Howe Standard Time", "+1030", "+11")
+    put(data, "Australia/Melbourne", "AUS Eastern Standard Time", "AEST", "AEDT")
+    put(data, "Australia/Perth", "W. Australia Standard Time", "AWST", "AWST")
+    put(data, "Australia/Sydney", "AUS Eastern Standard Time", "AEST", "AEDT")
+    put(data, "Etc/GMT", "UTC", "GMT", "GMT")
+    put(data, "Etc/GMT+1", "Cape Verde Standard Time", "-01", "-01")
+    put(data, "Etc/GMT+10", "Hawaiian Standard Time", "-10", "-10")
+    put(data, "Etc/GMT+11", "UTC-11", "-11", "-11")
+    put(data, "Etc/GMT+12", "Dateline Standard Time", "-12", "-12")
+    put(data, "Etc/GMT+2", "UTC-02", "-02", "-02")
+    put(data, "Etc/GMT+3", "SA Eastern Standard Time", "-03", "-03")
+    put(data, "Etc/GMT+4", "SA Western Standard Time", "-04", "-04")
+    put(data, "Etc/GMT+5", "SA Pacific Standard Time", "-05", "-05")
+    put(data, "Etc/GMT+6", "Central America Standard Time", "-06", "-06")
+    put(data, "Etc/GMT+7", "US Mountain Standard Time", "-07", "-07")
+    put(data, "Etc/GMT+8", "UTC-08", "-08", "-08")
+    put(data, "Etc/GMT+9", "UTC-09", "-09", "-09")
+    put(data, "Etc/GMT-1", "W. Central Africa Standard Time", "+01", "+01")
+    put(data, "Etc/GMT-10", "West Pacific Standard Time", "+10", "+10")
+    put(data, "Etc/GMT-11", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Etc/GMT-12", "UTC+12", "+12", "+12")
+    put(data, "Etc/GMT-13", "UTC+13", "+13", "+13")
+    put(data, "Etc/GMT-14", "Line Islands Standard Time", "+14", "+14")
+    put(data, "Etc/GMT-2", "South Africa Standard Time", "+02", "+02")
+    put(data, "Etc/GMT-3", "E. Africa Standard Time", "+03", "+03")
+    put(data, "Etc/GMT-4", "Arabian Standard Time", "+04", "+04")
+    put(data, "Etc/GMT-5", "West Asia Standard Time", "+05", "+05")
+    put(data, "Etc/GMT-6", "Central Asia Standard Time", "+06", "+06")
+    put(data, "Etc/GMT-7", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Etc/GMT-8", "Singapore Standard Time", "+08", "+08")
+    put(data, "Etc/GMT-9", "Tokyo Standard Time", "+09", "+09")
+    put(data, "Etc/UTC", "UTC", "UTC", "UTC")
+    put(data, "Europe/Amsterdam", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Andorra", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Astrakhan", "Astrakhan Standard Time", "+04", "+04")
+    put(data, "Europe/Athens", "GTB Standard Time", "EET", "EEST")
+    put(data, "Europe/Belgrade", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Berlin", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Bratislava", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Brussels", "Romance Standard Time", "CET", "CEST")
+    put(data, "Europe/Bucharest", "GTB Standard Time", "EET", "EEST")
+    put(data, "Europe/Budapest", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Busingen", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Chisinau", "E. Europe Standard Time", "EET", "EEST")
+    put(data, "Europe/Copenhagen", "Romance Standard Time", "CET", "CEST")
+    put(data, "Europe/Dublin", "GMT Standard Time", "GMT", "IST")
+    put(data, "Europe/Gibraltar", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Guernsey", "GMT Standard Time", "GMT", "BST")
+    put(data, "Europe/Helsinki", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Isle_of_Man", "GMT Standard Time", "GMT", "BST")
+    put(data, "Europe/Istanbul", "Turkey Standard Time", "+03", "+03")
+    put(data, "Europe/Jersey", "GMT Standard Time", "GMT", "BST")
+    put(data, "Europe/Kaliningrad", "Kaliningrad Standard Time", "EET", "EET")
+    put(data, "Europe/Kiev", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Kirov", "Russian Standard Time", "MSK", "MSK")
+    put(data, "Europe/Lisbon", "GMT Standard Time", "WET", "WEST")
+    put(data, "Europe/Ljubljana", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/London", "GMT Standard Time", "GMT", "BST")
+    put(data, "Europe/Luxembourg", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Madrid", "Romance Standard Time", "CET", "CEST")
+    put(data, "Europe/Malta", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Mariehamn", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Minsk", "Belarus Standard Time", "+03", "+03")
+    put(data, "Europe/Monaco", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Moscow", "Russian Standard Time", "MSK", "MSK")
+    put(data, "Europe/Oslo", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Paris", "Romance Standard Time", "CET", "CEST")
+    put(data, "Europe/Podgorica", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Prague", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Riga", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Rome", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Samara", "Russia Time Zone 3", "+04", "+04")
+    put(data, "Europe/San_Marino", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Sarajevo", "Central European Standard Time", "CET", "CEST")
+    put(data, "Europe/Saratov", "Saratov Standard Time", "+04", "+04")
+    put(data, "Europe/Simferopol", "Russian Standard Time", "MSK", "MSK")
+    put(data, "Europe/Skopje", "Central European Standard Time", "CET", "CEST")
+    put(data, "Europe/Sofia", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Stockholm", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Tallinn", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Tirane", "Central Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Ulyanovsk", "Astrakhan Standard Time", "+04", "+04")
+    put(data, "Europe/Vaduz", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Vatican", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Vienna", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Europe/Vilnius", "FLE Standard Time", "EET", "EEST")
+    put(data, "Europe/Volgograd", "Volgograd Standard Time", "MSK", "MSK")
+    put(data, "Europe/Warsaw", "Central European Standard Time", "CET", "CEST")
+    put(data, "Europe/Zagreb", "Central European Standard Time", "CET", "CEST")
+    put(data, "Europe/Zurich", "W. Europe Standard Time", "CET", "CEST")
+    put(data, "Indian/Antananarivo", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Indian/Chagos", "Central Asia Standard Time", "+06", "+06")
+    put(data, "Indian/Christmas", "SE Asia Standard Time", "+07", "+07")
+    put(data, "Indian/Cocos", "Myanmar Standard Time", "+0630", "+0630")
+    put(data, "Indian/Comoro", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Indian/Kerguelen", "West Asia Standard Time", "+05", "+05")
+    put(data, "Indian/Mahe", "Mauritius Standard Time", "+04", "+04")
+    put(data, "Indian/Maldives", "West Asia Standard Time", "+05", "+05")
+    put(data, "Indian/Mauritius", "Mauritius Standard Time", "+04", "+04")
+    put(data, "Indian/Mayotte", "E. Africa Standard Time", "EAT", "EAT")
+    put(data, "Indian/Reunion", "Mauritius Standard Time", "+04", "+04")
+    put(data, "Pacific/Apia", "Samoa Standard Time", "+13", "+13")
+    put(data, "Pacific/Auckland", "New Zealand Standard Time", "NZST", "NZDT")
+    put(data, "Pacific/Bougainville", "Bougainville Standard Time", "+11", "+11")
+    put(data, "Pacific/Chatham", "Chatham Islands Standard Time", "+1245", "+1345")
+    put(data, "Pacific/Easter", "Easter Island Standard Time", "-06", "-05")
+    put(data, "Pacific/Efate", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Pacific/Enderbury", "UTC+13", "+13", "+13")
+    put(data, "Pacific/Fakaofo", "UTC+13", "+13", "+13")
+    put(data, "Pacific/Fiji", "Fiji Standard Time", "+12", "+12")
+    put(data, "Pacific/Funafuti", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Galapagos", "Central America Standard Time", "-06", "-06")
+    put(data, "Pacific/Gambier", "UTC-09", "-09", "-09")
+    put(data, "Pacific/Guadalcanal", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Pacific/Guam", "West Pacific Standard Time", "ChST", "ChST")
+    put(data, "Pacific/Honolulu", "Hawaiian Standard Time", "HST", "HST")
+    put(data, "Pacific/Kiritimati", "Line Islands Standard Time", "+14", "+14")
+    put(data, "Pacific/Kosrae", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Pacific/Kwajalein", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Majuro", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Marquesas", "Marquesas Standard Time", "-0930", "-0930")
+    put(data, "Pacific/Midway", "UTC-11", "SST", "SST")
+    put(data, "Pacific/Nauru", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Niue", "UTC-11", "-11", "-11")
+    put(data, "Pacific/Norfolk", "Norfolk Standard Time", "+11", "+12")
+    put(data, "Pacific/Noumea", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Pacific/Pago_Pago", "UTC-11", "SST", "SST")
+    put(data, "Pacific/Palau", "Tokyo Standard Time", "+09", "+09")
+    put(data, "Pacific/Pitcairn", "UTC-08", "-08", "-08")
+    put(data, "Pacific/Ponape", "Central Pacific Standard Time", "+11", "+11")
+    put(data, "Pacific/Port_Moresby", "West Pacific Standard Time", "+10", "+10")
+    put(data, "Pacific/Rarotonga", "Hawaiian Standard Time", "-10", "-10")
+    put(data, "Pacific/Saipan", "West Pacific Standard Time", "ChST", "ChST")
+    put(data, "Pacific/Tahiti", "Hawaiian Standard Time", "-10", "-10")
+    put(data, "Pacific/Tarawa", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Tongatapu", "Tonga Standard Time", "+13", "+13")
+    put(data, "Pacific/Truk", "West Pacific Standard Time", "+10", "+10")
+    put(data, "Pacific/Wake", "UTC+12", "+12", "+12")
+    put(data, "Pacific/Wallis", "UTC+12", "+12", "+12")
+    data
+  end
 
-  }
+  # These canonical mappings from Windows to IANA time zone names, used for the
+  # local time zone, are based on
+  # https://raw.githubusercontent.com/unicode-org/cldr/f8369ba0795c79f3bac8eb89967eea359f77835e/common/supplemental/windowsZones.xml
+  private class_getter windows_to_iana : Hash(String, String) do
+    data = Hash(String, String).new(initial_capacity: 139)
+    put(data, "Egypt Standard Time", "Africa/Cairo")
+    put(data, "Morocco Standard Time", "Africa/Casablanca")
+    put(data, "South Africa Standard Time", "Africa/Johannesburg")
+    put(data, "South Sudan Standard Time", "Africa/Juba")
+    put(data, "Sudan Standard Time", "Africa/Khartoum")
+    put(data, "W. Central Africa Standard Time", "Africa/Lagos")
+    put(data, "E. Africa Standard Time", "Africa/Nairobi")
+    put(data, "Sao Tome Standard Time", "Africa/Sao_Tome")
+    put(data, "Libya Standard Time", "Africa/Tripoli")
+    put(data, "Namibia Standard Time", "Africa/Windhoek")
+    put(data, "Aleutian Standard Time", "America/Adak")
+    put(data, "Alaskan Standard Time", "America/Anchorage")
+    put(data, "Tocantins Standard Time", "America/Araguaina")
+    put(data, "Paraguay Standard Time", "America/Asuncion")
+    put(data, "Bahia Standard Time", "America/Bahia")
+    put(data, "SA Pacific Standard Time", "America/Bogota")
+    put(data, "Argentina Standard Time", "America/Buenos_Aires")
+    put(data, "Eastern Standard Time (Mexico)", "America/Cancun")
+    put(data, "Venezuela Standard Time", "America/Caracas")
+    put(data, "SA Eastern Standard Time", "America/Cayenne")
+    put(data, "Central Standard Time", "America/Chicago")
+    put(data, "Central Brazilian Standard Time", "America/Cuiaba")
+    put(data, "Mountain Standard Time", "America/Denver")
+    put(data, "Greenland Standard Time", "America/Godthab")
+    put(data, "Turks And Caicos Standard Time", "America/Grand_Turk")
+    put(data, "Central America Standard Time", "America/Guatemala")
+    put(data, "Atlantic Standard Time", "America/Halifax")
+    put(data, "Cuba Standard Time", "America/Havana")
+    put(data, "US Eastern Standard Time", "America/Indianapolis")
+    put(data, "SA Western Standard Time", "America/La_Paz")
+    put(data, "Pacific Standard Time", "America/Los_Angeles")
+    put(data, "Mountain Standard Time (Mexico)", "America/Mazatlan")
+    put(data, "Central Standard Time (Mexico)", "America/Mexico_City")
+    put(data, "Saint Pierre Standard Time", "America/Miquelon")
+    put(data, "Montevideo Standard Time", "America/Montevideo")
+    put(data, "Eastern Standard Time", "America/New_York")
+    put(data, "US Mountain Standard Time", "America/Phoenix")
+    put(data, "Haiti Standard Time", "America/Port-au-Prince")
+    put(data, "Magallanes Standard Time", "America/Punta_Arenas")
+    put(data, "Canada Central Standard Time", "America/Regina")
+    put(data, "Pacific SA Standard Time", "America/Santiago")
+    put(data, "E. South America Standard Time", "America/Sao_Paulo")
+    put(data, "Newfoundland Standard Time", "America/St_Johns")
+    put(data, "Pacific Standard Time (Mexico)", "America/Tijuana")
+    put(data, "Yukon Standard Time", "America/Whitehorse")
+    put(data, "Jordan Standard Time", "Asia/Amman")
+    put(data, "Arabic Standard Time", "Asia/Baghdad")
+    put(data, "Azerbaijan Standard Time", "Asia/Baku")
+    put(data, "SE Asia Standard Time", "Asia/Bangkok")
+    put(data, "Altai Standard Time", "Asia/Barnaul")
+    put(data, "Middle East Standard Time", "Asia/Beirut")
+    put(data, "Central Asia Standard Time", "Asia/Bishkek")
+    put(data, "India Standard Time", "Asia/Calcutta")
+    put(data, "Transbaikal Standard Time", "Asia/Chita")
+    put(data, "Sri Lanka Standard Time", "Asia/Colombo")
+    put(data, "Syria Standard Time", "Asia/Damascus")
+    put(data, "Bangladesh Standard Time", "Asia/Dhaka")
+    put(data, "Arabian Standard Time", "Asia/Dubai")
+    put(data, "West Bank Standard Time", "Asia/Hebron")
+    put(data, "W. Mongolia Standard Time", "Asia/Hovd")
+    put(data, "North Asia East Standard Time", "Asia/Irkutsk")
+    put(data, "Israel Standard Time", "Asia/Jerusalem")
+    put(data, "Afghanistan Standard Time", "Asia/Kabul")
+    put(data, "Russia Time Zone 11", "Asia/Kamchatka")
+    put(data, "Pakistan Standard Time", "Asia/Karachi")
+    put(data, "Nepal Standard Time", "Asia/Katmandu")
+    put(data, "North Asia Standard Time", "Asia/Krasnoyarsk")
+    put(data, "Magadan Standard Time", "Asia/Magadan")
+    put(data, "N. Central Asia Standard Time", "Asia/Novosibirsk")
+    put(data, "Omsk Standard Time", "Asia/Omsk")
+    put(data, "North Korea Standard Time", "Asia/Pyongyang")
+    put(data, "Qyzylorda Standard Time", "Asia/Qyzylorda")
+    put(data, "Myanmar Standard Time", "Asia/Rangoon")
+    put(data, "Arab Standard Time", "Asia/Riyadh")
+    put(data, "Sakhalin Standard Time", "Asia/Sakhalin")
+    put(data, "Korea Standard Time", "Asia/Seoul")
+    put(data, "China Standard Time", "Asia/Shanghai")
+    put(data, "Singapore Standard Time", "Asia/Singapore")
+    put(data, "Russia Time Zone 10", "Asia/Srednekolymsk")
+    put(data, "Taipei Standard Time", "Asia/Taipei")
+    put(data, "West Asia Standard Time", "Asia/Tashkent")
+    put(data, "Georgian Standard Time", "Asia/Tbilisi")
+    put(data, "Iran Standard Time", "Asia/Tehran")
+    put(data, "Tokyo Standard Time", "Asia/Tokyo")
+    put(data, "Tomsk Standard Time", "Asia/Tomsk")
+    put(data, "Ulaanbaatar Standard Time", "Asia/Ulaanbaatar")
+    put(data, "Vladivostok Standard Time", "Asia/Vladivostok")
+    put(data, "Yakutsk Standard Time", "Asia/Yakutsk")
+    put(data, "Ekaterinburg Standard Time", "Asia/Yekaterinburg")
+    put(data, "Caucasus Standard Time", "Asia/Yerevan")
+    put(data, "Azores Standard Time", "Atlantic/Azores")
+    put(data, "Cape Verde Standard Time", "Atlantic/Cape_Verde")
+    put(data, "Greenwich Standard Time", "Atlantic/Reykjavik")
+    put(data, "Cen. Australia Standard Time", "Australia/Adelaide")
+    put(data, "E. Australia Standard Time", "Australia/Brisbane")
+    put(data, "AUS Central Standard Time", "Australia/Darwin")
+    put(data, "Aus Central W. Standard Time", "Australia/Eucla")
+    put(data, "Tasmania Standard Time", "Australia/Hobart")
+    put(data, "Lord Howe Standard Time", "Australia/Lord_Howe")
+    put(data, "W. Australia Standard Time", "Australia/Perth")
+    put(data, "AUS Eastern Standard Time", "Australia/Sydney")
+    put(data, "UTC-11", "Etc/GMT+11")
+    put(data, "Dateline Standard Time", "Etc/GMT+12")
+    put(data, "UTC-02", "Etc/GMT+2")
+    put(data, "UTC-08", "Etc/GMT+8")
+    put(data, "UTC-09", "Etc/GMT+9")
+    put(data, "UTC+12", "Etc/GMT-12")
+    put(data, "UTC+13", "Etc/GMT-13")
+    put(data, "UTC", "Etc/UTC")
+    put(data, "Astrakhan Standard Time", "Europe/Astrakhan")
+    put(data, "W. Europe Standard Time", "Europe/Berlin")
+    put(data, "GTB Standard Time", "Europe/Bucharest")
+    put(data, "Central Europe Standard Time", "Europe/Budapest")
+    put(data, "E. Europe Standard Time", "Europe/Chisinau")
+    put(data, "Turkey Standard Time", "Europe/Istanbul")
+    put(data, "Kaliningrad Standard Time", "Europe/Kaliningrad")
+    put(data, "FLE Standard Time", "Europe/Kiev")
+    put(data, "GMT Standard Time", "Europe/London")
+    put(data, "Belarus Standard Time", "Europe/Minsk")
+    put(data, "Russian Standard Time", "Europe/Moscow")
+    put(data, "Romance Standard Time", "Europe/Paris")
+    put(data, "Russia Time Zone 3", "Europe/Samara")
+    put(data, "Saratov Standard Time", "Europe/Saratov")
+    put(data, "Volgograd Standard Time", "Europe/Volgograd")
+    put(data, "Central European Standard Time", "Europe/Warsaw")
+    put(data, "Mauritius Standard Time", "Indian/Mauritius")
+    put(data, "Samoa Standard Time", "Pacific/Apia")
+    put(data, "New Zealand Standard Time", "Pacific/Auckland")
+    put(data, "Bougainville Standard Time", "Pacific/Bougainville")
+    put(data, "Chatham Islands Standard Time", "Pacific/Chatham")
+    put(data, "Easter Island Standard Time", "Pacific/Easter")
+    put(data, "Fiji Standard Time", "Pacific/Fiji")
+    put(data, "Central Pacific Standard Time", "Pacific/Guadalcanal")
+    put(data, "Hawaiian Standard Time", "Pacific/Honolulu")
+    put(data, "Line Islands Standard Time", "Pacific/Kiritimati")
+    put(data, "Marquesas Standard Time", "Pacific/Marquesas")
+    put(data, "Norfolk Standard Time", "Pacific/Norfolk")
+    put(data, "West Pacific Standard Time", "Pacific/Port_Moresby")
+    put(data, "Tonga Standard Time", "Pacific/Tongatapu")
+    data
+  end
+
+  # TODO: this is needed to avoid generating lots of allocas
+  # in LLVM, which makes LLVM really slow. The compiler should
+  # try to avoid/reuse temporary allocas.
+  # Explanation: https://github.com/crystal-lang/crystal/issues/4516#issuecomment-306226171
+  private def self.put(hash : Hash, key, value) : Nil
+    hash[key] = value
+  end
+
+  private def self.put(hash : Hash, key, *values) : Nil
+    hash[key] = values
+  end
 end

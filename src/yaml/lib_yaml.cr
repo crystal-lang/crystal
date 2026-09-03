@@ -1,6 +1,14 @@
 require "./enums"
 
+# Supported library versions:
+#
+# * libyaml
+#
+# See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 @[Link("yaml", pkg_config: "yaml-0.1")]
+{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+  @[Link(dll: "yaml.dll")]
+{% end %}
 lib LibYAML
   alias Int = LibC::Int
 
@@ -114,6 +122,7 @@ lib LibYAML
 
   struct Emitter
     error : Int
+    problem : LibC::Char*
   end
 
   alias WriteHandler = (Void*, LibC::Char*, LibC::SizeT) -> Int
@@ -137,7 +146,7 @@ lib LibYAML
                                    plain_implicit : Int, quoted_implicit : Int, style : YAML::ScalarStyle) : Int
   fun yaml_alias_event_initialize(event : Event*, anchor : LibC::Char*) : Int
   fun yaml_sequence_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::SequenceStyle) : Int
-  fun yaml_sequence_end_event_initialize(event : Event*)
+  fun yaml_sequence_end_event_initialize(event : Event*) : Int
   fun yaml_mapping_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::MappingStyle) : Int
   fun yaml_mapping_end_event_initialize(event : Event*) : Int
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int

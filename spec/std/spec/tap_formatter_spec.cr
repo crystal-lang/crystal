@@ -1,19 +1,18 @@
 require "spec"
 
-private def build_report
+private def build_report(&)
   String.build do |io|
-    formatter = Spec::TAPFormatter.new(io)
+    cli = Spec::CLI.new(io)
+    formatter = Spec::TAPFormatter.new(cli)
     yield formatter
     formatter.finish(Time::Span.zero, false)
   end
 end
 
 private def exception_with_backtrace(msg)
-  begin
-    raise Exception.new(msg)
-  rescue e
-    e
-  end
+  raise Exception.new(msg)
+rescue e
+  e
 end
 
 describe Spec::TAPFormatter do

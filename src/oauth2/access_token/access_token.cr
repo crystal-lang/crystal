@@ -2,7 +2,7 @@
 #
 # Use `#authenticate` to authenticate an `HTTP::Client`.
 abstract class OAuth2::AccessToken
-  def self.new(pull : JSON::PullParser)
+  def self.new(pull : JSON::PullParser) : self
     token_type = nil
     access_token = nil
     expires_in = nil
@@ -27,6 +27,9 @@ abstract class OAuth2::AccessToken
       end
     end
 
+    unless access_token
+      raise ::JSON::SerializableError.new("Missing access token", "OAuth2::AccessToken", "access_token", *pull.location, cause: nil)
+    end
     access_token = access_token.not_nil!
 
     token_type ||= "bearer"

@@ -99,6 +99,26 @@ struct Symbol
     end
   end
 
+  # :nodoc:
+  # Appends *string* to *io* and quotes it if necessary.
+  def self.quote_for_named_argument(io : IO, string : String) : Nil
+    if needs_quotes_for_named_argument?(string)
+      string.inspect(io)
+    else
+      io << string
+    end
+  end
+
+  # :nodoc:
+  # Returns *string* and quotes it if necessary.
+  def self.quote_for_named_argument(string : String) : String
+    if needs_quotes_for_named_argument?(string)
+      string.inspect
+    else
+      string
+    end
+  end
+
   def clone
     self
   end

@@ -117,6 +117,10 @@ describe "Array" do
       b = [4, 5, 6] * 10
       (a | b).should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "different types" do
+      ([1, 2, 3] | ["hello"]).should eq([1, 2, 3, "hello"])
+    end
   end
 
   it "does +" do
@@ -144,11 +148,21 @@ describe "Array" do
     it "does with even larger arrays" do
       ((1..64).to_a - (1..32).to_a).should eq((33..64).to_a)
     end
+
+    context "with different types" do
+      it "small array" do
+        ([1, 2, 3, 'c'] - [2, nil]).should eq [1, 3, 'c']
+      end
+
+      it "big array" do
+        (((1..64).to_a + ['c']) - ((2..63).to_a + [nil])).should eq [1, 64, 'c']
+      end
+    end
   end
 
   it "does *" do
-    (([] of Int32) * 10).empty?.should be_true
-    ([1, 2, 3] * 0).empty?.should be_true
+    (([] of Int32) * 10).should be_empty
+    ([1, 2, 3] * 0).should be_empty
     ([1] * 3).should eq([1, 1, 1])
     ([1, 2, 3] * 3).should eq([1, 2, 3, 1, 2, 3, 1, 2, 3])
     ([1, 2] * 10).should eq([1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
@@ -435,6 +449,24 @@ describe "Array" do
       a[3..] = [4, 5, 6]
       a.should eq([1, 2, 3, 4, 5, 6])
     end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.pop
+      a[4, 0] = [6]
+      a.should eq([1, 2, 3, 4, 6])
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      a[4, 0] = [6, 7, 8, 9]
+      a.should eq([2, 3, 4, 5, 6, 7, 8, 9])
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(1)
+    end
   end
 
   describe "values_at" do
@@ -449,7 +481,7 @@ describe "Array" do
     end
 
     it "works with mixed types" do
-      [1, "a", 1.0, :a].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, :a})
+      [1, "a", 1.0, 'a'].values_at(0, 1, 2, 3).should eq({1, "a", 1.0, 'a'})
     end
   end
 
@@ -529,6 +561,20 @@ describe "Array" do
       a = [] of Int32
       a.concat(1..4)
       a.@capacity.should eq(6)
+    end
+
+    it "concats indexable" do
+      a = [1, 2, 3]
+      a.concat(Slice.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(StaticArray(Int32, 97).new { |i| i + 4 })
+      a.should eq((1..100).to_a)
+
+      a = [1, 2, 3]
+      a.concat(Deque.new(97) { |i| i + 4 })
+      a.should eq((1..100).to_a)
     end
 
     it "concats a union of arrays" do
@@ -831,6 +877,76 @@ describe "Array" do
     end
   end
 
+  describe "insert_all" do
+    it "inserts with index 0" do
+      a = [2, 3]
+      a.insert_all(0, [0, 1]).should be a
+      a.should eq([0, 1, 2, 3])
+    end
+
+    it "inserts with positive index" do
+      a = [1, 2, 5, 6]
+      a.insert_all(2, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts with index of #size" do
+      a = [1, 2, 3]
+      a.insert_all(a.size, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index" do
+      a = [1, 2, 3]
+      a.insert_all(-1, [4, 5]).should be a
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    it "inserts with negative index (2)" do
+      a = [1, 2, 5, 6]
+      a.insert_all(-3, [3, 4]).should be a
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "inserts when empty" do
+      a = [] of Int32
+      a.insert_all(0, [1, 2, 3]).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "inserts when other is empty" do
+      a = [1, 2, 3]
+      a.insert_all(1, [] of Int32).should be a
+      a.should eq([1, 2, 3])
+    end
+
+    it "raises with index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(4, [4, 5])
+      end
+    end
+
+    it "raises with negative index greater than size" do
+      a = [1, 2, 3]
+      expect_raises IndexError do
+        a.insert_all(-5, [4, 5])
+      end
+    end
+
+    it "inserts indexable" do
+      a = [1, 9, 10]
+      a.insert_all(1, Slice.new(3, 8)).should be a
+      a.should eq([1, 8, 8, 8, 9, 10])
+
+      a.insert_all(-6, StaticArray(Int32, 3).new { |i| i + 2 }).should be a
+      a.should eq([1, 2, 3, 4, 8, 8, 8, 9, 10])
+
+      a.insert_all(4, Deque{5, 6, 7}).should be a
+      a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 9, 10])
+    end
+  end
+
   describe "inspect" do
     it { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end
@@ -950,11 +1066,51 @@ describe "Array" do
     end
   end
 
-  it "does replace" do
-    a = [1, 2, 3]
-    b = [1]
-    b.replace a
-    b.should eq(a)
+  describe "#replace" do
+    it "replaces all elements" do
+      a = [1, 2, 3]
+      b = [4, 5, 6]
+      a.replace(b).should be(a)
+      a.should eq(b)
+    end
+
+    it "reuses the buffer if possible" do
+      a = [1, 2, 3, 4, 5]
+      a.shift
+      b = [6, 7, 8, 9, 10]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+
+      a = [1, 2, 3, 4, 5]
+      a.shift(2)
+      b = [6, 7, 8, 9]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(1)
+    end
+
+    it "resizes the buffer if capacity is not enough" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8, 9, 10, 11]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(10)
+      a.@offset_to_buffer.should eq(0)
+    end
+
+    it "clears unused elements if new size is smaller" do
+      a = [1, 2, 3, 4, 5]
+      b = [6, 7, 8]
+      a.replace(b).should be(a)
+      a.should eq(b)
+      a.@capacity.should eq(5)
+      a.@offset_to_buffer.should eq(0)
+      a.unsafe_fetch(3).should eq(0)
+      a.unsafe_fetch(4).should eq(0)
+    end
   end
 
   it "does reverse with an odd number of elements" do
@@ -1147,16 +1303,16 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should be_true }
+      3.times { a.should contain(b.shift) }
     end
 
     it "shuffle" do
       a = [1, 2, 3]
       b = a.shuffle
-      a.same?(b).should be_false
+      a.should_not be(b)
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should be_true }
+      3.times { b.should contain(a.shift) }
     end
 
     it "shuffle! with random" do
@@ -1319,7 +1475,7 @@ describe "Array" do
     it "truncates with index and count == 0" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(2, 0).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index and count, not enough elements" do
@@ -1331,7 +1487,7 @@ describe "Array" do
     it "truncates with index == size and count" do
       a = [0, 1, 4, 9, 16, 25]
       a.truncate(6, 1).should be(a)
-      a.empty?.should be_true
+      a.should be_empty
     end
 
     it "truncates with index < 0 and count" do
@@ -1366,21 +1522,21 @@ describe "Array" do
       a = [1, 2, 2, 3, 1, 4, 5, 3]
       b = a.uniq
       b.should eq([1, 2, 3, 4, 5])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with block" do
       a = [-1, 1, 0, 2, -2]
       b = a.uniq &.abs
       b.should eq([-1, 0, 2])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs with true" do
       a = [1, 2, 3]
       b = a.uniq { true }
       b.should eq([1])
-      a.same?(b).should be_false
+      a.should_not be(b)
     end
 
     it "uniqs large array" do
@@ -1809,9 +1965,9 @@ describe "Array" do
 
   describe "transpose" do
     it "transposes elements" do
-      [[:a, :b], [:c, :d], [:e, :f]].transpose.should eq([[:a, :c, :e], [:b, :d, :f]])
-      [[:a, :c, :e], [:b, :d, :f]].transpose.should eq([[:a, :b], [:c, :d], [:e, :f]])
-      [[:a]].transpose.should eq([[:a]])
+      [['a', 'b'], ['c', 'd'], ['e', 'f']].transpose.should eq([['a', 'c', 'e'], ['b', 'd', 'f']])
+      [['a', 'c', 'e'], ['b', 'd', 'f']].transpose.should eq([['a', 'b'], ['c', 'd'], ['e', 'f']])
+      [['a']].transpose.should eq([['a']])
     end
 
     it "transposes union of arrays" do
@@ -1825,9 +1981,9 @@ describe "Array" do
 
     it "transposes empty array" do
       e = [] of Array(Int32)
-      e.transpose.empty?.should be_true
-      [e].transpose.empty?.should be_true
-      [e, e, e].transpose.empty?.should be_true
+      e.transpose.should be_empty
+      [e].transpose.should be_empty
+      [e, e, e].transpose.should be_empty
     end
 
     it "raises IndexError error when size of element is invalid" do
@@ -2034,7 +2190,9 @@ describe "Array" do
     t = [4, 5, 6, [7, 8]]
     u = [9, [10, 11].each]
     a = [s, t, u, 12, 13]
-    a.flatten.to_a.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result = a.flatten.to_a
+    result.should eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+    result.should be_a(Array(Int32))
   end
 
   it "#skip" do

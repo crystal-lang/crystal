@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
     <link rel="stylesheet" href="/vendor/codemirror-5.38.0/lib/codemirror.css">
     <link rel="stylesheet" href="/vendor/codemirror-5.38.0/theme/neat.css">
-    <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
+    <link rel="stylesheet" href="/vendor/octicons-19.5.0/octicons.css">
     <link rel="stylesheet" href="/vendor/ansi_up-1.3.0/theme.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
     <% styles.each do |path| %>
@@ -28,7 +28,13 @@
                 <li><a href="/">Playground</a></li>
                 <li><a href="/workbook">Workbook</a></li>
                 <li><a href="/about">About</a></li>
-                <li><a href="/settings"><span class="f-16 octicon octicon-settings"></span></a></li>
+                <li>
+                  <a href="/settings">
+                    <svg viewBox="0 0 16 16" class="octicon">
+                      <use xlink:href="/vendor/octicons-19.5.0/octicons.svg#gear-16"></use>
+                    </svg>
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

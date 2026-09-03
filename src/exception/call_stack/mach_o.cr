@@ -1,4 +1,4 @@
-require "crystal/mach_o"
+require "crystal/system/unix/mach_o"
 
 lib LibC
   fun _dyld_image_count : UInt32
@@ -7,44 +7,21 @@ lib LibC
 end
 
 struct Exception::CallStack
+  DEBUG_LINE_STR = "__debug_line_str"
+  DEBUG_STR      = "__debug_str"
+  DEBUG_LINE     = "__debug_line"
+  DEBUG_ABBREV   = "__debug_abbrev"
+  DEBUG_INFO     = "__debug_info"
+
   @@image_slide : LibC::Long?
 
-  protected def self.load_debug_info_impl
-    read_dwarf_sections
-  end
-
-  protected def self.read_dwarf_sections
-    locate_dsym_bundle do |mach_o|
-      line_strings = mach_o.read_section?("__debug_line_str") do |sh, io|
-        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
-      end
-
-      strings = mach_o.read_section?("__debug_str") do |sh, io|
-        Crystal::DWARF::Strings.new(io, sh.offset, sh.size)
-      end
-
-      mach_o.read_section?("__debug_line") do |sh, io|
-        @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, sh.size, strings: strings, line_strings: line_strings)
-      end
-
-      mach_o.read_section?("__debug_info") do |sh, io|
-        names = [] of {LibC::SizeT, LibC::SizeT, String}
-
-        while (offset = io.pos - sh.offset) < sh.size
-          info = Crystal::DWARF::Info.new(io, offset)
-
-          mach_o.read_section?("__debug_abbrev") do |sh, io|
-            info.read_abbreviations(io)
-          end
-
-          parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
-            names << {low_pc, high_pc, name}
-          end
-        end
-
-        @@dwarf_function_names = names
-      end
+  protected def self.load_debug_info_impl : Nil
+    locate_dsym_bundle do |image|
+      read_dwarf_sections(image)
     end
+  rescue ex
+    @@dwarf_line_numbers = nil
+    @@dwarf_function_names = nil
   end
 
   # DWARF uses fixed addresses but Darwin loads executables at a random
@@ -61,7 +38,7 @@ struct Exception::CallStack
   # or within a `foo.dSYM` bundle for a program named `foo`.
   #
   # See <http://wiki.dwarfstd.org/index.php?title=Apple%27s_%22Lazy%22_DWARF_Scheme> for details.
-  private def self.locate_dsym_bundle
+  private def self.locate_dsym_bundle(&)
     program = Process.executable_path
     return unless program
 
@@ -73,8 +50,8 @@ struct Exception::CallStack
     files.each do |dwarf|
       next unless File.exists?(dwarf)
 
-      Crystal::MachO.open(program) do |mach_o|
-        Crystal::MachO.open(dwarf) do |dsym|
+      Crystal::System::MachO.open(program) do |mach_o|
+        Crystal::System::MachO.open(dwarf) do |dsym|
           if dsym.uuid == mach_o.uuid
             return yield dsym
           end
@@ -101,10 +78,10 @@ struct Exception::CallStack
       end
     end
 
-    program = String.new(buffer)
+    program = File.realpath(String.new(buffer))
 
     LibC._dyld_image_count.times do |i|
-      if program == String.new(LibC._dyld_get_image_name(i))
+      if program == File.realpath(String.new(LibC._dyld_get_image_name(i)))
         return LibC._dyld_get_image_vmaddr_slide(i)
       end
     end

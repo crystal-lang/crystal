@@ -13,10 +13,6 @@ module Crystal
       super(message)
     end
 
-    def color=(color)
-      @color = !!color
-    end
-
     def has_location?
       @filename || @line_number
     end
@@ -34,12 +30,17 @@ module Crystal
     def append_to_s(io : IO, source)
       msg = @message.to_s
       error_message_lines = msg.lines
-      default_message = "syntax error in #{@filename}:#{@line_number}"
 
       io << error_body(source, default_message)
       io << '\n'
       io << colorize("#{@warning ? "Warning" : "Error"}: #{error_message_lines.shift}").yellow.bold
       io << remaining error_message_lines
+    end
+
+    def default_message
+      if (filename = @filename) && (line_number = @line_number)
+        "#{@warning ? "warning" : "syntax error"} in #{filename}:#{line_number}"
+      end
     end
 
     def to_s_with_source(io : IO, source)

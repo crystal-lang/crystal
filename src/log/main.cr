@@ -37,6 +37,11 @@ class Log
 
   {% for method in %i(trace debug info notice warn error fatal) %}
     # See `Log#{{method.id}}`.
+    def self.{{method.id}}(*, exception : Exception) : Nil
+      Top.{{method.id}}(exception: exception)
+    end
+
+    # See `Log#{{method.id}}`.
     def self.{{method.id}}(*, exception : Exception? = nil)
       Top.{{method.id}}(exception: exception) do |dsl|
         yield dsl
@@ -59,12 +64,12 @@ class Log
   end
 
   # Sets the current fiber logging context.
-  def self.context=(value : Log::Metadata)
+  def self.context=(value : Log::Metadata) : Log::Metadata
     Fiber.current.logging_context = value
   end
 
   # :ditto:
-  def self.context=(value : Log::Context)
+  def self.context=(value : Log::Context) : Log::Metadata
     # NOTE: There is a need for `Metadata` and `Context` setters in
     # because `Log.context` returns a `Log::Context` for allowing DSL like `Log.context.set(a: 1)`
     # but if the metadata is built manually the construct `Log.context = metadata` will be used.
@@ -93,7 +98,7 @@ class Log
   # end
   # Log.info { %(message with {"a" => 1} context) }
   # ```
-  def self.with_context(**kwargs)
+  def self.with_context(**kwargs, &)
     previous = Log.context
     Log.context.set(**kwargs) unless kwargs.empty?
     begin
@@ -104,7 +109,7 @@ class Log
   end
 
   # :ditto:
-  def self.with_context(values)
+  def self.with_context(values, &)
     previous = Log.context
     Log.context.set(values) unless values.empty?
     begin
@@ -115,14 +120,14 @@ class Log
   end
 
   # :ditto:
-  def with_context(**kwargs)
+  def with_context(**kwargs, &)
     self.class.with_context(**kwargs) do
       yield
     end
   end
 
   # :ditto:
-  def with_context(values)
+  def with_context(values, &)
     self.class.with_context(values) do
       yield
     end
@@ -157,12 +162,12 @@ class Log
     # Log.context.set extra: h
     # Log.info { %q(message with a: 1, b: 2, extra: {"c" => 3} context) }
     # ```
-    def set(**kwargs)
+    def set(**kwargs) : Log::Metadata
       extend_fiber_context(Fiber.current, kwargs)
     end
 
     # :ditto:
-    def set(values) : Nil
+    def set(values : Hash | NamedTuple) : Nil
       extend_fiber_context(Fiber.current, values)
     end
 

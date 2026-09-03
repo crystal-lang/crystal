@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: exception" do
   it "codegens rescue specific leaf exception" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Foo < Exception
@@ -22,11 +22,11 @@ describe "Code gen: exception" do
       rescue ex : Foo
         bar(ex)
       end
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens exception handler with return" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo
@@ -38,11 +38,11 @@ describe "Code gen: exception" do
       end
 
       foo
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does ensure after rescue which returns (#171)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Global
@@ -68,11 +68,11 @@ describe "Code gen: exception" do
       foo
 
       Global.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "executes body if nothing raised (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       y = 1
@@ -82,11 +82,11 @@ describe "Code gen: exception" do
             y = 10
           end
       x + y
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "executes rescue if something is raised conditionally" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(8)
       require "prelude"
 
       y = 1
@@ -99,11 +99,11 @@ describe "Code gen: exception" do
             y = 4
           end
       x + y
-      )).to_i.should eq(8)
+      CRYSTAL
   end
 
   it "executes rescue if something is raised unconditionally" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(6)
       require "prelude"
 
       y = 1
@@ -115,11 +115,11 @@ describe "Code gen: exception" do
             y = 3
           end
       x + y
-      )).to_i.should eq(6)
+      CRYSTAL
   end
 
   it "can result into union (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       x = begin
@@ -128,11 +128,11 @@ describe "Code gen: exception" do
             2.1
           end
       x.to_i
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can result into union (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       y = begin
@@ -141,11 +141,11 @@ describe "Code gen: exception" do
             2.1
           end
       y.to_i
-    )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "handles nested exceptions" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       a = 0
@@ -161,11 +161,11 @@ describe "Code gen: exception" do
           end
 
       a + b
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "executes ensure when no exception is raised (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       require "prelude"
 
       a = 0
@@ -177,11 +177,11 @@ describe "Code gen: exception" do
             a = 10
           end
       a
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "executes ensure when no exception is raised (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 0
@@ -193,11 +193,11 @@ describe "Code gen: exception" do
             a = 10
           end
       b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure when exception is raised (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       a = 0
@@ -210,11 +210,11 @@ describe "Code gen: exception" do
             a = 2
           end
       a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "executes ensure when exception is raised (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       a = 0
@@ -227,11 +227,11 @@ describe "Code gen: exception" do
             a = 2
           end
       b
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "executes ensure when exception is unhandled (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -250,11 +250,11 @@ describe "Code gen: exception" do
             4
           end
       a
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "executes ensure when exception is unhandled (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -273,11 +273,11 @@ describe "Code gen: exception" do
             4
           end
       b
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "ensure without rescue" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 0
@@ -291,11 +291,11 @@ describe "Code gen: exception" do
       end
 
       a
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure when the main block returns" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       require "prelude"
 
       struct Nil; def to_i; 0; end; end
@@ -310,11 +310,11 @@ describe "Code gen: exception" do
 
       x = 0
       foo(pointerof(x)).to_i
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "executes ensure when the main block returns" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo(x)
@@ -328,11 +328,11 @@ describe "Code gen: exception" do
       x = 0
       foo(pointerof(x))
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure when the main block yields and returns" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo2(x)
@@ -352,11 +352,11 @@ describe "Code gen: exception" do
       x = 0
       bar2(pointerof(x))
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "rescues with type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -371,11 +371,11 @@ describe "Code gen: exception" do
           end
 
       a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "rescues with types defaults to generic rescue" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -392,11 +392,11 @@ describe "Code gen: exception" do
           end
 
       a
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "handles exception in outer block (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -415,11 +415,11 @@ describe "Code gen: exception" do
           end
 
       x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "handles exception in outer block (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -438,11 +438,11 @@ describe "Code gen: exception" do
           end
 
       p
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "handles subclass" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -456,11 +456,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "handle multiple exception types (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -473,11 +473,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "handle multiple exception types (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -490,11 +490,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "receives exception object" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("Ex1")
       require "prelude"
 
       class Ex1 < Exception
@@ -511,11 +511,11 @@ describe "Code gen: exception" do
       end
 
       x
-      )).to_string.should eq("Ex1")
+      CRYSTAL
   end
 
   it "executes else if no exception is raised (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       x = 1
@@ -526,11 +526,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "executes else if no exception is raised (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       require "prelude"
 
       x = 1
@@ -541,11 +541,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "doesn't execute else if exception is raised (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -559,11 +559,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "doesn't execute else if exception is raised (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -577,11 +577,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "doesn't execute else if exception is raised conditionally (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -595,11 +595,11 @@ describe "Code gen: exception" do
             x = 3
           end
       x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "doesn't execute else if exception is raised conditionally (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Ex1 < Exception; end
@@ -613,11 +613,11 @@ describe "Code gen: exception" do
             x = 3
           end
       y
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "handle exception raised by proc literal" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       x = 0
@@ -628,11 +628,11 @@ describe "Code gen: exception" do
         x = 1
       end
       x
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens issue #118 (1)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       begin
@@ -641,11 +641,11 @@ describe "Code gen: exception" do
       ensure
         p n
       end
-      ))
+      CRYSTAL
   end
 
   it "codegens issue #118 (2)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       n = nil
@@ -655,11 +655,11 @@ describe "Code gen: exception" do
       ensure
         p n
       end
-      ))
+      CRYSTAL
   end
 
   it "captures exception thrown from proc" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       def foo
@@ -673,11 +673,11 @@ describe "Code gen: exception" do
         a = 2
       end
       a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "uses exception after rescue" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("OH NO")
       require "prelude"
 
       begin
@@ -685,11 +685,11 @@ describe "Code gen: exception" do
       rescue ex
       end
       ex.not_nil!.message
-      )).to_string.should eq("OH NO")
+      CRYSTAL
   end
 
   it "doesn't codegen duplicated ensure if unreachable (#709)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       class Foo
@@ -707,11 +707,11 @@ describe "Code gen: exception" do
         end
       ensure
       end
-      ))
+      CRYSTAL
   end
 
   it "executes ensure when raising inside rescue" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       a = 1
@@ -728,11 +728,11 @@ describe "Code gen: exception" do
       end
 
       a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "executes ensure of break inside while inside body" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       a = 0
@@ -744,11 +744,11 @@ describe "Code gen: exception" do
         end
       end
       a
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "executes ensure of break inside while inside body with nested handlers" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       a = 0
@@ -766,11 +766,11 @@ describe "Code gen: exception" do
         a += 1
       end
       b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure of break inside while inside body with block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(0)
       require "prelude"
 
       class Global
@@ -808,11 +808,11 @@ describe "Code gen: exception" do
       end
 
       Global.b
-      )).to_i.should eq(0)
+      CRYSTAL
   end
 
   it "executes ensure of break inside while inside rescue" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       a = 0
@@ -826,11 +826,11 @@ describe "Code gen: exception" do
         end
       end
       a
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "executes ensure of break inside while inside else" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       a = 0
@@ -844,11 +844,11 @@ describe "Code gen: exception" do
         end
       end
       a
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "executes ensure of next inside while inside body" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       a = 0
@@ -862,11 +862,11 @@ describe "Code gen: exception" do
         end
       end
       a
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "executes return inside rescue, executing ensure" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Global
@@ -896,11 +896,11 @@ describe "Code gen: exception" do
       foo
 
       Global.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "executes ensure from return until target" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo
@@ -917,11 +917,11 @@ describe "Code gen: exception" do
       end
 
       a
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure from return until target" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Global
@@ -956,11 +956,11 @@ describe "Code gen: exception" do
       bar
 
       Global.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "executes ensure of next inside block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo
@@ -984,11 +984,11 @@ describe "Code gen: exception" do
       end
 
       b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure of next inside block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       class Global
@@ -1032,11 +1032,11 @@ describe "Code gen: exception" do
       end
 
       Global.b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure of break inside block" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
 
       def foo
@@ -1060,11 +1060,11 @@ describe "Code gen: exception" do
       end
 
       b
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "executes ensure of calling method when doing break inside block (#1233)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       class Global
@@ -1089,11 +1089,11 @@ describe "Code gen: exception" do
       end
 
       Global.x
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "propagates raise status (#2074)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       require "prelude"
 
       class Foo
@@ -1133,11 +1133,11 @@ describe "Code gen: exception" do
         a = 2
       end
       a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "doesn't crash on #1988" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
 
       begin
@@ -1150,11 +1150,11 @@ describe "Code gen: exception" do
       else
         21
       end
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "runs #2441" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       require "prelude"
 
       while true
@@ -1166,11 +1166,11 @@ describe "Code gen: exception" do
       end
 
       ex.not_nil!.message.to_s
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 
   it "can rescue TypeCastError (#2607)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(42)
       require "prelude"
 
       begin
@@ -1181,11 +1181,11 @@ describe "Code gen: exception" do
       rescue e : Exception
         0
       end
-      )).to_i.should eq(42)
+      CRYSTAL
   end
 
   it "can use argument in rescue (#2844)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       require "prelude"
 
       def foo(exe)
@@ -1199,11 +1199,11 @@ describe "Code gen: exception" do
       ex = Exception.new("foo")
       ex = foo(ex)
       ex.message.not_nil!
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 
   it "can use argument in rescue, with a different type (1) (#2844)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       require "prelude"
 
       def foo(exe)
@@ -1217,11 +1217,11 @@ describe "Code gen: exception" do
 
       ex = foo(1).as(Exception)
       ex.message.not_nil!
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 
   it "can use argument in rescue, with a different type (2) (#2844)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(10)
       require "prelude"
 
       def foo(exe)
@@ -1234,11 +1234,11 @@ describe "Code gen: exception" do
       end
 
       foo(10).as(Int32)
-      )).to_i.should eq(10)
+      CRYSTAL
   end
 
   it "runs NoReturn ensure (#3082)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       require "prelude"
 
       begin
@@ -1253,11 +1253,11 @@ describe "Code gen: exception" do
         print 4
       end
       print 5
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "catches exception thrown by as inside method (#4030)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("good")
       require "prelude"
 
       def foo
@@ -1271,11 +1271,11 @@ describe "Code gen: exception" do
       rescue ex : TypeCastError
         "good"
       end
-      )).to_string.should eq("good")
+      CRYSTAL
   end
 
   it "types parenthesized expression (#5511)" do
-    run(%(
+    run(<<-CRYSTAL).to_string.should eq("foo")
       require "prelude"
 
       begin
@@ -1283,11 +1283,11 @@ describe "Code gen: exception" do
       rescue ex
         ex.message
       end
-      )).to_string.should eq("foo")
+      CRYSTAL
   end
 
   it "codegens return from rescue with value" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(5)
       require "prelude"
 
       def foo
@@ -1299,11 +1299,11 @@ describe "Code gen: exception" do
       end
 
       foo
-      )).to_i.should eq(5)
+      CRYSTAL
   end
 
   it "closures rescue variable (#8141)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       require "prelude"
 
       def invoke(&block)
@@ -1317,6 +1317,166 @@ describe "Code gen: exception" do
         rescue ex
         end
       end
-    ))
+      CRYSTAL
+  end
+
+  it "handles rescuing module type" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Foo; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
+  it "handles rescuing union between module type and class type" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Foo; end
+
+      abstract class BaseError < Exception; end
+      class Ex2 < BaseError; end
+
+      class Ex1 < BaseError
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | BaseError
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
+  it "handles rescuing union between module types" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex1 < Exception
+        include Foo
+      end
+
+      class Ex2 < Exception
+        include Bar
+      end
+
+      x = 0
+      begin
+        raise Ex1.new
+      rescue Foo | Bar
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
+  it "does not rescue just any module" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        begin
+          raise Ex.new("oh no")
+        rescue Bar
+          x = 1
+        end
+      rescue ex
+        x = 2
+      end
+      x
+      CRYSTAL
+  end
+
+  it "rescues a valid union" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Foo, Bar)
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
+  it "rescues a valid nested union" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+      module Baz; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Baz, Union(Foo, Bar))
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
+  it "does not rescue just any union" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      module Foo; end
+      module Bar; end
+      module Baz; end
+
+      class Ex < Exception
+        include Foo
+      end
+
+      x = 0
+      begin
+        raise Ex.new("oh no")
+      rescue Union(Bar, Baz)
+        x = 1
+      rescue
+        x = 2
+      end
+      x
+      CRYSTAL
   end
 end

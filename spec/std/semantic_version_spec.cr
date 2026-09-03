@@ -45,6 +45,32 @@ describe SemanticVersion do
     end
   end
 
+  it "#valid?" do
+    SemanticVersion.valid?("1.2.3").should be_true
+    SemanticVersion.valid?("1.2.3-2").should be_true
+    SemanticVersion.valid?("1.2.3-10").should be_true
+    SemanticVersion.valid?("1.2.3-alpha").should be_true
+    SemanticVersion.valid?("1.2.3-alpha.2").should be_true
+    SemanticVersion.valid?("1.2.3-alpha.10").should be_true
+
+    SemanticVersion.valid?("").should be_false
+    SemanticVersion.valid?("1").should be_false
+    SemanticVersion.valid?("foo").should be_false
+  end
+
+  it "#parse?" do
+    SemanticVersion.parse?("1.2.3").should eq SemanticVersion.new(1, 2, 3)
+    SemanticVersion.parse?("1.2.3-2").should eq SemanticVersion.new(1, 2, 3, "2")
+    SemanticVersion.parse?("1.2.3-10").should eq SemanticVersion.new(1, 2, 3, "10")
+    SemanticVersion.parse?("1.2.3-alpha").should eq SemanticVersion.new(1, 2, 3, "alpha")
+    SemanticVersion.parse?("1.2.3-alpha.2").should eq SemanticVersion.new(1, 2, 3, SemanticVersion::Prerelease.parse("alpha.2"))
+    SemanticVersion.parse?("1.2.3-alpha.10").should eq SemanticVersion.new(1, 2, 3, SemanticVersion::Prerelease.parse("alpha.10"))
+
+    SemanticVersion.parse?("").should be_nil
+    SemanticVersion.parse?("1").should be_nil
+    SemanticVersion.parse?("foo").should be_nil
+  end
+
   it "does not accept bad versions" do
     sversions = %w(
       1
@@ -84,8 +110,34 @@ describe SemanticVersion do
       99999999999999999999999.999999999999999999.99999999999999999----RC-SNAPSHOT.12.09.1--------------------------------..12
     )
     sversions.each do |s|
+      SemanticVersion.valid?(s).should be_false
+      SemanticVersion.parse?(s).should be_nil
       expect_raises(ArgumentError) { SemanticVersion.parse(s) }
     end
+  end
+
+  it "copies with specified modifications" do
+    base_version = SemanticVersion.new(1, 2, 3, "rc", "0000")
+    base_version.copy_with(major: 0).should eq SemanticVersion.new(0, 2, 3, "rc", "0000")
+    base_version.copy_with(minor: 0).should eq SemanticVersion.new(1, 0, 3, "rc", "0000")
+    base_version.copy_with(patch: 0).should eq SemanticVersion.new(1, 2, 0, "rc", "0000")
+    base_version.copy_with(prerelease: "alpha").should eq SemanticVersion.new(1, 2, 3, "alpha", "0000")
+    base_version.copy_with(build: "0001").should eq SemanticVersion.new(1, 2, 3, "rc", "0001")
+    base_version.copy_with(prerelease: nil, build: nil).should eq SemanticVersion.new(1, 2, 3)
+  end
+
+  it "bumps to the correct version" do
+    SemanticVersion.new(1, 1, 1).bump_minor.should eq SemanticVersion.new(1, 2, 0)
+    SemanticVersion.new(1, 2, 0).bump_patch.should eq SemanticVersion.new(1, 2, 1)
+    SemanticVersion.new(1, 2, 1).bump_major.should eq SemanticVersion.new(2, 0, 0)
+    SemanticVersion.new(2, 0, 0).bump_patch.should eq SemanticVersion.new(2, 0, 1)
+    SemanticVersion.new(2, 0, 1).bump_minor.should eq SemanticVersion.new(2, 1, 0)
+    SemanticVersion.new(2, 1, 0).bump_major.should eq SemanticVersion.new(3, 0, 0)
+
+    version_with_prerelease = SemanticVersion.new(1, 2, 3, "rc", "0001")
+    version_with_prerelease.bump_major.should eq SemanticVersion.new(2, 0, 0)
+    version_with_prerelease.bump_minor.should eq SemanticVersion.new(1, 3, 0)
+    version_with_prerelease.bump_patch.should eq SemanticVersion.new(1, 2, 3)
   end
 
   describe SemanticVersion::Prerelease do

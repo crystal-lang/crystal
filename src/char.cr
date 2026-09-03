@@ -157,7 +157,7 @@ struct Char
 
   # Returns `true` if this char is an ASCII number in specified base.
   #
-  # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
+  # Base can be from 2 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
   #
   # ```
   # '4'.ascii_number?     # => true
@@ -197,6 +197,7 @@ struct Char
   # 'ç'.lowercase? # => true
   # 'G'.lowercase? # => false
   # '.'.lowercase? # => false
+  # 'ǲ'.lowercase? # => false
   # ```
   def lowercase? : Bool
     ascii? ? ascii_lowercase? : Unicode.lowercase?(self)
@@ -221,9 +222,22 @@ struct Char
   # 'Á'.uppercase? # => true
   # 'c'.uppercase? # => false
   # '.'.uppercase? # => false
+  # 'ǲ'.uppercase? # => false
   # ```
   def uppercase? : Bool
     ascii? ? ascii_uppercase? : Unicode.uppercase?(self)
+  end
+
+  # Returns `true` if this char is a titlecase character, i.e. a ligature
+  # consisting of an uppercase letter followed by lowercase characters.
+  #
+  # ```
+  # 'ǲ'.titlecase? # => true
+  # 'H'.titlecase? # => false
+  # 'c'.titlecase? # => false
+  # ```
+  def titlecase? : Bool
+    !ascii? && Unicode.titlecase?(self)
   end
 
   # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
@@ -393,15 +407,33 @@ struct Char
   # characters, like 'İ', than when downcased result in multiple
   # characters (in this case: 'I' and the dot mark).
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overloads that receive a block or an `IO`.
   #
   # ```
   # 'Z'.downcase # => 'z'
   # 'x'.downcase # => 'x'
   # '.'.downcase # => '.'
   # ```
-  def downcase(options = Unicode::CaseOptions::None) : Char
-    Unicode.downcase(self, options)
+  #
+  # If `options.fold?` is true, then returns the case-folded equivalent instead.
+  # Note that this will return `self` if a multiple-character case folding
+  # exists, even if a separate single-character transformation is also defined
+  # in Unicode.
+  #
+  # ```
+  # 'Z'.downcase(Unicode::CaseOptions::Fold) # => 'z'
+  # 'x'.downcase(Unicode::CaseOptions::Fold) # => 'x'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) # => 'σ'
+  # 'ꭰ'.downcase(Unicode::CaseOptions::Fold) # => 'Ꭰ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) # => 'ẞ' # not U+00DF 'ß'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) # => "ᾈ" # not U+1F80 'ᾀ'
+  # ```
+  def downcase(options : Unicode::CaseOptions = :none) : Char
+    if options.fold?
+      Unicode.foldcase(self, options)
+    else
+      Unicode.downcase(self, options)
+    end
   end
 
   # Yields each char for the downcase equivalent of this char.
@@ -409,8 +441,35 @@ struct Char
   # This method takes into account the possibility that an downcase
   # version of a char might result in multiple chars, like for
   # 'İ', which results in 'i' and a dot mark.
-  def downcase(options = Unicode::CaseOptions::None)
-    Unicode.downcase(self, options) { |char| yield char }
+  #
+  # ```
+  # 'Z'.downcase { |v| puts v }                             # prints 'z'
+  # 'ς'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'σ'
+  # 'ẞ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 's', 's'
+  # 'ᾈ'.downcase(Unicode::CaseOptions::Fold) { |v| puts v } # prints 'ἀ', 'ι'
+  # ```
+  def downcase(options : Unicode::CaseOptions = :none, &)
+    if options.fold?
+      Unicode.foldcase(self, options) { |char| yield char }
+    else
+      Unicode.downcase(self, options) { |char| yield char }
+    end
+  end
+
+  # Writes the downcase equivalent of this char to the given *io*.
+  #
+  # This method takes into account the possibility that an downcase
+  # version of a char might result in multiple chars, like for
+  # 'İ', which results in 'i' and a dot mark.
+  #
+  # ```
+  # 'Z'.downcase(STDOUT)                             # prints "z"
+  # 'ς'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "σ"
+  # 'ẞ'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "ss"
+  # 'ᾈ'.downcase(STDOUT, Unicode::CaseOptions::Fold) # prints "ἀι"
+  # ```
+  def downcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    downcase(options) { |char| io << char }
   end
 
   # Returns the upcase equivalent of this char.
@@ -420,14 +479,14 @@ struct Char
   # characters, like 'ﬄ', than when upcased result in multiple
   # characters (in this case: 'F', 'F', 'L').
   #
-  # For a more correct method see the method that receives a block.
+  # For more correct behavior see the overloads that receive a block or an `IO`.
   #
   # ```
   # 'z'.upcase # => 'Z'
   # 'X'.upcase # => 'X'
   # '.'.upcase # => '.'
   # ```
-  def upcase(options = Unicode::CaseOptions::None) : Char
+  def upcase(options : Unicode::CaseOptions = :none) : Char
     Unicode.upcase(self, options)
   end
 
@@ -441,8 +500,84 @@ struct Char
   # 'z'.upcase { |v| puts v } # prints 'Z'
   # 'ﬄ'.upcase { |v| puts v } # prints 'F', 'F', 'L'
   # ```
-  def upcase(options = Unicode::CaseOptions::None)
+  def upcase(options : Unicode::CaseOptions = :none, &)
     Unicode.upcase(self, options) { |char| yield char }
+  end
+
+  # Writes the upcase equivalent of this char to the given *io*.
+  #
+  # This method takes into account the possibility that an upcase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'F' and 'L'.
+  #
+  # ```
+  # 'z'.upcase(STDOUT) # prints "Z"
+  # 'ﬄ'.upcase(STDOUT) # prints "FFL"
+  # ```
+  def upcase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    upcase(options) { |char| io << char }
+  end
+
+  # Returns the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may return a different character where only
+  # the first letter is uppercase and the rest lowercase.
+  #
+  # Note that this only works for characters whose titlecase
+  # equivalent yields a single codepoint. There are a few
+  # characters, like 'ﬄ', than when titlecased result in multiple
+  # characters (in this case: 'F', 'f', 'l').
+  #
+  # For more correct behavior see the overloads that receive a block or an `IO`.
+  #
+  # ```
+  # 'z'.titlecase # => 'Z'
+  # 'X'.titlecase # => 'X'
+  # '.'.titlecase # => '.'
+  # 'Ǳ'.titlecase # => 'ǲ'
+  # 'ǳ'.titlecase # => 'ǲ'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none) : Char
+    Unicode.titlecase(self, options)
+  end
+
+  # Yields each char for the titlecase equivalent of this char.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may yield a different character sequence
+  # where only the first letter is uppercase and the rest lowercase.
+  #
+  # This method takes into account the possibility that a titlecase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'f' and 'l'.
+  #
+  # ```
+  # 'z'.titlecase { |v| puts v } # prints 'Z'
+  # 'Ǳ'.titlecase { |v| puts v } # prints 'ǲ'
+  # 'ﬄ'.titlecase { |v| puts v } # prints 'F', 'f', 'l'
+  # ```
+  def titlecase(options : Unicode::CaseOptions = :none, &)
+    Unicode.titlecase(self, options) { |char| yield char }
+  end
+
+  # Writes the titlecase equivalent of this char to the given *io*.
+  #
+  # Usually this is equivalent to `#upcase`, but a few precomposed characters
+  # consisting of multiple letters may yield a different character sequence
+  # where only the first letter is uppercase and the rest lowercase.
+  #
+  # This method takes into account the possibility that a titlecase
+  # version of a char might result in multiple chars, like for
+  # 'ﬄ', which results in 'F', 'f' and 'l'.
+  #
+  # ```
+  # 'z'.titlecase(STDOUT) # prints "Z"
+  # 'Ǳ'.titlecase(STDOUT) # prints "ǲ"
+  # 'ﬄ'.titlecase(STDOUT) # prints "Ffl"
+  # ```
+  def titlecase(io : IO, options : Unicode::CaseOptions = :none) : Nil
+    titlecase(options) { |char| io << char }
   end
 
   # See `Object#hash(hasher)`
@@ -487,7 +622,6 @@ struct Char
   # ```
   # 'b'.pred # => 'a'
   # 'ぃ'.pred # => 'あ'
-  # ```
   # ```
   #
   # This does not always return `codepoint - 1`. There is a gap in the
@@ -616,7 +750,7 @@ struct Char
     io << dump
   end
 
-  private def dump_or_inspect
+  private def dump_or_inspect(&)
     case self
     when '\'' then "'\\''"
     when '\\' then "'\\\\'"
@@ -646,7 +780,7 @@ struct Char
   # digits wrapped in curly braces and no leading zeros.
   #
   # ```
-  # 'a'.unicode_escape      # => "\\u00E1"
+  # 'a'.unicode_escape      # => "\\u0061"
   # '\t'.unicode_escape     # => "\\u0009"
   # 'あ'.unicode_escape      # => "\\u3042"
   # '\u0012'.unicode_escape # => "\\u0012"
@@ -723,7 +857,7 @@ struct Char
     to_i?(base)
   end
 
-  {% for type in %w(i8 i16 i64 u8 u16 u32 u64) %}
+  {% for type in %w(i8 i16 i64 i128 u8 u16 u32 u64 u128) %}
     # See also: `to_i`.
     def to_{{type.id}}(base : Int = 10)
       to_i(base).to_{{type.id}}
@@ -805,7 +939,7 @@ struct Char
   # 129
   # 130
   # ```
-  def each_byte : Nil
+  def each_byte(&) : Nil
     # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
 
     c = ord

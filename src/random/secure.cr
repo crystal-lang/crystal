@@ -11,8 +11,8 @@ require "crystal/system/random"
 # [1, 5, 6].shuffle(Random::Secure) # => [6, 1, 5]
 # ```
 #
-# On OpenBSD, it uses [`arc4random`](https://man.openbsd.org/arc4random),
-# on Linux [`getrandom`](http://man7.org/linux/man-pages/man2/getrandom.2.html) (if the kernel supports it),
+# On BSD-based systems and macOS/Darwin, it uses [`arc4random`](https://man.openbsd.org/arc4random),
+# on Linux [`getrandom`](http://man7.org/linux/man-pages/man2/getrandom.2.html),
 # on Windows [`RtlGenRandom`](https://docs.microsoft.com/en-us/windows/win32/api/ntsecapi/nf-ntsecapi-rtlgenrandom),
 # and falls back to reading from `/dev/urandom` on UNIX systems.
 module Random::Secure
@@ -27,7 +27,7 @@ module Random::Secure
     Crystal::System::Random.random_bytes(buf)
   end
 
-  {% for type in [UInt8, UInt16, UInt32, UInt64] %}
+  {% for type in [UInt8, UInt16, UInt32, UInt64, UInt128] %}
     # Generates a random integer of a given type. The number of bytes to
     # generate can be limited; by default it will generate as many bytes as
     # needed to fill the integer size.
@@ -55,7 +55,7 @@ module Random::Secure
     end
   {% end %}
 
-  {% for type in [Int8, Int16, Int32, Int64] %}
+  {% for type in [Int8, Int16, Int32, Int64, Int128] %}
     private def rand_type(type : {{type}}.class, needed_bytes = sizeof({{type}})) : {{type}}
       result = rand_type({{"U#{type}".id}}, needed_bytes)
       {{type}}.new!(result)

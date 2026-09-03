@@ -5,23 +5,23 @@ describe "INI" do
   describe "parse" do
     context "from String" do
       it "fails on malformed section" do
-        expect_raises(INI::ParseException, "unterminated section") do
+        expect_raises(INI::ParseException, "Unterminated section") do
           INI.parse("[section")
         end
       end
 
       it "fails on data after section" do
-        expect_raises(INI::ParseException, "data after section") do
+        expect_raises(INI::ParseException, "Data after section") do
           INI.parse("[section] foo  ")
         end
       end
 
       it "fails on malformed declaration" do
-        expect_raises(INI::ParseException, "expected declaration") do
+        expect_raises(INI::ParseException, "Expected declaration") do
           INI.parse("foobar")
         end
 
-        expect_raises(INI::ParseException, "expected declaration") do
+        expect_raises(INI::ParseException, "Expected declaration") do
           INI.parse("foo: bar")
         end
       end

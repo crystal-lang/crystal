@@ -20,6 +20,10 @@ module YAML
     DOUBLE_QUOTED
     LITERAL
     FOLDED
+
+    def quoted?
+      single_quoted? || double_quoted?
+    end
   end
 
   enum SequenceStyle

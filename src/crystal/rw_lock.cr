@@ -1,37 +1,42 @@
 # :nodoc:
-class Crystal::RWLock
-  @writer = Atomic(Int32).new(0)
+struct Crystal::RWLock
+  private UNLOCKED = 0
+  private LOCKED   = 1
+
+  @writer = Atomic(Int32).new(UNLOCKED)
   @readers = Atomic(Int32).new(0)
 
-  def read_lock
+  def read_lock : Nil
     loop do
-      while @writer.get != 0
+      while @writer.get(:relaxed) != UNLOCKED
         Intrinsics.pause
       end
 
-      @readers.add(1)
+      @readers.add(1, :acquire)
 
-      break if @writer.get == 0
+      if @writer.get(:acquire) == UNLOCKED
+        return
+      end
 
-      @readers.sub(1)
+      @readers.sub(1, :release)
     end
   end
 
-  def read_unlock
-    @readers.sub(1)
+  def read_unlock : Nil
+    @readers.sub(1, :release)
   end
 
-  def write_lock
-    while @writer.swap(1) != 0
+  def write_lock : Nil
+    while @writer.swap(LOCKED, :acquire) != UNLOCKED
       Intrinsics.pause
     end
 
-    while @readers.get != 0
+    while @readers.get(:acquire) != 0
       Intrinsics.pause
     end
   end
 
-  def write_unlock
-    @writer.lazy_set(0)
+  def write_unlock : Nil
+    @writer.set(UNLOCKED, :release)
   end
 end

@@ -1,5 +1,7 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
+# NOTE: To use `JSON` or its children, you must explicitly import it with `require "json"`
+#
 # ### General type-safe interface
 #
 # The general type-safe interface for parsing JSON is to invoke `T.from_json` on a
@@ -111,6 +113,8 @@
 # `to_json`, `to_json(IO)` and `to_json(JSON::Builder)` methods are provided
 # for primitive types, but you need to define `to_json(JSON::Builder)`
 # for custom objects, either manually or using `JSON::Serializable`.
+#
+# You can also generate human-readable JSON with `to_pretty_json`.
 module JSON
   # Generic JSON error.
   class Error < Exception
@@ -118,15 +122,40 @@ module JSON
 
   # Exception thrown on a JSON parse error.
   class ParseException < Error
-    getter line_number : Int32
-    getter column_number : Int32
+    @line_number : Int64
+    @column_number : Int64
 
-    def initialize(message, @line_number, @column_number, cause = nil)
+    def line_number : Int32
+      @line_number.to_i32
+    end
+
+    def column_number : Int32
+      @column_number.to_i32
+    end
+
+    @[Experimental]
+    def line_number_i64 : Int64
+      @line_number
+    end
+
+    @[Experimental]
+    def column_number_i64
+      @column_number
+    end
+
+    def initialize(message, line_number, column_number, cause = nil)
+      @line_number = line_number.to_i64
+      @column_number = column_number.to_i64
       super "#{message} at line #{@line_number}, column #{@column_number}", cause
     end
 
     def location : {Int32, Int32}
       {line_number, column_number}
+    end
+
+    @[Experimental]
+    def location_i64 : {Int64, Int64}
+      {line_number_i64, column_number_i64}
     end
   end
 

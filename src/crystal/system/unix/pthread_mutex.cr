@@ -36,7 +36,7 @@ class Thread
       raise RuntimeError.from_os_error("pthread_mutex_unlock", Errno.new(ret)) unless ret == 0
     end
 
-    def synchronize
+    def synchronize(&)
       lock
       yield self
     ensure

@@ -5,17 +5,20 @@ class YAML::Nodes::Parser < YAML::Parser
     @anchors = {} of String => Node
   end
 
-  def self.new(content)
+  def self.new(content, &)
     parser = new(content)
     yield parser ensure parser.close
   end
 
-  def new_documents
-    [] of Array(Node)
+  def new_documents : Array(YAML::Nodes::Document)
+    [] of Document
   end
 
   def new_document : YAML::Nodes::Document
-    Document.new
+    document = Document.new
+    document.start_line = @pull_parser.start_line.to_i
+    document.start_column = @pull_parser.start_column.to_i
+    document
   end
 
   def new_sequence : YAML::Nodes::Sequence

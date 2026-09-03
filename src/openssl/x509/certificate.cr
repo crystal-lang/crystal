@@ -28,6 +28,19 @@ module OpenSSL::X509
       @cert
     end
 
+    # Attempts to decode an ASN.1/DER-encoded certificate from *bytes*.
+    #
+    # Returns the decoded certificate and the remaining bytes on success.
+    # Returns `nil` and *bytes* unchanged on failure.
+    def self.from_der?(bytes : Bytes) : {self?, Bytes}
+      ptr = bytes.to_unsafe
+      if x509 = LibCrypto.d2i_X509(nil, pointerof(ptr), bytes.size)
+        {new(x509), bytes[ptr - bytes.to_unsafe..]}
+      else
+        {nil, bytes}
+      end
+    end
+
     def subject : X509::Name
       subject = LibCrypto.x509_get_subject_name(@cert)
       raise Error.new("X509_get_subject_name") if subject.null?
@@ -62,17 +75,13 @@ module OpenSSL::X509
 
     # Returns the name of the signature algorithm.
     def signature_algorithm : String
-      {% if LibCrypto.has_method?(:obj_find_sigid_algs) %}
-        sigid = LibCrypto.x509_get_signature_nid(@cert)
-        result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
-        raise "Could not determine certificate signature algorithm" if result == 0
+      sigid = LibCrypto.x509_get_signature_nid(@cert)
+      result = LibCrypto.obj_find_sigid_algs(sigid, out algo_nid, nil)
+      raise "Could not determine certificate signature algorithm" if result == 0
 
-        sn = LibCrypto.obj_nid2sn(algo_nid)
-        raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
-        String.new sn
-      {% else %}
-        raise "Missing OpenSSL function for certificate signature algorithm (requires OpenSSL 1.0.2)"
-      {% end %}
+      sn = LibCrypto.obj_nid2sn(algo_nid)
+      raise "Unknown algo NID #{algo_nid.inspect}" if sn.null?
+      String.new sn
     end
 
     # Returns the digest of the certificate using *algorithm_name*

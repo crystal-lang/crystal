@@ -10,10 +10,12 @@ module Crystal::System::Random
   # def self.next_u
 end
 
-{% if flag?(:linux) %}
-  require "./unix/getrandom"
-{% elsif flag?(:openbsd) || flag?(:netbsd) %}
+{% if flag?(:wasi) %}
+  require "./wasi/random"
+{% elsif flag?(:bsd) || flag?(:darwin) %}
   require "./unix/arc4random"
+{% elsif flag?(:linux) && (!flag?(:android) || LibC::ANDROID_API >= 28) %}
+  require "./unix/getrandom"
 {% elsif flag?(:unix) %}
   require "./unix/urandom"
 {% elsif flag?(:win32) %}

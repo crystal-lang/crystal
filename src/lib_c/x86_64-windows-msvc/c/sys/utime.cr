@@ -6,5 +6,6 @@ lib LibC
     modtime : Time64T
   end
 
+  # unused
   fun _wutime64(filename : WCHAR*, times : Utimbuf64*) : Int
 end

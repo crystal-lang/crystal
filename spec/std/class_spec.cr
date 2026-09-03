@@ -18,6 +18,8 @@ private class ClassWithRedefinedName
   end
 end
 
+private alias RecursiveNilableType = Array(RecursiveNilableType)?
+
 describe Class do
   it "does ===" do
     (Int32 === 1).should be_true
@@ -25,6 +27,10 @@ describe Class do
     (Array === [1]).should be_true
     (Array(Int32) === [1]).should be_true
     (Array(Int32) === ['a']).should be_false
+    (Int32.class === 1).should be_false
+    (Int32.class === 1.5).should be_false
+    (Int32.class === Int32).should be_true
+    (Int32.class === Array).should be_true
   end
 
   it "casts, allowing the class to be passed in at runtime" do
@@ -49,11 +55,17 @@ describe Class do
     Int32.clone.should eq(Int32)
   end
 
-  it "#nilable" do
+  it "#nilable?" do
     Int32.nilable?.should be_false
     Nil.nilable?.should be_true
     (Int32 | String).nilable?.should be_false
     Int32?.nilable?.should be_true
+    NoReturn.nilable?.should be_false
+    Reference.nilable?.should be_false
+    Value.nilable?.should be_true
+    Class.nilable?.should be_false
+    Object.nilable?.should be_true
+    RecursiveNilableType.nilable?.should be_true
   end
 
   it "does to_s" do

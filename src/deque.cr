@@ -20,6 +20,7 @@ class Deque(T)
   @start = 0
   protected setter size
   protected getter buffer
+  protected getter capacity
 
   # Creates a new empty Deque
   def initialize
@@ -150,8 +151,8 @@ class Deque(T)
 
   # Removes all elements from `self`.
   def clear
-    halfs do |r|
-      (@buffer + r.begin).clear(r.end - r.begin)
+    Deque.half_slices(self) do |slice|
+      slice.to_unsafe.clear(slice.size)
     end
     @size = 0
     @start = 0
@@ -178,7 +179,65 @@ class Deque(T)
   end
 
   # Appends the elements of *other* to `self`, and returns `self`.
-  def concat(other : Enumerable(T))
+  #
+  # ```
+  # deq = Deque{"a", "b"}
+  # deq.concat(Deque{"c", "d"})
+  # deq # => Deque{"a", "b", "c", "d"}
+  # ```
+  def concat(other : Indexable) : self
+    other_size = other.size
+
+    resize_if_cant_insert(other_size)
+
+    index = @start + @size
+    index -= @capacity if index >= @capacity
+    concat_indexable(other, index)
+
+    @size += other_size
+
+    self
+  end
+
+  private def concat_indexable(other : Deque, index)
+    Deque.half_slices(other) do |slice|
+      index = concat_indexable(slice, index)
+    end
+  end
+
+  private def concat_indexable(other : Array | StaticArray, index)
+    concat_indexable(Slice.new(other.to_unsafe, other.size), index)
+  end
+
+  private def concat_indexable(other : Slice, index)
+    if index + other.size <= @capacity
+      # there is enough space after the last element; one copy will suffice
+      (@buffer + index).copy_from(other.to_unsafe, other.size)
+      index += other.size
+      index == @capacity ? 0 : index
+    else
+      # copy the first half of *other* to the end of the buffer, and then the
+      # remaining half to the start, which must be available after a call to
+      # `#resize_if_cant_insert`
+      first_half_size = @capacity - index
+      second_half_size = other.size - first_half_size
+      (@buffer + index).copy_from(other.to_unsafe, first_half_size)
+      @buffer.copy_from(other.to_unsafe + first_half_size, second_half_size)
+      second_half_size
+    end
+  end
+
+  private def concat_indexable(other, index)
+    appender = (@buffer + index).appender
+    buffer_end = @buffer + @capacity
+    other.each do |elem|
+      appender << elem
+      appender = @buffer.appender if appender.pointer == buffer_end
+    end
+  end
+
+  # :ditto:
+  def concat(other : Enumerable(T)) : self
     other.each do |x|
       push x
     end
@@ -257,7 +316,7 @@ class Deque(T)
 
   # `reject!` and `delete` implementation:
   # returns the last matching element, or nil
-  private def internal_delete
+  private def internal_delete(&)
     match = nil
     i = 0
     while i < @size
@@ -339,9 +398,9 @@ class Deque(T)
   #
   # Do not modify the deque while using this variant of `each`!
   def each(& : T ->) : Nil
-    halfs do |r|
-      r.each do |i|
-        yield @buffer[i]
+    Deque.half_slices(self) do |slice|
+      slice.each do |elem|
+        yield elem
       end
     end
   end
@@ -363,7 +422,7 @@ class Deque(T)
     return unshift(value) if index == 0
     return push(value) if index == @size
 
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     rindex = @start + index
     rindex -= @capacity if rindex >= @capacity
 
@@ -439,7 +498,7 @@ class Deque(T)
 
   # Removes and returns the last item, if not empty, otherwise executes
   # the given block and returns its value.
-  def pop
+  def pop(&)
     if @size == 0
       yield
     else
@@ -474,7 +533,7 @@ class Deque(T)
   # a.push 3 # => Deque{1, 2, 3}
   # ```
   def push(value : T)
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     index = @start + @size
     index -= @capacity if index >= @capacity
     @buffer[index] = value
@@ -517,7 +576,7 @@ class Deque(T)
 
   # Removes and returns the first item, if not empty, otherwise executes
   # the given block and returns its value.
-  def shift
+  def shift(&)
     if @size == 0
       yield
     else
@@ -556,7 +615,7 @@ class Deque(T)
   # a.unshift 0 # => Deque{0, 1, 2}
   # ```
   def unshift(value : T) : self
-    increase_capacity if @size >= @capacity
+    resize_if_cant_insert
     @start -= 1
     @start += @capacity if @start < 0
     @buffer[@start] = value
@@ -564,32 +623,64 @@ class Deque(T)
     self
   end
 
-  private def halfs
+  # :nodoc:
+  def self.half_slices(deque : Deque, &)
     # For [----] yields nothing
-    # For contiguous [-012] yields 1...4
-    # For separated [234---01] yields 6...8, 0...3
+    # For contiguous [-012] yields @buffer[1...4]
+    # For separated [234---01] yields @buffer[6...8], @buffer[0...3]
 
-    return if empty?
-    a = @start
-    b = @start + size
-    b -= @capacity if b > @capacity
+    return if deque.empty?
+    a = deque.@start
+    b = deque.@start + deque.size
+    b -= deque.capacity if b > deque.capacity
     if a < b
-      yield a...b
+      # TODO: this `typeof` is a workaround for 1.0.0; remove it eventually
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.size)
     else
-      yield a...@capacity
-      yield 0...b
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer + a, deque.capacity - a)
+      yield Slice(typeof(deque.buffer.value)).new(deque.buffer, b)
     end
   end
 
-  private def increase_capacity
+  private INITIAL_CAPACITY = 4
+
+  # behaves like `calculate_new_capacity(@capacity + 1)`
+  private def calculate_new_capacity
+    return INITIAL_CAPACITY if @capacity == 0
+
+    @capacity * 2
+  end
+
+  private def calculate_new_capacity(new_size)
+    new_capacity = @capacity == 0 ? INITIAL_CAPACITY : @capacity
+    while new_capacity < new_size
+      new_capacity *= 2
+    end
+    new_capacity
+  end
+
+  # behaves like `resize_if_cant_insert(1)`
+  private def resize_if_cant_insert
+    if @size >= @capacity
+      resize_to_capacity(calculate_new_capacity)
+    end
+  end
+
+  private def resize_if_cant_insert(insert_size)
+    new_capacity = calculate_new_capacity(@size + insert_size)
+    if new_capacity > @capacity
+      resize_to_capacity(new_capacity)
+    end
+  end
+
+  private def resize_to_capacity(capacity)
+    old_capacity, @capacity = @capacity, capacity
+
     unless @buffer
-      @capacity = 4
       @buffer = Pointer(T).malloc(@capacity)
       return
     end
 
-    old_capacity = @capacity
-    @capacity *= 2
     @buffer = @buffer.realloc(@capacity)
 
     finish = @start + @size

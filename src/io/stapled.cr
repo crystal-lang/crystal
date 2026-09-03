@@ -107,7 +107,7 @@ class IO::Stapled < IO
   #
   # Both endpoints and the underlying `IO`s are closed after the block
   # (even if `sync_close?` is `false`).
-  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false)
+  def self.pipe(read_blocking : Bool? = nil, write_blocking : Bool? = nil, &)
     IO.pipe(read_blocking, write_blocking) do |a_read, a_write|
       IO.pipe(read_blocking, write_blocking) do |b_read, b_write|
         a, b = new(a_read, b_write, true), new(b_read, a_write, true)
@@ -123,7 +123,7 @@ class IO::Stapled < IO
 
   # Creates a pair of bidirectional pipe endpoints connected with each other
   # and returns them in a `Tuple`.
-  def self.pipe(read_blocking : Bool = false, write_blocking : Bool = false) : {self, self}
+  def self.pipe(read_blocking : Bool? = nil, write_blocking : Bool? = nil) : {self, self}
     a_read, a_write = IO.pipe(read_blocking, write_blocking)
     b_read, b_write = IO.pipe(read_blocking, write_blocking)
     return new(a_read, b_write, true), new(b_read, a_write, true)

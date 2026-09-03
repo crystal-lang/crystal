@@ -2,7 +2,7 @@ def generator(n : T) forall T
   channel = Channel(T).new
   spawn do
     loop do
-      sleep n
+      sleep n.seconds
       channel.send n
     end
   end

@@ -1,7 +1,7 @@
 require "yaml"
 require "big"
 
-def BigInt.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def BigInt.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : self
   unless node.is_a?(YAML::Nodes::Scalar)
     node.raise "Expected scalar, not #{node.class}"
   end
@@ -9,7 +9,7 @@ def BigInt.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   BigInt.new(node.value)
 end
 
-def BigFloat.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def BigFloat.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : self
   unless node.is_a?(YAML::Nodes::Scalar)
     node.raise "Expected scalar, not #{node.class}"
   end
@@ -17,7 +17,7 @@ def BigFloat.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   BigFloat.new(node.value)
 end
 
-def BigDecimal.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
+def BigDecimal.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node) : self
   unless node.is_a?(YAML::Nodes::Scalar)
     node.raise "Expected scalar, not #{node.class}"
   end

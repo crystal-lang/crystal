@@ -1,7 +1,7 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     def initialize(@filter : TypeFilter, @node : ASTNode)
-      @dependencies = [@node] of ASTNode
+      @dependencies.push @node
       node.add_observer self
       update(@node)
     end
@@ -142,9 +142,9 @@ module Crystal
 
       case other
       when NilType
-        return nil
+        nil
       when UnionType
-        return Type.merge(other.union_types.reject &.nil_type?)
+        other.program.union_of(other.union_types.reject &.nil_type?)
       else
         other
       end
@@ -287,6 +287,14 @@ module Crystal
       new node, TruthyFilter.instance
     end
 
+    def self.truthy_var(name : String)
+      new_filters = new
+      filter = TruthyFilter.instance
+      new_filters.pos[name] = filter
+      new_filters.neg[name] = filter.not
+      new_filters
+    end
+
     def self.and(filters1, filters2)
       return nil if filters1.nil? && filters2.nil?
 
@@ -346,7 +354,7 @@ module Crystal
       new_filters
     end
 
-    def each
+    def each(&)
       pos.each do |key, value|
         yield key, value
       end

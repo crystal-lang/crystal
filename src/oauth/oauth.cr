@@ -1,6 +1,8 @@
 # The OAuth module provides an `OAuth::Consumer` as specified by
 # [RFC 5849](https://tools.ietf.org/html/rfc5849).
 #
+# NOTE: To use `OAuth`, you must explicitly import it with `require "oauth"`
+#
 # ### Performing HTTP client requests with OAuth authentication
 #
 # Assuming you have an access token, its secret, the consumer key and the consumer secret,
@@ -38,7 +40,7 @@
 module OAuth
   # Sets up an `HTTP::Client` to add an OAuth authorization header to every request performed.
   # Check this module's docs for an example usage.
-  def self.authenticate(client : HTTP::Client, token, token_secret, consumer_key, consumer_secret, extra_params = nil) : Nil
+  def self.authenticate(client : HTTP::Client, token : String?, token_secret : String?, consumer_key : String, consumer_secret : String, extra_params : Hash(String, String)? = nil) : Nil
     client.before_request do |request|
       authenticate client, request, token, token_secret, consumer_key, consumer_secret, extra_params
     end

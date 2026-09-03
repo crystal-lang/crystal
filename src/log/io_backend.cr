@@ -3,8 +3,8 @@ class Log::IOBackend < Log::Backend
   property io : IO
   property formatter : Formatter
 
-  {% if flag?(:win32) %}
-    # TODO: this constructor must go away once channels are fixed in Windows
+  {% if flag?(:wasm32) %}
+    # TODO: this constructor must go away once channels are fixed in Windows / WebAssembly
     def initialize(@io = STDOUT, *, @formatter : Formatter = ShortFormat, dispatcher : Dispatcher::Spec = DispatchMode::Sync)
       super(dispatcher)
     end

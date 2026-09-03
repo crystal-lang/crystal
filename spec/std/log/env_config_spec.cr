@@ -10,7 +10,7 @@ end
 describe "Log.setup_from_env" do
   after_all do
     # Setup logging in specs (again) since these specs perform Log.setup
-    Spec.log_setup
+    Spec.cli.log_setup
   end
 
   describe "backend" do
@@ -50,6 +50,24 @@ describe "Log.setup_from_env" do
         Log.setup_from_env(builder: builder, default_level: :warn)
 
         builder.for("").initial_level.should eq(s(:warn))
+      end
+    end
+
+    it "is used if LOG_LEVEL is empty" do
+      with_env "LOG_LEVEL": "" do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+
+        builder.for("").initial_level.should eq(s(:info))
+      end
+    end
+
+    it "is used if LOG_LEVEL is just whitespace" do
+      with_env "LOG_LEVEL": "  " do
+        builder = Log::Builder.new
+        Log.setup_from_env(builder: builder)
+
+        builder.for("").initial_level.should eq(s(:info))
       end
     end
 

@@ -1,6 +1,7 @@
 require "./spec_helper"
 require "big"
 require "spec/helpers/iterate"
+require "../support/number"
 
 private macro it_converts_to_s(num, str, **opts)
   it {{ "converts #{num} to #{str}" }} do
@@ -11,7 +12,27 @@ private macro it_converts_to_s(num, str, **opts)
   end
 end
 
+private class IntEnumerable
+  include Enumerable(Int32)
+
+  def initialize(@elements : Array(Int32))
+  end
+
+  def each(&)
+    @elements.each do |e|
+      yield e
+    end
+  end
+end
+
 describe "Int" do
+  describe "#integer?" do
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it { {{ int }}::MIN.integer?.should be_true }
+      it { {{ int }}::MAX.integer?.should be_true }
+    {% end %}
+  end
+
   describe "**" do
     it "with positive Int32" do
       x = 2 ** 2
@@ -138,6 +159,156 @@ describe "Int" do
     end
   end
 
+  describe "#to_signed" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed.should eq(-123)
+        Int{{n}}::MIN.to_signed.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed.should eq(0)
+        expect_raises(OverflowError) { UInt{{n}}::MAX.to_signed }
+        expect_raises(OverflowError) { (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed }
+      end
+    {% end %}
+  end
+
+  describe "#to_signed!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_signed!.should eq(-123)
+        Int{{n}}::MIN.to_signed!.should eq(Int{{n}}::MIN)
+        Int{{n}}::MAX.to_signed!.should eq(Int{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_signed!
+        x.should be_a(Int{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_signed!.should eq(0)
+        UInt{{n}}::MAX.to_signed!.should eq(-1)
+        (UInt{{n}}::MAX - 122).to_signed!.should eq(-123)
+        (UInt{{n}}.new(Int{{n}}::MAX) + 1).to_signed!.should eq(Int{{n}}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.zero.to_unsigned.should eq(UInt{{n}}::MIN)
+        Int{{n}}::MAX.to_unsigned.should eq(UInt{{n}}.new(Int{{n}}::MAX))
+        expect_raises(OverflowError) { Int{{n}}::MIN.to_unsigned }
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#to_unsigned!" do
+    {% for n in [8, 16, 32, 64, 128] %}
+      it "does for Int{{n}}" do
+        x = Int{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        Int{{n}}.new(-123).to_unsigned!.should eq(UInt{{n}}::MAX - 122)
+        Int{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MAX // 2 + 1)
+        Int{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX // 2)
+        Int{{n}}.new(-1).to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+
+      it "does for UInt{{n}}" do
+        x = UInt{{n}}.new(123).to_unsigned!
+        x.should be_a(UInt{{n}})
+        x.should eq(123)
+
+        UInt{{n}}::MIN.to_unsigned!.should eq(UInt{{n}}::MIN)
+        UInt{{n}}::MAX.to_unsigned!.should eq(UInt{{n}}::MAX)
+      end
+    {% end %}
+  end
+
+  describe "#abs_unsigned" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+
+        x = {{ int }}.new(-123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(123)
+      end
+
+      it "does not overflow on {{ int }}::MIN" do
+        x = {{ int }}::MIN.abs_unsigned
+        x.should be_a(U{{ int }})
+        x.should eq(U{{ int }}.zero &- {{ int }}::MIN)
+      end
+    {% end %}
+  end
+
+  describe "#neg_signed" do
+    {% for int in Int::Signed.union_types %}
+      it "does for {{ int }}" do
+        x = {{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+
+        x = {{ int }}.new(-123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(123)
+
+        expect_raises(OverflowError) { {{ int }}::MIN.neg_signed }
+      end
+
+      it "does for U{{ int }}" do
+        x = U{{ int }}.new(123).neg_signed
+        x.should be_a({{ int }})
+        x.should eq(-123)
+      end
+
+      it "does not overflow on {{ int }}::MIN.abs_unsigned" do
+        x = {{ int }}::MIN.abs_unsigned.neg_signed
+        x.should be_a({{ int }})
+        x.should eq({{ int }}::MIN)
+      end
+    {% end %}
+  end
+
   describe "gcd" do
     it { 14.gcd(0).should eq(14) }
     it { 14.gcd(1).should eq(1) }
@@ -218,6 +389,7 @@ describe "Int" do
       it_converts_to_s 62, "10", base: 62
       it_converts_to_s 97, "1z", base: 62
       it_converts_to_s 3843, "ZZ", base: 62
+      it_converts_to_s Int128::MIN, "-1#{"0" * 127}", base: 2
 
       it "raises on base 1" do
         expect_raises(ArgumentError, "Invalid base 1") { 123.to_s(1) }
@@ -349,7 +521,61 @@ describe "Int" do
   end
 
   describe "divmod" do
-    it { 5.divmod(3).should eq({1, 2}) }
+    it "returns a Tuple of two elements containing the quotient and modulus obtained by dividing self by argument" do
+      5.divmod(3).should eq({1, 2})
+      -5.divmod(3).should eq({-2, 1})
+      5.divmod(-3).should eq({-2, -1})
+      -5.divmod(-3).should eq({1, -2})
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).divmod(2).should be_a(Tuple({{type}}, {{type}}))
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.divmod(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.divmod(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.divmod(-1) }
+
+      (UInt8::MIN.divmod(-1)).should eq({0, 0})
+    end
+  end
+
+  describe "tdivmod" do
+    it "returns a Tuple of two elements containing the quotient and modulus obtained by dividing self by argument using truncated division" do
+      5.tdivmod(3).should eq({1, 2})
+      -5.tdivmod(3).should eq({-1, -2})
+      5.tdivmod(-3).should eq({-1, 2})
+      -5.tdivmod(-3).should eq({1, -2})
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).tdivmod(2).should be_a(Tuple({{type}}, {{type}}))
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.tdivmod(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.tdivmod(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.tdivmod(-1) }
+
+      (UInt8::MIN.tdivmod(-1)).should eq({0, 0})
+    end
   end
 
   describe "fdiv" do
@@ -377,6 +603,50 @@ describe "Int" do
     it { (8000 << 2).should eq(32000) }
     it { (8000 << 32).should eq(0) }
     it { (8000 << -1).should eq(4000) }
+  end
+
+  describe "#rotate_left" do
+    it { 0x87654321_u32.rotate_left(1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_left(2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_left(-1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_left(-2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_left(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_left(1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_left(2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_left(-1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_left(-2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_left(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = ({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1)).rotate_left(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1))
+      end
+    {% end %}
+  end
+
+  describe "#rotate_right" do
+    it { 0x87654321_u32.rotate_right(1).should eq(0xC3B2A190_u32) }
+    it { 0x87654321_u32.rotate_right(2).should eq(0x61D950C8_u32) }
+    it { 0x87654321_u32.rotate_right(-1).should eq(0x0ECA8643_u32) }
+    it { 0x87654321_u32.rotate_right(-2).should eq(0x1D950C86_u32) }
+    it { 0x87654321_u32.rotate_right(32).should eq(0x87654321_u32) }
+
+    it { -0x789ABCDF.rotate_right(1).should eq(-0x3C4D5E70) }
+    it { -0x789ABCDF.rotate_right(2).should eq(0x61D950C8) }
+    it { -0x789ABCDF.rotate_right(-1).should eq(0x0ECA8643) }
+    it { -0x789ABCDF.rotate_right(-2).should eq(0x1D950C86) }
+    it { -0x789ABCDF.rotate_right(32).should eq(-0x789ABCDF) }
+
+    {% for int in BUILTIN_INTEGER_TYPES %}
+      it do
+        x = {{ int }}.new(1).rotate_right(1)
+        x.should be_a({{ int }})
+        x.should eq({{ int }}.new(1) << (sizeof({{ int }}) * 8 - 1))
+      end
+    {% end %}
   end
 
   describe "to" do
@@ -411,49 +681,49 @@ describe "Int" do
     it "String overload" do
       Int8.new("1").should be_a(Int8)
       Int8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int8: " 1 ") do
         Int8.new(" 1 ", whitespace: false)
       end
 
       Int16.new("1").should be_a(Int16)
       Int16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int16: " 1 ") do
         Int16.new(" 1 ", whitespace: false)
       end
 
       Int32.new("1").should be_a(Int32)
       Int32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int32: " 1 ") do
         Int32.new(" 1 ", whitespace: false)
       end
 
       Int64.new("1").should be_a(Int64)
       Int64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid Int64: " 1 ") do
         Int64.new(" 1 ", whitespace: false)
       end
 
       UInt8.new("1").should be_a(UInt8)
       UInt8.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt8: " 1 ") do
         UInt8.new(" 1 ", whitespace: false)
       end
 
       UInt16.new("1").should be_a(UInt16)
       UInt16.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt16: " 1 ") do
         UInt16.new(" 1 ", whitespace: false)
       end
 
       UInt32.new("1").should be_a(UInt32)
       UInt32.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt32: " 1 ") do
         UInt32.new(" 1 ", whitespace: false)
       end
 
       UInt64.new("1").should be_a(UInt64)
       UInt64.new("1").should eq(1)
-      expect_raises ArgumentError do
+      expect_raises ArgumentError, %(Invalid UInt64: " 1 ") do
         UInt64.new(" 1 ", whitespace: false)
       end
     end
@@ -541,11 +811,33 @@ describe "Int" do
     end
   end
 
-  it "tdivs" do
-    5.tdiv(3).should eq(1)
-    -5.tdiv(3).should eq(-1)
-    5.tdiv(-3).should eq(-1)
-    -5.tdiv(-3).should eq(1)
+  describe "tdiv" do
+    it "divides self by argument using truncated division" do
+      5.tdiv(3).should eq(1)
+      -5.tdiv(3).should eq(-1)
+      5.tdiv(-3).should eq(-1)
+      -5.tdiv(-3).should eq(1)
+    end
+
+    it "preserves type of lhs" do
+      {% for type in [UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, UInt128, Int128] %}
+        {{type}}.new(7).tdiv(2).should be_a({{type}})
+      {% end %}
+    end
+
+    it "raises when divides by zero" do
+      expect_raises(DivisionByZeroError) { 5.tdiv(0) }
+    end
+
+    it "raises when divides Int::MIN by -1" do
+      expect_raises(ArgumentError) { Int8::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int16::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int32::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int64::MIN.tdiv(-1) }
+      expect_raises(ArgumentError) { Int128::MIN.tdiv(-1) }
+
+      (UInt8::MIN.tdiv(-1)).should eq(0)
+    end
   end
 
   it "holds true that x == q*y + r" do
@@ -725,6 +1017,52 @@ describe "Int" do
     iter.next.should be_a(Iterator::Stop)
   end
 
+  describe "#bit_reverse" do
+    it { 0x12_u8.bit_reverse.should eq(0x48_u8) }
+    it { 0x1234_u16.bit_reverse.should eq(0x2C48_u16) }
+    it { 0x12345678_u32.bit_reverse.should eq(0x1E6A2C48_u32) }
+    it { 0x123456789ABCDEF0_u64.bit_reverse.should eq(0x0F7B3D591E6A2C48_u64) }
+    it { 1.to_u128.bit_reverse.should eq(1.to_u128 << 127) }
+    it { (1.to_u128 << 127).bit_reverse.should eq(0x1.to_u128) }
+    it { 0x12345678.to_u128.bit_reverse.should eq(0x1E6A2C48.to_u128 << 96) }
+
+    it { 0x12_i8.bit_reverse.should eq(0x48_i8) }
+    it { 0x1234_i16.bit_reverse.should eq(0x2C48_i16) }
+    it { 0x12345678_i32.bit_reverse.should eq(0x1E6A2C48_i32) }
+    it { 0x123456789ABCDEF0_i64.bit_reverse.should eq(0x0F7B3D591E6A2C48_i64) }
+    it { 1.to_i128.bit_reverse.should eq(1.to_i128 << 127) }
+    it { (1.to_i128 << 127).bit_reverse.should eq(0x1.to_i128) }
+    it { 0x12345678.to_i128.bit_reverse.should eq(0x1E6A2C48.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.bit_reverse.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.bit_reverse.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
+  describe "#byte_swap" do
+    it { 0x12_u8.byte_swap.should eq(0x12_u8) }
+    it { 0x1234_u16.byte_swap.should eq(0x3412_u16) }
+    it { 0x12345678_u32.byte_swap.should eq(0x78563412_u32) }
+    it { 0x123456789ABCDEF0_u64.byte_swap.should eq(0xF0DEBC9A78563412_u64) }
+    it { 1.to_u128.byte_swap.should eq(1.to_u128 << 120) }
+    it { (1.to_u128 << 127).byte_swap.should eq(0x80.to_u128) }
+    it { 0x12345678.to_u128.byte_swap.should eq(0x78563412.to_u128 << 96) }
+
+    it { 0x12_i8.byte_swap.should eq(0x12_i8) }
+    it { 0x1234_i16.byte_swap.should eq(0x3412_i16) }
+    it { 0x12345678_i32.byte_swap.should eq(0x78563412_i32) }
+    it { 0x123456789ABCDEF0_i64.byte_swap.should eq(0xF0DEBC9A78563412_u64.to_i64!) }
+    it { 1.to_i128.byte_swap.should eq(1.to_i128 << 120) }
+    it { (1.to_i128 << 127).byte_swap.should eq(0x80.to_i128) }
+    it { 0x12345678.to_i128.byte_swap.should eq(0x78563412.to_i128 << 96) }
+
+    {% for width in %w(8 16 32 64 128).map(&.id) %}
+      it { 0.to_i{{width}}.byte_swap.should be_a(Int{{width}}) }
+      it { 0.to_u{{width}}.byte_swap.should be_a(UInt{{width}}) }
+    {% end %}
+  end
+
   describe "#popcount" do
     it { 5_i8.popcount.should eq(2) }
     it { 127_i8.popcount.should eq(7) }
@@ -860,11 +1198,11 @@ describe "Int" do
     end
 
     it "works for maximums" do
-      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse)
-      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse)
-      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse)
-      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse)
+      Int32::MAX.digits.should eq(Int32::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int64::MAX.digits.should eq(Int64::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt64::MAX.digits.should eq(UInt64::MAX.to_s.chars.map(&.to_i).reverse!)
+      Int128::MAX.digits.should eq(Int128::MAX.to_s.chars.map(&.to_i).reverse!)
+      UInt128::MAX.digits.should eq(UInt128::MAX.to_s.chars.map(&.to_i).reverse!)
     end
 
     it "works for non-Int32" do
@@ -888,6 +1226,50 @@ describe "Int" do
       expect_raises(ArgumentError, "Can't request digits of negative number") do
         -123.digits
       end
+    end
+  end
+
+  describe "from_digits" do
+    it "returns Int composed from given digits" do
+      Int32.from_digits([9, 8, 7, 6, 5, 4, 3, 2, 1]).should eq(123456789)
+    end
+
+    it "works with a base" do
+      Int32.from_digits([11, 7], 16).should eq(123)
+      Int32.from_digits([11, 7], base: 16).should eq(123)
+    end
+
+    it "accepts digits as Enumerable" do
+      enumerable = IntEnumerable.new([11, 7])
+      Int32.from_digits(enumerable, 16).should eq(123)
+    end
+
+    it "raises for base less than 2" do
+      [-1, 0, 1].each do |base|
+        expect_raises(ArgumentError, "Invalid base #{base}") do
+          Int32.from_digits([1, 2, 3], base)
+        end
+      end
+    end
+
+    it "raises for digits greater than base" do
+      expect_raises(ArgumentError, "Invalid digit 2 for base 2") do
+        Int32.from_digits([1, 0, 2], 2)
+      end
+
+      expect_raises(ArgumentError, "Invalid digit 10 for base 2") do
+        Int32.from_digits([1, 0, 10], 2)
+      end
+    end
+
+    it "raises for negative digits" do
+      expect_raises(ArgumentError, "Invalid digit -1") do
+        Int32.from_digits([1, 2, -1])
+      end
+    end
+
+    it "works properly for values close to the upper limit" do
+      UInt8.from_digits([5, 5, 2]).should eq(255)
     end
   end
 end

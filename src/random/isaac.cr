@@ -61,7 +61,7 @@ class Random::ISAAC
 
     a = b = c = d = e = f = g = h = 0x9e3779b9_u32
 
-    mix = ->{
+    mix = -> {
       a ^= b << 11; d &+= a; b &+= c
       b ^= c >> 2; e &+= b; c &+= d
       c ^= d << 8; f &+= c; d &+= e

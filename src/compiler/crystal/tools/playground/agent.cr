@@ -8,7 +8,7 @@ class Crystal::Playground::Agent
     @ws = HTTP::WebSocket.new(URI.parse(url))
   end
 
-  def i(line, names = nil)
+  def i(line, names = nil, &)
     value = begin
       yield
     rescue ex
@@ -58,7 +58,7 @@ class Crystal::Playground::Agent
     HTML.escape(value.pretty_inspect)
   end
 
-  private def send(message_type)
+  private def send(message_type, &)
     message = JSON.build do |json|
       json.object do
         json.field "tag", @tag

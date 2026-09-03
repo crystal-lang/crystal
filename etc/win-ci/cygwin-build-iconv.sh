@@ -1,0 +1,43 @@
+#!/bin/sh
+# shellcheck disable=SC2155
+
+set -e
+
+Dynamic=$1
+
+export PATH="$(pwd)/build-aux:$PATH"
+export CC="$(pwd)/build-aux/compile cl -nologo"
+export CXX="$(pwd)/build-aux/compile cl -nologo"
+export AR="$(pwd)/build-aux/ar-lib lib"
+export RC="$(pwd)/build-aux/windres-rc rc"
+export WINDRES="$(pwd)/build-aux/windres-rc rc"
+export LD="link"
+export NM="dumpbin -symbols"
+export STRIP=":"
+export RANLIB=":"
+if [ -n "$Dynamic" ]; then
+  export CFLAGS="-MD"
+  export CXXFLAGS="-MD"
+  enable_shared=yes
+  enable_static=no
+else
+  export CFLAGS="-MT"
+  export CXXFLAGS="-MT"
+  enable_shared=no
+  enable_static=yes
+  # GNU libiconv appears to define `BUILDING_DLL` unconditionally, so the static
+  # library contains `/EXPORT` directives that make any executable also export
+  # the iconv symbols, which we don't want
+  find . '(' -name '*.h' -or -name '*.h.build.in' ')' -print0 | xargs -0 -I{} sed -i 's/__declspec(dllexport)//' '{}'
+fi
+export CPPFLAGS="-O2 -D_WIN32_WINNT=_WIN32_WINNT_WIN7 -I$(pwd)/iconv/include"
+export LDFLAGS="-L$(pwd)/iconv/lib"
+
+case "$(uname)" in
+  *-ARM64) host=aarch64-w64-mingw32 ;;
+  *) host=x86_64-w64-mingw32 ;;
+esac
+
+./configure --host="${host}" --prefix="$(pwd)/iconv" --enable-shared="${enable_shared}" --enable-static="${enable_static}"
+make
+make install

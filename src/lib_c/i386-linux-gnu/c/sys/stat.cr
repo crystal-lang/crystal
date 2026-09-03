@@ -26,16 +26,16 @@ lib LibC
   S_ISGID  = 0o2000
   S_ISVTX  = 0o1000
 
-  struct Stat
+  struct Stat # stat64
     st_dev : DevT
-    __pad1 : UShort
+    __pad1 : UInt
     __st_ino : ULong
     st_mode : ModeT
     st_nlink : NlinkT
     st_uid : UidT
     st_gid : GidT
     st_rdev : DevT
-    __pad2 : UShort
+    __pad2 : UInt
     st_size : OffT
     st_blksize : BlksizeT
     st_blocks : BlkcntT
@@ -46,6 +46,7 @@ lib LibC
   end
 
   fun chmod(file : Char*, mode : ModeT) : Int
+  fun fchmod(fd : Int, mode : ModeT) : Int
   fun fstat = fstat64(fd : Int, buf : Stat*) : Int
   fun lstat = lstat64(file : Char*, buf : Stat*) : Int
   fun mkdir(path : Char*, mode : ModeT) : Int
@@ -53,4 +54,5 @@ lib LibC
   fun mknod(path : Char*, mode : ModeT, dev : DevT) : Int
   fun stat = stat64(file : Char*, buf : Stat*) : Int
   fun umask(mask : ModeT) : ModeT
+  fun utimensat(fd : Int, path : Char*, times : Timespec[2], flag : Int) : Int
 end

@@ -45,12 +45,22 @@ describe "Codegen: is_a?" do
     run("1.is_a?(Object)").to_b.should be_true
   end
 
+  it "doesn't error if result is discarded (#14113)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+      end
+
+      (Foo.new || "").is_a?(Foo)
+      1
+      CRYSTAL
+  end
+
   it "evaluate method on filtered type" do
     run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.chr.should eq('a')
   end
 
   it "evaluate method on filtered type nilable type not-nil" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def foo
           1
@@ -64,11 +74,11 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "evaluate method on filtered type nilable type nil" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil
         def foo
           1
@@ -85,11 +95,11 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "evaluates method on filtered union type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize(x : Int32)
           @x = x
@@ -108,11 +118,11 @@ describe "Codegen: is_a?" do
       else
         0
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "evaluates method on filtered union type 2" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(x : Int32)
           @x = x
@@ -142,12 +152,12 @@ describe "Codegen: is_a?" do
       else
         0
       end
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "evaluates method on filtered union type 3" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_i.should eq(5)
+      require "prelude"
       a = 1
       a = [1.1]
       a = [5]
@@ -157,12 +167,12 @@ describe "Codegen: is_a?" do
       else
         0
       end.to_i
-    ").to_i.should eq(5)
+      CRYSTAL
   end
 
   it "codegens when is_a? is always false but properties are used" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_b.should be_false
+      require "prelude"
 
       class Foo
         def obj; 1 end
@@ -170,11 +180,11 @@ describe "Codegen: is_a?" do
 
       foo = 1
       foo.is_a?(Foo) && foo.obj && foo.obj
-    ").to_b.should be_false
+      CRYSTAL
   end
 
   it "codegens is_a? on right side of and" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def bar
           true
@@ -187,11 +197,11 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens is_a? with virtual" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
       end
 
@@ -200,11 +210,11 @@ describe "Codegen: is_a?" do
 
       foo = Bar.new || Foo.new
       foo.is_a?(Bar) ? 1 : 2
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens is_a? with virtual and nil" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
       end
 
@@ -213,11 +223,11 @@ describe "Codegen: is_a?" do
 
       f = Foo.new || Bar.new || nil
       f.is_a?(Foo) ? 1 : 2
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens is_a? with virtual and module" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       module Bar
       end
 
@@ -236,22 +246,22 @@ describe "Codegen: is_a?" do
 
       f = Foo.new || Foo2.new
       f.is_a?(Bar)
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "restricts simple type with union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       a = 1
       if a.is_a?(Int32 | Char)
         a &+ 1
       else
         0
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "restricts union with union" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       struct Char
         def &+(other : Int32)
           other
@@ -270,37 +280,37 @@ describe "Codegen: is_a?" do
       else
         a.foo
       end
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens is_a? with a Const does comparison and gives true" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_b.should be_true
+      require "prelude"
       CONST = 1
       1.is_a?(CONST)
-      ").to_b.should be_true
+      CRYSTAL
   end
 
   it "codegens is_a? with a Const does comparison and gives false" do
-    run("
-      require \"prelude\"
+    run(<<-CRYSTAL).to_b.should be_false
+      require "prelude"
       CONST = 1
       2.is_a?(CONST)
-      ").to_b.should be_false
+      CRYSTAL
   end
 
   it "gives false if generic type doesn't match exactly" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
       end
 
       foo = Foo(Int32 | Float64).new
       foo.is_a?(Foo(Int32)) ? 1 : 2
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does is_a? with more strict virtual type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
       end
 
@@ -316,25 +326,25 @@ describe "Codegen: is_a?" do
       else
         1
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens is_a? casts union to nilable" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo; end
 
-      var = \"hello\" || Foo.new || nil
+      var = "hello" || Foo.new || nil
       if var.is_a?(Foo | Nil)
         var2 = var
         1
       else
         2
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens is_a? casts union to nilable in method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo; end
 
       def foo(var)
@@ -346,13 +356,13 @@ describe "Codegen: is_a?" do
         end
       end
 
-      var = \"hello\" || Foo.new || nil
+      var = "hello" || Foo.new || nil
       foo(var)
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens is_a? from virtual type to module" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       module Moo
       end
 
@@ -374,11 +384,11 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens is_a? from nilable reference union type to nil" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
       end
 
@@ -392,11 +402,11 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens is_a? from nilable reference union type to type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
       end
 
@@ -410,17 +420,17 @@ describe "Codegen: is_a?" do
       else
         2
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "says false for value.is_a?(Class)" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_false
       1.is_a?(Class)
-      ").to_b.should be_false
+      CRYSTAL
   end
 
   it "restricts type in else but lazily" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize(@x : Int32)
         end
@@ -439,11 +449,11 @@ describe "Codegen: is_a?" do
       end
 
       z
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "works with inherited generic class against an instantiation" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo(T)
       end
 
@@ -452,11 +462,11 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Int32))
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "doesn't work with inherited generic class against an instantiation (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Class1
       end
 
@@ -471,11 +481,11 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Class1))
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "works with inherited generic class against an instantiation (3)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Foo(T)
       end
 
@@ -484,66 +494,66 @@ describe "Codegen: is_a?" do
 
       bar = Bar.new
       bar.is_a?(Foo(Float32))
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "doesn't type merge (1) (#548)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Base; end
       class Base1 < Base; end
       class Base2 < Base; end
       class Base3 < Base; end
 
       Base3.new.is_a?(Base1 | Base2)
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "doesn't type merge (2) (#548)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Base; end
       class Base1 < Base; end
       class Base2 < Base; end
       class Base3 < Base; end
 
       Base1.new.is_a?(Base1 | Base2) && Base2.new.is_a?(Base1 | Base2)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "doesn't skip assignment when used in combination with .is_a? (true case, then) (#1121)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(124)
       a = 123
       if (b = a).is_a?(Int32)
         b &+ 1
       else
         a
       end
-      )).to_i.should eq(124)
+      CRYSTAL
   end
 
   it "doesn't skip assignment when used in combination with .is_a? (true case, else) (#1121)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(125)
       a = 123
       if (b = a).is_a?(Int32)
         a &+ 2
       else
         b
       end
-      )).to_i.should eq(125)
+      CRYSTAL
   end
 
   it "doesn't skip assignment when used in combination with .is_a? (false case) (#1121)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(124)
       a = 123
       if (b = a).is_a?(Char)
         b
       else
         b &+ 1
       end
-      )).to_i.should eq(124)
+      CRYSTAL
   end
 
   it "doesn't skip assignment when used in combination with .is_a? and && (#1121)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(124)
       a = 123
       if (1 == 1) && (b = a).is_a?(Char)
         b
@@ -551,11 +561,11 @@ describe "Codegen: is_a?" do
         a
       end
       b ? b &+ 1 : 0
-      )).to_i.should eq(124)
+      CRYSTAL
   end
 
   it "transforms then if condition is always truthy" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(456)
       def foo
         123 && 456
       end
@@ -565,11 +575,11 @@ describe "Codegen: is_a?" do
       else
         999
       end
-      )).to_i.should eq(456)
+      CRYSTAL
   end
 
   it "transforms else if condition is always falsey" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(456)
       def foo
         123 && 456
       end
@@ -579,32 +589,30 @@ describe "Codegen: is_a?" do
       else
         foo
       end
-      )).to_i.should eq(456)
+      CRYSTAL
   end
 
   it "resets truthy state after visiting nodes (bug)" do
-    run(%(
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i.should eq(123)
       a = 123
       if !1.is_a?(Int32)
         a = 456
       end
       a
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "does is_a? with generic class metaclass" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       class Foo(T)
       end
 
       Foo(Int32).is_a?(Foo.class)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "says false for GenericChild(Base).is_a?(GenericBase(Child)) (#1294)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Base
       end
 
@@ -618,33 +626,33 @@ describe "Codegen: is_a?" do
       end
 
       GenericChild(Base).new.is_a?(GenericBase(Child))
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "does is_a?/responds_to? twice (#1451)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(4)
       a = 1 == 2 ? 1 : false
       if a.is_a?(Int32) && a.is_a?(Int32)
         3
       else
         4
       end
-      )).to_i.should eq(4)
+      CRYSTAL
   end
 
   it "does is_a? with && and true condition" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(3)
       a = 1 == 1 ? 1 : false
       if a.is_a?(Int32) && 1 == 1
         3
       else
         4
       end
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "does is_a? for union of module and type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       module Moo
         def moo
           2
@@ -669,11 +677,11 @@ describe "Codegen: is_a?" do
 
       io = Foo.new.as(Moo) || 1
       foo(io)
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does is_a? for virtual generic instance type against generic" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo(T)
       end
 
@@ -684,11 +692,11 @@ describe "Codegen: is_a?" do
       end
 
       Bar(Int32).new.as(Foo(Int32)).is_a?(Bar) ? 2 : 3
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does is_a?(generic type) for nested generic inheritance (1) (#9660)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_b.should be_true
       class Cxx
       end
 
@@ -702,11 +710,11 @@ describe "Codegen: is_a?" do
       end
 
       Baz.new.is_a?(Foo)
-      ), inject_primitives: false).to_b.should be_true
+      CRYSTAL
   end
 
   it "does is_a?(generic type) for nested generic inheritance (2)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_b.should be_true
       class Cxx
       end
 
@@ -720,11 +728,11 @@ describe "Codegen: is_a?" do
       end
 
       Baz(Cxx).new.is_a?(Foo)
-      ), inject_primitives: false).to_b.should be_true
+      CRYSTAL
   end
 
   it "does is_a?(generic type) for nested generic inheritance, through upcast (1)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_b.should be_true
       class Cxx
       end
 
@@ -738,11 +746,11 @@ describe "Codegen: is_a?" do
       end
 
       Baz.new.as(Foo(Cxx)).is_a?(Bar)
-      ), inject_primitives: false).to_b.should be_true
+      CRYSTAL
   end
 
   it "does is_a?(generic type) for nested generic inheritance, through upcast (2)" do
-    run(%(
+    run(<<-CRYSTAL, inject_primitives: false).to_b.should be_true
       class Cxx
       end
 
@@ -756,52 +764,50 @@ describe "Codegen: is_a?" do
       end
 
       Baz(Cxx).new.as(Foo(Cxx)).is_a?(Bar)
-      ), inject_primitives: false).to_b.should be_true
+      CRYSTAL
   end
 
   it "doesn't consider generic type to be a generic type of a recursive alias (#3524)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class Gen(T)
       end
 
       alias Type = Int32 | Gen(Type)
       a = Gen(Int32).new
       a.is_a?(Type)
-      )).to_b.should be_false
+      CRYSTAL
   end
 
   it "codegens untyped var (#4009)" do
-    codegen(%(
-      require "prelude"
-
+    codegen(<<-CRYSTAL)
       i = 1
       1 || i.is_a?(Int32) ? "" : i
-      ))
+      CRYSTAL
   end
 
   it "visits 1.to_s twice, may trigger enclosing_call (#4364)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
 
       B = String
       1.to_s.is_a?(B)
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "says true for Class.is_a?(Class.class) (#4374)" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       Class.is_a?(Class.class)
-    ").to_b.should be_true
+      CRYSTAL
   end
 
   it "says true for Class.is_a?(Class.class.class) (#4374)" do
-    run("
+    run(<<-CRYSTAL).to_b.should be_true
       Class.is_a?(Class.class.class)
-    ").to_b.should be_true
+      CRYSTAL
   end
 
   it "passes is_a? with generic module type on virtual type (#10302)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       module Mod(T)
       end
 
@@ -813,11 +819,11 @@ describe "Codegen: is_a?" do
       end
 
       Sub.new.is_a?(Mod(Sup))
-      )).to_b.should be_true
+      CRYSTAL
   end
 
   it "restricts metaclass against virtual metaclass type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class A
       end
 
@@ -832,11 +838,11 @@ describe "Codegen: is_a?" do
       else
         3
       end
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "restricts virtual metaclass against virtual metaclass type" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       class A
       end
 
@@ -854,11 +860,11 @@ describe "Codegen: is_a?" do
       else
         3
       end
-      )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "does is_a? with union type, don't resolve to virtual type (#10244)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class A
       end
 
@@ -873,11 +879,11 @@ describe "Codegen: is_a?" do
 
       x = D.new || C.new
       x.is_a?(B | C)
-    )).to_b.should be_false
+      CRYSTAL
   end
 
   it "does is_a? with union type as Union(X, Y), don't resolve to virtual type (#10244)" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_false
       class A
       end
 
@@ -892,6 +898,46 @@ describe "Codegen: is_a?" do
 
       x = D.new || C.new
       x.is_a?(Union(B, C))
-    )).to_b.should be_false
+      CRYSTAL
+  end
+
+  it "restricts union metaclass to metaclass (#12295)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      x = true ? Union(String | Int32) : String
+      if x.is_a?(String.class)
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
+
+  it "does is_a? for generic type against generic class instance type (#12304)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      require "prelude"
+
+      class A
+      end
+
+      class B(T) < A
+      end
+
+      a = B(Int32).new.as(A)
+      b = a.as(B)
+
+      b.is_a?(B(Int32))
+      CRYSTAL
+  end
+
+  it "virtual metaclass type is not virtual instance type (#12628)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      abstract struct Base
+      end
+
+      struct Impl < Base
+      end
+
+      Base.as(Base | Base.class).is_a?(Base | Impl)
+      CRYSTAL
   end
 end

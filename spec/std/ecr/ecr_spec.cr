@@ -30,6 +30,13 @@ describe "ECR" do
     program.should eq(pieces.join('\n') + '\n')
   end
 
+  it "escapes quotes in filename" do
+    program = ECR.process_string "<%= 123 %>", %("foo".cr)
+    program.should eq <<-CRYSTAL
+      #<loc:push>(#<loc:"\\"foo\\".cr",1,4> 123 )#<loc:pop>.to_s __str__\n
+      CRYSTAL
+  end
+
   it "does ECR.def_to_s" do
     view = ECRSpecHelloView.new("world!")
     view.to_s.strip.should eq("Hello world! 012")
@@ -62,7 +69,20 @@ describe "ECR" do
   it "does with -% inside string" do
     io = IO::Memory.new
     ECR.embed "#{__DIR__}/../data/test_template6.ecr", io
-    io.to_s.should eq("string with -%")
+    io.to_s.should eq("string with -%\n")
+  end
+
+  it "does with <%% %>" do
+    io = IO::Memory.new
+    ECR.embed "#{__DIR__}/../data/test_template7.ecr", io
+    io.to_s.should eq(<<-ECR)
+      <% if @name %>
+      Greetings, <%= @name %>!
+        <%- else -%>
+      Greetings!
+      <%- end -%>
+
+      ECR
   end
 
   it ".render" do

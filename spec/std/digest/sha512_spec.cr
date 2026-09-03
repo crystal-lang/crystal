@@ -47,8 +47,23 @@ describe Digest::SHA512 do
       bytes.hexstring.should eq(hexstring)
     end
 
-    it "does hexdigest for #{string.inspect}" do
+    it "does .hexdigest for #{string.inspect}" do
       Digest::SHA512.hexdigest(string).should eq(hexstring)
+    end
+
+    it "does #hexdigest for #{string.inspect}" do
+      digest = Digest::SHA512.new
+      hdst = Bytes.new digest.digest_size * 2
+      digest.update string
+
+      digest.dup.hexfinal.should eq(hexstring)
+
+      digest.hexfinal(hdst)
+      String.new(hdst).should eq(hexstring)
+
+      expect_raises(Digest::FinalizedError) do
+        digest.final
+      end
     end
 
     it "does base64digest for #{string.inspect}" do

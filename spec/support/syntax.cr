@@ -1,5 +1,5 @@
 require "spec"
-require "../../src/compiler/crystal/syntax"
+require "compiler/crystal/syntax"
 
 include Crystal
 
@@ -54,8 +54,12 @@ class String
     Var.new self
   end
 
-  def arg(default_value = nil, restriction = nil, external_name = nil)
-    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name
+  def ann
+    Annotation.new path
+  end
+
+  def arg(default_value = nil, restriction = nil, external_name = nil, annotations = nil)
+    Arg.new self, default_value: default_value, restriction: restriction, external_name: external_name, parsed_annotations: annotations
   end
 
   def call
@@ -129,33 +133,37 @@ class Crystal::ASTNode
   end
 end
 
-def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__)
-  it "says syntax error on #{str.inspect}", metafile, metaline, metaendline do
-    begin
+def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__, *, focus : Bool = false)
+  it "says syntax error on #{str.inspect}", metafile, metaline, metaendline, focus: focus do
+    ex = expect_raises(SyntaxException, message, file: metafile, line: metaline) do
       parse str
-      fail "Expected SyntaxException to be raised", metafile, metaline
-    rescue ex : SyntaxException
-      if message
-        unless ex.message.not_nil!.includes?(message.not_nil!)
-          fail "Expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
-        end
+    end
+    if line
+      unless ex.line_number == line
+        fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
       end
-      if line
-        unless ex.line_number == line
-          fail "Expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
-        end
-      end
-      if column
-        unless ex.column_number == column
-          fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
-        end
+    end
+    if column
+      unless ex.column_number == column
+        fail "Expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
       end
     end
   end
 end
 
-def parse(string, wants_doc = false, filename = nil)
-  parser = Parser.new(string)
+def assert_syntax_warning(str, message, *, metafile = __FILE__, metaline = __LINE__, metaendline = __END_LINE__)
+  it "says syntax warning on #{str.inspect}", metafile, metaline, metaendline do
+    warnings = WarningCollection.new
+    parse str, false, nil, warnings
+    unless warnings.infos.find(&.ends_with?(message))
+      fail "Expected warnings to include '#{message}'"
+    end
+  end
+end
+
+def parse(string, wants_doc = false, filename = nil, warnings = nil)
+  parser = Parser.new(string, warnings: warnings)
+  parser.warnings = warnings if warnings
   parser.wants_doc = wants_doc
   if filename
     parser.filename = filename

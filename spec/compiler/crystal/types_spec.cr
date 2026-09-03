@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-private def assert_type_to_s(expected)
+private def assert_type_to_s(expected, &)
   p = Program.new
   t = with p yield p
   t.to_s.should eq(expected)
@@ -8,22 +8,22 @@ end
 
 describe "types to_s of" do
   it "does for type contained in generic class" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       class Bar(T)
         class Foo
         end
       end
-    ))
+      CRYSTAL
     result.program.types["Bar"].types["Foo"].to_s.should eq("Bar::Foo")
   end
 
   it "does for type contained in generic module" do
-    result = semantic(%(
+    result = semantic(<<-CRYSTAL)
       module Bar(T)
         class Foo
         end
       end
-    ))
+      CRYSTAL
     result.program.types["Bar"].types["Foo"].to_s.should eq("Bar::Foo")
   end
 

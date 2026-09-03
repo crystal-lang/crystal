@@ -1,6 +1,19 @@
-def schedule_timeout(c : Channel(Symbol))
+enum SpecChannelStatus
+  Begin
+  End
+  Timeout
+end
+
+def schedule_timeout(c : Channel(SpecChannelStatus))
   spawn do
-    sleep 1
-    c.send(:timeout)
+    {% if flag?(:interpreted) %}
+      # TODO: it's not clear why some interpreter specs
+      # take more than 1 second in some cases.
+      # See #12429.
+      sleep 5.seconds
+    {% else %}
+      sleep 1.second
+    {% end %}
+    c.send(SpecChannelStatus::Timeout)
   end
 end

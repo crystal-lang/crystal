@@ -29,9 +29,9 @@ module Crystal
       when VirtualType
         self.struct?
       when NonGenericModuleType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericModuleInstanceType
-        self.including_types.try &.passed_by_value?
+        !!self.including_types.try &.passed_by_value?
       when GenericClassInstanceType
         self.generic_type.passed_by_value?
       when TypeDefType
@@ -69,6 +69,8 @@ module Crystal
         self.tuple_types.any? &.has_inner_pointers?
       when NamedTupleInstanceType
         self.entries.any? &.type.has_inner_pointers?
+      when ReferenceStorageType
+        self.reference_type.all_instance_vars.each_value.any? &.type.has_inner_pointers?
       when PrimitiveType
         false
       when EnumType
@@ -166,12 +168,6 @@ module Crystal
     end
   end
 
-  class TypeDefType
-    def llvm_name(io)
-      typedef.llvm_name(io)
-    end
-  end
-
   class Const
     property initializer : LLVM::Value?
 
@@ -185,7 +181,7 @@ module Crystal
     property? no_init_flag = false
 
     def initialized_llvm_name
-      "#{llvm_name}:init"
+      "#{llvm_name}:const_init"
     end
 
     # Returns `true` if this constant's value is a simple literal, like

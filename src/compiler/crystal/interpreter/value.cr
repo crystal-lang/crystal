@@ -2,7 +2,7 @@ require "./repl"
 
 # A value produced by the interpreter, essentially
 # a pointer to some data coupled with type information.
-# Based on the type we know how to interprter the data in `pointer`.
+# Based on the type we know how to interpreter the data in `pointer`.
 struct Crystal::Repl::Value
   getter pointer : Pointer(UInt8)
   getter type : Type
@@ -64,6 +64,21 @@ struct Crystal::Repl::Value
       context.type_from_id(type_id)
     else
       @pointer
+    end
+  end
+
+  def runtime_type : Crystal::Type
+    # Should match Crystal::Repl::Compiler#visit_primitive "class" case
+    # in src/compiler/crystal/interpreter/primitives.cr
+    case type
+    when Crystal::UnionType
+      type_id = @pointer.as(Int32*).value
+      context.type_from_id(type_id)
+    when Crystal::VirtualType
+      type_id = @pointer.as(Void**).value.as(Int32*).value
+      context.type_from_id(type_id)
+    else
+      type
     end
   end
 

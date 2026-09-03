@@ -8,14 +8,11 @@
 # appear in the API docs.
 
 # This list requires ordered statements
-require "crystal/once"
 require "lib_c"
 require "macros"
 require "object"
+require "crystal/once"
 require "comparable"
-{% if flag?(:win32) %}
-  require "windows_stubs"
-{% end %}
 require "exception"
 require "iterable"
 require "iterator"
@@ -45,6 +42,7 @@ require "enumerable"
 require "env"
 require "errno"
 require "winerror"
+require "wasi_error"
 require "file"
 require "float"
 require "gc"
@@ -54,9 +52,7 @@ require "intrinsics"
 require "io"
 require "kernel"
 require "math/math"
-{% unless flag?(:win32) %}
-  require "mutex"
-{% end %}
+require "mutex"
 require "named_tuple"
 require "nil"
 require "humanize"
@@ -69,9 +65,10 @@ require "raise"
 require "random"
 require "range"
 require "reference"
+require "reference_storage"
 require "regex"
 require "set"
-{% unless flag?(:win32) %}
+{% unless flag?(:wasm32) %}
   require "signal"
 {% end %}
 require "slice"

@@ -1,7 +1,9 @@
 require "./digest"
-require "openssl"
+require "openssl/digest"
 
 # Implements the SHA1 digest algorithm.
+#
+# NOTE: To use `SHA1`, you must explicitly import it with `require "digest/sha1"`
 #
 # WARNING: SHA1 is no longer a cryptographically secure hash, and should not be
 # used in security-related components, like password hashing. For passwords, see

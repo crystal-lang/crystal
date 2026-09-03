@@ -3,6 +3,7 @@ require "../../../spec_helper"
 private def processed_context_visitor(code, cursor_location)
   compiler = Compiler.new
   compiler.no_codegen = true
+  compiler.prelude = "empty"
   result = compiler.compile(Compiler::Source.new(".", code), "fake-no-build")
 
   visitor = ContextVisitor.new(cursor_location)
@@ -11,7 +12,7 @@ private def processed_context_visitor(code, cursor_location)
   {visitor, process_result}
 end
 
-private def run_context_tool(code)
+private def run_context_tool(code, &)
   cursor_location = nil
 
   code.lines.each_with_index do |line, line_number_0|
@@ -23,7 +24,7 @@ private def run_context_tool(code)
   code = code.delete('‸')
 
   if cursor_location
-    visitor, result = processed_context_visitor(code, cursor_location)
+    _, result = processed_context_visitor(code, cursor_location)
 
     yield result
   else
@@ -33,8 +34,7 @@ end
 
 private def assert_context_keys(code, *variables)
   run_context_tool(code) do |result|
-    result.contexts.should_not be_nil
-    result.contexts.not_nil!.each do |context|
+    result.contexts.should_not(be_nil).each do |context|
       context.keys.should eq(variables.to_a)
     end
   end
@@ -42,8 +42,7 @@ end
 
 private def assert_context_includes(code, variable, var_types)
   run_context_tool(code) do |result|
-    result.contexts.should_not be_nil
-    result.contexts.not_nil!.map { |h| h[variable].to_s }.should eq(var_types)
+    result.contexts.should_not(be_nil).map(&.[variable].to_s).should eq(var_types)
   end
 end
 
@@ -118,15 +117,20 @@ describe "context" do
   it "includes last call" do
     assert_context_includes %(
       class Foo
-        property lorem
+        def lorem
+          @lorem
+        end
 
         def initialize(@lorem : Int64)
         end
       end
 
+      def foo(f)
+      end
+
       f = Foo.new(1i64)
 
-      puts f.lo‸rem
+      foo f.lo‸rem
       1
     ), "f.lorem", ["Int64"]
   end
@@ -141,9 +145,13 @@ describe "context" do
 
   it "does includes regex special variables" do
     assert_context_keys %(
+      def match
+        $~ = "match"
+      end
+
       def foo
-        s = "string"
-        s =~ /s/
+        s = "foo"
+        match
         ‸
         0
       end
@@ -185,11 +193,7 @@ describe "context" do
 
   it "can handle union types" do
     assert_context_includes %(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     ), "a", ["(Int64 | String)"]
@@ -197,11 +201,7 @@ describe "context" do
 
   it "can display text output" do
     run_context_tool(%(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     )) do |result|
@@ -218,11 +218,7 @@ describe "context" do
 
   it "can display json output" do
     run_context_tool(%(
-    a = if rand() > 0
-      1i64
-    else
-      "foo"
-    end
+    a = 1_i64.as(Int64 | String)
     ‸
     0
     )) do |result|

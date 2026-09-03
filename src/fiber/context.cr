@@ -7,10 +7,26 @@ class Fiber
   @[Extern]
   struct Context
     property stack_top : Void*
-    property resumable : LibC::Long
+
+    {% if flag?(:interpreted) %}
+      # In interpreted mode, the interpreted fibers will be backed by a real
+      # fiber run by the interpreter. The fiber context is thus fake.
+      #
+      # The `stack_top` property is actually a pointer to the real Fiber
+      # running in the interpreter.
+      #
+      # The `resumable` property is also delegated to the real fiber. Only the
+      # getter is defined (so we know the real state of the fiber); we don't
+      # declare a setter because only the interpreter can manipulate it (in the
+      # `makecontext` and `swapcontext` primitives).
+      def resumable : LibC::Long
+        Crystal::Interpreter.fiber_resumable(pointerof(@stack_top))
+      end
+    {% else %}
+      property resumable : LibC::Long = 0
+    {% end %}
 
     def initialize(@stack_top = Pointer(Void).null)
-      @resumable = 0
     end
   end
 

@@ -1,4 +1,4 @@
-def retry(n = 5)
+def retry(n = 5, &)
   exception = nil
   n.times do |i|
     yield
@@ -7,7 +7,7 @@ def retry(n = 5)
     if i == 0
       Fiber.yield
     else
-      sleep 0.01 * (2**i)
+      sleep 10.milliseconds * (2**i)
     end
   else
     return

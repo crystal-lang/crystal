@@ -12,24 +12,20 @@ abstract class OpenSSL::SSL::Socket < IO
             hostname.to_unsafe.as(Pointer(Void))
           )
 
-          {% if LibSSL.has_method?(:ssl_get0_param) %}
-            param = LibSSL.ssl_get0_param(@ssl)
+          param = LibSSL.ssl_get0_param(@ssl)
 
-            if ::Socket.ip?(hostname)
-              unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
-                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
-              end
-            else
-              unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
-                raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
-              end
+          if ::Socket::IPAddress.valid?(hostname)
+            unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
             end
-          {% else %}
-            context.set_cert_verify_callback(hostname)
-          {% end %}
+          else
+            unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+              raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+            end
+          end
         end
 
-        ret = LibSSL.ssl_connect(@ssl)
+        ret = ktls_safe_handshake { LibSSL.ssl_connect(@ssl) }
         unless ret == 1
           raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
         end
@@ -39,7 +35,7 @@ abstract class OpenSSL::SSL::Socket < IO
       end
     end
 
-    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil, &)
       socket = new(io, context, sync_close, hostname)
 
       begin
@@ -71,14 +67,14 @@ abstract class OpenSSL::SSL::Socket < IO
     end
 
     def accept : Nil
-      ret = LibSSL.ssl_accept(@ssl)
+      ret = ktls_safe_handshake { LibSSL.ssl_accept(@ssl) }
       unless ret == 1
-        @bio.io.close if @sync_close
+        bio.io.close if @sync_close
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
 
-    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false, &)
       socket = new(io, context, sync_close)
 
       begin
@@ -97,7 +93,13 @@ abstract class OpenSSL::SSL::Socket < IO
 
   getter? closed : Bool
 
-  protected def initialize(io, context : Context, @sync_close : Bool = false)
+  {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+    @bio = uninitialized ReferenceStorage(BIO)
+  {% else %}
+    @bio = uninitialized BIO
+  {% end %}
+
+  protected def initialize(io, @context : Context, @sync_close : Bool = false)
     @closed = false
 
     @ssl = LibSSL.ssl_new(context)
@@ -105,19 +107,27 @@ abstract class OpenSSL::SSL::Socket < IO
       raise OpenSSL::Error.new("SSL_new")
     end
 
-    # Since OpenSSL::SSL::Socket is buffered it makes no
-    # sense to wrap a IO::Buffered with buffering activated.
-    if io.is_a?(IO::Buffered)
-      io.sync = true
-      io.read_buffering = false
-    end
+    bio =
+      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+        @bio = uninitialized ReferenceStorage(BIO)
+        BIO.unsafe_construct(pointerof(@bio), io)
+      {% else %}
+        @bio = BIO.new(io)
+      {% end %}
 
-    @bio = BIO.new(io)
-    LibSSL.ssl_set_bio(@ssl, @bio, @bio)
+    LibSSL.ssl_set_bio(@ssl, bio, bio)
   end
 
   def finalize
     LibSSL.ssl_free(@ssl)
+  end
+
+  private def bio
+    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
+      @bio.to_reference
+    {% else %}
+      @bio
+    {% end %}
   end
 
   def unbuffered_read(slice : Bytes) : Int32
@@ -152,18 +162,14 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def unbuffered_flush : Nil
-    @bio.io.flush
+    bio.io.flush
   end
 
   # Returns the negotiated ALPN protocol (eg: `"h2"`) of `nil` if no protocol was
   # negotiated.
   def alpn_protocol
-    {% if LibSSL.has_method?(:ssl_get0_alpn_selected) %}
-      LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
-      String.new(protocol, len) unless protocol.null?
-    {% else %}
-      raise NotImplementedError.new("LibSSL.ssl_get0_alpn_selected")
-    {% end %}
+    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+    String.new(protocol, len) unless protocol.null?
   end
 
   def unbuffered_close : Nil
@@ -172,33 +178,31 @@ abstract class OpenSSL::SSL::Socket < IO
 
     begin
       loop do
-        begin
-          ret = LibSSL.ssl_shutdown(@ssl)
-          break if ret == 1                # done bidirectional
-          break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
-          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
-        rescue e : OpenSSL::SSL::Error
-          case e.error
-          when .want_read?, .want_write?
-            # Ignore, shutdown did not complete yet
-          when .syscall?
-            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
-            # assume we're done
-            break
-          else
-            raise e
-          end
+        ret = LibSSL.ssl_shutdown(@ssl)
+        break if ret == 1                # done bidirectional
+        break if ret == 0 && sync_close? # done unidirectional, "this first successful call to SSL_shutdown() is sufficient"
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
+      rescue e : OpenSSL::SSL::Error
+        case e.error
+        when .want_read?, .want_write?
+          # Ignore, shutdown did not complete yet
+        when .syscall?
+          # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+          # assume we're done
+          break
+        else
+          raise e
         end
 
         # ret == 0, retry, shutdown is not complete yet
       end
     rescue IO::Error
     ensure
-      @bio.io.close if @sync_close
+      bio.io.close if @sync_close
     end
   end
 
-  def unbuffered_rewind
+  def unbuffered_rewind : Nil
     raise IO::Error.new("Can't rewind OpenSSL::SSL::Socket::Client")
   end
 
@@ -220,17 +224,17 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def local_address
-    io = @bio.io
+    io = bio.io
     io.responds_to?(:local_address) ? io.local_address : nil
   end
 
   def remote_address
-    io = @bio.io
+    io = bio.io
     io.responds_to?(:remote_address) ? io.remote_address : nil
   end
 
   def read_timeout
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :read_timeout
       io.read_timeout
     else
@@ -239,7 +243,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def read_timeout=(value)
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :read_timeout=
       io.read_timeout = value
     else
@@ -248,7 +252,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def write_timeout
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :write_timeout
       io.write_timeout
     else
@@ -257,7 +261,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   def write_timeout=(value)
-    io = @bio.io
+    io = bio.io
     if io.responds_to? :write_timeout=
       io.write_timeout = value
     else
@@ -266,7 +270,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   # Returns the `OpenSSL::X509::Certificate` the peer presented, if a
-  # connection was esablished.
+  # connection was established.
   #
   # NOTE: Due to the protocol definition, a TLS/SSL server will always send a
   # certificate, if present. A client will only send a certificate when
@@ -274,7 +278,35 @@ abstract class OpenSSL::SSL::Socket < IO
   # an anonymous cipher is used, no certificates are sent. That a certificate
   # is returned does not indicate information about the verification state.
   def peer_certificate : OpenSSL::X509::Certificate?
-    cert = LibSSL.ssl_get_peer_certificate(@ssl)
-    OpenSSL::X509::Certificate.new cert if cert
+    raw_cert = LibSSL.ssl_get_peer_certificate(@ssl)
+    if raw_cert
+      begin
+        OpenSSL::X509::Certificate.new(raw_cert)
+      ensure
+        LibCrypto.x509_free(raw_cert)
+      end
+    end
+  end
+
+  # When kernel TLS is enabled, we must disable the IO read buffer during the
+  # handshake so we don't over-read in the user-space buffer and leave the
+  # kernel with missing data (desync).
+  private def ktls_safe_handshake(&)
+    {% if OpenSSL.has_constant?(:KTLS) %}
+      io = bio.io
+
+      if @context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS) && io.is_a?(IO::Buffered)
+        if io.read_buffering?
+          io.read_buffering = false
+          begin
+            return yield
+          ensure
+            io.read_buffering = true
+          end
+        end
+      end
+    {% end %}
+
+    yield
   end
 end

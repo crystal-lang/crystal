@@ -33,12 +33,12 @@ end
 def assert_section(file, section, examples, smart)
   describe section do
     examples.each do |index, example|
-      assert_exapmle(file, section, index, example, smart)
+      assert_example(file, section, index, example, smart)
     end
   end
 end
 
-def assert_exapmle(file, section, index, example, smart)
+def assert_example(file, section, index, example, smart)
   markdown = example["markdown"].gsub("→", "\t").chomp
   html = example["html"].gsub("→", "\t")
   line = example["line"].to_i

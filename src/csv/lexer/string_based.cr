@@ -2,7 +2,7 @@ require "csv"
 
 # :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer
-  def initialize(string, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def initialize(string : String, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     super(separator, quote_char)
     @reader = Char::Reader.new(string)
     if @reader.current_char == '\n'

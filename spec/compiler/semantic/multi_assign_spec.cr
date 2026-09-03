@@ -3,17 +3,17 @@ require "../../spec_helper"
 describe "Semantic: multi assign" do
   context "without strict_multi_assign" do
     it "doesn't error if assigning tuple to fewer targets" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL) { tuple_of [int32, int32] }
         require "prelude"
 
         x = {1, 2, ""}
         a, b = x
         {a, b}
-        )) { tuple_of [int32, int32] }
+        CRYSTAL
     end
 
     it "doesn't error if assigning non-Indexable (#11414)" do
-      assert_no_errors <<-CR
+      assert_no_errors <<-CRYSTAL
         class Foo
           def [](index)
           end
@@ -24,11 +24,11 @@ describe "Semantic: multi assign" do
         end
 
         a, b, c = Foo.new
-        CR
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable to splat (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo"
         require "prelude"
 
         class Foo
@@ -41,60 +41,60 @@ describe "Semantic: multi assign" do
         end
 
         a, *b, c = Foo.new
-        CR
+        CRYSTAL
     end
   end
 
   context "strict_multi_assign" do
     it "errors if assigning tuple to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1, 2, ""}
         a, b = x
-        ), "cannot assign Tuple(Int32, Int32, String) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     pending "errors if assigning tuple to more targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = {1}
         a, b = x
-        ), "cannot assign Tuple(Int32) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "errors if assigning union of tuples to fewer targets" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
         require "prelude"
 
         x = true ? {1, 2, 3} : {4, 5, 6, 7}
         a, b = x
-        ), "cannot assign (Tuple(Int32, Int32, Int32) | Tuple(Int32, Int32, Int32, Int32)) to 2 targets", flags: "strict_multi_assign"
+        CRYSTAL
     end
 
     it "doesn't error if some type in union matches target count" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL, flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
         require "prelude"
 
         x = true ? {1, "", 3} : {4, 5}
         a, b = x
         {a, b}
-        ), flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
+        CRYSTAL
     end
 
     it "doesn't error if some type in union has no constant size" do
-      assert_type(%(
+      assert_type(<<-CRYSTAL, flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
         require "prelude"
 
         x = true ? {1, "", 3} : [4, 5]
         a, b = x
         {a, b}
-        ), flags: "strict_multi_assign") { tuple_of [int32, union_of(int32, string)] }
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
         require "prelude"
 
         class Foo
@@ -107,11 +107,11 @@ describe "Semantic: multi assign" do
         end
 
         a, b, c = Foo.new
-        CR
+        CRYSTAL
     end
 
     it "errors if assigning non-Indexable to splat (#11414)" do
-      assert_error <<-CR, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
+      assert_error <<-CRYSTAL, "right-hand side of one-to-many assignment must be an Indexable, not Foo", flags: "strict_multi_assign"
         require "prelude"
 
         class Foo
@@ -124,12 +124,12 @@ describe "Semantic: multi assign" do
         end
 
         a, *b, c = Foo.new
-        CR
+        CRYSTAL
     end
   end
 
   it "can pass splat variable at top-level to macros (#11596)" do
-    assert_type(<<-CR) { tuple_of [int32, int32, int32] }
+    assert_type(<<-CRYSTAL) { tuple_of [int32, int32, int32] }
       struct Tuple
         def self.new(*args)
           args
@@ -142,6 +142,6 @@ describe "Semantic: multi assign" do
 
       a, *b, c = 1, 2, 3, 4, 5
       foo(b)
-      CR
+      CRYSTAL
   end
 end

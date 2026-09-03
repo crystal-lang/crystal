@@ -3,23 +3,15 @@ require "../stdint"
 
 lib LibC
   alias BlkcntT = Long
-  alias BlksizeT = UInt
+  alias BlksizeT = Int
   alias ClockT = Int
   alias ClockidT = Int
-  alias DevT = UInt
+  alias DevT = ULong
   alias GidT = UInt
   alias IdT = Long
-  {% if flag?(:freebsd11) %}
-    alias InoT = UInt
-  {% else %}
-    alias InoT = ULong
-  {% end %}
+  alias InoT = ULong
   alias ModeT = UShort
-  {% if flag?(:freebsd11) %}
-    alias NlinkT = UShort
-  {% else %}
-    alias NlinkT = ULong
-  {% end %}
+  alias NlinkT = ULong
   alias OffT = Long
   alias PidT = Int
   type PthreadAttrT = Void*

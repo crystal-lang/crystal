@@ -58,6 +58,8 @@ lib LibC
   IP_DROP_MEMBERSHIP = 13
   IPV6_LEAVE_GROUP   = 13
 
+  IPV6_V6ONLY = 27
+
   struct IpMreq
     imr_multiaddr : InAddr
     imr_interface : InAddr

@@ -1,14 +1,16 @@
 #!/bin/sh
 
+: "${CRYSTAL_BOOTSTRAP_VERSION:=1.21.0}"
+
 fail() {
-  echo "${@}" >&2
+  echo "${*}" >&2
   exit 1
 }
 
 on_tag() {
   if [ -n "$CURRENT_TAG" ]; then
-    echo "${@}"
-    eval "${@}"
+    echo "${*}"
+    eval "${*}"
     return $?
   else
     return 0
@@ -20,7 +22,7 @@ fail_on_error() {
 
   exit=$?
   if [ "$exit" -ne "0" ]; then
-    fail "${@} exited with $exit"
+    fail "${*} exited with $exit"
   fi
 
   return 0
@@ -50,8 +52,8 @@ on_os() {
     verify_environment
 
     if [ "$TRAVIS_OS_NAME" = "$os" ]; then
-      echo "${@}"
-      eval "${@}"
+      echo "${*}"
+      eval "${*}"
       return $?
     else
       return 0
@@ -62,17 +64,17 @@ on_os() {
 }
 
 on_linux() {
-  fail_on_error on_os "linux" "${@}"
+  fail_on_error on_os "linux" "${*}"
 }
 
 on_osx() {
-  fail_on_error on_os "osx" "${@}"
+  fail_on_error on_os "osx" "${*}"
 }
 
 on_nix_shell_eval() {
   if [ -n "$CI_NIX_SHELL" ]; then
-    echo "${@}"
-    eval "${@}"
+    echo "${*}"
+    eval "${*}"
     return $?
   else
     return 0
@@ -80,12 +82,12 @@ on_nix_shell_eval() {
 }
 
 on_nix_shell() {
-  fail_on_error on_nix_shell_eval "${@}"
+  fail_on_error on_nix_shell_eval "${*}"
 }
 
 on_github() {
   if [ "$GITHUB_ACTIONS" = "true" ]; then
-    eval "${@}"
+    eval "${*}"
     return $?
   else
     return 0
@@ -98,6 +100,7 @@ prepare_system() {
 }
 
 build() {
+  with_build_env 'bin/crystal run scripts/print_regex_config.cr'
   with_build_env 'make std_spec clean threads=1 junit_output=.junit/std_spec.xml'
 
   case $ARCH in
@@ -128,15 +131,14 @@ build() {
 }
 
 format() {
-  with_build_env 'make clean crystal threads=1'
-  with_build_env './bin/crystal tool format --check samples spec src'
+  with_build_env 'make clean crystal format threads=1 check=1'
 }
 
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_osx curl -L https://github.com/crystal-lang/crystal/releases/download/1.3.2/crystal-1.3.2-1-darwin-universal.tar.gz -o ~/crystal.tar.gz
-  on_osx 'pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-1.3.2-1 crystal;popd'
+  on_osx curl -L "https://github.com/crystal-lang/crystal/releases/download/${CRYSTAL_BOOTSTRAP_VERSION}/crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1-darwin-universal.tar.gz" -o ~/crystal.tar.gz
+  on_osx "pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1 crystal;popd"
 
   # These commands may take a few minutes to run due to the large size of the repositories.
   # This restriction has been made on GitHub's request because updating shallow
@@ -153,7 +155,7 @@ prepare_build() {
 
   # Install a recent bash version for nix-shell.
   # macos ships with an ancient one.
-  if [ `uname` = "Darwin" ]; then
+  if [ "$(uname)" = "Darwin" ]; then
     on_nix_shell "brew install bash"
   fi
   # initialize nix environment
@@ -172,10 +174,9 @@ prepare_build() {
 
 verify_version() {
   # If building a tag, check it matches with file
-  FILE_VERSION=`cat ./src/VERSION`
+  FILE_VERSION=$(cat ./src/VERSION)
 
-  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]
-  then
+  if [ "$FILE_VERSION" != "$CURRENT_TAG" ]; then
     fail "VERSION ($FILE_VERSION) does not match GIT TAG ($CURRENT_TAG)"
   fi
 }
@@ -189,13 +190,13 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:=crystallang/crystal:1.3.2}"
+  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION}"}"
 
   case $ARCH in
-    x86_64)
+    aarch64 | x86_64)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
       ;;
-    x86_64-musl)
+    aarch64-musl | x86_64-musl)
       export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
       ;;
     i386)
@@ -203,15 +204,18 @@ with_build_env() {
       ;;
   esac
 
+  # NOTE: disabling seccomp because the default profile disables io_uring syscalls
   on_linux docker run \
     --rm -t \
-    -u $(id -u) \
-    -v $PWD:/mnt \
+    -u "$(id -u)" \
+    -v "$PWD":/mnt \
     -v /etc/passwd:/etc/passwd \
     -v /etc/group:/etc/group \
     -w /mnt \
     -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
     -e SPEC_SPLIT_DOTS \
+    -e USE_PCRE1 \
+    --security-opt seccomp=unconfined \
     "$DOCKER_TEST_IMAGE" \
     "$ARCH_CMD" /bin/sh -c "'$command'"
 
@@ -221,6 +225,7 @@ with_build_env() {
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/sh -c "'$command'"
 
+  # shellcheck disable=SC2086
   on_nix_shell nix-shell --pure $CI_NIX_SHELL_ARGS --run "'TZ=$TZ $command'"
 
   on_github echo "::endgroup::"
@@ -253,7 +258,7 @@ case $command in
     prepare_build
     ;;
   with_build_env)
-    target_command="${@}"
+    target_command="${*}"
     with_build_env "$target_command"
     ;;
   build)
@@ -262,7 +267,7 @@ case $command in
   format)
     format
     ;;
-  -h|--help|help)
+  -h | --help | help)
     usage
     ;;
   *)

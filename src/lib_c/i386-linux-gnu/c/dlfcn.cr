@@ -1,10 +1,13 @@
-@[Link("dl")]
+{% unless flag?(:interpreted) %}
+  @[Link("dl")]
+{% end %}
+
 lib LibC
   RTLD_LAZY    = 0x00001
   RTLD_NOW     = 0x00002
   RTLD_GLOBAL  = 0x00100
   RTLD_LOCAL   =       0
-  RTLD_DEFAULT = Pointer(Void).new(0)
+  RTLD_DEFAULT = Pointer(Void).new(0_u64)
 
   struct DlInfo
     dli_fname : Char*

@@ -1,7 +1,18 @@
 require "./sys/types"
 
+# Starting with glibc 2.34, `pthread` is integrated into `libc` and may not even
+# be available as a separate shared library.
+# There's always a static library for compiled mode, but `Crystal::Loader` does not support
+# static libraries. So we just skip `pthread` entirely in interpreted mode.
+# The symbols are still available in the interpreter because they are loaded in the compiler.
+{% unless flag?(:interpreted) %}
+  @[Link("pthread")]
+{% end %}
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 2
+
+  PTHREAD_CANCEL_ENABLE  = 0
+  PTHREAD_CANCEL_DISABLE = 1
 
   fun pthread_attr_destroy(attr : PthreadAttrT*) : Int
   fun pthread_attr_getstack(addr : PthreadAttrT*, stackaddr : Void**, stacksize : SizeT*) : Int
@@ -28,4 +39,9 @@ lib LibC
   fun pthread_mutex_trylock(mutex : PthreadMutexT*) : Int
   fun pthread_mutex_unlock(mutex : PthreadMutexT*) : Int
   fun pthread_self : PthreadT
+  fun pthread_setname_np(PthreadT, Char*) : Int
+
+  # Set cancellability state of current thread to STATE, returning old
+  # state in *OLDSTATE if OLDSTATE is not NULL.
+  fun pthread_setcancelstate(__state : Int, __oldstate : Int*) : Int
 end

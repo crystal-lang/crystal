@@ -15,12 +15,23 @@ class Crystal::Program
   record CompiledMacroRun, filename : String, elapsed : Time::Span, reused : Bool
   property compiled_macros_cache = {} of String => CompiledMacroRun
 
+  property interpreted_node_hook : Proc(ASTNode, Bool, Bool, Location?, Nil)? = nil
+  property macro_expanded_hook : Proc(Nil)? = nil
+  property macro_expansion_error_hook : Proc(::Exception?, Nil)? = nil
+
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     check_call_to_deprecated_macro a_macro, call
 
     interpreter = MacroInterpreter.new self, scope, path_lookup || scope, a_macro, call, a_def, in_macro: true
     a_macro.body.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex if @program.macro_expansion_error_hook.nil?
+
+    # See SkipMacroCodeCoverageException's definition for more information.
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    @program.macro_expanded_hook.try &.call
   end
 
   def expand_macro(node : ASTNode, scope : Type, path_lookup : Type? = nil, free_vars = nil, a_def : Def? = nil)
@@ -28,25 +39,30 @@ class Crystal::Program
     interpreter.free_vars = free_vars
     node.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
+  rescue ex
+    raise ex if @program.macro_expansion_error_hook.nil?
+
+    # See SkipMacroCodeCoverageException's definition for more information.
+    raise SkipMacroCodeCoverageException.new ex
+  ensure
+    @program.macro_expanded_hook.try &.call
   end
 
   def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, mode : Parser::ParseMode = :normal, visibility : Visibility = :public)
     parse_macro_source generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def, inside_type, inside_exp, visibility, &.parse(mode)
   end
 
-  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public)
-    begin
-      parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
-      parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
-      parser.macro_expansion_pragmas = macro_expansion_pragmas
-      parser.visibility = visibility
-      parser.def_nest = 1 if current_def && !current_def.is_a?(External)
-      parser.fun_nest = 1 if current_def && current_def.is_a?(External)
-      parser.type_nest = 1 if inside_type
-      parser.wants_doc = @program.wants_doc?
-      generated_node = yield parser
-      normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
-    end
+  def parse_macro_source(generated_source, macro_expansion_pragmas, the_macro, node, vars, current_def = nil, inside_type = false, inside_exp = false, visibility : Visibility = :public, &)
+    parser = @program.new_parser(generated_source, var_scopes: [vars.dup])
+    parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
+    parser.macro_expansion_pragmas = macro_expansion_pragmas
+    parser.visibility = visibility
+    parser.def_nest = 1 if current_def && !current_def.is_a?(External)
+    parser.fun_nest = 1 if current_def && current_def.is_a?(External)
+    parser.type_nest = 1 if inside_type
+    parser.wants_doc = @program.wants_doc?
+    generated_node = yield parser
+    normalize(generated_node, inside_exp: inside_exp, current_def: current_def)
   end
 
   record MacroRunResult, stdout : String, stderr : String, status : Process::Status
@@ -66,7 +82,7 @@ class Crystal::Program
   end
 
   def macro_compile(filename)
-    time = Time.monotonic
+    time = Time.instant
 
     source = File.read(filename)
 
@@ -91,8 +107,7 @@ class Crystal::Program
     {% end %}
 
     if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
-      elapsed_time = Time.monotonic - time
-      return CompiledMacroRun.new(executable_path, elapsed_time, true)
+      return CompiledMacroRun.new(executable_path, time.elapsed, true)
     end
 
     result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
@@ -115,8 +130,7 @@ class Crystal::Program
       requires_with_timestamps.to_json(file)
     end
 
-    elapsed_time = Time.monotonic - time
-    CompiledMacroRun.new(executable_path, elapsed_time, false)
+    CompiledMacroRun.new(executable_path, time.elapsed, false)
   end
 
   @host_compiler : Compiler?
@@ -129,7 +143,7 @@ class Crystal::Program
         # When cross-compiling, the host compiler shouldn't copy the config for
         # the target compiler and use the system defaults instead.
         # TODO: Add configuration overrides for host compiler to CLI.
-        unless compiler.cross_compile
+        unless compiler.cross_compile?
           host_compiler.flags = compiler.flags
           host_compiler.dump_ll = compiler.dump_ll?
           host_compiler.link_flags = compiler.link_flags
@@ -147,7 +161,7 @@ class Crystal::Program
 
       # Although release takes longer, once the bc is cached in .crystal
       # the subsequent times will make program execution faster.
-      host_compiler.release = true
+      host_compiler.release!
 
       # Don't cleanup old directories after compiling: it might happen
       # that in doing so we remove the directory associated with the current
@@ -183,13 +197,11 @@ class Crystal::Program
     # We start with the target filename
     required_files = Set{filename}
     recorded_requires.map do |recorded_require|
-      begin
-        files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
-        required_files.concat(files) if files
-      rescue Crystal::CrystalPath::NotFoundError
-        # Maybe the file is gone
-        next
-      end
+      files = @program.find_in_path(recorded_require.filename, recorded_require.relative_to)
+      required_files.concat(files) if files
+    rescue Crystal::CrystalPath::NotFoundError
+      # Maybe the file is gone
+      next
     end
 
     new_requires_with_timestamps = required_files.map do |required_file|

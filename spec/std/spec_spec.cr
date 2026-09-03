@@ -117,35 +117,19 @@ describe "Spec matchers" do
 
   it "detects a nesting `it`" do
     ex = expect_raises(Spec::NestingSpecError) { it { } }
-    ex.message.should eq "can't nest `it` or `pending`"
+    ex.message.should eq "Can't nest `it` or `pending`"
     ex.file.should eq __FILE__
   end
 
   it "detects a nesting `pending`" do
     ex = expect_raises(Spec::NestingSpecError) { pending }
-    ex.message.should eq "can't nest `it` or `pending`"
+    ex.message.should eq "Can't nest `it` or `pending`"
     ex.file.should eq __FILE__
   end
 
   describe "pending block is not compiled" do
     pending "pending has block with valid syntax, but invalid semantics" do
       UndefinedConstant.undefined_method
-    end
-  end
-end
-
-describe "Spec" do
-  describe "use_colors?" do
-    it "returns if output is colored or not" do
-      saved = Spec.use_colors?
-      begin
-        Spec.use_colors = false
-        Spec.use_colors?.should be_false
-        Spec.use_colors = true
-        Spec.use_colors?.should be_true
-      ensure
-        Spec.use_colors = saved
-      end
     end
   end
 end

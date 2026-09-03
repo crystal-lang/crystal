@@ -60,9 +60,9 @@ class Crystal::CodeGenVisitor
     #
     # Note we codegen the ensure body three times! In practice this isn't a big deal, since ensure bodies are typically small.
 
-    windows = @program.has_flag? "windows"
+    msvc = @program.has_flag?("msvc")
 
-    context.fun.personality_function = windows_personality_fun if windows
+    context.fun.personality_function = windows_personality_fun.func if msvc
 
     # This is the block which is entered when the body raises an exception
     rescue_block = new_block "rescue"
@@ -109,7 +109,7 @@ class Crystal::CodeGenVisitor
 
       old_catch_pad = @catch_pad
 
-      if windows
+      if msvc
         # Windows structured exception handling must enter a catch_switch instruction
         # which decides which catch body block to enter. Crystal only ever generates one catch body
         # which is used for all exceptions. For more information on how structured exception handling works in LLVM,
@@ -122,7 +122,9 @@ class Crystal::CodeGenVisitor
         position_at_end catch_body
 
         # Allocate space for the caught exception
-        caught_exception_ptr = alloca llvm_type(@program.exception.virtual_type)
+        exception_type = @program.exception.virtual_type
+        exception_llvm_type = llvm_type(exception_type)
+        caught_exception_ptr = alloca exception_llvm_type
 
         # The catchpad instruction dictates which types of exceptions this block handles,
         # we want all of them, so we rescue all void* by passing the void_ptr_type_descriptor.
@@ -133,22 +135,26 @@ class Crystal::CodeGenVisitor
 
         # builder.printf("catchpad entered #{node.location}\n", catch_pad: @catch_pad)
 
-        caught_exception = load caught_exception_ptr
-        exception_type_id = type_id(caught_exception, @program.exception.virtual_type)
+        caught_exception = load exception_llvm_type, caught_exception_ptr
+        exception_type_id = type_id(caught_exception, exception_type)
       else
-        # Unwind exception handling code - used on non-windows platforms - is a lot simpler.
+        # Unwind exception handling code - used on non-MSVC platforms (essentially the Itanium
+        # C++ ABI) - is a lot simpler.
         # First we generate the landing pad instruction, this returns a tuple of the libunwind
         # exception object and the type ID of the exception. This tuple is set up in the crystal
         # personality function in raise.cr
         lp_ret_type = llvm_typer.landing_pad_type
-        lp = builder.landing_pad lp_ret_type, main_fun(personality_name), [] of LLVM::Value
+        lp = builder.landing_pad lp_ret_type, main_fun(personality_name).func, [] of LLVM::Value
         unwind_ex_obj = extract_value lp, 0
         exception_type_id = extract_value lp, 1
 
         # We call __crystal_get_exception to get the actual crystal `Exception` object.
         get_exception_fun = main_fun(GET_EXCEPTION_NAME)
+        get_exception_arg_type = get_exception_fun.type.params_types.first # Void* or LibUnwind::Exception*
+        get_exception_arg = pointer_cast(unwind_ex_obj, get_exception_arg_type)
+
         set_current_debug_location node if @debug.line_numbers?
-        caught_exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, get_exception_fun.params.first.type)]
+        caught_exception_ptr = call get_exception_fun, [get_exception_arg]
         caught_exception = int2ptr caught_exception_ptr, llvm_typer.type_id_pointer
       end
 
@@ -183,8 +189,8 @@ class Crystal::CodeGenVisitor
           # If the rescue restriction matches, codegen the rescue block.
           position_at_end this_rescue_block
 
-          # On windows, we are "inside" the catchpad block. It's difficult to track when to catchret when
-          # codegenning the entire rescue body, so we catchret early and execute the rescue bodies "outside" the
+          # On MSVC, we are "inside" the catchpad block. It's difficult to track when to catch_ret when
+          # codegenning the entire rescue body, so we catch_ret early and execute the rescue bodies "outside" the
           # rescue block.
           if catch_pad = @catch_pad
             catch_ret_target_block = new_block "this_rescue_target"
@@ -243,7 +249,7 @@ class Crystal::CodeGenVisitor
 
         # Codegen catchswitch+pad or landing pad as described above.
         # This code is simpler because we never need to extract the exception type
-        if windows
+        if msvc
           rescue_ensure_body = new_block "rescue_ensure_body"
           catch_switch = builder.catch_switch(old_catch_pad || LLVM::Value.null, @rescue_block || LLVM::BasicBlock.null, 1)
           builder.add_handler catch_switch, rescue_ensure_body
@@ -253,7 +259,7 @@ class Crystal::CodeGenVisitor
           @catch_pad = builder.catch_pad catch_switch, [void_ptr_type_descriptor, int32(0), llvm_context.void_pointer.null]
         else
           lp_ret_type = llvm_typer.landing_pad_type
-          lp = builder.landing_pad lp_ret_type, main_fun(personality_name), [] of LLVM::Value
+          lp = builder.landing_pad lp_ret_type, main_fun(personality_name).func, [] of LLVM::Value
           unwind_ex_obj = extract_value lp, 0
         end
 
@@ -278,13 +284,15 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_re_raise(node, unwind_ex_obj)
-    if @program.has_flag? "windows"
-      # On windows we can re-raise by calling _CxxThrowException with two null arguments
+    if @program.has_flag?("msvc")
+      # On the MSVC C++ ABI we can re-raise by calling _CxxThrowException with two null arguments
       call windows_throw_fun, [llvm_context.void_pointer.null, llvm_context.void_pointer.null]
       unreachable
     else
       raise_fun = main_fun(RAISE_NAME)
-      codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj.not_nil!, raise_fun.params.first.type)], true, @program.no_return)
+      raise_fun_arg_type = raise_fun.func.params.first.type # Void* or LibUnwind::Exception*
+      raise_fun_arg = pointer_cast(unwind_ex_obj.not_nil!, raise_fun_arg_type)
+      codegen_call_or_invoke(node, nil, nil, raise_fun, [raise_fun_arg], true, @program.no_return)
     end
   end
 
@@ -310,14 +318,14 @@ class Crystal::CodeGenVisitor
   end
 
   private def windows_throw_fun
-    @llvm_mod.functions["_CxxThrowException"]? || begin
-      @llvm_mod.functions.add("_CxxThrowException", [llvm_context.void_pointer, llvm_context.void_pointer], llvm_context.void, false)
+    fetch_typed_fun(@llvm_mod, "_CxxThrowException") do
+      LLVM::Type.function([@llvm_context.void_pointer, @llvm_context.void_pointer], @llvm_context.void, false)
     end
   end
 
   private def windows_personality_fun
-    @llvm_mod.functions["__CxxFrameHandler3"]? || begin
-      @llvm_mod.functions.add("__CxxFrameHandler3", [] of LLVM::Type, llvm_context.int32, true)
+    fetch_typed_fun(@llvm_mod, "__CxxFrameHandler3") do
+      LLVM::Type.function([] of LLVM::Type, @llvm_context.int32, true)
     end
   end
 end

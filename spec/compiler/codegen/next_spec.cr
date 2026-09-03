@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Code gen: next" do
   it "codegens next" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo
         yield
       end
@@ -10,11 +10,11 @@ describe "Code gen: next" do
       foo do
         next 1
       end
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens next conditionally" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(4)
       def foo
         yield 1
         yield 2
@@ -28,11 +28,11 @@ describe "Code gen: next" do
         a &+= i
       end
       a
-      ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "codegens next conditionally with int type (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(100)
       def foo
         x = 0
         x &+= yield 1
@@ -52,11 +52,11 @@ describe "Code gen: next" do
         end
         40
       end
-      ").to_i.should eq(100)
+      CRYSTAL
   end
 
   it "codegens next with break (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(20)
       def foo
         yield 1
       end
@@ -68,11 +68,11 @@ describe "Code gen: next" do
           next 10
         end
       end
-      ").to_i.should eq(20)
+      CRYSTAL
   end
 
   it "codegens next with break (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(40)
       def foo
         a = 0
         a &+= yield 1
@@ -88,11 +88,11 @@ describe "Code gen: next" do
         end
         30
       end
-      ").to_i.should eq(40)
+      CRYSTAL
   end
 
   it "codegens next with break (3)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(20)
       def foo
         a = 0
         a &+= yield 1
@@ -108,11 +108,11 @@ describe "Code gen: next" do
         end
         30
       end
-      ").to_i.should eq(20)
+      CRYSTAL
   end
 
   it "codegens next with while inside block" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(30)
       def foo
         a = 0
         a &+= yield 4
@@ -133,11 +133,11 @@ describe "Code gen: next" do
         end
         20
       end
-      ").to_i.should eq(30)
+      CRYSTAL
   end
 
   it "codegens next without expressions" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       struct Nil; def to_i!; 0; end; end
 
       def foo
@@ -151,6 +151,6 @@ describe "Code gen: next" do
           next
         end
       end.to_i!
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 end

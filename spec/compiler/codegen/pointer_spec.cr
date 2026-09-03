@@ -6,7 +6,7 @@ describe "Code gen: pointer" do
   end
 
   it "get pointer of instance var" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(10)
       class Foo
         def initialize(value : Int32)
           @value = value
@@ -20,7 +20,7 @@ describe "Code gen: pointer" do
       foo = Foo.new(10)
       value_ptr = foo.value_ptr
       value_ptr.value
-      ").to_i.should eq(10)
+      CRYSTAL
   end
 
   it "set pointer value" do
@@ -36,7 +36,7 @@ describe "Code gen: pointer" do
   end
 
   it "increments pointer" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         def initialize
           @a = 1
@@ -49,7 +49,7 @@ describe "Code gen: pointer" do
         end
       end
       Foo.new.value
-    ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens malloc" do
@@ -77,7 +77,7 @@ describe "Code gen: pointer" do
   end
 
   it "gets pointer of instance variable in virtual type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
         def initialize
           @a = 1
@@ -94,11 +94,11 @@ describe "Code gen: pointer" do
       foo = Foo.new || Bar.new
       x = foo.foo
       x.value
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "sets value of pointer to struct" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(20)
       lib LibC
         struct Color
           r, g, b, a : UInt8
@@ -114,54 +114,54 @@ describe "Code gen: pointer" do
       color.value = color2.value
 
       color.value.r
-      ").to_i.should eq(20)
+      CRYSTAL
   end
 
   it "changes through var and reads from pointer" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(2)
       x = 1
       px = pointerof(x)
       x = 2
       px.value
-      ").to_i.should eq(2)
+      CRYSTAL
   end
 
   it "creates pointer by address" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(123)
       x = Pointer(Int32).new(123_u64)
       x.address
-    ").to_i.should eq(123)
+      CRYSTAL
   end
 
   it "calculates pointer diff" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       x = 1
       (pointerof(x) + 1_i64) - pointerof(x)
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "can dereference pointer to func" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo; 1; end
       x = ->foo
       y = pointerof(x)
       y.value.call
-    ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "gets pointer of argument that is never assigned to" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x)
         pointerof(x)
       end
 
       foo(1)
       1
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens nilable pointer type (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       p = Pointer(Int32).malloc(1_u64)
       p.value = 3
       a = 1 == 2 ? nil : p
@@ -170,11 +170,11 @@ describe "Code gen: pointer" do
       else
         4
       end
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens nilable pointer type (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(4)
       p = Pointer(Int32).malloc(1_u64)
       p.value = 3
       a = 1 == 1 ? nil : p
@@ -183,11 +183,11 @@ describe "Code gen: pointer" do
       else
         4
       end
-      ").to_i.should eq(4)
+      CRYSTAL
   end
 
   it "codegens nilable pointer type dispatch (1)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       def foo(x : Pointer)
         x.value
       end
@@ -200,11 +200,11 @@ describe "Code gen: pointer" do
       p.value = 3
       a = 1 == 1 ? p : nil
       foo(a)
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "codegens nilable pointer type dispatch (2)" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(0)
       def foo(x : Pointer)
         x.value
       end
@@ -217,11 +217,11 @@ describe "Code gen: pointer" do
       p.value = 3
       a = 1 == 1 ? nil : p
       foo(a)
-      ").to_i.should eq(0)
+      CRYSTAL
   end
 
   it "assigns nil and pointer to nilable pointer type" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize
         end
@@ -246,19 +246,19 @@ describe "Code gen: pointer" do
       else
         2
       end
-      ").to_i.should eq(3)
+      CRYSTAL
   end
 
   it "gets pointer to constant" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(1)
       require "prelude"
       FOO = 1
       pointerof(FOO).value
-    )).to_i.should eq(1)
+      CRYSTAL
   end
 
   it "passes pointer of pointer to method" do
-    run("
+    run(<<-CRYSTAL).to_i.should eq(1)
       def foo(x)
         x.value.value
       end
@@ -267,33 +267,33 @@ describe "Code gen: pointer" do
       p.value = Pointer(Int32).malloc(1_u64)
       p.value.value = 1
       foo p
-      ").to_i.should eq(1)
+      CRYSTAL
   end
 
   it "codegens pointer as if condition inside union (1)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       ptr = Pointer(Int32).new(0_u64) || Pointer(Float64).new(0_u64)
       if ptr
         1
       else
         2
       end
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "codegens pointer as if condition inside union (2)" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(30)
       if 1 == 1
         ptr = Pointer(Int32).new(0_u64)
       else
         ptr = 10
       end
       ptr ? 20 : 30
-      )).to_i.should eq(30)
+      CRYSTAL
   end
 
   it "can use typedef pointer value get and set (#630)" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         type MyObj = Int32*
         fun foo : MyObj
@@ -301,11 +301,11 @@ describe "Code gen: pointer" do
 
       LibFoo.foo.value
       LibFoo.foo.value = 1
-      ))
+      CRYSTAL
   end
 
   it "does pointerof class variable" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
         @@a = 1
 
@@ -320,13 +320,11 @@ describe "Code gen: pointer" do
 
       Foo.a_ptr.value = 2
       Foo.a
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does pointerof class variable with class" do
-    run(%(
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i.should eq(2)
       class Bar
         def initialize(@x : Int32)
         end
@@ -350,11 +348,11 @@ describe "Code gen: pointer" do
 
       Foo.a_ptr.value = Bar.new(2)
       Foo.a.x
-      )).to_i.should eq(2)
+      CRYSTAL
   end
 
   it "does pointerof read variable" do
-    run(%(
+    run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
         def initialize
           @x = 1
@@ -368,30 +366,28 @@ describe "Code gen: pointer" do
       foo = Foo.new
       pointerof(foo.@x).value = 123
       foo.x
-      )).to_i.should eq(123)
+      CRYSTAL
   end
 
   it "can assign nil to void pointer" do
-    codegen(%(
-      require "prelude"
-
+    codegen(<<-CRYSTAL)
       ptr = Pointer(Void).malloc(1_u64)
       ptr.value = ptr.value
-      ))
+      CRYSTAL
   end
 
   it "can pass any pointer to something expecting void* in lib call" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(x : Void*) : Float64
       end
 
       LibFoo.foo(Pointer(Int32).malloc(1_u64))
-      ))
+      CRYSTAL
   end
 
   it "can pass any pointer to something expecting void* in lib call, with to_unsafe" do
-    codegen(%(
+    codegen(<<-CRYSTAL)
       lib LibFoo
         fun foo(x : Void*) : Float64
       end
@@ -403,13 +399,11 @@ describe "Code gen: pointer" do
       end
 
       LibFoo.foo(Foo.new)
-      ))
+      CRYSTAL
   end
 
   it "uses correct llvm module for typedef metaclass (#2877)" do
-    run(%(
-      require "prelude"
-
+    run(<<-CRYSTAL)
       lib LibFoo
         type Foo = Void*
         type Bar = Void*
@@ -435,11 +429,11 @@ describe "Code gen: pointer" do
       foo.foo
       bar.foo
       1
-      ))
+      CRYSTAL
   end
 
   it "passes arguments correctly for typedef metaclass (#8544)" do
-    run <<-CR
+    run <<-CRYSTAL
       lib LibFoo
         type Foo = Void*
       end
@@ -453,13 +447,11 @@ describe "Code gen: pointer" do
       x = 1
       LibFoo::Foo.foo(x)
       Pointer(Void).foo(x)
-      CR
+      CRYSTAL
   end
 
   it "generates correct code for Pointer.malloc(0) (#2905)" do
-    run(%(
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i.should eq(3)
       class Foo
         def initialize(@value : Int32)
         end
@@ -472,11 +464,11 @@ describe "Code gen: pointer" do
       foo = Foo.new(3)
       Pointer(Int32 | UInt8[9]).malloc(0_u64)
       foo.value
-      )).to_i.should eq(3)
+      CRYSTAL
   end
 
   it "compares pointers through typedef" do
-    run(%(
+    run(<<-CRYSTAL).to_b.should be_true
       module Comparable(T)
         def ==(other : T)
           (self <=> other) == 0
@@ -497,15 +489,17 @@ describe "Code gen: pointer" do
 
       ptr = Pointer(Void).malloc(1_u64).as(LibFoo::Ptr)
       ptr == ptr
-      )).to_b.should be_true
+      CRYSTAL
   end
 
-  it "takes pointerof lib external var" do
-    test_c(
-      %(
+  # FIXME: `$external_var` implies __declspec(dllimport), but we only have an
+  # object file, so MinGW-w64 fails linking (actually MSVC also emits an
+  # LNK4217 linker warning)
+  {% unless flag?(:win32) && flag?(:gnu) %}
+    it "takes pointerof lib external var" do
+      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(111))
         int external_var = 0;
-      ),
-      %(
+        C
         lib LibFoo
           $external_var : Int32
         end
@@ -522,6 +516,7 @@ describe "Code gen: pointer" do
         z = LibFoo.external_var
 
         x + y + z
-      ), &.to_i.should eq(111))
-  end
+        CRYSTAL
+    end
+  {% end %}
 end

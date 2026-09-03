@@ -2,6 +2,8 @@ require "crystal/system/group"
 
 # Represents a group of users on the host system.
 #
+# NOTE: To use Group, you must explicitly import it with `require "system/group"`
+#
 # Groups can be retrieved by either group name or their group ID:
 #
 # ```
@@ -15,18 +17,19 @@ class System::Group
   class NotFoundError < Exception
   end
 
-  extend Crystal::System::Group
+  include Crystal::System::Group
 
   # The group's name.
-  getter name : String
+  def name : String
+    system_name
+  end
 
   # The group's identifier.
-  getter id : String
-
-  def_equals_and_hash @id
-
-  private def initialize(@name, @id)
+  def id : String
+    system_id
   end
+
+  def_equals_and_hash id
 
   # Returns the group associated with the given name.
   #
@@ -39,7 +42,7 @@ class System::Group
   #
   # Returns `nil` if no such group exists.
   def self.find_by?(*, name : String) : System::Group?
-    from_name?(name)
+    Crystal::System::Group.from_name?(name)
   end
 
   # Returns the group associated with the given ID.
@@ -53,7 +56,7 @@ class System::Group
   #
   # Returns `nil` if no such group exists.
   def self.find_by?(*, id : String) : System::Group?
-    from_id?(id)
+    Crystal::System::Group.from_id?(id)
   end
 
   def to_s(io)

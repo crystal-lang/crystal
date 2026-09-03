@@ -7,11 +7,11 @@ class LLVM::GenericValue
   end
 
   def to_i64 : Int64
-    LibLLVM.generic_value_to_int(self, signed: 1).unsafe_as(Int64)
+    LibLLVM.generic_value_to_int(self, is_signed: 1).to_i64!
   end
 
   def to_u64 : UInt64
-    LibLLVM.generic_value_to_int(self, signed: 0)
+    LibLLVM.generic_value_to_int(self, is_signed: 0)
   end
 
   def to_b : Bool

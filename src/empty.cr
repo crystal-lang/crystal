@@ -1,7 +1,8 @@
+{% skip_file if flag?(:docs) %}
 require "primitives"
 
-{% if flag?(:win32) %}
-  @[Link({{ flag?(:preview_dll) ? "msvcrt" : "libcmt" }})] # For `mainCRTStartup`
+{% if flag?(:msvc) %}
+  @[Link({{ flag?(:static) ? "libcmt" : "msvcrt" }})] # For `mainCRTStartup`
 {% end %}
 lib LibCrystalMain
   @[Raises]

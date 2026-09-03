@@ -3,12 +3,12 @@ lib Foo
 end
 
 def raise(msg)
-  while true
+  while true # ameba:disable Lint/EmptyLoop
   end
 end
 
 x = 1
-f = ->{ x }
+f = -> { x }
 Foo.foo(f)
 
 # CHECK:      define internal i8* @"~check_proc_is_not_closure"(%"->" %0)

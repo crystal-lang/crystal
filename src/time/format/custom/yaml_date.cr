@@ -4,8 +4,7 @@ struct Time::Format
   # can consist of just the date part, and following it any number of spaces,
   # or 't', or 'T' can follow, with many optional components. So, we implement
   # this in a more efficient way to avoid parsing the same string with many
-  # possible formats (there's also no way to specify any number of spaces
-  # with Time::Format, or an "or" like in a Regex).
+  # possible formats (there's also no way to specify an "or" like in a Regex).
   #
   # As an additional note, Ruby's Psych YAML parser also implements a
   # custom time parser, probably for this same reason.
@@ -44,34 +43,34 @@ struct Time::Format
       if (year = consume_number?(4)) && char?('-')
         @year = year
       else
-        return nil
+        return false
       end
 
       if (month = consume_number?(2)) && char?('-')
         @month = month
       else
-        return nil
+        return false
       end
 
       if day = consume_number?(2)
         @day = day
       else
-        return nil
+        return false
       end
 
       case current_char
       when 'T', 't'
         next_char
         return yaml_time?
-      when .ascii_whitespace?
-        skip_spaces
+      when ' ', '\t'
+        skip_whitespaces_and_tabs
 
         if @reader.has_next?
           return yaml_time?
         end
       else
         if @reader.has_next?
-          return nil
+          return false
         end
       end
 
@@ -82,36 +81,42 @@ struct Time::Format
       if (hour = consume_number?(2)) && char?(':')
         @hour = hour
       else
-        return nil
+        return false
       end
 
       if (minute = consume_number?(2)) && char?(':')
         @minute = minute
       else
-        return nil
+        return false
       end
 
       if second = consume_number?(2)
         @second = second
       else
-        return nil
+        return false
       end
 
       second_fraction?
 
-      skip_spaces
+      skip_whitespaces_and_tabs
 
       if @reader.has_next?
         begin
           time_zone_z_or_offset(force_zero_padding: false, force_minutes: false)
         rescue Time::Format::Error
-          return nil
+          return false
         end
 
-        return nil if @reader.has_next?
+        return false if @reader.has_next?
       end
 
       true
+    end
+
+    private def skip_whitespaces_and_tabs
+      while current_char.in?(' ', '\t')
+        next_char
+      end
     end
   end
 

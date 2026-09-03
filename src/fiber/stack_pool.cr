@@ -5,38 +5,96 @@ class Fiber
   class StackPool
     STACK_SIZE = 8 * 1024 * 1024
 
-    def initialize
-      @deque = Deque(Void*).new
-      @mutex = Thread::Mutex.new
+    {% unless flag?(:without_mt) %}
+      @lock = Crystal::SpinLock.new
+    {% end %}
+
+    # If *protect* is true, guards all top pages (pages with the lowest address
+    # values) in the allocated stacks; accessing them triggers an error
+    # condition, allowing stack overflows on non-main fibers to be detected.
+    #
+    # Interpreter stacks grow upwards (pushing values increases the stack
+    # pointer value) rather than downwards, so *protect* must be false.
+    #
+    # Interpreter keeps an internal list of stacks and musn't consider
+    # `Thread.current.dead_fiber_stack` for recycle which is handled by the
+    # scheduler's fiber stack pool where the interpreter runs.
+    def initialize(@protect : Bool = true, @reuse_dead_fiber_stack : Bool = true)
+      @deque = Deque(Stack).new
+    end
+
+    def finalize
+      @deque.each do |stack|
+        Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
+      end
     end
 
     # Removes and frees at most *count* stacks from the top of the pool,
     # returning memory to the operating system.
     def collect(count = lazy_size // 2) : Nil
       count.times do
-        if stack = @mutex.synchronize { @deque.shift? }
-          Crystal::System::Fiber.free_stack(stack, STACK_SIZE)
+        if stack = shift?
+          Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
         else
           return
         end
       end
     end
 
+    def collect_loop(every = 5.seconds) : Nil
+      loop do
+        sleep every
+        collect
+      end
+    end
+
     # Removes a stack from the bottom of the pool, or allocates a new one.
-    def checkout : {Void*, Void*}
-      stack = @mutex.synchronize { @deque.pop? } || Crystal::System::Fiber.allocate_stack(STACK_SIZE)
-      {stack, stack + STACK_SIZE}
+    def checkout : Stack
+      if stack = pop?
+        Crystal::System::Fiber.reset_stack(stack.pointer, stack.size, @protect)
+        stack
+      else
+        pointer = Crystal::System::Fiber.allocate_stack(STACK_SIZE, @protect)
+        Stack.new(pointer, STACK_SIZE, reusable: true)
+      end
     end
 
     # Appends a stack to the bottom of the pool.
-    def release(stack) : Nil
-      @mutex.synchronize { @deque.push(stack) }
+    def release(stack : Stack) : Nil
+      return unless stack.reusable?
+
+      {% if !flag?(:without_mt) %}
+        @lock.sync { @deque.push(stack) }
+      {% else %}
+        @deque.push(stack)
+      {% end %}
     end
 
     # Returns the approximated size of the pool. It may be equal or slightly
     # bigger or smaller than the actual size.
     def lazy_size : Int32
-      @mutex.synchronize { @deque.size }
+      @deque.size
+    end
+
+    private def shift?
+      {% if !flag?(:without_mt) %}
+        @lock.sync { @deque.shift? } unless @deque.empty?
+      {% else %}
+        @deque.shift?
+      {% end %}
+    end
+
+    private def pop?
+      {% if !flag?(:without_mt) %}
+        {% if !flag?(:preview_mt) || flag?(:execution_context) %}
+          if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
+            return stack
+          end
+        {% end %}
+        @lock.sync { @deque.pop? } unless @deque.empty?
+      {% else %}
+        @deque.pop?
+      {% end %}
     end
   end
 end

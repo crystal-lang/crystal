@@ -10,7 +10,7 @@ describe "Semantic: uninitialized" do
   end
 
   it "declares an instance variable in initialize as uninitialized" do
-    assert_type("
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         def initialize
           @x = uninitialized Int32
@@ -22,11 +22,11 @@ describe "Semantic: uninitialized" do
       end
 
       Foo.new.x
-      ") { int32 }
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars (with instance var)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
@@ -37,12 +37,11 @@ describe "Semantic: uninitialized" do
       end
 
       Bar.new
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 
   it "errors if declaring generic type without type vars (with class var)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "can't declare variable of generic non-instantiated type Foo"
       class Foo(T)
       end
 
@@ -51,31 +50,28 @@ describe "Semantic: uninitialized" do
       end
 
       Bar.new
-      ),
-      "can't declare variable of generic non-instantiated type Foo"
+      CRYSTAL
   end
 
   it "errors if declares var and then assigns other type" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "type must be Int32, not (Char | Int32)"
       x = uninitialized Int32
       x = 'a'
-      ),
-      "type must be Int32, not (Char | Int32)"
+      CRYSTAL
   end
 
   it "errors if declaring variable multiple times with different types (#917)" do
-    assert_error %(
+    assert_error <<-CRYSTAL, "variable 'buf' already declared with type Int32", inject_primitives: true
       if 1 == 0
         buf = uninitialized Int32
       else
         buf = uninitialized Float64
       end
-      ),
-      "variable 'buf' already declared with type Int32", inject_primitives: true
+      CRYSTAL
   end
 
   it "can uninitialize variable outside initialize (#2828)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo
         @x = uninitialized Int32
 
@@ -85,11 +81,11 @@ describe "Semantic: uninitialized" do
       end
 
       Foo.new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can uninitialize variable outside initialize, generic (#2828)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       class Foo(T)
         @x = uninitialized T
 
@@ -99,11 +95,11 @@ describe "Semantic: uninitialized" do
       end
 
       Foo(Int32).new.x
-      )) { int32 }
+      CRYSTAL
   end
 
   it "can use uninitialized with class type (#2940)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32.metaclass }
       class Foo(U)
         def initialize
           @x = uninitialized U
@@ -115,20 +111,19 @@ describe "Semantic: uninitialized" do
       end
 
       Foo(Int32.class).new.x
-      )) { int32.metaclass }
+      CRYSTAL
   end
 
   %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
     it "disallows declaring var of type #{type}" do
-      assert_error %(
+      assert_error <<-CRYSTAL, "use a more specific type"
         x = uninitialized #{type}
-        ),
-        "use a more specific type"
+        CRYSTAL
     end
   end
 
   it "works with uninitialized NoReturn (#3314)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { nil_type }
       def foo
         x = uninitialized typeof(yield)
       end
@@ -138,17 +133,17 @@ describe "Semantic: uninitialized" do
       end
 
       bar
-      )) { nil_type }
+      CRYSTAL
   end
 
   it "has type (#3641)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { int32 }
       x = uninitialized Int32
-      )) { int32 }
+      CRYSTAL
   end
 
   it "uses virtual type for uninitialized (#8216)" do
-    assert_type(%(
+    assert_type(<<-CRYSTAL) { types["Base"].virtual_type! }
       class Base
       end
 
@@ -157,6 +152,6 @@ describe "Semantic: uninitialized" do
 
       u = uninitialized Base
       u
-      )) { types["Base"].virtual_type! }
+      CRYSTAL
   end
 end

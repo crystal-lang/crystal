@@ -49,7 +49,7 @@ class OpenSSL::SSL::Server
   # *context* configures the SSL options, see `OpenSSL::SSL::Context::Server` for details
   #
   # The server is closed after the block returns.
-  def self.open(wrapped : ::Socket::Server, context : OpenSSL::SSL::Context::Server = OpenSSL::SSL::Context::Server.new, sync_close : Bool = true)
+  def self.open(wrapped : ::Socket::Server, context : OpenSSL::SSL::Context::Server = OpenSSL::SSL::Context::Server.new, sync_close : Bool = true, &)
     server = new(wrapped, context, sync_close)
 
     begin

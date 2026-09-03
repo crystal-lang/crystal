@@ -18,13 +18,15 @@ class Crystal::Repl
     # How many bytes occupy the method arguments.
     getter args_bytesize : Int32
 
+    property closure_context : ClosureContext?
+
     def initialize(
       context : Context,
       @def : Def,
       @owner : Type,
       @args_bytesize : Int32,
       @instructions : CompiledInstructions = CompiledInstructions.new,
-      @local_vars = LocalVars.new(context)
+      @local_vars = LocalVars.new(context),
     )
     end
   end

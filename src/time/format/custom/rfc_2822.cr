@@ -7,7 +7,7 @@ struct Time::Format
   # Time::Format::RFC_2822.format(Time.utc(2016, 2, 15, 4, 35, 50)) # => "Mon, 15 Feb 2016 04:35:50 +0000"
   #
   # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 +0000") # => 2016-02-15 04:35:50.0 +00:00
-  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 UTC")   # => 2016-02-15 04:35:50.0 UTC
+  # Time::Format::RFC_2822.parse("Mon, 15 Feb 2016 04:35:50 UTC")   # => 2016-02-15 04:35:50Z
   # ```
   module RFC_2822
     # Parses a string into a `Time`.
@@ -92,7 +92,7 @@ struct Time::Format
       in_comment = false
       seen_whitespace = false
       loop do
-        case char = current_char
+        case current_char
         when .ascii_whitespace?
           seen_whitespace = true
         when '('

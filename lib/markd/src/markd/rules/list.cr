@@ -66,9 +66,11 @@ module Markd::Rule
     end
 
     private def parse_list_marker(parser : Parser, container : Node) : Node::DataType
-      line = parser.line[parser.next_nonspace..-1]
-
       empty_data = {} of String => Node::DataValue
+      if parser.indent >= 4
+        return empty_data
+      end
+
       data = {
         "delimiter"     => 0,
         "marker_offset" => parser.indent,
@@ -76,6 +78,8 @@ module Markd::Rule
         "tight"         => true, # lists are tight by default
         "start"         => 1,
       } of String => Node::DataValue
+
+      line = parser.line[parser.next_nonspace..-1]
 
       if BULLET_LIST_MARKERS.includes?(line[0])
         data["type"] = "bullet"
@@ -139,7 +143,8 @@ module Markd::Rule
       while container
         return true if container.last_line_blank?
 
-        break unless container.type == Node::Type::List || container.type == Node::Type::Item
+        break unless !container.last_line_checked? && container.type.in?(Node::Type::List, Node::Type::Item)
+        container.last_line_checked = true
         container = container.last_child?
       end
 

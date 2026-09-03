@@ -48,7 +48,7 @@ describe OpenSSL::Cipher do
   it "authenticated?" do
     begin
       cipher = OpenSSL::Cipher.new("aes-128-gcm")
-      cipher.authenticated?.should eq(true)
+      cipher.authenticated?.should be_true
     rescue ArgumentError
       # This system doesn't support GCM ciphers
       # Silently skip, as this method will never return true
@@ -56,6 +56,29 @@ describe OpenSSL::Cipher do
     end
 
     cipher = OpenSSL::Cipher.new("aes-128-cbc")
-    cipher.authenticated?.should eq(false)
+    cipher.authenticated?.should be_false
+  end
+
+  it "encrypts/decrypts with GCM authentication tag" do
+    key = Random::Secure.random_bytes(32)
+    iv = Random::Secure.random_bytes(12)
+    plaintext = "Hello, GCM!"
+
+    enc = OpenSSL::Cipher.new("aes-256-gcm")
+    enc.encrypt
+    enc.key = key
+    enc.iv = iv
+    ciphertext = enc.update(plaintext)
+    ciphertext += enc.final
+    tag = enc.gcm_tag
+
+    dec = OpenSSL::Cipher.new("aes-256-gcm")
+    dec.decrypt
+    dec.key = key
+    dec.iv = iv
+    dec.gcm_tag = tag
+    result = dec.update(ciphertext)
+    result += dec.final
+    String.new(result).should eq(plaintext)
   end
 end

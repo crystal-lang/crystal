@@ -1,6 +1,7 @@
 require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/dfe8bd10fe6763e0a1d5d55fa2574ecba27d3e2e/src/librustc_trans/cabi_arm.rs
+@[Deprecated("This API is now internal to the compiler and no longer updated publicly.")]
 class LLVM::ABI::ARM < LLVM::ABI
   def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context) : LLVM::ABI::FunctionType
     ret_ty = compute_return_type(rty, ret_def, context)

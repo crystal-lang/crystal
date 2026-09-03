@@ -1,3 +1,4 @@
+# NOTE: To use `FileUtils`, you must explicitly import it with `require "file_utils"`
 module FileUtils
   extend self
 
@@ -24,7 +25,7 @@ module FileUtils
   # ```
   #
   # NOTE: Alias of `Dir.cd` with block
-  def cd(path : Path | String)
+  def cd(path : Path | String, &)
     Dir.cd(path) { yield }
   end
 
@@ -222,7 +223,7 @@ module FileUtils
       dest_path = File.join(dest_path, File.basename(src_path))
     end
 
-    File.delete(dest_path) if File.file?(dest_path)
+    rm_rf(dest_path) if File.exists?(dest_path)
     File.symlink(src_path, dest_path)
   end
 
@@ -316,7 +317,7 @@ module FileUtils
   # ```
   def mv(src_path : Path | String, dest_path : Path | String) : Nil
     if error = Crystal::System::File.rename(src_path.to_s, dest_path.to_s)
-      raise error unless Errno.value.in?(Errno::EXDEV, Errno::EPERM)
+      raise error unless error.os_error.in?(Errno::EXDEV, Errno::EPERM, WinError::ERROR_NOT_SAME_DEVICE)
       cp_r(src_path, dest_path)
       rm_r(src_path)
     end
@@ -332,10 +333,8 @@ module FileUtils
   def mv(srcs : Enumerable(Path | String), dest : Path | String) : Nil
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
-      begin
-        mv(src, File.join(dest, File.basename(src)))
-      rescue File::Error
-      end
+      mv(src, File.join(dest, File.basename(src)))
+    rescue File::Error
     end
   end
 
@@ -352,7 +351,7 @@ module FileUtils
     Dir.current
   end
 
-  # Deletes the *path* file given.
+  # Deletes the *path* file given, raises if the path does not exist.
   #
   # ```
   # require "file_utils"
@@ -365,7 +364,7 @@ module FileUtils
     File.delete(path)
   end
 
-  # Deletes all *paths* file given.
+  # Deletes all *paths* files given, raises if any of the paths doesn't exist.
   #
   # ```
   # require "file_utils"
@@ -375,6 +374,32 @@ module FileUtils
   def rm(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
       File.delete(path)
+    end
+  end
+
+  # Deletes the given *path* file, ignoring it if it does not exist.
+  #
+  # ```
+  # require "file_utils"
+  #
+  # FileUtils.rm_f("afile.cr")
+  # ```
+  #
+  # NOTE: Alias of `File.delete?`
+  def rm_f(path : Path | String) : Nil
+    File.delete?(path)
+  end
+
+  # Deletes all *paths* files given, ignoring non-existing ones.
+  #
+  # ```
+  # require "file_utils"
+  #
+  # FileUtils.rm_f(["dir/afile", "afile_copy"])
+  # ```
+  def rm_f(paths : Enumerable(Path | String)) : Nil
+    paths.each do |path|
+      File.delete?(path)
     end
   end
 
@@ -425,10 +450,8 @@ module FileUtils
   # FileUtils.rm_rf("non_existent_file")
   # ```
   def rm_rf(path : Path | String) : Nil
-    begin
-      rm_r(path)
-    rescue File::Error
-    end
+    rm_r(path)
+  rescue File::Error
   end
 
   # Deletes a list of files or directories *paths*.
@@ -442,10 +465,8 @@ module FileUtils
   # ```
   def rm_rf(paths : Enumerable(Path | String)) : Nil
     paths.each do |path|
-      begin
-        rm_r(path)
-      rescue File::Error
-      end
+      rm_r(path)
+    rescue File::Error
     end
   end
 
@@ -457,7 +478,7 @@ module FileUtils
   # FileUtils.rmdir("baz")
   # ```
   #
-  # NOTE: Alias of `Dir.rmdir`
+  # NOTE: Alias of `Dir.delete`
   def rmdir(path : Path | String) : Nil
     Dir.delete(path)
   end

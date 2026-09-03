@@ -34,13 +34,11 @@ module Crystal
 
         case cell.align
         in .left?
-          "%-#{available_width}s" % cell.text
+          cell.text.ljust(available_width)
         in .right?
-          "%+#{available_width}s" % cell.text
+          cell.text.rjust(available_width)
         in .center?
-          left = " " * ((available_width - cell.text.size) // 2)
-          right = " " * (available_width - cell.text.size - left.size)
-          "#{left}#{cell.text}#{right}"
+          cell.text.center(available_width)
         end
       end
     end
@@ -65,7 +63,7 @@ module Crystal
       @columns = [] of Column
     end
 
-    def build
+    def build(&)
       with self yield self
       render
     end
@@ -74,7 +72,7 @@ module Crystal
       @data << Separator.new
     end
 
-    def row
+    def row(&)
       @last_string_row = [] of Cell
       @data << last_string_row
       with self yield
@@ -86,7 +84,7 @@ module Crystal
       column_for_last_cell.will_render(cell)
     end
 
-    def cell(align : Alignment = :left, colspan = 1)
+    def cell(align : Alignment = :left, colspan = 1, &)
       cell(String::Builder.build { |io| yield io }, align, colspan)
     end
 

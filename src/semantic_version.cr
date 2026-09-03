@@ -4,6 +4,10 @@
 struct SemanticVersion
   include Comparable(self)
 
+  VERSION_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)
+                      (?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?
+                      (?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/x
+
   # The major version of this semantic version
   getter major : Int32
 
@@ -19,7 +23,18 @@ struct SemanticVersion
   # The pre-release version of this semantic version
   getter prerelease : Prerelease
 
-  # Parses a `SemanticVersion` from the given semantic version string
+  # Checks if *str* is a valid semantic version.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # SemanticVersion.valid?("1.15.0") # => true
+  # SemanticVersion.valid?("1.2")    # => false
+  def self.valid?(str : String) : Bool
+    VERSION_PATTERN.matches?(str)
+  end
+
+  # Parses a `SemanticVersion` from the given semantic version string.
   #
   # ```
   # require "semantic_version"
@@ -30,18 +45,23 @@ struct SemanticVersion
   #
   # Raises `ArgumentError` if *str* is not a semantic version.
   def self.parse(str : String) : self
-    if m = str.match /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)
-                      (?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?
-                      (?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/x
-      major = m[1].to_i
-      minor = m[2].to_i
-      patch = m[3].to_i
-      prerelease = m[4]?
-      build = m[5]?
-      new major, minor, patch, prerelease, build
-    else
-      raise ArgumentError.new("Not a semantic version: #{str.inspect}")
-    end
+    parse?(str) || raise ArgumentError.new("Not a semantic version: #{str.inspect}")
+  end
+
+  # Parses a `SemanticVersion` from the given semantic version string.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # semver = SemanticVersion.parse?("2.61.4")
+  # semver # => #<SemanticVersion:0x55b3667c9e70 @major=2, @minor=61, @patch=4, ... >
+  # ```
+  #
+  # Returns `nil` if *str* is not a semantic version.
+  def self.parse?(str : String) : self?
+    return unless m = str.match VERSION_PATTERN
+
+    new m[1].to_i, m[2].to_i, m[3].to_i, m[4]?, m[5]?
   end
 
   # Creates a new `SemanticVersion` instance with the given major, minor, and patch versions
@@ -79,6 +99,62 @@ struct SemanticVersion
     end
     if build
       io << '+' << build
+    end
+  end
+
+  # Returns a new `SemanticVersion` created with the specified parts. The
+  # default for each part is its current value.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # current_version = SemanticVersion.new 1, 1, 1, "rc"
+  # current_version.copy_with(patch: 2)        # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=2, @prerelease=SemanticVersion::Prerelease(@identifiers=["rc"]))
+  # current_version.copy_with(prerelease: nil) # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=1, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
+  # ```
+  def copy_with(major : Int32 = @major, minor : Int32 = @minor, patch : Int32 = @patch, prerelease : String | Prerelease | Nil = @prerelease, build : String? = @build)
+    SemanticVersion.new major, minor, patch, prerelease, build
+  end
+
+  # Returns a copy of the current version with a major bump.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # current_version = SemanticVersion.new 1, 1, 1, "rc"
+  # current_version.bump_major # => SemanticVersion(@build=nil, @major=2, @minor=0, @patch=0, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
+  # ```
+  def bump_major
+    copy_with(major: major + 1, minor: 0, patch: 0, prerelease: nil, build: nil)
+  end
+
+  # Returns a copy of the current version with a minor bump.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # current_version = SemanticVersion.new 1, 1, 1, "rc"
+  # current_version.bump_minor # => SemanticVersion(@build=nil, @major=1, @minor=2, @patch=0, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
+  # ```
+  def bump_minor
+    copy_with(minor: minor + 1, patch: 0, prerelease: nil, build: nil)
+  end
+
+  # Returns a copy of the current version with a patch bump. Bumping a patch of
+  # a prerelease just erase the prerelease data.
+  #
+  # ```
+  # require "semantic_version"
+  #
+  # current_version = SemanticVersion.new 1, 1, 1, "rc"
+  # next_patch = current_version.bump_patch # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=1, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
+  # next_patch.bump_patch                   # => SemanticVersion(@build=nil, @major=1, @minor=1, @patch=2, @prerelease=SemanticVersion::Prerelease(@identifiers=[]))
+  # ```
+  def bump_patch
+    if prerelease.identifiers.empty?
+      copy_with(patch: patch + 1, prerelease: nil, build: nil)
+    else
+      copy_with(prerelease: nil, build: nil)
     end
   end
 
@@ -122,7 +198,7 @@ struct SemanticVersion
     # ```
     def self.parse(str : String) : self
       identifiers = [] of String | Int32
-      str.split('.').each do |val|
+      str.split('.') do |val|
         if number = val.to_i32?
           identifiers << number
         else

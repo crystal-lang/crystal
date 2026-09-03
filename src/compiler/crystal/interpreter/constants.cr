@@ -41,6 +41,15 @@ class Crystal::Repl::Constants
   # Note that at that index the `initializer` "bit" (8 bytes) should be stored,
   # and only after `OFFSET_FROM_INITIALIZER` the data should be stored.
   def declare(const : Const, compiled_def : CompiledDef) : Int32
+    # if `Compiler#get_const_index_and_compiled_def` calls itself due to a
+    # recursive constant initializer, e.g. `STDOUT`, the same constant might be
+    # declared twice; in that case, use the new initializer but keep the same
+    # constant index as before
+    if value = fetch?(const)
+      @data[const] = value.copy_with(compiled_def: compiled_def)
+      return value.index
+    end
+
     type = const.value.type
 
     index = @bytesize
