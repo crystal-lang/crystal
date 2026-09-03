@@ -888,6 +888,9 @@ module Crystal
         ret
       elsif method_type.no_return?
         unreachable
+      elsif sret_pointer = context.sret_pointer
+        store_lhs upcast(@last, method_type, type), method_type, sret_pointer
+        ret
       else
         value = upcast(@last, method_type, type)
         ret to_rhs(value, method_type)
@@ -2147,9 +2150,7 @@ module Crystal
 
         if self_closured
           offset = parent_closure_type ? 1 : 0
-          self_value = to_rhs(llvm_self, current_context.type)
-
-          store self_value, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
+          store_lhs llvm_self, current_context.type, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
 
           current_context.closure_self = current_context.type
         end
@@ -2501,6 +2502,26 @@ module Crystal
 
     def to_rhs(value, type)
       type.passed_by_value? ? load(llvm_embedded_type(type), value) : value
+    end
+
+    # Stores the value of *type* held by *value* (a pointer if *type* is
+    # passed by value, see `to_lhs`) into *pointer*
+    def store_lhs(value, type, pointer)
+      if large_aggregate?(type)
+        llvm_type = llvm_type(type)
+        memcpy cast_to_void_pointer(pointer), cast_to_void_pointer(value), size_t(@llvm_typer.size_of(llvm_type)), @llvm_typer.align_of(llvm_type), int1(0)
+      else
+        store to_rhs(value, type), pointer
+      end
+    end
+
+    # LLVM handles aggregate values one scalar at a time, so compile time grows
+    # with the element count (#2485). Such values are copied with `memcpy` and
+    # returned through an `sret` pointer instead.
+    def large_aggregate?(type : Type?) : Bool
+      return false unless type
+      type = type.remove_typedef
+      type.is_a?(StaticArrayInstanceType) && type.size.as(NumberLiteral).value.to_i > 16
     end
 
     def extern_to_lhs(value, type)
