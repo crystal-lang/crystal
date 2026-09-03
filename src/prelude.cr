@@ -1,10 +1,5 @@
 {%
-  shard_yml = read_file("shard.yml")
-  min_compiler_version = if compare_versions(Crystal::VERSION, "1.19.0") > 0
-                           shard_yml.match(/crystal:\s*">=\s*([^"]+)"/)[1]
-                         else
-                           shard_yml.lines.find(&.starts_with?("crystal:")).split(">=")[1].gsub(/[" ]/, "")
-                         end
+  min_compiler_version = "1.13.0"
   if compare_versions(Crystal::VERSION, min_compiler_version) < 0
     @type.warning <<-TXT
       This compiler release at version #{Crystal::VERSION.id} is too old and no longer supported.
