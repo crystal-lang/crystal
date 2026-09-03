@@ -33,7 +33,7 @@ describe "Char::Reader" do
   it "iterates through empty string" do
     reader = Char::Reader.new("")
     reader.pos.should eq(0)
-    reader.current_char.ord.should eq(0)
+    reader.current_char.should eq '\0'
     reader.error.should be_nil
     reader.has_next?.should be_false
 
@@ -47,31 +47,34 @@ describe "Char::Reader" do
     reader.pos.should eq(0)
     reader.current_char.should eq('a')
     reader.has_next?.should be_true
-    reader.next_char.ord.should eq(0)
+    reader.next_char.should eq '\0'
     reader.has_next?.should be_false
 
     expect_raises IndexError do
       reader.next_char
+    end
+    expect_raises IndexError do
+      reader.peek_next_char
     end
   end
 
   it "iterates through chars" do
     reader = Char::Reader.new("há日本語")
     reader.pos.should eq(0)
-    reader.current_char.ord.should eq(104)
+    reader.current_char.should eq('h')
     reader.has_next?.should be_true
 
-    reader.next_char.ord.should eq(225)
+    reader.next_char.should eq('á')
 
     reader.pos.should eq(1)
-    reader.current_char.ord.should eq(225)
+    reader.current_char.should eq('á')
 
-    reader.next_char.ord.should eq(26085)
-    reader.next_char.ord.should eq(26412)
-    reader.next_char.ord.should eq(35486)
+    reader.next_char.should eq('日')
+    reader.next_char.should eq('本')
+    reader.next_char.should eq('語')
     reader.has_next?.should be_true
 
-    reader.next_char.ord.should eq(0)
+    reader.next_char.should eq '\0'
     reader.has_next?.should be_false
 
     expect_raises IndexError do
@@ -81,14 +84,14 @@ describe "Char::Reader" do
 
   it "peeks next char" do
     reader = Char::Reader.new("há日本語")
-    reader.peek_next_char.ord.should eq(225)
+    reader.peek_next_char.should eq('á')
   end
 
   it "sets pos" do
     reader = Char::Reader.new("há日本語")
     reader.pos = 1
     reader.pos.should eq(1)
-    reader.current_char.ord.should eq(225)
+    reader.current_char.should eq('á')
   end
 
   describe "#each" do
@@ -121,7 +124,7 @@ describe "Char::Reader" do
   it "starts at end" do
     reader = Char::Reader.new(at_end: "")
     reader.pos.should eq(0)
-    reader.current_char.ord.should eq(0)
+    reader.current_char.should eq '\0'
     reader.has_previous?.should be_false
     reader.has_next?.should be_false
   end
