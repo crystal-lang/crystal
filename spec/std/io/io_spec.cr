@@ -642,6 +642,9 @@ describe IO do
         end
 
         it "gets big EUC-JP string" do
+          {% if flag?(:darwin) && !flag?(:use_libiconv) %}
+            pending!
+          {% end %}
           2.times do
             str = ("好我是人\n" * 1000).encode("EUC-JP")
             io = SimpleIOMemory.new(str)
@@ -748,7 +751,7 @@ describe IO do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
           message =
-            {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) %}
+            {% if !flag?(:use_libiconv) && (flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) || flag?(:darwin)) %}
               "Incomplete multibyte sequence"
             {% else %}
               "Invalid multibyte sequence"
