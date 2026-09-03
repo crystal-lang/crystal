@@ -2516,12 +2516,25 @@ module Crystal
     end
 
     # LLVM handles aggregate values one scalar at a time, so compile time grows
-    # with the element count (#2485). Such values are copied with `memcpy` and
-    # returned through an `sret` pointer instead.
+    # with the element count (#2485), and AArch64 and x86-64 return at most 8
+    # scalars in registers anyway. Bigger aggregates are copied with `memcpy`
+    # and returned through an `sret` pointer instead.
+    MAX_AGGREGATE_SCALARS = 8
+
     def large_aggregate?(type : Type?) : Bool
-      return false unless type
-      type = type.remove_typedef
-      type.is_a?(StaticArrayInstanceType) && type.size.as(NumberLiteral).value.to_i > 16
+      return false unless type && type.passed_by_value?
+      scalar_count(llvm_type(type)) > MAX_AGGREGATE_SCALARS
+    end
+
+    private def scalar_count(llvm_type : LLVM::Type) : Int64
+      case llvm_type.kind
+      when LLVM::Type::Kind::Struct
+        llvm_type.struct_element_types.sum(0_i64) { |element_type| scalar_count(element_type) }
+      when LLVM::Type::Kind::Array
+        llvm_type.array_size.to_i64 * scalar_count(llvm_type.element_type)
+      else
+        1_i64
+      end
     end
 
     def extern_to_lhs(value, type)
