@@ -1,5 +1,3 @@
-require "process/executable_path" # Process::PATH_DELIMITER
-
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)

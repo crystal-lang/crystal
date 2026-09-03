@@ -16,6 +16,11 @@ class Crystal::System::ELF
     ENDIAN_LITTLE = 1
     ENDIAN_BIG    = 2
 
+    ET_DYN = 3
+
+    SHN_UNDEF  =      0
+    SHN_XINDEX = 0xffff
+
     struct Header
       ei_magic : UInt8[4]
       ei_class : UInt8
@@ -87,16 +92,37 @@ class Crystal::System::ELF
       header.value.e_ehsize == sizeof(LibELF::Header)
   end
 
-  def section?(name : String, &)
-    sh = (@pointer + header.value.e_shoff).as(LibELF::SectionHeader*)
-    sh_name_offset = @pointer + (sh + header.value.e_shstrndx).value.sh_offset
+  def pie?
+    header.value.e_type == LibELF::ET_DYN
+  end
 
-    header.value.e_shnum.times do |i|
-      if name_equal?(name, sh_name_offset + sh.value.sh_name)
+  def section?(name : String, &)
+    sh_pointer = @pointer + header.value.e_shoff
+
+    e_shnum = header.value.e_shnum
+    e_shstrndx = header.value.e_shstrndx
+
+    if e_shnum == LibELF::SHN_UNDEF && e_shstrndx == LibELF::SHN_XINDEX
+      # extended sections: values don't fit in the ELF header, they're in
+      # section #0 (reserved)
+      sh_0 = sh_pointer.as(LibELF::SectionHeader*)
+      e_shnum = sh_0.value.sh_size
+      e_shstrndx = sh_0.value.sh_link
+    end
+
+    sh_str = (sh_pointer + e_shstrndx.to_u64 * header.value.e_shentsize).as(LibELF::SectionHeader*)
+    sh_names = @pointer + sh_str.value.sh_offset
+
+    e_shnum.times do |i|
+      sh = sh_pointer.as(LibELF::SectionHeader*)
+      sh_name = sh_names + sh.value.sh_name
+
+      if name_equal?(name, sh_name)
         bytes = Bytes.new(@pointer + sh.value.sh_offset, sh.value.sh_size)
         return yield bytes, sh.value.sh_offset.to_i64
       end
-      sh += 1
+
+      sh_pointer += header.value.e_shentsize
     end
   end
 

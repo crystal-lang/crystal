@@ -591,6 +591,9 @@ class HTTP::Client
     raise IO::EOFError.new("Unexpected end of http response") unless response
 
     handle_response(response)
+  rescue ex : IO::Error
+    close
+    raise ex
   end
 
   private def exec_internal_single(request, implicit_compression = false)
@@ -650,6 +653,9 @@ class HTTP::Client
     raise user_exception if user_exception
 
     raise IO::EOFError.new("Unexpected end of http response")
+  rescue ex : IO::Error
+    close
+    raise ex
   end
 
   # Determine whether we should retry a request after an IO error happened,
@@ -840,7 +846,7 @@ class HTTP::Client
       if tls = @tls
         tcp_socket = io
         begin
-          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: @host.rchop('.'))
+          io = OpenSSL::SSL::Socket::Client.new(tcp_socket, context: tls, sync_close: true, hostname: hostname.rchop('.'))
         rescue exc
           # don't leak the TCP socket when the SSL connection failed
           tcp_socket.close
