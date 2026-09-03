@@ -172,21 +172,50 @@ describe HTTP::ChunkedContent do
     chunked.gets(2).should eq "AB"
   end
 
-  it "reads chunked trailer part" do
-    mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
+  describe "trailing headers" do
+    it "reads chunked trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    chunked.gets.should be_nil
-    mem.gets.should be_nil
-    chunked.headers.should eq HTTP::Headers{"Additional-Header" => "Foo"}
-  end
+      chunked = HTTP::ChunkedContent.new(mem)
+      chunked.gets.should be_nil
+      mem.gets.should be_nil
+      chunked.headers.should eq HTTP::Headers{"Additional-Header" => "Foo"}
+    end
 
-  it "fails if unterminated chunked trailer part" do
-    mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
+    it "fails if unterminated chunked trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    expect_raises IO::EOFError do
-      chunked.gets
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises IO::EOFError do
+        chunked.gets
+      end
+    end
+
+    it "fails on invalid trailer" do
+      mem = IO::Memory.new("0\r\nFoo\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises IO::Error, "Invalid HTTP chunked content: invalid trailer" do
+        chunked.gets
+      end
+    end
+
+    it "fails on invalid trailer value" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: \0\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises ArgumentError, "Header content contains invalid character" do
+        chunked.gets
+      end
+    end
+
+    it "fails on invalid trailer key" do
+      mem = IO::Memory.new("0\r\nFoo\0: Bar\r\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises ArgumentError, "Invalid header name" do
+        chunked.gets
+      end
     end
   end
 
