@@ -38,12 +38,16 @@ jobs:
       - name: Build compiler
         run: make interpreter=1 release=1
 
+      - name: Build process-utils
+        run: make .build/crystal-pu
+
       - name: Upload compiler artifact
         uses: actions/upload-artifact@v7
         with:
           name: crystal-interpreter
           path: |
             .build/crystal
+            .build/crystal-pu
 
   test-interpreter-std_spec:
     needs: build-interpreter
@@ -66,8 +70,8 @@ jobs:
           name: crystal-interpreter
           path: .build/
 
-      - name: Mark downloaded compiler as executable
-        run: chmod +x .build/crystal
+      - name: Mark downloaded files as executable
+        run: chmod +x .build/crystal .build/crystal-pu
 
       - name: Run std_spec with interpreter
         run: SPEC_SPLIT="${{ matrix.part }}%4" bin/crystal i spec/std_spec.cr -- --junit_output .junit/interpreter-std_spec.${{ matrix.part }}.xml
