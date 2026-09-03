@@ -1774,7 +1774,7 @@ struct Int128
   # Int16::MIN.abs_unsigned # => 32768_u16
   # ```
   def abs_unsigned : UInt128
-    self < 0 ? UInt128.new(0) &- self : to_u128!
+    self < 0 ? 0_u128 &- self : to_u128!
   end
 
   # Returns the negative of `self` as a signed value of the same size.
