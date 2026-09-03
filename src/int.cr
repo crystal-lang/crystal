@@ -2739,7 +2739,7 @@ struct UInt128
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
   def neg_signed : Int128
-    Int128.new(0) - self
+    0_i128 - self
   end
 
   def popcount
