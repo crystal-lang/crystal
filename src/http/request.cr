@@ -141,13 +141,13 @@ class HTTP::Request
 
   def body=(body : String) : String
     @body = IO::Memory.new(body)
-    self.content_length = body.bytesize.to_i64
+    self.content_length = body.bytesize
     body
   end
 
   def body=(body : Bytes) : Bytes
     @body = IO::Memory.new(body)
-    self.content_length = body.size.to_i64
+    self.content_length = body.size
     body
   end
 
