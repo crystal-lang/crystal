@@ -1341,7 +1341,7 @@ struct UInt128
 
   def &-
     # TODO: use 0_u128 &- self
-    UInt128.new(0) &- self
+    0_u128 &- self
   end
 
   def abs
