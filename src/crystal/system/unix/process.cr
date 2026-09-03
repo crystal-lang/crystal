@@ -29,8 +29,20 @@ struct Crystal::System::Process
     Crystal::System::Process.signal(@pid, graceful ? LibC::SIGTERM : LibC::SIGKILL)
   end
 
-  def self.exit(status)
+  def self.exit(status : Int32)
     LibC.exit(status)
+  end
+
+  def self.exit(status : ::Process::Status)
+    if signal = status.exit_signal?
+      signal(self.pid, signal)
+
+      # The same signal that killed the child process might not kill the parent.
+      # We have to exit explicitly. The exist status adding 128 is a convention.
+      exit 128 + signal.value
+    else
+      exit status.exit_code
+    end
   end
 
   def self.pid
@@ -164,39 +176,63 @@ struct Crystal::System::Process
   # `SOCK_CLOEXEC` and `accept4` are defined in `c/sys/socket.cr` which is only
   # included when using sockets. The absence of `LibC.socket` indicates that
   # we're not using sockets.
-  {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
-    # we don't implement .lock_read so compilation will fail if we need to
-    # support another case, instead of silently skipping the rwlock!
+  @@rwlock = Crystal::RWLock.new
 
-    def self.lock_write(&)
-      yield
-    end
-  {% else %}
-    @@rwlock = Crystal::RWLock.new
-
-    def self.lock_read(&)
+  def self.lock_read(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      {% raise "BUG: Crystal::System::Process.lock_read is only for targets without accept4, dup3 or pipe2" %}
+    {% else %}
       @@rwlock.read_lock
       begin
         yield
       ensure
         @@rwlock.read_unlock
       end
-    end
+    {% end %}
+  end
 
-    def self.lock_write(&)
+  def self.lock_write(&)
+    {% if (LibC.has_constant?(:SOCK_CLOEXEC) && (LibC.has_method?(:accept4)) || !LibC.has_method?(:socket)) && LibC.has_method?(:dup3) && LibC.has_method?(:pipe2) %}
+      yield
+    {% else %}
       @@rwlock.write_lock
       begin
         yield
       ensure
         @@rwlock.write_unlock
       end
-    end
-  {% end %}
+    {% end %}
+  end
 
   # Only used by deprecated `::Process.fork`
   def self.fork
-    {% raise("Process fork is unsupported with multithreaded mode") if flag?(:preview_mt) %}
+    {% raise("Process fork is unsupported with multithreaded mode") unless flag?(:without_mt) %}
 
+    pid, errno = lock_write do
+      pthread_disable_cancelstate do
+        block_signals do
+          pid = LibC.fork
+          {pid, Errno.value}
+        end
+      end
+    end
+
+    case pid
+    when 0
+      # forked process
+      ::Process.after_fork_child_callbacks.each(&.call)
+
+      nil
+    when -1
+      # forking process: error
+      raise RuntimeError.from_os_error("fork", errno)
+    else
+      # forking process: success
+      pid
+    end
+  end
+
+  private def self.block_signals(&)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
 
@@ -211,26 +247,26 @@ struct Crystal::System::Process
     ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
     raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
 
-    case pid = lock_write { LibC.fork }
-    when 0
-      # child:
-      pid = nil
-
-      ::Process.after_fork_child_callbacks.each(&.call)
-
-      # restore sigmask
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-    when -1
-      # error:
-      errno = Errno.value
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # parent:
+    begin
+      yield pointerof(oldmask)
+    ensure
       LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
     end
+  end
 
-    pid
+  private def self.pthread_disable_cancelstate(&)
+    # No thread cancellation on android
+    {% if flag?(:android) %}
+      yield
+    {% else %}
+      LibC.pthread_setcancelstate(LibC::PTHREAD_CANCEL_DISABLE, out cancel_state)
+
+      begin
+        yield
+      ensure
+        LibC.pthread_setcancelstate(cancel_state, nil)
+      end
+    {% end %}
   end
 
   # Duplicates the current process.
@@ -256,24 +292,31 @@ struct Crystal::System::Process
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
-      argv_ary = ["/bin/sh", "-c", command, "sh"]
+      command_args = ["/bin/sh", "-c", command, "sh"]
 
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(Can't specify arguments in both command and args without including "${@}" into your command))
         end
       end
-
-      pathname = "/bin/sh"
     else
-      argv_ary = [command]
-      pathname = command
+      command_args = [command]
     end
 
-    argv_ary.concat(args) if args
+    command_args.concat(args) if args
 
-    argv = argv_ary.map(&.check_no_null_byte.to_unsafe)
-    {pathname, argv.to_unsafe}
+    prepare_args(command_args)
+  end
+
+  def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
+    pathname = args.first
+    # `execve` requires NULL terminator
+    argv = Pointer(Pointer(UInt8)).malloc(args.size + 1)
+    args.each_with_index do |arg, i|
+      argv[i] = arg.check_no_null_byte.to_unsafe
+    end
+
+    {pathname, argv}
   end
 
   private def self.execvpe(file, argv, envp)
@@ -404,12 +447,17 @@ struct Crystal::System::Process
     raise_exception_from_errno(command)
   end
 
-  private def self.raise_exception_from_errno(command, errno = Errno.value)
-    case errno
-    when Errno::EACCES, Errno::ENOENT, Errno::ENOEXEC
-      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
+  private def self.raise_exception_from_errno(command, errno = Errno.value, &)
+    if ::File::NotFoundError.os_error?(errno) || ::File::AccessDeniedError.os_error?(errno) || errno == Errno::ENOEXEC
+      yield errno, command
     else
       raise IO::Error.from_os_error("Error executing process: '#{command}'", errno)
+    end
+  end
+
+  private def self.raise_exception_from_errno(command, errno = Errno.value)
+    raise_exception_from_errno(command, errno) do |errno, command|
+      raise ::File::Error.from_os_error("Error executing process", errno, file: command)
     end
   end
 

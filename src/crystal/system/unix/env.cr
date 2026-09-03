@@ -1,12 +1,15 @@
 require "c/stdlib"
+require "sync/rw_lock"
 
 module Crystal::System::Env
+  @@lock = Sync::RWLock.new(:unchecked)
+
   # Sets an environment variable.
   def self.set(key : String, value : String) : Nil
     key.check_no_null_byte("key")
     value.check_no_null_byte("value")
 
-    if LibC.setenv(key, value, 1) != 0
+    if @@lock.write { LibC.setenv(key, value, 1) } != 0
       raise RuntimeError.from_errno("setenv")
     end
   end
@@ -15,7 +18,7 @@ module Crystal::System::Env
   def self.set(key : String, value : Nil) : Nil
     key.check_no_null_byte("key")
 
-    if LibC.unsetenv(key) != 0
+    if @@lock.write { LibC.unsetenv(key) } != 0
       raise RuntimeError.from_errno("unsetenv")
     end
   end
@@ -24,8 +27,10 @@ module Crystal::System::Env
   def self.get(key : String) : String?
     key.check_no_null_byte("key")
 
-    if value = LibC.getenv(key)
-      String.new(value)
+    @@lock.read do
+      if value = LibC.getenv(key)
+        String.new(value)
+      end
     end
   end
 
@@ -33,23 +38,37 @@ module Crystal::System::Env
   def self.has_key?(key : String) : Bool
     key.check_no_null_byte("key")
 
-    !!LibC.getenv(key)
+    !!@@lock.read { LibC.getenv(key) }
   end
 
   # Iterates all environment variables.
   def self.each(&block : String, String ->)
-    each_pointer do |kv_pointer|
-      # this does `String.new(kv_pointer).partition('=')` without an intermediary string
-      key_value = Slice.new(kv_pointer, LibC.strlen(kv_pointer))
-      split_index = key_value.index!(0x3d_u8) # '='
-      key = String.new(key_value[0, split_index])
-      value = String.new(key_value[split_index + 1..])
+    # Collect variables while holding the lock because we can't trust
+    # LibC.environ to be stable and don't control what &block does: it might
+    # yield the current fiber while holding the lock, deadlock if it calls
+    # Env.set, ...
+    env = Array({String, String}).new
+
+    @@lock.read do
+      each_pointer do |kv_pointer|
+        # this does `String.new(kv_pointer).partition('=')` without an intermediary string
+        key_value = Slice.new(kv_pointer, LibC.strlen(kv_pointer))
+        split_index = key_value.index!(0x3d_u8) # '='
+        key = key_value[0, split_index]
+        value = key_value[split_index + 1..]
+        env << {String.new(key), String.new(value)}
+      end
+    end
+
+    # now we can safely iterate
+    env.each do |key, value|
       yield key, value
     end
   end
 
-  # Iterates all environment variables as a char pointer to a "KEY=VALUE" string.
-  def self.each_pointer(&block : LibC::Char* ->)
+  # Iterates all environment variables as a char pointer to a "KEY=VALUE"
+  # pointer.
+  private def self.each_pointer(&block : LibC::Char* ->)
     environ_ptr = LibC.environ
     while environ_ptr
       environ_value = environ_ptr.value
@@ -74,29 +93,29 @@ module Crystal::System::Env
   # buffer and `envp` upfront to reduce overall allocations.
   def self.make_envp(env, clear_env) : LibC::Char**
     # When there are no adjustments in `env`, we can take a short cut and return
-    # an empty pointer or the current environment.
-    if env.nil? || env.empty?
-      return clear_env ? Pointer(LibC::Char*).malloc(1) : LibC.environ
+    # an empty pointer.
+    if clear_env && (env.nil? || env.empty?)
+      return Pointer(LibC::Char*).malloc(1)
     end
 
     envp = Array(LibC::Char*).new
 
     unless clear_env
-      Env.each do |key, value|
-        # Skip overrides in `env`
-        next if env.has_key?(key)
+      # Dup LibC.environ, skipping overrides in env.
+      each do |key, value|
+        next if env.try(&.has_key?(key))
 
         envp << "#{key}=#{value}".to_unsafe
       end
     end
 
-    env.each do |key, value|
+    env.try(&.each do |key, value|
       # `nil` value means deleting the key from the inherited environment
       next unless value
 
       raise ArgumentError.new("Invalid env key #{key.inspect}") if key.empty? || key.includes?('=')
       envp << "#{key.check_no_null_byte("key")}=#{value.check_no_null_byte("value")}".to_unsafe
-    end
+    end)
 
     envp << Pointer(LibC::Char).null
 

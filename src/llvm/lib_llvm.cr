@@ -87,4 +87,5 @@ lib LibLLVM
   alias SizeT = LibC::SizeT
 end
 
+require "./lib_llvm/config"
 require "./lib_llvm/**"

@@ -31,8 +31,8 @@ private def assert_implementations(code)
   if cursor_location
     _, result = processed_implementation_visitor(code, cursor_location)
 
-    result_locations = result.implementations.not_nil!.map do |e|
-      Location.new(e.filename.not_nil!, e.line.not_nil!, e.column.not_nil!).to_s
+    result_locations = result.implementations.should_not(be_nil).map do |e|
+      Location.new(e.filename.should_not(be_nil), e.line.should_not(be_nil), e.column.should_not(be_nil)).to_s
     end.sort!
 
     result_locations.should eq(expected_locations.map(&.to_s))
@@ -187,23 +187,20 @@ describe "implementations" do
       bar
     ), Location.new(".", 12, 9))
 
-    result.implementations.should_not be_nil
-    impls = result.implementations.not_nil!
+    impls = result.implementations.should_not be_nil
     impls.size.should eq(1)
 
     impls[0].line.should eq(11) # location of baz
     impls[0].column.should eq(7)
     impls[0].filename.should eq(".")
 
-    impls[0].expands.should_not be_nil
-    exp = impls[0].expands.not_nil!
+    exp = impls[0].expands.should_not be_nil
     exp.line.should eq(8) # location of foo call in macro baz
     exp.column.should eq(9)
     exp.macro.should eq("baz")
     exp.filename.should eq(".")
 
-    exp.expands.should_not be_nil
-    exp = exp.expands.not_nil!
+    exp = exp.expands.should_not be_nil
     exp.line.should eq(3) # location of def bar in macro foo
     exp.column.should eq(9)
     exp.macro.should eq("foo")
@@ -486,7 +483,7 @@ describe "implementations" do
       Foo.new(42)
       CRYSTAL
 
-    result.implementations.not_nil!.map do |e|
+    result.implementations.should_not(be_nil).map do |e|
       Location.new(e.filename, e.line, e.column).to_s
     end.should eq ["<unknown>:0:0"]
   end

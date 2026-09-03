@@ -58,8 +58,10 @@ module Spec
       @randomizer = seed ? Random::PCG32.new(seed) : nil
     end
 
-    def option_parser : OptionParser
-      @option_parser ||= OptionParser.new do |opts|
+    getter option_parser : OptionParser { build_option_parser(without_p: false) }
+
+    def build_option_parser(*, without_p) : OptionParser
+      OptionParser.new do |opts|
         opts.banner = "crystal spec runner"
         opts.on("-e", "--example STRING", "run examples whose full nested names include STRING") do |pattern|
           @pattern = Regex.new(Regex.escape(pattern))
@@ -67,7 +69,7 @@ module Spec
         opts.on("-l", "--line LINE", "run examples whose line matches LINE") do |line|
           @line = line.to_i
         end
-        opts.on("-p", "--profile", "Print the 10 slowest specs") do
+        opts.on((without_p ? "" : "-p"), "--profile", "Print the 10 slowest specs") do
           @slowest = 10
         end
         opts.on("--fail-fast", "abort the run on first failure") do

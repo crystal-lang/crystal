@@ -158,16 +158,17 @@ describe Socket::IPAddress do
     end
 
     it "fails interface name lookup for non-existent interfaces" do
-      exc_suff = {% if flag?(:windows) %}
-                   ""
-                 {% elsif flag?(:darwin) || flag?(:bsd) %}
-                   ": Device not configured"
-                 {% else %}
-                   ": No such device or address"
-                 {% end %}
-      expect_raises(Socket::Error, "Failed to look up interface name for index 333#{exc_suff}") do
+      err = expect_raises(Socket::Error, "Failed to look up interface name for index 333") do
         Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
       end
+
+      {% if flag?(:win32) %}
+        err.os_error.should eq(WinError::ERROR_FILE_NOT_FOUND)
+      {% elsif flag?(:android) %}
+        err.os_error.should eq(Errno::ENODEV)
+      {% else %}
+        err.os_error.should eq(Errno::ENXIO)
+      {% end %}
     end
 
     it "interface name lookup returns nil in unsupported cases" do
@@ -201,9 +202,17 @@ describe Socket::IPAddress do
 
     it "fails on non-existent link-local zone interface" do
       # looking up an interface index obviously requires for said interface device to exist
-      expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
+      err = expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
         Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
       end
+
+      {% if flag?(:win32) %}
+        err.os_error.should eq(WinError::ERROR_INVALID_NAME)
+      {% elsif flag?(:darwin) || flag?(:bsd) %}
+        err.os_error.should eq(Errno::ENXIO)
+      {% else %}
+        err.os_error.should eq(Errno::ENODEV)
+      {% end %}
     end
   end
 
@@ -305,6 +314,8 @@ describe Socket::IPAddress do
     it { Socket::IPAddress.parse_v6_fields?("c0a8").should be_nil }
     it { Socket::IPAddress.parse_v6_fields?("fe80::a:b%eth0").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0, 0, 0xa, 0xb) }
     it { Socket::IPAddress.parse_v6_fields?("fe80:0:0:0:ffff:c0a8:5e4%lo").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0xffff, 0xc0a8, 0x5e4, 0) }
+
+    it { Socket::IPAddress.parse_v6_fields?("fe80::192.168.0.1%eth0").should eq UInt16.static_array(0xfe80, 0, 0, 0, 0, 0, 0xc0a8, 0x0001) }
   end
 
   describe ".v4" do

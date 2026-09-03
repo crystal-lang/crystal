@@ -159,6 +159,29 @@ describe "Hash" do
       # a[2].should raise_exception
       a.should eq({1 => 2})
     end
+
+    it "raises on missing key" do
+      h = {1 => 2}
+
+      expect_raises KeyError, "Missing hash key: 2" do
+        h[2]
+      end
+    end
+
+    describe "with block" do
+      it "calls and returns if of the same type" do
+        h = Hash(Int32, String).new { "b" }
+        h[0].should eq("b")
+      end
+
+      it "errors if of the wrong type" do
+        h = Hash(Int32, String).new { "b" }
+
+        expect_raises KeyError, "Invalid key type: expected Int32, got String" do
+          h["0"]
+        end
+      end
+    end
   end
 
   describe "[]=" do
@@ -677,7 +700,7 @@ describe "Hash" do
       clone.should be(clone.first[1])
     end
 
-    it "retains default block on clone" do
+    it "retains default value" do
       h1 = Hash(Int32, String).new("a")
       h2 = h1.clone
       h2[0].should eq("a")
@@ -685,6 +708,12 @@ describe "Hash" do
       h1[1] = "b"
       h3 = h1.clone
       h3[0].should eq("a")
+    end
+
+    it "retains default block" do
+      h1 = Hash(Int32, String).new { "b" }
+      h2 = h1.clone
+      h2[0].should eq("b")
     end
 
     it "retains compare_by_identity" do
@@ -734,7 +763,7 @@ describe "Hash" do
       h2[0].should eq([0])
     end
 
-    it "retains default block on dup" do
+    it "retains default value" do
       h1 = Hash(Int32, String).new("a")
       h2 = h1.dup
       h2[0].should eq("a")
@@ -742,6 +771,12 @@ describe "Hash" do
       h1[1] = "b"
       h3 = h1.dup
       h3[0].should eq("a")
+    end
+
+    it "retains default block" do
+      h1 = Hash(Int32, String).new { "b" }
+      h2 = h1.dup
+      h2[0].should eq("b")
     end
 
     it "retains compare_by_identity" do
@@ -802,6 +837,18 @@ describe "Hash" do
 
       h3 = h1.merge(h2) { |k, v1, v2| v1 + v2 }
       h3.should eq({1 => "foobar", "fizz" => "buzz"})
+    end
+
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.merge({1 => "a"})[0]?.should be_nil
+      h.merge({1 => "a"}) { |k, v1, v2| v1 }[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+      h.merge({1 => "a"})[0]?.should be_nil
+      h.merge({1 => "a"}) { |k, v1, v2| v1 }[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
@@ -909,6 +956,16 @@ describe "Hash" do
       h2.should eq({"a" => 1, "b" => 2})
     end
 
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.compact[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+      h.compact[0]?.should be_nil
+    end
+
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.compact.compare_by_identity?.should be_true
@@ -953,6 +1010,16 @@ describe "Hash" do
 
       h2 = h1.transform_keys { |k, v| "#{k}#{v}" }
       h2.should eq({"1a" => "a", "2b" => "b", "3c" => "c"})
+    end
+
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.transform_keys(&.succ)[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+      h.transform_keys(&.succ)[0]?.should be_nil
     end
 
     it "does not retain compare_by_identity" do
@@ -1020,6 +1087,16 @@ describe "Hash" do
 
       h2 = h1.transform_values { |v, k| "#{k}#{v}" }
       h2.should eq({"a" => "a1", "b" => "b2", "c" => "c3"})
+    end
+
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.transform_values(&.succ)[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+      h.transform_values(&.succ)[0]?.should be_nil
     end
 
     it "retains compare_by_identity" do
@@ -1275,6 +1352,16 @@ describe "Hash" do
       %w(a c).should contain h3[1]
     end
 
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+      h.invert[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+      h.invert[0]?.should be_nil
+    end
+
     it "does not retain compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.invert.compare_by_identity?.should be_false
@@ -1425,10 +1512,27 @@ describe "Hash" do
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
 
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+
+      h.reject(42)[0]?.should be_nil
+      h.reject([42])[0]?.should be_nil
+      h.reject { false }[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+
+      h.reject(42)[0]?.should be_nil
+      h.reject([42])[0]?.should be_nil
+      h.reject { false }[0]?.should be_nil
+    end
+
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.reject("a").compare_by_identity?.should be_true
-      h.reject { |_, _| false }.compare_by_identity?.should be_true
+      h.reject(["a"]).compare_by_identity?.should be_true
+      h.reject { false }.compare_by_identity?.should be_true
     end
   end
 
@@ -1456,11 +1560,27 @@ describe "Hash" do
       h.should eq({"a" => 3, "b" => 6, "c" => 9})
     end
 
+    it "does not retain default value" do
+      h = Hash(Int32, String).new("a")
+
+      h.select(42)[0]?.should be_nil
+      h.select([42])[0]?.should be_nil
+      h.select { true }[0]?.should be_nil
+    end
+
+    it "does not retain default block" do
+      h = Hash(Int32, String).new { "b" }
+
+      h.select(42)[0]?.should be_nil
+      h.select([42])[0]?.should be_nil
+      h.select { true }[0]?.should be_nil
+    end
+
     it "retains compare_by_identity" do
       h = ({} of String => Int32).compare_by_identity
       h.select("a").compare_by_identity?.should be_true
       h.select(["a"]).compare_by_identity?.should be_true
-      h.select { |_, _| true }.compare_by_identity?.should be_true
+      h.select { true }.compare_by_identity?.should be_true
     end
   end
 

@@ -54,8 +54,8 @@ module Random
   DEFAULT = PCG32.new
 
   # :nodoc:
-  thread_local(thread_default : ::Random) do
-    ::Random::PCG32.new.as(::Random)
+  thread_local(thread_default : ::Random::PCG32) do
+    ::Random::PCG32.new
   end
 
   # :nodoc:
@@ -103,9 +103,9 @@ module Random
   # split1 = random.split
   # split2 = random.split
   #
-  # 5.times.map { random.rand(99) }.to_a # => [79, 42, 54, 17, 52]
-  # 5.times.map { split1.rand(99) }.to_a # => [90, 37, 15, 74, 61]
-  # 5.times.map { split2.rand(99) }.to_a # => [6, 87, 5, 73, 71]
+  # Array.new(5) { random.rand(99) } # => [79, 42, 54, 17, 52]
+  # Array.new(5) { split1.rand(99) } # => [90, 37, 15, 74, 61]
+  # Array.new(5) { split2.rand(99) } # => [6, 87, 5, 73, 71]
   # ```
   def split : self
     copy = dup
@@ -479,6 +479,11 @@ module Random
   # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
   def hex(n : Int = 16) : String
     random_bytes(n).hexstring
+  end
+
+  # See `#split`.
+  def self.split : Random
+    thread_default.split.as(Random)
   end
 
   # See `#next_bool`.

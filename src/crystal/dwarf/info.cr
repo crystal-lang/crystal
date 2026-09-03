@@ -15,9 +15,7 @@ module Crystal
       @offset : Int64
       @ref_offset : Int64
 
-      def initialize(@io : IO::FileDescriptor, @offset)
-        @ref_offset = offset
-
+      def initialize(@io : IO::Memory, @ref_offset)
         @unit_length = @io.read_bytes(UInt32)
         if @unit_length == 0xffffffff
           @dwarf64 = true
@@ -26,7 +24,7 @@ module Crystal
           @dwarf64 = false
         end
 
-        @offset = @io.tell
+        @offset = @io.tell.to_i64
         @version = @io.read_bytes(UInt16)
 
         if @version < 2 || @version > 5

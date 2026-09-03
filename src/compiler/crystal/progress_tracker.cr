@@ -5,7 +5,7 @@ module Crystal
     STAGE_PADDING = 34
 
     property? stats = false
-    property? progress = false
+    property? progress : Bool = STDOUT.tty?
 
     getter current_stage = 1
     getter current_stage_name : String?
@@ -18,9 +18,9 @@ module Crystal
       print_stats
       print_progress
 
-      time_start = Time.monotonic
+      time_start = Time.instant
       retval = yield
-      time_taken = Time.monotonic - time_start
+      time_taken = time_start.elapsed
 
       print_stats(time_taken)
       print_progress

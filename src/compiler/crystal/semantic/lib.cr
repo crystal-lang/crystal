@@ -114,13 +114,17 @@ class Crystal::Call
             call_arg.raise "can't use out with Void* (parameter #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
           end
 
-          if call_arg.exp.is_a?(Underscore)
+          case exp = call_arg.exp
+          when Underscore
             call_arg.exp.type = arg_type.element_type
           else
             var = parent_visitor.lookup_var_or_instance_var(call_arg.exp)
             var.bind_to Var.new("out", arg_type.element_type)
             call_arg.exp.bind_to var
-            parent_visitor.bind_meta_var(call_arg.exp)
+            if exp.is_a?(Var)
+              meta_var = parent_visitor.bind_meta_var(exp)
+              meta_var.freeze_type = arg_type.element_type
+            end
           end
         else
           call_arg.raise "parameter #{lib_arg_name(arg, i)} of #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"

@@ -46,7 +46,7 @@ private def assert_expand(code, expected_result, &)
   run_expand_tool code do |result|
     result.status.should eq("ok")
     result.message.should eq("#{expected_result.size} expansion#{expected_result.size >= 2 ? "s" : ""} found")
-    result.expansions.not_nil!.zip(expected_result) do |expansion, expected_result|
+    result.expansions.should_not(be_nil).zip(expected_result) do |expansion, expected_result|
       expansion_to_a(expansion).zip(expected_result) do |result, expected|
         result.should eq(expected)
       end
@@ -61,7 +61,7 @@ private def assert_expand_simple(code, expanded, original = code.delete('‸'))
 end
 
 private def assert_expand_simple(code, expanded, original = code.delete('‸'), &)
-  assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.not_nil![0] }
+  assert_expand(code, [[original, expanded]]) { |result| yield result.expansions.should_not(be_nil)[0] }
 end
 
 private def assert_expand_fail(code, message = "no expansion found")
@@ -276,7 +276,7 @@ describe "expand" do
     CRYSTAL
 
     assert_expand code, [["bar", "foo\n:bar\n", ":foo\n:bar\n"]] do |result|
-      expansion = result.expansions.not_nil![0]
+      expansion = result.expansions.should_not(be_nil)[0]
 
       macros = expansion.expanded_macros
       macros.size.should eq(2)
@@ -318,7 +318,7 @@ describe "expand" do
     CRYSTAL
 
     assert_expand code, [["baz", "foo\nbar\n:baz\n", ":foo\nfoo\n:bar\n:baz\n", ":foo\n:foo\n:bar\n:baz\n"]] do |result|
-      expansion = result.expansions.not_nil![0]
+      expansion = result.expansions.should_not(be_nil)[0]
 
       macros = expansion.expanded_macros
       macros.size.should eq(3)

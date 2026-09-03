@@ -1,5 +1,8 @@
 require "spec"
 require "http/headers"
+require "json"
+require "yaml"
+require "../../support/wasm32"
 
 describe HTTP::Headers do
   it "is empty" do
@@ -123,18 +126,96 @@ describe HTTP::Headers do
     headers["baz"]?.should be_nil
   end
 
-  it "adds string" do
-    headers = HTTP::Headers.new
-    headers.add("foo", "bar")
-    headers.add("foo", "baz")
-    headers["foo"].should eq("bar,baz")
+  describe "#[]=(String)" do
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers[""] = "bar"
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["ä"] = "bar"
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["Foo: foo\r\nBar"] = "bar"
+      end
+    end
   end
 
-  it "adds array of string" do
-    headers = HTTP::Headers.new
-    headers.add("foo", "bar")
-    headers.add("foo", ["baz", "qux"])
-    headers["foo"].should eq("bar,baz,qux")
+  describe "#[]=(Array)" do
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers[""] = ["bar"]
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["ä"] = ["bar"]
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers["Foo: foo\r\nBar"] = ["bar"]
+      end
+    end
+  end
+
+  describe "#add(String)" do
+    it "adds string" do
+      headers = HTTP::Headers.new
+      headers.add("foo", "bar")
+      headers.add("foo", "baz")
+      headers["foo"].should eq("bar,baz")
+    end
+
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("", "bar")
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("ä", "bar")
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("Foo: foo\r\nBar", "bar")
+      end
+    end
+  end
+
+  describe "#add(Array)" do
+    it "adds array of string" do
+      headers = HTTP::Headers.new
+      headers.add("foo", "bar")
+      headers.add("foo", ["baz", "qux"])
+      headers["foo"].should eq("bar,baz,qux")
+    end
+
+    it "raises on invalid name" do
+      headers = HTTP::Headers.new
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("", ["bar"])
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("ä", ["bar"])
+      end
+      expect_raises(ArgumentError, "Invalid header name") do
+        headers.add("Foo: foo\r\nBar", ["bar"])
+      end
+    end
+  end
+
+  describe "#add?(String)" do
+    it "returns false on invalid name" do
+      headers = HTTP::Headers.new
+      headers.add?("", "bar").should be_false
+      headers.add?("ä", "bar").should be_false
+      headers.add?("Foo: foo\r\nBar", "bar").should be_false
+    end
+  end
+
+  describe "#add?(Array)" do
+    it "returns false on invalid name" do
+      headers = HTTP::Headers.new
+      headers.add?("", ["bar"]).should be_false
+      headers.add?("ä", ["bar"]).should be_false
+      headers.add?("Foo: foo\r\nBar", ["bar"]).should be_false
+    end
   end
 
   it "gets all values" do
@@ -155,9 +236,54 @@ describe HTTP::Headers do
     headers.serialize.should eq("Foo_quux: bar\r\nBaz-Quux: a\r\nBaz-Quux: b\r\n")
   end
 
-  it "merges and return self" do
+  describe "serializes" do
+    it "#to_json" do
+      HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}.to_json.should eq <<-JSON
+      {"Foo_quux":"bar","Baz-Quux":["a","b"]}
+      JSON
+    end
+
+    pending_wasm32 "#to_yaml" do
+      HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}.to_yaml.should eq <<-YAML
+      ---
+      Foo_quux: bar
+      Baz-Quux:
+      - a
+      - b\n
+      YAML
+    end
+  end
+
+  describe "#merge!" do
+    it "merges and return self" do
+      headers = HTTP::Headers.new
+      headers.should be headers.merge!({"foo" => "bar"})
+    end
+
+    it "merges other headers" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!(HTTP::Headers{"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
+
+    it "merges other hash" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      headers.merge!({"foo" => "baz", "qux" => "quux"})
+      headers.should eq HTTP::Headers{"foo" => "baz", "boo" => "baz", "qux" => "quux"}
+    end
+
+    it "raises an error if header value contains invalid character" do
+      headers = HTTP::Headers.new
+      expect_raises ArgumentError do
+        headers.merge!({"invalid-header" => "\r\nLocation: http://example.com"})
+      end
+    end
+  end
+
+  it "dispatch with union type (#16622)" do
     headers = HTTP::Headers.new
-    headers.should be headers.merge!({"foo" => "bar"})
+    headers.merge!(HTTP::Headers.new)
+    headers["foo"] = "bar".as(String | Array(String))
   end
 
   it "matches word" do

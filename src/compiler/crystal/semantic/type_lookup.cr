@@ -197,7 +197,7 @@ class Crystal::Type
             subnode.raise "can't use #{type} as a generic type argument yet, use a more specific type"
           end
 
-          entries << NamedArgumentType.new(named_arg.name, type.virtual_type)
+          entries << NamedArgumentType.new(named_arg.name, type.virtual_type, named_arg.location)
         end
 
         begin
@@ -253,7 +253,7 @@ class Crystal::Type
           end
           next
         when SizeOf, InstanceSizeOf, AlignOf, InstanceAlignOf, OffsetOf
-          next unless @raise
+          return unless @raise
 
           type_var.raise "can't use #{type_var} as a generic type argument"
         end

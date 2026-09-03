@@ -2,9 +2,7 @@ require "c/signal"
 require "c/unistd"
 
 struct Crystal::System::Process
-  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
-    prepared_args = prepare_args(command, args, shell)
-
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir, &)
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
@@ -47,7 +45,9 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32))) do |errno, command|
+          yield errno, command
+        end
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -59,41 +59,34 @@ struct Crystal::System::Process
   end
 
   private def self.fork_for_exec
-    newmask = uninitialized LibC::SigsetT
-    oldmask = uninitialized LibC::SigsetT
+    pid, errno = lock_write do
+      pthread_disable_cancelstate do
+        block_signals do |sigmask|
+          pid = LibC.fork
+          if pid == 0
+            # forked process
 
-    # block signals while we fork, so the child process won't forward signals it
-    # may receive to the parent through the signal pipe, but make sure to not
-    # block stop-the-world signals as it appears to create deadlocks in glibc
-    # for example; this is safe because these signal handlers musn't be
-    # registered through `Signal.trap` but directly through `sigaction`.
-    LibC.sigfillset(pointerof(newmask))
-    LibC.sigdelset(pointerof(newmask), System::Thread.sig_suspend)
-    LibC.sigdelset(pointerof(newmask), System::Thread.sig_resume)
-    ret = LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), pointerof(oldmask))
-    raise RuntimeError.from_errno("Failed to disable signals") unless ret == 0
+            Crystal::System::Signal.after_fork_before_exec
 
-    case pid = lock_write { LibC.fork }
-    when 0
-      # child:
-      pid = nil
-
-      Crystal::System::Signal.after_fork_before_exec
-
-      # reset sigmask (inherited on exec)
-      LibC.sigemptyset(pointerof(newmask))
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(newmask), nil)
-    when -1
-      # error:
-      errno = Errno.value
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # parent:
-      LibC.pthread_sigmask(LibC::SIG_SETMASK, pointerof(oldmask), nil)
+            # reset sigmask (inherited on exec)
+            LibC.sigemptyset(sigmask)
+          end
+          {pid, Errno.value}
+        end
+      end
     end
 
-    pid
+    case pid
+    when 0
+      # forked process
+      nil
+    when -1
+      # forking process: error
+      raise RuntimeError.from_os_error("fork", errno)
+    else
+      # forking process: success
+      pid
+    end
   end
 
   # This method is similar to `.replace` (used for `Process.exec`) with some

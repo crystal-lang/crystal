@@ -648,7 +648,7 @@ module Crystal
 
           node_type = node_type.virtual_type
 
-          entries << NamedArgumentType.new(named_arg.name, node_type)
+          entries << NamedArgumentType.new(named_arg.name, node_type, named_arg.location)
         end
 
         generic_type = instance_type.instantiate_named_args(entries)
@@ -742,6 +742,16 @@ module Crystal
 
   class TupleLiteral
     property! program : Program
+
+    def validate_splats!
+      elements.each do |element|
+        if element.is_a?(Splat) && (type = element.type?)
+          unless type.is_a?(TupleInstanceType)
+            element.raise "argument to splat must be a tuple, not #{type}"
+          end
+        end
+      end
+    end
 
     def update(from = nil)
       types = [] of TypeVar

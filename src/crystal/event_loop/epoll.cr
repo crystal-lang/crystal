@@ -4,7 +4,7 @@ require "../system/unix/eventfd"
 require "../system/unix/timerfd"
 
 class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
-  def initialize
+  def initialize(parallelism : Int32)
     # the epoll instance
     @epoll = System::Epoll.new
 
@@ -19,7 +19,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
-  {% unless flag?(:preview_mt) %}
+  {% if flag?(:without_mt) %}
     def after_fork : Nil
       super
 
@@ -122,7 +122,7 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.delete(fd) { yield }
   end
 
-  private def system_set_timer(time : Time::Span?) : Nil
+  private def system_set_timer(time : Time::Instant?) : Nil
     if time
       @timerfd.set(time)
     else

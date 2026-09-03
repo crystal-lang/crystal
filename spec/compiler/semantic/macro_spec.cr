@@ -261,6 +261,26 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors when a macro expands a class declaration inside a block (#12052)" do
+    assert_error <<-CRYSTAL, "can't declare class dynamically"
+      struct Int32
+        macro bar
+          class Foo
+          end
+        end
+      end
+
+      def foo
+        with 1 yield
+      end
+
+      foo do
+        bar do
+        end
+      end
+      CRYSTAL
+  end
+
   it "errors if find macros but wrong arguments" do
     assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 1, expected 0)", inject_primitives: true)
       macro foo
@@ -403,6 +423,35 @@ describe "Semantic: macro" do
 
           ex.to_s.should contain "error in line 5"
           ex.to_s.scan("error in line").size.should eq 1
+        end
+
+        it "points to proper location of a raise on a TypeNode#keys NT element" do
+          ex = assert_error(<<-'CRYSTAL', "OH NO")
+            class Foo
+              def self.test(**args : **T) forall T
+                {% T.keys.each { |k| k.raise "OH NO" } %}
+              end
+            end
+
+            Foo.test foo: 1
+            CRYSTAL
+
+          ex.to_s.should contain "OH NO"
+          ex.to_s.should contain "error in line 7"
+          ex.to_s.should contain "error in line 3"
+          ex.to_s.scan("error in line 7").size.should eq 2
+        end
+
+        it "uses the MacroId's location when a method call on a MacroId proxies through StringLiteral" do
+          assert_no_errors <<-'CRYSTAL'
+            class Foo
+              def self.test(**args : **T) forall T
+                {% raise "expected key on line 7" unless T.keys.first.line_number == 7 %}
+              end
+            end
+
+            Foo.test foo: 1
+            CRYSTAL
         end
       end
     end
@@ -579,6 +628,64 @@ describe "Semantic: macro" do
 
       baz
       CRYSTAL
+  end
+
+  it "error raised within complex macro included hook (#7394)" do
+    ex = assert_error(<<-'CRYSTAL', "Value method must be an instance method")
+      module ExampleModule
+        macro included
+          {% verbatim do %}
+            {%
+              if method = @type.class.methods.find &.name.stringify.==("value")
+                method.raise "Value method must be an instance method."
+              else
+                raise "BUG: Didn't find value method."
+              end
+            %}
+          {% end %}
+        end
+      end
+
+      class ExampleClass
+        def self.value : Nil
+        end
+
+        include ExampleModule
+      end
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 16"
+  end
+
+  it "error raise within macro included hook points to `include` vs `raise`" do
+    ex = assert_error(<<-'CRYSTAL', "noooo")
+      module Foo
+        macro included
+          {% raise "noooo" %}
+        end
+      end
+
+      include Foo
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 3"
+    ex.to_s.should contain "error in line 7"
+  end
+
+  it "error raise within macro inherited hook points to the inheriting type vs `raise`" do
+    ex = assert_error(<<-'CRYSTAL', "noooo")
+      abstract struct Parent
+        macro inherited
+          {% raise "noooo" %}
+        end
+      end
+
+      struct Child < Parent
+      end
+    CRYSTAL
+
+    ex.to_s.should contain "error in line 3"
+    ex.to_s.should contain "error in line 7"
   end
 
   it "gives precise location info when doing yield inside macro" do
@@ -1219,6 +1326,28 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "reports wrong number of arguments for module macro call with path receiver (#5479)" do
+    assert_error(<<-CRYSTAL, "wrong number of arguments for macro 'foo' (given 2, expected 1)")
+      module Mod
+        macro foo(foo)
+        end
+      end
+
+      Mod.foo(String, String)
+      CRYSTAL
+  end
+
+  it "reports named argument errors for module macro call with path receiver" do
+    assert_error(<<-CRYSTAL, "no parameter named 'y'")
+      module Mod
+        macro foo(x = 1)
+        end
+      end
+
+      Mod.foo(y: String)
+      CRYSTAL
+  end
+
   it "uses bare *, doesn't let more args" do
     assert_error(<<-CRYSTAL, "no overload matches")
       def foo(x, *, y)
@@ -1627,6 +1756,19 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "preserves escaped interpolation in verbatim (#16413)" do
+    assert_type(<<-'CRYSTAL') { nil_type }
+      {% begin %}
+        {% verbatim do %}
+          {%
+            name = "FOO"
+            "\#{get_env(#{name})}"
+          %}
+        {% end %}
+      {% end %}
+      CRYSTAL
+  end
+
   it "can use macro in instance var initializer (#7666)" do
     assert_type(<<-CRYSTAL) { string }
       class Foo
@@ -1699,8 +1841,8 @@ describe "Semantic: macro" do
       end
       CRYSTAL
 
-    method = result.program.types["Foo"].lookup_first_def("bar", false).not_nil!
-    method.location.not_nil!.expanded_location.not_nil!.line_number.should eq(9)
+    method = result.program.types["Foo"].lookup_first_def("bar", false).should_not(be_nil)
+    method.location.should_not(be_nil).expanded_location.should_not(be_nil).line_number.should eq(9)
   end
 
   it "assigns to underscore" do

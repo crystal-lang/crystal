@@ -1,3 +1,5 @@
+require "crystal/system/print_error"
+
 # :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
   GC.malloc(LibC::SizeT.new(size))
@@ -103,11 +105,24 @@ module GC
     expl_freed_bytes_since_gc : UInt64,
     obtained_from_os_bytes : UInt64
 
+  # :nodoc:
+  #
+  # Aborts the program when the GC failed to allocate memory. This method must
+  # not allocate memory itself: raising an exception would allocate the
+  # callstack and the unwind payload, which would fail again.
+  def self.oom(size : LibC::SizeT) : NoReturn
+    Crystal::System.print_error "Out of memory: failed to allocate %llu bytes\n", size
+    LibC.exit(1)
+  end
+
   # Allocates and clears *size* bytes of memory.
   #
   # The resulting object may contain pointers and they will be tracked by the GC.
   #
   # The memory will be automatically deallocated when unreferenced.
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc(size : Int) : Void*
     malloc(LibC::SizeT.new(size))
   end
@@ -117,6 +132,9 @@ module GC
   # The client promises that the resulting object will never contain any pointers.
   #
   # The memory is not cleared. It will be automatically deallocated when unreferenced.
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc_atomic(size : Int) : Void*
     malloc_atomic(LibC::SizeT.new(size))
   end
@@ -129,11 +147,30 @@ module GC
   #
   # The return value is a pointer that may be identical to *pointer* or different.
   #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
+  #
   # WARNING: Memory allocated using `Pointer.malloc` must be reallocated using
   # `Pointer#realloc` instead.
   def self.realloc(pointer : T*, size : Int) : T* forall T
     realloc(pointer.as(Void*), LibC::SizeT.new(size)).as(T*)
   end
+
+  # :nodoc:
+  #
+  # Marks the thread as doing a call that doesn't involve the GC, for example a
+  # blocking syscall such as `nanosleep` or `pthread_cond_timedwait`.
+  #
+  # The GC records the stack pointer at the entrypoint of the function, so the
+  # thread's stack will be scanned up to the stack pointer. The thread won't
+  # need to be suspended or resumed on wakeup (for the duration of the block).
+  #
+  # WARNING: Allocating memory into the GC HEAP (e.g. raising an exception), or
+  # mutating memory allocated into the GC HEAP are undefined behavior.
+  #
+  # WARNING: A system error (e.g. Errno, WinError) must be read before the block
+  # terminates as the value can change before the method returns.
+  # abstract def self.syscall(&block : ->) : Nil
 end
 
 {% if flag?(:gc_none) || flag?(:wasm32) %}

@@ -9,15 +9,14 @@ module Fiber::ExecutionContext
   # contexts.
   #
   # The context internally keeps a number of fiber schedulers, each scheduler
-  # being able to start running on a system thread, so multiple schedulers can
-  # run in parallel. The fibers are resumable by any scheduler in the context,
-  # they can thus move from one system thread to another at any time.
+  # runs on a system thread, so multiple schedulers can run in parallel. The
+  # fibers are resumable by any scheduler in the context, and can thus move from
+  # one system thread to another at any time.
   #
-  # The actual parallelism is controlled by the execution context. As the need
-  # for parallelism increases, for example more fibers running longer, the more
-  # schedulers will start (and thus system threads), as the need decreases, for
-  # example not enough fibers, the schedulers will pause themselves and
-  # parallelism will decrease.
+  # The actual parallelism is dynamic. As the need for parallelism increases,
+  # for example more fibers running longer, the more schedulers will start (and
+  # thus system threads), as the need decreases, for example not enough fibers,
+  # the schedulers will pause themselves and parallelism will decrease.
   #
   # The parallelism can be as low as 1, in which case the context becomes a
   # concurrent context (no parallelism) until resized.
@@ -55,6 +54,10 @@ module Fiber::ExecutionContext
   #
   # p result.get # => 523776
   # ```
+  #
+  # NOTE: The `Parallel` execution context isn't tied to a fixed set of system
+  # threads, and execution can switch to other system threads, for example when
+  # a fiber is blocked on a syscall.
   class Parallel
     include ExecutionContext
 
@@ -68,15 +71,19 @@ module Fiber::ExecutionContext
     getter stack_pool : Fiber::StackPool = Fiber::StackPool.new
 
     # :nodoc:
-    getter event_loop : Crystal::EventLoop = Crystal::EventLoop.create
+    getter event_loop : Crystal::EventLoop
     @event_loop_lock = Atomic(Bool).new(false)
 
     @parked = Atomic(Int32).new(0)
     @spinning = Atomic(Int32).new(0)
 
     # :nodoc:
+    #
+    # Starts the default execution context. There can be only one for the whole
+    # process. Must be called from the main thread's main fiber; associates the
+    # current thread and fiber to the created execution context.
     protected def self.default(maximum : Int32) : self
-      new("DEFAULT", maximum, hijack: true)
+      Fiber.current.execution_context = new("DEFAULT", maximum, hijack: true)
     end
 
     # Starts a `Parallel` context with a *maximum* parallelism. The context
@@ -98,30 +105,34 @@ module Fiber::ExecutionContext
       new(name, size.exclusive? ? size.end - 1 : size.end, hijack: false)
     end
 
-    protected def initialize(@name : String, @capacity : Int32, hijack : Bool)
-      raise ArgumentError.new("Parallelism can't be less than one.") if @capacity < 1
+    protected def initialize(@name : String, capacity : Int32, hijack : Bool)
+      raise ArgumentError.new("Parallelism can't be less than one.") if capacity < 1
 
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
 
       @global_queue = GlobalQueue.new(@mutex)
       @schedulers = Array(Scheduler).new(capacity)
-      @threads = Array(Thread).new(capacity)
-
+      @event_loop = Crystal::EventLoop.create(capacity)
+      @started = hijack ? 1 : 0
       @rng = Random::PCG32.new
 
       start_schedulers(capacity)
-      @threads << hijack_current_thread(@schedulers.first) if hijack
+      hijack_current_thread(@schedulers.first) if hijack
 
       ExecutionContext.execution_contexts.push(self)
     end
 
-    # The number of threads that have been started.
+    # :nodoc:
+    #
+    # TODO: must report how many schedulers are running (count spinning
+    # schedulers but don't count waiting/parked ones).
     def size : Int32
-      @threads.size
+      @schedulers.count(&.active?)
     end
 
-    # The maximum number of threads that can be started.
+    # The maximum number of schedulers that can be started, aka how many fibers
+    # can run in parallel or maximum parallelism of the context.
     def capacity : Int32
       @schedulers.size
     end
@@ -133,50 +144,44 @@ module Fiber::ExecutionContext
 
     # Starts all schedulers at once.
     #
-    # We could lazily initialize them as needed, like we do for threads, which
-    # would be safe as long as we only mutate when the mutex is locked... but
-    # unlike @threads, we do iterate the schedulers in #steal without locking
-    # the mutex (for obvious reasons) and there are no guarantees that the new
-    # schedulers.@size will be written after the scheduler has been written to
-    # the array's buffer.
+    # We could lazily initialize them as needed, would be safe as long as we
+    # only mutate when the mutex is locked, but we iterate the schedulers in
+    # #steal without locking the mutex (for obvious reasons) and there are no
+    # guarantees that the new schedulers.@size will be written after the
+    # scheduler has been written to the array's buffer.
     #
     # OPTIMIZE: consider storing schedulers to an array-like object that would
     # use an atomic/fence to make sure that @size can only be incremented
     # *after* the value has been written to @buffer.
     private def start_schedulers(capacity)
-      capacity.times do |index|
-        @schedulers << Scheduler.new(self, "#{@name}-#{index}")
-      end
+      capacity.times { |index| @schedulers << start_scheduler(index) }
+    end
+
+    private def start_scheduler(index)
+      scheduler = Scheduler.new(self, "#{@name}-#{index}")
+      @event_loop.register(scheduler, index)
+      scheduler
     end
 
     # Attaches *scheduler* to the current `Thread`, usually the process' main
     # thread. Starts a `Fiber` to run the scheduler loop.
-    private def hijack_current_thread(scheduler) : Thread
+    private def hijack_current_thread(scheduler) : Nil
       thread = Thread.current
       thread.internal_name = scheduler.name
       thread.execution_context = self
       thread.scheduler = scheduler
-
       scheduler.thread = thread
-      scheduler.main_fiber = Fiber.new("#{scheduler.name}:loop", self) do
-        scheduler.run_loop
-      end
-
-      thread
+      scheduler.running!
     end
 
     # Starts a new `Thread` and attaches *scheduler*. Runs the scheduler loop
     # directly in the thread's main `Fiber`.
-    private def start_thread(scheduler) : Thread
-      Thread.new(name: scheduler.name) do |thread|
-        thread.execution_context = self
-        thread.scheduler = scheduler
+    private def start_thread(scheduler) : Nil
+      ExecutionContext.thread_pool.checkout(scheduler)
+    end
 
-        scheduler.thread = thread
-        scheduler.main_fiber = thread.main_fiber
-        scheduler.main_fiber.name = "#{scheduler.name}:loop"
-        scheduler.run_loop
-      end
+    protected def each_scheduler(& : Scheduler ->) : Nil
+      @schedulers.each { |scheduler| yield scheduler }
     end
 
     # Resizes the context to the new *maximum* parallelism.
@@ -198,17 +203,13 @@ module Fiber::ExecutionContext
         # and eventually assign the copy as @schedulers; this way #steal can
         # safely access the array (never mutated).
         new_capacity = maximum
-        old_threads = @threads
         old_schedulers = @schedulers
         old_capacity = capacity
 
         if new_capacity > old_capacity
           @schedulers = Array(Scheduler).new(new_capacity) do |index|
-            old_schedulers[index]? || Scheduler.new(self, "#{@name}-#{index}")
+            old_schedulers[index]? || start_scheduler(index)
           end
-          threads = Array(Thread).new(new_capacity)
-          old_threads.each { |thread| threads << thread }
-          @threads = threads
         elsif new_capacity < old_capacity
           # tell the overflow schedulers to shutdown
           removed_schedulers = old_schedulers[new_capacity..]
@@ -216,7 +217,7 @@ module Fiber::ExecutionContext
 
           # resize
           @schedulers = old_schedulers[0...new_capacity]
-          @threads = old_threads[0...new_capacity]
+          @started = new_capacity if @started > new_capacity
 
           # reset @parked counter (we wake all parked threads) so they can
           # shutdown (if told to):
@@ -257,10 +258,18 @@ module Fiber::ExecutionContext
         ExecutionContext::Scheduler.current.enqueue(fiber)
       else
         # cross context: push to global queue
-        Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
-        @global_queue.push(fiber)
-        wake_scheduler
+        external_enqueue(fiber)
       end
+    end
+
+    # :nodoc:
+    def external_enqueue(fiber : Fiber) : Nil
+      Crystal.trace :sched, "enqueue", fiber: fiber, to_context: self
+      @global_queue.push(fiber)
+
+      # always try to wake a scheduler on external enqueues, they may all be
+      # parked/waiting on evloop:
+      wake_scheduler
     end
 
     # Picks a scheduler at random then iterates all schedulers to try to steal
@@ -289,6 +298,10 @@ module Fiber::ExecutionContext
         Crystal.trace :sched, "park"
         @parked.add(1, :acquire_release)
 
+        # NOTE: we could detach the scheduler and return the thread back into
+        # ThreadPool... but it would need synchronization with #wake_scheduler
+        # that wouldn't only start a thread for the next scheduler (@started)
+        # but have to pick a non running scheduler
         @condition.wait(@mutex)
 
         # we don't decrement @parked because #wake_scheduler did
@@ -304,21 +317,16 @@ module Fiber::ExecutionContext
     # from external execution contexts, in which case the context may have its
     # last thread about to park itself, and we must prevent the last thread from
     # parking when there is a parallel cross context enqueue!
-    #
-    # OPTIMIZE: instead of blindly spending time (blocking progress on the
-    # current thread) to unpark a thread / start a new thread we could move the
-    # responsibility to an external observer to increase parallelism in a MT
-    # context when it detects pending work.
-    protected def wake_scheduler : Nil
-      # another thread is spinning: nothing to do (it shall notice the enqueue)
-      if @spinning.get(:relaxed) > 0
-        return
-      end
+    protected def wake_scheduler(count = 1) : Nil
+      # another thread is spinning: nothing to do
+      count -= @spinning.get(:relaxed)
+      return if count < 1
 
       # interrupt a thread waiting on the event loop
-      if @event_loop_lock.get(:relaxed)
-        @event_loop.interrupt
-        return
+      # FIXME: what if every scheduler can wait on evloop? (i.e. io_uring)
+      if @event_loop.interrupt?
+        count -= 1
+        return if count == 0
       end
 
       # we can check @parked without locking the mutex because we can't push to
@@ -331,48 +339,45 @@ module Fiber::ExecutionContext
       if @parked.get(:acquire) > 0
         @mutex.synchronize do
           # avoid race conditions
-          return if @parked.get(:relaxed) == 0
-          return if @spinning.get(:relaxed) > 0
+          parked = @parked.get(:relaxed)
+          spinning = @spinning.get(:relaxed)
 
-          # increase the number of spinning threads _now_ to avoid multiple
-          # threads from trying to wakeup multiple threads at the same time
-          #
-          # we must also decrement the number of parked threads because another
-          # thread could lock the mutex and increment @spinning again before the
-          # signaled thread is resumed
-          @spinning.add(1, :acquire_release)
-          @parked.sub(1, :acquire_release)
+          if parked > 0 && spinning < count
+            wake = count > parked ? parked : count
 
-          @condition.signal
+            # increase the number of spinning threads _now_ to avoid multiple
+            # threads from trying to wakeup multiple threads at the same time
+            #
+            # we must also decrement the number of parked threads because another
+            # thread could lock the mutex and increment @spinning again before the
+            # signaled thread is resumed
+            @spinning.add(wake, :acquire_release)
+            @parked.sub(wake, :acquire_release)
+
+            if wake == parked
+              @condition.broadcast
+            else
+              wake.times { @condition.signal }
+            end
+
+            count -= wake
+          end
         end
-        return
+        return if count == 0
       end
 
-      # check if we can start another thread; no need for atomics, the values
-      # shall be rather stable over time and we check them again inside the
-      # mutex
-      return if @threads.size >= capacity
+      # check if we can start another scheduler; no need for atomics, the value
+      # shall be rather stable over time and we check again inside the mutex
+      return if @started >= capacity
 
       @mutex.synchronize do
-        index = @threads.size
-        return if index >= capacity # check again
+        start = @started
+        limit = (start + count).clamp(..capacity)
 
-        @threads << start_thread(@schedulers[index])
-      end
-    end
-
-    # Only one thread is allowed to run the event loop. Yields then returns true
-    # if the lock was acquired, otherwise returns false immediately.
-    protected def lock_evloop?(&) : Bool
-      if @event_loop_lock.swap(true, :acquire) == false
-        begin
-          yield
-        ensure
-          @event_loop_lock.set(false, :release)
+        (start...limit).each do |index|
+          start_thread(@schedulers[index])
+          @started += 1
         end
-        true
-      else
-        false
       end
     end
 

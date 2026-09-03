@@ -140,6 +140,7 @@ module Colorize
   #
   # This can be used to revert `Colorize.enabled?` to its initial state after
   # colorization is explicitly enabled or disabled.
+  @[Deprecated("This method is obsolete because it's the default behaviour since Crystal 1.17 ([#15881](https://github.com/crystal-lang/crystal/pull/15881)). For resetting a previous override, use `Colorize.enabled = Colorize.default_enabled?(STDOUT, STDERR)`.")]
   def self.on_tty_only! : Bool
     @@enabled = nil
     enabled?
@@ -340,8 +341,7 @@ private def each_reset_code(mode : Colorize::Mode, &)
   yield "22" if mode.dim?
   yield "23" if mode.italic?
   yield "24" if mode.underline?
-  yield "25" if mode.blink?
-  yield "26" if mode.blink_fast?
+  yield "25" if mode.blink? || mode.blink_fast?
   yield "27" if mode.reverse?
   yield "28" if mode.hidden?
   yield "29" if mode.strikethrough?

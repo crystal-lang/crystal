@@ -1,4 +1,4 @@
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   require "crystal/rw_lock"
 {% end %}
 require "crystal/tracing"
@@ -121,7 +121,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  {% if flag?(:preview_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
+  {% if !flag?(:without_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
     fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
   {% else %}
@@ -180,31 +180,42 @@ lib LibGC
   fun start_world_external = GC_start_world_external
   fun get_suspend_signal = GC_get_suspend_signal : Int
   fun get_thr_restart_signal = GC_get_thr_restart_signal : Int
+
+  alias FnType = Void* -> Void*
+  fun do_blocking = GC_do_blocking(FnType, Void*) : Void*
 end
 
 module GC
-  {% if flag?(:preview_mt) %}
+  {% unless flag?(:without_mt) %}
     @@lock = uninitialized Crystal::RWLock
   {% end %}
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size do
-      LibGC.malloc(size)
+      ptr = LibGC.malloc(size)
+      oom(size) if ptr.null? && size != 0
+      ptr
     end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size, atomic: 1 do
-      LibGC.malloc_atomic(size)
+      ptr = LibGC.malloc_atomic(size)
+      oom(size) if ptr.null? && size != 0
+      ptr
     end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
     Crystal.trace :gc, "realloc", size: size do
-      LibGC.realloc(ptr, size)
+      new_ptr = LibGC.realloc(ptr, size)
+      # `GC_realloc(ptr, 0)` legitimately returns NULL (free semantics), only
+      # a NULL result for a non-zero size means out of memory
+      oom(size) if new_ptr.null? && size != 0
+      new_ptr
     end
   end
 
@@ -214,7 +225,7 @@ module GC
     {% end %}
     LibGC.init
 
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @@lock = Crystal::RWLock.new
     {% end %}
 
@@ -229,7 +240,7 @@ module GC
           fiber.push_gc_roots unless fiber.running?
         end
 
-        {% if flag?(:preview_mt) %}
+        {% unless flag?(:without_mt) %}
           Thread.unsafe_each do |thread|
             if fiber = thread.current_fiber?
               GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack.bottom)
@@ -426,7 +437,7 @@ module GC
   end
 
   # :nodoc:
-  {% if flag?(:preview_mt) %}
+  {% if !flag?(:without_mt) %}
     def self.set_stackbottom(thread_handle : Void*, stack_bottom : Void*)
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
@@ -452,28 +463,28 @@ module GC
 
   # :nodoc:
   def self.lock_read
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @@lock.read_lock
     {% end %}
   end
 
   # :nodoc:
   def self.unlock_read
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @@lock.read_unlock
     {% end %}
   end
 
   # :nodoc:
   def self.lock_write
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @@lock.write_lock
     {% end %}
   end
 
   # :nodoc:
   def self.unlock_write
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       @@lock.write_unlock
     {% end %}
   end
@@ -515,4 +526,15 @@ module GC
       Signal.new(LibGC.get_thr_restart_signal)
     end
   {% end %}
+
+  # :nodoc:
+  def self.syscall(&proc : ->) : Nil
+    # `GC_do_blocking` immediately calls the callback and the thread's stack
+    # will be scanned up to the entry of `GC_do_blocking` so we don't need to
+    # box the proc
+    LibGC.do_blocking(->(data : Void*) {
+      data.as(Proc(Nil)*).value.call
+      Pointer(Void).null
+    }, pointerof(proc))
+  end
 end

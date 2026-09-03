@@ -12,7 +12,7 @@ end
 class Log::Builder
   include Configuration
 
-  @mutex = Mutex.new(:unchecked)
+  @mutex = Sync::Mutex.new(:unchecked)
   @logs = Hash(String, WeakRef(Log)).new
 
   private record Binding, source : String, level : Severity, backend : Backend

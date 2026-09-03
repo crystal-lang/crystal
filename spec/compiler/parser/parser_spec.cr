@@ -1,7 +1,25 @@
 require "../../support/syntax"
 
 private def regex(string, options = Regex::CompileOptions::None)
-  RegexLiteral.new(StringLiteral.new(string), options)
+  string = StringLiteral.new(string) if string.is_a?(String)
+  RegexLiteral.new(string, options)
+end
+
+private def command(string)
+  string = StringLiteral.new(string) if string.is_a?(String)
+  Call.new("`", string)
+end
+
+private def string_array(*args)
+  ary = [] of ASTNode
+  ary.concat(args)
+  ary.array_of(Crystal::Path.global("String"))
+end
+
+private def symbol_array(*args)
+  ary = [] of ASTNode
+  ary.concat(args)
+  ary.array_of(Crystal::Path.global("Symbol"))
 end
 
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *, focus : Bool = false)
@@ -19,6 +37,31 @@ private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *
     end
 
     node.should eq(Expressions.from(local_expected_node))
+  end
+end
+
+private def it_parses_literal(literal, expectations, *, file = __FILE__, line = __LINE__)
+  # For percent literals, add additional variants. But allow them to be overridden with different expectations.
+  expectations.dup.each do |delimiter, expected_node|
+    if delimiter.starts_with?("%")
+      expectations.put_if_absent("#{delimiter[..-2]}{", expected_node)
+      expectations.put_if_absent("#{delimiter[..-2]}|", expected_node)
+    end
+  end
+  expectations.each do |delimiter, expected_node|
+    end_delimiter = case delimiter[-1]
+                    when '[' then ']'
+                    when '{' then '}'
+                    when '(' then ')'
+                    else
+                      delimiter[-1]
+                    end
+    source = "#{delimiter}#{literal}#{end_delimiter}"
+    if expected_node.is_a?(String)
+      assert_syntax_error source, expected_node, metafile: file, metaline: line
+    else
+      it_parses source, expected_node, file: file, line: line
+    end
   end
 end
 
@@ -46,7 +89,7 @@ private def assert_end_location(source, line_number = 1, column_number = source.
     parser = Parser.new(string)
     node = parser.parse.as(Expressions).expressions[0]
     node_source(string, node).should eq(source)
-    end_loc = node.end_location.not_nil!
+    end_loc = node.end_location.should_not be_nil
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
   end
@@ -97,6 +140,17 @@ module Crystal
     it_parses %(%Q{hello \\n world}), "hello \n world".string
     it_parses %(%q{hello \\n world}), "hello \\n world".string
     it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
+
+    it_parses %(macro foo\n%q(%t{})\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%(%t{})\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%q(%t{)\nend), Macro.new("foo", body: Expressions.from(["%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+    it_parses %(macro foo\n%(%t{)\nend), Macro.new("foo", body: Expressions.from(["%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+
+    it_parses %({% begin %}\n%q(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%(%t{})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{})\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%q(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%q(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
+    it_parses %({% begin %}\n%(\#{%foo})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(\#{".macro_literal, MacroVar.new("foo"), "})\n".macro_literal] of ASTNode))
 
     it_parses ":foo", "foo".symbol
     it_parses ":foo!", "foo!".symbol
@@ -185,6 +239,13 @@ module Crystal
     it_parses "_ = 1", Assign.new(Underscore.new, 1.int32)
     it_parses "@foo/2", Call.new("@foo".instance_var, "/", 2.int32)
     it_parses "@@foo/2", Call.new("@@foo".class_var, "/", 2.int32)
+    it_parses "self/2", Call.new("self".var, "/", 2.int32)
+    it_parses "self//2", Call.new("self".var, "//", 2.int32)
+    it_parses "nil/2", Call.new(NilLiteral.new, "/", 2.int32)
+    it_parses "true/2", Call.new(true.bool, "/", 2.int32)
+    it_parses "false/2", Call.new(false.bool, "/", 2.int32)
+    it_parses "super/2", Call.new("super".call, "/", 2.int32)
+    it_parses "previous_def/2", Call.new("previous_def".call, "/", 2.int32)
     it_parses "1+2*3", Call.new(1.int32, "+", Call.new(2.int32, "*", 3.int32))
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
@@ -197,6 +258,7 @@ module Crystal
     it_parses %(foo%r), Call.new("foo".call, "%", "r".call)
     it_parses %(foo%x), Call.new("foo".call, "%", "x".call)
     it_parses %(foo%w), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo%W), Call.new("foo".call, "%", "W".path)
 
     it_parses %(foo %i), Call.new("foo".call, "%", "i".call)
     it_parses %(foo %q), Call.new("foo".call, "%", "q".call)
@@ -204,6 +266,7 @@ module Crystal
     it_parses %(foo %r), Call.new("foo".call, "%", "r".call)
     it_parses %(foo %x), Call.new("foo".call, "%", "x".call)
     it_parses %(foo %w), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo %W), Call.new("foo".call, "%", "W".path)
 
     it_parses %(foo %i()), "foo".call(([] of ASTNode).array_of(Path.global("Symbol")))
     it_parses %(foo %q()), "foo".call("".string)
@@ -218,6 +281,7 @@ module Crystal
     it_parses %(foo % r()), Call.new("foo".call, "%", "r".call)
     it_parses %(foo % x()), Call.new("foo".call, "%", "x".call)
     it_parses %(foo % w()), Call.new("foo".call, "%", "w".call)
+    it_parses %(foo % W()), Call.new("foo".call, "%", Generic.new("W".path, [] of ASTNode))
 
     it_parses "!1", Not.new(1.int32)
     it_parses "- 1", Call.new(1.int32, "-")
@@ -269,6 +333,11 @@ module Crystal
 
     assert_syntax_error "b? = 1", %(unexpected token: "=")
     assert_syntax_error "b! = 1", %(unexpected token: "=")
+
+    # #16713
+    assert_syntax_error "x &(a) = 1", %(unexpected token: "=")
+    assert_syntax_error "y &[b] = 2", %(unexpected token: "=")
+    assert_syntax_error "z &{c} = 3", %(unexpected token: "=")
     assert_syntax_error "a, B = 1, 2", "can't assign to constant in multiple assignment"
 
     assert_syntax_error "1 == 2, a = 4"
@@ -438,13 +507,19 @@ module Crystal
     it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", restriction: Metaclass.new(Self.new))])
     it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", restriction: Self.new.pointer_of)])
     it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Double".path] of ASTNode))])
+    it_parses "def foo(var : (Int | Double)); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.parens(Crystal::Union.new(["Int".path, "Double".path] of ASTNode)))])
     it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.new(["Int".path, "Nil".path(true)] of ASTNode))])
     it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of)])
     it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", restriction: "Int".path.pointer_of.pointer_of)])
     it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path))])
     it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
-    it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
+    it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: Crystal::Union.parens(ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path)))])
     it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
+    it_parses "def foo(var : () -> Double); end", Def.new("foo", [Arg.new("var", restriction: ProcNotation.new([] of ASTNode, "Double".path))])
+    it_parses "x : (A -> B)", TypeDeclaration.new("x".var, declared_type: Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path)))
+    it_parses "x : (A -> B).class", TypeDeclaration.new("x".var, declared_type: Metaclass.new(Crystal::Union.parens(ProcNotation.new(["A".path] of ASTNode, "B".path))))
+    it_parses "alias T = (A*) -> R", Alias.new("T".path, ProcNotation.new([Generic.new(Path.global("Pointer"), ["A".path] of ASTNode, suffix: :asterisk)] of ASTNode, "R".path))
+    it_parses "alias T = (A -> ) ->", Alias.new("T".path, ProcNotation.new([ProcNotation.new(["A".path] of ASTNode)] of ASTNode))
     it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
     it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
     it_parses "def foo(var : Int32 = 1); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)])
@@ -459,6 +534,7 @@ module Crystal
     it_parses "def foo(&\n); end", Def.new("foo", block_arg: Arg.new(""), block_arity: 0)
     it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block"), block_arity: 0)
     it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), block_arity: 1)
+    it_parses "def foo(a, &block : ((Int -> Double))); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: Union.parens(Union.parens(ProcNotation.new(["Int".path] of ASTNode, "Double".path)))), block_arity: 1)
     it_parses "def foo(a, & : Int -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("", restriction: ProcNotation.new(["Int".path] of ASTNode, "Double".path)), block_arity: 1)
     it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, "Float".path] of ASTNode, "Double".path)), block_arity: 2)
     it_parses "def foo(a, &block : Int, self -> Double); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path, Self.new] of ASTNode, "Double".path)), block_arity: 2)
@@ -613,6 +689,7 @@ module Crystal
     it_parses "foo &.block[]", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]")))
     it_parses "foo &.block[0]", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]", 0.int32)))
     it_parses "foo &.block=(0)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
+    it_parses "foo &.block = (0)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", Expressions.new([0.int32] of ASTNode).tap(&.keyword = :paren)))) # 16875
     it_parses "foo &.block = 0", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block=", 0.int32)))
     it_parses "foo &.block[] = 1", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 1.int32)))
     it_parses "foo &.block[0] = 1", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "block"), "[]=", 0.int32, 1.int32)))
@@ -641,6 +718,13 @@ module Crystal
     it_parses "foo &.as?(T)", Call.new("foo", block: Block.new([Var.new("__arg0")], NilableCast.new(Var.new("__arg0"), "T".path)))
     it_parses "foo &.as?(T).bar", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
     it_parses "foo(\n  &.block\n)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
+
+    it_parses "foo(&.bar)/2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo(&.bar)/ 2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
 
     it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
     it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
@@ -1200,7 +1284,8 @@ module Crystal
     it_parses "lib LibC\nfun getchar\nend", LibDef.new("LibC".path, [FunDef.new("getchar")] of ASTNode)
     it_parses "lib LibC\nfun getchar(...)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", varargs: true)] of ASTNode)
     it_parses "lib LibC\nfun getchar : Int\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: "Int".path)] of ASTNode)
-    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([ProcNotation.new, "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : (->)?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([Crystal::Union.parens(ProcNotation.new), "Nil".path(true)] of ASTNode))] of ASTNode)
+    it_parses "lib LibC\nfun getchar : ((->))?\nend", LibDef.new("LibC".path, [FunDef.new("getchar", return_type: Crystal::Union.new([Crystal::Union.parens(Crystal::Union.parens(ProcNotation.new)), "Nil".path(true)] of ASTNode))] of ASTNode)
     it_parses "lib LibC\nfun getchar(Int, Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("", restriction: "Int".path), Arg.new("", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int, b : Float)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path), Arg.new("b", restriction: "Float".path)])] of ASTNode)
     it_parses "lib LibC\nfun getchar(a : Int)\nend", LibDef.new("LibC".path, [FunDef.new("getchar", [Arg.new("a", restriction: "Int".path)])] of ASTNode)
@@ -1430,6 +1515,9 @@ module Crystal
 
     it_parses "macro foo;%var;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroLiteral.new(";")] of ASTNode))
     it_parses "macro foo;%var{1, x} = hello;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, "x".var] of ASTNode), MacroLiteral.new(" = hello;")] of ASTNode))
+    it_parses "macro foo;%var{}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [] of ASTNode)] of ASTNode))
+    it_parses "macro foo;%var{{1}}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroExpression.new(1.int32)] of ASTNode))
+    assert_syntax_error "macro foo;%var{{x}end", %q(expecting token '}', not 'end')
 
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do
@@ -1444,7 +1532,7 @@ module Crystal
       it_parses "macro foo;unless var;true;end;end", Macro.new("foo", [] of Arg, Expressions.from(["unless var;true;".macro_literal, "end;".macro_literal] of ASTNode))
     end
 
-    {'i', 'q', 'r', 'w', 'x', 'Q'}.each do |ch|
+    {'i', 'q', 'r', 'w', 'W', 'x', 'Q'}.each do |ch|
       it_parses "macro foo;%#{ch}[#{ch}];end", Macro.new("foo", [] of Arg, "%#{ch}[#{ch}];".macro_literal)
     end
 
@@ -1720,6 +1808,22 @@ module Crystal
     it_parses "@a : Foo = 1", TypeDeclaration.new("@a".instance_var, "Foo".path, 1.int32)
     it_parses "@@a : Foo = 1", TypeDeclaration.new("@@a".class_var, "Foo".path, 1.int32)
 
+    it_parses "FOO : Int64 = 1", TypeDeclaration.new("FOO".path, "Int64".path, 1.int32)
+    it_parses "FOO : Foo::Bar = 1", TypeDeclaration.new("FOO".path, Path.new(["Foo", "Bar"]), 1.int32)
+    it_parses "Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"]), "Int64".path, 1.int32)
+    it_parses "::FOO : Int64 = 1", TypeDeclaration.new("FOO".path(global: true), "Int64".path, 1.int32)
+    it_parses "::Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"], global: true), "Int64".path, 1.int32)
+    assert_syntax_warning "FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_warning "::FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_error "FOO : Int64", "expected '=' for constant type declaration"
+    assert_syntax_error "::FOO : Int64", "expected '=' for constant type declaration"
+
+    it "computes name_size for a TypeDeclaration whose var is a Path (#13443)" do
+      Parser.parse("FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("FOO".size)
+      Parser.parse("Foo::BAR : Int64 = 1").as(TypeDeclaration).name_size.should eq("Foo::BAR".size)
+      Parser.parse("::FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("::FOO".size)
+    end
+
     it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)
     it_parses "a : Foo*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), ["Foo".path] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), ["Foo".path, 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
@@ -1748,6 +1852,8 @@ module Crystal
     it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
     it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
     it_parses "begin; 1; rescue ex; 2; end; ex", [ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")]), "ex".var]
+    it_parses "begin; begin; ensure; end; end", [Expressions.new([ExceptionHandler.new(Nop.new, ensure: Nop.new)] of ASTNode)]
+    it_parses "begin; begin; ensure; end; rescue; end", [ExceptionHandler.new(ExceptionHandler.new(Nop.new, ensure: Nop.new), rescues: [Rescue.new])]
 
     it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", body: ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
@@ -2189,6 +2295,8 @@ module Crystal
       it_parses "{% begin %}%x#{open} %s #{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%x#{open} %s #{close}"))
       it_parses "{% begin %}%r#{open}\\A#{close}{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%r#{open}\\A#{close}"))
     end
+
+    it_parses "{% begin %}%-{% end %}", MacroIf.new(true.bool, MacroLiteral.new("%-"))
 
     it_parses %(foo(bar:"a", baz:"b")), Call.new("foo", named_args: [NamedArgument.new("bar", "a".string), NamedArgument.new("baz", "b".string)])
     it_parses %(foo(bar:a, baz:b)), Call.new("foo", named_args: [NamedArgument.new("bar", "a".call), NamedArgument.new("baz", "b".call)])
@@ -2653,6 +2761,13 @@ module Crystal
       assert_end_location "[1, 2,]"
       assert_end_location "foo(\n  &.block\n)", line_number: 3, column_number: 1
       assert_end_location "foo.bar(x) do; end"
+      assert_end_location "foo(bar: 123)"
+      assert_end_location "foo bar: 123"
+      assert_end_location "f foo(bar: 123)"
+      assert_end_location "f(foo bar: 123)"
+      assert_end_location "f foo bar: 123"
+      assert_end_location "f foo(x: 123, &.bar)"
+      assert_end_location "f foo x: 123, &.bar"
       assert_end_location "%w(one two)"
       assert_end_location "{%\nif foo\n  bar\n end\n%}", line_number: 5, column_number: 2
       assert_end_location "foo bar, out baz"
@@ -2701,6 +2816,8 @@ module Crystal
       assert_end_location %("hello "\\\n"world"), line_number: 2, column_number: 7
       assert_end_location "foo(&.bar)"
       assert_end_location "foo &.bar"
+      assert_end_location("foo &.bar = baz")
+      assert_end_location("foo &.[bar] = baz")
       assert_end_location "foo(&bar)"
       assert_end_location "foo &bar"
     end
@@ -2731,15 +2848,428 @@ module Crystal
     it_parses "%w{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%w{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%w{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one  two}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\ntwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\ttwo}", (["one".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{\n}", ([] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\\ two}", (["one two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one{} two}", (["one{}".string, "two".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{\\{one}", (["{one".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one\\}}", (["one}".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one \#{\"two\"} three}", (["one".string, "two".string, "three".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one \#{%w(two three)} four}", (["one".string, StringInterpolation.new([(["two".string, "three".string] of ASTNode).array_of(Path.global("String"))] of ASTNode), "four".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W{one a\#{\"two\"}b three}", (["one".string, "atwob".string, "three".string] of ASTNode).array_of(Path.global("String"))
     it_parses "%i(one\\ two)", (["one two".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i{(one two)}", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i((one two))", (["(one".symbol, "two)".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i(foo(bar) baz)", (["foo(bar)".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
     it_parses "%i{foo\\nbar baz}", (["foo\\nbar".symbol, "baz".symbol] of ASTNode).array_of(Path.global("Symbol"))
 
+    describe "literal escape" do
+      it_parses_literal "a\nb", {
+        "%q[" => "a\nb".string,
+        "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
+        "\""  => "a\nb".string,
+        "%r[" => regex("a\nb"),
+        "/"   => regex("a\nb"),
+        "%x[" => command("a\nb"),
+        "`"   => command("a\nb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\tb", {
+        "%q[" => "a\tb".string,
+        "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
+        "%r[" => regex("a\tb"),
+        "/"   => regex("a\tb"),
+        "%x[" => command("a\tb"),
+        "`"   => command("a\tb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\tb".symbol,
+      }
+      it_parses_literal "a\r\nb", {
+        "%q[" => "a\r\nb".string,
+        "%Q[" => "a\r\nb".string,
+        "%["  => "a\r\nb".string,
+        "\""  => "a\r\nb".string,
+        "%r[" => regex("a\r\nb"),
+        "/"   => regex("a\r\nb"),
+        "%x[" => command("a\r\nb"),
+        "`"   => command("a\r\nb"),
+        "%w[" => string_array("a".string, "b".string),
+        "%W[" => string_array("a".string, "b".string),
+        "%i[" => symbol_array("a".symbol, "b".symbol),
+        ":\"" => "a\r\nb".symbol,
+      }
+      it_parses_literal "a\\nb", {
+        "%q[" => "a\\nb".string,
+        "%Q[" => "a\nb".string,
+        "%["  => "a\nb".string,
+        "\""  => "a\nb".string,
+        "%r[" => regex("a\\nb"),
+        "/"   => regex("a\\nb"),
+        "%x[" => command("a\nb"),
+        "`"   => command("a\nb"),
+        "%w[" => string_array("a\\nb".string),
+        "%W[" => string_array("a\nb".string),
+        "%i[" => symbol_array("a\\nb".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\\tb", {
+        "%q[" => "a\\tb".string,
+        "%Q[" => "a\tb".string,
+        "%["  => "a\tb".string,
+        "\""  => "a\tb".string,
+        "%r[" => regex("a\\tb"),
+        "/"   => regex("a\\tb"),
+        "%x[" => command("a\tb"),
+        "`"   => command("a\tb"),
+        "%w[" => string_array("a\\tb".string),
+        "%W[" => string_array("a\tb".string),
+        "%i[" => symbol_array("a\\tb".symbol),
+        ":\"" => "a\tb".symbol,
+      }
+      it_parses_literal "a\\rb", {
+        "%q[" => "a\\rb".string,
+        "%Q[" => "a\rb".string,
+        "%["  => "a\rb".string,
+        "\""  => "a\rb".string,
+        "%r[" => regex("a\\rb"),
+        "/"   => regex("a\\rb"),
+        "%x[" => command("a\rb"),
+        "`"   => command("a\rb"),
+        "%w[" => string_array("a\\rb".string),
+        "%W[" => string_array("a\rb".string),
+        "%i[" => symbol_array("a\\rb".symbol),
+        ":\"" => "a\rb".symbol,
+      }
+      it_parses_literal "a\\\nb", {
+        "%q[" => "a\\\nb".string,
+        "%Q[" => "ab".string,
+        "%["  => "ab".string,
+        "\""  => "ab".string,
+        "%r[" => regex("a\nb"),
+        "/"   => regex("a\nb"),
+        "%x[" => command("ab"),
+        "`"   => command("ab"),
+        "%w[" => string_array("a\nb".string),
+        "%W[" => string_array("ab".string),
+        "%i[" => symbol_array("a\nb".symbol),
+        ":\"" => "a\nb".symbol,
+      }
+      it_parses_literal "a\\u{41}b", {
+        "%q[" => "a\\u{41}b".string,
+        "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
+        "\""  => "aAb".string,
+        "%r[" => "invalid regex",
+        "/"   => "invalid regex",
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\u{41}b".string),
+        "%W[" => string_array("aAb".string),
+        "%i[" => symbol_array("a\\u{41}b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      it_parses_literal "a\\x41b", {
+        "%q[" => "a\\x41b".string,
+        "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
+        "\""  => "aAb".string,
+        "%r[" => regex("a\\x41b"),
+        "/"   => regex("a\\x41b"),
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\x41b".string),
+        "%W[" => string_array("aAb".string),
+        "%i[" => symbol_array("a\\x41b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      it_parses_literal "a\\101b", {
+        "%q[" => "a\\101b".string,
+        "%Q[" => "aAb".string,
+        "%["  => "aAb".string,
+        "\""  => "aAb".string,
+        "%r[" => regex("a\\101b"),
+        "/"   => regex("a\\101b"),
+        "%x[" => command("aAb"),
+        "`"   => command("aAb"),
+        "%w[" => string_array("a\\101b".string),
+        "%W[" => string_array("aAb".string),
+        "%i[" => symbol_array("a\\101b".symbol),
+        ":\"" => "aAb".symbol,
+      }
+      it_parses_literal "a\#{x}b", {
+        "%q[" => "a\#{x}b".string,
+        "%Q[" => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "%["  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "\""  => StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode),
+        "%r[" => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "/"   => regex(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "%x[" => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "`"   => command(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "%w[" => string_array("a\#{x}b".string),
+        "%W[" => string_array(StringInterpolation.new(["a".string, Call.new("x"), "b".string] of ASTNode)),
+        "%i[" => symbol_array("a\#{x}b".symbol),
+        ":\"" => "a\#{x}b".symbol,
+      }
+      it_parses_literal "a\\\#{x}b", {
+        "%q[" => "a\\\#{x}b".string,
+        "%Q[" => "a\#{x}b".string,
+        "%["  => "a\#{x}b".string,
+        "\""  => "a\#{x}b".string,
+        "%r[" => regex("a\\\#{x}b"),
+        "/"   => regex("a\\\#{x}b"),
+        "%x[" => command("a\#{x}b"),
+        "`"   => command("a\#{x}b"),
+        "%w[" => string_array("a\\\#{x}b".string),
+        "%W[" => string_array("a\#{x}b".string),
+        "%i[" => symbol_array("a\\\#{x}b".symbol),
+        ":\"" => "a\#{x}b".symbol,
+      }
+      it_parses_literal "a\\]b", {
+        "%q[" => %(unexpected token: "b"), # ref #5403
+        "%q{" => "a\\]b".string,
+        "%q|" => "a\\]b".string,
+        "%Q[" => "a]b".string,
+        "%["  => "a]b".string,
+        "\""  => "a]b".string,
+        "%r[" => regex("a\\]b"),
+        "/"   => regex("a\\]b"),
+        "%x[" => command("a]b"),
+        "`"   => command("a]b"),
+        "%w[" => string_array("a]b".string),
+        "%w{" => string_array("a\\]b".string),
+        "%w|" => string_array("a\\]b".string),
+        "%W[" => string_array("a]b".string),
+        "%i[" => symbol_array("a]b".symbol),
+        "%i{" => symbol_array("a\\]b".symbol),
+        "%i|" => symbol_array("a\\]b".symbol),
+        ":\"" => "a]b".symbol,
+      }
+      it_parses_literal "a\\[b", {
+        "%q[" => "Unterminated string literal", # ref #5403
+        "%q{" => "a\\[b".string,
+        "%q|" => "a\\[b".string,
+        "%Q[" => "a[b".string,
+        "%["  => "a[b".string,
+        "\""  => "a[b".string,
+        "%r[" => regex("a\\[b"),
+        "/"   => regex("a\\[b"),
+        "%x[" => command("a[b"),
+        "`"   => command("a[b"),
+        "%w[" => string_array("a[b".string),
+        "%w{" => string_array("a\\[b".string),
+        "%w|" => string_array("a\\[b".string),
+        "%W[" => string_array("a[b".string),
+        "%i[" => symbol_array("a[b".symbol),
+        "%i{" => symbol_array("a\\[b".symbol),
+        "%i|" => symbol_array("a\\[b".symbol),
+        ":\"" => "a[b".symbol,
+      }
+      it_parses_literal "a\\[b\\]c", {
+        "%q[" => "a\\[b\\]c".string,
+        "%Q[" => "a[b]c".string,
+        "%["  => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => regex("a\\[b\\]c"),
+        "/"   => regex("a\\[b\\]c"),
+        "%x[" => command("a[b]c"),
+        "`"   => command("a[b]c"),
+        "%w[" => string_array("a[b]c".string),
+        "%w{" => string_array("a\\[b\\]c".string),
+        "%w|" => string_array("a\\[b\\]c".string),
+        "%W[" => string_array("a[b]c".string),
+        "%i[" => symbol_array("a[b]c".symbol),
+        "%i{" => symbol_array("a\\[b\\]c".symbol),
+        "%i|" => symbol_array("a\\[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a[b\\]c", {
+        "%q[" => "a[b\\]c".string,
+        "%Q[" => "Unterminated string literal", # ref #5403
+        "%Q{" => "a[b]c".string,
+        "%Q|" => "a[b]c".string,
+        "%["  => "Unterminated string literal", # ref #5403
+        "%{"  => "a[b]c".string,
+        "%|"  => "a[b]c".string,
+        "\""  => "a[b]c".string,
+        "%r[" => "Unterminated regular expression", # ref #5403
+        "%r{" => "invalid regex: missing terminating ] for character class at 6",
+        "%r|" => "invalid regex: missing terminating ] for character class at 6",
+        "/"   => "invalid regex: missing terminating ] for character class at 6",
+        "%x[" => "Unterminated command literal", # ref #5403
+        "%x{" => command("a[b]c".string),
+        "%x|" => command("a[b]c".string),
+        "`"   => command("a[b]c"),
+        "%w[" => "Unterminated string array literal", # ref #5403
+        "%w{" => string_array("a[b\\]c".string),
+        "%w|" => string_array("a[b\\]c".string),
+        "%W[" => "Unterminated string array literal", # ref #5403
+        "%W{" => string_array("a[b]c".string),
+        "%W|" => string_array("a[b]c".string),
+        "%i[" => "Unterminated symbol array literal", # ref #5403
+        "%i{" => symbol_array("a[b\\]c".symbol),
+        "%i|" => symbol_array("a[b\\]c".symbol),
+        ":\"" => "a[b]c".symbol,
+      }
+      it_parses_literal "a\\\\ b", {
+        "%q[" => "a\\\\ b".string,
+        "%Q[" => "a\\ b".string,
+        "%["  => "a\\ b".string,
+        "\""  => "a\\ b".string,
+        "%r[" => regex("a\\\\ b"),
+        "/"   => regex("a\\\\ b"),
+        "%x[" => command("a\\ b"),
+        "`"   => command("a\\ b"),
+        "%w[" => string_array("a\\".string, "b".string),
+        "%W[" => string_array("a\\".string, "b".string),
+        "%i[" => symbol_array("a\\".symbol, "b".symbol),
+        ":\"" => "a\\ b".symbol,
+      }
+      it_parses_literal "\\\\a", {
+        "%q[" => "\\\\a".string,
+        "%Q[" => "\\a".string,
+        "%["  => "\\a".string,
+        "\""  => "\\a".string,
+        "%r[" => regex("\\\\a"),
+        "/"   => regex("\\\\a"),
+        "%x[" => command("\\a"),
+        "`"   => command("\\a"),
+        "%w[" => string_array("\\a".string),
+        "%W[" => string_array("\\a".string),
+        "%i[" => symbol_array("\\a".symbol),
+        ":\"" => "\\a".symbol,
+      }
+      it_parses_literal "\\", {
+        "%q[" => "\\".string,
+        "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal",
+        "%W[" => "Unterminated string array literal",
+        "%i[" => "Unterminated symbol array literal",
+        ":\"" => "unterminated quoted symbol",
+      }
+      it_parses_literal "\\\\", {
+        "%q[" => "\\\\".string,
+        "%Q[" => "\\".string,
+        "%["  => "\\".string,
+        "\""  => "\\".string,
+        "%r[" => regex("\\\\"),
+        "/"   => regex("\\\\"),
+        "%x[" => command("\\"),
+        "`"   => command("\\"),
+        "%w[" => string_array("\\".string),
+        "%W[" => string_array("\\".string),
+        "%i[" => symbol_array("\\".symbol),
+        ":\"" => "\\".symbol,
+      }
+      it_parses_literal "\\\\\\", {
+        "%q[" => "\\\\\\".string,
+        "%Q[" => "Unterminated string literal",
+        "%["  => "Unterminated string literal",
+        "\""  => "Unterminated string literal",
+        "%r[" => "Unterminated regular expression",
+        "/"   => "Unterminated regular expression",
+        "%x[" => "Unterminated command literal",
+        "`"   => "Unterminated command literal",
+        "%w[" => "Unterminated string array literal", # FIXME: #12277
+        "%W[" => "Unterminated string array literal", # FIXME: #12277
+        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        ":\"" => "unterminated quoted symbol",
+      }
+    end
+
+    it_parses "%W[ foo]", (["foo".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[foo ]", (["foo".string] of ASTNode).array_of(Path.global("String"))
+    it_parses %q(%W[ #{1}]), ([StringInterpolation.new([1.int32] of ASTNode)] of ASTNode).array_of(Path.global("String"))
+    it_parses %q(%W[#{1} ]), ([StringInterpolation.new([1.int32] of ASTNode)] of ASTNode).array_of(Path.global("String"))
+
+    it_parses %(%W{hello \\n world}), (["hello".string, "\n".string, "world".string] of ASTNode).array_of(Path.global("String"))
+    it_parses %(%w{hello \\n world}), (["hello".string, "\\n".string, "world".string] of ASTNode).array_of(Path.global("String"))
+
+    it_parses "%W[a\nb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\tb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\r\nb]", (["a".string, "b".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\nb]", (["a\nb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\tb]", (["a\tb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\rb]", (["a\rb".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\\nb]", (["ab".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\\n b]", (["ab".string] of ASTNode).array_of(Path.global("String"))
+    it_parses "%W[a\\u{61}b]", (["aab".string] of ASTNode).array_of(Path.global("String"))
+
+    describe "string array" do
+      describe "parses %W interpolation into StringInterpolation" do
+        it_parses %q[%W(one #{two} three)], ([
+          "one".string,
+          StringInterpolation.new([Call.new(nil, "two")] of ASTNode),
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "parses %w without interpolation (keeps literal)" do
+        it_parses %q[%w(one #{two} three)], ([
+          "one".string,
+          %q(#{two}).string,
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "parses %W with escaped interpolation (keeps literal)" do
+        it_parses %q[%W(one \#{two} three)], ([
+          "one".string,
+          %q(#{two}).string,
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "collapses interpolation of string literal in %W" do
+        it_parses %q[%W(one #{"two three"} four)], ([
+          "one".string, "two three".string,
+          "four".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "keeps StringInterpolation for non-string expressions" do
+        it_parses %q[%W(one #{two.bar} three)], ([
+          "one".string,
+          StringInterpolation.new([Call.new(Call.new(nil, "two"), "bar")] of ASTNode),
+          "three".string,
+        ] of ASTNode).array_of(Path.global("String"))
+      end
+
+      describe "raises on unterminated interpolation in %W" do
+        assert_syntax_error(%q[%W(one #{two)], "Unterminated string interpolation")
+      end
+
+      describe "splat" do
+        it_parses %q(%W[#{*%w(one two)}]), ([Splat.new((["one".string, "two".string] of ASTNode).array_of(Path.global("String")))] of ASTNode).array_of(Path.global("String"))
+        it_parses %q(%W[#{*a}]), ([Splat.new(Call.new(nil, "a"))] of ASTNode).array_of(Path.global("String"))
+
+        assert_syntax_error(%q(%W[a#{*b}]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{a}#{*b}]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{*a}b]), "splat interpolation must be the only piece in a string array element")
+        assert_syntax_error(%q(%W[#{*a}#{b}]), "splat interpolation must be the only piece in a string array element")
+      end
+    end
+
     assert_syntax_error "%w(", "Unterminated string array literal"
     assert_syntax_error "%w{one}}", "expecting token 'EOF', not '}'"
     assert_syntax_error "%w{{one}", "Unterminated string array literal"
+    assert_syntax_error "%W(", "Unterminated string array literal"
+    assert_syntax_error "%W{one}}", "expecting token 'EOF', not '}'"
+    assert_syntax_error "%W{{one}", "Unterminated string array literal"
     assert_syntax_error "%i(", "Unterminated symbol array literal"
     assert_syntax_error "%i{one}}", "expecting token 'EOF', not '}'"
     assert_syntax_error "%i{{one}", "Unterminated symbol array literal"
@@ -2783,7 +3313,7 @@ module Crystal
 
     it "gets corrects of ~" do
       node = Parser.parse("\n  ~1")
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
@@ -2791,7 +3321,7 @@ module Crystal
     it "gets corrects end location for var" do
       parser = Parser.new("foo = 1\nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1]
-      end_loc = node.end_location.not_nil!
+      end_loc = node.end_location.should_not be_nil
       end_loc.line_number.should eq(2)
       end_loc.column_number.should eq(3)
     end
@@ -2799,7 +3329,7 @@ module Crystal
     it "gets corrects end location for var + var" do
       parser = Parser.new("foo = 1\nfoo + nfoo; 1")
       node = parser.parse.as(Expressions).expressions[1].as(Call).obj.as(Var)
-      end_loc = node.end_location.not_nil!
+      end_loc = node.end_location.should_not be_nil
       end_loc.line_number.should eq(2)
       end_loc.column_number.should eq(3)
     end
@@ -2807,8 +3337,8 @@ module Crystal
     it "gets corrects end location for block with { ... }" do
       parser = Parser.new("foo { 1 + 2 }; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
-      block = node.block.not_nil!
-      end_loc = block.end_location.not_nil!
+      block = node.block.should_not be_nil
+      end_loc = block.end_location.should_not be_nil
       end_loc.line_number.should eq(1)
       end_loc.column_number.should eq(13)
       node.end_location.should eq(end_loc)
@@ -2817,8 +3347,8 @@ module Crystal
     it "gets corrects end location for block with do ... end" do
       parser = Parser.new("foo do\n  1 + 2\nend; 1")
       node = parser.parse.as(Expressions).expressions[0].as(Call)
-      block = node.block.not_nil!
-      end_loc = block.end_location.not_nil!
+      block = node.block.should_not be_nil
+      end_loc = block.end_location.should_not be_nil
       end_loc.line_number.should eq(3)
       end_loc.column_number.should eq(3)
       node.end_location.should eq(end_loc)
@@ -2833,13 +3363,13 @@ module Crystal
         1 + 'a'
         CRYSTAL
       node = parser.parse.as(Expressions).expressions[1]
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(5)
     end
 
     it "gets correct location with \r\n (#1558)" do
       nodes = Parser.parse("class Foo\r\nend\r\n\r\n1").as(Expressions)
-      loc = nodes.last.location.not_nil!
+      loc = nodes.last.location.should_not be_nil
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
     end
@@ -2847,7 +3377,7 @@ module Crystal
     it "sets location of enum method" do
       parser = Parser.new("enum Foo; A; def bar; end; end")
       node = parser.parse.as(EnumDef).members[1].as(Def)
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(1)
       loc.column_number.should eq(14)
     end
@@ -2855,7 +3385,7 @@ module Crystal
     it "gets correct location after macro with yield" do
       parser = Parser.new(%(\n  1 ? 2 : 3))
       node = parser.parse
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
       loc.column_number.should eq(3)
     end
@@ -2863,7 +3393,7 @@ module Crystal
     it "gets correct location of empty exception handler inside def" do
       parser = Parser.new("def foo\nensure\nend")
       node = parser.parse.as(Def).body
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(2)
     end
 
@@ -2872,7 +3402,7 @@ module Crystal
       node = parser.parse.as(Expressions).expressions[1]
 
       node.name_location.should_not be_nil
-      name_location = node.name_location.not_nil!
+      name_location = node.name_location.should_not be_nil
 
       name_location.line_number.should eq(1)
       name_location.column_number.should eq(10)
@@ -2883,7 +3413,7 @@ module Crystal
       node = parser.parse.as(Expressions).expressions[1]
 
       node.name_location.should_not be_nil
-      name_location = node.name_location.not_nil!
+      name_location = node.name_location.should_not be_nil
 
       name_location.line_number.should eq(1)
       name_location.column_number.should eq(12)
@@ -2910,7 +3440,7 @@ module Crystal
     it "sets correct location of proc literal" do
       parser = Parser.new("->(\n  x : Int32,\n  y : String\n) { }")
       node = parser.parse.as(ProcLiteral)
-      loc = node.location.not_nil!
+      loc = node.location.should_not be_nil
       loc.line_number.should eq(1)
       loc.column_number.should eq(1)
     end
@@ -2918,62 +3448,62 @@ module Crystal
     it "sets correct location of `else` of if statement" do
       parser = Parser.new("if foo\nelse\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
 
       parser = Parser.new("if foo\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
+      node.location.should_not(be_nil).line_number.should eq(1)
       node.else_location.should be_nil
-      node.end_location.not_nil!.line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(2)
     end
 
     it "sets correct location of `elsif` of if statement" do
       parser = Parser.new("if foo\nelsif bar\nend")
       node = parser.parse.as(If)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location of `else` of unless statement" do
       parser = Parser.new("unless foo\nelse\nend")
       node = parser.parse.as(Unless)
-      node.location.not_nil!.line_number.should eq(1)
-      node.else_location.not_nil!.line_number.should eq(2)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.else_location.should_not(be_nil).line_number.should eq(2)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location and end location of `begin` block" do
       parser = Parser.new("begin\nfoo\nend")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.line_number.should eq(1)
-      node.end_location.not_nil!.line_number.should eq(3)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.end_location.should_not(be_nil).line_number.should eq(3)
     end
 
     it "sets correct location and end location of parenthesized empty block" do
       parser = Parser.new("()")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.column_number.should eq(1)
-      node.end_location.not_nil!.column_number.should eq(2)
+      node.location.should_not(be_nil).column_number.should eq(1)
+      node.end_location.should_not(be_nil).column_number.should eq(2)
     end
 
     it "sets correct location and end location of parenthesized block" do
       parser = Parser.new("(foo; bar)")
       node = parser.parse.as(Expressions)
-      node.location.not_nil!.column_number.should eq(1)
-      node.end_location.not_nil!.column_number.should eq(10)
+      node.location.should_not(be_nil).column_number.should eq(1)
+      node.end_location.should_not(be_nil).column_number.should eq(10)
     end
 
     it "sets correct locations of keywords of exception handler" do
       parser = Parser.new("begin\nrescue\nelse\nensure\nend")
       node = parser.parse.as(ExceptionHandler)
-      node.location.not_nil!.line_number.should eq(1)
-      node.rescues.not_nil!.first.location.not_nil!.line_number.should eq(2)
-      node.else_location.not_nil!.line_number.should eq(3)
-      node.ensure_location.not_nil!.line_number.should eq(4)
-      node.end_location.not_nil!.line_number.should eq(5)
+      node.location.should_not(be_nil).line_number.should eq(1)
+      node.rescues.should_not(be_nil).first.location.should_not(be_nil).line_number.should eq(2)
+      node.else_location.should_not(be_nil).line_number.should eq(3)
+      node.ensure_location.should_not(be_nil).line_number.should eq(4)
+      node.end_location.should_not(be_nil).line_number.should eq(5)
     end
 
     it "sets correct locations of macro if / else" do
@@ -3343,7 +3873,7 @@ module Crystal
     it "sets correct location of trailing ensure" do
       parser = Parser.new("foo ensure bar")
       node = parser.parse.as(ExceptionHandler)
-      ensure_location = node.ensure_location.not_nil!
+      ensure_location = node.ensure_location.should_not(be_nil)
       ensure_location.line_number.should eq(1)
       ensure_location.column_number.should eq(5)
     end
@@ -3351,7 +3881,7 @@ module Crystal
     it "sets correct location of trailing rescue" do
       source = "foo rescue bar"
       parser = Parser.new(source)
-      node = parser.parse.as(ExceptionHandler).rescues.not_nil![0]
+      node = parser.parse.as(ExceptionHandler).rescues.should_not(be_nil)[0]
       node_source(source, node).should eq("rescue bar")
     end
 
@@ -3376,7 +3906,7 @@ module Crystal
 
     it "sets correct location of implicit tuple literal of multi-return" do
       source = "def foo; return 1, 2; end"
-      node = Parser.new(source).parse.as(Def).body.as(Return).exp.not_nil!
+      node = Parser.new(source).parse.as(Def).body.as(Return).exp.should_not be_nil
       node_source(source, node).should eq("1, 2")
     end
 
@@ -3393,7 +3923,7 @@ module Crystal
     it "sets correct location of var in proc pointer" do
       source = "foo : Foo; ->foo.bar"
       expressions = Parser.new(source).parse.as(Expressions).expressions
-      node = expressions[1].as(ProcPointer).obj.not_nil!
+      node = expressions[1].as(ProcPointer).obj.should_not be_nil
       node_source(source, node).should eq("foo")
     end
 
@@ -3406,7 +3936,7 @@ module Crystal
 
     it "sets correct location of receiver var in method def" do
       source = "def foo.bar; end"
-      node = Parser.new(source).parse.as(Def).receiver.not_nil!
+      node = Parser.new(source).parse.as(Def).receiver.should_not be_nil
       node_source(source, node).should eq("foo")
     end
 
@@ -3415,6 +3945,19 @@ module Crystal
       expressions = Parser.new(source).parse.as(LibDef).body.as(CStructOrUnionDef).body.as(Expressions).expressions
       node_source(source, expressions[0].as(TypeDeclaration).var).should eq("fizz")
       node_source(source, expressions[1].as(TypeDeclaration).var).should eq("buzz")
+    end
+
+    it "sets correct location of a parenthesized union" do
+      source = "foo : (String | Nil) | Foo"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      union = node.declared_type.should be_a Union
+      node_source(source, union)
+        .should eq("(String | Nil) | Foo")
+
+      inner_union = union.types.first.should be_a Union
+      node_source(source, inner_union)
+        .should eq("(String | Nil)")
     end
 
     it "doesn't override yield with macro yield" do
@@ -3435,7 +3978,7 @@ module Crystal
       CRYSTAL
 
       exps = Parser.parse(code).as(Expressions)
-      exps.expressions[1].location.not_nil!.line_number.should eq(7)
+      exps.expressions[1].location.should_not(be_nil).line_number.should eq(7)
     end
 
     it "sets correct location for fun def" do
@@ -3497,25 +4040,25 @@ module Crystal
 
     it "sets correct location of argument in named tuple type" do
       source = "x : {foo: Bar}"
-      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.not_nil!.first
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.should_not(be_nil).first
       node_source(source, node).should eq("foo: Bar")
     end
 
     it "sets correct location of instance variable in proc pointer" do
       source = "->@foo.x"
-      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node = Parser.parse(source).as(ProcPointer).obj.should_not(be_nil)
       node_source(source, node).should eq("@foo")
     end
 
     it "sets correct location of instance variable in proc pointer" do
       source = "->@@foo.x"
-      node = Parser.parse(source).as(ProcPointer).obj.not_nil!
+      node = Parser.parse(source).as(ProcPointer).obj.should_not(be_nil)
       node_source(source, node).should eq("@@foo")
     end
 
     it "sets correct location of annotation on method parameter" do
       source = "def x(@[Foo] y) end"
-      node = Parser.parse(source).as(Def).args.first.parsed_annotations.not_nil!.first
+      node = Parser.parse(source).as(Def).args.first.parsed_annotations.should_not(be_nil).first
       node_source(source, node).should eq("@[Foo]")
     end
 
@@ -3553,6 +4096,24 @@ module Crystal
       source = "@[::Foo]"
       node = Parser.parse(source).as(Annotation).path
       node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = ((A), (B)) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should(be_a(Union)).types.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, inputs[1]).should eq "(B)"
+    end
+
+    it "sets correct location of proc notation inputs" do
+      source = "alias T = (A) -> R"
+      proc_notation = Parser.parse(source).as(Alias).value.should be_a(ProcNotation)
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      path = inputs.first.should be_a(Path)
+      node_source(source, path).should eq "A"
+      node_source(source, proc_notation).should eq "(A) -> R"
     end
 
     it "sets args_in_brackets to false for `a.b`" do

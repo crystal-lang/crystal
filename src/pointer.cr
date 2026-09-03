@@ -341,9 +341,7 @@ struct Pointer(T)
   # ptr2.to_s # => "Pointer(Int32).null"
   # ```
   def to_s(io : IO) : Nil
-    io << "Pointer("
-    io << T.to_s
-    io << ')'
+    io << {{ @type.name.stringify }}
     if address == 0
       io << ".null"
     else
@@ -466,6 +464,48 @@ struct Pointer(T)
     self
   end
 
+  # Returns a pointer with the address of this pointer
+  # aligned downwards to the next given byte *boundary*.
+  #
+  # INFO: This method requires the given parameter to be a power of 2
+  #
+  # INFO: This method aligns on byte boundaries, not sizeof(T) boundaries
+  #
+  # ```
+  # ptr = Pointer(Void).new(0x30_u64)
+  # ptr.align_down(16) # => Pointer(Void)@0x30
+  # ptr.align_down(32) # => Pointer(Void)@0x20
+  # ```
+  @[AlwaysInline]
+  def align_down(boundary : UInt64) : Pointer(T)
+    Pointer(T).new(self.address & (&-boundary))
+  end
+
+  # Returns a pointer with the address of this pointer
+  # aligned upwards to the next given byte *boundary*.
+  #
+  # INFO: This method requires the given parameter to be a power of 2
+  #
+  # INFO: This method aligns on byte boundaries, not sizeof(T) boundaries
+  #
+  # ```
+  # ptr = Pointer(Void).new(0x30_u64)
+  # ptr.align_up(16) # => Pointer(Void)@0x30
+  # ptr.align_up(32) # => Pointer(Void)@0x40
+  # ```
+  @[AlwaysInline]
+  def align_up(boundary : UInt64) : Pointer(T)
+    Pointer(T).new((self.address &+ (boundary &- 1)) & (&-boundary))
+  end
+
+  # :nodoc:
+  #
+  # This definition is required for the invalid `Pointer.new` method to not get
+  # documented. This will never be called, the compiler will fail to compile.
+  def initialize
+    raise "can't create instance of a pointer type"
+  end
+
   # Returns a pointer whose memory address is zero. This doesn't allocate memory.
   #
   # When calling a C function you can also pass `nil` instead of constructing a
@@ -506,6 +546,9 @@ struct Pointer(T)
   # # ...
   # ptr[9] # => 0
   # ```
+  #
+  # If the memory can't be allocated (out of memory), the program aborts with
+  # an error message written to the standard error.
   def self.malloc(size : Int = 1)
     if size < 0
       raise ArgumentError.new("Negative Pointer#malloc size")

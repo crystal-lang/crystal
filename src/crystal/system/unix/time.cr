@@ -6,53 +6,47 @@ require "c/time"
   require "c/sys/system_properties"
 {% end %}
 
-{% if flag?(:darwin) %}
-  # Darwin supports clock_gettime starting from macOS Sierra, but we can't
-  # use it because it would prevent running binaries built on macOS Sierra
-  # to run on older macOS releases.
-  #
-  # Furthermore, mach_absolute_time is reported to have a higher precision.
-  require "c/mach/mach_time"
-{% end %}
-
 module Crystal::System::Time
   UNIX_EPOCH_IN_SECONDS  = 62135596800_i64
   NANOSECONDS_PER_SECOND =   1_000_000_000
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    {% if LibC.has_method?("clock_gettime") %}
-      ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
-      raise RuntimeError.from_errno("clock_gettime") unless ret == 0
-      {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
-    {% else %}
-      ret = LibC.gettimeofday(out timeval, nil)
-      raise RuntimeError.from_errno("gettimeofday") unless ret == 0
-      {timeval.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timeval.tv_usec.to_i * 1_000}
-    {% end %}
+    ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
+    raise RuntimeError.from_errno("clock_gettime") unless ret == 0
+    {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
+  end
+
+  private def self.clock_gettime(&)
+    # Chose the best monotonic steady clock with nanosecond precision that ticks
+    # while the system is suspended. See https://github.com/crystal-lang/rfcs/pull/15
+    clock = {% if flag?(:darwin) %}
+              # CLOCK_MONOTONIC on Darwin has 1 microsecond resolution, but
+              # CLOCK_MONOTONIC_RAW has a higher resolution.
+              LibC::CLOCK_MONOTONIC_RAW
+            {% elsif flag?(:linux) %}
+              # On Linux, `CLOCK_MONOTONIC` does not count suspended time, but
+              # but `CLOCK_BOOTTIME` does.
+              LibC::CLOCK_BOOTTIME
+            {% else %}
+              # On all other systems, `CLOCK_MONOTONIC` includes suspended time.
+              LibC::CLOCK_MONOTONIC
+            {% end %}
+
+    ret = LibC.clock_gettime(clock, out tp)
+    yield unless ret == 0
+    tp
   end
 
   def self.monotonic : {Int64, Int32}
-    {% if flag?(:darwin) %}
-      info = mach_timebase_info
-      total_nanoseconds = LibC.mach_absolute_time * info.numer // info.denom
-      seconds = total_nanoseconds // NANOSECONDS_PER_SECOND
-      nanoseconds = total_nanoseconds.remainder(NANOSECONDS_PER_SECOND)
-      {seconds.to_i64, nanoseconds.to_i32}
-    {% else %}
-      ret = LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
-      raise RuntimeError.from_errno("clock_gettime(CLOCK_MONOTONIC)") unless ret == 0
-      {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
-    {% end %}
+    tp = clock_gettime do
+      raise RuntimeError.from_errno("clock_gettime()")
+    end
+    {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
   end
 
   def self.ticks : UInt64
-    {% if flag?(:darwin) %}
-      info = mach_timebase_info
-      LibC.mach_absolute_time &* info.numer // info.denom
-    {% else %}
-      LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out tp)
-      tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
-    {% end %}
+    tp = clock_gettime { }
+    tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
   end
 
   def self.to_timespec(time : ::Time)
@@ -70,11 +64,13 @@ module Crystal::System::Time
   end
 
   # Many systems use /usr/share/zoneinfo, Solaris 2 has
-  # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ.
+  # /usr/share/lib/zoneinfo, IRIX 6 has /usr/lib/locale/TZ,
+  # NixOS has /etc/zoneinfo.
   ZONE_SOURCES = {
     "/usr/share/zoneinfo/",
     "/usr/share/lib/zoneinfo/",
     "/usr/lib/locale/TZ/",
+    "/etc/zoneinfo/",
   }
 
   # Android Bionic C-specific locations. These are files rather than directories
@@ -107,7 +103,7 @@ module Crystal::System::Time
       return nil unless path = ::Time::Location.find_android_tzdata_file(android_tzdata_sources)
 
       ::File.open(path) do |file|
-        ::Time::Location.read_android_tzdata(file, true) do |name, location|
+        ::Time::Location.read_android_tzdata(file) do |name, location|
           return location if name == timezone
         end
       end
@@ -155,17 +151,6 @@ module Crystal::System::Time
             nil
           end
         end
-      end
-    end
-  {% end %}
-
-  {% if flag?(:darwin) %}
-    @@mach_timebase_info : LibC::MachTimebaseInfo?
-
-    private def self.mach_timebase_info
-      @@mach_timebase_info ||= begin
-        LibC.mach_timebase_info(out info)
-        info
       end
     end
   {% end %}

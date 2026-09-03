@@ -17,6 +17,8 @@ class Crystal::CodeGenVisitor
       if !global.initializer && type.includes_type?(@program.nil_type)
         global.initializer = main_llvm_type.null
       end
+
+      declare_class_var_debug_info(global, class_var) if @debug.variables?
     end
     global
   end
@@ -332,5 +334,29 @@ class Crystal::CodeGenVisitor
 
   def class_var_global_initialized_name(class_var : MetaTypeVar)
     "#{class_var.owner.llvm_name}#{class_var.name.gsub('@', ':')}:init"
+  end
+
+  private def declare_class_var_debug_info(global, class_var)
+    location = class_var.initializer.try(&.node.location).try(&.expanded_location)
+    return unless location
+
+    debug_type = in_main { get_debug_type(class_var.type) }
+    return unless debug_type
+
+    file, dir = file_and_dir(location.filename)
+    builder = di_builder(@main_mod)
+    file_metadata = builder.create_file(file, dir)
+    global_name = class_var_global_name(class_var)
+    gv_expr = builder.create_global_variable_expression(
+      scope: file_metadata,
+      name: global_name,
+      linkage_name: global_name,
+      file: file_metadata,
+      line: location.line_number,
+      type: debug_type,
+      local_to_unit: @single_module
+    )
+
+    global.global_set_metadata("dbg", gv_expr)
   end
 end

@@ -194,13 +194,13 @@ require "crystal/system/time"
 #
 # This monotonic clock should always be used for measuring elapsed time.
 #
-# A reading from this clock can be taken using `.monotonic`:
+# A reading from this clock can be taken using `.instant`:
 #
 # ```
-# t1 = Time.monotonic
+# t1 = Time.instant
 # # operation that takes 1 minute
-# t2 = Time.monotonic
-# t2 - t1 # => 1.minute (approximately)
+# t2 = Time.instant
+# t2.duration_since(t1) # => 1.minute (approximately)
 # ```
 #
 # The execution time of a block can be measured using `.measure`:
@@ -339,6 +339,7 @@ struct Time
   # ```
   #
   # The execution time of a block can be measured using `.measure`.
+  @[Deprecated("Use `Time.instant` instead.")]
   def self.monotonic : Time::Span
     seconds, nanoseconds = Crystal::System::Time.monotonic
     Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
@@ -356,9 +357,9 @@ struct Time
   # elapsed_time # => 20.milliseconds (approximately)
   # ```
   def self.measure(&block : ->) : Time::Span
-    start = monotonic
+    start = instant
     yield
-    monotonic - start
+    start.elapsed
   end
 
   # Creates a new `Time` instance representing the current time from the
@@ -1106,9 +1107,8 @@ struct Time
   # It is similar to the format `%FT%T.%N%::z[%Z]`. Some parts may be omitted or
   # shortened.
   #
-  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
-  # are zero. Zero offset seconds are omitted.  The name of the location is
-  # omitted for fixed zone offset.
+  # Nanoseconds are omitted if `#nanoseconds` is zero. Zero offset seconds are
+  # omitted.  The name of the location is omitted for fixed zone offset.
   #
   # ```
   # Time.utc(2014, 1, 2, 3, 4, 5)                      # => 2014-01-02 03:04:05Z
@@ -1118,7 +1118,17 @@ struct Time
   # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3600))           # => 2014-01-02 03:04:05+01:00
   # Time.local(2014, 1, 2, 3, 4, 5, location: Time::Location.fixed(3601))           # => 2014-01-02 03:04:05+01:00:01
   # ```
-  def inspect(io : IO, with_nanoseconds = true) : Nil
+  def inspect(io : IO) : Nil
+    Format::RFC_3339.format(self, io, fraction_digits: nanosecond.zero? ? 0 : 9, preferred_separator: ' ')
+    io << '[' << location.name << ']' unless location.fixed?
+  end
+
+  # :ditto:
+  #
+  # Nanoseconds are omitted if *with_nanoseconds* is `false` or `nanoseconds`
+  # are zero.
+  @[Deprecated("`with_nanoseconds` is deprecated, please use a custom format if necessary")]
+  def inspect(io : IO, with_nanoseconds) : Nil
     Format::RFC_3339.format(self, io, fraction_digits: (with_nanoseconds && !nanosecond.zero?) ? 9 : 0, preferred_separator: ' ')
     io << '[' << location.name << ']' unless location.fixed?
   end

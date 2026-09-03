@@ -119,7 +119,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       i = off // 8
       e = (off + t_size + 7) // 8
       while i < e
-        unify(cls, ix + 1, RegClass::Memory)
+        unify(cls, ix + i, RegClass::Memory)
         i += 1
       end
       return
@@ -279,9 +279,10 @@ class LLVM::ABI::X86_64 < LLVM::ABI
   def has_misaligned_fields?(type : Type, offset : Int = 0) : Bool
     case type.kind
     when Type::Kind::Struct
-      return false unless type.packed_struct?
       type.struct_element_types.each do |elem|
+        offset = align_offset(offset, elem) unless type.packed_struct?
         return true unless offset.divisible_by?(align(elem))
+        return true if has_misaligned_fields?(elem, offset)
         offset += size(elem)
       end
       false
@@ -302,7 +303,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       # misaligned fields, then `size(elem) % align(elem) == 0` must be true,
       # meaning array indices have no effect on element alignment.
       elem = type.element_type
-      has_misaligned_fields?(elem) || type.array_size > 1 && has_misaligned_fields?(elem, size(elem))
+      has_misaligned_fields?(elem, offset) || type.array_size > 1 && has_misaligned_fields?(elem, offset + size(elem))
     else
       false
     end

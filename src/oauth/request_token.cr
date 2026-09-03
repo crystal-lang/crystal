@@ -18,7 +18,14 @@ class OAuth::RequestToken
       end
     end
 
-    new token.not_nil!, secret.not_nil!
+    unless token && secret
+      values = [] of String
+      values << "token" if token.nil?
+      values << "secret" if secret.nil?
+      raise Error.new("Missing #{values.join(" and ")}")
+    end
+
+    new token, secret
   end
 
   def_equals_and_hash @token, @secret

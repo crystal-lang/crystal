@@ -16,7 +16,7 @@ private def assert_no_parser_warning(source, *, file = __FILE__, line = __LINE__
   assert_parser_warning(source, file: file, line: line)
 end
 
-VALID_SIGILS = ['i', 'q', 'r', 'w', 'x', 'Q']
+VALID_SIGILS = ['i', 'q', 'r', 'w', 'W', 'x', 'Q']
 
 describe "Parser warnings" do
   it "warns on suffix-less UInt64 literals > Int64::MAX" do
@@ -34,6 +34,13 @@ describe "Parser warnings" do
       assert_parser_warning "Foo(#{value})", "Warning: #{value} doesn't fit in an Int64, try using the suffix u64 or i128"
       assert_parser_warning "{{ #{value} }}", "Warning: #{value} doesn't fit in an Int64, try using the suffix u64 or i128"
     end
+  end
+
+  it "warns on uppercase instance and class variables" do
+    assert_parser_warning "@Foo", "Warning: uppercase instance variables are deprecated"
+    assert_parser_warning "@@Bar", "Warning: uppercase class variables are deprecated"
+    assert_no_parser_warning "@foo"
+    assert_no_parser_warning "@@bar"
   end
 
   describe "warns on missing space before colon" do

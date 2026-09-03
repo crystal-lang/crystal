@@ -4,7 +4,7 @@
 ## Generate time zone database for stdlib specs
 ##   $ make zoneinfo -f scripts/generate_data.mk
 
-TZDB_VERSION := 2025b
+TZDB_VERSION := 2025c
 
 ifeq ($(OS),Windows_NT)
   BIN_CRYSTAL=bin\crystal
@@ -35,12 +35,12 @@ help: ## Show this help
 	@echo
 	@printf '\033[34mtargets:\033[0m\n'
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
+		sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@printf '\033[34moptional variables:\033[0m\n'
 	@grep -hE '^[a-zA-Z_-]+ \?=.*?## .*$$' $(MAKEFILE_LIST) |\
-		sort |\
+		sort | \
 		awk 'BEGIN {FS = " \\?=.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo
 	@printf '\033[34mrecipes:\033[0m\n'

@@ -108,7 +108,7 @@ describe "Semantic: virtual" do
       CRYSTAL
     result = semantic nodes
     _, nodes = result.program, result.node.as(Expressions)
-    nodes.last.as(Call).target_defs.not_nil!.size.should eq(1)
+    nodes.last.as(Call).target_defs.should_not(be_nil).size.should eq(1)
   end
 
   it "dispatches virtual method with overload" do
@@ -131,7 +131,7 @@ describe "Semantic: virtual" do
       CRYSTAL
     result = semantic nodes
     _, nodes = result.program, result.node.as(Expressions)
-    nodes.last.as(Call).target_defs.not_nil!.size.should eq(2)
+    nodes.last.as(Call).target_defs.should_not(be_nil).size.should eq(2)
   end
 
   it "works with restriction alpha" do

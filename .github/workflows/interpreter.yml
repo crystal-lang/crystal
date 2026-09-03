@@ -15,10 +15,10 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.18.2-build
+      image: crystallang/crystal:1.21.0-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -28,10 +28,10 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.18.2-build
+      image: crystallang/crystal:1.21.0-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -39,7 +39,7 @@ jobs:
         run: make interpreter=1 release=1
 
       - name: Upload compiler artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: crystal-interpreter
           path: |
@@ -49,19 +49,19 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.18.2-build
+      image: crystallang/crystal:1.21.0-build
     strategy:
+      fail-fast: false
       matrix:
         part: [0, 1, 2, 3]
-      fail-fast: false
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: crystal-interpreter
           path: .build/
@@ -76,15 +76,15 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-24.04
     container:
-      image: crystallang/crystal:1.18.2-build
+      image: crystallang/crystal:1.21.0-build
     name: "Test primitives_spec with interpreter"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: crystal-interpreter
           path: .build/

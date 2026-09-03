@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "../spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
@@ -90,7 +91,7 @@ describe Socket, tags: "network" do
     server.listen
     address = Socket::IPAddress.new("127.0.0.1", port)
     spawn do
-      client = server.not_nil!.accept
+      client = server.accept
       client.gets.should eq "foo"
       client.puts "bar"
     ensure
@@ -198,7 +199,7 @@ describe Socket, tags: "network" do
       server.listen
 
       spawn do
-        client = server.not_nil!.accept
+        client = server.accept
         client.sync = false
         client << "foo"
         client.flush
@@ -215,6 +216,101 @@ describe Socket, tags: "network" do
     ensure
       socket.try &.close
       server.try &.close
+    end
+  end
+
+  describe "#sendfile" do
+    sendfile_test = ->(file : File, offset : Int32, count : Int32, expected : Int64) {
+      begin
+        port = unused_local_tcp_port
+        server = Socket.tcp(:inet)
+        server.bind("127.0.0.1", port)
+        server.listen
+        actual = nil
+
+        pos = file.pos
+
+        spawn do
+          client = server.not_nil!.accept
+          actual = client.sendfile(file, offset, count)
+        ensure
+          client.try(&.close)
+        end
+
+        socket = Socket.tcp(:inet)
+        socket.connect("localhost", port)
+        string = socket.gets_to_end
+
+        file.pos.should eq(pos), "`Socket#sendfile` should not affect `File#pos`, but it moved by #{file.pos - pos}"
+
+        actual.should eq(expected)
+
+        string
+      ensure
+        server.try(&.close)
+        socket.try(&.close)
+      end
+    }
+
+    it "rejects negative offset and count arguments" do
+      File.open(datapath("test_file.txt")) do |file|
+        sock = Socket.tcp(:inet)
+        expect_raises(ArgumentError, "Negative offset") { sock.sendfile(file, -1, 10) }
+        expect_raises(ArgumentError, "Negative count") { sock.sendfile(file, 1, -10) }
+      end
+    end
+
+    it "writes file range to socket" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 0, 11, 11_i64)
+        received.should eq("Hello World")
+      end
+    end
+
+    it "uses absolute range (unbuffered)" do
+      buf = uninitialized UInt8[3]
+
+      File.open(datapath("test_file.txt")) do |file|
+        file.read_buffering = false
+        file.read(buf.to_slice)
+
+        received = sendfile_test.call(file, 17, 11, 11_i64)
+        received.should eq(" World\nHell")
+      end
+    end
+
+    it "uses absolute range (buffered)" do
+      buf = uninitialized UInt8[9]
+
+      File.open(datapath("test_file.txt")) do |file|
+        file.read(buf.to_slice)
+
+        received = sendfile_test.call(file, 3, 10, 10_i64)
+        received.should eq("lo World\nH")
+      end
+    end
+
+    it "writes full file if count > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 0, (file.size + 10).to_i32, file.size)
+        received.bytesize.should eq file.size
+        file.rewind
+        received.should eq file.gets_to_end
+      end
+    end
+
+    it "writes nothing when offset > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, 500, 11, 0_i64)
+        received.should eq("")
+      end
+    end
+
+    it "writes remainder if offset + count > file.size" do
+      File.open(datapath("test_file.txt")) do |file|
+        received = sendfile_test.call(file, (file.size - 13).to_i32, 20, 13_i64)
+        received.should eq "\nHello World\n"
+      end
     end
   end
 end

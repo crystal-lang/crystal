@@ -66,6 +66,34 @@ end
 class ChildType < ParentType
 end
 
+private record IgnoreField, name : String, age : Int32? = nil, computed : String? = nil do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore: true)]
+  @computed : String?
+end
+
+private record IgnoreSerializeField, name : String, secret : String? = nil do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_serialize: true)]
+  @secret : String?
+end
+
+private record IgnoreDeserializeField, name : String, derived : String? = nil do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_deserialize: true)]
+  @derived : String?
+end
+
+private record IgnoreSerializeConditional, name : String, internal : Bool, extra : String? = nil do
+  include URI::Params::Serializable
+
+  @[URI::Params::Field(ignore_serialize: internal)]
+  @extra : String?
+end
+
 private record SimpleTypeInitializeOpts, value : Int32 do
   include URI::Params::Serializable
 
@@ -152,5 +180,67 @@ describe URI::Params::Serializable do
 
   it "supports generic type variables in converters" do
     GenericConverterType(MyConverter).from_www_form("value=123").value.should eq(1230)
+  end
+
+  describe "URI::Params::Field ignore options" do
+    describe "ignore: true" do
+      it "skips field in serialization" do
+        obj = IgnoreField.new("Alice", 30, "computed value")
+        obj.to_www_form.should eq "name=Alice&age=30"
+      end
+
+      it "skips field in deserialization" do
+        obj = IgnoreField.from_www_form("name=Alice&age=30&computed=should+be+ignored")
+        obj.name.should eq "Alice"
+        obj.age.should eq 30
+        obj.computed.should be_nil
+      end
+
+      it "round trips without the ignored field" do
+        obj = IgnoreField.new("Alice", 30, "computed")
+        round_tripped = IgnoreField.from_www_form(obj.to_www_form)
+        round_tripped.name.should eq "Alice"
+        round_tripped.age.should eq 30
+        round_tripped.computed.should be_nil
+      end
+    end
+
+    describe "ignore_serialize: true" do
+      it "skips field in serialization" do
+        obj = IgnoreSerializeField.new("Alice", "topsecret")
+        obj.to_www_form.should eq "name=Alice"
+      end
+
+      it "still deserializes the field" do
+        obj = IgnoreSerializeField.from_www_form("name=Alice&secret=topsecret")
+        obj.name.should eq "Alice"
+        obj.secret.should eq "topsecret"
+      end
+    end
+
+    describe "ignore_deserialize: true" do
+      it "still serializes the field" do
+        obj = IgnoreDeserializeField.new("Alice", "derived_value")
+        obj.to_www_form.should eq "name=Alice&derived=derived_value"
+      end
+
+      it "skips field in deserialization" do
+        obj = IgnoreDeserializeField.from_www_form("name=Alice&derived=should+be+ignored")
+        obj.name.should eq "Alice"
+        obj.derived.should be_nil
+      end
+    end
+
+    describe "ignore_serialize with runtime expression" do
+      it "skips field when expression is truthy" do
+        obj = IgnoreSerializeConditional.new("Alice", internal: true, extra: "hidden")
+        obj.to_www_form.should eq "name=Alice&internal=true"
+      end
+
+      it "includes field when expression is falsy" do
+        obj = IgnoreSerializeConditional.new("Alice", internal: false, extra: "visible")
+        obj.to_www_form.should eq "name=Alice&internal=false&extra=visible"
+      end
+    end
   end
 end

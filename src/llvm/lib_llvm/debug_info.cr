@@ -137,5 +137,11 @@ lib LibLLVM
     file : MetadataRef, line_no : UInt, ty : MetadataRef, always_preserve : Bool, flags : LLVM::DIFlags,
   ) : MetadataRef
 
+  fun di_builder_create_global_variable_expression = LLVMDIBuilderCreateGlobalVariableExpression(
+    builder : DIBuilderRef, scope : MetadataRef, name : Char*, name_len : SizeT,
+    linkage : Char*, linkage_len : SizeT, file : MetadataRef, line_no : UInt,
+    ty : MetadataRef, local_to_unit : Bool, expr : MetadataRef, decl : MetadataRef, align_in_bits : UInt32,
+  ) : MetadataRef
+
   fun set_subprogram = LLVMSetSubprogram(func : ValueRef, sp : MetadataRef)
 end
