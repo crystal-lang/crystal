@@ -72,6 +72,18 @@ module GC
   def self.disable
   end
 
+  # Limit the heap size to `n` bytes.
+  # Useful when you are debugging, especially on systems that do not handle
+  # running out of memory well.
+  #
+  # A zero `n` means the heap is unbounded; this is the default.
+  #
+  # This implementation rejects any other value than `0`.
+  def self.max_heap_size=(n : UInt64) : UInt64
+    raise ArgumentError.new("max_heap_size must be 0") unless n.zero?
+    n
+  end
+
   def self.free(pointer : Void*) : Nil
     Crystal.trace :gc, "free"
 

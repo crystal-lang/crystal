@@ -332,6 +332,18 @@ module GC
     LibGC.disable
   end
 
+  # Limit the heap size to `n` bytes.
+  # Useful when you are debugging, especially on systems that do not handle
+  # running out of memory well.
+  #
+  # A zero `n` means the heap is unbounded; this is the default.
+  # This setter function is unsynchronized (so it might require
+  # `GC_call_with_alloc_lock` to avoid data race).
+  def self.max_heap_size=(n : UInt64) : UInt64
+    LibGC.set_max_heap_size(n)
+    n
+  end
+
   def self.free(pointer : Void*) : Nil
     Crystal.trace :gc, "free" do
       LibGC.free(pointer)
