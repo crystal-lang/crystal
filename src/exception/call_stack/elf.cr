@@ -60,7 +60,7 @@ struct Exception::CallStack
       # zero; musl-libc doesn't implement dladdr1 (RTLD_DL_LINKMAP) or
       # populate the _r_debug symbol either, so we fallback to use the address
       # at which the ELF file has been loaded
-      if data.base_address == 0 && image.pie?
+      if data.base_address == 0 && program.pie?
         data.base_address = LibC::Elf_Addr.new(pointerof(LibC.__ehdr_start).address)
       end
     {% end %}
