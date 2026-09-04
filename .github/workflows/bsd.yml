@@ -1,0 +1,36 @@
+name: BSD CI
+
+on: [push, pull_request]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+  TZ: America/New_York
+
+jobs:
+  freebsd:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os_release: ["14"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: vmactions/freebsd-vm@f0552d3b69211736abd97f02ff3d4674c56b73b1 # v1.5.5
+        with:
+          mem: 8192
+          release: ${{ matrix.os_release }}
+          disable-cache: true
+          envs: 'SPEC_SPLIT_DOTS TZ'
+          prepare: |
+            set -eux
+            pkg install -y boehm-gc-threaded crystal git gmake libxml2 libyaml openssl pcre2 pkgconf
+            crystal version
+          run: |
+            gmake std_spec
