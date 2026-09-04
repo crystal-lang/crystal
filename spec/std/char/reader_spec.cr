@@ -3,19 +3,25 @@ require "char/reader"
 require "../../support/string"
 
 private def assert_invalid_byte_sequence(bytes, *, file = __FILE__, line = __LINE__)
-  reader = Char::Reader.new(String.new bytes)
-  reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
-  reader.current_char_width.should eq(1), file: file, line: line
-  reader.error.should eq(bytes[0]), file: file, line: line
-end
+  reader = Char::Reader.new("#{String.new(bytes)}Z")
+  bytes.each_with_index do |byte, i|
+    if byte.zero?
+      reader.current_char.should eq('\0'), file: file, line: line
+      reader.current_char?.should eq('\0'), file: file, line: line
+      reader.error.should be_nil, file: file, line: line
+    else
+      reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
+      reader.current_char?.should eq(Char::REPLACEMENT), file: file, line: line
+      reader.error.should eq(byte), file: file, line: line
+    end
+    reader.current_char_width.should eq(1), file: file, line: line
+    reader.pos.should eq(i), file: file, line: line
+    reader.has_next?.should be_true, file: file, line: line
 
-private def assert_reads_at_end(bytes, char, *, file = __FILE__, line = __LINE__)
-  str = String.new bytes
-  reader = Char::Reader.new(str, pos: bytes.size)
-  reader.previous_char.should eq(char), file: file, line: line
-  reader.current_char.should eq(char), file: file, line: line
-  reader.current_char_width.should eq(bytes.size), file: file, line: line
-  reader.pos.should eq(0), file: file, line: line
+    reader.next_char
+  end
+
+  reader.current_char.should eq('Z'), file: file, line: line
   reader.error.should be_nil, file: file, line: line
 end
 
@@ -27,6 +33,57 @@ private def assert_invalid_byte_sequence_at_end(bytes, *, file = __FILE__, line 
   reader.current_char_width.should eq(1), file: file, line: line
   reader.pos.should eq(bytes.size - 1), file: file, line: line
   reader.error.should eq(bytes[-1]), file: file, line: line
+end
+
+private def assert_current_char(reader, char)
+  reader.current_char.should eq char
+  reader.current_char?.should eq char
+  reader.current_char_width.should eq char.bytesize
+
+  reader.pos.should be < reader.string.bytesize
+  reader.has_next?.should be_true
+end
+
+private def assert_next_char(reader, char)
+  reader.has_next?.should be_true
+  next_pos = reader.pos + reader.current_char_width
+  reader_dup = reader.dup
+  reader_dup2 = reader.dup
+
+  reader.next_char.should eq char
+  reader.pos.should eq next_pos
+
+  reader_dup.next_char?.should eq char
+  reader_dup.pos.should eq next_pos
+
+  reader_dup2.pos = next_pos
+
+  assert_current_char(reader, char)
+  assert_current_char(reader_dup, char)
+  assert_current_char(reader_dup2, char)
+
+  reader
+end
+
+private def assert_previous_char(reader, char)
+  reader.has_previous?.should be_true
+  start_pos = reader.pos
+  reader_dup = reader.dup
+  reader_dup2 = reader.dup
+
+  reader.previous_char.should eq char
+  reader.pos.should eq start_pos - reader.current_char_width
+
+  reader_dup.previous_char?.should eq char
+  reader_dup.pos.should eq reader.pos
+
+  reader_dup2.pos = reader.pos
+
+  assert_current_char(reader, char)
+  assert_current_char(reader_dup, char)
+  assert_current_char(reader_dup2, char)
+
+  reader
 end
 
 describe "Char::Reader" do
@@ -218,20 +275,24 @@ describe "Char::Reader" do
     reader.pos.should eq(0)
   end
 
-  it "errors on invalid UTF-8" do
-    {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
-      assert_invalid_byte_sequence Bytes{{ bytes }}
-    {% end %}
-  end
+  describe "UTF-8 decoding" do
+    it "parses valid UTF-8 sequences" do
+      {% for _bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        reader = Char::Reader.new(at_end: ">#{{{ char.id.stringify }}}<")
+        assert_previous_char(reader, {{ char }})
 
-  describe "#previous_char" do
-    it "reads on valid UTF-8" do
-      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
-        assert_reads_at_end Bytes{{ bytes }}, {{ char }}
+        reader.pos = 0
+        assert_next_char(reader, {{ char }})
       {% end %}
     end
 
-    it "errors on invalid UTF-8" do
+    it "errors on invalid UTF-8 sequences (next)" do
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        assert_invalid_byte_sequence Bytes{{ bytes }}
+      {% end %}
+    end
+
+    it "errors on invalid UTF-8 sequences (previous)" do
       assert_invalid_byte_sequence_at_end Bytes[0x80]
       assert_invalid_byte_sequence_at_end Bytes[0xbf]
       assert_invalid_byte_sequence_at_end Bytes[0xc0]
