@@ -30,6 +30,7 @@ private def assert_invalid_byte_sequence_at_end(bytes, *, file = __FILE__, line 
   reader = Char::Reader.new(str, pos: bytes.size)
   reader.previous_char
   reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
+  reader.current_char?.should eq(Char::REPLACEMENT), file: file, line: line
   reader.current_char_width.should eq(1), file: file, line: line
   reader.pos.should eq(bytes.size - 1), file: file, line: line
   reader.error.should eq(bytes[-1]), file: file, line: line
@@ -170,15 +171,22 @@ describe "Char::Reader" do
       reader.each do |char|
         fail "reader each shouldn't yield on empty string"
       end.should be_nil
+
+      reader = Char::Reader.new(at_end: "")
+      reader.each do |char|
+        fail "reader each shouldn't yield on empty string"
+      end.should be_nil
     end
 
     it "checks bounds after block" do
-      string = "f"
+      string = "abc"
       reader = Char::Reader.new(string)
+      chars = [] of Char
       reader.each do |c|
-        c.should eq 'f'
+        chars << c
         reader.next_char
       end
+      chars.should eq ['a', 'c']
     end
   end
 
