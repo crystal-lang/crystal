@@ -131,55 +131,62 @@ describe "Char::Reader" do
     end
   end
 
-  it "iterates through empty string" do
-    reader = Char::Reader.new("")
-    reader.pos.should eq(0)
-    reader.current_char.should eq '\0'
-    reader.error.should be_nil
-    reader.has_next?.should be_false
+  describe "scenarios" do
+    it "iterates through empty string" do
+      reader = Char::Reader.new("")
+      reader.error.should be_nil
 
-    expect_raises IndexError do
-      reader.next_char
+      reader.current_char_width.should eq 1
+      assert_at_end(reader)
+      assert_at_start(reader)
+
+      reader.pos = 0
+      expect_raises IndexError do
+        reader.pos = 1
+      end
     end
-  end
 
-  it "iterates through string of size one" do
-    reader = Char::Reader.new("a")
-    reader.pos.should eq(0)
-    reader.current_char.should eq('a')
-    reader.has_next?.should be_true
-    reader.next_char.should eq '\0'
-    reader.has_next?.should be_false
+    it "iterates through empty string at_end" do
+      reader = Char::Reader.new(at_end: "")
+      reader.error.should be_nil
 
-    expect_raises IndexError do
-      reader.next_char
+      reader.current_char_width.should eq 0
+      assert_at_end(reader)
+      assert_at_start(reader)
+
+      reader.pos = 0
+      expect_raises IndexError do
+        reader.pos = 1
+      end
     end
-    expect_raises IndexError do
-      reader.peek_next_char
+
+    it "iterates through string of size one" do
+      reader = Char::Reader.new("a")
+      assert_at_start(reader)
+      assert_current_char(reader, 'a')
+
+      reader.next_char.should eq '\0'
+
+      assert_at_end(reader)
     end
-  end
 
-  it "iterates through chars" do
-    reader = Char::Reader.new("há日本語")
-    reader.pos.should eq(0)
-    reader.current_char.should eq('h')
-    reader.has_next?.should be_true
+    it "iterates through chars" do
+      reader = Char::Reader.new("há日本語")
+      reader.pos.should eq(0)
+      assert_current_char(reader, 'h')
+      reader = assert_next_char(reader, 'á')
+      reader.pos.should eq 1
 
-    reader.next_char.should eq('á')
+      reader = assert_next_char(reader, '日')
+      reader.pos.should eq 3
+      reader = assert_next_char(reader, '本')
+      reader = assert_next_char(reader, '語')
+      reader.has_next?.should be_true
 
-    reader.pos.should eq(1)
-    reader.current_char.should eq('á')
+      reader.next_char.should eq '\0'
+      reader.has_next?.should be_false
 
-    reader.next_char.should eq('日')
-    reader.next_char.should eq('本')
-    reader.next_char.should eq('語')
-    reader.has_next?.should be_true
-
-    reader.next_char.should eq '\0'
-    reader.has_next?.should be_false
-
-    expect_raises IndexError do
-      reader.next_char
+      assert_at_end(reader)
     end
   end
 
