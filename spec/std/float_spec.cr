@@ -1,5 +1,6 @@
 require "spec"
 require "spec/helpers/string"
+require "big"
 
 describe "Float" do
   describe "**" do
@@ -53,6 +54,13 @@ describe "Float" do
       (-1.0.modulo 5e-324).should eq(0.0)
     end
 
+    it "does not raise with a divisor too large for the dividend's type" do
+      (1.0_f32.modulo 1e300).should eq(1.0_f32)
+      (1.0_f32.modulo -1e300).should eq(-Float32::INFINITY)
+      (-1.0_f32.modulo 1e300).should eq(Float32::INFINITY)
+      (-1.0_f32.modulo -1e300).should eq(-1.0_f32)
+    end
+
     it "returns a result with the sign of the divisor" do
       (-3.7702231914821416e-103.modulo 1e300).should eq(1e300)
       (3.7702231914821416e-103.modulo -1e300).should eq(-1e300)
@@ -76,6 +84,39 @@ describe "Float" do
       (Float64::INFINITY.modulo 5.0).nan?.should be_true
       (5.0.modulo Float64::NAN).nan?.should be_true
       (Float64::NAN.modulo 5.0).nan?.should be_true
+    end
+
+    describe "with a non-primitive operand" do
+      it "keeps the divisor's type and precision" do
+        (1e17.modulo 3.to_big_f).should be_a(BigFloat)
+        (13.0.modulo 4.to_big_f).should eq(1.to_big_f)
+        (-13.0.modulo 4.to_big_f).should eq(3.to_big_f)
+        (13.0.modulo -4.to_big_f).should eq(-3.to_big_f)
+      end
+
+      it "does not round a BigFloat dividend to Float64" do
+        # 2 ** 60 + 1 needs 61 bits of significand, so `Float64` rounds it down
+        # to 2 ** 60 and every power-of-two divisor then divides it exactly
+        big = BigInt.new("1152921504606846977").to_big_f
+        (big.modulo 4.0).should eq(1.to_big_f)
+        (big.modulo 4.to_big_f).should eq(1.to_big_f)
+      end
+
+      it "supports an infinite divisor" do
+        big = 5.to_big_f
+        (big.modulo Float64::INFINITY).should eq(big)
+        (-big).modulo(-Float64::INFINITY).should eq(-big)
+      end
+
+      it "raises when an infinite or NaN result is not representable" do
+        expect_raises(ArgumentError) { -5.to_big_f.modulo Float64::INFINITY }
+        expect_raises(ArgumentError) { 5.to_big_f.modulo Float64::NAN }
+      end
+
+      it "raises when mods by zero" do
+        expect_raises(DivisionByZeroError) { 5.to_big_f.modulo 0.0 }
+        expect_raises(DivisionByZeroError) { 1.2.modulo 0.to_big_f }
+      end
     end
   end
 
@@ -125,6 +166,37 @@ describe "Float" do
     it "returns NaN for an infinite dividend or a NaN operand" do
       Float64::INFINITY.remainder(5.0).nan?.should be_true
       5.0.remainder(Float64::NAN).nan?.should be_true
+    end
+
+    describe "with a non-primitive operand" do
+      it "keeps the divisor's type and precision" do
+        1e17.remainder(3.to_big_f).should be_a(BigFloat)
+        13.0.remainder(4.to_big_f).should eq(1.to_big_f)
+        (-13.0).remainder(4.to_big_f).should eq(-1.to_big_f)
+        13.0.remainder(-4.to_big_f).should eq(1.to_big_f)
+      end
+
+      it "does not round a BigFloat dividend to Float64" do
+        big = BigInt.new("1152921504606846977").to_big_f
+        big.remainder(4.0).should eq(1.to_big_f)
+        big.remainder(4.to_big_f).should eq(1.to_big_f)
+      end
+
+      it "supports an infinite divisor" do
+        big = 5.to_big_f
+        big.remainder(Float64::INFINITY).should eq(big)
+        big.remainder(-Float64::INFINITY).should eq(big)
+        (-big).remainder(Float64::INFINITY).should eq(-big)
+      end
+
+      it "raises when a NaN result is not representable" do
+        expect_raises(ArgumentError) { 5.to_big_f.remainder Float64::NAN }
+      end
+
+      it "raises when mods by zero" do
+        expect_raises(DivisionByZeroError) { 5.to_big_f.remainder 0.0 }
+        expect_raises(DivisionByZeroError) { 1.2.remainder 0.to_big_f }
+      end
     end
   end
 

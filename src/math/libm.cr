@@ -180,6 +180,7 @@ lib LibM
   fun erf_f64 = erf(value : Float64) : Float64
   fun expm1_f32 = expm1f(value : Float32) : Float32
   fun expm1_f64 = expm1(value : Float64) : Float64
+  fun fmod_f32 = fmodf(value1 : Float32, value2 : Float32) : Float32
   fun fmod_f64 = fmod(value1 : Float64, value2 : Float64) : Float64
   {% unless flag?(:win32) %}
     fun frexp_f32 = frexpf(value : Float32, exp : Int32*) : Float32
