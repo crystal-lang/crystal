@@ -87,6 +87,22 @@ private def assert_previous_char(reader, char)
 end
 
 describe "Char::Reader" do
+  describe ".new" do
+    it "starts at pos" do
+      reader = Char::Reader.new("há日本語", pos: 9)
+      reader.pos.should eq(9)
+      reader.current_char.should eq('語')
+    end
+
+    it "starts at end" do
+      reader = Char::Reader.new(at_end: "")
+      reader.pos.should eq(0)
+      reader.current_char.should eq '\0'
+      reader.has_previous?.should be_false
+      reader.has_next?.should be_false
+    end
+  end
+
   it "iterates through empty string" do
     reader = Char::Reader.new("")
     reader.pos.should eq(0)
@@ -178,14 +194,6 @@ describe "Char::Reader" do
     end
   end
 
-  it "starts at end" do
-    reader = Char::Reader.new(at_end: "")
-    reader.pos.should eq(0)
-    reader.current_char.should eq '\0'
-    reader.has_previous?.should be_false
-    reader.has_next?.should be_false
-  end
-
   it "gets previous char (ascii)" do
     reader = Char::Reader.new(at_end: "hello")
     reader.pos.should eq(4)
@@ -218,12 +226,6 @@ describe "Char::Reader" do
     reader.previous_char.should eq('á')
     reader.previous_char.should eq('h')
     reader.has_previous?.should be_false
-  end
-
-  it "starts at pos" do
-    reader = Char::Reader.new("há日本語", pos: 9)
-    reader.pos.should eq(9)
-    reader.current_char.should eq('語')
   end
 
   it "#current_char?" do
