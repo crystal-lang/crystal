@@ -83,6 +83,6 @@ module Crystal::DWARF
         abbrev.each_attribute { }
       end
     end
-    raise Error.new("failed to find abbrev code=#{code}")
+    raise Error.new("Failed to find abbrev code=#{code}")
   end
 end
