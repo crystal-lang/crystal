@@ -2,8 +2,10 @@
   min_compiler_version = "1.13.0"
   if compare_versions(Crystal::VERSION, min_compiler_version) < 0
     @type.warning <<-TXT
-      This compiler release at version #{Crystal::VERSION.id} is too old and no longer supported.
+      This compiler release at version #{Crystal::VERSION.id} is no longer supported.
       Please upgrade to at least Crystal #{min_compiler_version.id}.
+
+      Learn about the forward compatibility policy at https://crystal-lang.org/reference/project/release-policy.html#forward-compatibility
       TXT
   end
 %}
