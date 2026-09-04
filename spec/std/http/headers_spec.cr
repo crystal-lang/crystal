@@ -254,6 +254,38 @@ describe HTTP::Headers do
     end
   end
 
+  describe "#merge" do
+    it "merges into a new Headers instance" do
+      headers = HTTP::Headers{"one" => "1", "two" => "2"}
+      new_headers = headers.merge({"three" => "3"})
+
+      new_headers.should eq HTTP::Headers{
+        "one"   => "1",
+        "two"   => "2",
+        "three" => "3",
+      }
+      headers["three"]?.should be_nil
+      new_headers.should_not be headers
+    end
+
+    it "merges other hash" do
+      headers = HTTP::Headers{"foo" => "bar", "boo" => "baz"}
+      new_headers = headers.merge({"foo" => "baz", "qux" => "quux"})
+      new_headers.should eq HTTP::Headers{
+        "foo" => "baz",
+        "boo" => "baz",
+        "qux" => "quux",
+      }
+    end
+
+    it "raises an error if header value contains invalid character" do
+      headers = HTTP::Headers.new
+      expect_raises ArgumentError do
+        headers.merge({"invalid-header" => "\r\nLocation: http://example.com"})
+      end
+    end
+  end
+
   describe "#merge!" do
     it "merges and return self" do
       headers = HTTP::Headers.new
