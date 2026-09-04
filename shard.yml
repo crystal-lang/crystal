@@ -7,7 +7,7 @@ authors:
 description: |
   The Crystal standard library and compiler.
 
-crystal: ">= 1.0"
+crystal: ">= 1.13.0"
 
 dependencies:
   markd:
