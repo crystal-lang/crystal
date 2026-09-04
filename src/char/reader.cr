@@ -37,7 +37,7 @@ struct Char
     include Enumerable(Char)
 
     # Returns the reader's String.
-    getter string : String
+    getter! string : String
 
     # Returns the current character, or `'\0'` if the reader is at the end of
     # the string.
@@ -81,15 +81,26 @@ struct Char
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
-      @pos = pos.to_i
-      decode_current_char unless @string.empty?
+      initialize(string.to_slice, pos.to_i)
     end
 
     # Creates a reader that will be positioned at the last char
     # of the given string.
     def initialize(*, at_end @string : String)
-      @pos = @string.bytesize
-      decode_previous_char unless @string.empty?
+      initialize(at_end: string.to_slice)
+    end
+
+    # Creates a reader with the specified *slice* of UTF-8 encoded string,
+    # positioned at# byte index *pos*.
+    def initialize(@slice : Bytes, @pos : Int32 = 0)
+      decode_current_char unless @slice.empty?
+    end
+
+    # Creates a reader that will be positioned at the last char
+    # of the given slice of UTF-8 encoded string.
+    def initialize(*, at_end @slice : Bytes)
+      @pos = @slice.size
+      decode_previous_char unless @slice.empty?
     end
 
     # Returns the current character.
@@ -116,7 +127,7 @@ struct Char
     # reader.has_next? # => false
     # ```
     def has_next? : Bool
-      @pos < @string.bytesize
+      @pos < @slice.bytesize
     end
 
     # Tries to read the next character in the string.
@@ -178,7 +189,7 @@ struct Char
 
       next_pos = @pos &+ @current_char_width
 
-      return '\0' if next_pos == @string.bytesize
+      return '\0' if next_pos == @slice.bytesize
 
       decode_char_at(next_pos) do |code_point|
         code_point.unsafe_chr
@@ -236,7 +247,7 @@ struct Char
     # reader.current_char # => 'a'
     # ```
     def pos=(pos)
-      unless 0 <= pos <= @string.bytesize
+      unless 0 <= pos <= @slice.bytesize
         raise IndexError.new
       end
 
@@ -429,7 +440,7 @@ struct Char
     end
 
     private def byte_at(i)
-      @string.to_unsafe[i].to_u32
+      @slice.to_unsafe[i].to_u32
     end
   end
 end
