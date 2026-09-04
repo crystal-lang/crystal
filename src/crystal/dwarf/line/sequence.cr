@@ -298,20 +298,6 @@ module Crystal::DWARF
           raise Error.new("Unexpected FORM value=#{form}")
         end
       end
-
-      def inspect(io : IO)
-        io << self.class.name << '('
-        io << "@dwarf64=" << @dwarf64
-        io << " @version=" << @version
-        io << " @minimum_instruction_length=" << minimum_instruction_length
-        io << " @maximum_operations_per_instruction=" << maximum_operations_per_instruction
-        io << " @default_is_stmt=" << default_is_stmt?
-        io << " @line_base=" << line_base
-        io << " @line_range=" << line_range
-        io << " @opcode_base=" << opcode_base
-        io << " @standard_opcode_lengths=" << standard_opcode_lengths
-        io << ')'
-      end
     end
   end
 end
