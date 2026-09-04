@@ -36,6 +36,33 @@ private def assert_invalid_byte_sequence_at_end(bytes, *, file = __FILE__, line 
   reader.error.should eq(bytes[-1]), file: file, line: line
 end
 
+private def assert_at_end(reader)
+  reader.current_char.should eq '\0'
+  reader.current_char?.should be_nil
+  reader.pos.should eq reader.string.bytesize
+
+  reader.has_next?.should be_false
+
+  reader.next_char?.should be_nil
+  expect_raises IndexError do
+    reader.next_char
+  end
+  expect_raises IndexError do
+    reader.peek_next_char
+  end
+end
+
+private def assert_at_start(reader)
+  reader.pos.should eq 0
+
+  reader.has_previous?.should be_false
+
+  reader.previous_char?.should be_nil
+  expect_raises IndexError do
+    reader.previous_char
+  end
+end
+
 private def assert_current_char(reader, char)
   reader.current_char.should eq char
   reader.current_char?.should eq char
@@ -190,54 +217,32 @@ describe "Char::Reader" do
     end
   end
 
-  it "gets previous char (ascii)" do
-    reader = Char::Reader.new(at_end: "hello")
-    reader.pos.should eq(4)
-    reader.current_char.should eq('o')
-    reader.has_previous?.should be_true
-    reader.has_next?.should be_true
+  describe "#previous_char" do
+    it "gets previous char (ascii)" do
+      reader = Char::Reader.new(at_end: "hello")
+      reader.pos.should eq(4)
+      reader.current_char.should eq('o')
 
-    reader.previous_char.should eq('l')
-    reader.has_next?.should be_true
-    reader.previous_char.should eq('l')
-    reader.previous_char.should eq('e')
-    reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
+      reader = assert_previous_char(reader, 'l')
+      reader = assert_previous_char(reader, 'l')
+      reader = assert_previous_char(reader, 'e')
+      reader = assert_previous_char(reader, 'h')
 
-    expect_raises IndexError do
-      reader.previous_char
+      assert_at_start(reader)
     end
-  end
 
-  it "gets previous char (unicode)" do
-    reader = Char::Reader.new(at_end: "há日本語")
-    reader.pos.should eq(9)
-    reader.current_char.should eq('語')
-    reader.has_previous?.should be_true
-    reader.has_next?.should be_true
+    it "gets previous char (unicode)" do
+      reader = Char::Reader.new(at_end: "há日本語")
+      reader.pos.should eq(9)
+      reader.current_char.should eq('語')
 
-    reader.previous_char.should eq('本')
-    reader.has_next?.should be_true
-    reader.previous_char.should eq('日')
-    reader.previous_char.should eq('á')
-    reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
-  end
+      reader = assert_previous_char(reader, '本')
+      reader = assert_previous_char(reader, '日')
+      reader = assert_previous_char(reader, 'á')
+      reader = assert_previous_char(reader, 'h')
 
-  it "#previous_char?" do
-    reader = Char::Reader.new("há日本語", pos: 12)
-    reader.previous_char?.should eq('語')
-    reader.pos.should eq(9)
-    reader.previous_char?.should eq('本')
-    reader.pos.should eq(6)
-    reader.previous_char?.should eq('日')
-    reader.pos.should eq(3)
-    reader.previous_char?.should eq('á')
-    reader.pos.should eq(1)
-    reader.previous_char?.should eq('h')
-    reader.pos.should eq(0)
-    reader.previous_char?.should be_nil
-    reader.pos.should eq(0)
+      assert_at_start(reader)
+    end
   end
 
   describe "UTF-8 decoding" do
