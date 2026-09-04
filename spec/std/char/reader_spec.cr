@@ -136,6 +136,7 @@ describe "Char::Reader" do
       reader = Char::Reader.new("")
       reader.error.should be_nil
 
+      # FIXME: current_char_width on an empty string should always be 0. There is no current char.
       reader.current_char_width.should eq 1
       assert_at_end(reader)
       assert_at_start(reader)
@@ -269,6 +270,10 @@ describe "Char::Reader" do
       {% end %}
     end
 
+    # NOTE: We're not using INVALID_UTF8_BYTE_SEQUENCES because we're reading
+    # backwards. Some of the standard invalid byte sequences end with a zero
+    # byte, which is considered valid when reading backwards.
+    # Also this tests a couple more edge cases.
     it "errors on invalid UTF-8 sequences (previous)" do
       assert_invalid_byte_sequence_at_end Bytes[0x80]
       assert_invalid_byte_sequence_at_end Bytes[0xbf]
