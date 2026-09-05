@@ -78,6 +78,7 @@ class Crystal::Command
 
   def initialize(@options : Array(String))
     @color = Colorize.default_enabled?(STDOUT, STDERR)
+    @diagnostic_color = Colorize.default_enabled?(STDERR)
     @error_trace = false
     @progress_tracker = ProgressTracker.new
   end
@@ -183,7 +184,11 @@ class Crystal::Command
   rescue ex : Crystal::CodeError
     report_warnings
 
-    ex.color = @color
+    ex.color = if compiler = @compiler
+                 compiler.color?
+               else
+                 @diagnostic_color
+               end
     ex.error_trace = @error_trace
     if @config.try(&.output_format) == "json"
       STDERR.puts ex.to_json
@@ -271,6 +276,7 @@ class Crystal::Command
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     @progress_tracker.stage("Tool (hierarchy)") do
+      result.program.color = @color
       Crystal.print_hierarchy result.program, STDOUT, config.hierarchy_exp, config.output_format
     end
   end
@@ -538,6 +544,7 @@ class Crystal::Command
 
       opts.on("--no-color", "Disable colored output") do
         @color = false
+        @diagnostic_color = false
         compiler.color = false
       end
 
@@ -667,6 +674,11 @@ class Crystal::Command
     unless output_format.in?(allowed_formats)
       abort! "You have input an invalid format: #{output_format}. Supported formats: #{allowed_formats.join(", ")}", :USAGE_ERROR
     end
+    if output_format == "json"
+      @color = false
+      @diagnostic_color = false
+      compiler.color = false
+    end
 
     abort! "maximum number of threads cannot be lower than 1", :USAGE_ERROR if compiler.n_threads < 1
 
@@ -737,6 +749,7 @@ class Crystal::Command
     end
     opts.on("--no-color", "Disable colored output") do
       @color = false
+      @diagnostic_color = false
       compiler.color = false
     end
     target_specific_opts(opts, compiler)
@@ -816,8 +829,8 @@ class Crystal::Command
 
   private def print_error(msg)
     # This is for the case where the main command is wrong
-    @color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDOUT, STDERR)
-    Crystal.print_error(msg, @color)
+    @diagnostic_color = false if ARGV.includes?("--no-color") || !Colorize.default_enabled?(STDERR)
+    Crystal.print_error(msg, @diagnostic_color)
   end
 
   private def self.crystal_opts
@@ -869,6 +882,8 @@ class Crystal::Command
   end
 
   private def new_compiler
-    @compiler = Compiler.new
+    @compiler = Compiler.new.tap do |compiler|
+      compiler.color = @diagnostic_color
+    end
   end
 end
