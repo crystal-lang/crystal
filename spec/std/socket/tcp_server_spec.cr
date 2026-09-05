@@ -98,6 +98,8 @@ describe TCPServer, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
@@ -112,6 +114,8 @@ describe TCPServer, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
@@ -156,11 +160,13 @@ describe TCPServer, tags: "network" do
 
       TCPSocket.open("127.0.0.1", server.local_address.port) do |client|
         server.accept? do |sock|
-          sock.ipv6_only?.should be_false
+          {% unless flag?(:freebsd) %}
+            sock.ipv6_only?.should be_false
+          {% end %}
 
           # should raise when changing ipv6_only when not applicable
           expect_raises(Socket::Error, /invalid argument/i) do
-            sock.ipv6_only = true
+            sock.ipv6_only = !sock.ipv6_only?
           end
         end
       end
