@@ -87,6 +87,10 @@ _canonicalize_file_path() (
   { cd "$dir" 2>/dev/null >/dev/null && printf '%s/%s\n' "$(pwd -P)" "$file"; }
 )
 
+canonicalize_dir_without_symlinks() {
+  { cd "$1" 2>/dev/null && pwd; }
+}
+
 ##############################################################################
 
 # Based on http://stackoverflow.com/q/370047/641451
@@ -126,7 +130,7 @@ __warning_msg() {
 
 SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
-CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
+CRYSTAL_ROOT="$(canonicalize_dir_without_symlinks "$(dirname "$(dirname "$0")")")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
 export CRYSTAL_PATH="${CRYSTAL_PATH:-./lib:$CRYSTAL_ROOT/src}"
@@ -170,11 +174,6 @@ if ($PARENT_CRYSTAL_EXISTS); then
     export CRYSTAL_CONFIG_LIBRARY_PATH="${CRYSTAL_CONFIG_LIBRARY_PATH:-$CRYSTAL_INSTALLED_LIBRARY_PATH}"
   fi
 fi
-
-# CRYSTAL_PATH has all symlinks resolved. In order to avoid issues with duplicate file
-# paths when the working directory is a symlink, we cd into the current directory
-# with symlinks resolved as well (see https://github.com/crystal-lang/crystal/issues/12969).
-cd "$(realpath "$(pwd)")" || exit
 
 case "$(uname -s)" in
   CYGWIN* | MSYS_NT* | MINGW32_NT* | MINGW64_NT*)
