@@ -1832,9 +1832,9 @@ module Crystal
     it_parses "a : Foo()*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), [Generic.new("Foo".path, [] of ASTNode)] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo()[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), [Generic.new("Foo".path, [] of ASTNode), 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
 
-    it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
-    it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
-    it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
+    it_parses "a = uninitialized Foo; a", [Assign.new("a".var, UninitializedVar.new("a".var, "Foo".path)), "a".var]
+    it_parses "@a = uninitialized Foo", Assign.new("@a".instance_var, UninitializedVar.new("@a".instance_var, "Foo".path))
+    it_parses "@@a = uninitialized Foo", Assign.new("@@a".class_var, UninitializedVar.new("@@a".class_var, "Foo".path))
 
     it_parses "()", Expressions.new([Nop.new] of ASTNode)
     it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode

@@ -431,8 +431,7 @@ module Crystal
                 push_var atomic
                 next_token_skip_space
                 type = parse_bare_proc_type
-                atomic = UninitializedVar.new(atomic, type).at(location).at_end(type)
-                return atomic
+                UninitializedVar.new(atomic, type).at(location).at_end(type)
               else
                 if atomic.is_a?(Var) && !var?(atomic.name)
                   @assigned_vars.push atomic.name
