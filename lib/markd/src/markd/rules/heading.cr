@@ -6,7 +6,7 @@ module Markd::Rule
     SETEXT_HEADING_MARKER = /^(?:=+|-+)[ \t]*$/
 
     def match(parser : Parser, container : Node) : MatchValue
-      if match = match?(parser, ATX_HEADING_MARKER)
+      if (match = match?(parser, ATX_HEADING_MARKER))
         # ATX Heading matched
         parser.advance_next_nonspace
         parser.advance_offset(match[0].size, false)
