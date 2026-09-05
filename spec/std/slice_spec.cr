@@ -23,6 +23,13 @@ private class Spaceship
   end
 end
 
+private struct SliceSpecMutable
+  property number : Int32
+
+  def initialize(@number : Int32)
+  end
+end
+
 private def is_stable_sort(mutable, &block)
   n = 42
   # [Spaceship.new(0), ..., Spaceship.new(n - 1), Spaceship.new(0), ..., Spaceship.new(n - 1)]
@@ -72,6 +79,59 @@ describe "Slice" do
     slice = Slice.new(pointer, 1)
     slice.to_unsafe.should eq(pointer)
     slice.size.should eq(1)
+  end
+
+  describe "#pointer_at" do
+    it "returns the pointer at the normalized index" do
+      slice = Slice[1, 2, 3]
+
+      slice.pointer_at(0).should eq(slice.to_unsafe)
+      slice.pointer_at(1).should eq(slice.to_unsafe + 1)
+      slice.pointer_at(-1).should eq(slice.to_unsafe + 2)
+    end
+
+    it "allows mutating a stored struct" do
+      slice = Slice[SliceSpecMutable.new(1)]
+
+      slice.pointer_at(0).value.number = 2
+
+      slice[0].number.should eq(2)
+    end
+
+    it "raises for an index outside the slice" do
+      slice = Slice[1, 2, 3]
+
+      expect_raises(IndexError) { slice.pointer_at(3) }
+      expect_raises(IndexError) { slice.pointer_at(-4) }
+    end
+  end
+
+  describe "#each_pointer" do
+    it "yields each pointer in order and allows mutating stored structs" do
+      slice = Slice.new(3) { |index| SliceSpecMutable.new(index) }
+      pointers = [] of SliceSpecMutable*
+
+      result = slice.each_pointer do |pointer|
+        pointers << pointer
+        pointer.value.number = pointer.value.number + 1
+      end
+
+      pointers.should eq([
+        slice.to_unsafe,
+        slice.to_unsafe + 1,
+        slice.to_unsafe + 2,
+      ])
+      slice.map(&.number).should eq(Slice[1, 2, 3])
+      result.should be_nil
+    end
+
+    it "does not yield for an empty slice" do
+      yielded = false
+
+      Slice(Int32).empty.each_pointer { yielded = true }
+
+      yielded.should be_false
+    end
   end
 
   it "does []?" do
