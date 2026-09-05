@@ -452,12 +452,17 @@ describe Process do
         value = Process.run(exe, ["pu", "env"], clear_env: true) do |proc|
           proc.output.gets_to_end
         end
+
+        {% if flag?(:win32) %}
+          # Ignore `PROCESSOR_ARCHITECTURE` which ucrt might inject.
+          value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
+        {% end %}
         value.should eq("")
       end
 
       it "clears and sets an environment variable" do
         env = {"FOO" => "bar"}
-        {% if flag?(:win32) && flag?(:gnu) %}
+        {% if flag?(:win32) %}
           # We must pass PATH because otherwise dynamic libraries might not be found.
           env["PATH"] = ENV["PATH"]
         {% end %}
@@ -466,7 +471,7 @@ describe Process do
           proc.output.gets_to_end
         end
 
-        {% if flag?(:win32) && flag?(:gnu) %}
+        {% if flag?(:win32) %}
           # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which ucrt
           # might inject.
           value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
