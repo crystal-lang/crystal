@@ -37,6 +37,19 @@ require "./float/printer"
 #
 # See [`Float` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/floats.html) in the language reference.
 struct Float
+  # Union of all built-in primitive floating-point types.
+  #
+  # Useful for method parameter restrictions that accept any standard IEEE 754 floating-point type
+  # while excluding arbitrary-precision types like `BigFloat`.
+  #
+  # ```
+  # def float_primitive?(x : Float::Primitive)
+  #   true
+  # end
+  #
+  # float_primitive?(1.0_f32) # => true
+  # float_primitive?(2.5_f64) # => true
+  # ```
   alias Primitive = Float32 | Float64
 
   # Negates this value's sign.

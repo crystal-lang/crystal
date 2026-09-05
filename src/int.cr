@@ -65,8 +65,50 @@
 #
 # See [`Integer` literals](https://crystal-lang.org/reference/syntax_and_semantics/literals/integers.html) in the language reference.
 struct Int
+  # Union of all built-in signed integer types.
+  #
+  # Commonly used in method parameter restrictions when an algorithm is only valid
+  # for signed integer numbers.
+  #
+  # ```
+  # def check_negative(x : Int::Signed)
+  #   x < 0
+  # end
+  #
+  # check_negative(-5_i32) # => true
+  # check_negative(10_i64) # => false
+  # ```
   alias Signed = Int8 | Int16 | Int32 | Int64 | Int128
+
+  # Union of all built-in unsigned integer types.
+  #
+  # Commonly used in method parameter restrictions when an algorithm is only valid
+  # for unsigned integer numbers.
+  #
+  # ```
+  # def format_hex(x : Int::Unsigned)
+  #   "0x#{x.to_s(16)}"
+  # end
+  #
+  # format_hex(255_u8)   # => "0xff"
+  # format_hex(1024_u16) # => "0x400"
+  # ```
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64 | UInt128
+
+  # Union of all built-in primitive integer types (`Int::Signed | Int::Unsigned`).
+  #
+  # Useful for type restrictions where any primitive integer is accepted, excluding
+  # arbitrary-precision integers such as `BigInt`.
+  #
+  # ```
+  # def primitive_byte_size(x : Int::Primitive)
+  #   sizeof(typeof(x))
+  # end
+  #
+  # primitive_byte_size(1_i8)   # => 1
+  # primitive_byte_size(1_i32)  # => 4
+  # primitive_byte_size(1_u128) # => 16
+  # ```
   alias Primitive = Signed | Unsigned
 
   # Returns a `Char` that has the unicode codepoint of `self`.
