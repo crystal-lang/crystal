@@ -1,11 +1,11 @@
 # :nodoc:
 abstract class YAML::Parser
-  def initialize(content : String | IO)
-    @pull_parser = PullParser.new(content)
+  def initialize(content : String | IO, options = Options.new)
+    @pull_parser = PullParser.new(content, options)
   end
 
-  def self.new(content, &)
-    parser = new(content)
+  def self.new(content, options = Options.new, &)
+    parser = new(content, options)
     yield parser ensure parser.close
   end
 
