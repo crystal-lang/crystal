@@ -29,6 +29,11 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     false
   end
 
+  def visit(node : Prepend)
+    node.hook_expansions.try &.each &.accept self
+    false
+  end
+
   def visit(node : Macro)
     false
   end

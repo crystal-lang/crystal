@@ -799,6 +799,10 @@ module Crystal
           end
         when 'r'
           case next_char
+          when 'e'
+            if char_sequence?('p', 'e', 'n', 'd')
+              return check_ident_or_keyword(:prepend, start)
+            end
           when 'i'
             if char_sequence?('v', 'a', 't', 'e')
               return check_ident_or_keyword(:private, start)
