@@ -4087,23 +4087,19 @@ class String
       return
     end
 
-    yielded = 0
-    byte_offset = 0
+    single_byte_optimizable = single_byte_optimizable?
 
-    reader = Char::Reader.new(self)
-    reader.each do |char|
-      if char == separator
-        piece_bytesize = reader.pos - byte_offset
-        yield String.new(to_unsafe + byte_offset, piece_bytesize) unless remove_empty && piece_bytesize == 0
-        yielded += 1
-        byte_offset = reader.pos + reader.current_char_width
-        break if limit && yielded + 1 == limit
+    if separator.ascii?
+      split_byte_index(separator.ord.to_u8!, limit, remove_empty: remove_empty) do |index, count|
+        piece_size = single_byte_optimizable ? count : 0
+        yield unsafe_byte_slice_string(index, count, piece_size)
+      end
+    else
+      split_byte_index(separator, limit, remove_empty: remove_empty) do |index, count|
+        piece_size = single_byte_optimizable ? count : 0
+        yield unsafe_byte_slice_string(index, count, piece_size)
       end
     end
-
-    piece_bytesize = bytesize - byte_offset
-    return if remove_empty && piece_bytesize == 0
-    yield String.new(to_unsafe + byte_offset, piece_bytesize)
   end
 
   # Makes an `Array` by splitting the string on *separator* (and removing instances of *separator*).
@@ -4176,11 +4172,23 @@ class String
       return
     end
 
+    separator_bytesize = separator.bytesize
+    single_byte_optimizable = single_byte_optimizable?
+
+    # separator is an ASCII character
+    if separator_bytesize == 1
+      byte = separator.to_unsafe[0]
+      if byte < 0x80
+        split_byte_index(byte, limit, remove_empty: remove_empty) do |index, count|
+          piece_size = single_byte_optimizable ? count : 0
+          yield unsafe_byte_slice_string(index, count, piece_size)
+        end
+        return
+      end
+    end
+
     yielded = 0
     byte_offset = 0
-    separator_bytesize = separator.bytesize
-
-    single_byte_optimizable = single_byte_optimizable?
 
     i = 0
     stop = bytesize - separator.bytesize + 1
@@ -4326,6 +4334,48 @@ class String
       yield self[yielded..-1]
       yielded += 1
     end
+  end
+
+  private def split_byte_index(separator : UInt8, limit = nil, *, remove_empty = false, &block : Int32, Int32 -> _) : Nil
+    last_byte_offset = 0
+
+    scan_byte_index(separator) do |index|
+      piece_bytesize = index - last_byte_offset
+      unless remove_empty && piece_bytesize == 0
+        yield last_byte_offset, piece_bytesize
+      end
+
+      last_byte_offset = index + 1
+      if limit
+        limit -= 1
+        break if limit <= 1
+      end
+    end
+
+    piece_bytesize = bytesize - last_byte_offset
+    unless remove_empty && piece_bytesize == 0
+      yield last_byte_offset, piece_bytesize
+    end
+  end
+
+  private def split_byte_index(separator : Char, limit = nil, *, remove_empty = false, &block : Int32, Int32 -> _) : Nil
+    yielded = 0
+    byte_offset = 0
+
+    reader = Char::Reader.new(self)
+    reader.each do |char|
+      if char == separator
+        piece_bytesize = reader.pos - byte_offset
+        yield byte_offset, piece_bytesize unless remove_empty && piece_bytesize == 0
+        yielded += 1
+        byte_offset = reader.pos + reader.current_char_width
+        break if limit && yielded + 1 == limit
+      end
+    end
+
+    piece_bytesize = bytesize - byte_offset
+    return if remove_empty && piece_bytesize == 0
+    yield byte_offset, piece_bytesize
   end
 
   # Returns an array of the string split into lines.
@@ -4913,6 +4963,18 @@ class String
       matches << match
     end
     matches
+  end
+
+  # Yields the byte indices of all occurrences of *search* in the string.
+  # Used by the `Char` and `String` overloads of `#split`.
+  #
+  # *offset* must be within `0..bytesize` and *search* should be an ASCII code
+  # point.
+  private def scan_byte_index(search : UInt8, offset = 0, & : Int32 ->) : Nil
+    while index = byte_index(search, offset)
+      yield index
+      offset = index + 1
+    end
   end
 
   # Yields the byte indices of all occurrences of *search* in the string.
