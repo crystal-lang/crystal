@@ -106,28 +106,29 @@ build() {
   case $ARCH in
     i386)
       with_build_env 'make crystal threads=1'
-      with_build_env 'SPEC_SPLIT="0%4" make std_spec threads=1 junit_output=.junit/std_spec.0.xml'
-      with_build_env 'SPEC_SPLIT="1%4" make std_spec threads=1 junit_output=.junit/std_spec.1.xml'
-      with_build_env 'SPEC_SPLIT="2%4" make std_spec threads=1 junit_output=.junit/std_spec.2.xml'
-      with_build_env 'SPEC_SPLIT="3%4" make std_spec threads=1 junit_output=.junit/std_spec.3.xml'
+      with_build_env 'SPEC_SPLIT="0%4" make CRYSTAL=.build/crystal std_spec threads=1 junit_output=.junit/std_spec.0.xml'
+      with_build_env 'SPEC_SPLIT="1%4" make CRYSTAL=.build/crystal std_spec threads=1 junit_output=.junit/std_spec.1.xml'
+      with_build_env 'SPEC_SPLIT="2%4" make CRYSTAL=.build/crystal std_spec threads=1 junit_output=.junit/std_spec.2.xml'
+      with_build_env 'SPEC_SPLIT="3%4" make CRYSTAL=.build/crystal std_spec threads=1 junit_output=.junit/std_spec.3.xml'
 
       parts=16
       i=0
       while [ $i -lt $parts ]; do
-        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make compiler_spec threads=1 junit_output=.junit/compiler_spec.$i.xml"
+        with_build_env "CRYSTAL_SPEC_COMPILER_THREADS=1 SPEC_SPLIT=\"$i%$parts\" make CRYSTAL=.build/crystal compiler_spec threads=1 junit_output=.junit/compiler_spec.$i.xml"
         i=$((i + 1))
       done
 
-      with_build_env 'make primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
-      with_build_env 'make docs threads=1'
+      with_build_env 'make CRYSTAL=.build/crystal primitives_spec threads=1 junit_output=.junit/primitives_spec.xml'
+      with_build_env 'make CRYSTAL=.build/crystal docs threads=1'
       ;;
     *)
-      with_build_env 'make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
+      with_build_env 'make crystal'
+      with_build_env 'make CRYSTAL=.build/crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"'
       ;;
   esac
 
-  with_build_env 'make samples'
-  with_build_env 'CRYSTAL_OPTS=--debug make samples'
+  with_build_env 'make -C samples CRYSTAL=../.build/crystal'
+  with_build_env 'CRYSTAL_OPTS=--debug make -C samples CRYSTAL=../.build/crystal'
 }
 
 format() {
