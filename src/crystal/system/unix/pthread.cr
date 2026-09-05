@@ -293,7 +293,18 @@ module Crystal::System::Thread
       LibC.pthread_threadid_np(@system_handle, out tid)
       sem_name = "/CRYSTAL/#{tid}" # limited to PSNAMLEN chars (31)
       @semaphore = LibC.sem_open(sem_name, LibC::O_CREAT | LibC::O_EXCL, 0o644, 0)
-      raise RuntimeError.from_errno("sem_open") if @semaphore == Pointer(LibC::SemT).new(-1.to_u64!) # LibC::SEM_FAILED
+
+      # can't use LibC::SEM_FAILED because it would create a runtime global that
+      # must be initialized and protected using crystal/once... that depends on
+      # this method
+      sem_failed =
+        {% if flag?(:darwin) || flag?(:solaris) %}
+          Pointer(LibC::SemT).new(-1.to_u64!)
+        {% else %}
+          Pointer(LibC::SemT).null
+        {% end %}
+
+      raise RuntimeError.from_errno("sem_open") if @semaphore == sem_failed
       LibC.sem_unlink(sem_name)
     {% else %}
       if LibC.sem_init(pointerof(@semaphore), 0, 0) == -1
