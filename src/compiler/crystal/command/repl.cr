@@ -10,7 +10,7 @@ class Crystal::Command
     parse_with_crystal_opts do |opts|
       opts.banner = "Usage: crystal i [options] [programfile] [arguments]\n\nOptions:"
 
-      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+      opts.on("-D", "--define FLAG", "Define a compile-time flag") do |flag|
         repl.program.flags << flag
       end
 
