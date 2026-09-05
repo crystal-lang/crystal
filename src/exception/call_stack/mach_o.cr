@@ -13,15 +13,13 @@ struct Exception::CallStack
   DEBUG_ABBREV   = "__debug_abbrev"
   DEBUG_INFO     = "__debug_info"
 
-  @@image_slide : LibC::Long?
+  @@base_address = LibC::Long.new(0)
 
   protected def self.load_debug_info_impl : Nil
-    locate_dsym_bundle do |image|
-      read_dwarf_sections(image)
+    if dsym = locate_dsym_bundle
+      load_base_address
+      preload_dwarf_sections(dsym)
     end
-  rescue ex
-    @@dwarf_line_numbers = nil
-    @@dwarf_function_names = nil
   end
 
   # DWARF uses fixed addresses but Darwin loads executables at a random
@@ -30,7 +28,7 @@ struct Exception::CallStack
   #
   # See https://en.wikipedia.org/wiki/Address_space_layout_randomization
   protected def self.decode_address(ip)
-    ip.address - image_slide
+    ip.address &- @@base_address
   end
 
   # Searches the companion dSYM bundle with the DWARF sections for the
@@ -38,54 +36,41 @@ struct Exception::CallStack
   # or within a `foo.dSYM` bundle for a program named `foo`.
   #
   # See <http://wiki.dwarfstd.org/index.php?title=Apple%27s_%22Lazy%22_DWARF_Scheme> for details.
-  private def self.locate_dsym_bundle(&)
-    program = Process.executable_path
-    return unless program
+  private def self.locate_dsym_bundle
+    return unless path = Process.executable_path
 
     files = {
-      "#{program}.dSYM/Contents/Resources/DWARF/#{File.basename(program)}",
-      "#{program}.dwarf",
+      "#{path}.dSYM/Contents/Resources/DWARF/#{File.basename(path)}",
+      "#{path}.dwarf",
     }
 
-    files.each do |dwarf|
-      next unless File.exists?(dwarf)
+    files.each do |dwarf_path|
+      next unless File.exists?(dwarf_path)
 
-      Crystal::System::MachO.open(program) do |mach_o|
-        Crystal::System::MachO.open(dwarf) do |dsym|
-          if dsym.uuid == mach_o.uuid
-            return yield dsym
-          end
-        end
+      Crystal::System::MachO.open(path) do |mach_o|
+        dsym = Crystal::System::MachO.open(dwarf_path)
+        return dsym if dsym.try(&.uuid) == mach_o.uuid
       end
     end
-
-    nil
   end
 
-  # The address offset at which the program was loaded at.
-  private def self.image_slide
-    @@image_slide ||= search_image_slide
-  end
-
-  private def self.search_image_slide
+  # Determine the address offset at which the program was loaded at.
+  private def self.load_base_address : Nil
     buffer = GC.malloc_atomic(LibC::PATH_MAX).as(UInt8*)
     size = LibC::PATH_MAX.to_u32
 
     if LibC._NSGetExecutablePath(buffer, pointerof(size)) == -1
       buffer = GC.malloc_atomic(size).as(UInt8*)
-      if LibC._NSGetExecutablePath(buffer, pointerof(size)) == -1
-        return LibC::Long.new(0)
-      end
+      return if LibC._NSGetExecutablePath(buffer, pointerof(size)) == -1
     end
 
     program = File.realpath(String.new(buffer))
 
     LibC._dyld_image_count.times do |i|
       if program == File.realpath(String.new(LibC._dyld_get_image_name(i)))
-        return LibC._dyld_get_image_vmaddr_slide(i)
+        @@base_address = LibC._dyld_get_image_vmaddr_slide(i)
+        return
       end
     end
-
-    LibC::Long.new(0)
   end
 end
