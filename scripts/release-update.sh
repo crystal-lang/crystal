@@ -44,6 +44,8 @@ if [ "${minor_branch}" != "${previous_release%.*}" ]; then
       s/\[[0-9.]+, /[/
       s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/
     }" .github/workflows/forward-compatibility.yml
+
+  sed -i -E "s/min_compiler_version = \"[0-9.]+\"/min_compiler_version = \"${min_forward_compat_version%.*}.0\"/" src/prelude.cr
 fi
 
 ##
