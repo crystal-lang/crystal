@@ -452,6 +452,11 @@ describe Process do
         value = Process.run(exe, ["pu", "env"], clear_env: true) do |proc|
           proc.output.gets_to_end
         end
+
+        {% if flag?(:win32) %}
+          # Ignore `PROCESSOR_ARCHITECTURE` which WOW64 might inject.
+          value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
+        {% end %}
         value.should eq("")
       end
 
@@ -466,8 +471,8 @@ describe Process do
           proc.output.gets_to_end
         end
 
-        {% if flag?(:win32) && flag?(:gnu) %}
-          # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which ucrt
+        {% if flag?(:win32) %}
+          # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which WOW64
           # might inject.
           value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
         {% end %}
