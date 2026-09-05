@@ -3,19 +3,25 @@ require "char/reader"
 require "../../support/string"
 
 private def assert_invalid_byte_sequence(bytes, *, file = __FILE__, line = __LINE__)
-  reader = Char::Reader.new(String.new bytes)
-  reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
-  reader.current_char_width.should eq(1), file: file, line: line
-  reader.error.should eq(bytes[0]), file: file, line: line
-end
+  reader = Char::Reader.new("#{String.new(bytes)}Z")
+  bytes.each_with_index do |byte, i|
+    if byte.zero?
+      reader.current_char.should eq('\0'), file: file, line: line
+      reader.current_char?.should eq('\0'), file: file, line: line
+      reader.error.should be_nil, file: file, line: line
+    else
+      reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
+      reader.current_char?.should eq(Char::REPLACEMENT), file: file, line: line
+      reader.error.should eq(byte), file: file, line: line
+    end
+    reader.current_char_width.should eq(1), file: file, line: line
+    reader.pos.should eq(i), file: file, line: line
+    reader.has_next?.should be_true, file: file, line: line
 
-private def assert_reads_at_end(bytes, char, *, file = __FILE__, line = __LINE__)
-  str = String.new bytes
-  reader = Char::Reader.new(str, pos: bytes.size)
-  reader.previous_char.should eq(char), file: file, line: line
-  reader.current_char.should eq(char), file: file, line: line
-  reader.current_char_width.should eq(bytes.size), file: file, line: line
-  reader.pos.should eq(0), file: file, line: line
+    reader.next_char
+  end
+
+  reader.current_char.should eq('Z'), file: file, line: line
   reader.error.should be_nil, file: file, line: line
 end
 
@@ -24,71 +30,165 @@ private def assert_invalid_byte_sequence_at_end(bytes, *, file = __FILE__, line 
   reader = Char::Reader.new(str, pos: bytes.size)
   reader.previous_char
   reader.current_char.should eq(Char::REPLACEMENT), file: file, line: line
+  reader.current_char?.should eq(Char::REPLACEMENT), file: file, line: line
   reader.current_char_width.should eq(1), file: file, line: line
   reader.pos.should eq(bytes.size - 1), file: file, line: line
   reader.error.should eq(bytes[-1]), file: file, line: line
 end
 
+private def assert_at_end(reader)
+  reader.current_char.should eq '\0'
+  reader.current_char?.should be_nil
+  reader.pos.should eq reader.string.bytesize
+
+  reader.has_next?.should be_false
+
+  reader.next_char?.should be_nil
+  expect_raises IndexError do
+    reader.next_char
+  end
+  expect_raises IndexError do
+    reader.peek_next_char
+  end
+end
+
+private def assert_at_start(reader)
+  reader.pos.should eq 0
+
+  reader.has_previous?.should be_false
+
+  reader.previous_char?.should be_nil
+  expect_raises IndexError do
+    reader.previous_char
+  end
+end
+
+private def assert_current_char(reader, char)
+  reader.current_char.should eq char
+  reader.current_char?.should eq char
+  reader.current_char_width.should eq char.bytesize
+
+  reader.pos.should be < reader.string.bytesize
+  reader.has_next?.should be_true
+end
+
+private def assert_next_char(reader, char)
+  reader.has_next?.should be_true
+  next_pos = reader.pos + reader.current_char_width
+  reader_dup = reader.dup
+  reader_dup2 = reader.dup
+
+  reader.next_char.should eq char
+  reader.pos.should eq next_pos
+
+  reader_dup.next_char?.should eq char
+  reader_dup.pos.should eq next_pos
+
+  reader_dup2.pos = next_pos
+
+  assert_current_char(reader, char)
+  assert_current_char(reader_dup, char)
+  assert_current_char(reader_dup2, char)
+
+  reader
+end
+
+private def assert_previous_char(reader, char)
+  reader.has_previous?.should be_true
+  start_pos = reader.pos
+  reader_dup = reader.dup
+  reader_dup2 = reader.dup
+
+  reader.previous_char.should eq char
+  reader.pos.should eq start_pos - reader.current_char_width
+
+  reader_dup.previous_char?.should eq char
+  reader_dup.pos.should eq reader.pos
+
+  reader_dup2.pos = reader.pos
+
+  assert_current_char(reader, char)
+  assert_current_char(reader_dup, char)
+  assert_current_char(reader_dup2, char)
+
+  reader
+end
+
 describe "Char::Reader" do
-  it "iterates through empty string" do
-    reader = Char::Reader.new("")
-    reader.pos.should eq(0)
-    reader.current_char.ord.should eq(0)
-    reader.error.should be_nil
-    reader.has_next?.should be_false
+  describe ".new" do
+    it "starts at pos" do
+      reader = Char::Reader.new("há日本語", pos: 9)
+      reader.pos.should eq(9)
+      reader.current_char.should eq('語')
+    end
 
-    expect_raises IndexError do
-      reader.next_char
+    it "starts at end" do
+      reader = Char::Reader.new(at_end: "")
+      reader.pos.should eq(0)
+      reader.current_char.should eq '\0'
+      reader.has_previous?.should be_false
+      reader.has_next?.should be_false
     end
   end
 
-  it "iterates through string of size one" do
-    reader = Char::Reader.new("a")
-    reader.pos.should eq(0)
-    reader.current_char.should eq('a')
-    reader.has_next?.should be_true
-    reader.next_char.ord.should eq(0)
-    reader.has_next?.should be_false
+  describe "scenarios" do
+    it "iterates through empty string" do
+      reader = Char::Reader.new("")
+      reader.error.should be_nil
 
-    expect_raises IndexError do
-      reader.next_char
+      # FIXME: current_char_width on an empty string should always be 0. There is no current char.
+      reader.current_char_width.should eq 1
+      assert_at_end(reader)
+      assert_at_start(reader)
+
+      reader.pos = 0
+      expect_raises IndexError do
+        reader.pos = 1
+      end
     end
-  end
 
-  it "iterates through chars" do
-    reader = Char::Reader.new("há日本語")
-    reader.pos.should eq(0)
-    reader.current_char.ord.should eq(104)
-    reader.has_next?.should be_true
+    it "iterates through empty string at_end" do
+      reader = Char::Reader.new(at_end: "")
+      reader.error.should be_nil
 
-    reader.next_char.ord.should eq(225)
+      reader.current_char_width.should eq 0
+      assert_at_end(reader)
+      assert_at_start(reader)
 
-    reader.pos.should eq(1)
-    reader.current_char.ord.should eq(225)
-
-    reader.next_char.ord.should eq(26085)
-    reader.next_char.ord.should eq(26412)
-    reader.next_char.ord.should eq(35486)
-    reader.has_next?.should be_true
-
-    reader.next_char.ord.should eq(0)
-    reader.has_next?.should be_false
-
-    expect_raises IndexError do
-      reader.next_char
+      reader.pos = 0
+      expect_raises IndexError do
+        reader.pos = 1
+      end
     end
-  end
 
-  it "peeks next char" do
-    reader = Char::Reader.new("há日本語")
-    reader.peek_next_char.ord.should eq(225)
-  end
+    it "iterates through string of size one" do
+      reader = Char::Reader.new("a")
+      assert_at_start(reader)
+      assert_current_char(reader, 'a')
 
-  it "sets pos" do
-    reader = Char::Reader.new("há日本語")
-    reader.pos = 1
-    reader.pos.should eq(1)
-    reader.current_char.ord.should eq(225)
+      reader.next_char.should eq '\0'
+
+      assert_at_end(reader)
+    end
+
+    it "iterates through chars" do
+      reader = Char::Reader.new("há日本語")
+      reader.pos.should eq(0)
+      assert_current_char(reader, 'h')
+      reader = assert_next_char(reader, 'á')
+      reader.pos.should eq 1
+
+      reader = assert_next_char(reader, '日')
+      reader.pos.should eq 3
+      reader = assert_next_char(reader, '本')
+      reader = assert_next_char(reader, '語')
+      reader.has_next?.should be_true
+
+      reader.next_char.should eq '\0'
+      reader.has_next?.should be_false
+
+      assert_at_end(reader)
+    end
   end
 
   describe "#each" do
@@ -106,129 +206,75 @@ describe "Char::Reader" do
       reader.each do |char|
         fail "reader each shouldn't yield on empty string"
       end.should be_nil
+
+      reader = Char::Reader.new(at_end: "")
+      reader.each do |char|
+        fail "reader each shouldn't yield on empty string"
+      end.should be_nil
     end
 
     it "checks bounds after block" do
-      string = "f"
+      string = "abc"
       reader = Char::Reader.new(string)
+      chars = [] of Char
       reader.each do |c|
-        c.should eq 'f'
+        chars << c
         reader.next_char
       end
+      chars.should eq ['a', 'c']
     end
-  end
-
-  it "starts at end" do
-    reader = Char::Reader.new(at_end: "")
-    reader.pos.should eq(0)
-    reader.current_char.ord.should eq(0)
-    reader.has_previous?.should be_false
-    reader.has_next?.should be_false
-  end
-
-  it "gets previous char (ascii)" do
-    reader = Char::Reader.new(at_end: "hello")
-    reader.pos.should eq(4)
-    reader.current_char.should eq('o')
-    reader.has_previous?.should be_true
-    reader.has_next?.should be_true
-
-    reader.previous_char.should eq('l')
-    reader.has_next?.should be_true
-    reader.previous_char.should eq('l')
-    reader.previous_char.should eq('e')
-    reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
-
-    expect_raises IndexError do
-      reader.previous_char
-    end
-  end
-
-  it "gets previous char (unicode)" do
-    reader = Char::Reader.new(at_end: "há日本語")
-    reader.pos.should eq(9)
-    reader.current_char.should eq('語')
-    reader.has_previous?.should be_true
-    reader.has_next?.should be_true
-
-    reader.previous_char.should eq('本')
-    reader.has_next?.should be_true
-    reader.previous_char.should eq('日')
-    reader.previous_char.should eq('á')
-    reader.previous_char.should eq('h')
-    reader.has_previous?.should be_false
-  end
-
-  it "starts at pos" do
-    reader = Char::Reader.new("há日本語", pos: 9)
-    reader.pos.should eq(9)
-    reader.current_char.should eq('語')
-  end
-
-  it "#current_char?" do
-    reader = Char::Reader.new("há日本語")
-    reader.current_char?.should eq('h')
-    reader.next_char
-    reader.current_char?.should eq('á')
-    reader.next_char
-    reader.current_char?.should eq('日')
-    reader.next_char
-    reader.current_char?.should eq('本')
-    reader.next_char
-    reader.current_char?.should eq('語')
-    reader.next_char
-    reader.current_char?.should be_nil
-    reader.previous_char
-    reader.current_char?.should eq('語')
-  end
-
-  it "#next_char?" do
-    reader = Char::Reader.new("há日本語")
-    reader.next_char?.should eq('á')
-    reader.pos.should eq(1)
-    reader.next_char?.should eq('日')
-    reader.pos.should eq(3)
-    reader.next_char?.should eq('本')
-    reader.pos.should eq(6)
-    reader.next_char?.should eq('語')
-    reader.pos.should eq(9)
-    reader.next_char?.should be_nil
-    reader.pos.should eq(12)
-    reader.next_char?.should be_nil
-    reader.pos.should eq(12)
-  end
-
-  it "#previous_char?" do
-    reader = Char::Reader.new("há日本語", pos: 12)
-    reader.previous_char?.should eq('語')
-    reader.pos.should eq(9)
-    reader.previous_char?.should eq('本')
-    reader.pos.should eq(6)
-    reader.previous_char?.should eq('日')
-    reader.pos.should eq(3)
-    reader.previous_char?.should eq('á')
-    reader.pos.should eq(1)
-    reader.previous_char?.should eq('h')
-    reader.pos.should eq(0)
-    reader.previous_char?.should be_nil
-    reader.pos.should eq(0)
-  end
-
-  it "errors on invalid UTF-8" do
-    {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
-      assert_invalid_byte_sequence Bytes{{ bytes }}
-    {% end %}
   end
 
   describe "#previous_char" do
-    it "reads on valid UTF-8" do
-      {% for bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
-        assert_reads_at_end Bytes{{ bytes }}, {{ char }}
+    it "gets previous char (ascii)" do
+      reader = Char::Reader.new(at_end: "hello")
+      reader.pos.should eq(4)
+      reader.current_char.should eq('o')
+
+      reader = assert_previous_char(reader, 'l')
+      reader = assert_previous_char(reader, 'l')
+      reader = assert_previous_char(reader, 'e')
+      reader = assert_previous_char(reader, 'h')
+
+      assert_at_start(reader)
+    end
+
+    it "gets previous char (unicode)" do
+      reader = Char::Reader.new(at_end: "há日本語")
+      reader.pos.should eq(9)
+      reader.current_char.should eq('語')
+
+      reader = assert_previous_char(reader, '本')
+      reader = assert_previous_char(reader, '日')
+      reader = assert_previous_char(reader, 'á')
+      reader = assert_previous_char(reader, 'h')
+
+      assert_at_start(reader)
+    end
+  end
+
+  describe "UTF-8 decoding" do
+    it "parses valid UTF-8 sequences" do
+      {% for _bytes, char in VALID_UTF8_BYTE_SEQUENCES %}
+        reader = Char::Reader.new(at_end: ">#{{{ char.id.stringify }}}<")
+        assert_previous_char(reader, {{ char }})
+
+        reader.pos = 0
+        assert_next_char(reader, {{ char }})
       {% end %}
     end
 
-    it "errors on invalid UTF-8" do
+    it "errors on invalid UTF-8 sequences (next)" do
+      {% for bytes in INVALID_UTF8_BYTE_SEQUENCES %}
+        assert_invalid_byte_sequence Bytes{{ bytes }}
+      {% end %}
+    end
+
+    # NOTE: We're not using INVALID_UTF8_BYTE_SEQUENCES because we're reading
+    # backwards. Some of the standard invalid byte sequences end with a zero
+    # byte, which is considered valid when reading backwards.
+    # Also this tests a couple more edge cases.
+    it "errors on invalid UTF-8 sequences (previous)" do
       assert_invalid_byte_sequence_at_end Bytes[0x80]
       assert_invalid_byte_sequence_at_end Bytes[0xbf]
       assert_invalid_byte_sequence_at_end Bytes[0xc0]
