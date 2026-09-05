@@ -82,6 +82,7 @@ ifeq ($(LLVM_VERSION),)
 LLVM_CONFIG  ?=
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version))
 endif
+LLVM_HOST_TARGET ?= $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --host-target))
 
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
@@ -318,7 +319,7 @@ rc: ## Write compiler resource script to standard output
 	echo             VALUE "ProductName",      "Crystal"& \
 	echo             VALUE "ProductVersion",   "$(ver_full)"& \
 	echo             VALUE "FileVersion",      "$(ver_full)"& \
-	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"& \
+	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_HOST_TARGET), $(LLVM_HOST_TARGET))"& \
 	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"& \
 	echo             VALUE "InternalName",     "crystal.exe"& \
 	echo             VALUE "OriginalFilename", "crystal.exe"& \

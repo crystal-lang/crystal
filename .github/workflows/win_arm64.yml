@@ -3,13 +3,17 @@
 
 name: Windows ARM64 CI
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  workflow_call:
+    inputs:
+      arch:
+        required: true
+        type: string
+    outputs:
+      artifact-id:
+        value: ${{ jobs.build-stage1.outputs.artifact-id }}
 
 permissions: {}
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
   SPEC_SPLIT_DOTS: 160
@@ -19,18 +23,10 @@ env:
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
 jobs:
-  aarch64-windows-deps:
-    name: Build dependencies
-    uses: ./.github/workflows/win_build_libs.yml
-    with:
-      arch: aarch64
-      runs-on: windows-11-vs2026-arm
-      llvm_version: "22.1.8"
-      llvm_targets: "X86;AArch64"
-
-  aarch64-windows-release:
-    needs: [aarch64-windows-deps]
+  build-stage1:
     runs-on: windows-11-vs2026-arm
+    outputs:
+      artifact-id: ${{ steps.upload-stage1-compiler.outputs.artifact-id }}
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -124,10 +120,12 @@ jobs:
           Add-Content $env:GITHUB_ENV "CRYSTAL_PATH=lib;$(pwd)\src"
           Add-Content $env:GITHUB_ENV 'CRYSTAL_CONFIG_PATH=lib;$ORIGIN\src'
           Add-Content $env:GITHUB_ENV 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\lib'
+          Add-Content $env:GITHUB_ENV "LLVM_HOST_TARGET=$env:INPUTS_LLVM_HOST_TARGET"
           Add-Content $env:GITHUB_ENV "LLVM_VERSION=$env:INPUTS_LLVM_VERSION"
           Add-Content $env:GITHUB_ENV "LLVM_TARGETS=$env:INPUTS_LLVM_TARGETS"
           Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=$env:INPUTS_LLVM_LDFLAGS"
         env:
+          INPUTS_LLVM_HOST_TARGET: aarch64-windows-msvc
           INPUTS_LLVM_VERSION: ${{ env.CI_LLVM_VERSION }}
           INPUTS_LLVM_TARGETS: ${{ env.CI_LLVM_TARGETS }}
           INPUTS_LLVM_LDFLAGS: ${{ env.CI_LLVM_LDFLAGS }}
@@ -155,6 +153,7 @@ jobs:
 
       - name: Upload Crystal binaries
         uses: actions/upload-artifact@v7
+        id: upload-stage1-compiler
         with:
-          name: crystal
+          name: crystal-aarch64-stage1
           path: crystal
