@@ -508,6 +508,12 @@ class Crystal::CodeGenVisitor
     # using the original invocation
     set_current_debug_location node if @debug.line_numbers? && fun_type.nil?
 
+    # The `sret` slot goes before all other arguments, `self` included
+    if target_def && internal_sret?(target_def)
+      sret_pointer = alloca llvm_type(target_def.type)
+      call_args = [sret_pointer] + call_args
+    end
+
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
       @last = invoke func, call_args, invoke_out_block, rescue_block
@@ -563,7 +569,9 @@ class Crystal::CodeGenVisitor
       when .no_return?
         unreachable
       when .passed_by_value?
-        if @needs_value
+        if sret_pointer
+          @last = sret_pointer
+        elsif @needs_value
           union = alloca llvm_type(type)
           store @last, union
           @last = union
@@ -579,6 +587,8 @@ class Crystal::CodeGenVisitor
   def set_call_attributes(node : Call, target_def, self_type, is_closure, fun_type)
     if external = target_def.c_calling_convention?
       set_call_attributes_external(node, external)
+    elsif internal_sret?(target_def)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet, llvm_context, llvm_type(target_def.type))
     else
       # Non-external methods/functions have no arguments attributes
     end
@@ -630,5 +640,11 @@ class Crystal::CodeGenVisitor
 
   def sret?(abi_info)
     abi_info.return_type.attr == LLVM::Attribute::StructRet
+  end
+
+  # Externals follow the C ABI (`abi_info`) and primitives are inlined at
+  # their call sites, so neither uses `sret`
+  def internal_sret?(target_def : Def) : Bool
+    !target_def.c_calling_convention? && !target_def.body.is_a?(Primitive) && large_aggregate?(target_def.type?)
   end
 end
