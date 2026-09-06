@@ -143,6 +143,18 @@ class File
       type.symlink?
     end
 
+    def inspect(io : IO) : Nil
+      io << "File::Info("
+      io << "type=" << type
+      io << ", size=" << size
+      io << ", permissions=" << permissions
+      io << ", flags=" << flags
+      io << ", modification_time=" << modification_time
+      io << ", owner_id=" << owner_id
+      io << ", group_id=" << group_id
+      io << ")"
+    end
+
     # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
     #
     # ```
