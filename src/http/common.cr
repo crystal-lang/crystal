@@ -531,6 +531,7 @@ module HTTP
     string
   end
 
+  # :nodoc:
   def self.validate_version(version : String) : String
     if HTTP::SUPPORTED_VERSIONS.includes?(version)
       version
