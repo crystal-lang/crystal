@@ -16,7 +16,7 @@ require "./ip_socket"
 class TCPSocket < IPSocket
   {% begin %}
     # Creates a new `TCPSocket`, waiting to be connected.
-    def self.new(family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+    def self.new(family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
       super(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
     end
   {% end %}
@@ -27,7 +27,7 @@ class TCPSocket < IPSocket
     # You may limit the DNS resolution time with `dns_timeout` and limit the
     # connection time to the remote server with `connect_timeout`. Both values
     # must be in seconds (integers or floats).
-    def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+    def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
       Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
         super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
         connect(addrinfo, timeout: connect_timeout) do |error|
@@ -57,7 +57,7 @@ class TCPSocket < IPSocket
     #
     # NOTE: On Windows, the handle must have been created with
     # `WSA_FLAG_OVERLAPPED`.
-    def initialize(*, fd : Handle, family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+    def initialize(*, fd : Handle, family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
       super fd, family, Type::STREAM, Protocol::TCP, blocking
     end
   {% end %}

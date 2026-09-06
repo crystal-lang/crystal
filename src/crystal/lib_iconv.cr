@@ -10,9 +10,7 @@ require "c/stddef"
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#internationalization-conversion
 @[Link("iconv")]
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  @[Link(dll: "iconv-2.dll")]
-{% end %}
+@[Link(dll: "iconv-2.dll")]
 lib LibIconv
   type IconvT = Void*
 

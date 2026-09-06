@@ -45,9 +45,7 @@ require "crystal/tracing"
 # * libgc (8.2.0+; earlier versions require a patch for MT support)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-runtime-libraries
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  @[Link(dll: "gc.dll")]
-{% end %}
+@[Link(dll: "gc.dll")]
 lib LibGC
   {% unless flag?(:win32) %}
     {% pkg_config_name = ((ann = LibGC.annotations(Link).find(&.["pkg_config"])) && ann["pkg_config"]) || ((ann = LibGC.annotations(Link).find(&.[0])) && ann[0]) %}

@@ -166,7 +166,7 @@ class File < IO::FileDescriptor
     #
     # NOTE: On macOS files are always opened in blocking mode because non-blocking
     # FIFO files don't work — the OS exhibits issues with readiness notifications.
-    def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+    def self.new(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil)
       new_internal filename, mode, perm, encoding, invalid, blocking
     end
   {% end %}
@@ -516,7 +516,7 @@ class File < IO::FileDescriptor
     # permissions may be set using the *perm* parameter.
     #
     # See `self.new` for what *mode* can be.
-    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : self
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : self
       new_internal(filename.to_s, mode, perm, encoding, invalid, blocking)
     end
   {% end %}
@@ -527,7 +527,7 @@ class File < IO::FileDescriptor
     # file as an argument, the file will be automatically closed when the block returns.
     #
     # See `self.new` for what *mode* can be.
-    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+    def self.open(filename : Path | String, mode = "r", perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, @[Deprecated] blocking = nil, &)
       open_internal(filename.to_s, mode, perm, encoding, invalid, blocking) { |file| yield file }
     end
   {% end %}
@@ -552,7 +552,7 @@ class File < IO::FileDescriptor
     #
     # File.read("non-existent") # raises File::NotFoundError
     # ```
-    def self.read(filename : Path | String, encoding = nil, invalid = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : String
+    def self.read(filename : Path | String, encoding = nil, invalid = nil, @[Deprecated] blocking = nil) : String
       open_internal(filename, "r", blocking: blocking) do |file|
         if encoding
           file.set_encoding(encoding, invalid: invalid)
@@ -583,7 +583,7 @@ class File < IO::FileDescriptor
     # end
     # array # => ["foo", "bar"]
     # ```
-    def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil, &)
+    def self.each_line(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil, &)
       open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
         file.each_line(chomp: chomp) do |line|
           yield line
@@ -599,7 +599,7 @@ class File < IO::FileDescriptor
     # File.write("foobar", "foo\nbar")
     # File.read_lines("foobar") # => ["foo", "bar"]
     # ```
-    def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil) : Array(String)
+    def self.read_lines(filename : Path | String, encoding = nil, invalid = nil, chomp = true, @[Deprecated] blocking = nil) : Array(String)
       lines = [] of String
       open_internal(filename, "r", encoding: encoding, invalid: invalid, blocking: blocking) do |file|
         file.each_line(chomp: chomp) do |line|
@@ -628,7 +628,7 @@ class File < IO::FileDescriptor
     # (the result of invoking `to_s` on *content*).
     #
     # See `self.new` for what *mode* can be.
-    def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated] {% end %} blocking = nil)
+    def self.write(filename : Path | String, content, perm = DEFAULT_CREATE_PERMISSIONS, encoding = nil, invalid = nil, mode = "w", @[Deprecated] blocking = nil)
       open_internal(filename, mode, perm, encoding: encoding, invalid: invalid, blocking: blocking) do |file|
         case content
         when Bytes

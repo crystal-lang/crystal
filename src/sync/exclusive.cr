@@ -34,27 +34,15 @@ module Sync
   class Exclusive(T)
     include Lockable
 
-    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-      @lock = uninitialized ReferenceStorage(Mutex)
-    {% else %}
-      @lock = uninitialized Mutex
-    {% end %}
+    @lock = uninitialized ReferenceStorage(Mutex)
 
     def initialize(@value : T, type : Type = :checked)
-      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-        @lock = uninitialized ReferenceStorage(Mutex)
-        Mutex.unsafe_construct(pointerof(@lock), type)
-      {% else %}
-        @lock = Mutex.new(type)
-      {% end %}
+      @lock = uninitialized ReferenceStorage(Mutex)
+      Mutex.unsafe_construct(pointerof(@lock), type)
     end
 
     private def lock : Mutex
-      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-        @lock.to_reference
-      {% else %}
-        @lock
-      {% end %}
+      @lock.to_reference
     end
 
     # Locks the mutex and yields the value. The lock is released before
