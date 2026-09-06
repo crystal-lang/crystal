@@ -5,8 +5,7 @@ require "./enums"
 # * libyaml
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
-@[Link("yaml", pkg_config: "yaml-0.1")]
-@[Link(dll: "yaml.dll")]
+@[Link("yaml", pkg_config: "yaml-0.1", dll: "yaml.dll")]
 lib LibYAML
   alias Int = LibC::Int
 

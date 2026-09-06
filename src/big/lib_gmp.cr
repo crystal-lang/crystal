@@ -5,8 +5,7 @@
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#big-numbers
 {% if flag?(:win32) && !flag?(:gnu) %}
-  @[Link("mpir")]
-  @[Link(dll: "mpir.dll")]
+  @[Link("mpir", dll: "mpir.dll")]
 {% else %}
   @[Link("gmp")]
 {% end %}

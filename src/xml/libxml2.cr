@@ -9,8 +9,7 @@ require "./save_options"
 # * libxml2
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
-@[Link("xml2", pkg_config: "libxml-2.0")]
-@[Link(dll: "libxml2.dll")]
+@[Link("xml2", pkg_config: "libxml-2.0", dll: "libxml2.dll")]
 {% if flag?("win32") %}
   @[Link("bcrypt")]
 {% end %}

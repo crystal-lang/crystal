@@ -3,8 +3,7 @@
 # * libpcre
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#regular-expression-engine
-@[Link("pcre", pkg_config: "libpcre")]
-@[Link(dll: "pcre.dll")]
+@[Link("pcre", pkg_config: "libpcre", dll: "pcre.dll")]
 lib LibPCRE
   alias Int = LibC::Int
 

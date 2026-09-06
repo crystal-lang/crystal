@@ -103,10 +103,8 @@ abstract class OpenSSL::SSL::Socket < IO
       raise OpenSSL::Error.new("SSL_new")
     end
 
-    bio = begin
-      @bio = uninitialized ReferenceStorage(BIO)
-      BIO.unsafe_construct(pointerof(@bio), io)
-    end
+    @bio = uninitialized ReferenceStorage(BIO)
+    bio = BIO.unsafe_construct(pointerof(@bio), io)
 
     LibSSL.ssl_set_bio(@ssl, bio, bio)
   end

@@ -3,8 +3,7 @@
 # * zlib
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
-@[Link("z")]
-@[Link(dll: "zlib1.dll")]
+@[Link("z", dll: "zlib1.dll")]
 lib LibZ
   alias Char = LibC::Char
   alias Int = LibC::Int

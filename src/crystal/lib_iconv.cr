@@ -9,8 +9,7 @@ require "c/stddef"
 # * libiconv-gnu
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#internationalization-conversion
-@[Link("iconv")]
-@[Link(dll: "iconv-2.dll")]
+@[Link("iconv", dll: "iconv-2.dll")]
 lib LibIconv
   type IconvT = Void*
 

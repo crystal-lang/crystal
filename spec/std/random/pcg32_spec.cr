@@ -253,11 +253,9 @@ describe "Random::PCG32" do
 
   it "#split_internal" do
     rng0 = Random::PCG32.new(123_u64, 456_u64)
-    rng1 = begin
-      buf = uninitialized ReferenceStorage(Random::PCG32)
-      Random::PCG32.unsafe_construct(pointerof(buf), rng0)
-      buf.to_reference
-    end
+    buf = uninitialized ReferenceStorage(Random::PCG32)
+    Random::PCG32.unsafe_construct(pointerof(buf), rng0)
+    rng1 = buf.to_reference
     rng0.split_internal(rng1)
     rng0.next_u.should eq(3152259133_u64)
     rng1.next_u.should eq(2489095755_u64)

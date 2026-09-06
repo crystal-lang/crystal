@@ -10,8 +10,7 @@
     {% llvm_targets = env("LLVM_TARGETS") || (lines && lines[1]) %}
     {% llvm_ldflags = env("LLVM_LDFLAGS") || (lines && lines[2]) %}
 
-    @[Link("llvm")]
-    @[Link(dll: "LLVM-C.dll")]
+    @[Link("llvm", dll: "LLVM-C.dll")]
     lib LibLLVM
     end
   {% else %}
