@@ -47,7 +47,9 @@ struct Exception::CallStack
            {% else %}
              Pointer(Void).new(LibUnwind.get_ip(context))
            {% end %}
-      bt << ip
+      # the last IP is often a NULL pointer on linux-gnu, or maybe it's
+      # libunwind; in any case it's invalid, so we we skip it
+      bt << ip unless ip.null?
 
       {% if flag?(:gnu) && flag?(:i386) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
@@ -110,16 +112,19 @@ struct Exception::CallStack
 
   private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
-      if @@loaded
-        pc = CallStack.decode_address(repeated_frame.ip)
-        if name = decode_function_name(pc)
-          file, line, column = Exception::CallStack.decode_line_number(pc)
-          if file && file != "??"
-            Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
-            return
-          end
-        end
-      end
+      # TODO: refactor .decode_function_name and .decode_line_number to return
+      # slices to static memory instead of allocating individual String, so we
+      # can decode a frame safely in the segfault handler
+      # if @@loaded
+      #   pc = CallStack.decode_address(repeated_frame.ip)
+      #   if name = decode_function_name(pc)
+      #     file, line, column = Exception::CallStack.decode_line_number(pc)
+      #     if file && file != "??"
+      #       Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
+      #       return
+      #     end
+      #   end
+      # end
     {% end %}
 
     unsafe_decode_frame(repeated_frame.ip) do |offset, sname, fname|

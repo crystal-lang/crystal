@@ -1,95 +1,44 @@
 require "crystal/dwarf"
 
 struct Exception::CallStack
-  @@dwarf_line_numbers : Crystal::DWARF::LineNumbers?
-  @@dwarf_function_names : Array(Tuple(LibC::SizeT, LibC::SizeT, String))?
+  @@dwarf = Crystal::DWARF::Backtraces.new
 
+  protected def self.preload_dwarf_sections(program) : Nil
+    program.section?(DEBUG_ABBREV) { |bytes, _| @@dwarf.debug_abbrev = bytes }
+    program.section?(DEBUG_INFO) { |bytes, _| @@dwarf.debug_info = bytes }
+    program.section?(DEBUG_LINE) { |bytes, _| @@dwarf.debug_line = bytes }
+    program.section?(DEBUG_LINE_STR) { |bytes, _| @@dwarf.debug_line_str = bytes }
+    program.section?(DEBUG_STR) { |bytes, _| @@dwarf.debug_str = bytes }
+    @@dwarf.build_caches
+  end
+
+  # OPTIMIZE: return bytes instead of allocating a string
   protected def self.decode_line_number(pc)
-    if ln = @@dwarf_line_numbers
-      if row = ln.find(pc)
-        return {row.path, row.line, row.column}
+    if result = @@dwarf.lookup_line_number(pc)
+      directory, file, line, column = result
+      unless directory.empty? && file.empty?
+        path =
+          if directory.empty?
+            String.new(file)
+          else
+            separator = Path.separators(Path::Kind.native).first
+            bytesize = directory.size + separator.bytesize + file.size
+            String.build(bytesize) do |io|
+              io.write(directory)
+              io << separator
+              io.write(file)
+            end
+          end
+        return {path, line.to_i32, column.to_i32}
       end
     end
     {"??", 0, 0}
   end
 
+  # OPTIMIZE: return bytes instead of allocating a string
   protected def self.decode_function_name(pc)
-    if fn = @@dwarf_function_names
-      fn.each do |(low_pc, high_pc, function_name)|
-        return function_name if low_pc <= pc <= high_pc
-      end
-    end
-  end
-
-  protected def self.read_dwarf_sections(image, base_address = 0_u64) : Nil
-    line_strings = image.section?(DEBUG_LINE_STR) do |bytes, _|
-      Crystal::DWARF::Strings.new(bytes)
-    end
-
-    strings = image.section?(DEBUG_STR) do |bytes, _|
-      Crystal::DWARF::Strings.new(bytes)
-    end
-
-    image.section?(DEBUG_LINE) do |bytes, _|
-      io = IO::Memory.new(bytes)
-      @@dwarf_line_numbers = Crystal::DWARF::LineNumbers.new(io, base_address, strings, line_strings)
-    end
-
-    abbrev_tables = {} of Int64 => Array(Crystal::DWARF::Abbrev)
-    image.section?(DEBUG_ABBREV) do |bytes, _|
-      io = IO::Memory.new(bytes)
-      while (offset = io.pos.to_i64) < bytes.size
-        abbrev_tables[offset] = Crystal::DWARF::Abbrev.read(io)
-      end
-    end
-
-    image.section?(DEBUG_INFO) do |bytes, offset|
-      io = IO::Memory.new(bytes)
-      names = [] of {LibC::SizeT, LibC::SizeT, String}
-
-      while io.pos < bytes.size
-        info = Crystal::DWARF::Info.new(io, offset)
-
-        if abbrev = abbrev_tables[info.debug_abbrev_offset]?
-          info.abbreviations = abbrev
-        end
-
-        parse_function_names_from_dwarf(info, strings, line_strings) do |low_pc, high_pc, name|
-          names << {low_pc + base_address, high_pc + base_address, name}
-        end
-      end
-
-      @@dwarf_function_names = names
-    end
-  end
-
-  protected def self.parse_function_names_from_dwarf(info, strings, line_strings, &)
-    info.each do |code, abbrev, attributes|
-      next unless abbrev && abbrev.tag.subprogram?
-      name = low_pc = high_pc = nil
-
-      attributes.each do |(at, form, value)|
-        case at
-        when Crystal::DWARF::AT::DW_AT_name
-          value = strings.try(&.decode(value.as(UInt32 | UInt64))) if form.strp?
-          value = line_strings.try(&.decode(value.as(UInt32 | UInt64))) if form.line_strp?
-          name = value.as(String)
-        when Crystal::DWARF::AT::DW_AT_low_pc
-          low_pc = value.as(LibC::SizeT)
-        when Crystal::DWARF::AT::DW_AT_high_pc
-          if form.addr?
-            high_pc = value.as(LibC::SizeT)
-          elsif value.responds_to?(:to_i)
-            high_pc = low_pc.as(LibC::SizeT) + value.to_i
-          end
-        else
-          # Not an attribute we care
-        end
-      end
-
-      if low_pc && high_pc && name
-        yield low_pc, high_pc, name
-      end
+    if bytes = @@dwarf.lookup_function_name(pc)
+      String.new(bytes)
     end
   end
 end
