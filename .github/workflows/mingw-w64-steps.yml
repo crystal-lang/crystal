@@ -146,20 +146,17 @@ jobs:
       - name: Run compiler specs
         shell: msys2 {0}
         run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make compiler_spec
+          make compiler_spec CRYSTAL=.build/crystal
 
       - name: Run interpreter specs
         shell: msys2 {0}
         run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make interpreter_spec
+          make interpreter_spec CRYSTAL=.build/crystal
 
       - name: Run primitives specs
         shell: msys2 {0}
         run: |
-          export CRYSTAL_SPEC_COMPILER_BIN="$(which crystal.exe)"
-          make -o .build/crystal.exe primitives_spec # we know the compiler is fresh; do not rebuild it here
+          make -o .build/crystal.exe primitives_spec CRYSTAL=.build/crystal.exe # we know the compiler is fresh; do not rebuild it here
         env:
           SPEC_FLAGS: --tag=~external_commands # skip exec_external_command spec because it doesn't work with this setup
 
