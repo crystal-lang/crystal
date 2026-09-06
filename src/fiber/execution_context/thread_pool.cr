@@ -128,7 +128,12 @@ class Fiber
             end
 
             @mutex.synchronize do
-              @pool.push pointerof(parked)
+              # pthread_cond_wait happens to return zero without being signaled
+              # (Darwin targets at least), so we make sure to only add the
+              # thread to the pool once:
+              unless parked.linked?
+                @pool.push pointerof(parked)
+              end
             end
 
             if thread == @main_thread || {% flag?(:win32) && Crystal::EventLoop.has_constant?(:IOCP) %}

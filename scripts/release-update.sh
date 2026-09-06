@@ -44,6 +44,8 @@ if [ "${minor_branch}" != "${previous_release%.*}" ]; then
       s/\[[0-9.]+, /[/
       s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/
     }" .github/workflows/forward-compatibility.yml
+
+  sed -i -E "s/crystal: \">= [0-9.]+\"/crystal: \">= ${min_forward_compat_version%.*}.0\"/" shard.yml
 fi
 
 ##
