@@ -929,8 +929,8 @@ struct Int
 end
 
 struct Int8
-  MIN = -128_i8
-  MAX =  127_i8
+  MIN = -0x80_i8
+  MAX =  0x7f_i8
 
   # Returns an `Int8` by invoking `to_i8` on *value*.
   # See `String#to_i` for more details.
@@ -1115,8 +1115,8 @@ struct Int8
 end
 
 struct Int16
-  MIN = -32768_i16
-  MAX =  32767_i16
+  MIN = -0x8000_i16
+  MAX =  0x7fff_i16
 
   # Returns an `Int16` by invoking `to_i16` on *value*.
   # See `String#to_i` for more details.
@@ -1301,8 +1301,8 @@ struct Int16
 end
 
 struct Int32
-  MIN = -2147483648_i32
-  MAX =  2147483647_i32
+  MIN = -0x80000000_i32
+  MAX =  0x7fffffff_i32
 
   # Returns an `Int32` by invoking `to_i32` on *value*.
   # See `String#to_i` for more details.
@@ -1487,8 +1487,8 @@ struct Int32
 end
 
 struct Int64
-  MIN = -9223372036854775808_i64
-  MAX =  9223372036854775807_i64
+  MIN = -0x80000000_00000000_i64
+  MAX =  0x7fffffff_ffffffff_i64
 
   # Returns an `Int64` by invoking `to_i64` on *value*.
   # See `String#to_i` for more details.
@@ -1674,9 +1674,8 @@ struct Int64
 end
 
 struct Int128
-  # TODO: eventually update to literals once UInt128 bit support is finished
-  MIN = new(1) << 127
-  MAX = ~MIN
+  MIN = -0x80000000_00000000_00000000_00000000_i128
+  MAX =  0x7fffffff_ffffffff_ffffffff_ffffffff_i128
 
   # Returns an `Int128` by invoking `to_i128` on *value*.
   # See `String#to_i` for more details.
@@ -1862,8 +1861,8 @@ struct Int128
 end
 
 struct UInt8
-  MIN =   0_u8
-  MAX = 255_u8
+  MIN =    0_u8
+  MAX = 0xff_u8
 
   # Returns an `UInt8` by invoking `to_u8` on *value*.
   # See `String#to_i` for more details.
@@ -2052,8 +2051,8 @@ struct UInt8
 end
 
 struct UInt16
-  MIN =     0_u16
-  MAX = 65535_u16
+  MIN =      0_u16
+  MAX = 0xffff_u16
 
   # Returns an `UInt16` by invoking `to_u16` on *value*.
   # See `String#to_i` for more details.
@@ -2243,7 +2242,7 @@ end
 
 struct UInt32
   MIN =          0_u32
-  MAX = 4294967295_u32
+  MAX = 0xffffffff_u32
 
   # Returns an `UInt32` by invoking `to_u32` on *value*.
   # See `String#to_i` for more details.
@@ -2432,8 +2431,8 @@ struct UInt32
 end
 
 struct UInt64
-  MIN =                    0_u64
-  MAX = 18446744073709551615_u64
+  MIN =                   0_u64
+  MAX = 0xffffffff_ffffffff_u64
 
   # Returns an `UInt64` by invoking `to_u64` on *value*.
   # See `String#to_i` for more details.
@@ -2622,9 +2621,8 @@ struct UInt64
 end
 
 struct UInt128
-  # TODO: eventually update to literals once UInt128 bit support is finished
-  MIN = new 0
-  MAX = ~MIN
+  MIN =                                     0_u128
+  MAX = 0xffffffff_ffffffff_ffffffff_ffffffff_u128
 
   # Returns an `UInt128` by invoking `to_u128` on *value*.
   # See `String#to_i` for more details.
