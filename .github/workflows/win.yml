@@ -10,7 +10,7 @@ concurrency:
 
 env:
   SPEC_SPLIT_DOTS: 160
-  CI_LLVM_VERSION: "20.1.7"
+  CI_LLVM_VERSION: "23.1.0"
   CI_LLVM_TARGETS: "X86,AArch64"
   CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
@@ -21,7 +21,7 @@ jobs:
     with:
       arch: x86_64
       runs-on: windows-2025-vs2026
-      llvm_version: "20.1.7"
+      llvm_version: "23.1.0"
       llvm_targets: "X86;AArch64"
 
   x86_64-windows-release:
@@ -29,7 +29,7 @@ jobs:
     uses: ./.github/workflows/win_build_portable.yml
     with:
       release: true
-      llvm_version: "20.1.7"
+      llvm_version: "23.1.0"
       llvm_targets: "X86;AArch64"
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
