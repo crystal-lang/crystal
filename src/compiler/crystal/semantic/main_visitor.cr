@@ -262,6 +262,28 @@ module Crystal
       end
 
       instance_type = node.name.type.instance_type
+
+      # Handle generic aliases (`alias Foo(T) = ...`): resolve by
+      # substituting the supplied type arguments into the alias body. The
+      # Generic node's type follows the usual rule: when used inside a
+      # type-args position (restrictions, type declarations) it is the
+      # instance type; outside (value position) it is the metaclass.
+      if instance_type.is_a?(AliasType) && (alias_tv_names = instance_type.type_vars)
+        if alias_tv_names.size != node.type_vars.size
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, alias_tv_names.size
+        end
+        resolved_args = node.type_vars.map do |tv|
+          if tv.is_a?(NumberLiteral)
+            tv.as(TypeVar)
+          else
+            tv.type.virtual_type.as(TypeVar)
+          end
+        end
+        resolved = instance_type.instantiate(resolved_args)
+        node.type = check_type_in_type_args(resolved.virtual_type)
+        return false
+      end
+
       unless instance_type.is_a?(GenericType)
         node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
       end

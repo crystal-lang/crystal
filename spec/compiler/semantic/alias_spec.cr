@@ -8,6 +8,95 @@ describe "Semantic: alias" do
       CRYSTAL
   end
 
+  describe "generic alias" do
+    it "resolves a generic alias used as a metaclass expression" do
+      assert_type(<<-CRYSTAL) { union_of(int32, nil_type).metaclass }
+        alias Maybe(T) = T | Nil
+        Maybe(Int32)
+        CRYSTAL
+    end
+
+    it "resolves a multi-parameter generic alias substituting both type vars" do
+      assert_type(<<-CRYSTAL) { generic_class("TwoTypes", types["String"], types["Int32"]) }
+        class TwoTypes(K, V)
+          def initialize(@k : K, @v : V); end
+        end
+
+        alias StringKeyed(V) = TwoTypes(String, V)
+
+        StringKeyed(Int32).new("a", 1)
+        CRYSTAL
+    end
+
+    it "errors with the wrong number of type arguments" do
+      assert_error <<-CRYSTAL, "wrong number of type vars"
+        alias Pair(K, V) = Tuple(K, V)
+        x : Pair(Int32) = uninitialized Pair(Int32)
+        CRYSTAL
+    end
+
+    it "uses a generic alias as a method argument restriction" do
+      assert_type(<<-CRYSTAL) { int32 }
+        class MyBox(T)
+          def initialize(@value : T); end
+          def value; @value; end
+        end
+
+        alias StringKeyed(V) = MyBox(V)
+
+        def take(x : StringKeyed(Int32))
+          x.value
+        end
+
+        take(MyBox(Int32).new(42))
+        CRYSTAL
+    end
+
+    it "uses a generic alias inside a `forall T` restriction" do
+      assert_type(<<-CRYSTAL) { int32 }
+        alias Boxed(T) = T
+
+        def unbox(x : Boxed(T)) forall T
+          x
+        end
+
+        unbox(1)
+        CRYSTAL
+    end
+
+    it "unifies a generic alias body via forall" do
+      assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
+        class Pair(K, V)
+          def initialize(@k : K, @v : V); end
+          def to_tuple
+            {@k, @v}
+          end
+        end
+
+        alias KV(K, V) = Pair(K, V)
+
+        def take(x : KV(K, V)) forall K, V
+          x.to_tuple
+        end
+
+        take(Pair(Int32, Char).new(1, 'a'))
+        CRYSTAL
+    end
+
+    it "preserves recursive (non-generic) aliases" do
+      result = assert_type(<<-CRYSTAL) { int32 }
+        class Foo(T)
+        end
+
+        alias Alias = Int32 | Foo(Alias)
+        1
+        CRYSTAL
+      mod = result.program
+      a = mod.types["Alias"].as(AliasType)
+      a.aliased_type.should_not be_nil
+    end
+  end
+
   it "declares alias inside type" do
     assert_type(<<-CRYSTAL) { types["Int32"].metaclass }
       alias Foo::Bar = Int32

@@ -224,6 +224,18 @@ class Crystal::Type
             node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
           end
         end
+      when AliasType
+        # A generic alias: validate arity, then instantiate below.
+        alias_type_vars = instance_type.type_vars
+        unless alias_type_vars
+          node.raise "#{instance_type} is not a generic alias, it's a #{instance_type.type_desc}"
+        end
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+        if alias_type_vars.size != node.type_vars.size
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, alias_type_vars.size
+        end
       else
         node.raise "#{instance_type} is not a generic type, it's a #{instance_type.type_desc}"
       end
@@ -299,6 +311,8 @@ class Crystal::Type
           # union types only when the type is instantiated.
           # TODO: check that everything is a type
           MixedUnionType.new(@root.program, type_vars.map(&.as(Type)))
+        elsif instance_type.is_a?(AliasType)
+          instance_type.instantiate(type_vars)
         else
           instance_type.as(GenericType).instantiate(type_vars)
         end
