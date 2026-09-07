@@ -691,9 +691,22 @@ describe "Code gen: closure" do
         fun a(a : -> Int32)
         end
 
-        value = 1
-        p = ->{ value }
-        a(p)
+        # Use ivar (not local var) to bypass compile-time closure detection
+        class Foo
+          @callback : -> Int32
+
+          def initialize
+            value = 1
+            @callback = ->{ value }
+          end
+
+          def callback
+            @callback
+          end
+        end
+
+        foo = Foo.new
+        a(foo.callback)
         CRYSTAL
     end
   end
