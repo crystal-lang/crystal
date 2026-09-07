@@ -2467,6 +2467,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     # Check number autocast but for non-literals
     if arg_type != target_def_arg_type && arg_type.is_a?(IntegerType | FloatType) && target_def_arg_type.is_a?(IntegerType | FloatType)
       primitive_convert(arg, arg_type, target_def_arg_type, checked: false)
+    elsif arg_type.filter_by(target_def_arg_type) == arg_type
+      upcast arg, arg_type, target_def_arg_type
     else
       # We first cast the argument to the def's arg type,
       # which is the external methods' type.
