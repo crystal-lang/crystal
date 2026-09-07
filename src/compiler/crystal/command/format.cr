@@ -28,11 +28,11 @@ class Crystal::Command
         check = true
       end
 
-      opts.on("-i <path>", "--include <path>", "Include path") do |f|
+      opts.on("-i", "--include <path>", "Include path") do |f|
         includes << f
       end
 
-      opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+      opts.on("-e", "--exclude <path>", "Exclude path (default: lib)") do |f|
         excludes << f
       end
 

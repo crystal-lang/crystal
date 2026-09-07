@@ -441,7 +441,7 @@ class Crystal::Command
         end
       end
 
-      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+      opts.on("-D", "--define FLAG", "Define a compile-time flag") do |flag|
         compiler.flags << flag
       end
 
@@ -472,17 +472,17 @@ class Crystal::Command
       end
 
       if cursor_command
-        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+        opts.on("-c", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
           cursor_location = cursor
         end
       end
 
       if dependencies
-        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+        opts.on("-i", "--include <path>", "Include path") do |f|
           includes << f
         end
 
-        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+        opts.on("-e", "--exclude <path>", "Exclude path (default: lib)") do |f|
           excludes << f
         end
 
@@ -491,7 +491,7 @@ class Crystal::Command
         end
       end
 
-      opts.on("-f #{allowed_formats.join("|")}", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
+      opts.on("-f", "--format #{allowed_formats.join("|")}", "Output format: #{allowed_formats[0]} (default), #{allowed_formats[1..].join(", ")}") do |f|
         output_format = f
       end
 
@@ -516,11 +516,11 @@ class Crystal::Command
       end
 
       if path_filter
-        opts.on("-i <path>", "--include <path>", "Include path") do |f|
+        opts.on("-i", "--include <path>", "Include path") do |f|
           includes << f
         end
 
-        opts.on("-e <path>", "--exclude <path>", "Exclude path (default: lib)") do |f|
+        opts.on("-e", "--exclude <path>", "Exclude path (default: lib)") do |f|
           excludes << f
         end
       end
@@ -545,7 +545,7 @@ class Crystal::Command
         opts.on("--no-codegen", "Don't do code generation") do
           compiler.no_codegen = true
         end
-        opts.on("-o FILE", "--output FILE", "Output path. If a directory, the filename is derived from the first source file (default: ./)") do |an_output_filename|
+        opts.on("-o", "--output FILE", "Output path. If a directory, the filename is derived from the first source file (default: ./)") do |an_output_filename|
           opt_output_filename = an_output_filename
           specified_output = true
         end
@@ -699,7 +699,7 @@ class Crystal::Command
     opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None
     end
-    opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+    opts.on("-D", "--define FLAG", "Define a compile-time flag") do |flag|
       compiler.flags << flag
     end
     opts.on("--error-trace", "Show full error trace") do
