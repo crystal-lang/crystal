@@ -63,7 +63,13 @@ class HTTP::Server::RequestProcessor
           remote_address: remote_address, local_address: local_address)
 
         Log.with_context do
-          @handler.call(context)
+          begin
+            @handler.call(context)
+          ensure
+            if output.is_a?(IO::Buffered)
+              output.sync = true
+            end
+          end
         rescue ex : ClientError
           Log.debug(exception: ex.cause) { ex.message }
         rescue ex
