@@ -13,7 +13,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.file?.should be_true
       entry.dir?.should be_false
       entry.filename.should eq("foo.txt")
@@ -24,7 +24,7 @@ describe Compress::Zip do
       entry.extra.should be_empty
       entry.io.gets_to_end.should eq("contents of foo")
 
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("bar.txt")
       entry.io.gets_to_end.should eq("contents of bar")
 
@@ -47,7 +47,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.time.should eq(time)
       entry.extra.should eq(extra)
@@ -80,7 +80,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.compression_method.should eq(Compress::Zip::CompressionMethod::STORED)
       entry.crc32.should eq(crc32)
@@ -88,7 +88,7 @@ describe Compress::Zip do
       entry.uncompressed_size.should eq(text.bytesize)
       entry.io.gets_to_end.should eq(text)
 
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("bar.txt")
       entry.io.gets_to_end.should eq(text)
     end
@@ -130,13 +130,13 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("one/")
       entry.file?.should be_false
       entry.dir?.should be_true
       entry.io.gets_to_end.should eq("")
 
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("two/")
       entry.dir?.should be_true
       entry.io.gets_to_end.should eq("")
@@ -153,7 +153,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.io.gets_to_end.should eq("contents of foo")
     end
@@ -169,7 +169,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.io.gets_to_end.should eq("contents of foo")
     end
@@ -186,7 +186,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.io.gets_to_end.should eq("contents of foo")
     end
@@ -205,7 +205,7 @@ describe Compress::Zip do
     io.rewind
 
     Compress::Zip::Reader.open(io) do |zip|
-      entry = zip.next_entry.not_nil!
+      entry = zip.next_entry.should_not(be_nil)
       entry.filename.should eq("foo.txt")
       entry.io.gets_to_end.should eq(File.read(filename))
     end

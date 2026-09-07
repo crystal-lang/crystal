@@ -12,6 +12,6 @@ raise "wrong endianness" unless IO::ByteFormat::SystemEndian == IO::ByteFormat::
 
 x = Foo.new(1.0_f32)
 # print: x
-# lldb-check: $0 = (x = 1065353216, y = 1, z = "\0\0\x80?")
+# lldb-check: {{(\$0 = )?}}(x = 1065353216, y = 1, z = "\0\0\x80?")
 # gdb-check: $1 = {x = 1065353216, y = 1, z = "\000\000\200?"}
 debugger

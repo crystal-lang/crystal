@@ -43,7 +43,6 @@ end
 def play(strategy0, strategy1)
   strategies = {strategy0, strategy1}
   s = Score.new(0, 0, 0)
-  turn_is_over = false
   current_player = rand(2)
   while s.player + s.this_turn < Win
     action = strategies[current_player].call(s)

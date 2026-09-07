@@ -7,8 +7,7 @@ class Crystal::EventLoop::Polling::FiberEvent
 
   # sleep or select timeout
   def add(timeout : Time::Span) : Nil
-    seconds, nanoseconds = System::Time.monotonic
-    now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+    now = Crystal::System::Time.instant
     @event.wake_at = now + timeout
     EventLoop.current.add_timer(pointerof(@event))
   end

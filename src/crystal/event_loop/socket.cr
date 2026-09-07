@@ -74,6 +74,13 @@ abstract class Crystal::EventLoop
     # and the source address.
     abstract def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
 
+    # Writes up to *count* bytes from the input file *fd* to *socket* starting
+    # from the byte at *offset*, avoiding copying data between the kernel and
+    # user spaces (aka zerocopy).
+    #
+    # Returns the number of bytes sent (up to *count*).
+    abstract def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
+
     # Internal shutdown of the socket. Called after the `Socket` has been marked
     # closed but before calling `#close` to actually close the system socket fd
     # or handle.

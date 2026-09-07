@@ -73,6 +73,19 @@ describe IO::Memory do
       io.@capacity.should_not eq old_capacity
     end
 
+    it "appends to itself even when messing with pos" do
+      io = IO::Memory.new(8)
+      io << "ABCDEF"
+      io.pos = 7
+      io.to_s(io)
+      io.to_s.should eq "ABCDEF\0ABCDEF"
+    end
+
+    it "can't append to itself when read-only" do
+      io = IO::Memory.new(Bytes[1, 2, 3], writable: false)
+      expect_raises(IO::Error, "Read-only stream") { io << io }
+    end
+
     {% if flag?(:without_iconv) %}
       pending "encoding"
     {% else %}
@@ -103,6 +116,23 @@ describe IO::Memory do
         end
       end
     {% end %}
+  end
+
+  describe "#writable?" do
+    it "returns false if underlying buffer is read only" do
+      buffer = Bytes.new(10, read_only: true)
+      IO::Memory.new(buffer).writable?.should be_false
+    end
+
+    it "returns true if underlying buffer isn't read only" do
+      buffer = Bytes.new(10, read_only: false)
+      IO::Memory.new(buffer).writable?.should be_true
+    end
+
+    it "returns false if writable is explicitly set to false" do
+      buffer = Bytes.new(10, read_only: false) # buffer writable
+      IO::Memory.new(buffer, writable: false).writable?.should be_false
+    end
   end
 
   it "reads single line content" do
@@ -326,7 +356,16 @@ describe IO::Memory do
     end
   end
 
-  it "creates from slice, non-writeable" do
+  it "creates from slice, non-writable" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = IO::Memory.new slice, writable: false
+
+    expect_raises(IO::Error, "Read-only stream") do
+      io.print 'z'
+    end
+  end
+
+  it "creates from slice, non-writable (deprecated)" do
     slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
     io = IO::Memory.new slice, writeable: false
 

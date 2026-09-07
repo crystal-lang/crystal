@@ -258,4 +258,15 @@ describe "Semantic: is_a?" do
       end
       CRYSTAL
   end
+
+  it "matches `is_a?(GenericA) && is_a?(GenericB)` when GenericB <= GenericA (#10831)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class A; end
+      class B(T) < A; end
+      class C(T) < B(T); end
+
+      x = C(Int32).new.as(A)
+      x.is_a?(B) && x.is_a?(C)
+      CRYSTAL
+  end
 end

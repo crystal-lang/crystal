@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-tool-macro_code_coverage - generate a macro code coverage report.
 
 == Synopsis
+
 *crystal tool macro_code_coverage* [options] [programfile]
 
 == Description

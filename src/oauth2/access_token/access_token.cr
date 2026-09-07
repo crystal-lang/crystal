@@ -27,6 +27,9 @@ abstract class OAuth2::AccessToken
       end
     end
 
+    unless access_token
+      raise ::JSON::SerializableError.new("Missing access token", "OAuth2::AccessToken", "access_token", *pull.location, cause: nil)
+    end
     access_token = access_token.not_nil!
 
     token_type ||= "bearer"

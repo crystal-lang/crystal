@@ -4,6 +4,9 @@ require "../../crystal/system/print_error"
 struct Exception::CallStack
   skip(__FILE__)
 
+  def self.load_debug_info_impl : Nil
+  end
+
   @[Primitive(:interpreter_call_stack_unwind)]
   protected def self.unwind : Array(Void*)
   end

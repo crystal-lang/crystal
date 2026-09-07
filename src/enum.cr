@@ -509,22 +509,26 @@ abstract struct Enum
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
     {% begin %}
-      # FIXME: There is no `StringLiteral#bytesize` or any other adequate means
-      # to figure out how much space we actually need. Maybe some regex could
-      # work. For now just play it safe.
-      # FIXME: We might want to establish some upper limit in case a member name
-      # is exorbitantly long.
-
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
-      {% max_size = @type.constants.map(&.size).sort.last %}
-      buffer = uninitialized UInt8[{{ max_size * 4 + 1 }}]
+      {%
+        max_charsize = @type.constants.map(&.size).sort.last
+        max_bytesize = if compare_versions(Crystal::VERSION, "1.22.0") >= 0
+                         @type.constants.map(&.bytesize).sort.last
+                       else
+                         # Without `StringLiteral#bytesize` we have no means to figure out how
+                         # much space we actually need. So we calculate the worst case based on
+                         # char size.
+                         max_charsize * 4
+                       end
+      %}
+      buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
       appender = buffer.to_unsafe.appender
       char_counter = 0
       string.each_char do |char|
         next if char == '-' || char == '_'
         char_counter += 1
-        return nil if char_counter > {{max_size}}
+        return nil if char_counter > {{ max_charsize }}
         char.downcase &.each_byte do |byte|
           appender << byte
         end

@@ -7,17 +7,15 @@ param(
 . "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\setup.ps1"
 
 [void](New-Item -Name (Split-Path -Parent $BuildTree) -ItemType Directory -Force)
-Setup-Git -Path $BuildTree -Url https://github.com/crystal-lang/libffi.git -Ref v$Version
+Invoke-WebRequest "https://github.com/libffi/libffi/releases/download/v${Version}/libffi-${Version}.tar.gz" -OutFile libffi.tar.gz
+tar -xzf libffi.tar.gz
+mv libffi-* $BuildTree
+rm libffi.tar.gz
 
 Run-InDirectory $BuildTree {
-    $args = "-DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
-    if ($Dynamic) {
-        $args = "-DBUILD_SHARED_LIBS=ON $args"
-    } else {
-        $args = "-DBUILD_SHARED_LIBS=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded $args"
-    }
-    & $cmake . $args.split(' ')
-    & $cmake --build . --config Release
+    $env:CHERE_INVOKING = 1
+
+    & 'C:\cygwin64\bin\bash.exe' --login "$PSScriptRoot\cygwin-build-ffi.sh" "$(if ($Dynamic) { 1 })"
     if (-not $?) {
         Write-Host "Error: Failed to build libffi" -ForegroundColor Red
         Exit 1
@@ -25,8 +23,8 @@ Run-InDirectory $BuildTree {
 }
 
 if ($Dynamic) {
-    mv -Force $BuildTree\Release\libffi.lib libs\ffi-dynamic.lib
-    mv -Force $BuildTree\Release\libffi.dll dlls\
+    mv -Force $BuildTree\ffi\libffi.lib libs\ffi-dynamic.lib
+    mv -Force $BuildTree\ffi\libffi-8.dll dlls\
 } else {
-    mv -Force $BuildTree\Release\libffi.lib libs\ffi.lib
+    mv -Force $BuildTree\ffi\libffi.lib libs\ffi.lib
 }

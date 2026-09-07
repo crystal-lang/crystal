@@ -177,4 +177,11 @@ describe "Semantic: static array" do
       alias BadArray = Int32[offsetof(Foo, @foo)]
       CRYSTAL
   end
+
+  it "reports arithmetic overflow in static array size argument (#11746)" do
+    assert_error <<-CRYSTAL, "Arithmetic overflow", inject_primitives: true
+      A = 0_u64 - 1_u64
+      b = StaticArray(Int32, A).new
+      CRYSTAL
+  end
 end

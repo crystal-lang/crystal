@@ -11,6 +11,9 @@ require "./sys/types"
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 2
 
+  PTHREAD_CANCEL_ENABLE  = 0
+  PTHREAD_CANCEL_DISABLE = 1
+
   fun pthread_attr_destroy(attr : PthreadAttrT*) : Int
   fun pthread_attr_getstack(addr : PthreadAttrT*, stackaddr : Void**, stacksize : SizeT*) : Int
   fun pthread_condattr_destroy(attr : PthreadCondattrT*) : Int
@@ -36,4 +39,8 @@ lib LibC
   fun pthread_mutex_unlock(mutex : PthreadMutexT*) : Int
   fun pthread_self : PthreadT
   fun pthread_setname_np(PthreadT, Char*) : Int
+
+  # Set cancellability state of current thread to STATE, returning old
+  # state in *OLDSTATE if OLDSTATE is not NULL.
+  fun pthread_setcancelstate(__state : Int, __oldstate : Int*) : Int
 end

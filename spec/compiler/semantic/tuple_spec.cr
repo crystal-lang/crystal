@@ -25,6 +25,20 @@ describe "Semantic: tuples" do
     assert_error "{*{1} || {2, 3}}", "argument to splat must be a tuple, not (Tuple(Int32) | Tuple(Int32, Int32))"
   end
 
+  it "errors if recursive tuple splat resolves to a non-tuple union" do
+    assert_error <<-CRYSTAL, "argument to splat must be a tuple, not (Tuple(Int32) | Tuple(Int32, Int32))"
+      def foo(flag)
+        if flag
+          {1}
+        else
+          {*foo(true), 1}
+        end
+      end
+
+      foo(false)
+      CRYSTAL
+  end
+
   describe "#[](NumberLiteral)" do
     it "types, inbound index" do
       assert_type("{1, 'a'}[0]") { int32 }

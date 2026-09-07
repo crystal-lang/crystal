@@ -146,7 +146,7 @@ lib LibYAML
                                    plain_implicit : Int, quoted_implicit : Int, style : YAML::ScalarStyle) : Int
   fun yaml_alias_event_initialize(event : Event*, anchor : LibC::Char*) : Int
   fun yaml_sequence_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::SequenceStyle) : Int
-  fun yaml_sequence_end_event_initialize(event : Event*)
+  fun yaml_sequence_end_event_initialize(event : Event*) : Int
   fun yaml_mapping_start_event_initialize(event : Event*, anchor : LibC::Char*, tag : LibC::Char*, implicit : Int, style : YAML::MappingStyle) : Int
   fun yaml_mapping_end_event_initialize(event : Event*) : Int
   fun yaml_emitter_emit(emitter : Emitter*, event : Event*) : Int

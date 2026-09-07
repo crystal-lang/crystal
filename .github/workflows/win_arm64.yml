@@ -1,0 +1,160 @@
+# temporary workflow definition for bootstrapping an ARM64 MSVC-based Crystal
+# compiler, to be later merged into `win.yml` and `win_build_portable.yml`
+
+name: Windows ARM64 CI
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+env:
+  SPEC_SPLIT_DOTS: 160
+  CI_SSL_VERSION: "3.5.0"
+  CI_LLVM_VERSION: "22.1.8"
+  CI_LLVM_TARGETS: "X86,AArch64"
+  CI_LLVM_LDFLAGS: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
+
+jobs:
+  aarch64-windows-deps:
+    name: Build dependencies
+    uses: ./.github/workflows/win_build_libs.yml
+    with:
+      arch: aarch64
+      runs-on: windows-11-vs2026-arm
+      llvm_version: "22.1.8"
+      llvm_targets: "X86;AArch64"
+
+  aarch64-windows-release:
+    needs: [aarch64-windows-deps]
+    runs-on: windows-11-vs2026-arm
+    steps:
+      - name: Disable CRLF line ending substitution
+        run: |
+          git config --global core.autocrlf false
+
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: arm64
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        id: install-crystal
+        with:
+          crystal: "1.21.0"
+          arch: "x86_64"
+
+      - name: Download Crystal source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Restore libraries
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            libs/pcre2-8.lib
+            libs/iconv.lib
+            libs/gc.lib
+            libs/ffi.lib
+            libs/z.lib
+            libs/mpir.lib
+            libs/yaml.lib
+            libs/xml2.lib
+            libs/libxml_VERSION
+          key: libs-aarch64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            libs/crypto.lib
+            libs/ssl.lib
+            libs/openssl_VERSION
+          key: libs-openssl-${{ env.CI_SSL_VERSION }}-aarch64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+          fail-on-cache-miss: true
+      - name: Restore DLLs
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            libs/pcre2-8-dynamic.lib
+            libs/iconv-dynamic.lib
+            libs/gc-dynamic.lib
+            libs/ffi-dynamic.lib
+            libs/z-dynamic.lib
+            libs/mpir-dynamic.lib
+            libs/yaml-dynamic.lib
+            libs/xml2-dynamic.lib
+            dlls/pcre2-8.dll
+            dlls/iconv-2.dll
+            dlls/gc.dll
+            dlls/libffi-8.dll
+            dlls/zlib1.dll
+            dlls/mpir.dll
+            dlls/yaml.dll
+            dlls/libxml2.dll
+          key: dlls-aarch64-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
+          fail-on-cache-miss: true
+      - name: Restore OpenSSL DLLs
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            libs/crypto-dynamic.lib
+            libs/ssl-dynamic.lib
+            dlls/libcrypto-3-arm64.dll
+            dlls/libssl-3-arm64.dll
+          key: dlls-openssl-${{ env.CI_SSL_VERSION }}-aarch64-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
+          fail-on-cache-miss: true
+      - name: Restore LLVM DLLs
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            libs/llvm_VERSION
+            libs/llvm-dynamic.lib
+            dlls/LLVM-C.dll
+          key: dlls-llvm-${{ env.CI_LLVM_VERSION }}-aarch64-windows-msvc-${{ hashFiles('etc/win-ci/build-llvm.ps1') }}
+          fail-on-cache-miss: true
+
+      - name: Set up environment
+        run: |
+          Add-Content $env:GITHUB_ENV "CRYSTAL_PATH=lib;$(pwd)\src"
+          Add-Content $env:GITHUB_ENV 'CRYSTAL_CONFIG_PATH=lib;$ORIGIN\src'
+          Add-Content $env:GITHUB_ENV 'CRYSTAL_CONFIG_LIBRARY_PATH=$ORIGIN\lib'
+          Add-Content $env:GITHUB_ENV "LLVM_VERSION=$env:INPUTS_LLVM_VERSION"
+          Add-Content $env:GITHUB_ENV "LLVM_TARGETS=$env:INPUTS_LLVM_TARGETS"
+          Add-Content $env:GITHUB_ENV "LLVM_LDFLAGS=$env:INPUTS_LLVM_LDFLAGS"
+        env:
+          INPUTS_LLVM_VERSION: ${{ env.CI_LLVM_VERSION }}
+          INPUTS_LLVM_TARGETS: ${{ env.CI_LLVM_TARGETS }}
+          INPUTS_LLVM_LDFLAGS: ${{ env.CI_LLVM_LDFLAGS }}
+
+      - name: Cross-compile Crystal
+        run: |
+          cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
+          crystal build --release --cross-compile --target=aarch64-windows-msvc src\compiler\crystal.cr -Di_know_what_im_doing
+          cl crystal.obj /Fecrystal /link /LIBPATH:$(pwd)\libs /INCREMENTAL:NO /STACK:0x800000 /ENTRY:wmainCRTStartup `
+            kernel32.lib ucrt.lib ole32.lib DbgHelp.lib advapi32.lib ws2_32.lib msvcrt.lib ntdll.lib shell32.lib `
+            ffi-dynamic.lib gc-dynamic.lib iconv-dynamic.lib llvm-dynamic.lib pcre2-8-dynamic.lib ssl-dynamic.lib crypto-dynamic.lib xml2-dynamic.lib z-dynamic.lib
+        env:
+          CRYSTAL_DIR: ${{ steps.install-crystal.outputs.path }}
+
+      - name: Gather Crystal binaries
+        run: |
+          mkdir crystal
+          cp crystal.exe crystal/
+          cp src -Destination crystal/ -Recurse
+          mkdir crystal/lib
+          cp libs/* crystal/lib/
+          cp dlls/* crystal/
+          cp README.md crystal/
+          cp LICENSE crystal/
+
+      - name: Upload Crystal binaries
+        uses: actions/upload-artifact@v7
+        with:
+          name: crystal
+          path: crystal

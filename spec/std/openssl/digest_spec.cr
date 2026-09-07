@@ -1,6 +1,6 @@
 require "spec"
 require "../spec_helper"
-require "../../../src/openssl"
+require "openssl"
 
 describe OpenSSL::Digest do
   [

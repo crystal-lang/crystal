@@ -30,20 +30,12 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
   end
 
-  private def system_flock_shared(blocking)
-    raise NotImplementedError.new "Crystal::System::File#system_flock_shared"
+  private def system_lock(blocking, exclusive)
+    raise NotImplementedError.new "Crystal::System::File#system_lock"
   end
 
-  private def system_flock_exclusive(blocking)
-    raise NotImplementedError.new "Crystal::System::File#system_flock_exclusive"
-  end
-
-  private def system_flock_unlock
-    raise NotImplementedError.new "Crystal::System::File#system_flock_unlock"
-  end
-
-  private def flock(op : LibC::FlockOp, blocking : Bool = true)
-    raise NotImplementedError.new "Crystal::System::File#flock"
+  private def system_unlock
+    raise NotImplementedError.new "Crystal::System::File#system_unlock"
   end
 
   private def system_echo(enable : Bool)

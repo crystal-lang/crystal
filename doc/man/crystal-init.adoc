@@ -6,17 +6,19 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-init - Create a a new Crystal project
 
 == Synopsis
+
 *crystal init* TYPE [DIR | NAME DIR]
 
 == Description
 
 TYPE is one of:
 
-*lib*	 Creates a library skeleton +
-*app*	 Creates an application skeleton
+*lib*  Creates a library skeleton +
+*app*  Creates an application skeleton
 
 This initializes the lib/app project folder as a git repository, with a license file, a README file, a shard.yml for use with shards (the Crystal dependency manager), a .gitignore file, and src and spec folders.
 

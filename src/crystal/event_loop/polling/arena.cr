@@ -148,11 +148,9 @@ class Crystal::EventLoop::Polling::Arena(T, BLOCK_BYTESIZE)
   # *index* is out of bounds.
   def free(index : Index, &) : Nil
     at?(index) do |entry|
-      begin
-        yield entry.value.pointer
-      ensure
-        entry.value.free
-      end
+      yield entry.value.pointer
+    ensure
+      entry.value.free
     end
   end
 

@@ -34,7 +34,7 @@ class Compress::Gzip::Header
 
     flg = Flg.new(header[3])
 
-    seconds = IO::ByteFormat::LittleEndian.decode(Int32, header.to_slice[4, 4])
+    seconds = IO::ByteFormat::LittleEndian.decode(UInt32, header.to_slice[4, 4])
     @modification_time = Time.unix(seconds).to_local
 
     _xfl = header[8]

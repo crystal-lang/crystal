@@ -38,7 +38,9 @@ class HTTP::WebSocket::Protocol
     size : Int32,
     final : Bool
 
-  def initialize(@io : IO, masked = false, @sync_close = true)
+  getter protocol : String?
+
+  def initialize(@io : IO, masked = false, @sync_close = true, @protocol : String? = nil)
     @header = uninitialized UInt8[2]
     @mask = uninitialized UInt8[4]
     @mask_offset = 0
@@ -48,6 +50,8 @@ class HTTP::WebSocket::Protocol
   end
 
   class StreamIO < IO
+    getter? closed = false
+
     def initialize(@websocket : Protocol, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Bytes.new(frame_size)
@@ -55,6 +59,7 @@ class HTTP::WebSocket::Protocol
     end
 
     def write(slice : Bytes) : Nil
+      check_open
       return if slice.empty?
 
       count = Math.min(@buffer.size - @pos, slice.size)
@@ -62,7 +67,7 @@ class HTTP::WebSocket::Protocol
       @pos += count
 
       if @pos == @buffer.size
-        flush(final: false)
+        send_frame(final: false)
       end
 
       if count < slice.size
@@ -74,7 +79,7 @@ class HTTP::WebSocket::Protocol
       raise "This IO is write-only"
     end
 
-    def flush(final = true) : Nil
+    private def send_frame(final = false) : Nil
       @websocket.send(
         @buffer[0...@pos],
         @opcode,
@@ -83,6 +88,12 @@ class HTTP::WebSocket::Protocol
       )
       @opcode = Opcode::CONTINUATION
       @pos = 0
+    end
+
+    def close
+      return if closed?
+      @closed = true
+      send_frame(final: true)
     end
   end
 
@@ -97,7 +108,7 @@ class HTTP::WebSocket::Protocol
   def stream(binary = true, frame_size = 1024, &)
     stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
-    stream_io.flush
+    stream_io.close
   end
 
   def send(data : Bytes, opcode : Opcode, flags : Flags = Flags::FINAL, flush : Bool = true) : Nil
@@ -286,7 +297,7 @@ class HTTP::WebSocket::Protocol
     close(CloseCode.new(code), message)
   end
 
-  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new) : self
+  def self.new(host : String, path : String, port : Int32? = nil, tls : HTTP::Client::TLSContext = nil, headers : HTTP::Headers = HTTP::Headers.new, protocols : Enumerable(String)? = nil) : self
     {% if flag?(:without_openssl) %}
       if tls
         raise "WebSocket TLS is disabled because `-D without_openssl` was passed at compile time"
@@ -296,6 +307,7 @@ class HTTP::WebSocket::Protocol
     port ||= tls ? 443 : 80
 
     socket = TCPSocket.new(host, port)
+    accepted_protocol = nil
     begin
       {% if !flag?(:without_openssl) %}
         if tls
@@ -315,6 +327,7 @@ class HTTP::WebSocket::Protocol
       headers["Upgrade"] = "websocket"
       headers["Sec-WebSocket-Version"] = VERSION
       headers["Sec-WebSocket-Key"] = random_key
+      headers["Sec-WebSocket-Protocol"] = protocols.join(",") if protocols && !protocols.empty?
 
       path = "/" if path.empty?
       handshake = HTTP::Request.new("GET", path, headers)
@@ -330,12 +343,23 @@ class HTTP::WebSocket::Protocol
       unless handshake_response.headers["Sec-WebSocket-Accept"]? == challenge_response
         raise Socket::Error.new("Handshake got denied. Server did not verify WebSocket challenge.")
       end
+
+      if protocols && !protocols.empty?
+        if server_protocol = handshake_response.headers["Sec-WebSocket-Protocol"]?
+          unless protocols.includes?(server_protocol)
+            raise Socket::Error.new("Handshake got denied. Server responded with an invalid Sec-WebSocket-Protocol.")
+          end
+          accepted_protocol = server_protocol
+        else
+          raise Socket::Error.new("Handshake got denied. Server did not respond with Sec-WebSocket-Protocol.")
+        end
+      end
     rescue exc
       socket.close
       raise exc
     end
 
-    new(socket, masked: true)
+    new(socket, masked: true, protocol: accepted_protocol)
   end
 
   def self.new(uri : URI | String, headers : HTTP::Headers = HTTP::Headers.new) : self

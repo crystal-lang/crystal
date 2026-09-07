@@ -57,7 +57,7 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/_other_types.html"
   end
 
-  record MainTemplate, body : String, types : Array(Type), project_info : ProjectInfo do
+  record MainTemplate, body : String, types : Array(Type), project_info : ProjectInfo, base_path : String? = nil do
     ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 

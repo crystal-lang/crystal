@@ -4,20 +4,16 @@ require "c/sys/socket"
 require "io/evented"
 
 module Crystal::System::Socket
-  include IO::Evented
-
   alias Handle = Int32
 
   private def initialize_handle(fd, blocking = nil)
   end
 
-  # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     raise NotImplementedError.new "Crystal::System::Socket#system_bind"
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     raise NotImplementedError.new "Crystal::System::Socket#system_listen"
   end
 
@@ -35,6 +31,10 @@ module Crystal::System::Socket
     if LibC.shutdown(fd, LibC::SHUT_WR) != 0
       raise ::Socket::Error.from_errno("shutdown write")
     end
+  end
+
+  private def system_accept : {::Socket::Handle, Bool}?
+    event_loop.accept(self)
   end
 
   private def system_send_buffer_size : Int
@@ -151,11 +151,6 @@ module Crystal::System::Socket
     LibC.isatty(fd) == 1
   end
 
-  private def system_close
-    event_loop.shutdown(self)
-    event_loop.close(self)
-  end
-
   def socket_close
     # Clear the @volatile_fd before actually closing it in order to
     # reduce the chance of reading an outdated fd value
@@ -208,5 +203,13 @@ module Crystal::System::Socket
 
   private def system_tcp_keepalive_count=(val : Int)
     raise NotImplementedError.new("Crystal::System::Socket#system_tcp_keepalive_count=")
+  end
+
+  def self.network_interface_to_index(name : String, & : WasiError ->) : Int
+    raise NotImplementedError.new("Crystal::System::Socket.network_interface_to_index")
+  end
+
+  def self.network_interface_from_index(index : Int, & : WasiError ->) : String
+    raise NotImplementedError.new("Crystal::System::Socket.network_interface_from_index")
   end
 end

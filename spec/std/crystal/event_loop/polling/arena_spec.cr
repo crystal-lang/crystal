@@ -23,9 +23,9 @@ describe Crystal::EventLoop::Polling::Arena do
       called.should eq(1)
 
       pointer.should_not be_nil
-      index.should_not be_nil
+      index = index.should_not be_nil
 
-      arena.get(index.not_nil!) do |ptr|
+      arena.get(index) do |ptr|
         ptr.should eq(pointer)
       end
     end
@@ -33,16 +33,17 @@ describe Crystal::EventLoop::Polling::Arena do
     it "allocates up to capacity" do
       arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
 
-      indexes = 32.times.map do |i|
+      indexes = Array.new(32) do |i|
         arena.allocate_at?(i) { |ptr, _| ptr.value = i }
-      end.to_a
+      end
 
       indexes.size.should eq(32)
 
       indexes.each do |index|
-        arena.get(index.not_nil!) do |pointer|
+        index = index.should_not(be_nil)
+        arena.get(index) do |pointer|
           pointer.should eq(pointer)
-          pointer.value.should eq(index.not_nil!.index)
+          pointer.value.should eq(index.index)
         end
       end
     end
@@ -66,7 +67,7 @@ describe Crystal::EventLoop::Polling::Arena do
       called = 0
 
       2.times do
-        arena.get(index.not_nil!) do |ptr|
+        arena.get(index) do |ptr|
           ptr.should eq(pointer)
           ptr.value.should eq(654321)
           called += 1
@@ -121,7 +122,7 @@ describe Crystal::EventLoop::Polling::Arena do
       2.times do
         ret = arena.get?(index) do |ptr|
           ptr.should eq(pointer)
-          ptr.not_nil!.value.should eq(654321)
+          ptr.should_not(be_nil).value.should eq(654321)
           called += 1
         end
         ret.should be_true

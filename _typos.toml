@@ -25,6 +25,9 @@ RPC_S_CALL_FAILED_DNE = "RPC_S_CALL_FAILED_DNE"
 SEH = "SEH"
 setup_seh_handler = "setup_seh_handler"
 usri4_parms = "usri4_parms"
+msg_controllen = "msg_controllen"
+__crystal_sigfault_handler = "__crystal_sigfault_handler"
+TunkShif = "TunkShif"
 
 [default]
 extend-ignore-re = [
@@ -50,6 +53,11 @@ extend-ignore-re = [
   " ([a-zA-Z.]{8} ){4}->", # src/bit_array.cr
   "[A-z]+[0-9]+", # words including a number are likely some kind of identifier
   "sha256[:-][0-9A-z=]+", # shell.nix
+  "writeable writable", # in src/io/memory.cr
+  "writeable:", # in spec/std/io/memory_spec.cr
+  "File.writeable", # in docs/changelogs/pre-1.0.md
+  # command-line options
+  "FO", # etc/win-ci/windres-rc.sh
 ]
 
 [files]
@@ -58,6 +66,7 @@ extend-exclude = [
   "lib/**",
   "man/**",
   "spec/compiler/semantic/did_you_mean_spec.cr",
+  "spec/std/string_scanner_spec.cr",
   "spec/std/data/**",
   "spec/std/string/grapheme_break_spec.cr",
   "src/compiler/crystal/tools/playground/public/vendor/",

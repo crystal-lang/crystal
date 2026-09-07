@@ -1,12 +1,11 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
+{% unless flag?(:netbsd) || flag?(:openbsd) %}
+  require "c/sys/sendfile"
+{% end %}
 
 module Crystal::System::Socket
-  {% if IO.has_constant?(:Evented) %}
-    include IO::Evented
-  {% end %}
-
   alias Handle = Int32
 
   def self.socket(family, type, protocol, blocking) : Handle
@@ -27,23 +26,44 @@ module Crystal::System::Socket
     {% end %}
   end
 
+  def self.sendfile(sockfd, fd, offset, count, flags)
+    ret = 0
+    sent_bytes = 0_i64
+
+    {% if flag?(:darwin) %}
+      len = LibC::OffT.new(count)
+      ret = LibC.sendfile(fd, sockfd, offset, pointerof(len), nil, 0)
+      sent_bytes = len.to_i64
+    {% elsif flag?(:dragonfly) || flag?(:freebsd) %}
+      ret = LibC.sendfile(fd, sockfd, offset, LibC::SizeT.new(count), nil, out sbytes, flags)
+      sent_bytes = sbytes.to_i64
+    {% elsif flag?(:linux) || flag?(:solaris) %}
+      off = LibC::OffT.new(offset)
+      ret = LibC.sendfile(sockfd, fd, pointerof(off), LibC::SizeT.new(count))
+      sent_bytes = ret.to_i64 unless ret == -1
+    {% else %}
+      Errno.value = Errno::ENOSYS
+      ret = -1
+    {% end %}
+
+    {ret, sent_bytes}
+  end
+
   private def initialize_handle(fd, blocking = nil)
     {% if Crystal::EventLoop.has_constant?(:Polling) %}
       @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX
     {% end %}
   end
 
-  # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  private def system_bind(addr, addrstr, &)
+  private def system_bind(addr, addrstr)
     unless LibC.bind(fd, addr, addr.size) == 0
-      yield ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
+      ::Socket::BindError.from_errno("Could not bind to '#{addrstr}'")
     end
   end
 
-  private def system_listen(backlog, &)
+  private def system_listen(backlog)
     unless LibC.listen(fd, backlog) == 0
-      yield ::Socket::Error.from_errno("Listen failed")
+      ::Socket::Error.from_errno("Listen failed")
     end
   end
 
@@ -176,7 +196,7 @@ module Crystal::System::Socket
   end
 
   private def system_close_on_exec?
-    flags = system_fcntl(LibC::F_GETFD)
+    flags = FileDescriptor.fcntl(fd, LibC::F_GETFD)
     (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
   end
 
@@ -221,11 +241,6 @@ module Crystal::System::Socket
 
   private def system_tty?
     LibC.isatty(fd) == 1
-  end
-
-  private def system_close
-    event_loop.shutdown(self)
-    event_loop.close(self)
   end
 
   def socket_close(&)
@@ -348,4 +363,50 @@ module Crystal::System::Socket
       val
     end
   {% end %}
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    {% if LibC.has_method?(:sendfile) %}
+      case ret = event_loop.sendfile(self, file.fd, offset, count, flags: 0)
+      in Int64
+        ret
+      in Errno
+        if ret == Errno::ETIMEDOUT
+          raise IO::TimeoutError.new("Sendfile timed out", target: self)
+        else
+          raise IO::Error.from_os_error("sendfile", ret, target: self)
+        end
+      end
+    {% else %}
+      # emulate in user-space
+      buf = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+      len = count.clamp(..IO::DEFAULT_BUFFER_SIZE)
+
+      ret = LibC.pread(file.fd, buf, len, offset)
+      raise IO::Error.from_errno("pread", target: file) if ret == -1
+
+      slice = buf.to_slice[0, ret]
+      until slice.empty?
+        sent_bytes = event_loop.write(self, slice)
+        slice += sent_bytes
+      end
+
+      ret.to_i64
+    {% end %}
+  end
+
+  def self.network_interface_to_index(name : String, & : Errno ->) : Int
+    zone_id = LibC.if_nametoindex(name)
+    return zone_id if zone_id != 0
+
+    yield Errno.value
+  end
+
+  def self.network_interface_from_index(index : Int, & : Errno ->) : String
+    buf = uninitialized UInt8[LibC::IF_NAMESIZE]
+    if result = LibC.if_indextoname(index, buf)
+      return String.new(result)
+    end
+
+    yield Errno.value
+  end
 end

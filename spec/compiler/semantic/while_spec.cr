@@ -335,6 +335,14 @@ describe "Semantic: while" do
       CRYSTAL
   end
 
+  it "keeps storage of var assigned only in short-circuited cond branch nilable (#16483)" do
+    assert_type(<<-CRYSTAL) { nilable string }
+      until true || (text = "hello")
+      end
+      text
+      CRYSTAL
+  end
+
   it "finds all while cond assign targets in expressions (#10350)" do
     assert_type(<<-CRYSTAL) { int32 }
       a = 1

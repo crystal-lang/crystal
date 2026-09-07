@@ -11,12 +11,12 @@ private def wait_for(&)
             {% else %}
               5.seconds
             {% end %}
-  now = Time.monotonic
+  now = Time.instant
 
   until yield
     Fiber.yield
 
-    if (Time.monotonic - now) > timeout
+    if now.elapsed > timeout
       raise "server failed to start within #{timeout}"
     end
   end
@@ -46,7 +46,7 @@ def run_server(server, &)
     wait_for { server.listening? }
     wait_until_blocked f
 
-    {% if flag?(:preview_mt) %}
+    {% unless flag?(:without_mt) %}
       # avoids fiber synchronization issues in specs, like closing the server
       # before we properly listen, ...
       sleep 1.millisecond
@@ -84,7 +84,17 @@ def run_handler(handler, &)
       yield client
     ensure
       processor.close
+
+      {% if Fiber.has_constant?(:ExecutionContext) && Crystal::EventLoop.has_constant?(:IoUring) %}
+        # FIXME: flaky workaround to avoid OAuth2::Client specs to fail:
+        #
+        # Error while flushing data to the client (HTTP::Server::ClientError)
+        # Caused by: Closed stream (IO::Error)
+        Fiber.yield
+      {% end %}
+
       server_io.close
+
       if exc = done.receive
         raise exc
       end

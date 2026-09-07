@@ -611,7 +611,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         closure_self = lookup_closured_var?("self")
         if closure_self
           if closure_self.type.passed_by_value?
-            ivar_offset, ivar_size = get_closured_self_pointer(closure_self, target.name, node: node)
+            _, ivar_size = get_closured_self_pointer(closure_self, target.name, node: node)
             pointer_set ivar_size, node: node
           else
             ivar_offset = ivar_offset(closure_self.type, target.name)
@@ -791,8 +791,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def lookup_local_var_or_closured_var(name : String) : LocalVar | ClosuredVar
-    lookup_local_var?(name) ||
+    lookup_local_var?(name, at: @block_level) ||
       lookup_closured_var?(name) ||
+      lookup_local_var?(name, from: @block_level - 1) ||
       raise("BUG: can't find closured var or local var #{name}")
   end
 
@@ -800,19 +801,18 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     lookup_local_var?(name) || raise("BUG: can't find local var #{name}")
   end
 
-  def lookup_local_var?(name : String) : LocalVar?
-    block_level = @block_level
-    while block_level >= 0
-      index = @local_vars.name_to_index?(name, block_level)
-      if index
-        type = @local_vars.type(name, block_level)
-        return LocalVar.new(index, type)
+  def lookup_local_var?(name : String, *, from : Int32 = @block_level) : LocalVar?
+    from.downto(0) do |block_level|
+      if local_var = lookup_local_var?(name, at: block_level)
+        return local_var
       end
-
-      block_level -= 1
     end
+  end
 
-    nil
+  def lookup_local_var?(name : String, *, at block_level : Int32) : LocalVar?
+    if index = @local_vars.name_to_index?(name, block_level)
+      LocalVar.new(index, @local_vars.type(name, block_level))
+    end
   end
 
   def lookup_closured_var(name : String) : ClosuredVar
@@ -1032,7 +1032,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     closured_self = lookup_closured_var?("self")
     if closured_self
-      ivar_offset, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
+      _, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
       pointer_get ivar_size, node: node
     else
       ivar_offset = ivar_offset(scope, node.name)
@@ -2963,8 +2963,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
     if target_while = @while
-      target_while = @while.not_nil!
-
       upcast node, exp_type, target_while.type
 
       jump 0, node: nil

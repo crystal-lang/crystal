@@ -1,0 +1,41 @@
+# mbake configuration file
+# Generated with: mbake init
+
+# Global settings
+debug = false
+verbose = false
+
+# Error message formatting
+gnu_error_format = true
+wrap_error_messages = false
+
+[formatter]
+# Spacing settings - enable proper spacing
+space_around_assignment = true
+space_before_colon = false
+space_after_colon = true
+
+# Line continuation settings
+normalize_line_continuations = true
+max_line_length = 120
+
+# PHONY settings
+auto_insert_phony_declarations = false
+group_phony_declarations = false
+phony_at_top = false
+
+# General settings - enable proper formatting
+remove_trailing_whitespace = true
+ensure_final_newline = true
+normalize_empty_lines = true
+max_consecutive_empty_lines = 2
+fix_missing_recipe_tabs = true
+
+# Conditional formatting settings (Default disabled)
+indent_nested_conditionals = false
+# Indentation settings
+tab_width = 2
+
+# Variable alignment settings
+align_variable_assignments = true
+align_across_comments = false

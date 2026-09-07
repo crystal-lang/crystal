@@ -70,11 +70,16 @@ abstract class Crystal::SyntaxHighlighter
   end
 
   private def slash_is_not_regex(last_token_type type, space_before)
-    return nil if type.nil?
-
-    type.number? || type.const? || type.instance_var? ||
-      type.class_var? || type.op_rparen? ||
-      type.op_rsquare? || type.op_rcurly? || !space_before
+    case type
+    when Nil
+      false
+    when .number?, .const?, .instance_var?, .class_var?, .op_rparen?, .op_rsquare?, .op_rcurly?
+      true
+    when .op_lparen?, .op_lsquare?, .op_lcurly?
+      false
+    else
+      !space_before
+    end
   end
 
   private def highlight_normal_state(lexer, break_on_rcurly = false)
@@ -237,13 +242,18 @@ abstract class Crystal::SyntaxHighlighter
       render :STRING_ARRAY_START, token.raw
       while true
         consume_space_or_newline(lexer)
-        token = lexer.next_string_array_token
+        delimiter_state = token.delimiter_state
+        token = lexer.next_string_token(delimiter_state)
         case token.type
         when .string?
           render :STRING_ARRAY_TOKEN, token.raw
         when .string_array_end?
           render :STRING_ARRAY_END, token.raw
           break
+        when .interpolation_start?
+          render_interpolation do
+            highlight_normal_state lexer, break_on_rcurly: true
+          end
         when .eof?
           if token.delimiter_state.kind.string_array?
             raise "Unterminated string array literal"
@@ -251,7 +261,7 @@ abstract class Crystal::SyntaxHighlighter
             raise "Unterminated symbol array literal"
           end
         else
-          raise "BUG: Shouldn't happen"
+          raise "BUG: Unexpected token type: #{token.type}"
         end
       end
     end

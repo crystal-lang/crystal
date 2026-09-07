@@ -1,12 +1,12 @@
 require "./lib_event2"
 
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   LibEvent2.evthread_use_pthreads
 {% end %}
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
-  struct Event
+  class Event
     include Crystal::EventLoop::Event
 
     VERSION = String.new(LibEvent2.event_get_version)
@@ -21,7 +21,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
     def add(timeout : Time::Span) : Nil
       timeval = LibC::Timeval.new(
-        tv_sec: LibC::TimeT.new(timeout.total_seconds),
+        tv_sec: LibC::TimeT.new(timeout.to_seconds),
         tv_usec: timeout.nanoseconds // 1_000
       )
       LibEvent2.event_add(@event, pointerof(timeval))

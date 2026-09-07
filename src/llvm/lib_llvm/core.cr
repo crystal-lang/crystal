@@ -162,6 +162,7 @@ lib LibLLVM
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Bool)
   fun is_global_constant = LLVMIsGlobalConstant(global_var : ValueRef) : Bool
   fun set_global_constant = LLVMSetGlobalConstant(global_var : ValueRef, is_constant : Bool)
+  fun global_set_metadata = LLVMGlobalSetMetadata(global_var : ValueRef, kind : UInt, md : MetadataRef)
 
   fun delete_function = LLVMDeleteFunction(fn : ValueRef)
   fun set_personality_fn = LLVMSetPersonalityFn(fn : ValueRef, personality_fn : ValueRef)

@@ -1,5 +1,3 @@
-require "set"
-require "colorize"
 require "../syntax/ast"
 
 class Crystal::Command

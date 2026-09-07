@@ -18,7 +18,7 @@ require "c/netdb"
 {% else %}
   @[Link("event", pkg_config: "libevent")]
 {% end %}
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   @[Link("event_pthreads", pkg_config: "libevent_pthreads")]
 {% end %}
 lib LibEvent2
@@ -75,7 +75,7 @@ lib LibEvent2
   fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
   fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
 
-  {% if flag?(:preview_mt) %}
+  {% unless flag?(:without_mt) %}
     fun evthread_use_pthreads : Int
   {% end %}
 end

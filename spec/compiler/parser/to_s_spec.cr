@@ -59,6 +59,7 @@ describe "ASTNode#to_s" do
   expect_to_s %(macro foo\n  %bar = 1\nend)
   expect_to_s %(macro foo\n  %bar = 1; end)
   expect_to_s %(macro foo\n  %bar{1, x} = 1\nend)
+  expect_to_s %(macro foo\n  %bar{}\nend)
   expect_to_s %({% foo %})
   expect_to_s %({{ foo }})
   expect_to_s %({% if foo %}\n  foo_then\n{% end %})
@@ -123,9 +124,9 @@ describe "ASTNode#to_s" do
 
   # 14216
   expect_to_s "def foo(x, **args, &block : _ -> _)\nend"
-  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend", "def foo(x, **args, &block : _ -> _)\nend"
+  expect_to_s "def foo(x, **args, &block : (_ -> _))\nend"
   expect_to_s "def foo(& : ->)\nend"
-  expect_to_s "def foo(& : (->))\nend", "def foo(& : ->)\nend"
+  expect_to_s "def foo(& : (->))\nend"
   expect_to_s "def foo(x : (T -> U) -> V, *args : (T -> U) -> V, y : (T -> U) -> V, **opts : (T -> U) -> V, & : (T -> U) -> V) : ((T -> U) -> V)\nend"
   expect_to_s "foo(x : (T -> U) -> V, W)"
   expect_to_s "foo[x : (T -> U) -> V, W]"
@@ -223,6 +224,16 @@ describe "ASTNode#to_s" do
   expect_to_s %q("#{(1 + 2)}")
   expect_to_s %({(1 + 2) => (3 + 4)})
   expect_to_s %([(1 + 2)] of Int32)
+
+  # Typed constant declarations (#13443)
+  expect_to_s "FOO : Int64 = 123"
+  expect_to_s "FOO : String = \"hey\""
+  expect_to_s %(class Bar\n  CONST : Int32 = 1\nend)
+  expect_to_s %(module Mod\n  NESTED : Float64 = 3.14\nend)
+  expect_to_s "PAIR : Tuple(Int32, String) = {1, \"x\"}"
+  expect_to_s "TYPED : ::Int32 = -5"
+  expect_to_s "::FOO : Int64 = 123"
+  expect_to_s "::Foo::BAR : Int64 = 123"
   expect_to_s %(foo(1, (2 + 3), bar: (4 + 5)))
   expect_to_s %(if (1 + 2\n3)\n  4\nend)
   expect_to_s "%x(whoami)", "`whoami`"
@@ -330,6 +341,9 @@ describe "ASTNode#to_s" do
   expect_to_s %q(`\n\0`), %q(`\n\u0000`)
   expect_to_s %q(`#{1}\n\0`), %q(`#{1}\n\u0000`)
   expect_to_s Call.new("`", Call.new("String".path, "interpolation", "x".var, global: true)), %q(`#{::String.interpolation(x)}`)
+  expect_to_s StringInterpolation.new(["#".string, "{foo}".string] of ASTNode), %q("\#{foo}")
+  expect_to_s StringInterpolation.new([2.int32, " ".string, "#".string, "{".string] of ASTNode), %q("#{2} \#{")
+  expect_to_s StringInterpolation.new(["a".string, "b".string] of ASTNode), %q("ab")
   expect_to_s "macro foo\n{% verbatim do %}1{% end %}\nend"
   expect_to_s Assign.new("x".var, Expressions.new([1.int32, 2.int32] of ASTNode)), "x = (1\n2\n)"
   expect_to_s "foo.*"

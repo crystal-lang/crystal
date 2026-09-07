@@ -1,8 +1,6 @@
 require "spec"
-require "bit_array"
 require "../spec_helper"
 require "big"
-require "random/secure"
 
 struct Crystal::Hasher
   def self.for_test

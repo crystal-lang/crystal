@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-eval - Evaluate a crystal program
 
 == Synopsis
+
 *crystal eval* [options] [source]
 
 == Description
@@ -25,10 +27,10 @@ those tools.
 Generate the output without any symbolic debug symbols.
 *-D* _FLAG_, *--define* _FLAG_::
 Define a compile-time flag. This is useful to conditionally define types, methods, or commands based on flags available at compile time. The default flags are from the target triple given
-with --target-triple or the hosts default, if none is given.
+with `--target-triple` or the hosts default, if none is given.
 *--error-trace*::
 Show full error trace.
-*-O* _LEVEL_::	 Optimization mode: 0 (default), 1, 2, 3. See *OPTIMIZATIONS* for details.
+*-O* _LEVEL_::  Optimization mode: 0 (default), 1, 2, 3. See *OPTIMIZATIONS* for details.
 *--release*::
 Compile in release mode. Equivalent to *-O3 --single-module*
 *-s*, *--stats*::

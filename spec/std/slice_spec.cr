@@ -45,6 +45,28 @@ private def is_stable_sort(mutable, &block)
 end
 
 describe "Slice" do
+  describe ".new" do
+    describe "initializes with default value" do
+      it "integer" do
+        Slice(Int32).new(3, 0).should eq Slice[0, 0, 0]
+        Slice(Int32).new(3, 1).should eq Slice[1, 1, 1]
+      end
+
+      it "float" do
+        Slice(Float32).new(3, 0.0).should eq Slice[0.0, 0.0, 0.0]
+        Slice(Float32).new(3, 1.0).should eq Slice[1.0, 1.0, 1.0]
+      end
+
+      it "pointer" do
+        null = Pointer(Void).null
+        Slice(Pointer(Void)).new(3, null).should eq Slice[null, null, null]
+
+        value = Pointer(Void).new(0x123_u64)
+        Slice(Pointer(Void)).new(3, value).should eq Slice[value, value, value]
+      end
+    end
+  end
+
   it "gets pointer and size" do
     pointer = Pointer.malloc(1, 0)
     slice = Slice.new(pointer, 1)
@@ -105,17 +127,14 @@ describe "Slice" do
   it "does []? with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
 
-    slice1 = slice[1, 2]?
-    slice1.should_not be_nil
-    slice1 = slice1.not_nil!
+    slice1 = slice[1, 2]?.should_not be_nil
     slice1.size.should eq(2)
     slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)
     slice1[1].should eq(3)
 
     slice2 = slice[-1, 1]?
-    slice2.should_not be_nil
-    slice2 = slice2.not_nil!
+    slice2 = slice2.should_not be_nil
     slice2.size.should eq(1)
     slice2.to_unsafe.should eq(slice.to_unsafe + 3)
 
@@ -127,9 +146,7 @@ describe "Slice" do
   it "does []? with range" do
     slice = Slice.new(4) { |i| i + 1 }
 
-    slice1 = slice[1..2]?
-    slice1.should_not be_nil
-    slice1 = slice1.not_nil!
+    slice1 = slice[1..2]?.should_not be_nil
     slice1.size.should eq(2)
     slice1.to_unsafe.should eq(slice.to_unsafe + 1)
     slice1[0].should eq(2)

@@ -196,6 +196,18 @@ describe "Semantic: module" do
     end
   end
 
+  it "errors when a generic instance type alias is used as namespace (#8512)" do
+    assert_error <<-CRYSTAL, "Foo(Int32) can't be used as a namespace"
+      struct Foo(T)
+      end
+
+      alias Bar = Foo(Int32)
+
+      module Bar::X
+      end
+      CRYSTAL
+  end
+
   it "includes generic module with another generic type" do
     assert_type(<<-CRYSTAL) { generic_class("Baz", int32).metaclass }
       module Foo(T)

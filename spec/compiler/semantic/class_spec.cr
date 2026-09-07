@@ -1206,4 +1206,20 @@ describe "Semantic: class" do
       Pointer(Foo(Int32)).malloc(1_u64).value.foo?
       CRYSTAL
   end
+
+  it "doesn't try to instantiate abstract generic struct when iterating subtypes (#9621)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      require "prelude"
+
+      abstract struct Base; end
+      struct A < Base; end
+      struct B < Base; end
+      abstract struct Gen(T) < Base; end
+      struct C < Gen(Int32); end
+
+      [A, B].each &.new
+
+      1
+      CRYSTAL
+  end
 end

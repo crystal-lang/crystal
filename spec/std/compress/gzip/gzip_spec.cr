@@ -34,7 +34,7 @@ describe Compress::Gzip do
     io = new_sample_io
 
     Compress::Gzip::Reader.open(io) do |gzip|
-      header = gzip.header.not_nil!
+      header = gzip.header.should_not(be_nil)
       header.modification_time.should eq(SAMPLE_TIME)
       header.os.should eq(SAMPLE_OS)
       header.extra.should eq(SAMPLE_EXTRA)
@@ -61,7 +61,7 @@ describe Compress::Gzip do
   it "reads file with extra fields from file system" do
     File.open(datapath("test.gz")) do |file|
       Compress::Gzip::Reader.open(file) do |gzip|
-        header = gzip.header.not_nil!
+        header = gzip.header.should_not(be_nil)
         header.modification_time.to_utc.should eq(Time.utc(2012, 9, 4, 22, 6, 5))
         header.os.should eq(3_u8)
         header.extra.should eq(Bytes[1, 2, 3, 4, 5])
@@ -85,7 +85,7 @@ describe Compress::Gzip do
     end
     io.rewind
     Compress::Gzip::Reader.open(io) do |gzip|
-      header = gzip.header.not_nil!
+      header = gzip.header.should_not(be_nil)
       header.modification_time.to_utc.should eq(Time.utc(2012, 9, 4, 22, 6, 5))
       header.os.should eq(3_u8)
       header.extra.should eq(Bytes[1, 2, 3, 4, 5])

@@ -10,6 +10,7 @@ lib LibC
   EALREADY        = 114
   EBADF           =   9
   EBADMSG         =  74
+  EBADR           =  53
   EBUSY           =  16
   ECANCELED       = 125
   ECHILD          =  10

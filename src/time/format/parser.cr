@@ -533,15 +533,12 @@ struct Time::Format
     end
 
     def consume_number_i64?(max_digits)
-      n = 0_i64
       char = current_char
 
-      if char.ascii_number?
-        n = (char - '0').to_i64
-        char = next_char
-      else
-        return nil
-      end
+      return nil unless char.ascii_number?
+
+      n = (char - '0').to_i64
+      char = next_char
 
       max_digits -= 1
 

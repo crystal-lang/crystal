@@ -41,12 +41,13 @@ class UNIXServer < UNIXSocket
     @path = path = path.to_s
     super(Family::UNIX, type)
 
-    system_bind(UNIXAddress.new(path), path) do |error|
+    if error = @fd_lock.reference { system_bind(UNIXAddress.new(path), path) }
       close(delete: false)
       raise error
     end
 
     return if type == Type::DGRAM
+
     listen(backlog) do |error|
       close
       raise error
@@ -84,7 +85,9 @@ class UNIXServer < UNIXSocket
   # Returns the client socket or `nil` if the server is closed after invoking
   # this method.
   def accept? : UNIXSocket?
-    if rs = system_accept
+    return if closed?
+
+    if rs = @fd_lock.read { system_accept }
       sock = UNIXSocket.new(handle: rs[0], type: type, path: @path, blocking: rs[1])
       sock.sync = sync?
       sock

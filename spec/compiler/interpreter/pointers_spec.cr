@@ -292,5 +292,19 @@ describe Crystal::Repl::Interpreter do
         end
       CRYSTAL
     end
+
+    it "autocasts a typed pointer to `Pointer(Void)` in a lib struct (#16649)" do
+      interpret(<<-CRYSTAL).should eq(0xDEAD_u64)
+        lib LibFoo
+          struct S
+            data : Pointer(Void)
+          end
+        end
+
+        s = LibFoo::S.new
+        s.data = Pointer(UInt8).new(0xDEAD_u64)
+        s.data.address
+      CRYSTAL
+    end
   end
 end

@@ -1,4 +1,7 @@
 struct Exception::CallStack
+  def self.load_debug_info_impl : Nil
+  end
+
   def self.decode_address(ip)
     ip
   end

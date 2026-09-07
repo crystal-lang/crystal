@@ -238,10 +238,10 @@ describe "Random::PCG32" do
     rng2 = rng0.split
     rng3 = rng1.split # split of split
 
-    seq0 = 5.times.map { rng0.next_u }.to_a
-    seq1 = 5.times.map { rng1.next_u }.to_a
-    seq2 = 5.times.map { rng2.next_u }.to_a
-    seq3 = 5.times.map { rng3.next_u }.to_a
+    seq0 = Array.new(5) { rng0.next_u }
+    seq1 = Array.new(5) { rng1.next_u }
+    seq2 = Array.new(5) { rng2.next_u }
+    seq3 = Array.new(5) { rng3.next_u }
 
     seq1.should_not eq(seq0)
     seq1.should_not eq(seq2)

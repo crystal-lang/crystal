@@ -7,14 +7,6 @@ end
 
 private CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
 
-private def shell_command(command)
-  {% if flag?(:win32) %}
-    "cmd.exe /c #{Process.quote(command)}"
-  {% else %}
-    "/bin/sh -c #{Process.quote(command)}"
-  {% end %}
-end
-
 describe IO::FileDescriptor do
   describe "#initialize" do
     it "handles closed file descriptor gracefully" do
@@ -28,10 +20,12 @@ describe IO::FileDescriptor do
   end
 
   it "reopen STDIN with the right mode", tags: %w[slow] do
-    code = %q(puts "#{STDIN.blocking} #{STDIN.info.type}")
+    code = %q(print "#{STDIN.blocking} #{STDIN.info.type}")
     compile_source(code) do |binpath|
-      `#{shell_command %(#{Process.quote(binpath)} < #{Process.quote(binpath)})}`.chomp.should eq("true File")
-      `#{shell_command %(echo "" | #{Process.quote(binpath)})}`.chomp.should eq("#{{{ flag?(:win32) }}} Pipe")
+      File.open(binpath) do |input|
+        Process.capture(binpath, input: input).should eq("true File")
+      end
+      Process.capture(binpath, input: Process::Redirect::Pipe).should eq("#{{{ flag?(:win32) }}} Pipe")
     end
   end
 
@@ -45,7 +39,9 @@ describe IO::FileDescriptor do
     it "returns false for standard streams redirected to null device", tags: %w[slow] do
       code = %q(print STDIN.tty?, ' ', STDERR.tty?)
       compile_source(code) do |binpath|
-        `#{shell_command %(#{Process.quote(binpath)} < #{File::NULL} 2> #{File::NULL})}`.should eq("false false")
+        File.open(File::NULL) do |null|
+          Process.capture(binpath, input: null, error: null).should eq("false false")
+        end
       end
     end
   end

@@ -133,7 +133,7 @@ describe "Semantic: new" do
   end
 
   it "errors if using self call in default argument (1)" do
-    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@caps' of My"
       class My
         @name : String
         @caps : String
@@ -153,7 +153,7 @@ describe "Semantic: new" do
   end
 
   it "errors if using self call in default argument (2)" do
-    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@caps' of My"
       class My
         @name : String
         @caps : String
@@ -172,7 +172,7 @@ describe "Semantic: new" do
   end
 
   it "errors if using self call in default argument (3)" do
-    assert_error <<-CRYSTAL, "instance variable '@caps' of My was not initialized directly in all of the 'initialize' methods, rendering it nilable. Indirect initialization is not supported."
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@caps' of My"
       class My
         @name : String
         @caps : String

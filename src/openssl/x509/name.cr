@@ -86,7 +86,7 @@ module OpenSSL::X509
         end
 
         asn1 = LibCrypto.x509_name_entry_get_data(entry)
-        str = LibCrypto.asn1_string_data(asn1)
+        str = LibCrypto.asn1_string_get0_data(asn1)
         str_len = LibCrypto.asn1_string_length(asn1)
 
         {oid, String.new(str, str_len)}

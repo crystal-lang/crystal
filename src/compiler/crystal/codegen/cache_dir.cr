@@ -95,12 +95,10 @@ module Crystal
 
       # Return the first one for which we could create a directory
       candidates.each do |candidate|
-        begin
-          Dir.mkdir_p(candidate)
-          return @dir = candidate
-        rescue File::Error
-          # Try next one
-        end
+        Dir.mkdir_p(candidate)
+        return @dir = candidate
+      rescue File::Error
+        # Try next one
       end
 
       msg = String.build do |io|

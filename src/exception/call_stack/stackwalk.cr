@@ -4,19 +4,11 @@ require "c/dbghelp"
 struct Exception::CallStack
   skip(__FILE__)
 
-  @@sym_loaded = false
+  @@mutex = Thread::Mutex.new
 
-  def self.load_debug_info : Nil
-    return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
-
-    unless @@sym_loaded
-      @@sym_loaded = true
-      begin
-        load_debug_info_impl
-      rescue ex
-        Crystal::System.print_exception "Unable to load debug information", ex
-      end
-    end
+  private def decode_backtrace
+    # must grab the mutex because DbgHelp isn't thread safe
+    @@mutex.synchronize { previous_def }
   end
 
   private def self.load_debug_info_impl : Nil
@@ -37,25 +29,29 @@ struct Exception::CallStack
 
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_call_stack_unwind)] {% end %}
   protected def self.unwind : Array(Void*)
+    # unlike DWARF, this is required on Windows to even be able to produce
+    # correct stack traces, so we do it here but not in `libunwind.cr`
+    load_debug_info
+
     # TODO: use stack if possible (must be 16-byte aligned)
     context = Pointer(LibC::CONTEXT).malloc(1)
     context.value.contextFlags = LibC::CONTEXT_FULL
     LibC.RtlCaptureContext(context)
 
     stack = [] of Void*
+
+    # DbgHelp is thread unsafe so we'd theoretically need to grab the mutex, but
+    # unwinding alone seems fine, only decoding the backtrace seems unsafe
     each_frame(context) do |frame|
       (frame.count + 1).times do
         stack << frame.ip
       end
     end
+
     stack
   end
 
   private def self.each_frame(context, &)
-    # unlike DWARF, this is required on Windows to even be able to produce
-    # correct stack traces, so we do it here but not in `libunwind.cr`
-    load_debug_info
-
     machine_type = {% if flag?(:x86_64) %}
                      LibC::IMAGE_FILE_MACHINE_AMD64
                    {% elsif flag?(:i386) %}
@@ -131,8 +127,14 @@ struct Exception::CallStack
   private record StackContext, context : LibC::CONTEXT*, thread : LibC::HANDLE
 
   def self.print_backtrace(exception_info) : Nil
-    each_frame(exception_info.value.contextRecord) do |frame|
-      print_frame(frame)
+    load_debug_info
+
+    # must grab the mutex because we decode the backtrace (thread unsafe) as we
+    # unwind the stack (apparently thread safe)
+    @@mutex.synchronize do
+      each_frame(exception_info.value.contextRecord) do |frame|
+        print_frame(frame)
+      end
     end
   end
 
@@ -160,9 +162,8 @@ struct Exception::CallStack
     end
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_line_number(pc)
-    load_debug_info
-
     line_info = uninitialized LibC::IMAGEHLP_LINEW64
     line_info.sizeOfStruct = sizeof(LibC::IMAGEHLP_LINEW64)
 
@@ -185,6 +186,7 @@ struct Exception::CallStack
     {file_name, line_number, 0}
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_function_name(pc)
     if sym = sym_from_addr(pc)
       _, sname = sym
@@ -192,6 +194,7 @@ struct Exception::CallStack
     end
   end
 
+  # WARNING: caller must own the @@mutex lock!
   protected def self.decode_frame(ip)
     pc = decode_address(ip)
     if sym = sym_from_addr(pc)
@@ -204,8 +207,6 @@ struct Exception::CallStack
   end
 
   private def self.sym_get_module_info(pc)
-    load_debug_info
-
     module_info = Pointer(LibC::IMAGEHLP_MODULEW64).malloc(1)
     module_info.value.sizeOfStruct = sizeof(LibC::IMAGEHLP_MODULEW64)
 
@@ -217,8 +218,6 @@ struct Exception::CallStack
   end
 
   private def self.sym_from_addr(pc)
-    load_debug_info
-
     symbol_size = sizeof(LibC::SYMBOL_INFOW) + (LibC::MAX_SYM_NAME - 1) * sizeof(LibC::WCHAR)
     symbol = Pointer(UInt8).malloc(symbol_size).as(LibC::SYMBOL_INFOW*)
     symbol.value.sizeOfStruct = sizeof(LibC::SYMBOL_INFOW)

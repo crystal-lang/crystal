@@ -103,7 +103,7 @@ describe Socket::Addrinfo, tags: "network" do
       it ".new (deprecated)" do
         error = Socket::Addrinfo::Error.new(LibC::EAI_NONAME, "No address found", "foobar.com")
         error.os_error.should eq Errno.new(LibC::EAI_NONAME)
-        error.message.not_nil!.should eq "Hostname lookup for foobar.com failed: No address found"
+        error.message.should eq "Hostname lookup for foobar.com failed: No address found"
       end
     {% end %}
   end

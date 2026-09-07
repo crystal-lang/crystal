@@ -202,6 +202,71 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "emits global debug info for constants" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      struct Bar
+        def initialize(@x : Int32)
+        end
+      end
+
+      A = Bar.new(41)
+
+      v1 = A
+      v1
+      CRYSTAL
+
+    str = mod.to_s
+    str.should contain("DIGlobalVariable(name: \"A\", linkageName: \"A\",")
+    str.should contain(%(~A:const_init))
+  end
+
+  it "emits global debug info once for constants read before assignment" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      require "prelude"
+
+      struct Bar
+        def initialize(@x : Int32)
+        end
+      end
+
+      A
+      A = Bar.new(41)
+      CRYSTAL
+
+    str = mod.to_s
+    str.scan(%r{DIGlobalVariable\(name: "A", linkageName: "A",}).size.should eq(1)
+    str.should contain(%(~A:const_init))
+  end
+
+  it "keeps literal constants inlined in debug mode" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      A = 1
+      A
+      CRYSTAL
+
+    str = mod.to_s
+    str.should_not match(/^@A =/)
+    str.should contain("ret i32 1")
+  end
+
+  it "emits global debug info for class vars" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      class Foo
+        @@x = "world"
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      CRYSTAL
+
+    str = mod.to_s
+    str.should match(/@"Foo::x" = global (?:ptr|%String\*) null, !dbg !/)
+    str.should contain("DIGlobalVariable(name: \"Foo::x\", linkageName: \"Foo::x\",")
+  end
+
   it "stores and restores debug location after jumping to main (#6920)" do
     codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       require "prelude"
@@ -302,6 +367,16 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "codegens proc debug info" do
+    codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      x = ->(n : Int32) { n &+ 1 }
+      y : Proc(Int32, Int32)? = ->(n : Int32) { n &+ 2 }
+      captured = 40
+      z = ->(n : Int32) { captured &+ n }
+      {x, y, z}
+      CRYSTAL
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
@@ -329,6 +404,20 @@ describe "Code gen: debug" do
       end
 
       Int32
+      CRYSTAL
+  end
+
+  it "doesn't fail if Proc self is closured (#16382)" do
+    codegen <<-CRYSTAL, debug: Crystal::Debug::All
+      struct Proc
+        def partial
+          -> do
+            self
+          end
+        end
+      end
+
+      -> { }.partial.call
       CRYSTAL
   end
 end

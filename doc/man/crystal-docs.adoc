@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-doc - Generate API docs for Crystal code
 
 == Synopsis
+
 *crystal build* [options] [programfile] [--] [arguments]
 
 == Description

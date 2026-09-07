@@ -4,7 +4,6 @@ def fannkuch(n)
   sign, maxflips, sum = 1, 0, 0
 
   w = [0].concat((1..n).to_a)
-  q = w.dup
   s = w.dup
 
   while true

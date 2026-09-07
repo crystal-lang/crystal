@@ -3,6 +3,8 @@
 /Makefile.win.local
 .env
 .env.*
+.envrc
+.envrc.*
 
 # Build artifacts
 *.o
@@ -16,7 +18,10 @@
 /.build/
 /samples/.build/
 /docs/
-/man/*.gz
+/man/
+
+# Spec artifacts
+/spec/manual/dwarf/
 
 # CI
 /coverage/

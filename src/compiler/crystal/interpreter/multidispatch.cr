@@ -59,7 +59,7 @@ module Crystal::Repl::Multidispatch
       block: node.block,
     )
 
-    cache_key = Context::MultidispatchKey.new(obj_type, signature)
+    cache_key = Context::MultidispatchKey.new(obj_type, signature, target_defs.map(&.object_id).sort!)
     cached_def = context.multidispatchs[cache_key]?
     return cached_def if cached_def
 

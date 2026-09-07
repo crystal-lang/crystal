@@ -86,6 +86,8 @@ struct Crystal::MathInterpreter
     else
       interpret_call_macro(node)
     end
+  rescue ex : OverflowError | DivisionByZeroError
+    node.raise ex.message
   end
 
   def interpret_call_macro(node : Call)

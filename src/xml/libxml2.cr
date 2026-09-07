@@ -175,15 +175,18 @@ lib LibXML
   fun xmlNewParserCtxt : ParserCtxt
   fun xmlCtxtReadIO(ParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
   fun xmlCtxtReadMemory(ParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun xmlFreeParserCtxt(ctxt : ParserCtxt)
 
   fun htmlNewParserCtxt : HTMLParserCtxt
   fun htmlCtxtReadMemory(HTMLParserCtxt, buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
   fun htmlCtxtReadIO(HTMLParserCtxt, ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
+  fun htmlFreeParserCtxt(ctxt : HTMLParserCtxt)
 
   fun xmlDocGetRootElement(doc : Doc*) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int
   fun xmlNodeGetContent(node : Node*) : UInt8*
+  fun xmlGetLineNo(node : Node*) : LibC::Long
   fun xmlNodeSetContent(node : Node*, content : UInt8*)
   fun xmlNodeSetName(node : Node*, name : UInt8*)
   fun xmlUnlinkNode(node : Node*)
@@ -381,6 +384,8 @@ lib LibXML
   {% if compare_versions(LibXML::VERSION, "2.14.0") >= 0 %}
     fun xmlSaveSetIndentString(SaveCtxPtr, UInt8*)
   {% end %}
+
+  $xmlFree : (Void* -> Void)
 
   fun xmlFreeDoc(Doc*)
   fun xmlFreeNode(Node*)

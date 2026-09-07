@@ -88,6 +88,15 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
+  def global_set_metadata(kind : String, metadata)
+    kind = LibLLVM.get_md_kind_id_in_context(type.context, kind, kind.bytesize)
+    global_set_metadata(kind, metadata)
+  end
+
+  def global_set_metadata(kind, metadata)
+    LibLLVM.global_set_metadata(self, kind, metadata)
+  end
+
   def volatile=(volatile)
     LibLLVM.set_volatile(self, volatile ? 1 : 0)
   end

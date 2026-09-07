@@ -170,6 +170,9 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       declare_instance_var(node, var)
     when ClassVar
       declare_class_var(node, var, false)
+    when Path
+      var_type = lookup_type(node.declared_type)
+      check_declare_var_type(node, var_type, "a constant")
     else
       raise "Unexpected TypeDeclaration var type: #{var.class}"
     end

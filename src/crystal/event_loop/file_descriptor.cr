@@ -27,6 +27,10 @@ abstract class Crystal::EventLoop
     # Returns 0 when EOF is reached.
     abstract def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
 
+    # Identical to `#read` but takes an *offset* into the file to read at,
+    # instead of the current position. Doesn't affect the current position.
+    abstract def pread(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+
     # Blocks the current fiber until the file descriptor is ready for read.
     abstract def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
 

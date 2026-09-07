@@ -1192,8 +1192,12 @@ class Hash(K, V)
   # ```
   def [](key)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        unless key.is_a?(K)
+          raise KeyError.new "Invalid key type: expected #{K}, got #{key.class}"
+        end
+
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -1528,6 +1532,8 @@ class Hash(K, V)
   # # => {"foo" => "bar"}
   # ```
   def merge(other : Hash(L, W)) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self
@@ -1536,6 +1542,8 @@ class Hash(K, V)
   end
 
   def merge(other : Hash(L, W), & : L, V, W -> V | W) : Hash(K | L, V | W) forall L, W
+    # Don't retain @block as far as key type may be changed and retained @block
+    # will not be compatible with this new type.
     hash = Hash(K | L, V | W).new
     hash.compare_by_identity if compare_by_identity?
     hash.merge! self
@@ -1644,11 +1652,26 @@ class Hash(K, V)
   # Returns a new `Hash` without the given keys.
   #
   # ```
+  # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject(["a", "c"]) # => {"b" => 2, "d" => 4}
+  # ```
+  def reject(keys : Enumerable) : Hash(K, V)
+    object = {} of K => V
+    object.compare_by_identity if compare_by_identity?
+
+    each_entry_with_index do |entry, _|
+      object[entry.key] = entry.value unless keys.includes?(entry.key)
+    end
+
+    object
+  end
+
+  # Returns a new `Hash` without the given keys.
+  #
+  # ```
   # {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.reject("a", "c") # => {"b" => 2, "d" => 4}
   # ```
   def reject(*keys) : Hash(K, V)
-    hash = self.dup
-    hash.reject!(*keys)
+    reject(keys)
   end
 
   # Removes a list of keys out of hash.
@@ -1732,7 +1755,10 @@ class Hash(K, V)
   # hash.compact # => {"hello" => "world"}
   # ```
   def compact
+    # Don't retain @block as far as #compact may change value type, e.g.
+    # (String | Nil) will become String.
     object = {} of K => typeof(self.first_value.not_nil!)
+
     object.compare_by_identity if compare_by_identity?
 
     each_with_object(object) do |(key, value), memo|
@@ -1829,7 +1855,7 @@ class Hash(K, V)
   # # => {"key1" => "value1", "key2" => "value2", "key3" => "value3"}
   # ```
   def self.zip(ary1 : Array(K), ary2 : Array(V))
-    hash = {} of K => V
+    hash = Hash(K, V).new(initial_capacity: ary1.size)
     ary1.each_with_index do |key, i|
       hash[key] = ary2[i]
     end

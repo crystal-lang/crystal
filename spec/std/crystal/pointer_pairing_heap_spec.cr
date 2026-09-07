@@ -1,5 +1,5 @@
 require "spec"
-require "../../../src/crystal/pointer_pairing_heap"
+require "crystal/pointer_pairing_heap"
 
 private struct Node
   getter key : Int32

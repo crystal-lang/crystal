@@ -34,8 +34,7 @@ end
 
 private def assert_context_keys(code, *variables)
   run_context_tool(code) do |result|
-    result.contexts.should_not be_nil
-    result.contexts.not_nil!.each do |context|
+    result.contexts.should_not(be_nil).each do |context|
       context.keys.should eq(variables.to_a)
     end
   end
@@ -43,8 +42,7 @@ end
 
 private def assert_context_includes(code, variable, var_types)
   run_context_tool(code) do |result|
-    result.contexts.should_not be_nil
-    result.contexts.not_nil!.map(&.[variable].to_s).should eq(var_types)
+    result.contexts.should_not(be_nil).map(&.[variable].to_s).should eq(var_types)
   end
 end
 

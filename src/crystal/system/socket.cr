@@ -9,10 +9,11 @@ module Crystal::System::Socket
   end
 
   # Tries to bind the socket to a local address.
-  # Yields an `Socket::BindError` if the binding failed.
-  # private def system_bind(addr, addrstr)
+  # Returns a `Socket::BindError` on failure.
+  # private def system_bind(addr, addrstr) : ::Socket::BindError?
 
-  # private def system_listen(backlog)
+  # Returns a `Socket::Error` on failure.
+  # private def system_listen(backlog) : ::Socket::Error?
 
   private def system_accept : {Handle, Bool}?
     event_loop.accept(self)
@@ -24,6 +25,10 @@ module Crystal::System::Socket
 
   private def system_receive_from(bytes : Bytes) : Tuple(Int32, ::Socket::Address)
     event_loop.receive_from(self, bytes)
+  end
+
+  private def system_sendfile(file : IO::FileDescriptor, offset : Int64, count : Int64) : Int64
+    event_loop.sendfile(self, file.fd, offset, count, 0)
   end
 
   # private def system_close_read
@@ -125,6 +130,12 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count
 
   # private def system_tcp_keepalive_count=(val : Int)
+
+  # IPAddress:
+
+  # def self.network_interface_to_index(name : String, & : Errno | WinError | WasiError ->) : Int
+
+  # def self.network_interface_from_index(index : Int, & : Errno | WinError | WasiError ->) : String
 end
 
 {% if flag?(:wasi) %}

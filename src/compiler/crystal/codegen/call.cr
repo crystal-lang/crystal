@@ -320,7 +320,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_with_block_as_fun_literal(node, fun_literal, self_type, call_args)
-    accept fun_literal
+    request_value(fun_literal)
     call_args.push @last
 
     target_def = node.target_def
@@ -492,7 +492,9 @@ class Crystal::CodeGenVisitor
   end
 
   def inline_call_return_value(target_def, body)
-    if target_def.type.nil_type?
+    if target_def.type.no_return?
+      unreachable
+    elsif target_def.type.nil_type?
       @last = llvm_nil
     else
       @last = upcast(@last, target_def.type, body.type)

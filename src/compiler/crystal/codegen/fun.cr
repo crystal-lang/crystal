@@ -48,10 +48,14 @@ class Crystal::CodeGenVisitor
     type = @llvm_typer.copy_type(func.type)
     typed_fun = add_typed_fun(@llvm_mod, mangled_name, type)
 
+    source_fun = func.func
     new_fun = typed_fun.func
-    func.func.params.to_a.each_with_index do |p1, index|
-      attrs = new_fun.attributes(index + 1)
-      new_fun.add_attribute(attrs, index + 1) unless attrs.value == 0
+    source_fun.params.each_index do |index|
+      attrs = source_fun.attributes(index + 1)
+      if attrs.value != 0
+        param_type = new_fun.params[index].type
+        new_fun.add_attribute(attrs, index + 1, param_type)
+      end
     end
 
     typed_fun
@@ -117,7 +121,7 @@ class Crystal::CodeGenVisitor
           void_ptr = context.fun.params.first
           closure_type = llvm_typer.copy_type(context.closure_type.not_nil!)
           closure_ptr = pointer_cast void_ptr, closure_type.pointer
-          setup_closure_vars target_def.vars, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
+          setup_closure_vars target_def, context.closure_vars.not_nil!, self.context, closure_type, closure_ptr
         else
           context.reset_closure
         end
@@ -447,23 +451,40 @@ class Crystal::CodeGenVisitor
     context.fun = typed_fun.func
     context.fun_type = typed_fun.type
 
-    if @debug.variables?
+    optimize_none = @debug.variables?
+    features = target_def.target_features
+    cpu = target_def.target_cpu
+
+    if optimize_none || features || cpu
+      # Make it a hard boundary, disabling inlining
       context.fun.add_attribute LLVM::Attribute::NoInline
-      context.fun.add_attribute LLVM::Attribute::OptimizeNone
+
+      context.fun.add_attribute LLVM::Attribute::OptimizeNone if optimize_none
+      context.fun.add_target_dependent_attribute("target-features", features) if features
+      context.fun.add_target_dependent_attribute("target-cpu", cpu) if cpu
     else
       context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+      context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
     end
+
+    {% unless LibLLVM::IS_LT_130 %}
+      case @program.optimization_mode
+      when .os? then context.fun.add_attribute LLVM::Attribute::OptimizeForSize
+      when .oz? then context.fun.add_attribute LLVM::Attribute::MinSize
+      end
+    {% end %}
+
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
     context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
-    context.fun.add_attribute LLVM::Attribute::NoInline if target_def.no_inline?
   end
 
-  def setup_closure_vars(def_vars, closure_vars, context, closure_type, closure_ptr)
+  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(def_vars, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
+      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
     else
+      def_vars = target_def.vars
       closure_vars.each_with_index do |var, i|
         # A closured var in this context might have the same name as
         # a local var in another context, for example if the local var
@@ -472,7 +493,14 @@ class Crystal::CodeGenVisitor
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
 
-        self.context.vars[var.name] = LLVMVar.new(gep(closure_type, closure_ptr, 0, i, var.name), var.type)
+        if context.fun.naked?
+          debug_variable_created = false
+        else
+          var_offset = llvm_typer.offset_of(closure_type, i)
+          debug_variable_created = declare_variable(var.name, var.type, closure_ptr, target_def.location, offset: var_offset)
+        end
+        var_ptr = gep(closure_type, closure_ptr, 0, i, var.name)
+        self.context.vars[var.name] = LLVMVar.new(var_ptr, var.type, debug_variable_created: debug_variable_created)
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
@@ -480,12 +508,18 @@ class Crystal::CodeGenVisitor
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
         parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
-        setup_closure_vars(def_vars, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
+        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
       elsif closure_self = context.closure_self
-        offset = context.closure_parent_context ? 1 : 0
-        self_value = gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
-        self_value = load(llvm_type(closure_self), self_value) unless context.type.passed_by_value?
-        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
+        self_index = closure_vars.size + (context.closure_parent_context ? 1 : 0)
+        if context.fun.naked?
+          debug_variable_created = false
+        else
+          self_offset = llvm_typer.offset_of(closure_type, self_index)
+          debug_variable_created = declare_variable("self", closure_self, closure_ptr, target_def.location, offset: self_offset)
+        end
+        self_value = gep(closure_type, closure_ptr, 0, self_index, "self")
+        self_value = load(llvm_type(closure_self), self_value) unless closure_self.passed_by_value?
+        self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true, debug_variable_created: debug_variable_created)
       end
     end
   end

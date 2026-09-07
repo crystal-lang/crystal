@@ -287,6 +287,14 @@ module Crystal
       new node, TruthyFilter.instance
     end
 
+    def self.truthy_var(name : String)
+      new_filters = new
+      filter = TruthyFilter.instance
+      new_filters.pos[name] = filter
+      new_filters.neg[name] = filter.not
+      new_filters
+    end
+
     def self.and(filters1, filters2)
       return nil if filters1.nil? && filters2.nil?
 

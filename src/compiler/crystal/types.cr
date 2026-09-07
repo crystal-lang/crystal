@@ -2626,7 +2626,7 @@ module Crystal
 
     def replace_type_parameters(instance)
       new_entries = entries.map do |entry|
-        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance))
+        NamedArgumentType.new(entry.name, entry.type.replace_type_parameters(instance), entry.loc)
       end
       program.named_tuple_of(new_entries)
     end
@@ -3320,6 +3320,12 @@ module Crystal
   # saved under a type types like any other type.
   class Const < NamedType
     property value : ASTNode
+
+    # Type restriction declared with `FOO : Int64 = 123` syntax. The value's
+    # inferred type must conform to this and number/symbol literals autocast
+    # to it.
+    property declared_type : ASTNode?
+
     property fake_def : Def?
     property? used = false
     property? visited = false

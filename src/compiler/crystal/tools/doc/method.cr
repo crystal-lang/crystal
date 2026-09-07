@@ -79,7 +79,7 @@ class Crystal::Doc::Method
 
     previous_docs = previous_def_docs(@def)
     if previous_docs
-      return DocInfo.new(def_doc, nil)
+      return DocInfo.new(previous_docs, nil)
     end
 
     ancestor_info = self.ancestor_doc_info
@@ -108,11 +108,10 @@ class Crystal::Doc::Method
         # If we find an ancestor method with the same signature
         if def_with_metadata.compare_strictness(other_def_with_metadata, self_owner: type.type, other_owner: ancestor) == 0
           other_def = other_def_with_metadata.def
-          doc = other_def.doc
-          return DocInfo.new(doc, @generator.type(ancestor)) if doc
-
-          doc = previous_def_docs(other_def)
-          return DocInfo.new(doc, nil) if doc
+          ancestor_type = @generator.type(ancestor)
+          ancestor_method = Doc::Method.new(@generator, ancestor_type, other_def, @class_method)
+          doc = ancestor_method.doc
+          return DocInfo.new(doc, ancestor_type) if doc
         end
       end
     end

@@ -374,7 +374,7 @@ describe YAML::Any do
 
   describe "#[]?" do
     it "of array" do
-      YAML.parse("- foo\n- bar\n")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("- foo\n- bar\n")[1]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("- foo\n- bar\n")[3]?.should be_nil
 
       any = YAML::Any.new([YAML::Any.new("baz"), YAML::Any.new("bar")])
@@ -399,12 +399,12 @@ describe YAML::Any do
     end
 
     it "of hash" do
-      YAML.parse("foo: bar")["foo"]?.not_nil!.raw.should eq("bar")
+      YAML.parse("foo: bar")["foo"]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("foo: bar")["fox"]?.should be_nil
     end
 
     it "of hash with integer keys" do
-      YAML.parse("1: bar")[1]?.not_nil!.raw.should eq("bar")
+      YAML.parse("1: bar")[1]?.should_not(be_nil).raw.should eq("bar")
       YAML.parse("1: bar")[2]?.should be_nil
     end
 

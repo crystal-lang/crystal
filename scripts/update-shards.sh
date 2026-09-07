@@ -11,7 +11,7 @@
 #
 # See Crystal release checklist: https://github.com/crystal-lang/distribution-scripts/blob/master/processes/shards-release.md#post-release
 
-set -eux
+set -eu
 
 SHARDS_VERSION=${1:-}
 if [ -z "$SHARDS_VERSION" ]; then
@@ -20,4 +20,4 @@ if [ -z "$SHARDS_VERSION" ]; then
 fi
 
 # Update shards ref in mingw64 and win-msvc build actions
-sed -i "/repository: crystal-lang\/shards/{n;s/ref: .*/ref: ${SHARDS_VERSION}/}" .github/workflows/mingw-w64.yml .github/workflows/win_build_portable.yml
+sed -i "/repository: crystal-lang\/shards/{n;s/ref: .*/ref: v${SHARDS_VERSION}/}" .github/workflows/mingw-w64-steps.yml .github/workflows/win_build_portable.yml

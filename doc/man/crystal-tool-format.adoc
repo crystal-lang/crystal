@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-tool-format - Format Crystal source files
 
 == Synopsis
+
 *crystal tool format* [options] [source...]
 
 == Description
