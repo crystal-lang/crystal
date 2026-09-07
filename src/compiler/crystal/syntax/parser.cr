@@ -3518,7 +3518,7 @@ module Crystal
         check :OP_PERCENT_RCURLY
 
         macro_state.control_nest += 1
-        body, end_location = parse_macro_body(start_location, macro_state)
+        body, _end_location = parse_macro_body(start_location, macro_state)
         macro_state.control_nest -= 1
 
         check_ident :end
@@ -3535,7 +3535,7 @@ module Crystal
         check :OP_PERCENT_RCURLY
 
         macro_state.control_nest += 1
-        body, end_location = parse_macro_body(start_location, macro_state)
+        body, _end_location = parse_macro_body(start_location, macro_state)
         macro_state.control_nest -= 1
 
         check_ident :end
@@ -3554,7 +3554,7 @@ module Crystal
         check :OP_PERCENT_RCURLY
 
         macro_state.control_nest += 1
-        body, end_location = parse_macro_body(start_location, macro_state)
+        body, _end_location = parse_macro_body(start_location, macro_state)
         macro_state.control_nest -= 1
 
         check_ident :end
@@ -3601,7 +3601,7 @@ module Crystal
       check :OP_PERCENT_RCURLY
 
       macro_state.control_nest += 1
-      a_then, end_location = parse_macro_body(start_location, macro_state)
+      a_then, _end_location = parse_macro_body(start_location, macro_state)
       macro_state.control_nest -= 1
 
       case @token.value
@@ -3610,7 +3610,7 @@ module Crystal
         check :OP_PERCENT_RCURLY
 
         macro_state.control_nest += 1
-        a_else, end_location = parse_macro_body(start_location, macro_state)
+        a_else, _end_location = parse_macro_body(start_location, macro_state)
         macro_state.control_nest -= 1
 
         if check_end
