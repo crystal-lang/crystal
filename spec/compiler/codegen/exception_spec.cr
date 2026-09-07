@@ -493,6 +493,51 @@ describe "Code gen: exception" do
       CRYSTAL
   end
 
+  it "rescues a union alias by its members, not their ancestor (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      class FooErr < Exception; end
+      class BarErr < FooErr; end
+      class BazErr < FooErr; end
+      class QuuxErr < FooErr; end
+
+      alias BarBaz = BarErr | BazErr
+
+      x = 0
+      begin
+        begin
+          raise QuuxErr.new
+        rescue BarBaz
+          x = 1
+        end
+      rescue
+        x = 2
+      end
+      x
+      CRYSTAL
+  end
+
+  it "rescues a member through a union alias (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      class FooErr < Exception; end
+      class BarErr < FooErr; end
+      class BazErr < FooErr; end
+
+      alias BarBaz = BarErr | BazErr
+
+      x = 0
+      begin
+        raise BarErr.new
+      rescue BarBaz
+        x = 1
+      end
+      x
+      CRYSTAL
+  end
+
   it "receives exception object" do
     run(<<-CRYSTAL).to_string.should eq("Ex1")
       require "prelude"

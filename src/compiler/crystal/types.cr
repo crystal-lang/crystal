@@ -690,6 +690,14 @@ module Crystal
       self
     end
 
+    # Like `remove_alias`, but if the alias (transitively) resolves to a
+    # union, that union keeps its members instead of being merged into their
+    # common ancestor. Used inside `is_a?`, where `Foo | Bar` must not be
+    # generalized — mirroring how an inline union behaves there (#9665).
+    def remove_alias_union_of
+      self
+    end
+
     def remove_indirection
       self
     end
@@ -2775,6 +2783,25 @@ module Crystal
     def remove_alias_if_simple
       process_value
       @simple ? remove_alias : self
+    end
+
+    def remove_alias_union_of
+      process_value
+      # For a recursive (non-simple) alias the value AST refers back to the
+      # alias itself, so re-resolving it would loop forever; fall back to the
+      # regular alias resolution there.
+      if @aliased_type && @simple
+        # `@aliased_type` was resolved with the regular `type_merge`, which
+        # generalizes a union to its common ancestor. Re-resolve the original
+        # value AST preserving the union's members instead, so an alias of a
+        # union behaves like an inline union inside `is_a?` (#9665).
+        namespace.lookup_type(@value,
+          allow_typeof: false,
+          find_root_generic_type_parameters: false,
+          inside_is_a: true)
+      else
+        remove_alias
+      end
     end
 
     def remove_indirection
