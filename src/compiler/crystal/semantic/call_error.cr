@@ -971,9 +971,23 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      unless scope_type.has_protected_access_to?(owner_type)
-        raise "protected method '#{match.def.name}' called for #{match.def.owner}"
-      end
+      return if scope_type.has_protected_access_to?(owner_type)
+
+      # Check the metaclasses too: a class method gained by `extend`ing a
+      # module belongs to the metaclass hierarchy, which the instance
+      # types above don't reflect
+      return if scope.has_protected_access_to?(match.def.owner, allow_same_namespace: false)
+
+      # The namespace that grants protected access is the one where the
+      # calling code is written. A method inherited from a parent type or an
+      # included module keeps the access granted by the namespace it's
+      # defined in, but including a module doesn't grant the including
+      # type's own code access to protected methods of other types in the
+      # module's namespace (#16827)
+      defining_type = parent_visitor.path_lookup.try(&.instance_type.devirtualize)
+      return if defining_type && defining_type.same_namespace?(owner_type)
+
+      raise "protected method '#{match.def.name}' called for #{match.def.owner}"
     when .public?
       # okay
     end
