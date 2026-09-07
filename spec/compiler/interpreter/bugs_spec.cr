@@ -258,5 +258,23 @@ describe Crystal::Repl::Interpreter do
         parser = "parser"
       CRYSTAL
     end
+
+    it "downcasts from NilableType to ReferenceUnionType (#16596)" do
+      interpret(<<-CRYSTAL).should be_true
+        abstract class Base
+        end
+
+        class Gen(T) < Base
+        end
+
+        Gen(Int64).new
+
+        if gen = Gen(Int32).new.as(Base).as?(Gen) # Error: BUG: missing downcast_distinct from (Gen(T) | Nil) to (Gen(Int32) | Gen(Int64)) (Crystal::NilableType to Crystal::ReferenceUnionType)
+          gen.is_a?(Gen(Int32))
+        else
+          false
+        end
+      CRYSTAL
+    end
   end
 end
