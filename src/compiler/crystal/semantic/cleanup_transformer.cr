@@ -161,6 +161,11 @@ module Crystal
       node
     end
 
+    def transform(node : Prepend)
+      node.hook_expansions.try &.map! &.transform self
+      node
+    end
+
     def transform(node : Expressions)
       if exp = node.single_expression?
         return exp.transform(self)

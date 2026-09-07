@@ -3244,6 +3244,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : Prepend)
+    false
+  end
+
   def visit(node : Unreachable)
     unreachable("Reached the unreachable", node: node)
 

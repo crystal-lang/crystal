@@ -108,6 +108,24 @@ module Crystal
     include HookExpansionsContainer
   end
 
+  class Prepend
+    # Hook expansions correspond to the `prepended` hook
+    #
+    # ```
+    # module Moo
+    #   macro prepended
+    #     puts 1
+    #   end
+    # end
+    #
+    # class Foo
+    #   # At this point the `prepended` hook is triggered
+    #   prepend Moo
+    # end
+    # ```
+    include HookExpansionsContainer
+  end
+
   class Def
     # Hook expansions correspond to the `method_added` hook
     #

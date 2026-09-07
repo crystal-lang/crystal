@@ -3496,6 +3496,13 @@ module Crystal
       false
     end
 
+    def visit(node : Prepend)
+      write_keyword :prepend, " "
+      accept node.name
+
+      false
+    end
+
     def visit(node : LibDef)
       @inside_lib += 1
 
