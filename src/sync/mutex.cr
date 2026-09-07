@@ -16,10 +16,15 @@ module Sync
   # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
+    @@lock_ids = Atomic(UInt64).new(0)
+
+    # :nodoc:
+    getter lock_id : UInt64
 
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
+      @lock_id = @@lock_ids.add(1)
     end
 
     # Acquires the exclusive lock for the duration of the block. The lock will
