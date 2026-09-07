@@ -236,7 +236,7 @@ describe "Semantic: pointer" do
       CRYSTAL
   end
 
-  it "does not recalculate element type on multiple calls to `#value=` (#15742)" do
+  it "does not recalculate element type on multiple calls to `#value=` (#15742, #15752)" do
     result = semantic <<-CRYSTAL
       module Foo
       end
@@ -255,7 +255,6 @@ describe "Semantic: pointer" do
         end
       end
 
-      # NOTE: `typeof(v)` is `(Bar2 | Foo)*` but should most certainly be just `Foo*`
       v = uninitialized Pointer(Bar1 | Bar2 | Foo)
 
       a = uninitialized Bar1 | Bar2
@@ -267,6 +266,6 @@ describe "Semantic: pointer" do
       CRYSTAL
 
     type = result.node.type.should be_a(PointerInstanceType)
-    type.element_type.should_not eq(result.program.types["Foo"])
+    type.element_type.should eq(result.program.types["Foo"].virtual_type!)
   end
 end
