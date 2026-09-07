@@ -66,6 +66,7 @@ module Fiber::ExecutionContext
 
       GC.lock_read
       thread.current_fiber = fiber
+      Crystal::FiberLocalStorage.fls = fiber.fls
       Fiber.swapcontext(pointerof(current_fiber.@context), pointerof(fiber.@context))
       GC.unlock_read
     end
