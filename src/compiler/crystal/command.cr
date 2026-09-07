@@ -576,10 +576,6 @@ class Crystal::Command
         @progress_tracker.progress = true
       end
 
-      opts.on("--no-progress", "Disable progress output") do
-        @progress_tracker.progress = false
-      end
-
       opts.on("-t", "--time", "Enable execution time output") do
         @time = true
       end
