@@ -51,39 +51,31 @@ class Socket < IO
     write_timeout
   end
 
-  {% begin %}
-    # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
-    # need full control over the socket.
-    def self.tcp(family : Family, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
-      new(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
-    end
-  {% end %}
+  # Creates a TCP socket. Consider using `TCPSocket` or `TCPServer` unless you
+  # need full control over the socket.
+  def self.tcp(family : Family, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
+    new(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
+  end
 
-  {% begin %}
-    # Creates an UDP socket. Consider using `UDPSocket` unless you need full
-    # control over the socket.
-    def self.udp(family : Family, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
-      new(af: family, type: Type::DGRAM, protocol: Protocol::UDP, blocking: blocking)
-    end
-  {% end %}
+  # Creates an UDP socket. Consider using `UDPSocket` unless you need full
+  # control over the socket.
+  def self.udp(family : Family, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
+    new(af: family, type: Type::DGRAM, protocol: Protocol::UDP, blocking: blocking)
+  end
 
-  {% begin %}
-    # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
-    # you need full control over the socket.
-    def self.unix(type : Type = Type::STREAM, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
-      new(af: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking)
-    end
-  {% end %}
+  # Creates an UNIX socket. Consider using `UNIXSocket` or `UNIXServer` unless
+  # you need full control over the socket.
+  def self.unix(type : Type = Type::STREAM, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil) : self
+    new(af: Family::UNIX, type: type, protocol: Protocol::IP, blocking: blocking)
+  end
 
-  {% begin %}
-    # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
-    # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
-    def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
-      # This method is `#initialize` instead of `.new` because it is used as super
-      # constructor from subclasses.
-      initialize(af: family, type: type, protocol: protocol, blocking: blocking)
-    end
-  {% end %}
+  # Creates a socket. Consider using `TCPSocket`, `TCPServer`, `UDPSocket`,
+  # `UNIXSocket` or `UNIXServer` unless you need full control over the socket.
+  def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    # This method is `#initialize` instead of `.new` because it is used as super
+    # constructor from subclasses.
+    initialize(af: family, type: type, protocol: protocol, blocking: blocking)
+  end
 
   # :nodoc:
   #
@@ -95,21 +87,19 @@ class Socket < IO
     self.sync = true
   end
 
-  {% begin %}
-    # Creates a Socket from an existing system file descriptor or socket handle.
-    #
-    # This adopts *fd* into the IO system that will reconfigure it as per the
-    # event loop runtime requirements.
-    #
-    # NOTE: On Windows, the handle must have been created with
-    # `WSA_FLAG_OVERLAPPED`.
-    def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
-      initialize(handle: fd, family: family, type: type, protocol: protocol)
-      blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
-      Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
-      self.sync = true
-    end
-  {% end %}
+  # Creates a Socket from an existing system file descriptor or socket handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
+  def initialize(fd, @family : Family, @type : Type, @protocol : Protocol = Protocol::IP, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    initialize(handle: fd, family: family, type: type, protocol: protocol)
+    blocking = Crystal::EventLoop.default_socket_blocking? if blocking.nil?
+    Crystal::System::Socket.set_blocking(fd, blocking) unless blocking
+    self.sync = true
+  end
 
   # :nodoc:
   #

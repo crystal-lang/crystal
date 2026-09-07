@@ -47,21 +47,19 @@ class IO::FileDescriptor < IO
     write_timeout
   end
 
-  {% begin %}
-    # Creates an IO::FileDescriptor from an existing system file descriptor or
-    # handle.
-    #
-    # This adopts *fd* into the IO system that will reconfigure it as per the
-    # event loop runtime requirements.
-    #
-    # NOTE: On Windows, the handle should have been created with
-    # `FILE_FLAG_OVERLAPPED`.
-    def self.new(fd : Handle, @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] blocking = nil, *, close_on_finalize = true)
-      file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
-      file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
-      file_descriptor
-    end
-  {% end %}
+  # Creates an IO::FileDescriptor from an existing system file descriptor or
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows, the handle should have been created with
+  # `FILE_FLAG_OVERLAPPED`.
+  def self.new(fd : Handle, @[Deprecated("Use IO::FileDescriptor.set_blocking instead.")] blocking = nil, *, close_on_finalize = true)
+    file_descriptor = new(handle: fd, close_on_finalize: close_on_finalize)
+    file_descriptor.system_blocking_init(blocking) unless file_descriptor.closed?
+    file_descriptor
+  end
 
   # :nodoc:
   #
