@@ -428,8 +428,13 @@ module Crystal
       matches = base_type_matches.matches
       changes = nil
 
-      # Traverse all subtypes
-      instance_type.subtypes(base_type).each do |subtype|
+      # Traverse all subtypes. For virtual metaclasses, include uninstantiated
+      # generic subclasses too — their metaclasses are valid dispatch targets
+      # (e.g. `Bar.foo` where `class Bar(T) < Foo`), and without them the
+      # dispatch table is missing a branch and the call hits the unreachable
+      # at runtime (#11134).
+      subtypes = virtual_metaclass? ? instance_type.subtypes_including_generic(base_type) : instance_type.subtypes(base_type)
+      subtypes.each do |subtype|
         next if is_new && subtype.is_a?(GenericClassInstanceType) && subtype.abstract?
 
         subtype_lookup = virtual_lookup(subtype)
