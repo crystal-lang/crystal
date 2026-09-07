@@ -65,6 +65,15 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   #
+  # Internal constructor to create a closed stdio object.
+  def initialize(*, @closed : Bool)
+    @volatile_fd = Atomic.new(-1)
+    @close_on_finalize = false
+    {% if flag?(:win32) %} @system_blocking = false {% end %}
+  end
+
+  # :nodoc:
+  #
   # Internal constructor to wrap a system *handle*. The *blocking* arg is purely
   # informational.
   def initialize(*, handle : Handle, @close_on_finalize = true, blocking = nil)
