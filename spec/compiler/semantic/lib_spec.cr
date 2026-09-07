@@ -994,4 +994,14 @@ describe "Semantic: lib" do
       {% end %}
       CRYSTAL
   end
+
+  it "upgrades an implicit namespace to a lib when later declared as `lib` (#16918)" do
+    semantic(<<-CRYSTAL).program.types["A"].should be_a(Crystal::LibType)
+      lib A::B
+      end
+
+      lib A
+      end
+      CRYSTAL
+  end
 end
