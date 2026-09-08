@@ -1746,6 +1746,20 @@ module Crystal
         raise "BUG: #{node} at #{node.location} should have been expanded"
       end
 
+      # Multi-dispatch on block return type: yield returns the cached block
+      # result instead of inlining the block body. The block was evaluated
+      # once at the call site; this typed_def reuses that value, downcast to
+      # the narrowed type for this branch.
+      if cached = context.cached_block_result
+        cached_block, cached_value, cached_type = cached
+        # Only use the cached value if THIS yield is for the cached block.
+        # Nested calls may have their own yields to different blocks.
+        if cached_block.same?(context.block?)
+          @last = downcast(cached_value, node.type, cached_type, true)
+          return false
+        end
+      end
+
       block_context = context.block_context.not_nil!
       block = context.block
       splat_index = block.splat_index

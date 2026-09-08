@@ -14,6 +14,11 @@ class Crystal::CodeGenVisitor
     property while_block : LLVM::BasicBlock?
     property! block : Block
     property! block_context : Context
+    # When set (multi-dispatch on block return type), yield to the associated
+    # block reads this cached value instead of inlining block.body. The block
+    # was already evaluated at the call site; each dispatched typed_def reuses
+    # that single result. Tuple is {block, value, value_type}.
+    property cached_block_result : {Block, LLVM::Value, Type}?
     property closure_vars : Array(MetaVar)?
     property closure_type : LLVM::Type?
     property closure_ptr : LLVM::Value?
@@ -48,6 +53,7 @@ class Crystal::CodeGenVisitor
         context.block = block
       end
       context.block_context = @block_context
+      context.cached_block_result = @cached_block_result
       context.closure_vars = @closure_vars
       context.closure_type = @closure_type
       context.closure_ptr = @closure_ptr

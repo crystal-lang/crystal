@@ -1604,4 +1604,152 @@ describe "Block inference" do
       Foo.new.bar(1_i64) { "hi" }
       CRYSTAL
   end
+
+  it "distinguishes overloads by block return type restriction" do
+    assert_type(<<-CRYSTAL) { char }
+      def foo(&block : -> Int32)
+        yield
+        'a'
+      end
+
+      def foo(&block : -> String)
+        yield
+        1
+      end
+
+      foo { 1 }
+    CRYSTAL
+  end
+
+  it "distinguishes overloads by block return type restriction (reverse order)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(&block : -> Int32)
+        yield
+        'a'
+      end
+
+      def foo(&block : -> String)
+        yield
+        1
+      end
+
+      foo { "hello" }
+    CRYSTAL
+  end
+
+  it "prefers more specific block restriction over unrestricted block" do
+    assert_type(<<-CRYSTAL) { char }
+      def foo(&block : -> Int32)
+        yield
+        'a'
+      end
+
+      def foo(&block)
+        yield
+        1
+      end
+
+      foo { 1 }
+    CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union (defs without yield)" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      a = 42
+      b : Int32? = nil
+      foo { (a || nil) || (b || "x") }
+    CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union (returns union of overload returns)" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      x = 1 || "x"
+      foo { x }
+    CRYSTAL
+  end
+
+  it "errors when block return union isn't fully covered by overloads" do
+    assert_error <<-CRYSTAL, "expected block to return Int32, not (Int32 | String)"
+      def foo(& : -> Int32)
+        true
+      end
+
+      x = 1 || "x"
+      foo { x }
+      CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union with yielding defs" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      struct Int32
+        def double
+          self
+        end
+      end
+
+      class String
+        def upper
+          self
+        end
+      end
+
+      def foo(& : -> Int32)
+        result = yield
+        result.double
+      end
+
+      def foo(& : -> String)
+        result = yield
+        result.upper
+      end
+
+      x = 1 || "x"
+      foo { x }
+    CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union with captured-block defs" do
+    assert_type(<<-CRYSTAL) { union_of(int32, string) }
+      def foo(&block : -> Int32)
+        block.call
+      end
+
+      def foo(&block : -> String)
+        block.call
+      end
+
+      x = 1 || "x"
+      foo { x }
+    CRYSTAL
+  end
+
+  it "multi-dispatches on block return type union when overload restriction is itself a union" do
+    assert_type(<<-CRYSTAL) { union_of(bool, char) }
+      def foo(& : -> Int32 | Bool)
+        true
+      end
+
+      def foo(& : -> String)
+        'a'
+      end
+
+      foo { 1 || "" }
+    CRYSTAL
+  end
 end

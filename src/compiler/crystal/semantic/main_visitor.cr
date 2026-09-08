@@ -57,6 +57,13 @@ module Crystal
     # that the yielded expression has the type that the block specification said.
     property yield_vars : Array(Var)?
 
+    # When set (during multi-dispatch on block return type), yield expressions
+    # in this typed_def's body bind to this narrowed type instead of the
+    # block's full union type. The body type-checks assuming yield returns
+    # only the subset this typed_def handles. At runtime, dispatch ensures
+    # yield's value is indeed of this narrowed type.
+    property narrowed_yield_return_type : Type?
+
     # In vars we store the types of variables as we traverse the nodes.
     # These type are not cumulative: if you do `x = 1`, 'x' will have
     # type Int32. Then if you do `x = false`, 'x' will have type Bool.
@@ -1020,7 +1027,14 @@ module Crystal
         untyped_def.block_nest += 1 if untyped_def
       end
 
-      node.bind_to block
+      # In multi-dispatch on block return type, narrow yield's type to the
+      # subset this typed_def handles. At runtime, dispatch ensures yield's
+      # value is indeed of this narrowed type.
+      if narrowed = @narrowed_yield_return_type
+        node.type = narrowed
+      else
+        node.bind_to block
+      end
 
       @type_filters = nil
       false
