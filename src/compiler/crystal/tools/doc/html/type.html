@@ -12,7 +12,7 @@
 
 <%= Crystal::Doc::SVG_DEFS %>
 <%= Crystal::Doc::SIDEBAR_BUTTON %>
-<%= SidebarTemplate.new(project_info, types, type) %>
+<iframe class="sidebar" src="<%= type.path_to("") %>sidebar.html"></iframe>
 
 <div class="main-content">
 <h1 class="type-name">
