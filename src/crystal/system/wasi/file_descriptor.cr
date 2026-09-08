@@ -3,7 +3,7 @@ require "../unix/file_descriptor"
 # :nodoc:
 module Crystal::System::FileDescriptor
   def self.from_stdio(fd)
-    if Crystal.std_closed?(fd)
+    if Crystal.stdio_closed?(fd)
       IO::FileDescriptor.new(closed: true)
     else
       # TODO: WASI doesn't offer a way to detect if a 'fd' is a TTY.
