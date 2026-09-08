@@ -378,11 +378,27 @@ describe Process do
     end
 
     it "forwards closed io" do
-      closed_io = IO::Memory.new
-      closed_io.close
-      Process.run(exe, ["pu", "cat"], input: closed_io)
-      Process.run(exe, ["pu", "cat"], output: closed_io)
-      Process.run(exe, ["pu", "cat", "--stderr"], error: closed_io)
+      opened = IO::Memory.new
+      closed = IO::Memory.new.tap(&.close)
+      path = File.tempname("stdio")
+
+      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: opened, error: opened)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=closed stdout=opened stderr=opened"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: opened, output: closed, error: opened)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=opened stdout=closed stderr=opened"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: opened, output: opened, error: closed)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=opened stdout=opened stderr=closed"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: closed, error: closed)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=closed stdout=closed stderr=closed"
+    ensure
+      File.delete?(path) if path
     end
 
     it "forwards non-blocking file" do

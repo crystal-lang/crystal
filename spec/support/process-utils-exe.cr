@@ -59,6 +59,12 @@ module ProcessUtils
       output.puts Dir.current
     when "sleep"
       sleep
+    when "stdio"
+      File.open(args.shift, "w") do |file|
+        file << "stdin=" << (STDIN.closed? ? "closed" : "opened") << ' '
+        file << "stdout=" << (STDOUT.closed? ? "closed" : "opened") << ' '
+        file << "stderr=" << (STDERR.closed? ? "closed" : "opened")
+      end
     else
       ::abort "Unknown process util command: #{command}"
     end
