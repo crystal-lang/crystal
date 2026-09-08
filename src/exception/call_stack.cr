@@ -22,7 +22,7 @@ struct Exception::CallStack
   skip(__FILE__)
 
   @@loaded = false
-  @@lru_cache = Sync::Exclusive(Crystal::LRUCache(Void*, String)).new(Crystal::LRUCache(Void*, String).new(1024))
+  @@lru_cache = Sync::Exclusive(Crystal::LRUCache(Void*, String?)).new(Crystal::LRUCache(Void*, String?).new(1024))
 
   # :nodoc:
   def self.load_debug_info : Nil
@@ -64,9 +64,14 @@ struct Exception::CallStack
 
   # :nodoc:
   def self.decode_backtrace_frame(ip, show_full_info) : String?
-    line = @@lru_cache.lock(&.fetch?(ip))
+    cache_miss = false
 
-    unless line
+    line = @@lru_cache.lock(&.fetch(ip) do
+      cache_miss = true
+      nil
+    end)
+
+    if cache_miss
       pc = decode_address(ip)
       file, line_number, column_number = decode_line_number(pc)
 
@@ -76,10 +81,10 @@ struct Exception::CallStack
         line = format_backtrace_frame(file, line_number, column_number, function, show_full_info ? ip : nil)
       end
 
-      @@lru_cache.lock(&.put(ip, line || ""))
+      @@lru_cache.lock(&.put(ip, line))
     end
 
-    line unless line.try(&.empty?)
+    line
   end
 
   private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String
