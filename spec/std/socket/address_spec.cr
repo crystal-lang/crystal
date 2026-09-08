@@ -208,7 +208,7 @@ describe Socket::IPAddress do
 
       {% if flag?(:win32) %}
         err.os_error.should eq(WinError::ERROR_INVALID_NAME)
-      {% elsif flag?(:darwin) || flag?(:bsd) %}
+      {% elsif flag?(:darwin) || flag?(:bsd) || flag?(:solaris) %}
         err.os_error.should eq(Errno::ENXIO)
       {% else %}
         err.os_error.should eq(Errno::ENODEV)
