@@ -18,16 +18,24 @@ module Crystal
     # stream is closed. The same can happen for crystal/tracing with
     # CRYSTAL_TRACE_FILE.
     #
-    # We thus store the state ASAP when the program starts, then go on to
+    # We thus store the state ASAP when the program starts, then use it to
+    # create the STDIN, ORIGINAL_STDIN, and others, as closed IO objects.
     @@stdio_closed = uninitialized {Bool, Bool, Bool}
 
     # :nodoc:
     private def self.init_stdio_closed : Nil
-      @@stdio_closed = {
-        LibC.fcntl(0, LibC::F_GETFL) == -1,
-        LibC.fcntl(1, LibC::F_GETFL) == -1,
-        LibC.fcntl(2, LibC::F_GETFL) == -1,
-      }
+      # check for closed stdio fds
+      closed_stdin = LibC.fcntl(0, LibC::F_GETFL) == -1
+      closed_stdout = LibC.fcntl(1, LibC::F_GETFL) == -1
+      closed_stderr = LibC.fcntl(2, LibC::F_GETFL) == -1
+
+      # reopen closed fds (guaranteed to be the smallest number)
+      LibC.open("/dev/null", LibC::O_RDONLY | LibC::O_CLOEXEC, 0) if closed_stdin
+      LibC.open("/dev/null", LibC::O_WRONLY | LibC::O_CLOEXEC, 0) if closed_stdout
+      LibC.open("/dev/null", LibC::O_WRONLY | LibC::O_CLOEXEC, 0) if closed_stderr
+
+      # save the closed state for when we create the IO objects
+      @@stdio_closed = {closed_stdin, closed_stdout, closed_stderr}
     end
 
     # :nodoc:
