@@ -146,7 +146,9 @@ describe Socket::IPAddress do
 
     it "looks up loopback interface index by name" do
       # loopback interface is usually the first interface, but sometimes it's not
-      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) { pending! }
+      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
+        raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+      end
 
       address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
       address.address.should eq "fe80::1111"
@@ -155,7 +157,9 @@ describe Socket::IPAddress do
 
     it "looks up loopback interface name by index" do
       # loopback interface is usually the first interface, but sometimes it's not
-      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) { pending! }
+      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
+        raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+      end
 
       address = Socket::IPAddress.new("fe80::1111%#{zone_id}", 0)
       address.link_local_interface.should eq loopback_iface
