@@ -214,11 +214,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @mutex = Thread::Mutex.new
   end
 
-  {% if flag?(:without_mt) %}
-    def after_fork : Nil
-    end
-  {% end %}
-
   private def ring : Ring
     {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
       Fiber::ExecutionContext::Scheduler.current.__evloop_ring

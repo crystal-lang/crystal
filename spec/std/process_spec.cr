@@ -1127,25 +1127,6 @@ describe Process do
     end
   {% end %}
 
-  {% if flag?(:without_mt) && !flag?(:win32) %}
-    describe ".fork" do
-      it "executes the new process with exec" do
-        with_tempfile("crystal-spec-exec") do |path|
-          File.exists?(path).should be_false
-
-          fork = Process.fork do
-            Process.exec("/usr/bin/env", {"touch", path})
-          end
-          fork.wait
-
-          File.exists?(path).should be_true
-        end
-      end
-
-      typeof(Process.fork)
-    end
-  {% end %}
-
   describe ".exec" do
     it "redirects STDIN and STDOUT to files", tags: %w[slow] do
       with_tempfile("crystal-exec-stdin", "crystal-exec-stdout") do |stdin_path, stdout_path|

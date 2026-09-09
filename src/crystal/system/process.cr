@@ -69,10 +69,6 @@ struct Crystal::System::Process
   # Measures CPU times.
   # def self.times : ::Process::Tms
 
-  # Duplicates the current process.
-  # def self.fork : ProcessInformation
-  # def self.fork(&)
-
   # def prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args
   # def prepare_args(args : Enumerable(String)) : Args
 
