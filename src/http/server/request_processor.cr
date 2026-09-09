@@ -43,6 +43,8 @@ class HTTP::Server::RequestProcessor
           return
         end
 
+        original_body = request.body
+
         # RFC 9112, Section 6.1: reject & close on ambiguous body content to
         # prevent request smuggling
         if request.headers.has_key?("Content-Length") && request.headers.has_key?("Transfer-Encoding")
@@ -94,16 +96,16 @@ class HTTP::Server::RequestProcessor
 
         # The request body is either FixedLengthContent or ChunkedContent.
         # In case it has not entirely been consumed by the handler, the connection is
-        # closed the connection even if keep alive was requested.
-        case body = request.body
+        # closed even if keep alive was requested.
+        case original_body
         when FixedLengthContent
-          if body.read_remaining > 0
+          if original_body.read_remaining > 0
             # Close the connection if there are bytes remaining
             break
           end
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
-          break unless body.closed?
+          break unless original_body.closed?
         end
       end
     rescue IO::Error

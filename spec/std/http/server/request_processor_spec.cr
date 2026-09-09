@@ -289,19 +289,14 @@ describe HTTP::Server::RequestProcessor do
       output = IO::Memory.new
       processor.process(input, output)
       output.rewind
-      output.gets_to_end.should eq(<<-HTTP
-        HTTP/1.1 200 OK\r
-        Connection: keep-alive\r
-        Content-Length: 0\r
-        \r
-        HTTP/1.1 414 URI Too Long\r
-        Content-Type: text/plain\r
-        Content-Length: 17\r
-        \r
-        414 URI Too Long
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
 
         HTTP
-      )
+      ))
     end
 
     it "continues when request has no body" do
