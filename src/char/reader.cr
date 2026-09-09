@@ -132,11 +132,13 @@ struct Char
     # reader.current_char # => '\0'
     # ```
     def next_char? : Char?
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
+      @pos &+= @current_char_width
+      if has_next?
         decode_current_char
-        current_char?
+      else
+        @current_char_width = 0
+        @current_char = '\0'
+        nil
       end
     end
 
@@ -170,11 +172,13 @@ struct Char
     # reader.current_char   # => 'a'
     # ```
     def peek_next_char : Char
-      next_pos = @pos + @current_char_width
-
-      if next_pos > @string.bytesize
+      if @current_char_width.zero?
         raise IndexError.new
       end
+
+      next_pos = @pos &+ @current_char_width
+
+      return '\0' if next_pos == @string.bytesize
 
       decode_char_at(next_pos) do |code_point|
         code_point.unsafe_chr

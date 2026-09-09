@@ -40,6 +40,7 @@ private def assert_at_end(reader)
   reader.current_char.should eq '\0'
   reader.current_char?.should be_nil
   reader.pos.should eq reader.string.bytesize
+  reader.current_char_width.should eq(0)
 
   reader.has_next?.should be_false
 
@@ -136,7 +137,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new("")
       reader.error.should be_nil
 
-      reader.current_char_width.should eq 0
       assert_at_end(reader)
       assert_at_start(reader)
 
@@ -150,7 +150,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new(at_end: "")
       reader.error.should be_nil
 
-      reader.current_char_width.should eq 0
       assert_at_end(reader)
       assert_at_start(reader)
 
