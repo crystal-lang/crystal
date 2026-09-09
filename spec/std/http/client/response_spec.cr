@@ -262,7 +262,8 @@ class HTTP::Client::Response
     end
 
     it "serialize as chunked with body_io" do
-      response = Response.new(:ok, body_io: IO::Memory.new("hello"))
+      # IO::Sized wrapper simulates an arbitrary IO to ensure that `Response#to_io` does not apply the optimization for IO::Memory
+      response = Response.new(:ok, body_io: IO::Sized.new(IO::Memory.new("hello"), 100))
       io = IO::Memory.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")

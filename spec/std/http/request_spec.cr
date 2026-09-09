@@ -317,10 +317,25 @@ module HTTP
       end
 
       it "serialize POST (with io body, without content-length header)" do
-        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        # IO::Sized wrapper simulates an arbitrary IO to ensure that `Request#to_io` does not apply the optimization for IO::Memory
+        request = Request.new "POST", "/", body: IO::Sized.new(IO::Memory.new("thisisthebody"), 100)
         io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+      end
+
+      it "serializes POST (with io body)`" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "serializes POST (with io body, starting at offset)" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody").tap { |io| io.pos = 4 }
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 9\r\n\r\nisthebody")
       end
 
       it "serialize POST (with io body, with content-length header)" do
