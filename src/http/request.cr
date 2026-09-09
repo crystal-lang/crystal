@@ -396,6 +396,8 @@ class HTTP::Request
   #
   # [idempotency]: https://httpwg.org/specs/rfc9110.html#idempotent.methods
   def replayable? : Bool
+    return true if @method == "QUERY"
+
     @body.nil? && @form_params.nil? && (
       @method.in?("GET", "HEAD", "OPTIONS", "TRACE") ||
         headers.has_key?("Idempotency-Key") || headers.has_key?("X-Idempotency-Key")
