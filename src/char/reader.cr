@@ -154,13 +154,9 @@ struct Char
     # reader.next_char # raise IndexError
     # ```
     def next_char : Char
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
-        decode_current_char
-      else
-        raise IndexError.new
-      end
+      raise IndexError.new unless has_next?
+
+      next_char? || '\0'
     end
 
     # Returns the next character in the `#string` without incrementing `#pos`.
