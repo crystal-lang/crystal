@@ -378,21 +378,21 @@ describe Process do
     end
 
     it "forwards closed io" do
-      opened = IO::Memory.new
+      open = IO::Memory.new
       closed = IO::Memory.new.tap(&.close)
       path = File.tempname("stdio")
 
-      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: opened, error: opened)
+      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: open, error: open)
       status.success?.should be_true
-      File.read(path).should eq "stdin=closed stdout=opened stderr=opened"
+      File.read(path).should eq "stdin=closed stdout=open stderr=open"
 
-      status = Process.run(exe, ["pu", "stdio", path], input: opened, output: closed, error: opened)
+      status = Process.run(exe, ["pu", "stdio", path], input: open, output: closed, error: open)
       status.success?.should be_true
-      File.read(path).should eq "stdin=opened stdout=closed stderr=opened"
+      File.read(path).should eq "stdin=open stdout=closed stderr=open"
 
-      status = Process.run(exe, ["pu", "stdio", path], input: opened, output: opened, error: closed)
+      status = Process.run(exe, ["pu", "stdio", path], input: open, output: open, error: closed)
       status.success?.should be_true
-      File.read(path).should eq "stdin=opened stdout=opened stderr=closed"
+      File.read(path).should eq "stdin=open stdout=open stderr=closed"
 
       status = Process.run(exe, ["pu", "stdio", path], input: closed, output: closed, error: closed)
       status.success?.should be_true

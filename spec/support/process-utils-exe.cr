@@ -61,9 +61,9 @@ module ProcessUtils
       sleep
     when "stdio"
       File.open(args.shift, "w") do |file|
-        file << "stdin=" << (STDIN.closed? ? "closed" : "opened") << ' '
-        file << "stdout=" << (STDOUT.closed? ? "closed" : "opened") << ' '
-        file << "stderr=" << (STDERR.closed? ? "closed" : "opened")
+        file << "stdin=" << (STDIN.closed? ? "closed" : "open") << ' '
+        file << "stdout=" << (STDOUT.closed? ? "closed" : "open") << ' '
+        file << "stderr=" << (STDERR.closed? ? "closed" : "open")
       end
     else
       ::abort "Unknown process util command: #{command}"
