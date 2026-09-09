@@ -4344,6 +4344,34 @@ describe "Semantic: instance var" do
     end
   end
 
+  it "errors if including a module with a declared instance var in an enum" do
+    assert_error <<-CRYSTAL, "can't declare instance variables in Bar"
+      module Foo
+        @x : Int32 = 1
+      end
+
+      enum Bar
+        A = 1
+
+        include Foo
+      end
+      CRYSTAL
+  end
+
+  it "errors if including a module with a guessed instance var in an enum" do
+    assert_error <<-CRYSTAL, "can't declare instance variables in Bar"
+      module Foo
+        @x = 1
+      end
+
+      enum Bar
+        A = 1
+
+        include Foo
+      end
+      CRYSTAL
+  end
+
   it "errors if including a module with a guessed instance var in a primitive type" do
     assert_error <<-CRYSTAL, "can't declare instance variables in Int32"
       module Foo

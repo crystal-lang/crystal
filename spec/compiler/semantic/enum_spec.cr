@@ -627,4 +627,105 @@ describe "Semantic: enum" do
     a_defs = result.program.types["Foo"].lookup_defs("bar?")
     a_defs.first.doc.should eq(":nodoc:")
   end
+
+  it "includes a module in an enum" do
+    assert_type(<<-CRYSTAL) { types["Foo"] }
+      module Moo
+        def foo
+          self
+        end
+      end
+
+      enum Foo
+        A = 1
+
+        include Moo
+      end
+
+      Foo::A.foo
+      CRYSTAL
+  end
+
+  it "matches an enum against an included module" do
+    assert_type(<<-CRYSTAL) { types["Foo"] }
+      module Moo
+      end
+
+      enum Foo
+        A = 1
+
+        include Moo
+      end
+
+      def foo(x : Moo)
+        x
+      end
+
+      foo(Foo::A)
+      CRYSTAL
+  end
+
+  it "extends a module in an enum" do
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
+      module Moo
+        def foo
+          self
+        end
+      end
+
+      enum Foo
+        A = 1
+
+        extend Moo
+      end
+
+      Foo.foo
+      CRYSTAL
+  end
+
+  it "runs included hook when including a module in an enum" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Moo
+        macro included
+          def self.moo
+            1
+          end
+        end
+      end
+
+      enum Foo
+        A = 1
+
+        include Moo
+      end
+
+      Foo.moo
+      CRYSTAL
+  end
+
+  it "errors if including a non-module in an enum" do
+    assert_error <<-CRYSTAL, "Moo is not a module, it's a class"
+      class Moo
+      end
+
+      enum Foo
+        A = 1
+
+        include Moo
+      end
+      CRYSTAL
+  end
+
+  it "errors if applying a visibility modifier to an include in an enum" do
+    assert_error <<-CRYSTAL, "can't apply visibility modifier"
+      module Moo
+      end
+
+      enum Foo
+        A = 1
+
+        private include Moo
+      end
+      CRYSTAL
+  end
 end

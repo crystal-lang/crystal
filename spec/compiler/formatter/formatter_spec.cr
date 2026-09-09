@@ -1585,6 +1585,8 @@ describe Crystal::Formatter do
   assert_format "enum Foo\nA = 1\nend", "enum Foo\n  A = 1\nend"
   assert_format "enum Foo : Int32\nA = 1\nend", "enum Foo : Int32\n  A = 1\nend"
   assert_format "enum Foo : Int32\nA = 1\ndef foo\n1\nend\nend", "enum Foo : Int32\n  A = 1\n\n  def foo\n    1\n  end\nend"
+  assert_format "enum Foo\nA = 1\ninclude Bar\nend", "enum Foo\n  A = 1\n  include Bar\nend"
+  assert_format "enum Foo\nA = 1\n\ninclude Bar\nextend Baz\nend", "enum Foo\n  A = 1\n\n  include Bar\n  extend Baz\nend"
   assert_format "lib Bar\n  enum Foo\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A\n  end\nend"
   assert_format "lib Bar\n  enum Foo\n    A = 1\n  end\nend"

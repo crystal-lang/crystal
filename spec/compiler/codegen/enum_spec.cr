@@ -371,4 +371,30 @@ describe "Code gen: enum" do
       Foo::A.value.to_u64!
       CRYSTAL
   end
+
+  it "codegens enum with included module and virtual dispatch" do
+    run(<<-CRYSTAL).to_i.should eq(3)
+      module Moo
+        def moo
+          value &+ 1
+        end
+      end
+
+      enum Foo
+        A = 1
+
+        include Moo
+      end
+
+      enum Bar
+        B = 2
+
+        include Moo
+      end
+
+      x = 1 == 1 ? Foo::A.as(Moo) : Bar::B.as(Moo)
+      y = 1 == 2 ? Foo::A.as(Moo) : Bar::B.as(Moo)
+      x.moo &+ y.moo &- 2
+      CRYSTAL
+  end
 end
