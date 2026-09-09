@@ -382,7 +382,7 @@ describe Process do
       closed_io.close
       Process.run(exe, ["pu", "cat"], input: closed_io)
       Process.run(exe, ["pu", "cat"], output: closed_io)
-      Process.run(exe, ["pu", "cat"], error: closed_io)
+      Process.run(exe, ["pu", "cat", "--stderr"], error: closed_io)
     end
 
     it "forwards non-blocking file" do
