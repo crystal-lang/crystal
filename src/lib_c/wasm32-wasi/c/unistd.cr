@@ -10,6 +10,7 @@ lib LibC
   SC_NPROCESSORS_ONLN = 84
 
   fun access(x0 : Char*, x1 : Int) : Int
+  fun faccessat(Int, Char*, Int, Int) : Int
   fun chdir(x0 : Char*) : Int
   fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
