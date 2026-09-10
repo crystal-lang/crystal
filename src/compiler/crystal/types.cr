@@ -1003,6 +1003,11 @@ module Crystal
       unless parents.includes?(mod)
         parents.insert 0, mod
         mod.add_including_type(self)
+        if self.is_a?(GenericType)
+          # There might be existing instantiations of this generic type and
+          # we need to make sure they include the module, too (#8771).
+          self.backfill_including_type(mod)
+        end
       end
     end
 
@@ -1576,6 +1581,18 @@ module Crystal
     def each_instantiated_type(&)
       if types = @generic_types
         types.each_value { |type| yield type }
+      end
+    end
+
+    def backfill_including_type(mod : GenericModuleInstanceType)
+      each_instantiated_type do |instance|
+        mod.replace_type_parameters(instance).add_including_type(instance)
+      end
+    end
+
+    def backfill_including_type(mod)
+      each_instantiated_type do |instance|
+        mod.add_including_type(instance)
       end
     end
 
