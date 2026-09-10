@@ -78,23 +78,19 @@ class Fiber
         thread = Thread.current
         detach(thread)
 
-        if thread == @main_thread
-          thread.internal_name = "?"
-          resume(main_thread_loop)
-        else
-          Thread.name = ""
-          thread.internal_name = "?"
-          resume(thread.main_fiber)
-        end
+        Thread.name = "" unless thread == @main_thread
+        thread.internal_name = "?"
+
+        resume(thread.main_fiber)
       end
 
-      private def main_thread_loop
-        @main_thread_loop ||= begin
-          # OPTIMIZE: allocate minimum stack size
-          pointer = Crystal::System::Fiber.allocate_stack(StackPool::STACK_SIZE, protect: true)
-          stack = Stack.new(pointer, StackPool::STACK_SIZE, reusable: true)
-          Fiber.new(nil, stack, ExecutionContext.default) { enter_thread_loop(@main_thread) }
-        end
+      def enter_main_thread_loop(fiber : Fiber) : Nil
+        # switch execution to the main user code fiber
+        resume(fiber)
+
+        # execution switched back to the main fiber, which means that the thread
+        # has checkin into the thread pool: enter the main loop
+        enter_thread_loop(@main_thread)
       end
 
       # Each thread has a general loop, which is used to park the thread while
