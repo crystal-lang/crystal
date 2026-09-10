@@ -99,12 +99,12 @@ require "./execution_context/*"
 # and reattached to the same execution context or to another one (`Concurrent`,
 # `Parallel` or `Isolated`).
 module Fiber::ExecutionContext
-  @@thread_pool : ThreadPool?
+  @@thread_pool = uninitialized ThreadPool
   @@default : ExecutionContext::Parallel?
 
   # :nodoc:
   def self.thread_pool : ThreadPool
-    @@thread_pool.not_nil!("expected thread pool to have been setup")
+    @@thread_pool
   end
 
   # Returns the default `ExecutionContext` for the process, automatically
@@ -119,8 +119,12 @@ module Fiber::ExecutionContext
   end
 
   # :nodoc:
-  def self.init_default_context : Nil
+  def self.init : Nil
     @@thread_pool = ThreadPool.new
+  end
+
+  # :nodoc:
+  def self.init_default_context : Nil
     @@default = Parallel.default(1)
     @@monitor = Monitor.new
   end
