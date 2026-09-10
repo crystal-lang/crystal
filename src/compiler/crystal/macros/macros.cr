@@ -139,6 +139,8 @@ class Crystal::Program
   # compilation.
   def host_compiler
     @host_compiler ||= Compiler.new.tap do |host_compiler|
+      host_compiler.color = color?
+
       if compiler = self.compiler
         # When cross-compiling, the host compiler shouldn't copy the config for
         # the target compiler and use the system defaults instead.

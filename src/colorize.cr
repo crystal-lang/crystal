@@ -168,8 +168,11 @@ module Colorize
   #   io << " default"
   # end
   # ```
-  def self.reset(io = STDOUT)
-    io << "\e[0m" if enabled?
+  #
+  # *enabled* can explicitly control whether the reset sequence is emitted.
+  # By default it follows `.enabled?`.
+  def self.reset(io = STDOUT, *, enabled : Bool = enabled?)
+    io << "\e[0m" if enabled
   end
 
   # Helper method to use colorize with `IO`.
@@ -440,6 +443,11 @@ struct Colorize::Object(T)
 
   def on(color : Symbol)
     back color
+  end
+
+  # Returns whether colors and text decoration are enabled on this object.
+  def enabled? : Bool
+    @enabled
   end
 
   # Enables or disables colors and text decoration on this object.
