@@ -1,14 +1,6 @@
 # :nodoc:
 class YAML::Nodes::Parser < YAML::Parser
-  def initialize(content : String | IO)
-    super
-    @anchors = {} of String => Node
-  end
-
-  def self.new(content, &)
-    parser = new(content)
-    yield parser ensure parser.close
-  end
+  @anchors = {} of String => Node
 
   def new_documents : Array(YAML::Nodes::Document)
     [] of Document
