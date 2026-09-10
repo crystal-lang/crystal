@@ -32,6 +32,13 @@ class IO
   class TimeoutError < Error
   end
 
+  # Raised when an `IO` operation is attempted on a closed stream.
+  class ClosedError < Error
+    def initialize(message = "Closed stream", cause : Exception? = nil, *, target = nil)
+      super(message, cause: cause, target: target)
+    end
+  end
+
   class EOFError < Error
     def initialize(message = "End of file reached")
       super(message)
