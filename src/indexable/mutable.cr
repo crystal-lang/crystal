@@ -213,7 +213,6 @@ module Indexable::Mutable(T)
     end
   end
 
-  {% begin %}
   # Invokes the given block for each element of `self`, replacing the element
   # with the value returned by the block. Returns `self`.
   #
@@ -222,17 +221,12 @@ module Indexable::Mutable(T)
   # a.map! { |x| x * x }
   # a # => [1, 4, 9]
   # ```
-  {% if compare_versions(Crystal::VERSION, "1.1.1") >= 0 %}
   def map!(& : T -> _) : self # TODO: add as constant
-  {% else %}
-  def map!(&) # it doesn't compile with the type annotation in the 1.0.0 compiler
-  {% end %}
     each_index do |i|
       unsafe_put(i, yield unsafe_fetch(i))
     end
     self
   end
-  {% end %}
 
   # Like `#map!`, but the block gets passed both the element and its index.
   #

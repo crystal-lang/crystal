@@ -93,11 +93,7 @@ abstract class OpenSSL::SSL::Socket < IO
 
   getter? closed : Bool
 
-  {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-    @bio = uninitialized ReferenceStorage(BIO)
-  {% else %}
-    @bio = uninitialized BIO
-  {% end %}
+  @bio = uninitialized ReferenceStorage(BIO)
 
   protected def initialize(io, @context : Context, @sync_close : Bool = false)
     @closed = false
@@ -107,13 +103,8 @@ abstract class OpenSSL::SSL::Socket < IO
       raise OpenSSL::Error.new("SSL_new")
     end
 
-    bio =
-      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-        @bio = uninitialized ReferenceStorage(BIO)
-        BIO.unsafe_construct(pointerof(@bio), io)
-      {% else %}
-        @bio = BIO.new(io)
-      {% end %}
+    @bio = uninitialized ReferenceStorage(BIO)
+    bio = BIO.unsafe_construct(pointerof(@bio), io)
 
     LibSSL.ssl_set_bio(@ssl, bio, bio)
   end
@@ -123,11 +114,7 @@ abstract class OpenSSL::SSL::Socket < IO
   end
 
   private def bio
-    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-      @bio.to_reference
-    {% else %}
-      @bio
-    {% end %}
+    @bio.to_reference
   end
 
   def unbuffered_read(slice : Bytes) : Int32

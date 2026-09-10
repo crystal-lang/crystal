@@ -63,15 +63,11 @@ module Random
   # Same as `Random.thread_default#split` but allocates the dup on the stack
   # when possible (hence the macro).
   macro split_on_stack
-    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-      %thread_rng = ::Random.thread_default.as(::Random::PCG32)
-      %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
-      %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
-      %thread_rng.split_internal(%copy)
-      %copy
-    {% else %}
-      ::Random.thread_default.split
-    {% end %}
+    %thread_rng = ::Random.thread_default.as(::Random::PCG32)
+    %buf = uninitialized ::ReferenceStorage(::Random::PCG32)
+    %copy = ::Random::PCG32.unsafe_construct(pointerof(%buf), %thread_rng)
+    %thread_rng.split_internal(%copy)
+    %copy
   end
 
   # Initializes an instance with the given *seed* and *sequence*.

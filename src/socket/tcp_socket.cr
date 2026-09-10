@@ -14,29 +14,25 @@ require "./ip_socket"
 # client.close
 # ```
 class TCPSocket < IPSocket
-  {% begin %}
-    # Creates a new `TCPSocket`, waiting to be connected.
-    def self.new(family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
-      super(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
-    end
-  {% end %}
+  # Creates a new `TCPSocket`, waiting to be connected.
+  def self.new(family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    super(af: family, type: Type::STREAM, protocol: Protocol::TCP, blocking: blocking)
+  end
 
-  {% begin %}
-    # Creates a new TCP connection to a remote TCP server.
-    #
-    # You may limit the DNS resolution time with `dns_timeout` and limit the
-    # connection time to the remote server with `connect_timeout`. Both values
-    # must be in seconds (integers or floats).
-    def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
-      Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-        super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
-        connect(addrinfo, timeout: connect_timeout) do |error|
-          close
-          error
-        end
+  # Creates a new TCP connection to a remote TCP server.
+  #
+  # You may limit the DNS resolution time with `dns_timeout` and limit the
+  # connection time to the remote server with `connect_timeout`. Both values
+  # must be in seconds (integers or floats).
+  def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
+      super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
+      connect(addrinfo, timeout: connect_timeout) do |error|
+        close
+        error
       end
     end
-  {% end %}
+  end
 
   protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP)
     super family, type, protocol
@@ -48,19 +44,17 @@ class TCPSocket < IPSocket
     super(handle: handle, family: family, type: type, protocol: protocol, blocking: blocking)
   end
 
-  {% begin %}
-    # Creates an UNIXSocket from an existing system file descriptor or socket
-    # handle.
-    #
-    # This adopts *fd* into the IO system that will reconfigure it as per the
-    # event loop runtime requirements.
-    #
-    # NOTE: On Windows, the handle must have been created with
-    # `WSA_FLAG_OVERLAPPED`.
-    def initialize(*, fd : Handle, family : Family = Family::INET, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
-      super fd, family, Type::STREAM, Protocol::TCP, blocking
-    end
-  {% end %}
+  # Creates an UNIXSocket from an existing system file descriptor or socket
+  # handle.
+  #
+  # This adopts *fd* into the IO system that will reconfigure it as per the
+  # event loop runtime requirements.
+  #
+  # NOTE: On Windows, the handle must have been created with
+  # `WSA_FLAG_OVERLAPPED`.
+  def initialize(*, fd : Handle, family : Family = Family::INET, @[Deprecated("Use Socket.set_blocking instead.")] blocking = nil)
+    super fd, family, Type::STREAM, Protocol::TCP, blocking
+  end
 
   # Opens a TCP socket to a remote TCP server, yields it to the block, then
   # eventually closes the socket when the block returns.
