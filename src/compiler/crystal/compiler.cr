@@ -649,6 +649,11 @@ module Crystal
       wg = WaitGroup.new
       mutex = Sync::Mutex.new
 
+      {% if Fiber.has_constant?(:ExecutionContext) %}
+        cpu_count = Fiber::ExecutionContext.default_workers_count.clamp(1..n_threads)
+        Fiber::ExecutionContext.default.resize(cpu_count)
+      {% end %}
+
       n_threads.times do
         wg.spawn do
           while unit = channel.receive?
