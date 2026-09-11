@@ -27,5 +27,25 @@ describe Crystal::Repl::Interpreter do
         blue.value
       CRYSTAL
     end
+
+    it "does enum with included module" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Moo
+          def moo
+            value &+ 1
+          end
+        end
+
+        enum Color
+          Red
+          Green
+          Blue
+
+          include Moo
+        end
+
+        Color::Blue.moo
+      CRYSTAL
+    end
   end
 end
