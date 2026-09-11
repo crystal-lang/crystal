@@ -195,6 +195,8 @@ class File
     # operation because it applies to all file types, including directories
     # (which typically *are* executable to signal it's allowed to list their
     # contents).
+    #
+    # NOTE: `follow_symlinks: false` is not implemented on Windows.
     def self.executable?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
       Crystal::System::File.executable?(path.to_s, follow_symlinks: follow_symlinks)
     end
