@@ -888,6 +888,9 @@ module Crystal
         ret
       elsif method_type.no_return?
         unreachable
+      elsif sret_pointer = context.sret_pointer
+        store_lhs upcast(@last, method_type, type), method_type, sret_pointer
+        ret
       else
         value = upcast(@last, method_type, type)
         ret to_rhs(value, method_type)
@@ -2147,9 +2150,7 @@ module Crystal
 
         if self_closured
           offset = parent_closure_type ? 1 : 0
-          self_value = to_rhs(llvm_self, current_context.type)
-
-          store self_value, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
+          store_lhs llvm_self, current_context.type, gep(closure_type, closure_ptr, 0, closure_vars.size + offset, "self")
 
           current_context.closure_self = current_context.type
         end
@@ -2501,6 +2502,39 @@ module Crystal
 
     def to_rhs(value, type)
       type.passed_by_value? ? load(llvm_embedded_type(type), value) : value
+    end
+
+    # Stores the value of *type* held by *value* (a pointer if *type* is
+    # passed by value, see `to_lhs`) into *pointer*
+    def store_lhs(value, type, pointer)
+      if large_aggregate?(type)
+        llvm_type = llvm_type(type)
+        memcpy cast_to_void_pointer(pointer), cast_to_void_pointer(value), size_t(@llvm_typer.size_of(llvm_type)), @llvm_typer.align_of(llvm_type), int1(0)
+      else
+        store to_rhs(value, type), pointer
+      end
+    end
+
+    # LLVM handles aggregate values one scalar at a time, so compile time grows
+    # with the element count (#2485), and AArch64 and x86-64 return at most 8
+    # scalars in registers anyway. Bigger aggregates are copied with `memcpy`
+    # and returned through an `sret` pointer instead.
+    MAX_AGGREGATE_SCALARS = 8
+
+    def large_aggregate?(type : Type?) : Bool
+      return false unless type && type.passed_by_value?
+      scalar_count(llvm_type(type)) > MAX_AGGREGATE_SCALARS
+    end
+
+    private def scalar_count(llvm_type : LLVM::Type) : Int64
+      case llvm_type.kind
+      when LLVM::Type::Kind::Struct
+        llvm_type.struct_element_types.sum(0_i64) { |element_type| scalar_count(element_type) }
+      when LLVM::Type::Kind::Array
+        llvm_type.array_size.to_i64 * scalar_count(llvm_type.element_type)
+      else
+        1_i64
+      end
     end
 
     def extern_to_lhs(value, type)
