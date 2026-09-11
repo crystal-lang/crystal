@@ -131,6 +131,24 @@ class Fiber
   end
   {% end %}
 
+  {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
+    # :nodoc:
+    #
+    # Internal constructor for running the main user code in a new fiber. No
+    # execution context (yet).
+    def initialize(@stack : Stack, &@proc : ->)
+      @context = Context.new
+
+      fiber_main = ->(f : Fiber) { f.run }
+      stack_ptr = @stack.first_addressable_pointer
+      makecontext(stack_ptr, fiber_main)
+
+      @name = "main_user_code"
+
+      Fiber.fibers.push(self)
+    end
+  {% end %}
+
   # :nodoc:
   def initialize(stack : Void*, thread)
     @proc = Proc(Void).new { }

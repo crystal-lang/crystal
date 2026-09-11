@@ -4,6 +4,7 @@ lib LibCrystalMain
 end
 
 module Crystal
+  {% begin %}
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes runtime requirements (GC, ...)
@@ -31,30 +32,61 @@ module Crystal
   # Note that the above is really just an example, almost the
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
-  def self.main(&block)
+  def self.main(&block : ->)
     {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
-    GC.init
 
+    GC.init
     init_runtime
 
-    status =
-      begin
-        yield
-        0
-      rescue ex
-        1
-      end
+    {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
+      # Run main user code in a fiber so the main program doesn't run on a
+      # thread's stack. This avoids situations where thread B would pick and
+      # resume the main fiber of thread A (crashes on aarch64-darwin), and
+      # allows every fiber to run on the same stack size.
+      pointer = Crystal::System::Fiber.allocate_stack(Fiber::StackPool::STACK_SIZE, protect: true)
+      stack = Fiber::Stack.new(pointer, Fiber::StackPool::STACK_SIZE, reusable: true)
 
-    exit(status, ex)
+      main_user_code_fiber = Fiber.new(stack) do
+        status =
+          begin
+            block.call
+            0
+          rescue ex
+            1
+          end
+        LibC.exit(exit(status , ex))
+      end
+      Fiber::ExecutionContext.thread_pool.enter_main_thread_loop(main_user_code_fiber)
+
+      # unreachable (the above never returns)
+      1
+    {% else %}
+      status =
+        begin
+          yield
+          0
+        rescue ex
+          1
+        end
+      exit(status, ex)
+    {% end %}
   end
+  {% end %}
 
   # :nodoc:
+  #
+  # Manually initializes parts of the stdlib that must be setup before we can
+  # execute main user code, that will initialize globals, runtime (kernel) then
+  # run the actual program.
   def self.init_runtime : Nil
-    # `__crystal_once` directly or indirectly depends on `Fiber` and `Thread`
-    # so we explicitly initialize their class vars, then init crystal/once
     Thread.init
     Fiber.init
+
     Crystal::Once.init
+
+    {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
+      Fiber::ExecutionContext.init
+    {% end %}
   end
 
   # :nodoc:
