@@ -44,7 +44,9 @@ module Crystal::System::VisualStudio
 
   private def self.get_vs_installations : Array(Installation)?
     if vswhere_path = find_vswhere
-      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -products * -sort -format json`.chomp
+      # the workload ID for host build support depends on machine architecture
+      arch = {{ flag?(:aarch64) ? "ARM64" : "x86.x64" }}
+      vc_install_json = `#{::Process.quote(vswhere_path)} -requires Microsoft.VisualStudio.Component.VC.Tools.#{arch} -products * -sort -format json`.chomp
       return if !$?.success? || vc_install_json.empty?
 
       Array(Installation).from_json(vc_install_json)
