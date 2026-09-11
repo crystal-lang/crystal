@@ -192,31 +192,31 @@ module GC
 
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, "malloc", size: size do
+    #Crystal.trace :gc, "malloc", size: size do
       ptr = LibGC.malloc(size)
       oom(size) if ptr.null? && size != 0
       ptr
-    end
+    #end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
-    Crystal.trace :gc, "malloc", size: size, atomic: 1 do
+    #Crystal.trace :gc, "malloc", size: size, atomic: 1 do
       ptr = LibGC.malloc_atomic(size)
       oom(size) if ptr.null? && size != 0
       ptr
-    end
+    #end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
-    Crystal.trace :gc, "realloc", size: size do
+    #Crystal.trace :gc, "realloc", size: size do
       new_ptr = LibGC.realloc(ptr, size)
       # `GC_realloc(ptr, 0)` legitimately returns NULL (free semantics), only
       # a NULL result for a non-zero size means out of memory
       oom(size) if new_ptr.null? && size != 0
       new_ptr
-    end
+    #end
   end
 
   def self.init : Nil
@@ -346,9 +346,9 @@ module GC
   end
 
   def self.free(pointer : Void*) : Nil
-    Crystal.trace :gc, "free" do
+    #Crystal.trace :gc, "free" do
       LibGC.free(pointer)
-    end
+    #end
   end
 
   def self.add_finalizer(object : Reference) : Nil
