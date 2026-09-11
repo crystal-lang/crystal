@@ -105,6 +105,14 @@ module Crystal
           write System.to_int_slice(@int_buf.to_slice, value.address, 16, true, 2)
         end
 
+        def write(value : Int128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
+        end
+
+        def write(value : UInt128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
+        end
+
         def write(value : Int::Signed) : Nil
           write System.to_int_slice(@int_buf.to_slice, value, 10, true, 2)
         end
