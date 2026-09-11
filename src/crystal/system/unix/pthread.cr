@@ -303,8 +303,8 @@ module Crystal::System::Thread
   end
 
   def wait : Nil
-    if LibC.sem_wait(semaphore) == -1
-      raise RuntimeError.from_errno("sem_wait")
+    while LibC.sem_wait(semaphore) == -1
+      raise RuntimeError.from_errno("sem_wait") unless Errno.value == Errno::EINTR
     end
   end
 
