@@ -62,24 +62,43 @@ class Crystal::System::MachO
     end
   end
 
-  def self.open(path : String, &)
+  def self.open(path : String) : self?
     fd = LibC.open(path, LibC::O_RDONLY | LibC::O_CLOEXEC, 0)
     return if fd == -1
 
-    begin
-      return unless LibC.fstat(fd, out stat) == 0
-
-      pointer = LibC.mmap(nil, stat.st_size, LibC::PROT_READ, LibC::MAP_PRIVATE, fd, 0)
-      return if pointer == LibC::MAP_FAILED
-
-      begin
-        program = new(pointer.as(UInt8*), stat.st_size)
-        yield program if program.valid?
-      ensure
-        LibC.munmap(pointer, stat.st_size)
-      end
-    ensure
+    unless LibC.fstat(fd, out stat) == 0
       LibC.close(fd)
+      return
+    end
+
+    # FIXME: round stat.st_size to next page size to avoid SIGBUS errors
+
+    pointer = LibC.mmap(nil, stat.st_size, LibC::PROT_READ, LibC::MAP_PRIVATE, fd, 0)
+    if pointer == LibC::MAP_FAILED
+      LibC.close(fd)
+      return
+    end
+
+    program = new(pointer.as(UInt8*), stat.st_size)
+
+    # we mmap the whole executable then return slices to each section, we don't
+    # need the `fd` anymore and can close it early
+    LibC.close(fd)
+
+    unless program.valid?
+      program.close
+      return
+    end
+
+    program
+  end
+
+  def self.open(path : String, &)
+    return unless program = open(path)
+    begin
+      yield program
+    ensure
+      program.close
     end
   end
 
@@ -134,5 +153,9 @@ class Crystal::System::MachO
 
   private def header
     @pointer.as(LibMachO::Header*)
+  end
+
+  def close : Nil
+    LibC.munmap(@pointer, @size)
   end
 end

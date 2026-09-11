@@ -5,7 +5,7 @@ describe "GC" do
   pending_wasm32 describe: "abort on OOM" do
     it "aborts with an error message when an allocation is too large for the heap" do
       status, _, error = compile_and_run_source <<-CRYSTAL
-        LibGC.set_max_heap_size(64_u64 * 1024 * 1024)
+        GC.max_heap_size = 64_u64 * 1024 * 1024
         GC.malloc(1_u64 << 30)
         CRYSTAL
 
@@ -16,7 +16,7 @@ describe "GC" do
 
     it "aborts with an error message when the heap is exhausted" do
       status, _, error = compile_and_run_source <<-CRYSTAL
-        LibGC.set_max_heap_size(32_u64 * 1024 * 1024)
+        GC.max_heap_size = 32_u64 * 1024 * 1024
         bufs = [] of Bytes
         loop do
           bufs << Bytes.new(1024 * 1024)

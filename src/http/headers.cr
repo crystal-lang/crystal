@@ -192,6 +192,10 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
+  def merge(other) : self
+    dup.merge!(other)
+  end
+
   def merge!(other) : self
     other.each do |key, value|
       self[key] = value

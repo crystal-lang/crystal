@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:linux) %}
+{% skip_file unless flag?(:linux) || flag?(:solaris) %}
 require "c/sys/timerfd"
 
 struct Crystal::System::TimerFD
@@ -10,7 +10,12 @@ struct Crystal::System::TimerFD
     # order to accept absolute timers with `Time::Instant` values.
     # Since `TimerFD` is only used on Linux, we do not have to differentiate
     # between different targets.
-    @fd = LibC.timerfd_create(LibC::CLOCK_BOOTTIME, LibC::TFD_CLOEXEC)
+    clock = {% if flag?(:linux) %}
+              LibC::CLOCK_BOOTTIME
+            {% else %}
+              LibC::CLOCK_MONOTONIC
+            {% end %}
+    @fd = LibC.timerfd_create(clock, LibC::TFD_CLOEXEC)
     raise RuntimeError.from_errno("timerfd_settime") if @fd == -1
   end
 

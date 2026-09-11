@@ -73,9 +73,8 @@ private def inject_primitives(node : ASTNode)
 end
 
 def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
-  program = new_program
+  program = new_program(flags.try(&.split))
   program.warnings = warnings if warnings
-  program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
@@ -97,8 +96,7 @@ def top_level_semantic(node : ASTNode, wants_doc = false)
 end
 
 def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, line = __LINE__)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   from_nodes = parse(from, filename: filename)
   to_nodes = program.normalize(from_nodes)
   to_nodes_str = to_nodes.to_s.strip
@@ -136,15 +134,13 @@ def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, lin
 end
 
 def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
   yield to_nodes, program
 end
 
 def assert_expand_named(from : String, to, *, generic = nil, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   from_nodes = parse(from, filename: filename)
   generic_type = generic.path if generic
   case from_nodes
@@ -207,9 +203,8 @@ def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE_
 end
 
 def prepare_macro_call(macro_body, flags = nil, &)
-  program = new_program
   flags = flags.split if flags.is_a?(String)
-  program.flags.concat(flags) if flags
+  program = new_program(flags)
   program.top_level_semantic_complete = true
   args = yield program
 
@@ -248,9 +243,10 @@ def compile(*codes, prelude = "empty", debug = Crystal::Debug::None, target = ni
   end
 end
 
-private def new_program
+private def new_program(flags = nil)
   program = Program.new
   program.color = false
+  program.flags.concat(flags) if flags
   apply_program_flags(program.flags)
   program.define_crystal_constants
   program
@@ -339,8 +335,7 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
       return SpecRunOutput.new(output)
     end
   else
-    program = new_program
-    program.flags.concat(flags) if flags
+    program = new_program(flags)
     program.run(code, filename: filename, debug: debug)
   end
 end
@@ -353,8 +348,7 @@ def run(code, return_type : T.class, filename : String? = nil, inject_primitives
   if code.includes?(%(require "prelude"))
     fail "TODO: support the prelude in typed codegen specs", file: file
   else
-    program = new_program
-    program.flags.concat(flags) if flags
+    program = new_program(flags)
     program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end
