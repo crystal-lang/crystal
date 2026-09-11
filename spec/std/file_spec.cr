@@ -741,6 +741,7 @@ describe "File" do
 
       context "follow_symlinks: false" do
         it "gives true for a symlink" do
+          pending! if {{ flag?(:win32) }}
           with_tempfile("good_symlink_x.txt") do |good_path|
             crystal = Process.executable_path || pending! "Unable to locate compiler executable"
             File.symlink(File.expand_path(crystal), good_path)
@@ -749,6 +750,7 @@ describe "File" do
         end
 
         it "gives true for a symlink to a non-existent file" do
+          pending! if {{ flag?(:win32) }}
           with_tempfile("missing_symlink_x.txt") do |missing_path|
             File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
             File::Info.executable?(missing_path, follow_symlinks: false).should be_true

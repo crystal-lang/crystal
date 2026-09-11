@@ -171,6 +171,8 @@ module Crystal::System::File
   end
 
   def self.executable?(path, *, follow_symlinks = true) : Bool
+    raise NotImplementedError.new("File.executable?(follow_symlinks: false)") unless follow_symlinks
+
     # NOTE: this always follows symlinks:
     # https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getbinarytypew#remarks
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
