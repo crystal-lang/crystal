@@ -6,6 +6,7 @@ module Crystal
     @[Flags]
     enum Section
       GC
+      Thread
       Sched
       Evloop
 
