@@ -317,7 +317,8 @@ module HTTP
       end
 
       it "serialize POST (with io body, without content-length header)" do
-        # IO::Sized wrapper simulates an arbitrary IO to ensure that `Request#to_io` does not apply the optimization for IO::Memory
+        # IO::Sized wrapper simulates an arbitrary IO to ensure that the body
+        # is chunked because `Request#to_io` optimizes for IO::Memory.
         request = Request.new "POST", "/", body: IO::Sized.new(IO::Memory.new("thisisthebody"), 100)
         io = IO::Memory.new
         request.to_io(io)
