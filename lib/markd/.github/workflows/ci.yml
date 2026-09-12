@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ameba_linter:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ameba-version: [v1.6.4]
+    name: Ameba ${{ matrix.ameba-version }} linter check
+    steps:
+      - name: Install latest Crystal
+        uses: crystal-lang/install-crystal@v1
+      - name: Check out repository code
+        uses: actions/checkout@master
+      - name: Install dependencies
+        run: shards install --without-development
+      - name: Cache Ameba binary
+        id: cache-ameba
+        uses: actions/cache@v3
+        with:
+          path: bin/ameba
+          key: ${{ runner.os }}-ameba-${{ matrix.ameba-version }}
+
+      - name: Build Ameba
+        if: steps.cache-ameba.outputs.cache-hit != 'true'
+        run: |
+          git clone --branch ${{ matrix.ameba-version }} --single-branch https://github.com/crystal-ameba/ameba.git
+          cd ameba
+          make bin/ameba CRFLAGS='-Dpreview_mt --no-debug'
+          mkdir -p ../bin
+          mv bin/ameba ../bin/ameba
+          cd ..
+          rm -rf ameba
+
+      - name: Run Ameba Linter
+        run: bin/ameba -c .ameba.yml
+  specs:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, crystal: latest }
+          - { os: ubuntu-latest, crystal: nightly }
+          - { os: macos-latest }
+          - { os: windows-latest }
+    runs-on: ${{matrix.os}}
+
+    name: Crystal ${{ matrix.crystal }} specs on ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: ${{ matrix.crystal }}
+
+      - name: Install dependencies
+        run: shards install --without-development
+
+      - name: Run specs
+        run: crystal spec --error-on-warnings --error-trace

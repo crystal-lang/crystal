@@ -6,9 +6,9 @@ module Markd::Rule
     ORDERED_LIST_MARKERS = {'.', ')'}
 
     def match(parser : Parser, container : Node) : MatchValue
-      if (!parser.indented || container.type.list?)
+      if !parser.indented || container.type.list?
         data = parse_list_marker(parser, container)
-        return MatchValue::None unless data && !data.empty?
+        return MatchValue::None if !data || data.empty?
 
         parser.close_unmatched_blocks
         if !parser.tip.type.list? || !list_match?(container.data, data)
@@ -82,15 +82,33 @@ module Markd::Rule
       line = parser.line[parser.next_nonspace..-1]
 
       if BULLET_LIST_MARKERS.includes?(line[0])
-        data["type"] = "bullet"
-        data["bullet_char"] = line[0].to_s
+        if parser.gfm? && line[1..].strip.starts_with?("[ ]")
+          data["type"] = "checkbox"
+          data["bullet_char"] = line[0].to_s
+          data["checked"] = false
+          padding_checkbox = line.index!(']')
+        elsif parser.gfm? && line[1..].strip.starts_with?("[x]")
+          data["type"] = "checkbox"
+          data["bullet_char"] = line[0].to_s
+          data["checked"] = true
+          padding_checkbox = line.index!(']')
+        else
+          data["type"] = "bullet"
+          data["bullet_char"] = line[0].to_s
+        end
+
         first_match_size = 1
       else
         pos = 0
         while line[pos]?.try &.ascii_number?
           pos += 1
         end
-        number = pos >= 1 ? line[0..pos - 1].to_i : -1
+
+        number = pos >= 1 ? line[0..pos - 1].to_i? : -1
+        if number.nil?
+          return empty_data
+        end
+
         if pos >= 1 && pos <= 9 && ORDERED_LIST_MARKERS.includes?(line[pos]?) &&
            (!container.type.paragraph? || number == 1)
           data["type"] = "ordered"
@@ -114,6 +132,12 @@ module Markd::Rule
 
       parser.advance_next_nonspace
       parser.advance_offset(first_match_size, true)
+
+      # Skip past the checkbox brackets ([])
+      if parser.gfm? && padding_checkbox
+        parser.advance_offset(padding_checkbox, true)
+      end
+
       spaces_start_column = parser.column
       spaces_start_offset = parser.offset
 
@@ -143,7 +167,7 @@ module Markd::Rule
       while container
         return true if container.last_line_blank?
 
-        break unless !container.last_line_checked? && container.type.in?(Node::Type::List, Node::Type::Item)
+        break if container.last_line_checked? || !container.type.in?(Node::Type::List, Node::Type::Item)
         container.last_line_checked = true
         container = container.last_child?
       end

@@ -333,7 +333,7 @@ class Crystal::Doc::Generator
     options = ::Markd::Options.new
     document = ::Markd::Parser.parse(source, options)
     renderer = MarkdDocRenderer.new(context, options)
-    renderer.render(document).chomp
+    renderer.render(document, nil).chomp
   end
 
   def fetch_doc_lines(doc : String) : String
