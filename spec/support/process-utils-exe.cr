@@ -38,9 +38,9 @@ module ProcessUtils
       opts.on("", "--stderr", "Write to stderr instead of stdout") do
         output = STDERR
       end
-      opts.on("", "--no-exit-on-epipe", "Set exit_on_epipe = false on stdio") do
-        STDOUT.exit_on_epipe = false
-        STDERR.exit_on_epipe = false
+      opts.on("", "--no-exit-on-epipe", "Set exit_on_broken_pipe = false on stdio") do
+        STDOUT.exit_on_broken_pipe = false
+        STDERR.exit_on_broken_pipe = false
       end
     end
 

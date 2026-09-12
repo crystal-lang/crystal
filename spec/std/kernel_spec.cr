@@ -352,7 +352,7 @@ describe "SIGPIPE emulation" do
     end
   end
 
-  context "with exit_on_epipe: false" do
+  context "with exit_on_broken_pipe: false" do
     it "raises IO::Error when stdout is closed" do
       IO.pipe do |reader, writer|
         reader.close
