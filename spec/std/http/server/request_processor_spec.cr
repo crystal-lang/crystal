@@ -235,6 +235,126 @@ describe HTTP::Server::RequestProcessor do
         HTTP
       ))
     end
+
+    it "continues when `request.body` is replaced as long as original is consumed" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.request.body.should_not(be_nil).gets_to_end
+        context.request.body = IO::Memory.new
+      end
+
+      input = IO::Memory.new(requestize(<<-HTTP
+        POST / HTTP/1.1
+        Content-Length: 16387
+
+        #{"0" * 16_384}1
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      ))
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "closes connection when `request.body` is replaced" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.request.body = IO::Memory.new
+      end
+
+      input = IO::Memory.new(requestize(<<-HTTP
+        POST / HTTP/1.1
+        Content-Length: 16387
+
+        #{"0" * 16_384}1
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      ))
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "continues when request has no body" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+      end
+
+      input = IO::Memory.new(<<-HTTP
+        POST / HTTP/1.1
+
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      )
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "errors when request unexpectedly has a body" do
+      processor = HTTP::Server::RequestProcessor.new { }
+
+      input = IO::Memory.new(<<-HTTP
+        POST / HTTP/1.1
+
+        hello
+        HTTP
+      )
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(<<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        HTTP/1.1 400 Bad Request\r
+        Content-Type: text/plain\r
+        Content-Length: 16\r
+        \r
+        400 Bad Request
+
+        HTTP
+      )
+    end
   end
 
   it "handles IO::Error while reading" do
