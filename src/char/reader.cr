@@ -50,7 +50,7 @@ struct Char
     # reader.next_char
     # reader.current_char # => '\0'
     # ```
-    getter current_char : Char
+    getter current_char : Char = '\0'
 
     # Returns the size of the `#current_char` (in bytes) as if it were encoded in UTF-8.
     #
@@ -60,7 +60,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width : Int32
+    getter current_char_width : Int32 = 0
 
     # Returns the byte position of the current character.
     #
@@ -82,8 +82,6 @@ struct Char
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
       @pos = pos.to_i
-      @current_char = '\0'
-      @current_char_width = 0
       decode_current_char
     end
 
@@ -91,8 +89,6 @@ struct Char
     # of the given string.
     def initialize(*, at_end @string : String)
       @pos = @string.bytesize
-      @current_char = '\0'
-      @current_char_width = 0
       decode_previous_char
     end
 
@@ -158,13 +154,9 @@ struct Char
     # reader.next_char # raise IndexError
     # ```
     def next_char : Char
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
-        decode_current_char
-      else
-        raise IndexError.new
-      end
+      raise IndexError.new unless has_next?
+
+      next_char? || '\0'
     end
 
     # Returns the next character in the `#string` without incrementing `#pos`.
