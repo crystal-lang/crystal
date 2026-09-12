@@ -1483,6 +1483,9 @@ describe "String" do
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
       it { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      it "splits by a multibyte separator" do
+        "a💥b💥c".split("💥").should eq(["a", "b", "c"])
+      end
       it { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
