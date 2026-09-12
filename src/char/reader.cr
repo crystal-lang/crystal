@@ -232,7 +232,7 @@ struct Char
     # reader.current_char # => 'a'
     # ```
     def pos=(pos)
-      if pos > @string.bytesize
+      unless 0 <= pos <= @string.bytesize
         raise IndexError.new
       end
 
