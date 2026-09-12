@@ -357,10 +357,30 @@ module Crystal
       define_crystal_string_constant "TARGET_TRIPLE", codegen_target.to_s, <<-MD
         The LLVM target triple of the target system (the machine that the compiler builds for).
         MD
+      define_string_array_constant "USER_FLAGS", user_flags, <<-MD
+        The flags provided by the user via the `-D` command line argument.
+        MD
+      define_string_array_constant "ALL_FLAGS", flags, <<-MD
+        The combined flags of the user and the program, including the target triple and the user flags.
+        MD
     end
 
     private def define_crystal_string_constant(name, value, doc = nil)
       define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string)), doc
+    end
+
+    private def define_constant(name, value, doc = nil) : Const
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.doc = doc
+      const
+    end
+
+    private def define_string_array_constant(name, ary, doc = nil) : Const
+      node = ArrayLiteral.map(ary) { |item| StringLiteral.new(item) }
+      if ary.empty?
+        node.of = Path.global("String")
+      end
+      define_constant(name, node, doc: doc)
     end
 
     private def define_crystal_nil_constant(name, doc = nil)
