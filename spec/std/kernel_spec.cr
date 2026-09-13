@@ -54,12 +54,12 @@ describe "exit" do
     status.exit_code.should eq(42)
   end
 
-  it "exists with Process::Status", tags: %w[slow] do
+  it "exits with Process::Status", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit Process::Status.new(system_exit_status: 0)"
     status.success?.should be_true
   end
 
-  it "exists with abnormal status", tags: %w[slow] do
+  it "exits with abnormal status", tags: %w[slow] do
     status, _, _ = compile_and_run_source "exit Process::Status.new(system_exit_status: {% if flag?(:unix) %}Signal::INT.value{% else %}LibC::STATUS_CONTROL_C_EXIT{% end %})"
     status.exit_reason.should eq Process::ExitReason::Interrupted
   end
@@ -318,3 +318,60 @@ end
     {% end %}
   end
 {% end %}
+
+require "../support/process-utils"
+
+describe "SIGPIPE emulation" do
+  it "exits cleanly when stdout is closed" do
+    IO.pipe do |reader, writer|
+      reader.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "foobar", output: writer)
+      result.output.should eq ""
+      result.error.should eq ""
+      result.status.should eq Process::Status[141]
+    end
+  end
+
+  it "exits cleanly when stderr is closed" do
+    IO.pipe do |reader, writer|
+      reader.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "foobar", error: writer)
+      result.output.should eq ""
+      result.error.should eq ""
+      result.status.should eq Process::Status[141]
+    end
+  end
+
+  it "exits cleanly when stdin is closed" do
+    IO.pipe do |reader, writer|
+      writer.close
+      result = Process.capture_result(ProcessUtils::EXE, "pu", "cat", input: reader)
+      result.output.should eq ""
+      result.error.should eq ""
+      result.status.success?.should be_true
+    end
+  end
+
+  context "with exit_on_epipe: false" do
+    it "raises IO::Error when stdout is closed" do
+      IO.pipe do |reader, writer|
+        reader.close
+        result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--no-exit-on-epipe", "foobar", output: writer)
+        result.output.should eq ""
+        result.error.should match /Unhandled exception: (write|Error writing file)/
+        result.error.should match /(The pipe is being closed.|Broken pipe)/
+        result.status.should eq Process::Status[1]
+      end
+    end
+
+    it "raises IO::Error when stderr is closed" do
+      IO.pipe do |reader, writer|
+        reader.close
+        result = Process.capture_result(ProcessUtils::EXE, "pu", "echo", "--stderr", "--no-exit-on-epipe", "foobar", error: writer)
+        result.output.should eq ""
+        result.error.should eq ""
+        result.status.should eq Process::Status[1]
+      end
+    end
+  end
+end
