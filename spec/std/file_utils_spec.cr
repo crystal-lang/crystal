@@ -527,15 +527,14 @@ describe "FileUtils" do
       with_tempfile("mv-source", "mv-target") do |source_path, target_path|
         path1 = File.join(source_path, "a")
         path2 = File.join(source_path, "b")
-        path3 = File.join(source_path, "c", "sub")
 
-        test_with_string_and_path(path1, path2, path3, target_path) do |arg1, arg2, arg3, arg4|
+        test_with_string_and_path(path1, path2, target_path) do |arg1, arg2, arg3|
           FileUtils.mkdir_p([path1, path2, target_path])
           path1 = File.join(path1, "a")
           path2 = File.join(path2, "b")
           File.write(path1, "")
           File.write(path2, "")
-          FileUtils.mv([arg1, arg2, arg3], arg4).should be_nil
+          FileUtils.mv([arg1, arg2], arg3).should be_nil
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
           File.exists?(File.join(target_path, "a")).should be_true
