@@ -1,4 +1,5 @@
 require "html"
+require "uri"
 
 module Markd::Parser
   class Inline
@@ -25,12 +26,11 @@ module Markd::Parser
       end
 
       node.text = ""
-      process_emphasis(nil)
+      process_delimiters(nil)
     end
 
     private def process_line(node : Node)
       char = char_at?(@pos)
-
       return false unless char && char != Char::ZERO
 
       res = case char
@@ -42,6 +42,12 @@ module Markd::Parser
               backtick(node)
             when '*', '_'
               handle_delim(char, node)
+            when '~'
+              if @options.gfm?
+                handle_delim(char, node)
+              else
+                string(node)
+              end
             when '\'', '"'
               @options.smart? && handle_delim(char, node)
             when '['
@@ -52,10 +58,55 @@ module Markd::Parser
               close_bracket(node)
             when '<'
               auto_link(node) || html_tag(node)
+            when 'w'
+              # Catch www. autolinks for GFM
+              # Do not match if it's http://www
+              if @options.autolink? && (@pos == 0 || char_at?(@pos - 1) != '/')
+                auto_link(node)
+              else
+                false
+              end
+            when 'h'
+              # Catch http:// and https:// autolinks for GFM
+              # Do not match ![http:// ... because that was matched by '!']
+              if @options.autolink? && (@pos == 0 || char_at?(@pos - 1) != '[')
+                auto_link(node)
+              else
+                false
+              end
+            when 'f'
+              # Catch ftp:// autolinks for GFM
+              # Do not match if it's <ftp:// ... because that was matched by '<'
+              if @options.autolink? && (@pos == 0 || char_at?(@pos - 1) != '<')
+                auto_link(node)
+              else
+                false
+              end
+            when 'x'
+              # Catch xmpp: autolinks for GFM
+              if @options.autolink? && (@pos == 0 || char_at?(@pos - 1) != '<')
+                auto_link(node)
+              else
+                false
+              end
+            when 'm'
+              # Catch mailto: autolinks for GFM
+              if @options.autolink? && (@pos == 0 || char_at?(@pos - 1) != '<')
+                auto_link(node)
+              else
+                false
+              end
             when '&'
               entity(node)
+            when ':'
+              emoji(node)
             else
-              string(node)
+              if @options.autolink? && node.text.includes? '@'
+                # Catch email autolinks for GFM
+                auto_link(node)
+              else
+                string(node)
+              end
             end
 
       unless res
@@ -120,7 +171,7 @@ module Markd::Parser
 
       num_ticks = @pos - start_pos
       after_open_ticks = @pos
-      while text = match(Rule::TICKS)
+      while (text = match(Rule::TICKS))
         if text.bytesize == num_ticks
           child = Node.new(Node::Type::Code)
           child_text = @text.byte_slice(after_open_ticks, (@pos - num_ticks) - after_open_ticks).gsub(Rule::LINE_ENDING, " ")
@@ -192,7 +243,7 @@ module Markd::Parser
         return true
       end
 
-      unless opener.active
+      unless opener.active?
         # no matched opener, just return a literal
         node.append_child(text("]"))
         # take opener off brackets stack
@@ -201,7 +252,7 @@ module Markd::Parser
       end
 
       # If we got here, open is a potential opener
-      is_image = opener.image
+      is_image = opener.image?
 
       # Check to see if we have a link/image
       save_pos = @pos
@@ -227,7 +278,7 @@ module Markd::Parser
         label_size = link_label
         if label_size > 2
           ref_label = normalize_reference(@text.byte_slice(before_label, label_size + 1))
-        elsif !opener.bracket_after
+        elsif !opener.bracket_after?
           # Empty or missing second label means to use the first label as the reference.
           # The reference must not contain a bracket. If we know there's a bracket, we don't even bother checking it.
           byte_count = start_pos - opener.index
@@ -262,14 +313,14 @@ module Markd::Parser
         end
 
         node.append_child(child)
-        process_emphasis(opener.previous_delimiter)
+        process_delimiters(opener.previous_delimiter)
         remove_bracket
         opener.node.unlink
 
         unless is_image
           opener = @brackets
           while opener
-            opener.active = false unless opener.image
+            opener.active = false unless opener.image?
             opener = opener.previous?
           end
         end
@@ -282,7 +333,7 @@ module Markd::Parser
       true
     end
 
-    private def process_emphasis(delimiter : Delimiter?)
+    private def process_delimiters(delimiter : Delimiter?)
       # find first closer above stack_bottom:
       closer = @delimiters
       while closer
@@ -299,11 +350,13 @@ module Markd::Parser
           '"'  => delimiter,
         } of Char => Delimiter?
 
+        openers_bottom['~'] = delimiter if @options.gfm?
+
         # move forward, looking for closers, and handling each
         while closer
           closer_char = closer.char
 
-          unless closer.can_close
+          unless closer.can_close?
             closer = closer.next?
             next
           end
@@ -312,10 +365,10 @@ module Markd::Parser
           opener = closer.previous?
           opener_found = false
           while opener && opener != delimiter && opener != openers_bottom[closer_char]
-            odd_match = (closer.can_open || opener.can_close) &&
+            odd_match = (closer.can_open? || opener.can_close?) &&
                         closer.orig_delims % 3 != 0 &&
                         (opener.orig_delims + closer.orig_delims) % 3 == 0
-            if opener.char == closer.char && opener.can_open && !odd_match
+            if opener.char == closer.char && opener.can_open? && !odd_match
               opener_found = true
               break
             end
@@ -326,49 +379,65 @@ module Markd::Parser
           old_closer = closer
 
           case closer_char
-          when '*', '_'
-            unless opener
-              closer = closer.next?
-            else
-              # calculate actual number of delimiters used from closer
-              use_delims = (closer.num_delims >= 2 && opener.num_delims >= 2) ? 2 : 1
-              opener_inl = opener.node
-              closer_inl = closer.node
+          when '*', '_', '~'
+            if closer_char != '~' || (closer_char == '~' && @options.gfm?)
+              if opener
+                # calculate actual number of delimiters used from closer
+                use_delims = (closer.num_delims >= 2 && opener.num_delims >= 2) ? 2 : 1
 
-              # remove used delimiters from stack elts and inlines
-              opener.num_delims -= use_delims
-              closer.num_delims -= use_delims
+                if closer_char == '~' && (
+                     closer.num_delims > 2 ||
+                     opener.num_delims > 2 ||
+                     closer.num_delims != opener.num_delims
+                   )
+                  closer = closer.next?
+                  next
+                end
 
-              opener_inl.text = opener_inl.text[0..(-use_delims - 1)]
-              closer_inl.text = closer_inl.text[0..(-use_delims - 1)]
+                opener_inl = opener.node
+                closer_inl = closer.node
 
-              # build contents for new emph element
-              emph = Node.new((use_delims == 1) ? Node::Type::Emphasis : Node::Type::Strong)
+                # remove used delimiters from stack elts and inlines
+                opener.num_delims -= use_delims
+                closer.num_delims -= use_delims
 
-              tmp = opener_inl.next?
-              while tmp && tmp != closer_inl
-                next_node = tmp.next?
-                tmp.unlink
-                emph.append_child(tmp)
-                tmp = next_node
-              end
+                opener_inl.text = opener_inl.text[0..(-use_delims - 1)]
+                closer_inl.text = closer_inl.text[0..(-use_delims - 1)]
 
-              opener_inl.insert_after(emph)
+                if closer_char == '~'
+                  emph = Node.new(Node::Type::Strikethrough)
+                else
+                  # build contents for new emph element
+                  emph = Node.new((use_delims == 1) ? Node::Type::Emphasis : Node::Type::Strong)
+                end
 
-              # remove elts between opener and closer in delimiters stack
-              remove_delimiter_between(opener, closer)
+                tmp = opener_inl.next?
+                while tmp && tmp != closer_inl
+                  next_node = tmp.next?
+                  tmp.unlink
+                  emph.append_child(tmp)
+                  tmp = next_node
+                end
 
-              # if opener has 0 delims, remove it and the inline
-              if opener.num_delims == 0
-                opener_inl.unlink
-                remove_delimiter(opener)
-              end
+                opener_inl.insert_after(emph)
 
-              if closer.num_delims == 0
-                closer_inl.unlink
-                tmp_stack = closer.next?
-                remove_delimiter(closer)
-                closer = tmp_stack
+                # remove elts between opener and closer in delimiters stack
+                remove_delimiter_between(opener, closer)
+
+                # if opener has 0 delims, remove it and the inline
+                if opener.num_delims == 0
+                  opener_inl.unlink
+                  remove_delimiter(opener)
+                end
+
+                if closer.num_delims == 0
+                  closer_inl.unlink
+                  tmp_stack = closer.next?
+                  remove_delimiter(closer)
+                  closer = tmp_stack
+                end
+              else
+                closer = closer.next?
               end
             end
           when '\''
@@ -383,13 +452,11 @@ module Markd::Parser
               opener.node.text = "\u{201C}"
             end
             closer = closer.next?
-          else
-            nil
           end
 
           if !opener && !odd_match
             openers_bottom[closer_char] = old_closer.previous?
-            remove_delimiter(old_closer) if !old_closer.can_open
+            remove_delimiter(old_closer) if !old_closer.can_open?
           end
         end
       end
@@ -401,20 +468,69 @@ module Markd::Parser
     end
 
     private def auto_link(node : Node)
-      if text = match(Rule::EMAIL_AUTO_LINK)
-        node.append_child(link(text, true))
+      if (matched_text = match(Rule::EMAIL_AUTO_LINK))
+        node.append_child(link(matched_text, true))
         return true
-      elsif text = match(Rule::AUTO_LINK)
-        node.append_child(link(text, false))
+      elsif (matched_text = match(Rule::AUTO_LINK))
+        node.append_child(link(matched_text, false))
         return true
+      elsif @options.autolink?
+        # These are all the extended autolinks from the
+        # autolink extension
+
+        if (matched_text = match(Rule::WWW_AUTO_LINK))
+          clean_text = autolink_cleanup(matched_text)
+          if clean_text.empty?
+            node.append_child(text(matched_text))
+          else
+            _, post = @text.split(clean_text, 2)
+            node.append_child(link(clean_text, false, true))
+            node.append_child(text(post)) if post.size > 0 && matched_text != clean_text
+          end
+          return true
+        elsif (matched_text = (
+                match(Rule::PROTOCOL_AUTO_LINK) ||
+                match(Rule::XMPP_AUTO_LINK) ||
+                match(Rule::MAILTO_AUTO_LINK)
+              ))
+          clean_text = autolink_cleanup(matched_text)
+          if clean_text.empty?
+            node.append_child(text(matched_text))
+          else
+            _, post = @text.split(clean_text, 2)
+            node.append_child(link(clean_text, false, false))
+            node.append_child(text(post)) if post.size > 0 && matched_text != clean_text
+          end
+          return true
+        elsif (matched_text = match(Rule::EXTENDED_EMAIL_AUTO_LINK))
+          # Emails that end in - or _ are declared not to be links by the spec:
+          #
+          # `.`, `-`, and `_` can occur on both sides of the `@`, but only `.` may occur at
+          # the end of the email address, in which case it will not be considered part of
+          # the address:
+
+          # a.b-c_d@a.b_  => <p>a.b-c_d@a.b_</p>
+
+          if "-_".includes?(matched_text[-1])
+            node.append_child(text(matched_text))
+          else
+            node.append_child(link(matched_text, true, false))
+          end
+          return true
+        end
       end
 
       false
     end
 
     private def html_tag(node : Node)
-      if text = match(Rule::HTML_TAG)
+      if (text = match(Rule::HTML_TAG))
         child = Node.new(Node::Type::HTMLInline)
+
+        if @options.tagfilter?
+          text = Rule::HTMLBlock.escape_disallowed_html(text)
+        end
+
         child.text = text
         node.append_child(child)
         true
@@ -438,8 +554,6 @@ module Markd::Parser
               break
             when Char::ZERO, nil
               return false
-            else
-              nil
             end
           end
           text = @text.byte_slice((@pos + 1), (pos - 1) - (@pos + 1))
@@ -454,8 +568,43 @@ module Markd::Parser
       end
     end
 
+    private def emoji(node : Node)
+      return false unless @options.emoji?
+
+      if char_at?(@pos) == ':'
+        pos = @pos + 1
+        loop do
+          char = char_at?(pos)
+          pos += 1
+
+          case char
+          when ':'
+            break
+          when Char::ZERO, nil
+            return false
+          when 'a'..'z', 'A'..'Z', '0'..'9', '+', '-', '_'
+            nil
+          else
+            return false
+          end
+        end
+
+        text = @text.byte_slice((@pos + 1), (pos - 1) - (@pos + 1))
+        if (emoji = EmojiEntities::EMOJI_MAPPINGS[text]?)
+          @pos = pos
+          node.append_child(text(emoji))
+
+          true
+        else
+          false
+        end
+      else
+        false
+      end
+    end
+
     private def string(node : Node)
-      if text = match_main
+      if (text = match_main)
         if @options.smart?
           text = text.gsub(Rule::ELLIPSIS, '\u{2026}')
             .gsub(Rule::DASH) do |chars|
@@ -484,9 +633,12 @@ module Markd::Parser
       end
     end
 
-    private def link(match : String, email = false) : Node
-      dest = match[1..-2]
+    private def link(match : String, email = false, add_proto = false) : Node
+      dest = match.lstrip("<").rstrip(">")
       destination = email ? "mailto:#{dest}" : dest
+      if add_proto
+        destination = "http://#{destination}"
+      end
 
       node = Node.new(Node::Type::Link)
       node.data["title"] = ""
@@ -512,12 +664,12 @@ module Markd::Parser
     end
 
     private def link_destination
-      dest = if text = match(Rule::LINK_DESTINATION_BRACES)
+      dest = if (text = match(Rule::LINK_DESTINATION_BRACES))
                text[1..-2]
              elsif char_at?(@pos) != '<'
                save_pos = @pos
                open_parens = 0
-               while char = char_at?(@pos)
+               while (char = char_at?(@pos))
                  case char
                  when '\\'
                    @pos += 1
@@ -564,7 +716,7 @@ module Markd::Parser
 
       delimiter = Delimiter.new(char, num_delims, num_delims, child, @delimiters, nil, res[:can_open], res[:can_close])
 
-      if prev = delimiter.previous?
+      if (prev = delimiter.previous?)
         prev.next = delimiter
       end
 
@@ -574,11 +726,11 @@ module Markd::Parser
     end
 
     private def remove_delimiter(delimiter : Delimiter)
-      if prev = delimiter.previous?
+      if (prev = delimiter.previous?)
         prev.next = delimiter.next?
       end
 
-      if nxt = delimiter.next?
+      if (nxt = delimiter.next?)
         nxt.previous = delimiter.previous?
       else
         # top of stack
@@ -713,7 +865,7 @@ module Markd::Parser
         }
       end
 
-      return @pos - startpos
+      @pos - startpos
     end
 
     private def space_at_end_of_line?
@@ -728,13 +880,14 @@ module Markd::Parser
       else
         return false
       end
-      return true
+
+      true
     end
 
     # Parse zero or more space characters, including at most one newline
     private def spnl
       seen_newline = false
-      while c = char_at?(@pos)
+      while (c = char_at?(@pos))
         if !seen_newline && c == '\n'
           seen_newline = true
         elsif c != ' '
@@ -744,21 +897,45 @@ module Markd::Parser
         @pos += 1
       end
 
-      return true
+      true
     end
 
     private def match(regex : Regex) : String?
       text = @text.byte_slice(@pos)
-      if match = text.match(regex)
+      if (match = text.match(regex))
         @pos += match.byte_end.not_nil!
         return match[0]
       end
     end
 
+    # This function advances @pos as far as possible until it finds a
+    # "special" character, such as '<', ']', or a special string (like a URL).
+    #
+    # Then it returns the chunk before it found that match, or in the case
+    # of special strings, the chunk matched.
+
     private def match_main : String?
-      # This is the same as match(/^[^\n`\[\]\\!<&*_'"]+/m) but done manually (faster)
       start_pos = @pos
-      while (char = char_at?(@pos)) && main_char?(char)
+      while (char = char_at?(@pos))
+        # If we detected a special string (like a URL), and it's
+        # not the beggining of the string, we need to break right away.
+        #
+        # If we are at the beginning of the string, then we return
+        # the chunk matched
+        if @options.autolink?
+          advance = special_string?(@text, @pos)
+          if advance > 0
+            if @pos > start_pos
+              break
+            else
+              @pos += advance
+              break
+            end
+          end
+        end
+
+        # If we detect a special character, we need to break
+        break if !main_char?(char)
         @pos += 1
       end
 
@@ -769,10 +946,98 @@ module Markd::Parser
       end
     end
 
+    # Identify "special" strings by matching against
+    # regular expressions. It returns the number of characters
+    # that were matched.
+
+    private def special_string?(full_text : String, pos : Int) : Int
+      text = full_text.byte_slice(pos)
+      # All such recognized autolinks can only come at the beginning of
+      # a line, after whitespace, or any of the delimiting characters `*`, `_`, `~`,
+      # and `(`.
+      if pos > 0 && !("*_~( \n\t".includes? char_at(pos - 1))
+        0
+      elsif text.starts_with?("http://") || text.starts_with?("https://") || text.starts_with?("ftp://")
+        # This should not be an autolink:
+        # < ftp://example.com >
+        if full_text[...pos].includes?("<") && full_text[...pos].matches?(/<\s*$/)
+          return 0
+        end
+
+        m = autolink_cleanup(text.match(Rule::PROTOCOL_AUTO_LINK).to_s)
+        m.size
+      elsif text.starts_with?("www.") && text.matches?(Rule::WWW_AUTO_LINK)
+        m = autolink_cleanup(text.match(Rule::WWW_AUTO_LINK).to_s)
+        m.size
+      elsif text.includes?("@") && text.matches?(Rule::EXTENDED_EMAIL_AUTO_LINK)
+        # m = autolink_cleanup(text.match(Rule::EMAIL_AUTO_LINK).to_s)
+        matched_text = text.match(Rule::EMAIL_AUTO_LINK).to_s
+
+        # `.`, `-`, and `_` can occur on both sides of the `@`, but only `.` may occur at
+        # the end of the email address, in which case it will not be considered part of
+        # the address:
+
+        if "-_".includes? char_at(pos + matched_text.size + 1)
+          return 0
+        end
+        matched_text.size
+      else
+        0
+      end
+    end
+
+    # These cleanups are defined in the spec
+
+    private def autolink_cleanup(text : String) : String
+      return text if text.empty?
+      # When an autolink ends in `)`, we scan the entire autolink for the total number
+      # of parentheses.  If there is a greater number of closing parentheses than
+      # opening ones, we don't consider the unmatched trailing parentheses part of the
+      # autolink, in order to facilitate including an autolink inside a parenthesis:
+      while text.ends_with?(")") && text.count(")") != text.count("(")
+        text = text[0..-2]
+      end
+
+      # Trailing punctuation (specifically, `?`, `!`, `.`, `,`, `:`, `*`, `_`, and `~`)
+      # will not be considered part of the autolink, though they may be included in the
+      # interior of the link
+      while "\"'?!.,:*~_".includes?(text[-1])
+        text = text[0..-2]
+      end
+
+      # If an autolink ends in a semicolon (`;`), we check to see if it appears to
+      # resemble an [entity reference][entity references]; if the preceding text is `&`
+      # followed by one or more alphanumeric characters.  If so, it is excluded from
+      # the autolink:
+
+      if text.ends_with?(";") && text.includes?("&")
+        parts = text.split("&")
+        if "&#{parts[-1]}".matches?(Rule::HTML_ENTITY)
+          text = parts[0..-2].join("&")
+        end
+      end
+
+      # If the autolink has a domain and the last component has a `_` then
+      # it's invalid.
+      if text.starts_with?("www.")
+        uri = URI.parse("http://#{text}")
+      else
+        uri = URI.parse(text)
+      end
+      if uri.host && !uri.host.to_s.match(Rule::VALID_DOMAIN_NAME)
+        text = ""
+      end
+
+      text
+    end
+
+    # This is the same as match(/^[^\n`\[\]\\!<&*_'":]+/m) but done manually (faster)
     private def main_char?(char)
       case char
-      when '\n', '`', '[', ']', '\\', '!', '<', '&', '*', '_', '\'', '"'
+      when '\n', '`', '[', ']', '\\', '!', '<', '&', '*', '_', '\'', '"', ':', 'w'
         false
+      when '~'
+        !@options.gfm?
       else
         true
       end
@@ -801,8 +1066,6 @@ module Markd::Parser
       if byte_index < @text.bytesize
         reader = Char::Reader.new(@text, byte_index)
         reader.current_char
-      else
-        nil
       end
     end
 
@@ -835,9 +1098,9 @@ module Markd::Parser
       property! previous : Bracket?
       property previous_delimiter : Delimiter?
       property index : Int32
-      property image : Bool
-      property active : Bool
-      property bracket_after : Bool
+      property? image : Bool
+      property? active : Bool
+      property? bracket_after : Bool
 
       def initialize(@node, @previous, @previous_delimiter, @index, @image, @active = true)
         @bracket_after = false
@@ -851,8 +1114,8 @@ module Markd::Parser
       property node : Node
       property! previous : Delimiter?
       property! next : Delimiter?
-      property can_open : Bool
-      property can_close : Bool
+      property? can_open : Bool
+      property? can_close : Bool
 
       def initialize(@char, @num_delims, @orig_delims, @node,
                      @previous, @next, @can_open, @can_close)
