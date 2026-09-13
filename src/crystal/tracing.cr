@@ -167,10 +167,13 @@ module Crystal
           else
             @@handle = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
           end
+
+          # don't propagate to sub-processes
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE", nil)
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE_FILE", nil)
         {% else %}
-          if ptr = LibC.getenv("CRYSTAL_TRACE")
-            len = LibC.strlen(ptr)
-            parse_sections(Slice.new(ptr, len)) if len > 0
+          if (ptr = LibC.getenv("CRYSTAL_TRACE")) && (len = LibC.strlen(ptr)) > 0
+            parse_sections(Slice.new(ptr, len))
           end
 
           if (ptr = LibC.getenv("CRYSTAL_TRACE_FILE")) && (LibC.strlen(ptr) > 0)
@@ -178,6 +181,10 @@ module Crystal
           else
             @@handle = 2
           end
+
+          # don't propagate to sub-processes
+          LibC.unsetenv("CRYSTAL_TRACE")
+          LibC.unsetenv("CRYSTAL_TRACE_FILE")
         {% end %}
       end
 
