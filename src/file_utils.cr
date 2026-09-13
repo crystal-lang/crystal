@@ -334,7 +334,6 @@ module FileUtils
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       mv(src, File.join(dest, File.basename(src)))
-    rescue File::Error
     end
   end
 
