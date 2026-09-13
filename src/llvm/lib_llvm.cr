@@ -10,10 +10,7 @@
     {% llvm_targets = env("LLVM_TARGETS") || (lines && lines[1]) %}
     {% llvm_ldflags = env("LLVM_LDFLAGS") || (lines && lines[2]) %}
 
-    @[Link("llvm")]
-    {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-      @[Link(dll: "LLVM-C.dll")]
-    {% end %}
+    @[Link("llvm", dll: "LLVM-C.dll")]
     lib LibLLVM
     end
   {% else %}

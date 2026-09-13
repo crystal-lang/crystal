@@ -897,11 +897,7 @@ module Crystal
     end
 
     def self.new(obj : ASTNode?, name : String, *args : ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)
-      {% if compare_versions(Crystal::VERSION, "1.5.0") > 0 %}
-        new obj, name, [*args] of ASTNode, block: block, block_arg: block_arg, named_args: named_args, global: global
-      {% else %}
-        new obj, name, args.to_a(&.as(ASTNode)), block: block, block_arg: block_arg, named_args: named_args, global: global
-      {% end %}
+      new obj, name, [*args] of ASTNode, block: block, block_arg: block_arg, named_args: named_args, global: global
     end
 
     def self.new(name : String, args : Array(ASTNode) = [] of ASTNode, block : Block? = nil, block_arg : ASTNode? = nil, named_args : Array(NamedArgument)? = nil, global : Bool = false)

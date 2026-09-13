@@ -35,27 +35,15 @@ module Sync
   class Shared(T)
     include Lockable
 
-    {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-      @lock = uninitialized ReferenceStorage(RWLock)
-    {% else %}
-      @lock = uninitialized RWLock
-    {% end %}
+    @lock = uninitialized ReferenceStorage(RWLock)
 
     def initialize(@value : T, type : Type = :checked)
-      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-        @lock = uninitialized ReferenceStorage(RWLock)
-        RWLock.unsafe_construct(pointerof(@lock), type)
-      {% else %}
-        @lock = RWLock.new(type)
-      {% end %}
+      @lock = uninitialized ReferenceStorage(RWLock)
+      RWLock.unsafe_construct(pointerof(@lock), type)
     end
 
     private def lock : RWLock
-      {% if compare_versions(Crystal::VERSION, "1.12.0") >= 0 %}
-        @lock.to_reference
-      {% else %}
-        @lock
-      {% end %}
+      @lock.to_reference
     end
 
     # Locks in shared mode and yields the value. The lock is released before

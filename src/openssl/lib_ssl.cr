@@ -53,7 +53,7 @@ require "./lib_crypto"
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 {% end %}
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% begin %}
   {% suffix = flag?(:aarch64) ? "arm64" : "x64" %}
   @[Link(dll: {{ "libssl-#{LibSSL::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
   @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]

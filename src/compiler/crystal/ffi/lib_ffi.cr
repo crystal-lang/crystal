@@ -4,10 +4,7 @@
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#compiler-dependencies
 module Crystal
-  @[Link("ffi", pkg_config: "libffi")]
-  {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-    @[Link(dll: "libffi-8.dll")]
-  {% end %}
+  @[Link("ffi", pkg_config: "libffi", dll: "libffi-8.dll")]
   lib LibFFI
     {% begin %}
     enum ABI
