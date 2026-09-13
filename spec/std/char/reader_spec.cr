@@ -253,6 +253,22 @@ describe "Char::Reader" do
     end
   end
 
+  describe "#pos" do
+    it "rejects invalid positions" do
+      reader = Char::Reader.new("abc")
+
+      expect_raises IndexError do
+        reader.pos = -5
+      end
+      expect_raises IndexError do
+        reader.pos = -1
+      end
+      expect_raises IndexError do
+        reader.pos = 5
+      end
+    end
+  end
+
   describe "UTF-8 decoding" do
     it "parses valid UTF-8 sequences" do
       {% for _bytes, char in VALID_UTF8_BYTE_SEQUENCES %}

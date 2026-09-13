@@ -235,6 +235,10 @@ module Crystal::System::FileDescriptor
   end
 
   def self.from_stdio(fd)
+    if Crystal.stdio_closed?(fd)
+      return IO::FileDescriptor.new(closed: true)
+    end
+
     # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
     # We need to reopen it to use O_NONBLOCK without causing other programs to break
 
