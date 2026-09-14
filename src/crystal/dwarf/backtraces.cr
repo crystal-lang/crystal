@@ -311,9 +311,10 @@ module Crystal
         # let caller fill what's needed
         slice = Slice(F).new(pointer.as(F*), aligned_bytesize // sizeof(F))
         actual_size = yield slice
+        table = slice[0, actual_size]
 
         # determine overallocation (boundary must be paged aligned)
-        aligned_boundary = (pointer + actual_size * sizeof(F)).align_up(page_size)
+        aligned_boundary = (pointer + table.bytesize).align_up(page_size)
         limit = pointer + aligned_bytesize
         oversize = limit - aligned_boundary
 
@@ -326,7 +327,7 @@ module Crystal
           {% end %}
         end
 
-        slice[0, actual_size]
+        table
       end
     end
   end
