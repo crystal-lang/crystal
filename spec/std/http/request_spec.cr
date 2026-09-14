@@ -187,26 +187,22 @@ module HTTP
       end
 
       it "keeps content-length header in sync" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/", body: "foo")
         req.body = IO::Memory.new("")
         req.method = "POST"
-        req.content_length.should eq 3_i64
+        req.content_length.should be_nil
         String.build do |io|
-          expect_raises(ArgumentError, "Content-Length header is 3 but body had 0 bytes") do
-            req.to_io(io)
-          end
-        end
+          req.to_io(io)
+        end.should eq "POST / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
       end
 
       it "keeps content-length header in sync" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("PATCH", "/", body: "foo")
         req.body = nil
-        req.content_length.should eq 3_i64
+        req.content_length.should be_nil
         String.build do |io|
           req.to_io(io)
-        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
+        end.should eq "PATCH / HTTP/1.1\r\n\r\n"
       end
     end
 
@@ -317,10 +313,25 @@ module HTTP
       end
 
       it "serialize POST (with io body, without content-length header)" do
-        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        # IO::Sized wrapper simulates an arbitrary IO to ensure that `Request#to_io` does not apply the optimization for IO::Memory
+        request = Request.new "POST", "/", body: IO::Sized.new(IO::Memory.new("thisisthebody"), 100)
         io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+      end
+
+      it "serializes POST (with io body)`" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "serializes POST (with io body, starting at offset)" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody").tap { |io| io.pos = 4 }
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 9\r\n\r\nisthebody")
       end
 
       it "serialize POST (with io body, with content-length header)" do
