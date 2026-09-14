@@ -106,6 +106,17 @@ require "../../support/tempfile"
   end
 {% end %}
 
+# TODO: Find a better way to execute specs involving file permissions when
+# running as a privileged user. Compiling a program and running a separate
+# process would be a lot of overhead.
+private def pending_if_superuser!
+  {% if flag?(:unix) %}
+    if LibC.getuid == 0
+      pending! "Spec cannot run as superuser"
+    end
+  {% end %}
+end
+
 describe "Process.find_executable" do
   test_dir = Path[SPEC_TEMPFILE_PATH] / "find_executable"
   base_dir = Path[test_dir] / "base"
@@ -138,4 +149,76 @@ describe "Process.find_executable" do
       end
     end
   end
+
+  it "raises ArgumentError for a name containing a null byte" do
+    expect_raises(ArgumentError, "String contains null byte") do
+      Process.find_executable("foo\0bar")
+    end
+  end
+
+  {% if flag?(:unix) %}
+    it "skips an inaccessible PATH entry" do
+      with_tempfile("inaccessible-path") do |denied_dir|
+        Dir.mkdir_p(denied_dir)
+        exe = File.join(denied_dir, "foo")
+        File.write(exe, "")
+        File.chmod(exe, 0o755)
+
+        begin
+          File.chmod(denied_dir, 0o000)
+          pending_if_superuser!
+
+          expect_raises(File::AccessDeniedError) { File.info?(exe) }
+          Process.find_executable("foo", path: denied_dir).should be_nil
+        ensure
+          File.chmod(denied_dir, 0o755)
+        end
+      end
+    end
+
+    it "finds an executable after an inaccessible PATH entry" do
+      with_tempfile("inaccessible-then-accessible", "accessible") do |denied_dir, allowed_dir|
+        Dir.mkdir_p(denied_dir)
+        Dir.mkdir_p(allowed_dir)
+
+        denied_exe = File.join(denied_dir, "foo")
+        File.write(denied_exe, "")
+        File.chmod(denied_exe, 0o755)
+
+        allowed_exe = File.join(allowed_dir, "foo")
+        File.write(allowed_exe, "")
+        File.chmod(allowed_exe, 0o755)
+
+        begin
+          File.chmod(denied_dir, 0o000)
+          pending_if_superuser!
+
+          expect_raises(File::AccessDeniedError) { File.info?(denied_exe) }
+          path = {denied_dir, allowed_dir}.join(Process::PATH_DELIMITER)
+          Process.find_executable("foo", path: path).should eq allowed_exe
+        ensure
+          File.chmod(denied_dir, 0o755)
+        end
+      end
+    end
+
+    it "returns nil for an inaccessible absolute path" do
+      with_tempfile("inaccessible-absolute") do |denied_dir|
+        Dir.mkdir_p(denied_dir)
+        exe = File.join(denied_dir, "foo")
+        File.write(exe, "")
+        File.chmod(exe, 0o755)
+
+        begin
+          File.chmod(denied_dir, 0o000)
+          pending_if_superuser!
+
+          expect_raises(File::AccessDeniedError) { File.info?(exe) }
+          Process.find_executable(exe).should be_nil
+        ensure
+          File.chmod(denied_dir, 0o755)
+        end
+      end
+    end
+  {% end %}
 end
