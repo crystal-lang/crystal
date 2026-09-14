@@ -295,6 +295,7 @@ module Crystal
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
+      program.user_flags.concat @flags
       program.flags.concat @flags
       program.define_crystal_constants
       program.wants_doc = wants_doc?
@@ -376,7 +377,7 @@ module Crystal
 
       {% if LibLLVM::IS_LT_170 %}
         # initialize the legacy pass manager once in the main thread/process
-        # before we start codegen in threads (MT) or processes (fork)
+        # before we start codegen in threads (MT)
         init_llvm_legacy_pass_manager unless optimization_mode.o0?
       {% end %}
 

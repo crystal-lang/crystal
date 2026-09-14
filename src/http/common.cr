@@ -331,6 +331,13 @@ module HTTP
   end
 
   # :nodoc:
+  def self.validate_content_length(length : Int64) : Int64
+    raise ArgumentError.new("Invalid Content-Length: #{length}") if length < 0
+
+    length
+  end
+
+  # :nodoc:
   def self.keep_alive?(message) : Bool
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
@@ -531,6 +538,7 @@ module HTTP
     string
   end
 
+  # :nodoc:
   def self.validate_version(version : String) : String
     if HTTP::SUPPORTED_VERSIONS.includes?(version)
       version

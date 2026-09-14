@@ -3878,11 +3878,25 @@ module Crystal
       ensure_location.column_number.should eq(5)
     end
 
+    it "sets correct location of trailing ensure in an assignment" do
+      source = "foo = do_foo ensure bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo ensure bar")
+    end
+
     it "sets correct location of trailing rescue" do
       source = "foo rescue bar"
       parser = Parser.new(source)
       node = parser.parse.as(ExceptionHandler).rescues.should_not(be_nil)[0]
       node_source(source, node).should eq("rescue bar")
+    end
+
+    it "sets correct location of trailing rescue in an assignment" do
+      source = "foo = do_foo rescue bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo rescue bar")
     end
 
     it "sets correct location of call name" do

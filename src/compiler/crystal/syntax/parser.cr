@@ -315,6 +315,7 @@ module Crystal
             rescue_body = parse_op_assign
             rescues = [Rescue.new(rescue_body).at(rescue_location).at_end(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
+              location = atomic.value.location
               atomic.value = ex = ExceptionHandler.new(atomic.value, rescues)
             else
               atomic = ex = ExceptionHandler.new(atomic, rescues)
@@ -326,6 +327,7 @@ module Crystal
             next_token_skip_space
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
+              location = atomic.value.location
               atomic.value = ex = ExceptionHandler.new(atomic.value, ensure: ensure_body)
             else
               atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)

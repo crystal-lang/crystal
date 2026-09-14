@@ -3,23 +3,29 @@ require "./sys/stat"
 require "./unistd"
 
 lib LibC
-  F_GETFD    =          1
-  F_SETFD    =          2
-  F_GETFL    =          3
-  F_SETFL    =          4
-  FD_CLOEXEC =          1
-  O_CLOEXEC  =    0x20000
-  O_EXCL     =     0x0800
-  O_TRUNC    =     0x0400
-  O_CREAT    =     0x0200
-  O_NOFOLLOW =     0x0100
-  O_SYNC     =     0x0080
-  O_APPEND   =     0x0008
-  O_NONBLOCK =     0x0004
-  O_RDWR     =     0x0002
-  O_WRONLY   =     0x0001
-  O_RDONLY   =     0x0000
-  AT_FDCWD   = 0xFFFAFDCD
+  F_GETFD    =       1
+  F_SETFD    =       2
+  F_GETFL    =       3
+  F_SETFL    =       4
+  FD_CLOEXEC =       1
+  O_CLOEXEC  = 0x20000
+  O_EXCL     =  0x0800
+  O_TRUNC    =  0x0400
+  O_CREAT    =  0x0200
+  O_NOFOLLOW =  0x0100
+  O_SYNC     =  0x0080
+  O_APPEND   =  0x0008
+  O_NONBLOCK =  0x0004
+  O_RDWR     =  0x0002
+  O_WRONLY   =  0x0001
+  O_RDONLY   =  0x0000
+
+  # Constants used by "at" family of system calls.
+  AT_FDCWD            = 0xFFFAFDCD # invalid file descriptor
+  AT_SYMLINK_NOFOLLOW =          1
+  AT_REMOVEDIR        =          2
+  AT_EACCESS          =          4
+  AT_SYMLINK_FOLLOW   =          8
 
   struct Flock
     l_start : OffT

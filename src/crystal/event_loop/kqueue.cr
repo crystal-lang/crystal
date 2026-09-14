@@ -19,28 +19,6 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
   end
 
-  {% if flag?(:without_mt) %}
-    def after_fork : Nil
-      super
-
-      # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
-      @kqueue.close
-      @kqueue = System::Kqueue.new
-
-      @interrupted.set(false, :relaxed)
-
-      @kqueue.kevent(
-        INTERRUPT_IDENTIFIER,
-        LibC::EVFILT_USER,
-        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-
-      system_set_timer(@timers.next_ready?)
-
-      # re-add all registered fds
-      Polling.arena.each_index { |fd, index| system_add(fd, index) }
-    end
-  {% end %}
-
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     buffer = uninitialized LibC::Kevent[128]
 

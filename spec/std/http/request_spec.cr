@@ -191,7 +191,7 @@ module HTTP
         req = Request.new("GET", "/", body: "foo")
         req.body = IO::Memory.new("")
         req.method = "POST"
-        req.content_length.should eq 3
+        req.content_length.should eq 3_i64
         String.build do |io|
           expect_raises(ArgumentError, "Content-Length header is 3 but body had 0 bytes") do
             req.to_io(io)
@@ -203,7 +203,7 @@ module HTTP
         # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("PATCH", "/", body: "foo")
         req.body = nil
-        req.content_length.should eq 3
+        req.content_length.should eq 3_i64
         String.build do |io|
           req.to_io(io)
         end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
@@ -213,28 +213,27 @@ module HTTP
     describe "#content_length=" do
       it "accepts valid values" do
         req = Request.new("GET", "/")
-        (req.content_length = 1234).should eq 1234
-        req.content_length.should eq 1234
+        (req.content_length = 1234).should eq 1234_i64
+        req.content_length.should eq 1234_i64
         req.headers["Content-Length"].should eq "1234"
 
-        (req.content_length = 0).should eq 0
-        req.content_length.should eq 0
+        (req.content_length = 0).should eq 0_i64
+        req.content_length.should eq 0_i64
         req.headers["Content-Length"].should eq "0"
 
-        (req.content_length = UInt64::MAX).should eq UInt64::MAX
-        req.content_length.should eq UInt64::MAX
-        req.headers["Content-Length"].should eq UInt64::MAX.to_s
+        (req.content_length = Int64::MAX).should eq Int64::MAX
+        req.content_length.should eq Int64::MAX
+        req.headers["Content-Length"].should eq Int64::MAX.to_s
       end
 
       it "rejects invalid values" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.content_length = -1
-        req.headers["Content-Length"].should eq "-1"
-        req.content_length = -1234
-        req.headers["Content-Length"].should eq "-1234"
-        req.content_length = UInt64::MAX.to_i128 + 1
-        req.headers["Content-Length"].should eq (UInt64::MAX.to_i128 + 1).to_s
+        expect_raises(ArgumentError, "Invalid Content-Length: -1") do
+          req.content_length = -1
+        end
+        expect_raises(ArgumentError, "Invalid Content-Length: -1234") do
+          req.content_length = -1234
+        end
       end
     end
 

@@ -378,11 +378,27 @@ describe Process do
     end
 
     it "forwards closed io" do
-      closed_io = IO::Memory.new
-      closed_io.close
-      Process.run(exe, ["pu", "cat"], input: closed_io)
-      Process.run(exe, ["pu", "cat"], output: closed_io)
-      Process.run(exe, ["pu", "cat"], error: closed_io)
+      open = IO::Memory.new
+      closed = IO::Memory.new.tap(&.close)
+      path = File.tempname("stdio")
+
+      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: open, error: open)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=closed stdout=open stderr=open"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: open, output: closed, error: open)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=open stdout=closed stderr=open"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: open, output: open, error: closed)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=open stdout=open stderr=closed"
+
+      status = Process.run(exe, ["pu", "stdio", path], input: closed, output: closed, error: closed)
+      status.success?.should be_true
+      File.read(path).should eq "stdin=closed stdout=closed stderr=closed"
+    ensure
+      File.delete?(path) if path
     end
 
     it "forwards non-blocking file" do
@@ -452,6 +468,11 @@ describe Process do
         value = Process.run(exe, ["pu", "env"], clear_env: true) do |proc|
           proc.output.gets_to_end
         end
+
+        {% if flag?(:win32) %}
+          # Ignore `PROCESSOR_ARCHITECTURE` which WOW64 might inject.
+          value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
+        {% end %}
         value.should eq("")
       end
 
@@ -466,8 +487,8 @@ describe Process do
           proc.output.gets_to_end
         end
 
-        {% if flag?(:win32) && flag?(:gnu) %}
-          # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which ucrt
+        {% if flag?(:win32) %}
+          # Ignore `PATH` (added above) and `PROCESSOR_ARCHITECTURE` which WOW64
           # might inject.
           value = value.gsub(/^(PATH|PROCESSOR_ARCHITECTURE)=.*\n/m, "")
         {% end %}
@@ -1119,25 +1140,6 @@ describe Process do
       Process.pgid.should eq(Process.pgid(Process.pid))
     ensure
       process.try(&.wait)
-    end
-  {% end %}
-
-  {% if flag?(:without_mt) && !flag?(:win32) %}
-    describe ".fork" do
-      it "executes the new process with exec" do
-        with_tempfile("crystal-spec-exec") do |path|
-          File.exists?(path).should be_false
-
-          fork = Process.fork do
-            Process.exec("/usr/bin/env", {"touch", path})
-          end
-          fork.wait
-
-          File.exists?(path).should be_true
-        end
-      end
-
-      typeof(Process.fork)
     end
   {% end %}
 
