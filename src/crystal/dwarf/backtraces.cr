@@ -50,16 +50,24 @@ module Crystal
       private def preload_function_names : Nil
         return unless debug_info = @debug_info
 
+        # index to each individual abbreviation at an abbrev offset, so we don't
+        # have to scan DEBUG_ABBREV over and over again to find the abbrevs
+        # we're looking for, we can directly pinpoint the abbrev we need; this
+        # dramatically improves the performance of parsing the DEBUG_INFO section
+        abbrev_indexes = Hash(UInt64, Array(Int32)).new
+
         # use the length of the DEBUG_INFO as the oversized mmap size; the final
         # table is always only a fraction of the section's size
         table = memory_map(debug_info.bytesize, Tuple(UInt64, UInt64, UInt8*)) do |slice|
           size = 0
 
-          each_function_name do |low_pc, high_pc, name|
-            unless name.empty?
-              # we take advantage that DWARF strings are always null terminated to
-              # only save the pointer to reduce the table's size
-              slice[size] = {low_pc, high_pc, name.to_unsafe}
+          each_function_name(abbrev_indexes) do |low_pc, high_pc, name_form, name_value|
+            # we take advantage that DWARF strings are always NULL terminated to
+            # only save the pointer and reduce the table's size by 25%
+            name_ptr = decode_str_pointer(name_form, name_value)
+
+            unless name_ptr.null?
+              slice[size] = {low_pc, high_pc, name_ptr}
               size += 1
             end
           end
@@ -78,19 +86,7 @@ module Crystal
         end
       end
 
-      def each_function_name(&)
-        # index to each individual abbreviation at an abbrev offset, so we don't
-        # have to scan DEBUG_ABBREV over and over again to find the abbrevs
-        # we're looking for, we can directly pinpoint the abbrev we need; this
-        # dramatically improves the performance of parsing the DEBUG_INFO section
-        abbrev_indexes = Hash(UInt64, Array(Int32)).new
-
-        each_function_name_impl(abbrev_indexes) do |low_pc, high_pc, name_form, name_value|
-          yield low_pc, high_pc, decode_str(name_form, name_value)
-        end
-      end
-
-      private def each_function_name_impl(abbrev_indexes, &)
+      private def each_function_name(abbrev_indexes, &)
         return unless debug_abbrev = @debug_abbrev
         return unless debug_info = @debug_info
 
@@ -244,13 +240,33 @@ module Crystal
         end
       end
 
+      private def decode_str_pointer(form, value)
+        case form
+        when DW_FORM_string
+          value.as(Bytes).to_unsafe
+        when DW_FORM_strp
+          decode_strp_pointer(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_line_strp
+          decode_strp_pointer(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        else
+          Pointer(UInt8).null
+        end
+      end
+
       private def decode_strp(bytes, offset)
-        if bytes && (0 <= offset < bytes.size)
-          pointer = bytes.to_unsafe + offset
+        if pointer = decode_strp_pointer(bytes, offset)
           bytesize = LibC.strlen(pointer).to_i32
           Bytes.new(pointer, bytesize, read_only: true)
         else
           Bytes.empty
+        end
+      end
+
+      private def decode_strp_pointer(bytes, offset)
+        if bytes && (0 <= offset < bytes.size)
+          bytes.to_unsafe + offset
+        else
+          Pointer(UInt8).null
         end
       end
 
