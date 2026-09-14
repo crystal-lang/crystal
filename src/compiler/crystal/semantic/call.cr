@@ -251,6 +251,15 @@ class Crystal::Call
     end
 
     @uses_with_scope = true
+
+    # A module can't hold def instances, and can't be a receiver at runtime, so
+    # the matches found above only establish that the scope responds to this
+    # call. Resolve it against the types including the module, which is also
+    # what a call with an explicit receiver of a module type does.
+    if owner.module?
+      return lookup_matches_in owner, arg_types, named_args_types, with_autocast: with_autocast
+    end
+
     instantiate signature, matches, owner, self_type: nil, with_autocast: with_autocast
   end
 
@@ -278,8 +287,18 @@ class Crystal::Call
       elsif with_scope = @with_scope
         defined_method_missing = with_scope.check_method_missing(signature, self)
         if defined_method_missing
-          matches = with_scope.lookup_matches(signature, analyze_all: with_autocast)
           @uses_with_scope = true
+
+          # `check_method_missing` defined the method on the module, which can't
+          # hold its def instances, so resolve the call against the types
+          # including it, as `#lookup_matches_with_scope_in` does. When
+          # `self_type` is given it is the def instance owner, and then there's
+          # nothing to expand.
+          if with_scope.module? && !self_type
+            return lookup_matches_in with_scope, arg_types, named_args_types, with_autocast: with_autocast
+          end
+
+          matches = with_scope.lookup_matches(signature, analyze_all: with_autocast)
         end
       end
     end
