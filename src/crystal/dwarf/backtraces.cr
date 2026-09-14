@@ -29,6 +29,7 @@ module Crystal
         a = @function_names
         l, r = 0, a.size
 
+        # binary search of the left-most entry and a double comparison:
         while l < r
           m = l &+ (r &- l) // 2
           low_pc, high_pc, cstring = a.to_unsafe[m]
@@ -80,9 +81,8 @@ module Crystal
         # while the low/high PC are mostly growing while following the debug
         # info, they actually aren't perfectly sorted in ascending order, and
         # must sort the table for binary searches
-        @function_names = table.sort! do |a, b|
-          cmp = a[0] <=> b[0]
-          cmp == 0 ? a[1] <=> b[1] : cmp
+        @function_names = table.sort_by! do |(low_pc, high_pc, _)|
+          {low_pc, high_pc}
         end
       end
 
@@ -284,7 +284,6 @@ module Crystal
       # Instead, we overallocate an anonymous memory map, let the caller fill
       # some of it, then truncate the overallocated pages.
       private def memory_map(bytesize, type : F.class, &) forall F
-        # align to page size
         page_size =
           {% if flag?(:win32) %}
             LibC.GetNativeSystemInfo(out system_info)
@@ -292,6 +291,9 @@ module Crystal
           {% else %}
             LibC.sysconf(LibC::SC_PAGESIZE).to_u64
           {% end %}
+
+        # align to page size so we reserve full pages that the OS will reserve
+        # anyway
         aligned_bytesize = (bytesize.to_u64 &+ (page_size &- 1)) & (&-page_size)
 
         # allocate
@@ -310,7 +312,7 @@ module Crystal
         slice = Slice(F).new(pointer.as(F*), aligned_bytesize // sizeof(F))
         actual_size = yield slice
 
-        # determine overallocation
+        # determine overallocation (boundary must be paged aligned)
         aligned_boundary = (pointer + actual_size * sizeof(F)).align_up(page_size)
         limit = pointer + aligned_bytesize
         oversize = limit - aligned_boundary
