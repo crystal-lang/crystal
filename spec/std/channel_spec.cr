@@ -833,6 +833,18 @@ describe "buffered" do
     ch.receive?.should be_nil
   end
 
+  it "drains buffered values on receive and receive? when closed" do
+    ch = Channel(Int32).new(2)
+    ch.send 1
+    ch.send 2
+    ch.close
+    ch.closed?.should be_true
+    ch.receive.should eq(1)
+    ch.receive?.should eq(2)
+    ch.receive?.should be_nil
+    expect_raises(Channel::ClosedError) { ch.receive }
+  end
+
   it "can receive? when not empty" do
     ch = Channel(Int32).new(10)
     spawn { ch.send 123 }
