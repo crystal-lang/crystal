@@ -81,8 +81,8 @@ struct Char
     # Creates a reader with the specified *string* positioned at
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
-      @pos = pos.to_i
-      decode_current_char
+      @pos = 0
+      self.pos = pos.to_i
     end
 
     # Creates a reader that will be positioned at the last char
