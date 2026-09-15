@@ -24,7 +24,6 @@ lib LibC
     fflags : UInt32
     data : Int64
     udata : Void*
-    ext : UInt64[4]
   end
 
   fun kqueue1(flags : Int) : Int
