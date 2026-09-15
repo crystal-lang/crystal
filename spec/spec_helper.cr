@@ -246,7 +246,10 @@ end
 private def new_program(flags = nil)
   program = Program.new
   program.color = false
-  program.flags.concat(flags) if flags
+  if flags
+    program.user_flags.concat(flags)
+    program.flags.concat(flags)
+  end
   apply_program_flags(program.flags)
   program.define_crystal_constants
   program
