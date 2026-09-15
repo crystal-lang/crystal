@@ -221,4 +221,52 @@ describe "Semantic: yield with scope" do
       foo { method }
       CRYSTAL
   end
+
+  it "yields union type dispatching to each type in the union (#17408)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      class Foo
+        def method
+          1
+        end
+      end
+
+      class Bar
+        def method
+          2
+        end
+      end
+
+      def foo(x, &)
+        with x yield
+      end
+
+      foo(Bar.new || Foo.new) { method }
+      CRYSTAL
+  end
+
+  it "uses method of enclosing scope if no type in the union yield scope has a match (#17408)" do
+    run(<<-CRYSTAL).to_i.should eq(3)
+      class Foo
+      end
+
+      class Bar
+      end
+
+      def foo(x, &)
+        with x yield
+      end
+
+      class Baz
+        def method
+          3
+        end
+
+        def baz
+          foo(Bar.new || Foo.new) { method }
+        end
+      end
+
+      Baz.new.baz
+      CRYSTAL
+  end
 end
