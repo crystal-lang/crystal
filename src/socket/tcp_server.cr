@@ -13,14 +13,14 @@ require "./tcp_socket"
 #   client.puts message
 # end
 #
-# server = TCPServer.new("localhost", 1234)
+# server = TCPServer.new("127.0.0.1", 1234)
 # while client = server.accept?
 #   spawn handle_client(client)
 # end
 # ```
 #
 # Options:
-# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *host* local interface to bind on (e.g. `127.0.0.1` or `::1`), or `::` to bind on all local interfaces. Passing a hostname such as `localhost` binds only to the first address family returned by DNS (often `::1`), which will not accept connections directed to `127.0.0.1`.
 # - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
 # - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
@@ -33,6 +33,11 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
+  #
+  # NOTE: When *host* is a hostname such as `localhost`, the server only binds
+  # to the first address returned by the system resolver (often `::1` on modern
+  # platforms). To bind explicitly to IPv4 loopback, use `127.0.0.1`. To listen
+  # on all local interfaces for both IPv4 and IPv6, pass `::` or use `.new(port)`.
   def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
