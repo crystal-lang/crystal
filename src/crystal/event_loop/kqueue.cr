@@ -146,6 +146,8 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def system_set_timer(time : Time::Instant?) : Nil
+    fflags = 0_u32
+
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
@@ -153,22 +155,22 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       t = time.duration_since(Crystal::System::Time.instant)
 
       data = t.to_nanoseconds.to_i64!
-      {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
+      {% if LibC.has_constant?(:NOTE_NSECONDS) %}
+        fflags |= LibC::NOTE_NSECONDS
+      {% else %}
         # legacy BSD (and DragonFly) only have millisecond precision, so we
         # round up to the next millisecond.
         data = (data + 999_999) // 1_000_000
+      {% end %}
+
+      {% if flag?(:netbsd) %}
+        # timeout must be greater than zero on NetBSD
+        data = 1 if data == 0
       {% end %}
     else
       flags = LibC::EV_DELETE
       data = 0_u64
     end
-
-    fflags =
-      {% if LibC.has_constant?(:NOTE_NSECONDS) %}
-        LibC::NOTE_NSECONDS
-      {% else %}
-        0
-      {% end %}
 
     @kqueue.kevent(TIMER_IDENTIFIER, LibC::EVFILT_TIMER, flags, fflags, data) do
       raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
