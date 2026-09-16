@@ -280,6 +280,11 @@ module HTTP
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
+      elsif body_io.is_a?(IO::Memory)
+        headers.serialize(io)
+        slice = body_io.to_slice + body_io.pos
+        io << "Content-Length: " << slice.bytesize << "\r\n\r\n"
+        io.write slice
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
         headers.serialize(io)
