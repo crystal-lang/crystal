@@ -114,7 +114,11 @@ jobs:
 
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
@@ -204,7 +208,11 @@ jobs:
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} -Dynamic ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
