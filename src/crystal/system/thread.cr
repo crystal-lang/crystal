@@ -157,8 +157,8 @@ class Thread
   # Creates and starts a new system thread.
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
-    init_handle
     init_semaphore
+    init_handle
   end
 
   # Used once to initialize the thread object representing the main thread of
