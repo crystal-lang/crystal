@@ -241,7 +241,7 @@ struct Char
       end
 
       @pos = pos
-      decode_current_char unless empty?
+      decode_current_char unless @string.empty?
       pos
     end
 
