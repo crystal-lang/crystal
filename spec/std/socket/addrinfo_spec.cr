@@ -141,5 +141,16 @@ describe Socket::Addrinfo, tags: "network" do
         error.message.should eq "Hostname lookup for foobar.com failed: No address found"
       end
     {% end %}
+
+    {% unless flag?(:wasm32) %}
+      # `getaddrinfo` reports an unavailable service inconsistently across
+      # platforms (macOS returns `EAI_NONAME`), so the message is checked
+      # directly instead of through a lookup.
+      it "names the service on EAI_SERVICE" do
+        os_error = {% if flag?(:win32) %}LibC::EAI_SERVICE{% else %}Errno.new(LibC::EAI_SERVICE){% end %}
+        error = Socket::Addrinfo::Error.from_os_error(nil, os_error, domain: "localhost", type: Socket::Type::STREAM, service: "http", protocol: Socket::Protocol::TCP)
+        error.message.should eq "Hostname lookup for localhost failed: The requested service http is not available for the requested socket type STREAM"
+      end
+    {% end %}
   end
 end
