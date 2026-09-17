@@ -14,7 +14,7 @@ module Crystal
       #
       # OPTIMIZE: reduce the table row size, for example using offsets (u32)
       # instead of absolute PCs (u64) to save 8 bytes out of every entry.
-      @function_names = Slice({UInt64, UInt64, UInt8*}).empty
+      @function_names = Slice({LibC::SizeT, LibC::SizeT, UInt8*}).empty
 
       @initialized = false
 
@@ -59,7 +59,7 @@ module Crystal
 
         # use the length of the DEBUG_INFO as the oversized mmap size; the final
         # table is always only a fraction of the section's size
-        table = memory_map(debug_info.bytesize, Tuple(UInt64, UInt64, UInt8*)) do |slice|
+        table = memory_map(debug_info.bytesize, Tuple(LibC::SizeT, LibC::SizeT, UInt8*)) do |slice|
           size = 0
 
           each_function_name(abbrev_indexes) do |low_pc, high_pc, name_form, name_value|
