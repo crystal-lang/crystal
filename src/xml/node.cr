@@ -385,9 +385,11 @@ class XML::Node
   # Returns the namespace for this node or `nil` if not found.
   def namespace : Namespace?
     case type
-    when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      nil
-    else
+    # These types use xmlAttr or xmlNode representation which both have a
+    # namespace field.
+    when Type::ATTRIBUTE_NODE, Type::ELEMENT_NODE, Type::TEXT_NODE,
+         Type::CDATA_SECTION_NODE, Type::ENTITY_REF_NODE, Type::PI_NODE,
+         Type::COMMENT_NODE, Type::DOCUMENT_FRAG_NODE, Type::XINCLUDE_START, Type::XINCLUDE_END
       ns = @node.value.ns
       ns ? Namespace.new(document, ns) : nil
     end
