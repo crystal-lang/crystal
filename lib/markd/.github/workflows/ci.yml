@@ -24,7 +24,7 @@ jobs:
         run: shards install --without-development
       - name: Cache Ameba binary
         id: cache-ameba
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: bin/ameba
           key: ${{ runner.os }}-ameba-${{ matrix.ameba-version }}
