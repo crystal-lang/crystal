@@ -79,6 +79,99 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
+  it "does union" do
+    # Int ranges
+    # Int ranges
+    (1..5).union(3..7).should eq(1..7)      # Overlapping integer ranges
+    (1..5).union(6..10).should eq(1..10)    # Adjacent ranges
+    (1...6).union(6..10).should eq(1..10)   # Adjacent ranges with an exclusive-end
+    (1..5).union(10..15).should eq(1...1)   # Disjoint integer ranges
+    (3..7).union(1..5).should eq(1..7)      # Overlapping integer ranges
+    (6..10).union(1..5).should eq(1..10)    # Adjacent ranges
+    (10..15).union(1..5).should eq(10...10) # Disjoint integer ranges
+
+    # Float ranges
+    (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)  # Overlapping float ranges
+    (1.0..2.5).union(3.0..4.0).should eq(1.0...1.0) # Non-overlapping float ranges
+
+    # Char ranges
+    ('a'..'e').union('c'..'g').should eq('a'..'g')  # Overlapping char ranges
+    ('a'..'c').union('e'..'f').should eq('a'...'a') # Non-overlapping char ranges
+    ('a'..'c').union('d'..'f').should eq('a'..'f')  # Adjacent char ranges
+
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t2).union(t2..t3).should eq(t1..t3)  # Adjacent time ranges
+    (t1..t2).union(t3..t4).should eq(t1...t1) # Disjoint time ranges
+
+    # Exclusive ranges
+    (1...5).union(5...10).should eq(1...10)           # Adjacent exclusive integer ranges
+    (1.0...5.5).union(3.2...7.8).should eq(1.0...7.8) # Overlapping exclusive float ranges
+    (1.0...5.5).union(5.5...7.8).should eq(1.0...7.8) # Adjacent exclusive float ranges
+    ('a'...'e').union('c'...'g').should eq('a'...'g') # Overlapping exclusive string ranges
+    (t1...t2).union(t2...t3).should eq(t1...t3)       # Adjacent exclusive time ranges
+  end
+
+  it "does intersection" do
+    # Int ranges
+    (1..5).intersection(3..7).should eq(3..5)    # Overlapping integer ranges
+    (1..5).intersection(6..10).should eq(1...1)  # Non-overlapping integer ranges
+    (1...6).intersection(6..10).should eq(1...1) # Adjacent integer ranges
+    (1..5).intersection(5..10).should eq(5..5)
+    (1...1).intersection(0..10).should eq(1...1)
+
+    # Float ranges
+    (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)   # Overlapping float ranges
+    (1.0...3.0).intersection(3.0..4.0).should eq(1.0...1.0) # Adjacent float ranges
+    (1.0..2.5).intersection(3.0..4.0).should eq(1.0...1.0)  # Non-overlapping float ranges
+
+    # Char ranges
+    ('a'..'e').intersection('c'..'g').should eq('c'..'e')  # Overlapping char ranges
+    ('a'..'c').intersection('d'..'f').should eq('a'...'a') # Non-overlapping char ranges
+
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).intersection(t2..t4).should eq(t2..t3)  # Overlapping time ranges
+    (t1..t2).intersection(t3..t4).should eq(t1...t1) # Non-overlapping time ranges
+
+    # Exclusive ranges
+    (1...5).intersection(3...7).should eq(3...5)             # Overlapping exclusive integer ranges
+    (1.0...5.5).intersection(3.2...7.8).should eq(3.2...5.5) # Overlapping exclusive float ranges
+    ('a'...'e').intersection('c'...'g').should eq('c'...'e') # Overlapping exclusive string ranges
+    (t1...t3).intersection(t2...t4).should eq(t2...t3)       # Overlapping exclusive time ranges
+  end
+
+  it "overlaps?" do
+    # Int ranges
+    (1..5).overlaps?(3..7).should eq(true)   # Overlapping integer ranges
+    (3..7).overlaps?(1..5).should eq(true)   # Overlapping integer ranges
+    (1..6).overlaps?(6..10).should eq(true)  # Overlapping integer ranges
+    (1..5).overlaps?(6..10).should eq(false) # Non-overlapping integer ranges
+    (6..10).overlaps?(1..5).should eq(false) # Non-overlapping integer ranges
+
+    # Float ranges
+    (1.0..5.5).overlaps?(3.2..7.8).should eq(true)  # Overlapping float ranges
+    (1.0..2.5).overlaps?(3.0..4.0).should eq(false) # Non-overlapping float ranges
+
+    # Char ranges
+    ('a'..'e').overlaps?('c'..'g').should eq(true)  # Overlapping char ranges
+    ('a'..'c').overlaps?('d'..'f').should eq(false) # Non-overlapping char ranges
+
+    # Time ranges
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).overlaps?(t2..t4).should eq(true)  # Overlapping time ranges
+    (t1..t2).overlaps?(t3..t4).should eq(false) # Non-overlapping time ranges
+  end
+
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
