@@ -29,6 +29,11 @@ require "c/string"
 # `Pointer.null` to construct a null pointer.
 #
 # For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
+#
+# For raw memory operations equivalent to standard C library functions, see:
+# * `#copy_to` and `#copy_from` (`memcpy`)
+# * `#move_to` and `#move_from` (`memmove`)
+# * `#clear` and `#fill` (`memset`)
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
   # it while advancing the location and keeping track of how many elements
@@ -149,6 +154,8 @@ struct Pointer(T)
   end
 
   # Copies *count* elements from *source* into `self`.
+  #
+  # This operation is similar to C's `memcpy`.
   # If *source* and `self` overlap, behaviour is undefined.
   # Use `#move_from` if they overlap (slower but always works).
   #
@@ -180,6 +187,8 @@ struct Pointer(T)
   end
 
   # Copies *count* elements from `self` into *target*.
+  #
+  # This operation is similar to C's `memcpy`.
   # If `self` and *target* overlap, behaviour is undefined.
   # Use `#move_to` if they overlap (slower but always works).
   #
@@ -202,6 +211,8 @@ struct Pointer(T)
   end
 
   # Copies *count* elements from *source* into `self`.
+  #
+  # This operation is similar to C's `memmove`.
   # *source* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
@@ -231,6 +242,8 @@ struct Pointer(T)
   end
 
   # Copies *count* elements from `self` into *target*.
+  #
+  # This operation is similar to C's `memmove`.
   # *target* and `self` may overlap; the copy is always done in a non-destructive manner.
   #
   # ```
@@ -421,6 +434,8 @@ struct Pointer(T)
   end
 
   # Replaces *count* elements in `self` with *value*. Returns `self`.
+  #
+  # For byte pointers (`Pointer(UInt8)`), this operation uses C's `memset`.
   #
   # ```
   # ptr = Pointer(Int32).malloc(5) { |i| i }
@@ -618,6 +633,8 @@ struct Pointer(T)
   end
 
   # Clears (sets to "zero" bytes) a number of values pointed by this pointer.
+  #
+  # This operation is similar to C's `memset(pointer, 0, count * sizeof(T))`.
   #
   # ```
   # ptr = Pointer.malloc(6) { |i| i + 10 } # [10, 11, 12, 13, 14, 15]
