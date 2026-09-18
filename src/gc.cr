@@ -48,7 +48,47 @@ fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
   GC.realloc(ptr, LibC::SizeT.new(size))
 end
 
+# The `GC` module provides an interface to the runtime's garbage collector.
+#
+# Crystal uses a conservative mark-and-sweep garbage collector (the
+# [Boehm-Demers-Weiser Garbage Collector](https://www.hboehm.info/gc/)) by default.
+# The collector automatically tracks dynamically allocated memory and reclaims
+# memory that is no longer reachable by the application.
+#
+# ### Memory Allocation
+#
+# Memory is allocated through the collector using `#malloc` or `#malloc_atomic`:
+#
+# * `#malloc`: Allocates cleared memory that may contain pointers to other objects.
+#   The GC will scan this memory during collection cycles.
+# * `#malloc_atomic`: Allocates uncleared memory guaranteed never to contain pointers
+#   (such as raw strings or byte buffers). The GC will not scan this memory, reducing
+#   collection overhead.
+# * `#realloc`: Resizes an existing allocation.
+# * `#free`: Explicitly deallocates memory. This is rarely needed and must be used with
+#   extreme care to avoid dangling pointer bugs.
+#
+# ### Collector Control
+#
+# Automatic collection can be temporarily paused and resumed:
+#
+# * `#disable`: Disables automatic collection cycles. Allocations will still succeed and
+#   the heap will grow as needed.
+# * `#enable`: Re-enables automatic collection cycles after a `#disable` call.
+# * `#collect`: Explicitly triggers a collection cycle.
+#
+# ### Heap Sizing and Tuning
+#
+# The maximum heap size can be limited programmatically via `#max_heap_size=` or through
+# the `GC_MAX_HEAP_SIZE` environment variable at runtime.
+#
+# ### Inspection
+#
+# * `#stats`: Returns a `GC::Stats` struct with heap size, free bytes, and allocation counts.
+# * `#prof_stats`: Returns detailed internal GC profiling metrics via `GC::ProfStats`.
+# * `#is_heap_ptr`: Queries whether a given pointer resides within the GC-managed heap.
 module GC
+  # Memory statistics for the garbage collector heap.
   struct Stats
     # The system memory allocated by the GC for its HEAP, in bytes. The memory
     # may or may not have been allocated by the OS (for example some pages
@@ -91,6 +131,7 @@ module GC
     end
   end
 
+  # Detailed internal profiling statistics for the garbage collector.
   record ProfStats,
     heap_size : UInt64,
     free_bytes : UInt64,
