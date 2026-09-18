@@ -950,7 +950,7 @@ module Crystal
       case cond
       when NilLiteral
         return IsA.new(right_side, Path.global("Nil"))
-      when Path, Generic
+      when Path, Generic, Union
         return IsA.new(right_side, cond)
       when Call
         obj = cond.obj
@@ -966,11 +966,58 @@ module Crystal
         else
           # no special treatment
         end
+
+        # A `when Foo | Bar` parses as a `|` call between type-like operands,
+        # not as a `Union` node. Turn it into an `is_a?` against the union so it
+        # behaves like `when Foo, Bar` and like `x.is_a?(Foo | Bar)`, instead of
+        # comparing the union value (its common ancestor) with `===` (#9665).
+        # If the operands turn out to be constants (e.g. enum members or numeric
+        # constants) rather than types, the `IsA` is reverted to the original
+        # `===` comparison during semantic analysis.
+        if union = case_when_union(cond)
+          return IsA.new(right_side, union)
+        end
       else
         # no special treatment
       end
 
       Call.new(cond, "===", right_side)
+    end
+
+    # If *node* is a `|` call chain between type-like operands (`Foo | Bar`,
+    # `Foo | Bar | Baz`, possibly with `.class` or aliases), returns the
+    # equivalent `Union` node. Otherwise returns `nil`.
+    private def case_when_union(node)
+      return nil unless node.is_a?(Call)
+      return nil unless node.name == "|" && node.args.size == 1
+      obj = node.obj
+      arg = node.args.first
+      return nil unless obj
+
+      left = case_when_union_operand(obj)
+      return nil unless left
+      right = case_when_union_operand(arg)
+      return nil unless right
+
+      Union.new(left + right).at(node)
+    end
+
+    # Returns the list of type nodes *node* contributes to a `case ... when`
+    # union, or `nil` if it isn't a type-like operand.
+    private def case_when_union_operand(node) : Array(ASTNode)?
+      case node
+      when Path, Generic, Union
+        [node] of ASTNode
+      when Call
+        obj = node.obj
+        if node.name == "class" && node.args.empty? && (obj.is_a?(Path) || obj.is_a?(Generic))
+          [Metaclass.new(obj).at(obj)] of ASTNode
+        else
+          case_when_union(node).try { |union| union.types }
+        end
+      else
+        nil
+      end
     end
 
     macro check_implicit_obj(type)
