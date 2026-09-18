@@ -7,6 +7,7 @@ lib LibC
   SOCK_SEQPACKET =  5
   SOCK_STREAM    =  1
   SOL_SOCKET     =  1
+  SO_ERROR       =  4
   SO_BROADCAST   =  6
   SO_KEEPALIVE   =  9
   SO_LINGER      = 13
