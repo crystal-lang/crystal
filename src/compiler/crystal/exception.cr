@@ -3,6 +3,34 @@ require "./error"
 require "colorize"
 
 module Crystal
+  # A compiler error message with source fragments that should be highlighted
+  # when rendered with color. The stored text always remains ANSI-free.
+  class DiagnosticMessage
+    enum HighlightKind
+      Syntax
+      Blue
+      YellowBold
+    end
+
+    record Highlight,
+      offset : Int32,
+      size : Int32,
+      kind : HighlightKind,
+      numbered_source : String? = nil
+
+    getter text : String
+    getter highlights : Array(Highlight)
+
+    def initialize(@text : String, @highlights : Array(Highlight))
+    end
+
+    # Overridden in `diagnostic/syntax_highlighter` when the full compiler is
+    # loaded.
+    def render(color : Bool) : String
+      @text
+    end
+  end
+
   # Base class for all errors related to specific user code.
   abstract class CodeError < Error
     property? color = false
@@ -56,6 +84,17 @@ module Crystal
 
     def with_color
       Colorize.with.toggle(@color)
+    end
+
+    # Overridden in `diagnostic/syntax_highlighter` when the full compiler is
+    # loaded.
+    def syntax_highlight(source : String) : String
+      source
+    end
+
+    # :ditto:
+    def syntax_highlight_line(source : Array(String), line_index : Int32, displayed_line : String) : String
+      displayed_line
     end
 
     def replace_leading_tabs_with_spaces(line)
@@ -141,8 +180,10 @@ module Crystal
         # `column_number`.
         final_column_number = (column_number - space_delta).clamp(0..)
 
+        highlighted_line = syntax_highlight_line(lines, line_number - 1, lstripped_line.chomp)
+
         io << "\n\n"
-        io << colorize(decorator).dim << colorize(lstripped_line.chomp).bold
+        io << colorize(decorator).dim << colorize(highlighted_line).bold
         append_error_indicator(io, decorator.size, final_column_number, size || 0)
       end
     end
@@ -220,7 +261,8 @@ module Crystal
       if lines && line_number
         io << "\n\n"
         io << colorize(line_number_decorator(line_number)).dim
-        io << lines[line_number - 1].lstrip
+        displayed_line = lines[line_number - 1].lstrip.chomp
+        io << syntax_highlight_line(lines, line_number - 1, displayed_line)
       end
     end
 
@@ -228,13 +270,17 @@ module Crystal
       min_leading_white_space =
         source.min_of? { |line| leading_white_space(line) } || 0
 
-      if min_leading_white_space > 0
-        source = source.map do |line|
-          replace_leading_tabs_with_spaces(line).lchop(" " * min_leading_white_space)
-        end
-      end
+      source = remove_indentation(source, min_leading_white_space)
 
       {source, min_leading_white_space}
+    end
+
+    private def remove_indentation(source, size)
+      return source unless size > 0
+
+      source.map do |line|
+        replace_leading_tabs_with_spaces(line).lchop(" " * size)
+      end
     end
 
     private def leading_white_space(line)
@@ -251,17 +297,37 @@ module Crystal
       line_number = @line_number
       if @error_trace || !line_number
         source, _ = minimize_indentation(source.lines)
+        source = syntax_highlight_lines(source)
         io << Crystal.with_line_numbers(source, line_number, @color)
       else
-        to_index = line_number.clamp(0..source.lines.size)
+        # Materialize only the lines up to the reported one, plus one more so
+        # the highlighter sees its terminating newline; the rest of a large
+        # expansion is never displayed.
+        source_lines = [] of String
+        source.each_line do |line|
+          source_lines << line
+          break if source_lines.size > line_number
+        end
+        source = source_lines
+        to_index = line_number.clamp(0..source.size)
         from_index = {0, to_index - MACRO_LINES_TO_SHOW}.max
-        source_slice = source.lines[from_index...to_index]
+        source_slice = source[from_index...to_index]
         source_slice, spaces_removed = minimize_indentation(source_slice)
+        if @color
+          source = remove_indentation(source, spaces_removed)
+          source_slice = syntax_highlight_lines(source, through_line: to_index - 1)[from_index...to_index]
+        end
 
         io << Crystal.with_line_numbers(source_slice, line_number, @color, from_index + 1)
         offset = OFFSET_FROM_LINE_NUMBER_DECORATOR + line_number.to_s.size - spaces_removed
         append_error_indicator(io, offset, @column_number, @size)
       end
+    end
+
+    # Overridden in `diagnostic/syntax_highlighter` when the full compiler is
+    # loaded.
+    private def syntax_highlight_lines(source : Array(String), *, through_line : Int32? = nil) : Array(String)
+      source
     end
 
     def append_where_macro_expanded(io, filename : VirtualFile)
