@@ -91,6 +91,32 @@ describe "Semantic: method_missing" do
       CRYSTAL
   end
 
+  it "finds method_missing in a module with 'with ... yield' (#17393)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Moo
+        macro method_missing(call)
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+      end
+
+      def bar(x : Moo, &)
+        with x yield
+      end
+
+      bar(Foo.new.as(Moo)) do
+        baz
+      end
+      CRYSTAL
+  end
+
   it "doesn't look up method_missing in with_yield_scope if call has a receiver (#12097)" do
     assert_error(<<-CRYSTAL, "undefined method 'bar' for Int32")
       class Foo
