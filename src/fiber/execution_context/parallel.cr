@@ -311,6 +311,20 @@ module Fiber::ExecutionContext
       nil
     end
 
+    # Manually scales the context up to *size* running schedulers now, without
+    # waiting for auto-scaling.
+    #
+    # Wakes waiting schedulers and starts more system threads until the
+    # parallelism reaches *size*. Only scales up: does nothing if *size* is
+    # lower or equal to the current number of active schedulers.
+    #
+    # Be warned that schedulers will immediately return to wait if there isn't
+    # enough fibers enqueued in the context.
+    def scale(to size : Int32) : Nil
+      count = size - self.size
+      wake_scheduler(count) if count > 0
+    end
+
     # This method always runs in parallel!
     #
     # This can be called from any thread in the context but can also be called
