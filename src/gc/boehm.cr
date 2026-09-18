@@ -314,12 +314,19 @@ module GC
     end
   {% end %}
 
+  # Forces a garbage collection cycle.
+  #
+  # Calling this method explicitly initiates a full collection cycle to reclaim
+  # unreachable memory and execute pending finalizers.
   def self.collect
     Crystal.trace :gc, "collect" do
       LibGC.collect
     end
   end
 
+  # Enables the garbage collector after it was disabled with `#disable`.
+  #
+  # Raises an `Exception` if the garbage collector is not currently disabled.
   def self.enable
     unless LibGC.is_disabled != 0
       raise "GC is not disabled"
@@ -328,6 +335,11 @@ module GC
     LibGC.enable
   end
 
+  # Disables automatic garbage collection cycles.
+  #
+  # Memory allocations (`#malloc`, `#malloc_atomic`) will continue to succeed and
+  # the heap will grow as needed, but background collection cycles will not run
+  # until `#enable` is called.
   def self.disable
     LibGC.disable
   end
@@ -345,16 +357,27 @@ module GC
     size
   end
 
+  # Explicitly deallocates memory at *pointer*.
+  #
+  # *pointer* must point to memory allocated by the garbage collector (e.g. via
+  # `GC.malloc` or `GC.malloc_atomic`).
+  #
+  # WARNING: Deallocating memory while references to it still exist results in
+  # undefined behavior. Calling `#free` is rarely necessary in normal Crystal programs.
   def self.free(pointer : Void*) : Nil
     Crystal.trace :gc, "free" do
       LibGC.free(pointer)
     end
   end
 
+  # Registers a finalizer on *object*.
+  #
+  # When *object* is collected, its `finalize` method will be called.
   def self.add_finalizer(object : Reference) : Nil
     add_finalizer_impl(object)
   end
 
+  # :nodoc:
   def self.add_finalizer(object)
     # Nothing
   end
@@ -366,20 +389,33 @@ module GC
     nil
   end
 
+  # Adds *object* as an additional root for garbage collection.
+  #
+  # An object registered as a root will not be reclaimed by the garbage collector
+  # even if it is no longer reachable from stack or global variables.
   def self.add_root(object : Reference)
     roots = @@roots ||= [] of Pointer(Void)
     roots << Pointer(Void).new(object.object_id)
   end
 
+  # Registers a disappearing link at *pointer*.
+  #
+  # When the object referenced by `pointer.value` is reclaimed by the garbage collector,
+  # the address at `pointer.value` is cleared to `nil`. This is the low-level primitive
+  # used to implement weak references (`WeakRef`).
   def self.register_disappearing_link(pointer : Void**)
     base = LibGC.base(pointer.value)
     LibGC.general_register_disappearing_link(pointer, base)
   end
 
+  # Returns `true` if *pointer* points to memory managed by the GC heap, `false` otherwise.
   def self.is_heap_ptr(pointer : Void*)
     LibGC.is_heap_ptr(pointer) != 0
   end
 
+  # Returns current GC heap memory usage statistics.
+  #
+  # See `GC::Stats`.
   def self.stats
     LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
     # collections = LibGC.gc_no - 1
@@ -396,6 +432,9 @@ module GC
     )
   end
 
+  # Returns detailed internal GC profiling metrics.
+  #
+  # See `GC::ProfStats`.
   def self.prof_stats
     LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
 
