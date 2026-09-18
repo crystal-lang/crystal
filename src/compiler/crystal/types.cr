@@ -939,7 +939,7 @@ module Crystal
       nil
     end
 
-    def add_macro(a_macro)
+    def add_macro(a_macro) : Nil
       a_macro.owner = self
 
       case a_macro.name
@@ -958,16 +958,25 @@ module Crystal
       end
 
       macros = (@macros ||= {} of String => Array(Macro))
-      array = (macros[a_macro.name] ||= [] of Macro)
-      index = array.index { |existing_macro| a_macro.overrides?(existing_macro) }
-      if index
-        # a_macro has the same signature of an existing macro, we override it.
-        a_macro.doc ||= array[index].doc
-        array[index] = a_macro
-      else
-        # a_macro has a new signature, add it with the others.
-        array << a_macro
+      overloads = macros.put_if_absent(a_macro.name) { [] of Macro }
+      overloads.each_with_index do |ex_macro, i|
+        case a_macro.compare_strictness(ex_macro)
+        when nil
+          # Incompatible macros; do nothing
+        when 0
+          # The two macros have the same signature so a_macro overrides ex_macro.
+          overloads[i] = a_macro
+          a_macro.doc ||= ex_macro.doc
+          return
+        when .negative?
+          # a_macro has a new signature, stricter than ex_macro.
+          overloads.insert(i, a_macro)
+          return
+        end
       end
+
+      # a_macro has a new signature, less strict than the existing overloads.
+      overloads << a_macro
     end
 
     def add_hook(kind : HookKind, a_macro, args_size = 0)
