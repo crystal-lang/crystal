@@ -202,8 +202,32 @@ struct Crystal::TypeDeclarationProcessor
 
   private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo, freeze_type = true)
     type = info.type
-    type = Type.merge!(type, @program.nil) unless info.outside_def
+    # A class var assigned only inside a method (never at the class body) is
+    # guessed as nilable, since from a read-before-write standpoint it could be
+    # read before that method runs. But if an ancestor declares the same class
+    # var non-nilably, the storage is shared and the ancestor guarantees a
+    # value, so the `Nil` would be spurious — don't add it (#5161).
+    unless info.outside_def || inherits_non_nilable_class_var?(owner, name)
+      type = Type.merge!(type, @program.nil)
+    end
     declare_meta_type_var(vars, owner, name, type, freeze_type: freeze_type)
+  end
+
+  # Whether *name* is a class var declared non-nilably by some ancestor of
+  # *owner*. Ancestors are processed before their descendants, so by the time a
+  # subclass's class var is declared the ancestor's type is already known.
+  private def inherits_non_nilable_class_var?(owner, name)
+    return false unless owner.is_a?(ClassVarContainer)
+
+    owner.ancestors.each do |ancestor|
+      next unless ancestor.is_a?(ClassVarContainer)
+      next unless ancestor_var = ancestor.class_vars[name]?
+      next unless ancestor_type = ancestor_var.type?
+
+      return true unless ancestor_type.includes_type?(@program.nil_type)
+    end
+
+    false
   end
 
   private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false, check_nilable = true, freeze_type = true)
@@ -681,6 +705,13 @@ struct Crystal::TypeDeclarationProcessor
   end
 
   def check_non_nilable_class_vars_without_initializers
+    # A subclass shares class-var storage with the ancestor that declares
+    # the variable, so it inherits that ancestor's initializer. Adopt it
+    # here — after `visit_class_vars_initializers` has populated the
+    # ancestors' initializers — so the check below treats an inherited
+    # initializer as present (#5161).
+    adopt_inherited_class_var_initializers
+
     type_decl_visitor.class_vars.each do |owner, vars|
       vars.each_key do |name|
         check_non_nilable_class_var_without_initializers(owner, name)
@@ -690,6 +721,26 @@ struct Crystal::TypeDeclarationProcessor
     type_guess_visitor.class_vars.each do |owner, vars|
       vars.each_key do |name|
         check_non_nilable_class_var_without_initializers(owner, name)
+      end
+    end
+  end
+
+  private def adopt_inherited_class_var_initializers
+    {type_decl_visitor.class_vars, type_guess_visitor.class_vars}.each do |all_vars|
+      all_vars.each do |owner, vars|
+        vars.each_key do |name|
+          next unless class_var = owner.class_vars[name]?
+          next if class_var.initializer
+
+          owner.ancestors.each do |ancestor|
+            next unless ancestor.is_a?(ClassVarContainer)
+            next unless ancestor_class_var = ancestor.class_vars[name]?
+            next unless initializer = ancestor_class_var.initializer
+
+            class_var.initializer = initializer
+            break
+          end
+        end
       end
     end
   end
