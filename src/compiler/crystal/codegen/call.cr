@@ -517,7 +517,7 @@ class Crystal::CodeGenVisitor
     end
 
     if target_def.is_a?(External) && (call_convention = target_def.call_convention)
-      @last.call_convention = call_convention
+      @last.call_convention = call_convention.to_llvm
     end
 
     if @builder.end

@@ -1,5 +1,6 @@
 require "llvm"
 require "json"
+require "./call_convention"
 require "./types"
 require "crystal/digest/md5"
 
