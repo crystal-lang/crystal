@@ -800,9 +800,13 @@ describe "buffered" do
 
   it "can be closed after sending" do
     ch = Channel(Int32).new(10)
-    ch.send 123
+    ch.send 1
+    ch.send 2
     ch.close
-    ch.receive.should eq(123)
+    ch.closed?.should be_true
+    ch.receive.should eq(1)
+    ch.receive?.should eq(2)
+    ch.receive?.should be_nil
     expect_raises(Channel::ClosedError) { ch.receive }
   end
 

@@ -94,12 +94,13 @@ class Channel(T)
   # Closes the channel.
   # The method prevents any new value from being sent to the channel.
   #
-  # If the channel has buffered values, then subsequent calls to `receive` will succeed
-  # and consume the buffer until it is empty.
+  # If the channel has buffered values, then subsequent calls to `#receive` and `#receive?` will
+  # succeed and consume the buffer until it is empty.
   #
   # All fibers blocked in `send` or `receive` will be awakened with `Channel::ClosedError`.
   # All subsequent calls to `#send` will consider the channel closed.
-  # Subsequent calls to `#receive` will consider the channel closed if the buffer is empty.
+  # Subsequent calls to `#receive` and `#receive?` will consider the channel closed once the
+  # buffer is empty.
   #
   # Calling `#close` on a closed channel does not have any effect.
   #
@@ -121,6 +122,10 @@ class Channel(T)
     true
   end
 
+  # Returns `true` if this channel has been closed for new submissions.
+  #
+  # NOTE: A closed buffered channel continues to deliver remaining buffered values
+  # through `#receive` and `#receive?` until the internal buffer is drained.
   def closed? : Bool
     @closed
   end
@@ -181,9 +186,12 @@ class Channel(T)
   end
 
   # Receives a value from the channel.
+  #
   # If there is a value waiting, then it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
-  # Raises `ClosedError` if the channel is closed or closes while waiting for receive.
+  # For buffered channels, remaining values in the buffer are delivered first even if the channel is closed.
+  #
+  # Raises `ClosedError` if the channel is closed (with no buffered values remaining) or closes while waiting for receive.
   #
   # ```
   # channel = Channel(Int32).new
@@ -197,9 +205,12 @@ class Channel(T)
   end
 
   # Receives a value from the channel.
+  #
   # If there is a value waiting, it is returned immediately. Otherwise, this method blocks until a value is sent to the channel.
   #
-  # Returns `nil` if the channel is closed or closes while waiting for receive.
+  # For buffered channels, remaining values in the buffer are delivered first even if the channel is closed.
+  #
+  # Returns `nil` if the channel is closed (with no buffered values remaining) or closes while waiting for receive.
   def receive? : T?
     receive_impl { return nil }
   end
