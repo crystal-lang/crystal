@@ -335,6 +335,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
       case Errno.value
       when Errno::EISCONN
+        {% if flag?(:darwin) %}
+          # macOS 26.7 may report failures as connected (sic),
+          # check the actual error state of the socket:
+          errno = Crystal::System::Socket.system_error(socket.fd)
+          raise RuntimeError.from_os_error("connect", errno) unless errno.none?
+        {% end %}
         return
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(socket, timeout) do
