@@ -46,7 +46,7 @@
 {% else %}
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libcrypto || printf %s '-lcrypto'`")]
 {% end %}
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% begin %}
   {% suffix = flag?(:aarch64) ? "arm64" : "x64" %}
   @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
 {% end %}
