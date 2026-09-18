@@ -631,7 +631,9 @@ module Crystal
 
     private def sequential_codegen(units)
       units.each do |unit|
-        unit.compile
+        # Parse the module back from bitcode, as LLVM 23 miscompiles the module
+        # otherwise
+        unit.compile(isolate_context: true)
         @progress_tracker.stage_progress += 1
       end
     end
