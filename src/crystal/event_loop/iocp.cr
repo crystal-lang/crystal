@@ -595,12 +595,18 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # can't send more than 2,147,483,646 bytes at once
     len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
 
+    file_handle = LibC::HANDLE.new(fd)
+
+    # store the current file pointer because TransmitFile may advance the file
+    # pointer in some cases (e.g. offset == file.pos).
+    LibC.SetFilePointerEx(file_handle, 0, out original_pos, IO::Seek::Current)
+
     Crystal::System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
       operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
       operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
 
       ret = Crystal::System::Socket.transmit_file
-        .call(socket.fd, LibC::HANDLE.new(fd), len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
+        .call(socket.fd, file_handle, len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
       return len.to_i64 if ret == 1
 
       error = WinError.wsa_value
@@ -617,6 +623,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
           raise IO::Error.from_os_error("TransmitFile", error, target: socket)
         end
       end
+    ensure
+      LibC.SetFilePointerEx(file_handle, original_pos, nil, IO::Seek::Set)
     end.to_i64
   end
 

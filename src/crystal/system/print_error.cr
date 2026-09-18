@@ -163,7 +163,7 @@ module Crystal::System
     end
   end
 
-  private def self.to_int_slice_impl(buf, num, base)
+  protected def self.to_int_slice_impl(buf, num, base)
     ptr_end = buf.to_unsafe + buf.size
     ptr = ptr_end
 

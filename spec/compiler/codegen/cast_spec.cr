@@ -497,4 +497,48 @@ describe "Code gen: cast" do
       Base.as(Base | Base.class).as?(Base | Impl).nil?
       CRYSTAL
   end
+
+  it "backfills included type to existing instantiations (#8771)" do
+    run(<<-CRYSTAL).to_i.should eq 42
+      module Dexable(T)
+        def dex
+          42
+        end
+      end
+
+      struct Uple(T)
+        extend Dexable(Uple(String))
+        include Dexable(T)
+      end
+
+      Uple(String).new.as(Dexable(String)).dex
+      CRYSTAL
+  end
+
+  it "backfills included type to existing instantiations with ivar (#8771)" do
+    run(<<-CRYSTAL).to_i.should eq 42
+      module Dexable(T)
+        def dex
+          42
+        end
+      end
+
+      struct Uple(T)
+        extend Dexable(Uple(String))
+        include Dexable(T)
+      end
+
+      class Foo
+        def initialize(@args : Dexable(String))
+        end
+
+        def args
+          @args
+        end
+      end
+
+      Foo.new(Uple(String).new).args.dex
+
+      CRYSTAL
+  end
 end

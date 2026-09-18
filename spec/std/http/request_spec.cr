@@ -28,11 +28,10 @@ module HTTP
         end
 
         it "rejects invalid methods" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET /", "/").method.should eq "GET /"
-          Request.new("GET\n", "/").method.should eq "GET\n"
-          Request.new("GET\r", "/").method.should eq "GET\r"
-          Request.new("", "/").method.should eq ""
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET /", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\n", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "GET\r", "/" }
+          expect_raises(ArgumentError, "Invalid HTTP method") { Request.new "", "/" }
         end
       end
 
@@ -43,16 +42,11 @@ module HTTP
           Request.new "GET", "/foo/bar?baz=qux"
         end
 
-        it "accepts empty resource" do
-          Request.new("GET", "").path.should eq "/"
-        end
-
         it "rejects invalid resource target" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET", "foo /").resource.should eq "foo /"
-          Request.new("GET", "foo\n").resource.should eq "foo\n"
-          Request.new("GET", "foo\r").resource.should eq "foo\r"
-          Request.new("GET", "").resource.should eq ""
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo /\"") { Request.new "GET", "foo /" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo\\n\"") { Request.new "GET", "foo\n" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"foo\\r\"") { Request.new "GET", "foo\r" }
+          expect_raises(ArgumentError, "Invalid HTTP resource: \"\"") { Request.new "GET", "" }
         end
 
         describe "target forms" do
@@ -93,10 +87,15 @@ module HTTP
         end
 
         it "rejects invalid HTTP versions" do
-          # BUG: The following specs all demonstrate incorrect behaviour.
-          Request.new("GET", "/", version: "HTTP/1.2").version.should eq "HTTP/1.2"
-          Request.new("GET", "/", version: "HTTP/3.0").version.should eq "HTTP/3.0"
-          Request.new("GET", "/", version: "INVALID").version.should eq "INVALID"
+          expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/1.2") do
+            Request.new("GET", "/", version: "HTTP/1.2")
+          end
+          expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/3.0") do
+            Request.new("GET", "/", version: "HTTP/3.0")
+          end
+          expect_raises(ArgumentError, "Unsupported HTTP version: INVALID") do
+            Request.new("GET", "/", version: "INVALID")
+          end
         end
       end
     end
@@ -116,16 +115,11 @@ module HTTP
       end
 
       it "rejects invalid methods" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.method = "GET /"
-        req.method.should eq "GET /"
-        req.method = "GET\n"
-        req.method.should eq "GET\n"
-        req.method = "GET\r"
-        req.method.should eq "GET\r"
-        req.method = ""
-        req.method.should eq ""
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET /" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\n" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "GET\r" }
+        expect_raises(ArgumentError, "Invalid HTTP method") { req.method = "" }
       end
     end
 
@@ -169,14 +163,16 @@ module HTTP
       end
 
       it "rejects invalid HTTP versions" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.version = "HTTP/1.2"
-        req.version.should eq "HTTP/1.2"
-        req.version = "HTTP/3.0"
-        req.version.should eq "HTTP/3.0"
-        req.version = "INVALID"
-        req.version.should eq "INVALID"
+        expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/1.2") do
+          req.version = "HTTP/1.2"
+        end
+        expect_raises(ArgumentError, "Unsupported HTTP version: HTTP/3.0") do
+          req.version = "HTTP/3.0"
+        end
+        expect_raises(ArgumentError, "Unsupported HTTP version: INVALID") do
+          req.version = "INVALID"
+        end
       end
     end
 
@@ -195,7 +191,7 @@ module HTTP
         req = Request.new("GET", "/", body: "foo")
         req.body = IO::Memory.new("")
         req.method = "POST"
-        req.content_length.should eq 3
+        req.content_length.should eq 3_i64
         String.build do |io|
           expect_raises(ArgumentError, "Content-Length header is 3 but body had 0 bytes") do
             req.to_io(io)
@@ -207,7 +203,7 @@ module HTTP
         # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("PATCH", "/", body: "foo")
         req.body = nil
-        req.content_length.should eq 3
+        req.content_length.should eq 3_i64
         String.build do |io|
           req.to_io(io)
         end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
@@ -217,28 +213,27 @@ module HTTP
     describe "#content_length=" do
       it "accepts valid values" do
         req = Request.new("GET", "/")
-        req.content_length = 1234
-        req.content_length.should eq 1234
+        (req.content_length = 1234).should eq 1234_i64
+        req.content_length.should eq 1234_i64
         req.headers["Content-Length"].should eq "1234"
 
-        req.content_length = 0
-        req.content_length.should eq 0
+        (req.content_length = 0).should eq 0_i64
+        req.content_length.should eq 0_i64
         req.headers["Content-Length"].should eq "0"
 
-        req.content_length = UInt64::MAX
-        req.content_length.should eq UInt64::MAX
-        req.headers["Content-Length"].should eq UInt64::MAX.to_s
+        (req.content_length = Int64::MAX).should eq Int64::MAX
+        req.content_length.should eq Int64::MAX
+        req.headers["Content-Length"].should eq Int64::MAX.to_s
       end
 
       it "rejects invalid values" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/")
-        req.content_length = -1
-        req.headers["Content-Length"].should eq "-1"
-        req.content_length = -1234
-        req.headers["Content-Length"].should eq "-1234"
-        req.content_length = UInt64::MAX.to_i128 + 1
-        req.headers["Content-Length"].should eq (UInt64::MAX.to_i128 + 1).to_s
+        expect_raises(ArgumentError, "Invalid Content-Length: -1") do
+          req.content_length = -1
+        end
+        expect_raises(ArgumentError, "Invalid Content-Length: -1234") do
+          req.content_length = -1234
+        end
       end
     end
 
@@ -322,10 +317,26 @@ module HTTP
       end
 
       it "serialize POST (with io body, without content-length header)" do
-        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        # IO::Sized wrapper simulates an arbitrary IO to ensure that the body
+        # is chunked because `Request#to_io` optimizes for IO::Memory.
+        request = Request.new "POST", "/", body: IO::Sized.new(IO::Memory.new("thisisthebody"), 100)
         io = IO::Memory.new
         request.to_io(io)
         io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nd\r\nthisisthebody\r\n0\r\n\r\n")
+      end
+
+      it "serializes POST (with io body)`" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody")
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+      end
+
+      it "serializes POST (with io body, starting at offset)" do
+        request = Request.new "POST", "/", body: IO::Memory.new("thisisthebody").tap { |io| io.pos = 4 }
+        io = IO::Memory.new
+        request.to_io(io)
+        io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 9\r\n\r\nisthebody")
       end
 
       it "serialize POST (with io body, with content-length header)" do
@@ -652,10 +663,6 @@ module HTTP
       it "returns parsed path" do
         request = Request.from_io(IO::Memory.new("GET /api/v3/some/resource?filter=hello&world=test HTTP/1.1\r\n\r\n")).should be_a(Request)
         request.path.should eq("/api/v3/some/resource")
-      end
-
-      it "falls back to /" do
-        Request.new("GET", "").path.should eq("/")
       end
 
       it "parses with only leading with double slash" do

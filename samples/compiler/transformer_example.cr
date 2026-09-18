@@ -4,8 +4,7 @@
 # Here we transform all number literals with their char
 # equivalent using `chr`.
 
-# Use `require "compiler/crystal/syntax"` in your programs
-require "../../src/compiler/crystal/syntax"
+require "compiler/crystal/syntax"
 
 class Charify < Crystal::Transformer
   def transform(node : Crystal::NumberLiteral)

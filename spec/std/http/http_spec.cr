@@ -92,4 +92,31 @@ describe HTTP do
       end
     end
   end
+
+  describe ".validate_token" do
+    it "accepts valid token" do
+      HTTP.validate_token("foo").should eq "foo"
+      HTTP.validate_token("foo-bar+baz").should eq "foo-bar+baz"
+    end
+
+    it "rejects empty token" do
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("")
+      end
+    end
+
+    it "rejects invalid tokens" do
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo bar")
+      end
+
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo(bar)")
+      end
+
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo@bar")
+      end
+    end
+  end
 end

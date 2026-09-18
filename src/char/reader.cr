@@ -50,7 +50,7 @@ struct Char
     # reader.next_char
     # reader.current_char # => '\0'
     # ```
-    getter current_char : Char
+    getter current_char : Char = '\0'
 
     # Returns the size of the `#current_char` (in bytes) as if it were encoded in UTF-8.
     #
@@ -60,7 +60,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width : Int32
+    getter current_char_width : Int32 = 0
 
     # Returns the byte position of the current character.
     #
@@ -82,18 +82,14 @@ struct Char
     # byte index *pos*.
     def initialize(@string : String, pos = 0)
       @pos = pos.to_i
-      @current_char = '\0'
-      @current_char_width = 0
-      decode_current_char
+      decode_current_char unless @string.empty?
     end
 
     # Creates a reader that will be positioned at the last char
     # of the given string.
     def initialize(*, at_end @string : String)
       @pos = @string.bytesize
-      @current_char = '\0'
-      @current_char_width = 0
-      decode_previous_char
+      decode_previous_char unless @string.empty?
     end
 
     # Returns the current character.
@@ -136,11 +132,13 @@ struct Char
     # reader.current_char # => '\0'
     # ```
     def next_char? : Char?
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
+      @pos &+= @current_char_width
+      if has_next?
         decode_current_char
-        current_char?
+      else
+        @current_char_width = 0
+        @current_char = '\0'
+        nil
       end
     end
 
@@ -158,13 +156,9 @@ struct Char
     # reader.next_char # raise IndexError
     # ```
     def next_char : Char
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
-        decode_current_char
-      else
-        raise IndexError.new
-      end
+      raise IndexError.new unless has_next?
+
+      next_char? || '\0'
     end
 
     # Returns the next character in the `#string` without incrementing `#pos`.
@@ -178,11 +172,13 @@ struct Char
     # reader.current_char   # => 'a'
     # ```
     def peek_next_char : Char
-      next_pos = @pos + @current_char_width
-
-      if next_pos > @string.bytesize
+      if @current_char_width.zero?
         raise IndexError.new
       end
+
+      next_pos = @pos &+ @current_char_width
+
+      return '\0' if next_pos == @string.bytesize
 
       decode_char_at(next_pos) do |code_point|
         code_point.unsafe_chr
@@ -227,7 +223,7 @@ struct Char
         raise IndexError.new
       end
 
-      decode_previous_char.as(Char)
+      decode_previous_char
     end
 
     # Sets `#pos` to *pos*.
@@ -240,7 +236,7 @@ struct Char
     # reader.current_char # => 'a'
     # ```
     def pos=(pos)
-      if pos > @string.bytesize
+      unless 0 <= pos <= @string.bytesize
         raise IndexError.new
       end
 
@@ -424,8 +420,6 @@ struct Char
 
     @[AlwaysInline]
     private def decode_previous_char
-      return nil if @pos == 0
-
       decode_char_before(@pos) do |code_point, width, error|
         @current_char_width = width
         @pos -= width

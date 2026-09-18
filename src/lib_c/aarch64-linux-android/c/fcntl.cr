@@ -19,7 +19,26 @@ lib LibC
   O_RDONLY   =       0o0
   O_RDWR     =       0o2
   O_WRONLY   =       0o1
-  AT_FDCWD   =      -100
+
+  AT_FDCWD                =    -100
+  AT_SYMLINK_NOFOLLOW     =   0x100
+  AT_SYMLINK_FOLLOW       =   0x400
+  AT_NO_AUTOMOUNT         =   0x800
+  AT_EMPTY_PATH           =  0x1000
+  AT_STATX_SYNC_TYPE      =  0x6000
+  AT_STATX_SYNC_AS_STAT   =  0x0000
+  AT_STATX_FORCE_SYNC     =  0x2000
+  AT_STATX_DONT_SYNC      =  0x4000
+  AT_RECURSIVE            =  0x8000
+  AT_RENAME_NOREPLACE     =  0x0001
+  AT_RENAME_EXCHANGE      =  0x0002
+  AT_RENAME_WHITEOUT      =  0x0004
+  AT_EACCESS              =   0x200
+  AT_REMOVEDIR            =   0x200
+  AT_HANDLE_FID           =   0x200
+  AT_HANDLE_MNT_ID_UNIQUE =   0x001
+  AT_HANDLE_CONNECTABLE   =   0x002
+  AT_EXECVE_CHECK         = 0x10000
 
   fun fcntl(__fd : Int, __cmd : Int, ...) : Int
   fun open(__path : Char*, __flags : Int, ...) : Int

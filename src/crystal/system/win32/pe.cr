@@ -5,32 +5,34 @@ require "c/winbase"
 class Crystal::System::PE
   record COFFSymbol, offset : UInt32, name : String
 
-  def self.open(path : String, &)
+  def self.open(path : String) : self?
     wpath = Crystal::System.to_wstr(path)
     file_handle = LibC.CreateFileW(wpath, LibC::FILE_GENERIC_READ, LibC::DEFAULT_SHARE_MODE, nil, LibC::OPEN_EXISTING, 0, nil)
     return if file_handle == LibC::INVALID_HANDLE_VALUE
 
     begin
       return if LibC.GetFileInformationByHandle(file_handle, out info) == 0
-      size = LibC::SizeT.new((info.nFileSizeHigh.to_u64 << 32) | info.nFileSizeLow.to_u64)
 
+      size = LibC::SizeT.new((info.nFileSizeHigh.to_u64 << 32) | info.nFileSizeLow.to_u64)
       map_handle = LibC.CreateFileMappingA(file_handle, nil, LibC::PAGE_READONLY, info.nFileSizeHigh, info.nFileSizeLow, nil)
       return if map_handle == LibC::INVALID_HANDLE_VALUE
 
-      begin
-        pointer = LibC.MapViewOfFile(map_handle, LibC::FILE_MAP_READ, 0, 0, size)
-        return if pointer.null?
-
-        begin
-          program = new(pointer.as(UInt8*), size)
-          yield program if program.valid?
-        ensure
-          LibC.UnmapViewOfFile(pointer)
-        end
-      ensure
+      pointer = LibC.MapViewOfFile(map_handle, LibC::FILE_MAP_READ, 0, 0, size)
+      if pointer.null?
         LibC.CloseHandle(map_handle)
+        return
       end
+
+      program = new(map_handle, pointer.as(UInt8*), size)
+      unless program.valid?
+        program.close
+        return
+      end
+
+      program
     ensure
+      # we map the whole executable then return slices to each section, we don't
+      # need the file handle anymore and can close it early
       LibC.CloseHandle(file_handle)
     end
   end
@@ -38,7 +40,7 @@ class Crystal::System::PE
   @nt_header = Pointer(LibC::IMAGE_NT_HEADERS).null
   @symbol_table = Pointer(UInt8).null
 
-  def initialize(@pointer : UInt8*, @size : LibC::SizeT)
+  def initialize(@map_handle : LibC::HANDLE, @pointer : UInt8*, @size : LibC::SizeT)
   end
 
   # File is a PE file for the current architecture.
@@ -134,6 +136,7 @@ class Crystal::System::PE
   end
 
   # TODO: extract to Crystal::COFF type (?)
+  # OPTIMIZE: return Bytes instead of String
   private def coff_symbol_name(sym)
     pointer =
       if sym.value.n.name.short == 0
@@ -159,5 +162,10 @@ class Crystal::System::PE
 
   private def nt_header
     @nt_header ||= (@pointer + dos_header.value.e_lfanew).as(LibC::IMAGE_NT_HEADERS*)
+  end
+
+  def close : Nil
+    LibC.UnmapViewOfFile(@pointer)
+    LibC.CloseHandle(@map_handle)
   end
 end

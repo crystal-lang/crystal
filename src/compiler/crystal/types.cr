@@ -1003,6 +1003,11 @@ module Crystal
       unless parents.includes?(mod)
         parents.insert 0, mod
         mod.add_including_type(self)
+        if self.is_a?(GenericType)
+          # There might be existing instantiations of this generic type and
+          # we need to make sure they include the module, too (#8771).
+          self.backfill_including_type(mod)
+        end
       end
     end
 
@@ -1576,6 +1581,18 @@ module Crystal
     def each_instantiated_type(&)
       if types = @generic_types
         types.each_value { |type| yield type }
+      end
+    end
+
+    def backfill_including_type(mod : GenericModuleInstanceType)
+      each_instantiated_type do |instance|
+        mod.replace_type_parameters(instance).add_including_type(instance)
+      end
+    end
+
+    def backfill_including_type(mod)
+      each_instantiated_type do |instance|
+        mod.add_including_type(instance)
       end
     end
 
@@ -2845,10 +2862,15 @@ module Crystal
 
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
       metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", restriction: Path.global(@base_type.to_s))], Primitive.new("enum_new", self))
+      program.enum.add_subclass self
     end
 
     def parents
       @parents ||= [program.enum] of Type
+    end
+
+    def superclass
+      program.enum
     end
 
     def add_constant(name, value)

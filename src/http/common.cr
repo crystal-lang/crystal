@@ -71,7 +71,7 @@ module HTTP
             case encoding
             when Nil
               # nothing
-            when "gzip"
+            when "gzip", "x-gzip"
               body = Compress::Gzip::Reader.new(body, sync_close: true)
               headers.delete("Content-Encoding")
               headers.delete("Content-Length")
@@ -207,7 +207,6 @@ module HTTP
     {name, value}
   end
 
-  # Important! These have to be in lexicographic order.
   private COMMON_HEADERS = %w(
     Accept-Encoding
     Accept-Language
@@ -255,17 +254,17 @@ module HTTP
     referer
     user-agent
   )
+    .to_h { |header| {header.to_slice, header} }
 
   # :nodoc:
   def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
-    if slice.size < 20
-      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
-      return name if name && name.to_slice == slice
+    if slice.size < 20 && (name = COMMON_HEADERS[slice]?)
+      name
+    else
+      String.new(slice)
     end
-
-    String.new(slice)
   end
 
   # :nodoc:
@@ -281,6 +280,11 @@ module HTTP
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
+      elsif body_io.is_a?(IO::Memory)
+        headers.serialize(io)
+        slice = body_io.to_slice + body_io.pos
+        io << "Content-Length: " << slice.bytesize << "\r\n\r\n"
+        io.write slice
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
         headers.serialize(io)
@@ -329,6 +333,13 @@ module HTTP
       raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
     end
     first_header.to_u64
+  end
+
+  # :nodoc:
+  def self.validate_content_length(length : Int64) : Int64
+    raise ArgumentError.new("Invalid Content-Length: #{length}") if length < 0
+
+    length
   end
 
   # :nodoc:
@@ -454,11 +465,107 @@ module HTTP
       quote_string(string, io)
     end
   end
+
+  # :nodoc:
+  VALID_TOKEN_CHAR_MAP = {% if compare_versions(Crystal::VERSION, "1.11.0") >= 0 %}
+    {%
+      table = (0x00..0xFF).map { 0_u8 }
+      table['!'.ord] = 1_u8
+      table['#'.ord] = 1_u8
+      table['$'.ord] = 1_u8
+      table['%'.ord] = 1_u8
+      table['&'.ord] = 1_u8
+      table['\''.ord] = 1_u8
+      table['*'.ord] = 1_u8
+      table['+'.ord] = 1_u8
+      table['-'.ord] = 1_u8
+      table['.'.ord] = 1_u8
+      table['^'.ord] = 1_u8
+      table['_'.ord] = 1_u8
+      table['`'.ord] = 1_u8
+      table['|'.ord] = 1_u8
+      table['~'.ord] = 1_u8
+      ('0'.ord..'9'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('A'.ord..'Z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+      ('a'.ord..'z'.ord).each do |i|
+        table[i] = 1_u8
+      end
+    %}
+    {% if compare_versions(Crystal::VERSION, "1.16.0") >= 0 %}
+      Slice(UInt8).literal({{ table.splat }})
+    {% else %}
+      Slice.new({{table}}.to_unsafe, {{table.size}})
+    {% end %}
+  {% else %}
+                           table = Slice(UInt8).new(256)
+                           table[0x21] = 1
+                           table[0x23] = 1
+                           table[0x24] = 1
+                           table[0x25] = 1
+                           table[0x26] = 1
+                           table[0x27] = 1
+                           table[0x2a] = 1
+                           table[0x2b] = 1
+                           table[0x2d] = 1
+                           table[0x2e] = 1
+                           table[0x5e] = 1
+                           table[0x5f] = 1
+                           table[0x60] = 1
+                           table[0x7c] = 1
+                           table[0x7e] = 1
+                           (0x30..0x39).each do |i|
+                             table[i] = 1
+                           end
+                           (0x41..0x5a).each do |i|
+                             table[i] = 1
+                           end
+                           (0x61..0x7a).each do |i|
+                             table[i] = 1
+                           end
+                           table
+                         {% end %}
+
+  # :nodoc:
+  def self.valid_token?(string : String) : Bool
+    !string.empty? && !string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+  end
+
+  # :nodoc:
+  def self.validate_token(string : String, message = "Invalid HTTP token") : String
+    unless valid_token?(string)
+      raise ArgumentError.new(message)
+    end
+
+    string
+  end
+
+  # :nodoc:
+  def self.validate_version(version : String) : String
+    if HTTP::SUPPORTED_VERSIONS.includes?(version)
+      version
+    else
+      raise ArgumentError.new("Unsupported HTTP version: #{version}")
+    end
+  end
+
+  # :nodoc:
+  def self.validate_resource(string : String) : String
+    if string.empty? || string.to_slice.any? { |c| c < 0x21_u8 || c >= 0x7F_u8 }
+      raise ArgumentError.new("Invalid HTTP resource: #{string.inspect}")
+    end
+    string
+  end
 end
 
 require "./status"
-require "./request"
-require "./client/response"
+{% unless flag?(:wasi) %}
+  require "./request"
+  require "./client/response"
+{% end %}
 require "./headers"
 require "./content"
 require "./cookie"
