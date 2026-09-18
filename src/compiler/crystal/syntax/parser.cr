@@ -328,9 +328,17 @@ module Crystal
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
               location = atomic.value.location
-              atomic.value = ex = ExceptionHandler.new(atomic.value, ensure: ensure_body)
+              if (value = atomic.value).is_a?(ExceptionHandler)
+                ex = value.tap(&.ensure = ensure_body)
+              else
+                ex = atomic.value = ExceptionHandler.new(value, ensure: ensure_body)
+              end
             else
-              atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)
+              if atomic.is_a?(ExceptionHandler)
+                ex = atomic.tap(&.ensure = ensure_body)
+              else
+                ex = atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
+              end
             end
             ex.at(location).at_end(ensure_body)
             ex.ensure_location = ensure_location
