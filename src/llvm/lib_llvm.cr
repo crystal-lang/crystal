@@ -56,7 +56,7 @@
 
 # Supported library versions:
 #
-# * LLVM (8-22; aarch64 requires 13+)
+# * LLVM (8-23; aarch64 requires 13+)
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 {% begin %}
@@ -74,6 +74,8 @@
     IS_LT_190 = {{compare_versions(LibLLVM::VERSION, "19.0.0") < 0}}
     IS_LT_200 = {{compare_versions(LibLLVM::VERSION, "20.0.0") < 0}}
     IS_LT_210 = {{compare_versions(LibLLVM::VERSION, "21.0.0") < 0}}
+    IS_LT_220 = {{compare_versions(LibLLVM::VERSION, "22.0.0") < 0}}
+    IS_LT_230 = {{compare_versions(LibLLVM::VERSION, "23.0.0") < 0}}
   end
 {% end %}
 

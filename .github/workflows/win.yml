@@ -15,7 +15,7 @@ jobs:
     with:
       arch: x86_64
       runs-on: windows-2025-vs2026
-      llvm_version: "20.1.7"
+      llvm_version: "23.1.1"
       llvm_targets: "X86;AArch64"
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
 
@@ -25,6 +25,6 @@ jobs:
     with:
       arch: aarch64
       runs-on: windows-11-vs2026-arm
-      llvm_version: "22.1.8"
+      llvm_version: "23.1.1"
       llvm_targets: "X86;AArch64"
       llvm_ldflags: "psapi.lib shell32.lib ole32.lib uuid.lib advapi32.lib ws2_32.lib ntdll.lib"
