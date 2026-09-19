@@ -95,8 +95,9 @@ struct Char
 
     # Creates a reader with the specified *slice* of UTF-8 encoded string,
     # positioned at byte index *pos*.
-    def initialize(@slice : Bytes, @pos : Int32 = 0)
-      decode_current_char unless @slice.empty?
+    def initialize(@slice : Bytes, pos : Int32 = 0)
+      @pos = 0
+      self.pos = pos.to_i
     end
 
     # Creates a reader that will be positioned at the last char of the given
@@ -255,7 +256,7 @@ struct Char
       end
 
       @pos = pos
-      decode_current_char
+      decode_current_char unless @slice.empty?
       pos
     end
 

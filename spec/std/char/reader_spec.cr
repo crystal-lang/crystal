@@ -364,6 +364,24 @@ describe "Char::Reader" do
     end
   end
 
+  describe ".new" do
+    it "rejects invalid positions" do
+      expect_raises IndexError do
+        Char::Reader.new("abc", -5)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", -1)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", 5)
+      end
+    end
+
+    it "accepts a position at the end" do
+      Char::Reader.new("abc", 3).pos.should eq(3)
+    end
+  end
+
   describe "#pos" do
     it "rejects invalid positions" do
       reader = Char::Reader.new("abc")

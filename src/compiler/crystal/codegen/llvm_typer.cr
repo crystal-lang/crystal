@@ -280,6 +280,10 @@ module Crystal
       llvm_type(type, wants_size)
     end
 
+    private def create_llvm_struct_type(type : ReferenceStorageType, wants_size)
+      llvm_type(type, wants_size)
+    end
+
     private def create_llvm_struct_type(type : InstanceVarContainer, wants_size)
       if type.extern_union?
         return create_llvm_c_union_struct_type(type, wants_size)
