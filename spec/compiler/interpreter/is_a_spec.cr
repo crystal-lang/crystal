@@ -162,5 +162,29 @@ describe Crystal::Repl::Interpreter do
         end
         CRYSTAL
     end
+
+    it "does is_a? from MixedUnionType to an unrelated GenericClassType (false)" do
+      interpret(<<-CRYSTAL).should eq(1)
+        abstract struct Segment
+        end
+
+        struct PropertySegment < Segment
+        end
+
+        struct KeySegment(K) < Segment
+        end
+
+        struct ExtensionSegment < Segment
+        end
+
+        segment = PropertySegment.new.as(PropertySegment | ExtensionSegment)
+        case segment
+        when PropertySegment  then 1
+        when KeySegment       then 2
+        when ExtensionSegment then 3
+        else                       4
+        end
+        CRYSTAL
+    end
   end
 end
