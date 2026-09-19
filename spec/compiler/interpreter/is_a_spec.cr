@@ -163,27 +163,26 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
 
-    it "does is_a? from MixedUnionType to an unrelated GenericClassType (false)" do
-      interpret(<<-CRYSTAL).should eq(1)
-        abstract struct Segment
-        end
+    it "does is_a? to a generic type the operand can never be (false)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        abstract struct Seg; end
+        struct Foo < Seg; end
+        struct Baz(T) < Seg; end
 
-        struct PropertySegment < Segment
-        end
+        x = Foo.new.as(Seg)
+        x.is_a?(Baz) ? 1 : 2
+        CRYSTAL
+    end
 
-        struct KeySegment(K) < Segment
-        end
+    it "does is_a? from a union to a generic type the operand can never be (false)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        abstract struct Seg; end
+        struct Foo < Seg; end
+        struct Bar < Seg; end
+        struct Baz(T) < Seg; end
 
-        struct ExtensionSegment < Segment
-        end
-
-        segment = PropertySegment.new.as(PropertySegment | ExtensionSegment)
-        case segment
-        when PropertySegment  then 1
-        when KeySegment       then 2
-        when ExtensionSegment then 3
-        else                       4
-        end
+        x = Foo.new.as(Foo | Bar)
+        x.is_a?(Baz) ? 1 : 2
         CRYSTAL
     end
   end
