@@ -10,6 +10,10 @@ require "slice/sort"
 # A Slice can be created as read-only: trying to write to it
 # will raise. For example the slice of bytes returned by
 # `String#to_slice` is read-only.
+#
+# For operations equivalent to standard C memory manipulation functions, see:
+# * `#copy_to` and `#copy_from` (`memcpy`)
+# * `#move_to` and `#move_from` (`memmove`)
 struct Slice(T)
   include Indexable::Mutable(T)
   include Comparable(Slice)
@@ -508,6 +512,8 @@ struct Slice(T)
 
   # Copies the contents of this slice into *target*.
   #
+  # This operation is similar to C's `memcpy`.
+  #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. `dest.size < self.size`.
   #
@@ -526,6 +532,8 @@ struct Slice(T)
   end
 
   # Copies the contents of *source* into this slice.
+  #
+  # This operation is similar to C's `memcpy`.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
@@ -546,6 +554,8 @@ struct Slice(T)
 
   # Moves the contents of this slice into *target*. *target* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
+  #
+  # This operation is similar to C's `memmove`.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred
   # e.g. `dest.size < self.size`.
@@ -568,6 +578,8 @@ struct Slice(T)
 
   # Moves the contents of *source* into this slice. *source* and `self` may
   # overlap; the copy is always done in a non-destructive manner.
+  #
+  # This operation is similar to C's `memmove`.
   #
   # Raises `IndexError` if the destination slice cannot fit the data being transferred.
   @[AlwaysInline]
