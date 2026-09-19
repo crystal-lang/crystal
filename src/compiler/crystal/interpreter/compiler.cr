@@ -1733,6 +1733,15 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     obj_type = node.obj.type
     const_type = node.const.type
 
+    # No type in `obj_type` can ever be a `const_type`, so the check is
+    # statically false. `filter_by` returns nil for this, and there is nothing
+    # to filter, so discard the value and answer false.
+    if obj_type.remove_indirection.filter_by(const_type).nil?
+      pop aligned_sizeof_type(obj_type), node: nil
+      put_false node: node
+      return false
+    end
+
     is_a(node, obj_type, const_type)
 
     false
