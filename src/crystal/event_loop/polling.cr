@@ -322,17 +322,19 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : Time::Span?) : IO::Error?
-    loop do
-      ret = LibC.connect(socket.fd, address, address.size)
-      return unless ret == -1
+    ret = LibC.connect(socket.fd, address, address.size)
+    return unless ret == -1
 
-      case Errno.value
-      when Errno::EISCONN
-        return
+    errno = Errno.value
+
+    loop do
+      case errno
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(socket, timeout) do
           return IO::TimeoutError.new("Connect timed out")
         end
+        errno = Crystal::System::Socket.system_error(socket.fd)
+        return if errno.none?
       else
         return ::Socket::ConnectError.from_errno("connect")
       end
