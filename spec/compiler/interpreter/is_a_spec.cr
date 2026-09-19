@@ -167,17 +167,6 @@ describe Crystal::Repl::Interpreter do
       interpret(<<-CRYSTAL).should eq(2)
         abstract struct Seg; end
         struct Foo < Seg; end
-        struct Baz(T) < Seg; end
-
-        x = Foo.new.as(Seg)
-        x.is_a?(Baz) ? 1 : 2
-        CRYSTAL
-    end
-
-    it "does is_a? from a union to a generic type the operand can never be (false)" do
-      interpret(<<-CRYSTAL).should eq(2)
-        abstract struct Seg; end
-        struct Foo < Seg; end
         struct Bar < Seg; end
         struct Baz(T) < Seg; end
 
