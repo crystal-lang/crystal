@@ -25,9 +25,10 @@
 
 require "spec"
 require "crystal/dwarf"
+require "crystal/dwarf/backtraces"
 
 module Crystal::DWARF
-  def self.parse_debug_sections(path)
+  def self.parse_executable(path, &)
     debug_line_str_name = ".debug_line_str"
     debug_str_name = ".debug_str"
     debug_line_name = ".debug_line"
@@ -35,6 +36,7 @@ module Crystal::DWARF
     debug_info_name = ".debug_info"
     program = nil
 
+    # TEST: can parse executable file for the current target
     {% if flag?(:darwin) %}
       debug_line_str_name = "__debug_line_str"
       debug_str_name = "__debug_str"
@@ -58,109 +60,117 @@ module Crystal::DWARF
     debug_str = program.section?(debug_str_name) { |bytes, _| bytes }
     debug_line_str = program.section?(debug_line_str_name) { |bytes, _| bytes }
 
-    assert_debug_str = ->(form : UInt32, value : DWARF::Info::Value) {
-      case form
-      when DWARF::DW_FORM_string
-        value.as(Bytes)
-      when DWARF::DW_FORM_strp
-        offset = value.as(UInt8 | UInt16 | UInt32 | UInt64)
-        offset.should be < debug_str.size if debug_str
-      when DWARF::DW_FORM_line_strp
-        offset = value.as(UInt8 | UInt16 | UInt32 | UInt64)
-        offset.should be < debug_line_str.size if debug_line_str
-      else
-        # skip
-      end
-    }
+    yield debug_abbrev, debug_info, debug_line, debug_str, debug_line_str
+  ensure
+    program.try(&.close)
+  end
 
-    if debug_abbrev && debug_info
-      abbrev_indexes = Hash(UInt64, Array(Int32)).new
-
-      # index abbrev offsets to speed up scanning .debug_info attributes
-      Crystal::DWARF.each_info(debug_info) do |info|
-        abbrev_table = debug_abbrev + info.debug_abbrev_offset
-
-        abbrev_indexes[info.debug_abbrev_offset] ||= Array(Int32).new.tap do |index|
-          Crystal::DWARF.each_abbrev(abbrev_table) do |abbrev, offset|
-            index << offset
-            abbrev.each_attribute { }
-          end
+  def self.parse_debug_sections(path)
+    parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str|
+      assert_debug_str = ->(form : UInt32, value : DWARF::Info::Value) {
+        case form
+        when DWARF::DW_FORM_string
+          value.as(Bytes)
+        when DWARF::DW_FORM_strp
+          offset = value.as(UInt8 | UInt16 | UInt32 | UInt64)
+          offset.should be < debug_str.size if debug_str
+        when DWARF::DW_FORM_line_strp
+          offset = value.as(UInt8 | UInt16 | UInt32 | UInt64)
+          offset.should be < debug_line_str.size if debug_line_str
+        else
+          # skip
         end
-      end
+      }
 
-      # test: skip over attributes (no unknown DW_FORM_*)
-      DWARF.each_info(debug_info) do |info|
-        abbrev_table = debug_abbrev + info.debug_abbrev_offset
-        abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
+      # TEST: can scan the DEBUG_INFO section
+      if debug_abbrev && debug_info
+        abbrev_indexes = Hash(UInt64, Array(Int32)).new
 
-        info.each do |abbrev_code|
-          offset = abbrev_index[abbrev_code &- 1]
+        # index abbrev offsets to speed up scanning .debug_info attributes
+        Crystal::DWARF.each_info(debug_info) do |info|
+          abbrev_table = debug_abbrev + info.debug_abbrev_offset
 
-          DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
-            abbrev.each_attribute do |attr|
-              info.skip_attribute_value(attr.form)
+          abbrev_indexes[info.debug_abbrev_offset] ||= Array(Int32).new.tap do |index|
+            Crystal::DWARF.each_abbrev(abbrev_table) do |abbrev, offset|
+              index << offset
+              abbrev.each_attribute { }
             end
           end
         end
-      end
 
-      # test: read attribute values (no unknown DW_FORM_*)
-      DWARF.each_info(debug_info) do |info|
-        abbrev_table = debug_abbrev + info.debug_abbrev_offset
-        abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
+        # TEST: skip over attributes (no unknown DW_FORM_*)
+        DWARF.each_info(debug_info) do |info|
+          abbrev_table = debug_abbrev + info.debug_abbrev_offset
+          abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
 
-        info.each do |abbrev_code|
-          offset = abbrev_index[abbrev_code &- 1]
+          info.each do |abbrev_code|
+            offset = abbrev_index[abbrev_code &- 1]
 
-          DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
-            abbrev.each_attribute do |attr|
-              value = info.read_attribute_value(attr.form, attr.const_value)
+            DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
+              abbrev.each_attribute do |attr|
+                info.skip_attribute_value(attr.form)
+              end
+            end
+          end
+        end
 
-              case attr.form
-              when DWARF::DW_FORM_string, DWARF::DW_FORM_strp, DWARF::DW_FORM_line_strp
-                # string values are valid, for example the offset correctly
-                # points within the .debug_str or .debug_str_line sections or it
-                # was correctly inlined
-                assert_debug_str.call(attr.form, value)
-              when DWARF::DW_AT_low_pc, DWARF::DW_AT_high_pc
-                # TODO: verify that the PC is valid (points within the .text section)
+        # TEST: read attribute values (no unknown DW_FORM_*)
+        DWARF.each_info(debug_info) do |info|
+          abbrev_table = debug_abbrev + info.debug_abbrev_offset
+          abbrev_index = abbrev_indexes[info.debug_abbrev_offset]
+
+          info.each do |abbrev_code|
+            offset = abbrev_index[abbrev_code &- 1]
+
+            DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
+              abbrev.each_attribute do |attr|
+                value = info.read_attribute_value(attr.form, attr.const_value)
+
+                case attr.form
+                when DWARF::DW_FORM_string, DWARF::DW_FORM_strp, DWARF::DW_FORM_line_strp
+                  # string values are valid, for example the offset correctly
+                  # points within the .debug_str or .debug_str_line sections or it
+                  # was correctly inlined
+                  assert_debug_str.call(attr.form, value)
+                when DWARF::DW_AT_low_pc, DWARF::DW_AT_high_pc
+                  # TODO: verify that the PC is valid (points within the .text section)
+                end
               end
             end
           end
         end
       end
-    end
 
-    if debug_line
-      DWARF.each_line_sequence(debug_line) do |seq|
-        # directory table
-        directories = 1
+      # TEST: can scan the DEBUG_LINE section
+      if debug_line
+        DWARF.each_line_sequence(debug_line) do |seq|
+          # directory table
+          directories = 1
 
-        seq.each_directory do |form, value|
-          # verify that the string exists
-          assert_debug_str.call(form, value)
-          directories += 1
-        end
+          seq.each_directory do |form, value|
+            # verify that the string exists
+            assert_debug_str.call(form, value)
+            directories += 1
+          end
 
-        # file table
-        files = 1
-        seq.each_file do |(form, value), directory_index|
-          # verify that the directory exists, and that the string exists
-          directory_index.should be <= directories
-          assert_debug_str.call(form, value)
-          files += 1
-        end
+          # file table
+          files = 1
+          seq.each_file do |(form, value), directory_index|
+            # verify that the directory exists, and that the string exists
+            directory_index.should be <= directories
+            assert_debug_str.call(form, value)
+            files += 1
+          end
 
-        # iterate file:line:column
-        registers = DWARF::Line::Registers.new(seq.default_is_stmt?)
-        seq.read_statement_program(pointerof(registers)) do
-          # verify that the file exists
-          registers.file.should be <= files
+          # iterate file:line:column
+          registers = DWARF::Line::Registers.new(seq.default_is_stmt?)
+          seq.read_statement_program(pointerof(registers)) do
+            # verify that the file exists
+            registers.file.should be <= files
+          end
         end
       end
     end
-  ensure
-    program.try(&.close)
   end
 end
 
@@ -206,8 +216,23 @@ describe Crystal::DWARF do
 
       if File.basename(path).in?(skip_files)
         pending(path)
-      else
-        it(path) { Crystal::DWARF.parse_debug_sections(path) }
+        next
+      end
+
+      it "scans #{path}" do
+        Crystal::DWARF.parse_debug_sections(path)
+      end
+
+      it "preloads #{path}" do
+        Crystal::DWARF.parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str|
+          bt = Crystal::DWARF::Backtraces.new
+          bt.debug_abbrev = debug_abbrev
+          bt.debug_info = debug_info
+          bt.debug_line = debug_line
+          bt.debug_str = debug_str
+          bt.debug_line_str = debug_line_str
+          bt.build_caches
+        end
       end
     end
   end
