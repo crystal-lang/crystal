@@ -7,6 +7,7 @@ module Crystal
       property debug_line : Bytes?
       property debug_line_str : Bytes?
       property debug_str : Bytes?
+      property debug_str_offsets : Bytes?
 
       # The decoded table for resolving function names; parsed once from the
       # debug info and debug abbrev sections; the table is much smaller than the
@@ -16,6 +17,7 @@ module Crystal
       # OPTIMIZE: reduce the table row size, for example using offsets (u32)
       # instead of absolute PCs (u64) to save 8 bytes out of every entry.
       @function_names = Slice({LibC::SizeT, LibC::SizeT, UInt8*}).empty
+      @str_offsets : StrOffsets?
 
       @initialized = false
 
@@ -98,6 +100,7 @@ module Crystal
           abbrev_table = debug_abbrev + info.debug_abbrev_offset
           abbrev_index = abbrev_indexes[info.debug_abbrev_offset] ||= parse_abbrev_indexes(abbrev_table)
           addr = nil
+          @str_offsets = nil
 
           info.each do |abbrev_code|
             offset = abbrev_index[abbrev_code &- 1]
@@ -145,6 +148,9 @@ module Crystal
                   when DW_AT_addr_base
                     value = info.read_attribute_value(attr.form, attr.const_value)
                     addr = DWARF.addr_at?(@debug_addr, value.as(UInt8 | UInt16 | UInt32))
+                  when DW_AT_str_offsets_base
+                    value = info.read_attribute_value(attr.form, attr.const_value)
+                    @str_offsets = DWARF.str_offsets_at?(@debug_str_offsets, value.as(UInt8 | UInt16 | UInt32))
                   else
                     info.skip_attribute_value(attr.form)
                   end
@@ -157,6 +163,8 @@ module Crystal
             end
           end
         end
+      ensure
+        @str_offsets = nil
       end
 
       private def parse_abbrev_indexes(abbrev_table)
@@ -259,6 +267,8 @@ module Crystal
           decode_strp(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Bytes.empty
         end
@@ -272,6 +282,8 @@ module Crystal
           decode_strp_pointer(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp_pointer(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx_pointer(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Pointer(UInt8).null
         end
@@ -289,6 +301,22 @@ module Crystal
       private def decode_strp_pointer(bytes, offset)
         if bytes && (0 <= offset < bytes.size)
           bytes.to_unsafe + offset
+        else
+          Pointer(UInt8).null
+        end
+      end
+
+      private def decode_strx(offset)
+        if str_offsets = @str_offsets
+          decode_strp(@debug_str, str_offsets[offset])
+        else
+          Bytes.empty
+        end
+      end
+
+      private def decode_strx_pointer(offset)
+        if str_offsets = @str_offsets
+          decode_strp_pointer(@debug_str, str_offsets[offset])
         else
           Pointer(UInt8).null
         end
