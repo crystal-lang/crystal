@@ -6,6 +6,7 @@ struct Exception::CallStack
   DEBUG_LINE     = ".debug_line"
   DEBUG_ABBREV   = ".debug_abbrev"
   DEBUG_INFO     = ".debug_info"
+  DEBUG_ADDR     = ".debug_addr"
 
   @@base_address = 0_u64
   @@coff_symbols : Hash(Int32, Array(Crystal::System::PE::COFFSymbol))?

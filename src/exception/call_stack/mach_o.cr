@@ -12,6 +12,7 @@ struct Exception::CallStack
   DEBUG_LINE     = "__debug_line"
   DEBUG_ABBREV   = "__debug_abbrev"
   DEBUG_INFO     = "__debug_info"
+  DEBUG_ADDR     = "__debug_addr"
 
   @@base_address = LibC::Long.new(0)
 

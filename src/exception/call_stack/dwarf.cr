@@ -9,6 +9,7 @@ struct Exception::CallStack
     program.section?(DEBUG_LINE) { |bytes, _| @@dwarf.debug_line = bytes }
     program.section?(DEBUG_LINE_STR) { |bytes, _| @@dwarf.debug_line_str = bytes }
     program.section?(DEBUG_STR) { |bytes, _| @@dwarf.debug_str = bytes }
+    program.section?(DEBUG_ADDR) { |bytes, _| @@dwarf.debug_addr = bytes }
     @@dwarf.build_caches
   end
 

@@ -2,6 +2,7 @@ module Crystal
   module DWARF
     class Backtraces
       property debug_abbrev : Bytes?
+      property debug_addr : Bytes?
       property debug_info : Bytes?
       property debug_line : Bytes?
       property debug_line_str : Bytes?
@@ -96,7 +97,7 @@ module Crystal
         DWARF.each_info(debug_info) do |info|
           abbrev_table = debug_abbrev + info.debug_abbrev_offset
           abbrev_index = abbrev_indexes[info.debug_abbrev_offset] ||= parse_abbrev_indexes(abbrev_table)
-          addr_base = LibC::SizeT.zero
+          addr = nil
 
           info.each do |abbrev_code|
             offset = abbrev_index[abbrev_code &- 1]
@@ -118,14 +119,14 @@ module Crystal
                     when DW_FORM_addr
                       low_pc = value.as(LibC::SizeT)
                     when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
-                      low_pc = addr_base + value.as(UInt8 | UInt16 | UInt32)
+                      low_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
                     end
                   when DW_AT_high_pc
                     case attr.form
                     when DW_FORM_addr
                       high_pc = value.as(LibC::SizeT)
                     when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
-                      high_pc = addr_base + value.as(UInt8 | UInt16 | UInt32)
+                      high_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
                     when DW_FORM_udata, DW_FORM_data1, DW_FORM_data2, DW_FORM_data4, DW_FORM_data8, DW_FORM_data16
                       high_pc = low_pc.as(LibC::SizeT) + value.as(UInt8 | UInt16 | UInt32 | UInt64 | UInt128)
                     end
@@ -143,7 +144,7 @@ module Crystal
                   case attr.at
                   when DW_AT_addr_base
                     value = info.read_attribute_value(attr.form, attr.const_value)
-                    addr_base = LibC::SizeT.new(value.as(UInt8 | UInt16 | UInt32))
+                    addr = DWARF.addr_at?(@debug_addr, value.as(UInt8 | UInt16 | UInt32))
                   else
                     info.skip_attribute_value(attr.form)
                   end

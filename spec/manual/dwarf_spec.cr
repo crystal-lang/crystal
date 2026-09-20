@@ -34,6 +34,7 @@ module Crystal::DWARF
     debug_line_name = ".debug_line"
     debug_abbrev_name = ".debug_abbrev"
     debug_info_name = ".debug_info"
+    debug_addr_name = ".debug_addr"
     program = nil
 
     # TEST: can parse executable file for the current target
@@ -42,7 +43,7 @@ module Crystal::DWARF
       debug_str_name = "__debug_str"
       debug_line_name = "__debug_line"
       debug_abbrev_name = "__debug_abbrev"
-      debug_info_name = "__debug_info"
+      debug_addr_name = "__debug_addr"
       program = Crystal::System::MachO.open(path)
     {% elsif flag?(:unix) %}
       program = Crystal::System::ELF.open(path)
@@ -59,14 +60,15 @@ module Crystal::DWARF
     debug_line = program.section?(debug_line_name) { |bytes, _| bytes }
     debug_str = program.section?(debug_str_name) { |bytes, _| bytes }
     debug_line_str = program.section?(debug_line_str_name) { |bytes, _| bytes }
+    debug_addr = program.section?(debug_addr_name) { |bytes, _| bytes }
 
-    yield debug_abbrev, debug_info, debug_line, debug_str, debug_line_str
+    yield debug_abbrev, debug_info, debug_line, debug_str, debug_line_str, debug_addr
   ensure
     program.try(&.close)
   end
 
   def self.parse_debug_sections(path)
-    parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str|
+    parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str, _|
       assert_debug_str = ->(form : UInt32, value : DWARF::Info::Value) {
         case form
         when DWARF::DW_FORM_string
@@ -224,13 +226,14 @@ describe Crystal::DWARF do
       end
 
       it "preloads #{path}" do
-        Crystal::DWARF.parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str|
+        Crystal::DWARF.parse_executable(path) do |debug_abbrev, debug_info, debug_line, debug_str, debug_line_str, debug_addr|
           bt = Crystal::DWARF::Backtraces.new
           bt.debug_abbrev = debug_abbrev
           bt.debug_info = debug_info
           bt.debug_line = debug_line
           bt.debug_str = debug_str
           bt.debug_line_str = debug_line_str
+          bt.debug_addr = debug_addr
           bt.build_caches
         end
       end
