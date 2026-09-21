@@ -105,6 +105,34 @@ module GC
     expl_freed_bytes_since_gc : UInt64,
     obtained_from_os_bytes : UInt64
 
+  # Enables GC collections. This is the default behavior. The GC will collect
+  # memory when the HEAP is full. Must be called as many times as `GC.disable`
+  # was called.
+  def self.enable : Nil
+    {% raise "NotImplementedError: GC.enable" %}
+  end
+
+  # Disables GC collections. The GC will always increase the HEAP size when the
+  # HEAP is full. Call `GC.enable` as many times as `GC.disable` was called to
+  # reenable GC collections.
+  def self.disable : Nil
+    {% raise "NotImplementedError: GC.disable" %}
+  end
+
+  # :nodoc:
+  #
+  # Limit the heap size to *size* bytes.
+  # Useful when you are debugging, especially on systems that do not handle
+  # running out of memory well. Or as an alternative to the environment variable
+  # `GC_MAX_HEAP_SIZE`.
+  #
+  # A zero *size* means the heap is unbounded; this is the default.
+  # This setter function is unsynchronized (so it might require
+  # `GC_call_with_alloc_lock` to avoid data race).
+  def self.max_heap_size=(size : UInt64) : UInt64
+    {% raise "NotImplementedError: GC.max_heap_size=" %}
+  end
+
   # :nodoc:
   #
   # Aborts the program when the GC failed to allocate memory. This method must
@@ -156,6 +184,10 @@ module GC
     realloc(pointer.as(Void*), LibC::SizeT.new(size)).as(T*)
   end
 
+  # Collect the HEAP memory now, instead of waiting until the HEAP is full.
+  def self.collect : Nil
+  end
+
   # :nodoc:
   #
   # Marks the thread as doing a call that doesn't involve the GC, for example a
@@ -171,6 +203,17 @@ module GC
   # WARNING: A system error (e.g. Errno, WinError) must be read before the block
   # terminates as the value can change before the method returns.
   # abstract def self.syscall(&block : ->) : Nil
+
+  # Returns statistics about the current HEAP memory.
+  def self.stats : Stats
+    {% raise "NotImplementedError: GC.stats" %}
+  end
+
+  # Returns extended profiling statistics about the HEAP memory and GC
+  # collections.
+  def self.prof_stats : ProfStats
+    {% raise "NotImplementedError: GC.prof_stats" %}
+  end
 end
 
 {% if flag?(:gc_none) || flag?(:wasm32) %}
