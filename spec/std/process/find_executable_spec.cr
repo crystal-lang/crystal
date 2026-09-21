@@ -158,6 +158,8 @@ describe "Process.find_executable" do
 
   {% if flag?(:unix) %}
     it "skips an inaccessible PATH entry" do
+      pending_if_superuser!
+
       with_tempfile("inaccessible-path") do |denied_dir|
         Dir.mkdir_p(denied_dir)
         exe = File.join(denied_dir, "foo")
@@ -166,7 +168,6 @@ describe "Process.find_executable" do
 
         begin
           File.chmod(denied_dir, 0o000)
-          pending_if_superuser!
 
           expect_raises(File::AccessDeniedError) { File.info?(exe) }
           Process.find_executable("foo", path: denied_dir).should be_nil
@@ -177,6 +178,8 @@ describe "Process.find_executable" do
     end
 
     it "finds an executable after an inaccessible PATH entry" do
+      pending_if_superuser!
+
       with_tempfile("inaccessible-then-accessible", "accessible") do |denied_dir, allowed_dir|
         Dir.mkdir_p(denied_dir)
         Dir.mkdir_p(allowed_dir)
@@ -191,7 +194,6 @@ describe "Process.find_executable" do
 
         begin
           File.chmod(denied_dir, 0o000)
-          pending_if_superuser!
 
           expect_raises(File::AccessDeniedError) { File.info?(denied_exe) }
           path = {denied_dir, allowed_dir}.join(Process::PATH_DELIMITER)
@@ -203,6 +205,8 @@ describe "Process.find_executable" do
     end
 
     it "returns nil for an inaccessible absolute path" do
+      pending_if_superuser!
+
       with_tempfile("inaccessible-absolute") do |denied_dir|
         Dir.mkdir_p(denied_dir)
         exe = File.join(denied_dir, "foo")
@@ -211,7 +215,6 @@ describe "Process.find_executable" do
 
         begin
           File.chmod(denied_dir, 0o000)
-          pending_if_superuser!
 
           expect_raises(File::AccessDeniedError) { File.info?(exe) }
           Process.find_executable(exe).should be_nil
