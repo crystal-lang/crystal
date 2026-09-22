@@ -50,12 +50,29 @@ module Crystal::DWARF
         end
       end
 
+      def resume_statement_program(registers, offset, &)
+        if registers.value.end_sequence?
+          # DW_LNE_end_sequence
+          registers.value = Registers.new(@default_is_stmt)
+          return if offset >= @program.size
+        else
+          # DW_LNS_copy or special opcode
+          registers.value.reset
+        end
+        read_statement_program_impl(offset, registers) { |*args| yield *args }
+      end
+
       # Resolves the program. Yields every time *registers* shall be appended to
       # the matrix.
       #
       # TODO: DW_LNE_define_file (uncommon, deprecated in DWARF 5)
       def read_statement_program(registers : Registers*, &)
+        read_statement_program_impl(0, registers) { |*args| yield *args }
+      end
+
+      private def read_statement_program_impl(offset, registers : Registers*, &)
         reader = Reader.new(@program)
+        reader.pos = offset
 
         until reader.eof?
           opcode = reader.read_u8
@@ -65,7 +82,7 @@ module Crystal::DWARF
             adjusted_opcode = opcode &- @opcode_base
             increment_address_and_op_index(registers, adjusted_opcode // @line_range)
             registers.value.line = registers.value.line &+ @line_base &+ (adjusted_opcode % @line_range)
-            yield
+            yield reader.pos
             registers.value.reset
           elsif opcode == 0
             # extended opcode
@@ -74,7 +91,7 @@ module Crystal::DWARF
             case reader.read_u8
             when DW_LNE_end_sequence
               registers.value.end_sequence = true
-              yield
+              yield reader.pos
               break if reader.eof?
               registers.value = Registers.new(@default_is_stmt)
             when DW_LNE_set_address
@@ -94,7 +111,7 @@ module Crystal::DWARF
             # standard opcode
             case opcode
             when DW_LNS_copy
-              yield
+              yield reader.pos
               registers.value.reset
             when DW_LNS_advance_pc
               operation_advance = reader.read_uleb128
