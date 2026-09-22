@@ -323,8 +323,8 @@ module Fiber::ExecutionContext
     # Schedulers will immediately return to wait if there isn't enough fibers
     # enqueued in the context.
     #
-    # See `#resize` to increase, or shrink, the parallelism of the context.
-    def scale(to size : Int32) : Nil
+    # See `#resize` to increase, or shrink, the maximum parallelism of the context.
+    def scale_up(to size : Int32 = capacity) : Nil
       count = size - self.size
       wake_scheduler(count) if count > 0
     end
