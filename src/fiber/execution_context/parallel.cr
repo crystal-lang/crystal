@@ -187,7 +187,8 @@ module Fiber::ExecutionContext
     # Resizes the context to the new *maximum* parallelism.
     #
     # The new *maximum* can grow, in which case more schedulers are created to
-    # eventually increase the parallelism.
+    # eventually increase the parallelism through auto-scaling or manual scaling
+    # (see `#scale`).
     #
     # The new *maximum* can also shrink, in which case the overflow schedulers
     # are removed and told to shutdown immediately. The actual shutdown is
@@ -314,12 +315,15 @@ module Fiber::ExecutionContext
     # Manually scales the context up to *size* running schedulers now, without
     # waiting for auto-scaling.
     #
-    # Wakes waiting schedulers and starts more system threads until the
-    # parallelism reaches *size*. Only scales up: does nothing if *size* is
-    # lower or equal to the current number of active schedulers.
+    # Wakes waiting schedulers and starts system threads until the parallelism
+    # reaches *size* or *capacity*, whichever is smaller (no overscaling). Only
+    # scales up: does nothing if *size* is lower or equal to the current number
+    # of running schedulers.
     #
-    # Be warned that schedulers will immediately return to wait if there isn't
-    # enough fibers enqueued in the context.
+    # Schedulers will immediately return to wait if there isn't enough fibers
+    # enqueued in the context.
+    #
+    # See `#resize` to increase, or shrink, the parallelism of the context.
     def scale(to size : Int32) : Nil
       count = size - self.size
       wake_scheduler(count) if count > 0
