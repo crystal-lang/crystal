@@ -558,7 +558,7 @@ describe "FileUtils" do
           File.write(path3, "")
 
           expect_raises File::NotFoundError do
-            FileUtils.mv(arg1, arg2, arg3, arg4)
+            FileUtils.mv([arg1, arg2, arg3], arg4)
           end
 
           File.exists?(path1).should be_false
