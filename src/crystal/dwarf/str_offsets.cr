@@ -1,21 +1,6 @@
 module Crystal
   module DWARF
-    struct StrOffsets
-      @addresses : Slice(UInt32) | Slice(UInt64)
-
-      def initialize(bytes : Bytes, @dwarf64 : Bool)
-        @addresses =
-          if @dwarf64
-            bytes.unsafe_slice_of(UInt64)
-          else
-            bytes.unsafe_slice_of(UInt32)
-          end
-      end
-
-      def [](index : Int::Unsigned) : UInt32 | UInt64
-        @addresses[index]
-      end
-    end
+    alias StrOffsets = Slice(UInt32) | Slice(UInt64)
 
     def self.each_str_offsets(bytes : Bytes, &)
       reader = Reader.new(bytes)
@@ -35,7 +20,14 @@ module Crystal
         base = reader.pos
         unit_bytes = reader.read(offset + unit_length - base)
 
-        yield StrOffsets.new(unit_bytes, dwarf64), base
+        str_offsets =
+          if dwarf64
+            unit_bytes.unsafe_slice_of(UInt64)
+          else
+            unit_bytes.unsafe_slice_of(UInt32)
+          end
+
+        yield str_offsets, base
       end
     end
 
