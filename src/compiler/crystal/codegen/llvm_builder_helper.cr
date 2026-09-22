@@ -246,21 +246,5 @@ module Crystal
     def llvm_closure_type(type)
       llvm_typer.closure_type(type.as(ProcInstanceType))
     end
-
-    def llvm_size(type)
-      llvm_type(type).size
-    end
-
-    def llvm_struct_size(type)
-      llvm_struct_type(type).size
-    end
-
-    def llvm_alignment(type)
-      llvm_type(type).alignment
-    end
-
-    def llvm_struct_alignment(type)
-      llvm_struct_type(type).alignment
-    end
   end
 end

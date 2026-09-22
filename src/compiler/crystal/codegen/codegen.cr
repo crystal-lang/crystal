@@ -957,22 +957,22 @@ module Crystal
     end
 
     def visit(node : SizeOf)
-      @last = trunc(llvm_size(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.size_of(llvm_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.size_of(llvm_struct_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : AlignOf)
-      @last = trunc(llvm_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.align_of(llvm_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : InstanceAlignOf)
-      @last = trunc(llvm_struct_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.align_of(llvm_struct_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
