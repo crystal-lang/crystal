@@ -614,7 +614,7 @@ def __lldb_init_module(debugger, internal_dict):
 
     This uses the API (CreateCategory, AddTypeSynthetic, AddTypeSummary)
     instead of debugger.HandleCommand() because `type` commands crash
-    lldb-dap on Windows. The options mirror the flags of the previous
+    lldb-dap on Windows. The options mirror the flags of
     `type synthetic add` / `type summary add` commands: every formatter
     cascades, and summaries without `-e` hide their children.
     """
