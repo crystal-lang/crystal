@@ -12,6 +12,7 @@ struct LLVM::Type
     new LibLLVM.function_type(return_type, (arg_types.to_unsafe.as(LibLLVM::TypeRef*)), arg_types.size, varargs ? 1 : 0)
   end
 
+  @[Deprecated("Use `LLVM::TargetData#abi_size` instead")]
   def size
     # Asking the size of void crashes the program, we definitely don't want that
     if void?
@@ -21,6 +22,7 @@ struct LLVM::Type
     end
   end
 
+  @[Deprecated("Use `LLVM::TargetData#abi_alignment` instead")]
   def alignment
     # Asking the alignment of void crashes the program, we definitely don't want that
     if void?
