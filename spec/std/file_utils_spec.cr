@@ -545,8 +545,29 @@ describe "FileUtils" do
     end
 
     it "raises if a file doesn't exist" do
-      expect_raises File::NotFoundError do
-        FileUtils.mv("non-existent", "non-existent2")
+      with_tempfile("mv-source", "target-path") do |source_path, target_path|
+        path1 = File.join(source_path, "a")
+        path2 = File.join(source_path, "b")
+        path3 = File.join(source_path, "c", "sub")
+
+        test_with_string_and_path(path1, path2, path3, target_path) do |arg1, arg2, arg3, arg4|
+          FileUtils.mkdir_p(File.dirname(path3))
+          FileUtils.mkdir_p(target_path)
+
+          File.write(path1, "")
+          File.write(path3, "")
+
+          expect_raises File::NotFoundError do
+            FileUtils.mv(arg1, arg2, arg3, arg4)
+          end
+
+          File.exists?(path1).should be_false
+          File.exists?(path2).should be_false
+          File.exists?(path3).should be_true
+          File.exists?(File.join(target_path, "a")).should be_true
+          File.exists?(File.join(target_path, "b")).should be_false
+          File.exists?(File.join(target_path, "c", "sub")).should be_false
+        end
       end
     end
   end
