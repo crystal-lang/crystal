@@ -380,7 +380,6 @@ module GC
     LibGC.is_heap_ptr(pointer) != 0
   end
 
-  # :nodoc:
   def self.stats
     LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
     # collections = LibGC.gc_no - 1
@@ -397,7 +396,6 @@ module GC
     )
   end
 
-  # :nodoc:
   def self.prof_stats
     LibGC.get_prof_stats(out stats, sizeof(LibGC::ProfStats))
 

@@ -103,7 +103,6 @@ module GC
   def self.register_disappearing_link(pointer : Void**)
   end
 
-  # :nodoc:
   def self.stats : GC::Stats
     Stats.new(
       # collections: 0,
@@ -115,7 +114,6 @@ module GC
       total_bytes: 0)
   end
 
-  # :nodoc:
   def self.prof_stats
     ProfStats.new(
       heap_size: 0,
