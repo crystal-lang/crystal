@@ -11,6 +11,26 @@ lib LibLLVM
   fun get_target_name = LLVMGetTargetName(t : TargetRef) : Char*
   fun get_target_description = LLVMGetTargetDescription(t : TargetRef) : Char*
 
+  {% if compare_versions(LibLLVM::VERSION, "18.0.0") >= 0 %}
+    type TargetMachineOptionsRef = Void*
+
+    fun create_target_machine_options = LLVMCreateTargetMachineOptions : TargetMachineOptionsRef
+    fun dispose_target_machine_options = LLVMDisposeTargetMachineOptions(TargetMachineOptionsRef)
+    fun target_machine_options_set_cpu = LLVMTargetMachineOptionsSetCPU(TargetMachineOptionsRef, Char*)
+    fun target_machine_options_set_features = LLVMTargetMachineOptionsSetFeatures(TargetMachineOptionsRef, Char*)
+    fun target_machine_options_set_abi = LLVMTargetMachineOptionsSetABI(TargetMachineOptionsRef, Char*)
+    fun target_machine_options_set_code_gen_opt_level = LLVMTargetMachineOptionsSetCodeGenOptLevel(TargetMachineOptionsRef, LLVM::CodeGenOptLevel)
+    fun target_machine_options_set_code_model = LLVMTargetMachineOptionsSetCodeModel(TargetMachineOptionsRef, LLVM::CodeModel)
+    fun target_machine_options_set_reloc_mode = LLVMTargetMachineOptionsSetRelocMode(TargetMachineOptionsRef, LLVM::RelocMode)
+    fun create_target_machine_with_options = LLVMCreateTargetMachineWithOptions(TargetRef, Char*, TargetMachineOptionsRef) : TargetMachineRef
+
+    # NOTE: https://github.com/llvm/llvm-project/pull/161155
+    {% if compare_versions(LibLLVM::VERSION, "22.0.0") >= 0 %}
+      fun target_machine_options_set_emulated_tls = LLVMTargetMachineOptionsSetEmulatedTLS(TargetMachineOptionsRef, Bool)
+      fun target_machine_options_set_enable_tls_desc = LLVMTargetMachineOptionsSetEnableTLSDESC(TargetMachineOptionsRef, Bool)
+    {% end %}
+  {% end %}
+
   fun create_target_machine = LLVMCreateTargetMachine(t : TargetRef, triple : Char*, cpu : Char*, features : Char*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
   fun dispose_target_machine = LLVMDisposeTargetMachine(t : TargetMachineRef)
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
