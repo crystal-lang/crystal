@@ -537,20 +537,20 @@ CrystalDocs.loadIndex = function() {
 
   for(var i = 0; i < document.scripts.length; i++){
     var script = document.scripts[i];
-    if (script.src && script.src.indexOf("js/doc.js") >= 0) {
+    if (script.src && script.src.indexOf("js/doc-sidebar.js") >= 0) {
       if (script.src.indexOf("file://") == 0) {
         // We need to support JSONP files for the search to work on local file system.
-        var jsonPath = script.src.replace("js/doc.js", "search-index.js");
+        var jsonPath = script.src.replace("js/doc-sidebar.js", "search-index.js");
         loadScript(jsonPath);
         return;
       } else {
-        var jsonPath = script.src.replace("js/doc.js", "index.json");
+        var jsonPath = script.src.replace("js/doc-sidebar.js", "index.json");
         loadJSON(jsonPath, parseJSON);
         return;
       }
     }
   }
-  console.error("Could not find location of js/doc.js");
+  console.error("Could not find location of js/doc-sidebar.js");
 };
 
 // Callback for jsonp
