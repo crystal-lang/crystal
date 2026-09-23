@@ -137,10 +137,15 @@ abstract class CSV::Lexer
 
   private def next_char
     @column_number += 1
+    previous_char = current_char
     char = next_char_no_column_increment
-    if char.in?('\n', '\r')
+    case char
+    when '\r'
       @column_number = 0
       @line_number += 1
+    when '\n'
+      @column_number = 0
+      @line_number += 1 unless previous_char == '\r'
     end
     char
   end

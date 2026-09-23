@@ -3155,14 +3155,10 @@ class String
         # Also reject any invalid code units
         if 65 <= byte1 <= 90
           byte1 += 32
-        elsif byte1 >= 0x80
-          return 1 if byte2 < 0x80
         end
 
         if 65 <= byte2 <= 90
           byte2 += 32
-        elsif byte2 >= 0x80
-          return byte1 < 0x80 ? -1 : 0
         end
 
         comparison = byte1 <=> byte2
@@ -3176,52 +3172,63 @@ class String
       reader1 = Char::Reader.new(self)
       reader2 = Char::Reader.new(other)
 
-      # 3 chars maximum for case folding; 2 held in temporary buffers
-      chars1 = Crystal::SmallDeque(Char, 2).new
-      chars2 = Crystal::SmallDeque(Char, 2).new
+      # The buffers must be large enough to hold the largest possible sequence
+      # of codepoints when a single codepoint folds to multiple codepoints.
+      # The maximum transformation is always 3 codepoints (see `unicode/data.cr`).
+      buffer1 = uninitialized UInt8[12]
+      buffer2 = uninitialized UInt8[12]
+
+      scratch1 = buffer1.to_unsafe
+      scratch2 = buffer2.to_unsafe
+
+      size1 = pos1 = 0_i64
+      size2 = pos2 = 0_i64
 
       while true
-        lhs = chars1.shift do
-          next unless reader1.has_next?
-          lhs_ = nil
-          reader1.current_char.downcase(options) do |char|
-            if lhs_
-              chars1 << char
-            else
-              lhs_ = char
-            end
-          end
-          reader1.next_char
-          lhs_
+        if pos1 == size1
+          reader1, size1 = fill_folded_bytes(reader1, scratch1, options)
+          pos1 = 0_i64
         end
 
-        rhs = chars2.shift do
-          next unless reader2.has_next?
-          rhs_ = nil
-          reader2.current_char.downcase(options) do |char|
-            if rhs_
-              chars2 << char
-            else
-              rhs_ = char
-            end
-          end
-          reader2.next_char
-          rhs_
+        if pos2 == size2
+          reader2, size2 = fill_folded_bytes(reader2, scratch2, options)
+          pos2 = 0_i64
         end
 
-        case {lhs, rhs}
-        in {Nil, Nil}
-          return 0
-        in {Nil, Char}
-          return -1
-        in {Char, Nil}
-          return 1
-        in {Char, Char}
-          comparison = lhs <=> rhs
-          return comparison.sign unless comparison == 0
-        end
+        return size1 <=> size2 if size1.zero? || size2.zero?
+
+        comparison = scratch1[pos1] <=> scratch2[pos2]
+        return comparison.sign unless comparison == 0
+
+        pos1 &+= 1_i64
+        pos2 &+= 1_i64
       end
     end
+  end
+
+  # Fills *buffer* with the folded bytes of *reader*'s current character or the
+  # raw bytes of an invalid byte sequence.
+  # invalid byte sequence, its raw bytes) and advances *reader* past it.
+  # Returns the advanced reader and the number of bytes written.
+  private def fill_folded_bytes(reader, buffer, options)
+    appender = buffer.appender
+
+    if reader.error
+      reader.current_char_width.times do |i|
+        appender << reader.string.byte_at(reader.pos + i)
+      end
+    elsif char = reader.current_char?
+      char.downcase(options) do |folded_char|
+        folded_char.each_byte do |byte|
+          appender << byte
+        end
+      end
+    else
+      return {reader, 0_i64}
+    end
+
+    reader.next_char
+    {reader, appender.size}
   end
 
   # Tests whether *str* matches *regex*.

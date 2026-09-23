@@ -40,6 +40,7 @@ private def assert_at_end(reader)
   reader.current_char.should eq '\0'
   reader.current_char?.should be_nil
   reader.pos.should eq reader.string.bytesize
+  reader.current_char_width.should eq(0)
 
   reader.has_next?.should be_false
 
@@ -136,8 +137,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new("")
       reader.error.should be_nil
 
-      # FIXME: current_char_width on an empty string should always be 0. There is no current char.
-      reader.current_char_width.should eq 1
       assert_at_end(reader)
       assert_at_start(reader)
 
@@ -151,7 +150,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new(at_end: "")
       reader.error.should be_nil
 
-      reader.current_char_width.should eq 0
       assert_at_end(reader)
       assert_at_start(reader)
 
@@ -250,6 +248,24 @@ describe "Char::Reader" do
       reader = assert_previous_char(reader, 'h')
 
       assert_at_start(reader)
+    end
+  end
+
+  describe ".new" do
+    it "rejects invalid positions" do
+      expect_raises IndexError do
+        Char::Reader.new("abc", -5)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", -1)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", 5)
+      end
+    end
+
+    it "accepts a position at the end" do
+      Char::Reader.new("abc", 3).pos.should eq(3)
     end
   end
 
