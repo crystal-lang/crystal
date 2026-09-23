@@ -90,12 +90,16 @@ class OptionParser
   end
 
   class InvalidOption < Exception
+    getter option
+
     def initialize(option)
       super("Invalid option: #{option}")
     end
   end
 
   class MissingOption < Exception
+    getter option
+
     def initialize(option)
       super("Missing option: #{option}")
     end
