@@ -1862,8 +1862,12 @@ module Crystal
     it_parses "1.tap do |x|; 1; rescue; x; end", Call.new(1.int32, "tap", block: Block.new(["x".var], body: ExceptionHandler.new(1.int32, [Rescue.new("x".var)])))
 
     it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+    it_parses "1 rescue 2 ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
+    it_parses "begin; 1; rescue; 2; end ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
     it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
     it_parses "x = 1 ensure 2", Assign.new("x".var, ExceptionHandler.new(1.int32, ensure: 2.int32))
+    it_parses "x = 1 rescue 2 ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
+    it_parses "x = begin; 1; rescue; 2; end ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
     it_parses "a = 1; a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, [Rescue.new("a".var)])]
     it_parses "a = 1; yield a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), [Rescue.new("a".var)])]
 
