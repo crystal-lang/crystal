@@ -549,6 +549,12 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     false
   end
 
+  def visit(node : Prepend)
+    check_outside_exp node, "prepend"
+    prepend_in current_type, node, :prepended
+    false
+  end
+
   def visit(node : LibDef)
     check_outside_exp node, "declare lib"
 
@@ -1153,6 +1159,34 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       # This will make the location show on that node instead of the `raise` call.
       ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
 
+      raise ex
+    rescue ex : TypeException
+      node.raise "at '#{kind}' hook", ex
+    end
+  end
+
+  def prepend_in(current_type, node, kind : HookKind)
+    node_name = node.name
+
+    type = lookup_type(node_name)
+    case type
+    when GenericModuleType
+      node.raise "generic type arguments must be specified when prepending #{type}"
+    when .module?
+      # OK
+    else
+      node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
+    end
+
+    if node_name.is_a?(Path)
+      @program.check_deprecated_type(type, node_name)
+    end
+
+    begin
+      current_type.as(ModuleType).prepend type
+      run_hooks hook_type(type), current_type, kind, node
+    rescue ex : MacroRaiseException
+      ex.inner = Crystal::MacroRaiseException.for_node node, ex.message
       raise ex
     rescue ex : TypeException
       node.raise "at '#{kind}' hook", ex
