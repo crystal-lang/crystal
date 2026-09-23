@@ -261,17 +261,19 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    ret = LibC.connect(socket.fd, address, address.size)
+    return unless ret == -1
+
+    errno = Errno.value
+
     loop do
-      if LibC.connect(socket.fd, address, address.size) == 0
-        return
-      end
-      case Errno.value
-      when Errno::EISCONN
-        return
+      case errno
       when Errno::EINPROGRESS, Errno::EALREADY
         socket.evented_wait_writable(timeout: timeout) do
           return IO::TimeoutError.new("connect timed out")
         end
+        errno = Crystal::System::Socket.system_error(socket.fd)
+        return if errno.none?
       else
         return ::Socket::ConnectError.from_errno("connect")
       end

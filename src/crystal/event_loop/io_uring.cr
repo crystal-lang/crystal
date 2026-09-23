@@ -768,7 +768,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     errno = Errno.new(-res)
     if errno == Errno::ECANCELED
       IO::TimeoutError.new("Connect timed out")
-    elsif errno != Errno::EISCONN
+    else
       ::Socket::ConnectError.from_os_error("connect", errno)
     end
   end
