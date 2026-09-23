@@ -683,6 +683,8 @@ module Crystal
         arg.expressions.each do |exp|
           check_arg_is_not_closure(node, message, exp)
         end
+      when Var
+        check_arg_is_not_closure_from_var(node, message, arg)
       when Call
         # If the call simply returns its captured block unchanged, we can detect
         # closured vars inside the block during compile-time
@@ -721,6 +723,28 @@ module Crystal
         owner = arg.call.target_def.owner
         if owner.passed_as_self?
           arg.raise "#{message} (closured vars: self)"
+        end
+      end
+    end
+
+    # Follows Var/MetaVar dependencies from a local variable and applies the usual
+    # closure checks to the source value.
+    private def check_arg_is_not_closure_from_var(node, message, arg : Var)
+      visited = Set(ASTNode).new.compare_by_identity
+      stack = [arg] of ASTNode
+
+      while current = stack.pop?
+        # Avoid dependency cycles (e.g. `a = b; b = a`)
+        next if visited.includes?(current)
+        visited.add(current)
+
+        current.dependencies.each do |dep|
+          case dep
+          when Var, MetaVar
+            stack << dep
+          else
+            check_arg_is_not_closure(node, message, dep)
+          end
         end
       end
     end
