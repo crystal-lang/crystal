@@ -92,19 +92,13 @@ class Reference
   # See also: `Reference.unsafe_construct`, `Struct.pre_initialize`.
   @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
   @[Primitive(:pre_initialize)]
-  {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
-    def self.pre_initialize(address : Pointer)
-      # This ensures `.pre_initialize` is instantiated for every subclass,
-      # otherwise all calls will refer to the sole instantiation in
-      # `Reference.class`. This is necessary when the receiver is a virtual
-      # metaclass type. Apparently this works even for primitives
-      \{% @type %}
-    end
-  {% else %}
-    # Primitives cannot have a body until 1.2.0 (#11147)
-    def self.pre_initialize(address : Pointer)
-    end
-  {% end %}
+  def self.pre_initialize(address : Pointer)
+    # This ensures `.pre_initialize` is instantiated for every subclass,
+    # otherwise all calls will refer to the sole instantiation in
+    # `Reference.class`. This is necessary when the receiver is a virtual
+    # metaclass type. Apparently this works even for primitives
+    {% @type %}
+  end
 end
 
 struct Struct
@@ -141,14 +135,9 @@ struct Struct
   # See also: `Reference.pre_initialize`.
   @[Experimental("This API is still under development. Join the discussion about custom reference allocation at [#13481](https://github.com/crystal-lang/crystal/issues/13481).")]
   @[Primitive(:pre_initialize)]
-  {% if compare_versions(Crystal::VERSION, "1.2.0") >= 0 %}
-    def self.pre_initialize(address : Pointer) : Nil
-      \{% @type %}
-    end
-  {% else %}
-    def self.pre_initialize(address : Pointer) : Nil
-    end
-  {% end %}
+  def self.pre_initialize(address : Pointer) : Nil
+    {% @type %}
+  end
 end
 
 class Class
