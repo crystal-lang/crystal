@@ -23,12 +23,16 @@ class HTTP::Server::RequestProcessor
   end
 
   def process(input : IO, output : IO) : Nil
-    response = Response.new(output)
+    process(IO::Stapled.new(input, output))
+  end
+
+  def process(io : IO) : Nil
+    response = Response.new(io)
 
     begin
       until @wants_close
         request = HTTP::Request.from_io(
-          input,
+          io,
           max_request_line_size: max_request_line_size,
           max_headers_size: max_headers_size,
         )
@@ -80,12 +84,12 @@ class HTTP::Server::RequestProcessor
           response.output.close
         end
 
-        output.flush
+        io.flush
 
         # If there is an upgrade handler, hand over
         # the connection to it and return
         if upgrade_handler = response.upgrade_handler
-          upgrade_handler.call(IO::Stapled.new(input, output))
+          upgrade_handler.call(io)
           return
         end
 
