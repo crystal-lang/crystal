@@ -787,6 +787,40 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "says that enum inherits from `Enum`" do
+    run(<<-CRYSTAL, Bool).should be_true
+      enum Foo
+        X
+      end
+
+      {{ Foo.superclass == Enum }}
+      CRYSTAL
+
+    run(<<-CRYSTAL, Bool).should be_true
+      @[Flags]
+      enum Foo
+        X
+      end
+
+      {{ Foo.superclass == Enum }}
+      CRYSTAL
+  end
+
+  it "gets all subclasses of `Enum`" do
+    run(<<-CRYSTAL, Bool).should be_true
+      enum Foo
+        X
+      end
+
+      @[Flags]
+      enum Bar
+        Y
+      end
+
+      {{ Enum.subclasses.includes?(Foo) && Enum.subclasses.includes?(Bar) }}
+      CRYSTAL
+  end
+
   it "gets methods" do
     run(<<-CRYSTAL).to_string.should eq("bar")
       class Foo

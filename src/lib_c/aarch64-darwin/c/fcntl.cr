@@ -19,7 +19,17 @@ lib LibC
   O_RDONLY   =    0x0000
   O_RDWR     =    0x0002
   O_WRONLY   =    0x0001
-  AT_FDCWD   =        -2
+
+  # Descriptor value for the current working directory
+  AT_FDCWD = -2
+
+  # Flags for the at functions
+  AT_EACCESS          = 0x0010 # Use effective ids in access check
+  AT_SYMLINK_NOFOLLOW = 0x0020 # Act on the symlink itself not the target
+  AT_SYMLINK_FOLLOW   = 0x0040 # Act on target of symlink
+  AT_REMOVEDIR        = 0x0080 # Path refers to directory
+  AT_REALDEV          = 0x0200 # Return real device inodes resides on for fstatat(2)
+  AT_FDONLY           = 0x0400 # Use only the fd and Ignore the path for fstatat(2)
 
   struct Flock
     l_start : OffT

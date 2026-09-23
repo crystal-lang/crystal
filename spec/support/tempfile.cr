@@ -32,7 +32,7 @@ def with_tempfile(*paths, file = __FILE__, &)
   ensure
     if SPEC_TEMPFILE_CLEANUP
       paths.each do |path|
-        FileUtils.rm_rf(path) if File.exists?(path)
+        FileUtils.rm_rf(path) if File.exists?(path, follow_symlinks: false)
       end
     end
   end

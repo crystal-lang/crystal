@@ -20,6 +20,12 @@ lib LibC
   O_RDWR     = O_RDONLY | O_WRONLY
   O_WRONLY   = 0x10000000
 
+  AT_FDCWD            =  -100
+  AT_SYMLINK_NOFOLLOW = 0x100
+  AT_REMOVEDIR        = 0x200
+  AT_SYMLINK_FOLLOW   = 0x400
+  AT_EACCESS          = 0x200
+
   fun fcntl(x0 : Int, x1 : Int, ...) : Int
   fun open(x0 : Char*, x1 : Int, ...) : Int
 end

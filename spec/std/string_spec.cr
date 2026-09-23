@@ -1483,6 +1483,9 @@ describe "String" do
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
       it { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      it "splits by a multibyte separator" do
+        "a💥b💥c".split("💥").should eq(["a", "b", "c"])
+      end
       it { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
@@ -2891,6 +2894,9 @@ describe "String" do
       "h".compare("zzz", case_insensitive: true).should eq(-1)
       "ä".compare("äA", case_insensitive: true).should eq(-1)
       "äÄ".compare("äÄ", case_insensitive: true).should eq(0)
+      "".compare("äbc", case_insensitive: true).should eq(-1)
+      "äbc".compare("", case_insensitive: true).should eq(1)
+      "".compare("", case_insensitive: true).should eq(0)
       "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic).should eq(0)
       "".compare("abc", case_insensitive: true).should eq(-1)
       "abc".compare("", case_insensitive: true).should eq(1)
@@ -2899,13 +2905,25 @@ describe "String" do
 
     it "compares case-insensitive, multiple chars after case conversion (#4513)" do
       "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄﬄﬄ".compare("fflfflffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄ".compare("FFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬀﬀﬀ".compare("ﬀﬀﬀF", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFFL".compare("Fﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬄ".compare("FFFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
     end
 
+    it "treats invalid code units as replacement char in an non-optimizable string" do
+      "ö\xC0".compare("ö\xE0", case_insensitive: true).should eq(-1)
+      "ö\xE0".compare("ö\xC0", case_insensitive: true).should eq(1)
+      "ö\xC0".compare("öa", case_insensitive: true).should eq(1)
+      "öa".compare("ö\xC0", case_insensitive: true).should eq(-1)
+    end
+
     it "treats invalid code units as replacement char in an otherwise ascii string" do
-      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
-      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(-1)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(1)
       "\xC0".compare("a", case_insensitive: true).should eq(1)
       "a".compare("\xC0", case_insensitive: true).should eq(-1)
     end

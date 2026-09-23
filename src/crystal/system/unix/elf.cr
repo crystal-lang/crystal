@@ -16,6 +16,8 @@ class Crystal::System::ELF
     ENDIAN_LITTLE = 1
     ENDIAN_BIG    = 2
 
+    ET_DYN = 3
+
     SHN_UNDEF  =      0
     SHN_XINDEX = 0xffff
 
@@ -56,23 +58,28 @@ class Crystal::System::ELF
     end
   end
 
-  def self.open(path : String, &)
+  def self.open(path : String) : self?
     fd = LibC.open(path, LibC::O_RDONLY | LibC::O_CLOEXEC, 0)
     return if fd == -1
 
     begin
       return unless LibC.fstat(fd, out stat) == 0
 
+      # FIXME: round stat.st_size to next page size to avoid SIGBUS errors
+
       pointer = LibC.mmap(nil, stat.st_size, LibC::PROT_READ, LibC::MAP_PRIVATE, fd, 0)
       return if pointer == LibC::MAP_FAILED
 
-      begin
-        program = new(pointer.as(UInt8*), stat.st_size)
-        yield program if program.valid?
-      ensure
-        LibC.munmap(pointer, stat.st_size)
+      program = new(pointer.as(UInt8*), stat.st_size)
+      unless program.valid?
+        program.close
+        return
       end
+
+      program
     ensure
+      # we map the whole executable then return slices to each section, we don't
+      # need the fd anymore and can close it early
       LibC.close(fd)
     end
   end
@@ -88,6 +95,10 @@ class Crystal::System::ELF
       header.value.ei_version == 1 &&
       header.value.e_version == 1 &&
       header.value.e_ehsize == sizeof(LibELF::Header)
+  end
+
+  def pie?
+    header.value.e_type == LibELF::ET_DYN
   end
 
   def section?(name : String, &)
@@ -130,5 +141,9 @@ class Crystal::System::ELF
 
   private def header
     @pointer.as(LibELF::Header*)
+  end
+
+  def close : Nil
+    LibC.munmap(@pointer, @size)
   end
 end

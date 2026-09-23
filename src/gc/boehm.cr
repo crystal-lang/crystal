@@ -193,21 +193,29 @@ module GC
   # :nodoc:
   def self.malloc(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size do
-      LibGC.malloc(size)
+      ptr = LibGC.malloc(size)
+      oom(size) if ptr.null? && size != 0
+      ptr
     end
   end
 
   # :nodoc:
   def self.malloc_atomic(size : LibC::SizeT) : Void*
     Crystal.trace :gc, "malloc", size: size, atomic: 1 do
-      LibGC.malloc_atomic(size)
+      ptr = LibGC.malloc_atomic(size)
+      oom(size) if ptr.null? && size != 0
+      ptr
     end
   end
 
   # :nodoc:
   def self.realloc(ptr : Void*, size : LibC::SizeT) : Void*
     Crystal.trace :gc, "realloc", size: size do
-      LibGC.realloc(ptr, size)
+      new_ptr = LibGC.realloc(ptr, size)
+      # `GC_realloc(ptr, 0)` legitimately returns NULL (free semantics), only
+      # a NULL result for a non-zero size means out of memory
+      oom(size) if new_ptr.null? && size != 0
+      new_ptr
     end
   end
 
@@ -322,6 +330,19 @@ module GC
 
   def self.disable
     LibGC.disable
+  end
+
+  # Limit the heap size to *size* bytes.
+  # Useful when you are debugging, especially on systems that do not handle
+  # running out of memory well. Or as an alternative to the environment variable
+  # `GC_MAX_HEAP_SIZE`.
+  #
+  # A zero *size* means the heap is unbounded; this is the default.
+  # This setter function is unsynchronized (so it might require
+  # `GC_call_with_alloc_lock` to avoid data race).
+  def self.max_heap_size=(size : UInt64) : UInt64
+    LibGC.set_max_heap_size(size)
+    size
   end
 
   def self.free(pointer : Void*) : Nil

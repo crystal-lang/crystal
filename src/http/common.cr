@@ -207,7 +207,6 @@ module HTTP
     {name, value}
   end
 
-  # Important! These have to be in lexicographic order.
   private COMMON_HEADERS = %w(
     Accept-Encoding
     Accept-Language
@@ -255,17 +254,17 @@ module HTTP
     referer
     user-agent
   )
+    .to_h { |header| {header.to_slice, header} }
 
   # :nodoc:
   def self.header_name(slice : Bytes) : String
     # Check if the header name is a common one.
     # If so we avoid having to allocate a string for it.
-    if slice.size < 20
-      name = COMMON_HEADERS.bsearch { |string| slice <= string.to_slice }
-      return name if name && name.to_slice == slice
+    if slice.size < 20 && (name = COMMON_HEADERS[slice]?)
+      name
+    else
+      String.new(slice)
     end
-
-    String.new(slice)
   end
 
   # :nodoc:
@@ -281,6 +280,11 @@ module HTTP
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
+      elsif body_io.is_a?(IO::Memory)
+        headers.serialize(io)
+        slice = body_io.to_slice + body_io.pos
+        io << "Content-Length: " << slice.bytesize << "\r\n\r\n"
+        io.write slice
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
         headers.serialize(io)
@@ -329,6 +333,13 @@ module HTTP
       raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
     end
     first_header.to_u64
+  end
+
+  # :nodoc:
+  def self.validate_content_length(length : Int64) : Int64
+    raise ArgumentError.new("Invalid Content-Length: #{length}") if length < 0
+
+    length
   end
 
   # :nodoc:
@@ -518,14 +529,21 @@ module HTTP
                            table
                          {% end %}
 
+  # :nodoc:
+  def self.valid_token?(string : String) : Bool
+    !string.empty? && !string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+  end
+
+  # :nodoc:
   def self.validate_token(string : String, message = "Invalid HTTP token") : String
-    if string.empty? || string.to_slice.any? { |c| VALID_TOKEN_CHAR_MAP[c] == 0 }
+    unless valid_token?(string)
       raise ArgumentError.new(message)
     end
 
     string
   end
 
+  # :nodoc:
   def self.validate_version(version : String) : String
     if HTTP::SUPPORTED_VERSIONS.includes?(version)
       version
@@ -544,8 +562,10 @@ module HTTP
 end
 
 require "./status"
-require "./request"
-require "./client/response"
+{% unless flag?(:wasi) %}
+  require "./request"
+  require "./client/response"
+{% end %}
 require "./headers"
 require "./content"
 require "./cookie"

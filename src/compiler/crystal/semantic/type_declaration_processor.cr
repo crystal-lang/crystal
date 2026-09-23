@@ -264,7 +264,7 @@ struct Crystal::TypeDeclarationProcessor
       if extender = find_extending_type(owner)
         raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_decl.location)
       end
-    elsif owner.metaclass?
+    elsif owner.metaclass? || !owner.is_a?(InstanceVarContainer)
       raise TypeException.new("can't declare instance variables in #{owner}", type_decl.location)
     end
 
@@ -378,7 +378,7 @@ struct Crystal::TypeDeclarationProcessor
       if extender = find_extending_type(owner)
         raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_info.location)
       end
-    elsif owner.metaclass?
+    elsif owner.metaclass? || !owner.is_a?(InstanceVarContainer)
       raise TypeException.new("can't declare instance variables in #{owner}", type_info.location)
     end
 

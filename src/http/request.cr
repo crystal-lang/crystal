@@ -130,13 +130,13 @@ class HTTP::Request
     @method == "HEAD"
   end
 
-  def content_length=(length : Int) : Int
-    headers["Content-Length"] = length.to_s
+  def content_length=(length : Int64) : Int64
+    headers["Content-Length"] = HTTP.validate_content_length(length).to_s
     length
   end
 
-  def content_length
-    HTTP.content_length(headers)
+  def content_length : Int64?
+    HTTP.content_length(headers).try(&.to_i64)
   end
 
   def body=(body : String) : String

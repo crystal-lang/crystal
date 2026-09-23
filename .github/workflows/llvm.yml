@@ -47,6 +47,7 @@ jobs:
           - {llvm_version: 20, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 21, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 22, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 23, runs-on: ubuntu-24.04, codename: noble}
           - {runs-on: ubuntu-24.04, codename: noble}
     name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
     steps:
@@ -75,7 +76,10 @@ jobs:
         run: make -B deps
 
       - name: Test compiler_spec
-        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+        run: |
+          # patch for ubuntu-22.04 whose PCRE2 doesn't support binary Unicode properties
+          sed -i 's/\\p{Emoji_Presentation}//g' lib/markd/src/markd/rule.cr
+          make compiler_spec junit_output=.junit/compiler_spec.xml
 
       - name: Integration test
         run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml

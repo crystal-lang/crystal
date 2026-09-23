@@ -45,7 +45,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
@@ -114,7 +114,11 @@ jobs:
 
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
@@ -128,7 +132,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
@@ -204,7 +208,11 @@ jobs:
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} -Dynamic ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
@@ -224,7 +232,7 @@ jobs:
           python-version: '3.14'
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
