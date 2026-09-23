@@ -678,8 +678,7 @@ describe "Semantic: doc" do
 
   it "expands record macro with comments (#16074)" do
     result = semantic <<-CRYSTAL, wants_doc: true
-      require "macros"
-      require "object/properties"
+      require "prelude"
 
       record Foo,
         # This is a multiline
