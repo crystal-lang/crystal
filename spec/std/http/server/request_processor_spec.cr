@@ -498,4 +498,27 @@ describe HTTP::Server::RequestProcessor do
       HTTP
     ))
   end
+
+  it "uses upgrade handler" do
+    upgrade_handler = Proc(IO, Nil).new do |io|
+      message = io.gets.try(&.upcase) || "(nil)"
+      io.puts message
+    end
+
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.upgrade_handler = upgrade_handler
+    end
+
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\nfoobar")
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.to_s.should eq <<-HTTP
+      HTTP/1.1 200 OK\r
+      Connection: keep-alive\r
+      Content-Length: 0\r
+      \r
+      FOOBAR
+
+      HTTP
+  end
 end

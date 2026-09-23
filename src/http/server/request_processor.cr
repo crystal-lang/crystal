@@ -85,7 +85,7 @@ class HTTP::Server::RequestProcessor
         # If there is an upgrade handler, hand over
         # the connection to it and return
         if upgrade_handler = response.upgrade_handler
-          upgrade_handler.call(output)
+          upgrade_handler.call(IO::Stapled.new(input, output))
           return
         end
 
