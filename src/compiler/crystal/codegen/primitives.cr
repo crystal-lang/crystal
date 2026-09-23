@@ -847,9 +847,11 @@ class Crystal::CodeGenVisitor
     end
 
     if type.element_type.has_inner_pointers?
+      size = builder.mul llvm_type.size, call_args[1]
       last = array_malloc(llvm_type, call_args[1])
+      memset last, int8(0), size_t(size)
     else
-      last = array_malloc_atomic(llvm_type, call_args[1])
+      last = array_calloc_atomic(llvm_type, call_args[1])
     end
 
     if @debug.line_numbers?
