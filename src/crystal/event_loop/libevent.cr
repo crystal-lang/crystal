@@ -23,7 +23,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event_base.loop(flags)
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include Lock
@@ -58,7 +58,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
     event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
       f = data.as(Fiber)
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
         event_loop.callback_enqueue(f)
       {% else %}
@@ -74,7 +74,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       if select_action = f.timeout_select_action
         f.timeout_select_action = nil
         if select_action.time_expired?
-          {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          {% if !flag?(:without_mt) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
             event_loop.callback_enqueue(f)
           {% else %}
