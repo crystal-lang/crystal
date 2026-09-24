@@ -2,6 +2,10 @@ require "fiber"
 require "channel"
 require "crystal/tracing"
 
+{% if flag?(:preview_mt) && !flag?(:execution_context) %}
+  {% raise "The legacy 'preview_mt' runtime is no longer available. Resize the default execution context, or start additional contexts instead." %}
+{% end %}
+
 {% if !flag?(:without_mt) %}
   require "fiber/execution_context"
 {% else %}
