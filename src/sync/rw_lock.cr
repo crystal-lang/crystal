@@ -106,7 +106,7 @@ module Sync
 
     private def lock_slow : Nil
       if owns_lock?
-        raise Error::Deadlock.new("Can't lock rwlock recursively") unless @type.reentrant?
+        raise Error::Deadlock.new("Can't lock rwlock recursively", Fiber.current, Fiber.current, self, self) unless @type.reentrant?
         @counter += 1
         return
       end
