@@ -530,4 +530,30 @@ describe YAML::Any do
       YAML
     any.to_json.should eq %({"foo":"bar","baz":[1,2.3,true,"qux",{"qax":"qox"}]})
   end
+
+  describe "#hash" do
+    it "recursively (Hash)" do
+      recursive = Hash(YAML::Any, YAML::Any).new
+      recursive[YAML::Any.new(nil)] = YAML::Any.new(recursive)
+
+      hash = recursive.hash # no stack overflow
+      recursive.hash.should eq(hash)
+    end
+
+    it "recursively (Array)" do
+      recursive = Array(YAML::Any).new
+      recursive << YAML::Any.new(recursive)
+
+      hash = recursive.hash # no stack overflow
+      recursive.hash.should eq(hash)
+    end
+
+    it "recursively (Set)" do
+      recursive = Set(YAML::Any).new
+      recursive << YAML::Any.new(recursive)
+
+      hash = recursive.hash # no stack overflow
+      recursive.hash.should eq(hash)
+    end
+  end
 end

@@ -23,6 +23,17 @@ describe "YAML" do
       doc["friends"][0].as_h.should be(doc.as_h)
     end
 
+    it "parses recursive mapping keys (hash)" do
+      doc = YAML.parse "? &1 {*1 : }"
+      doc.as_h.keys[0].as_h.should be(hash)
+    end
+
+    it "parses recursive mapping keys (array)" do
+      doc = YAML.parse("{&x [*x]: 0}")
+      array = doc.as_h.keys[0].as_a
+      array[0].as_a.should be(array)
+    end
+
     it "parses alias to scalar" do
       doc = YAML.parse("---\n- &x foo\n- *x\n")
       doc.should eq(["foo", "foo"])
