@@ -65,8 +65,6 @@ jobs:
         opts:
           - flags: "-Dwithout_mt"
           - workers: 4 # execution_context: parallel
-          - flags: "-Dpreview_mt"
-            workers: 4
           - flags: "-Devloop=io_uring"
             workers: 4
           - flags: "-Devloop=io_uring -Dwithout_mt"
