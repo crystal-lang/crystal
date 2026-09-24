@@ -260,42 +260,47 @@ module Sync
           # spinlock, and release the lock (early)
           _, success = @word.compare_and_set(word, (word | SPINLOCK | DESIGNATED_WAKER) &- sub_on_release, :acquire_release, :relaxed)
           if success
-            # spinlock is held, resume a single writer, or resume all readers
-            wake = Crystal::PointerLinkedList(Waiter).new
-            writer_waiting = 0_u32
-
-            if first_waiter = @waiters.shift?
-              wake.push(first_waiter)
-
-              if first_waiter.value.reader?
-                @waiters.each do |waiter|
-                  if waiter.value.reader?
-                    @waiters.delete(waiter)
-                    wake.push(waiter)
-                  else
-                    # found a writer, prevent new readers from locking
-                    writer_waiting = WRITER_WAITING
-                  end
-                end
-              end
-            end
-
-            # update flags
-            clear = 0_u32
-            clear |= DESIGNATED_WAKER if wake.empty? # nothing to wake => no designated waker
-            clear |= WAITING if @waiters.empty?      # no more waiters => nothing waiting
-
-            release_spinlock(set: writer_waiting, clear: clear)
-
-            wake.consume_each do |waiter|
-              waiter.value.wake
-            end
-
+            # spinlock is held
+            wake_waiters
             return
           end
         end
 
         attempts = Thread.delay(attempts)
+      end
+    end
+
+    # Resume a single writer or resume all readers.
+    # The spinlock must have been acquired; it will be released before returning.
+    protected def wake_waiters : Nil
+      wake = Crystal::PointerLinkedList(Waiter).new
+      writer_waiting = 0_u32
+
+      if first_waiter = @waiters.shift?
+        wake.push(first_waiter)
+
+        if first_waiter.value.reader?
+          @waiters.each do |waiter|
+            if waiter.value.reader?
+              @waiters.delete(waiter)
+              wake.push(waiter)
+            else
+              # found a writer, prevent new readers from locking
+              writer_waiting = WRITER_WAITING
+            end
+          end
+        end
+      end
+
+      # update flags
+      clear = 0_u32
+      clear |= DESIGNATED_WAKER if wake.empty? # nothing to wake => no designated waker
+      clear |= WAITING if @waiters.empty?      # no more waiters => nothing waiting
+
+      release_spinlock(set: writer_waiting, clear: clear)
+
+      wake.consume_each do |waiter|
+        waiter.value.wake
       end
     end
 
