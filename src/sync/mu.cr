@@ -97,23 +97,31 @@ module Sync
     end
 
     @[NoInline]
-    def lock_slow
+    def lock_slow : Nil
+      lock_slow { }
+    end
+
+    @[NoInline]
+    def rlock_slow : Nil
+      rlock_slow { }
+    end
+
+    def lock_slow(&before_suspend) : Nil
       waiter = Waiter.new(:writer)
 
       lock_slow_impl(pointerof(waiter),
         zero_to_acquire: ANY_LOCK,
         add_on_acquire: WLOCK,
         set_on_waiting: WRITER_WAITING,
-        clear_on_acquire: WRITER_WAITING)
+        clear_on_acquire: WRITER_WAITING) { yield }
     end
 
-    @[NoInline]
-    def rlock_slow
+    def rlock_slow(&before_suspend) : Nil
       waiter = Waiter.new(:reader)
 
       lock_slow_impl(pointerof(waiter),
         zero_to_acquire: WLOCK | WRITER_WAITING,
-        add_on_acquire: RLOCK)
+        add_on_acquire: RLOCK) { yield }
     end
 
     # Called from CV#wait after a cv waiter has been transferred to mu then
@@ -131,10 +139,10 @@ module Sync
         set_on_waiting = 0_u32
         clear_on_acquire = 0_u32
       end
-      lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting, clear_on_acquire, clear)
+      lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting, clear_on_acquire, clear) { }
     end
 
-    private def lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting = 0_u32, clear_on_acquire = 0_u32, clear = 0_u32) : Nil
+    private def lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting = 0_u32, clear_on_acquire = 0_u32, clear = 0_u32, &before_suspend) : Nil
       long_wait = 0_u32
       zero_to_acquire |= LONG_WAIT
       set_on_waiting |= WAITING
@@ -165,6 +173,13 @@ module Sync
             end
             release_spinlock
 
+            begin
+              yield
+            rescue exception
+              abort_wait(waiter)
+              raise exception
+            end
+
             # wait...
             waiter.value.wait
             # ...resumed
@@ -187,6 +202,24 @@ module Sync
         # against fibers running in parallel threads, trying to (spin)lock /
         # unlock.
         attempts = Thread.delay(attempts)
+      end
+    end
+
+    protected def abort_wait(waiter) : Nil
+      acquire_spinlock
+
+      if waiter.value.linked?
+        # waiter is still queued, cleanup
+        @waiters.delete(waiter)
+        release_spinlock
+      else
+        # waiter is a designated waker, act as one
+        release_spinlock
+
+        waiter.value.wait
+
+        acquire_spinlock
+        wake_waiters
       end
     end
 
@@ -312,6 +345,21 @@ module Sync
     def rheld? : Bool
       word = @word.get(:relaxed)
       (word & RMASK) != 0
+    end
+
+    private def acquire_spinlock
+      attempts = 0
+
+      while true
+        word = @word.get(:relaxed)
+
+        if (word & SPINLOCK) == 0
+          _, success = @word.compare_and_set(word, word | SPINLOCK, :acquire, :relaxed)
+          return if success
+        end
+
+        attempts = Thread.delay(attempts)
+      end
     end
 
     private def release_spinlock(set = 0_u32, clear = 0_u32)
