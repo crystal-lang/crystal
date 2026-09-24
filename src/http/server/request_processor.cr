@@ -58,12 +58,12 @@ class HTTP::Server::RequestProcessor
 
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        if input.responds_to?(:remote_address)
-          remote_address = input.remote_address
+        if io.responds_to?(:remote_address)
+          remote_address = io.remote_address
         end
 
-        if input.responds_to?(:local_address)
-          local_address = input.local_address
+        if io.responds_to?(:local_address)
+          local_address = io.local_address
         end
         context = Context.new(request, response,
           remote_address: remote_address, local_address: local_address)
