@@ -468,6 +468,34 @@ describe "YAML serialization" do
         end
         ex.location.should eq({2, 3})
       end
+
+      it "enforces limits" do
+        yaml = String.build do |str|
+          11.times { str << "- name\n" }
+        end
+        expect_raises YAML::ParseException, "Exceeded maximum number of nodes" do
+          Array(Hash(String, String)).from_yaml(yaml, YAML::Options.new(max_nodes: 10))
+        end
+
+        yaml = "-\n  -\n    -\n      - too deep"
+        expect_raises YAML::ParseException, "Exceeded maximum depth" do
+          Array(Hash(String, String)).from_yaml(yaml, YAML::Options.new(max_nesting: 3))
+        end
+      end
+
+      it "enforces limits (keyword arguments)" do
+        yaml = String.build do |str|
+          11.times { str << "- name\n" }
+        end
+        expect_raises YAML::ParseException, "Exceeded maximum number of nodes" do
+          Array(Hash(String, String)).from_yaml(yaml, max_nodes: 10)
+        end
+
+        yaml = "-\n  -\n    -\n      - too deep"
+        expect_raises YAML::ParseException, "Exceeded maximum depth" do
+          Array(Hash(String, String)).from_yaml(yaml, max_nesting: 3)
+        end
+      end
     end
   end
 
@@ -727,6 +755,26 @@ describe "YAML serialization" do
       h[h] = h
 
       h.to_yaml.should match(/\A--- &1\n1: 2\n\*1 ?: \*1\n\z/)
+    end
+
+    it "enforces limits" do
+      expect_raises YAML::Error, "Exceeded maximum number of nodes" do
+        Array.new(10) { Hash{"name" => "John"} }.to_yaml(YAML::Options.new(max_nodes: 10))
+      end
+
+      expect_raises YAML::Error, "Exceeded maximum depth" do
+        [[[["too deep"]]]].to_yaml(YAML::Options.new(max_nesting: 3))
+      end
+    end
+
+    it "enforces limits (keyword arguments)" do
+      expect_raises YAML::Error, "Exceeded maximum number of nodes" do
+        Array.new(10) { Hash{"name" => "John"} }.to_yaml(max_nodes: 10)
+      end
+
+      expect_raises YAML::Error, "Exceeded maximum depth" do
+        [[[["too deep"]]]].to_yaml(max_nesting: 3)
+      end
     end
   end
 end
