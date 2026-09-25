@@ -104,11 +104,12 @@ class Fiber
     # :nodoc:
     #
     # The list of locks currently held by this fiber.
-    getter(__sync_locked : Array(Sync::Mutex | Sync::RWLock)) do
-      [] of Sync::Mutex | Sync::RWLock
+    getter(__sync_locked : Array(Sync::Deadlockable)) do
+      [] of Sync::Deadlockable
     end
 
-    def __sync_locked?(lock : Sync::Mutex | Sync::RWLock) : Bool
+    # :nodoc:
+    def __sync_locked?(lock : Sync::Deadlockable) : Bool
       @__sync_locked.try(&.includes?(lock)) || false
     end
   {% end %}

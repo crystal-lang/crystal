@@ -1,5 +1,6 @@
 require "spec"
-require "sync"
+require "sync/mutex"
+require "sync/rw_lock"
 require "wait_group"
 
 {% unless flag?(:detect_deadlocks) %}
