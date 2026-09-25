@@ -1,22 +1,32 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY              = 10.milliseconds
-    INCREASE_PARALLELISM_EVERY = 100.milliseconds
-    COLLECT_STACKS_EVERY       = 5.seconds
-
     @thread : Thread?
+    @every : Time::Span
+    @collect_stacks_next : Time::Instant
+    @increase_parallelism_next : Time::Instant
 
-    {% if compare_versions(Crystal::VERSION, "1.4.0") < 0 %}
-      @every : Time::Span
-      @collect_stacks_next : Time::Instant
-      @increase_parallelism_next : Time::Instant
-    {% end %}
-
-    def initialize(@every = DEFAULT_EVERY)
-      @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
-      @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY
+    def initialize(@every = default_every)
+      @collect_stacks_next = Crystal::System::Time.instant + collect_stacks_every
+      @increase_parallelism_next = Crystal::System::Time.instant + increase_parallelism_every
       @thread = Thread.new(name: "SYSMON") { run_loop }
+    end
+
+    # the following settings aren't constants because they'd involve
+    # crystal/once to initialize since the value isn't a trivial literal, but
+    # the monitor thread is a bare thread (no execution context, no scheduler,
+    # no fiber)
+
+    private def default_every
+      Time::Span.new(nanoseconds: 10_000_000)
+    end
+
+    private def increase_parallelism_every
+      Time::Span.new(nanoseconds: 100_000_000)
+    end
+
+    private def collect_stacks_every
+      Time::Span.new(seconds: 5, nanoseconds: 0)
     end
 
     # TODO: maybe yield (ST/MT): detect schedulers that have been stuck running
@@ -52,7 +62,11 @@ module Fiber::ExecutionContext
       remaining = @every
 
       loop do
-        Thread.sleep(remaining)
+        # can't use Time::Span.zero or Time::Span.positive? that must resolve
+        # Time::Span::ZERO using crystal/once (but we're a bare thread)
+        if remaining > Time::Span.new(nanoseconds: 0)
+          Thread.sleep(remaining)
+        end
 
         start = Crystal::System::Time.instant
         yield(start)
@@ -60,7 +74,7 @@ module Fiber::ExecutionContext
 
         # calculate remaining time for more steady wakeups (minimize exponential
         # delays)
-        remaining = (start + @every - stop).clamp(Time::Span.zero..)
+        remaining = start + @every - stop
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
@@ -97,7 +111,7 @@ module Fiber::ExecutionContext
     # running them.
     private def increase_parallelism(now) : Nil
       return unless @increase_parallelism_next <= now
-      @increase_parallelism_next = now + INCREASE_PARALLELISM_EVERY
+      @increase_parallelism_next = now + increase_parallelism_every
 
       ExecutionContext.each do |execution_context|
         next unless execution_context.is_a?(Parallel)
@@ -139,7 +153,7 @@ module Fiber::ExecutionContext
     # OPTIMIZE: should maybe happen during GC collections (?)
     private def collect_stacks(now)
       return unless @collect_stacks_next <= now
-      @collect_stacks_next = now + COLLECT_STACKS_EVERY
+      @collect_stacks_next = now + collect_stacks_every
 
       Crystal.trace :sched, "collect_stacks" do
         ExecutionContext.each(&.stack_pool?.try(&.collect))
