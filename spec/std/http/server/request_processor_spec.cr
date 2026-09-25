@@ -469,4 +469,62 @@ describe HTTP::Server::RequestProcessor do
     logs.check :info, "after"
     logs.entry.context[:foo].should eq "bar"
   end
+
+  describe "upgrade" do
+    it "consumes request body before upgrade" do
+      upgrade_handler = Proc(IO, Nil).new do |io|
+        message = io.gets.try(&.upcase) || "(nil)"
+        io << message
+      end
+
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.upgrade_handler = upgrade_handler
+      end
+
+      String.build do |io|
+        stapled = IO::Stapled.new(IO::Memory.new(<<-HTTP), io)
+          GET / HTTP/1.1\r
+          Content-Length: 13\r
+          \r
+          message body
+          upgraded content
+          HTTP
+        processor.process(stapled, stapled)
+      end.should eq <<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        UPGRADED CONTENT
+        HTTP
+    end
+
+    it "consumes chunked request body before upgrade" do
+      upgrade_handler = Proc(IO, Nil).new do |io|
+        message = io.gets.try(&.upcase) || "(nil)"
+        io << message
+      end
+
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.upgrade_handler = upgrade_handler
+      end
+      String.build do |io|
+        stapled = IO::Stapled.new(IO::Memory.new(<<-HTTP), io)
+          GET / HTTP/1.1\r
+          Transfer-Encoding: chunked\r
+          \r
+          c\r\nmessage body\r
+          0\r\n\r
+          upgraded content
+          HTTP
+        processor.process(stapled, stapled)
+      end.should eq <<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        UPGRADED CONTENT
+        HTTP
+    end
+  end
 end
