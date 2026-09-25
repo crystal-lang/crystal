@@ -157,7 +157,7 @@ class HTTP::Request
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
-    status = HTTP.parse_headers_and_body(io, max_headers_size: max_headers_size) do |headers, body|
+    status = HTTP.parse_headers_and_body(io, decompress: false, max_headers_size: max_headers_size) do |headers, body|
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 
