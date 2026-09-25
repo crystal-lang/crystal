@@ -189,6 +189,37 @@ describe "Semantic: doc" do
     bar.doc.should eq("Hello")
   end
 
+  it "stores doc for def with visibility in an enum" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      enum Foo
+        A
+
+        # Hello
+        private def bar
+        end
+      end
+      CRYSTAL
+    program = result.program
+    foo = program.types["Foo"]
+    bar = foo.lookup_defs("bar").first
+    bar.doc.should eq("Hello")
+  end
+
+  it "stores doc for macro with visibility in an enum" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      enum Foo
+        A
+
+        # Hello
+        private macro bar
+        end
+      end
+      CRYSTAL
+    program = result.program
+    bar = program.types["Foo"].metaclass.macros.not_nil!["bar"].first
+    bar.doc.should eq("Hello")
+  end
+
   it "stores doc for def with annotation" do
     result = semantic <<-CRYSTAL, wants_doc: true
       class Foo
