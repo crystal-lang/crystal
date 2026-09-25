@@ -53,7 +53,7 @@ module Sync
         fiber = Fiber.current
         fiber.__sync_locked.each do |owned_lock|
           # is the lock's owner waiting on any lock we own?
-          if owned_lock.@mu.waiting?(owner)
+          if owned_lock.waiting?(owner)
             # deadlock! taint the other fiber, so both sides will raise an
             # exception
             owned_lock.tainted(owner, fiber, self)
@@ -100,6 +100,10 @@ module Sync
         if index = tainted.index { |(f, _, _)| f == fiber }
           tainted.delete_at(index)
         end
+      end
+
+      protected def waiting?(fiber)
+        @mu.waiting?(fiber)
       end
     {% end %}
   end

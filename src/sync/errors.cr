@@ -8,8 +8,8 @@ module Sync
       getter fiber1 : Fiber?
       getter fiber2 : Fiber?
 
-      getter lock1 : Mutex | RWLock | Nil
-      getter lock2 : Mutex | RWLock | Nil
+      getter lock1 : Lockable?
+      getter lock2 : Lockable?
 
       def initialize(message : String, @fiber1 = nil, @fiber2 = nil, @lock1 = nil, @lock2 = nil)
         super(message)
@@ -18,14 +18,7 @@ module Sync
 
     # :nodoc:
     def self.deadlock(fiber, lock)
-      type =
-        case lock
-        in Mutex
-          "mutex"
-        in RWLock
-          "rwlock"
-        end
-      Deadlock.new("Can't lock #{type} recursively", fiber, fiber, lock, lock)
+      Deadlock.new("Can't lock #{lock.class.name} recursively", fiber, fiber, lock, lock)
     end
 
     # :nodoc:
@@ -44,13 +37,12 @@ module Sync
       fiber.name || "0x#{fiber.object_id.to_s(16)}"
     end
 
-    private def self.to_name(lock : Mutex | RWLock, i = nil)
+    private def self.to_name(lock, i = nil)
       type =
         case lock
-        in Mutex
-          "mutex"
-        in RWLock
-          "rwlock"
+        when Mutex  then "mutex"
+        when RWLock then "rwlock"
+        else             "lock"
         end
       "#{type}#{i} (0x#{lock.object_id.to_s(16)})"
     end
