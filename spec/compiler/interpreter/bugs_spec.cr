@@ -238,6 +238,22 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "upcasts argument when passing to union type parameter (#16484)" do
+      interpret(<<-CRYSTAL).should eq(nil)
+        def foo(arg : Int32)
+        end
+
+        def foo(arg : Int32 | String)
+        end
+
+        def foo(arg : Int32 | String | Nil) # or foo(arg)
+        end
+
+        foo(nil.as(Int32 | String | Nil)) # BUG: missing downcast_distinct from String to (Int32 | String) (Crystal::NonGenericClassType to Crystal::MixedUnionType
+
+      CRYSTAL
+    end
+
     it "looks up local vars in parent scopes after looking up local vars in current scope and closured scope (#15489)" do
       interpret(<<-CRYSTAL).should eq("parser")
         def capture(&block)
