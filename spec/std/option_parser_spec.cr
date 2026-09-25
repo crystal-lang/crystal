@@ -293,6 +293,28 @@ describe "OptionParser" do
       args.size.should eq(0)
     end
 
+    it "consumes the next argument as the value when the bundle ends in a value flag" do
+      args = %w(-fo value)
+      f = false
+      value = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("-f", "") { f = true }
+        opts.on("-o VALUE", "") { |v| value = v }
+      end
+      f.should be_true
+      value.should eq("value")
+      args.size.should eq(0)
+    end
+
+    it "raises MissingOption when the bundle ends in a required value flag with nothing left" do
+      expect_raises OptionParser::MissingOption, "Missing option: -o" do
+        OptionParser.parse(%w(-fo)) do |opts|
+          opts.on("-f", "") { }
+          opts.on("-o VALUE", "") { |v| }
+        end
+      end
+    end
+
     it "does not bundle when some options are unknown" do
       n = false
       parser = OptionParser.new do |opts|

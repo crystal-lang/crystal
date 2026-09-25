@@ -496,12 +496,46 @@ class OptionParser
   end
 
   private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
+    handled_args << arg_index
+
     bundle.each_with_index do |handler, index|
-      value = arg[(index + 2)..] unless handler.value_type.none?
-      handler.block.call value || ""
+      if handler.value_type.none?
+        handler.block.call ""
+        next
+      end
+
+      value = arg[(index + 2)..]
+
+      # The value-consuming flag is always last in the bundle (see #validate_bundle),
+      # so if there's nothing left inline, fall back to the next argument, the same
+      # way a standalone flag with a required/optional value would.
+      if value.empty?
+        case handler.value_type
+        in FlagValue::Required
+          if next_value = args[arg_index + 1]?
+            handled_args << arg_index + 1
+            arg_index += 1
+            value = next_value
+          else
+            @missing_option.call("-#{arg[index + 1]}")
+          end
+        in FlagValue::Optional
+          unless gnu_optional_args?
+            next_value = args[arg_index + 1]?
+            if next_value && !@handlers.has_key?(next_value)
+              handled_args << arg_index + 1
+              arg_index += 1
+              value = next_value
+            end
+          end
+        in FlagValue::None
+          # unreachable: handled above
+        end
+      end
+
+      handler.block.call value
     end
 
-    handled_args << arg_index
     arg_index
   end
 
