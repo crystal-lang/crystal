@@ -257,8 +257,6 @@ describe "Semantic: hooks" do
       CRYSTAL
   end
 
-  # `no_cleanup` is what `crystal tool expand` sets to report the program as
-  # written. The hooks are part of that program, so they have to follow it.
   it "leaves finished hook expansions alone when cleanup is off" do
     compiler = Compiler.new
     compiler.no_codegen = true
