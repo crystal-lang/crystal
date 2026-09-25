@@ -100,6 +100,20 @@ class Fiber
     fibers.each { |fiber| yield fiber }
   end
 
+  {% if flag?(:detect_deadlocks) %}
+    # :nodoc:
+    #
+    # The list of locks currently held by this fiber.
+    getter(__sync_locked : Array(Sync::Deadlockable)) do
+      [] of Sync::Deadlockable
+    end
+
+    # :nodoc:
+    def __sync_locked?(lock : Sync::Deadlockable) : Bool
+      @__sync_locked.try(&.includes?(lock)) || false
+    end
+  {% end %}
+
   {% begin %}
   # Creates a new `Fiber` instance.
   #
