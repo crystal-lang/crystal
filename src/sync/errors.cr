@@ -18,7 +18,14 @@ module Sync
 
     # :nodoc:
     def self.deadlock(fiber, lock)
-      Deadlock.new("Can't lock #{to_name(lock)} recursively", fiber, fiber, lock, lock)
+      type =
+        case lock
+        in Mutex
+          "mutex"
+        in RWLock
+          "rwlock"
+        end
+      Deadlock.new("Can't lock #{type} recursively", fiber, fiber, lock, lock)
     end
 
     # :nodoc:
