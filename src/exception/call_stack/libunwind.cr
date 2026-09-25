@@ -112,19 +112,20 @@ struct Exception::CallStack
 
   private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
-      # TODO: refactor .decode_function_name and .decode_line_number to return
-      # slices to static memory instead of allocating individual String, so we
-      # can decode a frame safely in the segfault handler
-      # if @@loaded
-      #   pc = CallStack.decode_address(repeated_frame.ip)
-      #   if name = decode_function_name(pc)
-      #     file, line, column = Exception::CallStack.decode_line_number(pc)
-      #     if file && file != "??"
-      #       Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
-      #       return
-      #     end
-      #   end
-      # end
+      if @@loaded
+        pc = decode_address(repeated_frame.ip)
+
+        if (fname = lookup_function_name?(pc)) && (ln = lookup_line_number?(pc))
+          directory, file, line, column = ln
+          Crystal::System.print_error "%s at ", fname
+          unless directory.empty?
+            Crystal::System.print_error directory
+            Crystal::System.print_error Path::Kind.native.windows? ? "\\" : "/"
+          end
+          Crystal::System.print_error "%s:%d:%d", file, line, column
+          return
+        end
+      end
     {% end %}
 
     unsafe_decode_frame(repeated_frame.ip) do |offset, sname, fname|
