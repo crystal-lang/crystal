@@ -511,5 +511,33 @@ describe Crystal::Repl::Interpreter do
         res1 &* 1000 &+ res2
       CRYSTAL
     end
+
+    it "dispatches on the with scope type rather than on the enclosing scope" do
+      interpret(<<-CRYSTAL).should eq(2)
+        class Foo
+          def method
+            1
+          end
+        end
+
+        class Bar < Foo
+          def method
+            2
+          end
+        end
+
+        def apply(&)
+          with (Bar.new || Foo.new) yield
+        end
+
+        class Caller
+          def run
+            apply { method }
+          end
+        end
+
+        Caller.new.run
+        CRYSTAL
+    end
   end
 end
