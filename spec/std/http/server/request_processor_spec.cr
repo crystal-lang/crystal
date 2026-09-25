@@ -495,7 +495,7 @@ describe HTTP::Server::RequestProcessor do
         Connection: keep-alive\r
         Content-Length: 0\r
         \r
-        MESSAGE BODY
+        UPGRADED CONTENT
         HTTP
     end
 
@@ -523,7 +523,7 @@ describe HTTP::Server::RequestProcessor do
         Connection: keep-alive\r
         Content-Length: 0\r
         \r
-        C
+        UPGRADED CONTENT
         HTTP
     end
   end
