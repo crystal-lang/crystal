@@ -23,6 +23,29 @@ describe Socket::Addrinfo, tags: "network" do
       end
     end
 
+    it "resolves a service name" do
+      addrinfos = Socket::Addrinfo.resolve("localhost", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
+      addrinfos.size.should_not eq(0)
+      addrinfos.first.ip_address.port.should eq(80)
+    end
+
+    it "accepts the port number boundaries" do
+      Socket::Addrinfo.resolve("127.0.0.1", 0, type: Socket::Type::STREAM).size.should_not eq(0)
+      Socket::Addrinfo.resolve("127.0.0.1", 65535, type: Socket::Type::STREAM).size.should_not eq(0)
+    end
+
+    it "raises on out of range port number" do
+      expect_raises(Socket::Error, "Invalid port number: 65536") do
+        Socket::Addrinfo.resolve("127.0.0.1", 65536, type: Socket::Type::STREAM)
+      end
+    end
+
+    it "raises on negative port number" do
+      expect_raises(Socket::Error, "Invalid port number: -1") do
+        Socket::Addrinfo.resolve("127.0.0.1", -1, type: Socket::Type::STREAM)
+      end
+    end
+
     it "raises helpful message on getaddrinfo failure" do
       expect_raises(Socket::Addrinfo::Error, "Hostname lookup for badhostname.unknown failed: ") do
         Socket::Addrinfo.resolve("badhostname.unknown", 80, type: Socket::Type::DGRAM)
@@ -51,6 +74,12 @@ describe Socket::Addrinfo, tags: "network" do
       end
     end
 
+    it "raises on out of range port number" do
+      expect_raises(Socket::Error, "Invalid port number: 70000") do
+        Socket::Addrinfo.tcp("127.0.0.1", 70000)
+      end
+    end
+
     {% if flag?(:win32) %}
       it "raises timeout error" do
         expect_raises(IO::TimeoutError) do
@@ -70,6 +99,12 @@ describe Socket::Addrinfo, tags: "network" do
     it "yields each result" do
       Socket::Addrinfo.udp("localhost", 80) do |addrinfo|
         typeof(addrinfo).should eq(Socket::Addrinfo)
+      end
+    end
+
+    it "raises on out of range port number" do
+      expect_raises(Socket::Error, "Invalid port number: 70000") do
+        Socket::Addrinfo.udp("127.0.0.1", 70000)
       end
     end
 
@@ -104,6 +139,17 @@ describe Socket::Addrinfo, tags: "network" do
         error = Socket::Addrinfo::Error.new(LibC::EAI_NONAME, "No address found", "foobar.com")
         error.os_error.should eq Errno.new(LibC::EAI_NONAME)
         error.message.should eq "Hostname lookup for foobar.com failed: No address found"
+      end
+    {% end %}
+
+    {% unless flag?(:wasm32) %}
+      # `getaddrinfo` reports an unavailable service inconsistently across
+      # platforms (macOS returns `EAI_NONAME`), so the message is checked
+      # directly instead of through a lookup.
+      it "names the service on EAI_SERVICE" do
+        os_error = {% if flag?(:win32) %}LibC::EAI_SERVICE{% else %}Errno.new(LibC::EAI_SERVICE){% end %}
+        error = Socket::Addrinfo::Error.from_os_error(nil, os_error, domain: "localhost", type: Socket::Type::STREAM, service: "http", protocol: Socket::Protocol::TCP)
+        error.message.should eq "Hostname lookup for localhost failed: The requested service http is not available for the requested socket type STREAM"
       end
     {% end %}
   end
