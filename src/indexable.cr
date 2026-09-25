@@ -1545,8 +1545,8 @@ module Indexable(T)
       @n = array.size
       @copy = array.dup
       @indices = Array.new(@size, 0)
-      @pool = @indices.map { |i| @copy[i] }
-      @stop = false
+      @stop = @n == 0 && @size > 0
+      @pool = @stop ? Array(T).new : @indices.map { |i| @copy[i] }
       @i = @size - 1
       @first = true
     end
