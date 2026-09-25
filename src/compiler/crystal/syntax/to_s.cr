@@ -13,7 +13,7 @@ module Crystal
     @str : IO
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
-    @doc_emitted_by_modifier : ASTNode? = nil
+    @skip_doc = false
 
     # Represents the root level `Expressions` instance within a `MacroExpression`.
     @root_level_macro_expressions : Expressions? = nil
@@ -37,20 +37,12 @@ module Crystal
       @inside_macro = 0
     end
 
-    # The doc of a visibility modifier's expression is emitted before the
-    # modifier, because `private # doc` followed by the expression does not
-    # parse. The parser sets the doc on both nodes, but a tree built elsewhere
-    # may carry it on only one of them, so either is accepted.
-    private def doc_to_emit(node)
-      if node.is_a?(VisibilityModifier)
-        node.doc || node.exp.doc
-      elsif !node.same?(@doc_emitted_by_modifier)
-        node.doc
-      end
-    end
-
     def visit_any(node)
-      if @emit_doc && (doc = doc_to_emit(node)) && !doc.empty?
+      if @skip_doc
+        # A visibility modifier reports the doc of the node it wraps, and has
+        # already emitted it before writing itself.
+        @skip_doc = false
+      elsif @emit_doc && (doc = node.doc) && !doc.empty?
         doc.each_line(chomp: true) do |line|
           @str << "# "
           @str << line
@@ -1377,8 +1369,7 @@ module Crystal
     def visit(node : VisibilityModifier)
       @str << node.modifier.to_s.downcase
       @str << ' '
-      # `visit_any` already emitted the expression's doc for the modifier
-      @doc_emitted_by_modifier = node.exp
+      @skip_doc = @emit_doc
       node.exp.accept self
       false
     end
