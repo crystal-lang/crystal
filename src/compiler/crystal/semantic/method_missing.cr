@@ -117,14 +117,23 @@ module Crystal
     end
 
     private def raise_wrong_method_missing_expansion(msg, expanded_macro, original_call)
+      highlights = [] of DiagnosticMessage::Highlight
       str = String.build do |io|
         io << "wrong method_missing expansion\n\n"
         io << "The method_missing macro expanded to:\n\n"
-        io << Crystal.with_line_numbers(expanded_macro)
+        numbered_expansion = Crystal.with_line_numbers(expanded_macro)
+        expansion_offset = io.bytesize
+        io << numbered_expansion
+        highlights << DiagnosticMessage::Highlight.new(
+          expansion_offset,
+          numbered_expansion.bytesize,
+          :syntax,
+          numbered_source: expanded_macro
+        )
         io << "\n\n"
         io << "However, " << msg
       end
-      original_call.raise str
+      original_call.raise DiagnosticMessage.new(str, highlights)
     end
   end
 
