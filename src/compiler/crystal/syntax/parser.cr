@@ -6325,6 +6325,12 @@ module Crystal
         when .ident?
           visibility = nil
 
+          # The doc belongs to the first token of the member, which is the
+          # visibility modifier when there is one. `parse_def` and `parse_macro`
+          # read it off the `def`/`macro` token, which is past it by then, so it
+          # has to be kept here.
+          doc = @token.doc
+
           case @token.value
           when Keyword::PRIVATE
             visibility = Visibility::Private
@@ -6340,16 +6346,20 @@ module Crystal
 
           case @token.value
           when Keyword::DEF
-            member = parse_def.at(def_location)
-            member = VisibilityModifier.new(visibility, member).at(location) if visibility
-            members << member
+            member = parse_def(doc: doc).at(def_location)
           when Keyword::MACRO
             member = parse_macro.at(def_location)
-            member = VisibilityModifier.new(visibility, member).at(location) if visibility
-            members << member
+            member.doc ||= doc
           else
             unexpected_token
           end
+
+          if visibility
+            member = VisibilityModifier.new(visibility, member).at(location)
+            member.doc = doc
+          end
+
+          members << member
         when .class_var?
           class_var = ClassVar.new(@token.value.to_s).at(location)
 

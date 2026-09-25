@@ -101,4 +101,26 @@ describe "Parser doc" do
     baz = nodes[1].as(Def)
     baz.doc.should eq("doc 3")
   end
+
+  {
+    "private def"   => "private def foo\nend",
+    "protected def" => "protected def foo\nend",
+    "private macro" => "private macro foo\nend",
+    "def"           => "def foo\nend",
+  }.each do |desc, code|
+    it "includes doc for #{desc} in an enum body" do
+      parser = Parser.new(<<-CRYSTAL)
+        enum E
+          A
+
+          # This is foo.
+          #{code}
+        end
+        CRYSTAL
+      parser.wants_doc = true
+      member = parser.parse.as(EnumDef).members.last
+      member.doc.should eq("This is foo.")
+      member.as(VisibilityModifier).exp.doc.should eq("This is foo.") if member.is_a?(VisibilityModifier)
+    end
+  end
 end
