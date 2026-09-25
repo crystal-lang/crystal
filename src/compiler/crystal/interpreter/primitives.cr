@@ -123,6 +123,13 @@ class Crystal::Repl::Compiler
         else
           put_self node: node
         end
+      elsif owner.reference_like?
+        if obj
+          request_value(obj)
+        else
+          put_self node: node
+        end
+        pointer_get(4, node: node)
       else
         put_i32 type_id(owner), node: node
       end
