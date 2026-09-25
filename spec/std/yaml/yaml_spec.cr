@@ -25,7 +25,8 @@ describe "YAML" do
 
     it "parses recursive mapping keys (hash)" do
       doc = YAML.parse "? &1 {*1 : }"
-      doc.as_h.keys[0].as_h.should be(hash)
+      hash = doc.as_h.keys[0].as_h
+      hash.keys[0].as_h.should be(hash)
     end
 
     it "parses recursive mapping keys (array)" do
