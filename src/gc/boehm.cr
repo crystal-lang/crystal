@@ -219,6 +219,7 @@ module GC
     end
   end
 
+  # :nodoc:
   def self.init : Nil
     {% unless flag?(:win32) %}
       LibGC.set_handle_fork(1)
@@ -314,13 +315,13 @@ module GC
     end
   {% end %}
 
-  def self.collect
+  def self.collect : Nil
     Crystal.trace :gc, "collect" do
       LibGC.collect
     end
   end
 
-  def self.enable
+  def self.enable : Nil
     unless LibGC.is_disabled != 0
       raise "GC is not disabled"
     end
@@ -328,33 +329,29 @@ module GC
     LibGC.enable
   end
 
-  def self.disable
+  def self.disable : Nil
     LibGC.disable
   end
 
-  # Limit the heap size to *size* bytes.
-  # Useful when you are debugging, especially on systems that do not handle
-  # running out of memory well. Or as an alternative to the environment variable
-  # `GC_MAX_HEAP_SIZE`.
-  #
-  # A zero *size* means the heap is unbounded; this is the default.
-  # This setter function is unsynchronized (so it might require
-  # `GC_call_with_alloc_lock` to avoid data race).
+  # :nodoc:
   def self.max_heap_size=(size : UInt64) : UInt64
     LibGC.set_max_heap_size(size)
     size
   end
 
+  # :nodoc:
   def self.free(pointer : Void*) : Nil
     Crystal.trace :gc, "free" do
       LibGC.free(pointer)
     end
   end
 
+  # :nodoc:
   def self.add_finalizer(object : Reference) : Nil
     add_finalizer_impl(object)
   end
 
+  # :nodoc:
   def self.add_finalizer(object)
     # Nothing
   end
@@ -366,16 +363,19 @@ module GC
     nil
   end
 
+  # :nodoc:
   def self.add_root(object : Reference)
     roots = @@roots ||= [] of Pointer(Void)
     roots << Pointer(Void).new(object.object_id)
   end
 
+  # :nodoc:
   def self.register_disappearing_link(pointer : Void**)
     base = LibGC.base(pointer.value)
     LibGC.general_register_disappearing_link(pointer, base)
   end
 
+  # :nodoc:
   def self.is_heap_ptr(pointer : Void*)
     LibGC.is_heap_ptr(pointer) != 0
   end
@@ -449,14 +449,15 @@ module GC
     {% end %}
   end
 
-  # :nodoc:
   {% if !flag?(:without_mt) %}
+    # :nodoc:
     def self.set_stackbottom(thread_handle : Void*, stack_bottom : Void*)
       sb = LibGC::StackBase.new
       sb.mem_base = stack_bottom
       LibGC.set_stackbottom(thread_handle, pointerof(sb))
     end
   {% else %}
+    # :nodoc:
     def self.set_stackbottom(stack_bottom : Void*)
       \{% if LibGC.has_method?(:set_stackbottom) %}
         # this is necessary because Boehm GC does _not_ use `GC_stackbottom` on
