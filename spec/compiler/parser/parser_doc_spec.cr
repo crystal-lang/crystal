@@ -119,8 +119,9 @@ describe "Parser doc" do
         CRYSTAL
       parser.wants_doc = true
       member = parser.parse.as(EnumDef).members.last
+      # The doc is stored on the node the modifier wraps, as in a class body.
+      member = member.exp if member.is_a?(VisibilityModifier)
       member.doc.should eq("This is foo.")
-      member.as(VisibilityModifier).exp.doc.should eq("This is foo.") if member.is_a?(VisibilityModifier)
     end
   end
 end
