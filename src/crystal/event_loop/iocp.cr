@@ -23,7 +23,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     true
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # Creates a global IOCP instance, then forwards the completion events to their
     # original instance (through a dedicated thread), because:
     #
@@ -95,7 +95,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def create_completion_port(handle : LibC::HANDLE) : LibC::HANDLE
     iocp_handle =
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         @@global.handle
       {% else %}
         @iocp.handle
@@ -126,7 +126,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     enqueued
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # thread unsafe
     def run(blocking : Bool, & : Fiber ->) : Nil
       run_impl(blocking) { |fiber| yield fiber }

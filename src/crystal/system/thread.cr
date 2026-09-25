@@ -92,7 +92,7 @@ class Thread
 
   getter name : String?
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
 
