@@ -203,4 +203,23 @@ describe "Semantic: yield with scope" do
       Foo.new.bar
       CRYSTAL
   end
+
+  it "errors if only some types of the union yield scope have a match (#17408)" do
+    assert_error <<-CRYSTAL, "undefined method 'method' for Bar (with ... yield)"
+      class Foo
+        def method
+          1
+        end
+      end
+
+      class Bar
+      end
+
+      def foo(x, &)
+        with x yield
+      end
+
+      foo(Bar.new || Foo.new) { method }
+      CRYSTAL
+  end
 end
