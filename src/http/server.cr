@@ -518,7 +518,7 @@ class HTTP::Server
       end
     {% end %}
 
-    @processor.process(io, io)
+    @processor.process(io)
   ensure
     {% begin %}
       begin

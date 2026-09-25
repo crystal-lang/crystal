@@ -69,7 +69,7 @@ def run_handler(handler, &)
   IO::Stapled.pipe do |server_io, client_io|
     processor = HTTP::Server::RequestProcessor.new(handler)
     f = spawn do
-      processor.process(server_io, server_io)
+      processor.process(server_io)
     rescue exc
       done.send exc
     else
