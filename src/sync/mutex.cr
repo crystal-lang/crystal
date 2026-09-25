@@ -2,6 +2,7 @@ require "./mu"
 require "./type"
 require "./errors"
 require "./lockable"
+require "./deadlockable"
 
 module Sync
   # A mutual exclusion lock to protect critical sections.
@@ -16,6 +17,7 @@ module Sync
   # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
+    include Deadlockable
 
     def initialize(@type : Type = :checked)
       @counter = 0
@@ -47,11 +49,15 @@ module Sync
 
     private def lock_slow : Nil
       if owns_lock?
-        raise Error::Deadlock.new("Can't lock mutex recursively", Fiber.current, Fiber.current, self, self) unless @type.reentrant?
+        raise Error.deadlock(Fiber.current, self) unless @type.reentrant?
         @counter += 1
         return
       end
-      @mu.lock_slow
+
+      @mu.lock_slow do
+        {% if flag?(:detect_deadlocks) %} detect_deadlock! {% end %}
+      end
+
       set_owner
     end
 
@@ -60,7 +66,7 @@ module Sync
       unless @type.unchecked?
         unless owns_lock?
           message =
-            if @locked_by
+            if locked_by?
               "Can't unlock Sync::Mutex locked by another fiber"
             else
               "Can't unlock Sync::Mutex that isn't locked"
@@ -96,16 +102,27 @@ module Sync
     end
 
     protected def owns_lock? : Bool
-      @locked_by == Fiber.current
+      locked_by? == Fiber.current
     end
 
     private def set_owner(counter = 1) : Nil
-      @locked_by = Fiber.current
+      fiber = Fiber.current
+
+      self.locked_by = fiber
       @counter = counter if @type.reentrant?
+
+      {% if flag?(:detect_deadlocks) %}
+        fiber.__sync_locked.push(self)
+        detect_indirect_deadlock!(fiber) { unlock }
+      {% end %}
     end
 
     private def unset_owner : Nil
-      @locked_by = nil
+      self.locked_by = nil
+
+      {% if flag?(:detect_deadlocks) %}
+        Fiber.current.__sync_locked.delete(self)
+      {% end %}
     end
 
     # :nodoc:
