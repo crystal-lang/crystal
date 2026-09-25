@@ -120,6 +120,64 @@ describe "Codegen: special vars" do
       CRYSTAL
   end
 
+  it "codegens in block when def has typed block annotation (#16391)" do
+    # `Nil#not_nil!` returns a sentinel (0) instead of raising so that if
+    # this regression is reintroduced the test fails cleanly on the value
+    # comparison rather than aborting the spec run with a NilAssertionError.
+    run(<<-CRYSTAL).to_i.should eq(42)
+      class Object; def not_nil!; self; end; end
+      struct Nil; def not_nil!; 0; end; end
+
+      def foo(& : Int32 -> _)
+        $~ = 42
+        yield 0
+      end
+
+      a = 0
+      foo do
+        a = $~
+      end
+      a
+      CRYSTAL
+  end
+
+  it "codegens in block when def has typed block annotation with concrete output (#16391)" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      class Object; def not_nil!; self; end; end
+      struct Nil; def not_nil!; 0; end; end
+
+      def foo(& : Int32 -> Int32)
+        $~ = 42
+        yield 0
+      end
+
+      a = 0
+      foo do |s|
+        a = $~
+        s
+      end
+      a
+      CRYSTAL
+  end
+
+  it "codegens when def assigns special vars and block return type uses a free variable (#16391)" do
+    # Free variable in the block output requires eager block typing — the
+    # block's actual return type fixes `U`. The previous deferral-only fix
+    # for `assigns_special_var?` couldn't compile this combination at all
+    # ("can't infer block return type"). The block here doesn't reference
+    # `$~` itself, so eager typing produces correct types.
+    run(<<-CRYSTAL).to_i.should eq(20)
+      def foo(& : Int32 -> U) forall U
+        $~ = "hey"
+        yield 1
+      end
+
+      foo do |i|
+        i &* 20
+      end
+      CRYSTAL
+  end
+
   it "codegens in block with nested block" do
     run(<<-CRYSTAL).to_string.should eq("hey")
       require "prelude"
