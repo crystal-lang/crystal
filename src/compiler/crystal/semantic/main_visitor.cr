@@ -12,7 +12,10 @@ module Crystal
 
       node = cleanup node if cleanup
 
-      if process_finished_hooks
+      # The hooks are part of the program too, so they follow `cleanup`: with
+      # `no_cleanup` the main tree is left as written, and cleaning the hooks
+      # anyway would hand back rewritten code for half the program.
+      if process_finished_hooks && cleanup
         finished_hooks.map! do |hook|
           hook_node = cleanup(hook.node)
           FinishedHook.new(hook.scope, hook.macro, hook_node)
