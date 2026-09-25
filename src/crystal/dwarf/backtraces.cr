@@ -2,10 +2,12 @@ module Crystal
   module DWARF
     class Backtraces
       property debug_abbrev : Bytes?
+      property debug_addr : Bytes?
       property debug_info : Bytes?
       property debug_line : Bytes?
       property debug_line_str : Bytes?
       property debug_str : Bytes?
+      property debug_str_offsets : Bytes?
 
       # The decoded table for resolving function names; parsed once from the
       # debug info and debug abbrev sections; the table is much smaller than the
@@ -15,6 +17,7 @@ module Crystal
       # OPTIMIZE: reduce the table row size, for example using offsets (u32)
       # instead of absolute PCs (u64) to save 8 bytes out of every entry.
       @function_names = Slice({LibC::SizeT, LibC::SizeT, UInt8*}).empty
+      @str_offsets : StrOffsets?
 
       @initialized = false
 
@@ -34,6 +37,9 @@ module Crystal
           m = l &+ (r &- l) // 2
           low_pc, high_pc, cstring = a.to_unsafe[m]
 
+          # high PC is defined as "the address of the first location past the
+          # last instruction associated with the entity", so the range should
+          # exclude high PC, but in practice PC can be equal to high PC
           if low_pc <= pc <= high_pc
             return Bytes.new(cstring, LibC.strlen(cstring))
           end
@@ -93,12 +99,15 @@ module Crystal
         DWARF.each_info(debug_info) do |info|
           abbrev_table = debug_abbrev + info.debug_abbrev_offset
           abbrev_index = abbrev_indexes[info.debug_abbrev_offset] ||= parse_abbrev_indexes(abbrev_table)
+          addr = nil
+          @str_offsets = nil
 
           info.each do |abbrev_code|
             offset = abbrev_index[abbrev_code &- 1]
 
             DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
-              if abbrev.tag == DW_TAG_subprogram
+              case abbrev.tag
+              when DW_TAG_subprogram
                 low_pc = nil
                 high_pc = nil
                 name_form = nil
@@ -109,12 +118,20 @@ module Crystal
 
                   case attr.at
                   when DW_AT_low_pc
-                    low_pc = value.as(LibC::SizeT)
+                    case attr.form
+                    when DW_FORM_addr
+                      low_pc = value.as(LibC::SizeT)
+                    when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
+                      low_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
+                    end
                   when DW_AT_high_pc
-                    if attr.form == DW_FORM_addr
+                    case attr.form
+                    when DW_FORM_addr
                       high_pc = value.as(LibC::SizeT)
-                    elsif value.responds_to?(:to_u64)
-                      high_pc = low_pc.as(LibC::SizeT) + value.to_u64
+                    when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
+                      high_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
+                    when DW_FORM_udata, DW_FORM_data1, DW_FORM_data2, DW_FORM_data4, DW_FORM_data8, DW_FORM_data16
+                      high_pc = low_pc.as(LibC::SizeT) + value.as(UInt8 | UInt16 | UInt32 | UInt64 | UInt128)
                     end
                   when DW_AT_name
                     name_form = attr.form
@@ -122,8 +139,21 @@ module Crystal
                   end
                 end
 
-                if low_pc && high_pc && name_form && name_value
-                  yield low_pc, high_pc, name_form, name_value
+                if low_pc && name_form && name_value
+                  yield low_pc, high_pc || low_pc, name_form, name_value
+                end
+              when DW_TAG_compile_unit
+                abbrev.each_attribute do |attr|
+                  case attr.at
+                  when DW_AT_addr_base
+                    value = info.read_attribute_value(attr.form, attr.const_value)
+                    addr = DWARF.addr_at?(@debug_addr, value.as(UInt8 | UInt16 | UInt32))
+                  when DW_AT_str_offsets_base
+                    value = info.read_attribute_value(attr.form, attr.const_value)
+                    @str_offsets = DWARF.str_offsets_at?(@debug_str_offsets, value.as(UInt8 | UInt16 | UInt32))
+                  else
+                    info.skip_attribute_value(attr.form)
+                  end
                 end
               else
                 abbrev.each_attribute do |attr|
@@ -133,6 +163,8 @@ module Crystal
             end
           end
         end
+      ensure
+        @str_offsets = nil
       end
 
       private def parse_abbrev_indexes(abbrev_table)
@@ -235,6 +267,8 @@ module Crystal
           decode_strp(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Bytes.empty
         end
@@ -248,6 +282,8 @@ module Crystal
           decode_strp_pointer(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp_pointer(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx_pointer(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Pointer(UInt8).null
         end
@@ -265,6 +301,22 @@ module Crystal
       private def decode_strp_pointer(bytes, offset)
         if bytes && (0 <= offset < bytes.size)
           bytes.to_unsafe + offset
+        else
+          Pointer(UInt8).null
+        end
+      end
+
+      private def decode_strx(offset)
+        if str_offsets = @str_offsets
+          decode_strp(@debug_str, str_offsets[offset])
+        else
+          Bytes.empty
+        end
+      end
+
+      private def decode_strx_pointer(offset)
+        if str_offsets = @str_offsets
+          decode_strp_pointer(@debug_str, str_offsets[offset])
         else
           Pointer(UInt8).null
         end
