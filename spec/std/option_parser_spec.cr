@@ -294,13 +294,15 @@ describe "OptionParser" do
     end
 
     it "consumes the next argument as the value when the bundle ends in a value flag" do
-      args = %w(-fo value)
-      f = false
       value = nil
-      OptionParser.parse(args) do |opts|
+      f = false
+      parser = OptionParser.new do |opts|
         opts.on("-f", "") { f = true }
         opts.on("-o VALUE", "") { |v| value = v }
       end
+
+      args = %w(-fo value)
+      parser.parse(args)
       f.should be_true
       value.should eq("value")
       args.size.should eq(0)

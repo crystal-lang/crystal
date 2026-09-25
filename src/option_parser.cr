@@ -495,6 +495,34 @@ class OptionParser
     {arg, nil}
   end
 
+  # Resolves the value for a *value_type* flag that had no inline value, consuming the next
+  # argument if appropriate (a `Required` flag always consumes it when present; an `Optional`
+  # flag only consumes it when it isn't itself a registered flag, and never under
+  # `gnu_optional_args?`). *flag* is only used to name the flag in a `MissingOption` error.
+  # Returns the resolved value (`nil` if none was consumed) and the, possibly incremented,
+  # *arg_index*.
+  private def consume_next_arg_as_value(value_type : FlagValue, flag : String, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : {String?, Int32}
+    case value_type
+    in FlagValue::Required
+      if next_value = args[arg_index + 1]?
+        handled_args << arg_index + 1
+        {next_value, arg_index + 1}
+      else
+        @missing_option.call(flag)
+        {nil, arg_index}
+      end
+    in FlagValue::Optional
+      if !gnu_optional_args? && (next_value = args[arg_index + 1]?) && !@handlers.has_key?(next_value)
+        handled_args << arg_index + 1
+        {next_value, arg_index + 1}
+      else
+        {nil, arg_index}
+      end
+    in FlagValue::None
+      {nil, arg_index}
+    end
+  end
+
   private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
     handled_args << arg_index
 
@@ -510,27 +538,8 @@ class OptionParser
       # so if there's nothing left inline, fall back to the next argument, the same
       # way a standalone flag with a required/optional value would.
       if value.empty?
-        case handler.value_type
-        in FlagValue::Required
-          if next_value = args[arg_index + 1]?
-            handled_args << arg_index + 1
-            arg_index += 1
-            value = next_value
-          else
-            @missing_option.call("-#{arg[index + 1]}")
-          end
-        in FlagValue::Optional
-          unless gnu_optional_args?
-            next_value = args[arg_index + 1]?
-            if next_value && !@handlers.has_key?(next_value)
-              handled_args << arg_index + 1
-              arg_index += 1
-              value = next_value
-            end
-          end
-        in FlagValue::None
-          # unreachable: handled above
-        end
+        next_value, arg_index = consume_next_arg_as_value(handler.value_type, "-#{arg[index + 1]}", arg_index, args, handled_args)
+        value = next_value if next_value
       end
 
       handler.block.call value
@@ -547,28 +556,7 @@ class OptionParser
     handled_args << arg_index
 
     if !value
-      case handler.value_type
-      in FlagValue::Required
-        value = args[arg_index + 1]?
-        if value
-          handled_args << arg_index + 1
-          arg_index += 1
-        else
-          @missing_option.call(flag)
-        end
-      in FlagValue::Optional
-        unless gnu_optional_args?
-          value = args[arg_index + 1]?
-          if value && !@handlers.has_key?(value)
-            handled_args << arg_index + 1
-            arg_index += 1
-          else
-            value = nil
-          end
-        end
-      in FlagValue::None
-        # do nothing
-      end
+      value, arg_index = consume_next_arg_as_value(handler.value_type, flag, arg_index, args, handled_args)
     end
 
     # If this is a subcommand (flag not starting with -), delete all
