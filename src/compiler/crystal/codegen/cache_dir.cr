@@ -8,6 +8,10 @@ module Crystal
   # To keep the cache dir small, only the 10 most recently used
   # directories are kept. We use the directory's modification
   # time for this.
+  #
+  # A directory that was used recently is kept regardless, because the cache is
+  # shared by every compiler process: a build that is still writing to its
+  # directory must not have it removed by another one that happens to finish.
   class CacheDir
     def self.instance
       @@instance ||= new
@@ -49,8 +53,11 @@ module Crystal
       output_dir
     end
 
-    # Keeps the 10 most recently used directories in the cache,
-    # and removes all others.
+    # How long a directory is kept after it was last used.
+    KEEP_RECENT = 1.hour
+
+    # Keeps the 10 most recently used directories in the cache, and any used
+    # within `KEEP_RECENT`, and removes all others.
     def cleanup
       dir = compute_dir
       entries = gather_cache_entries(dir)
@@ -120,12 +127,14 @@ module Crystal
     end
 
     private def cleanup_dirs(entries)
+      keep_after = Time.utc - KEEP_RECENT
+
       entries
-        .select { |dir| Dir.exists?(dir) }
-        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
+        .compact_map { |dir| {dir, File.info?(dir) || next} }
+        .sort_by! { |_, info| info.modification_time }
         .reverse!
         .skip(10)
-        .each { |name| FileUtils.rm_rf(name) }
+        .each { |dir, info| FileUtils.rm_rf(dir) if info.modification_time < keep_after }
     end
 
     private def gather_cache_entries(dir)
