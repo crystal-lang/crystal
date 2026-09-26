@@ -624,4 +624,27 @@ describe "expand" do
 
     assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
+
+  # `PropagateDocVisitor` copies the macro call's doc onto the nodes the
+  # expansion generates, including ones nested inside an expression, where a
+  # comment cannot be written.
+  it "does not emit a doc comment inside an expression" do
+    code = <<-CRYSTAL
+      class Holder
+      end
+
+      macro prop(name)
+        @{{name.id}} : Holder = Holder.new
+      end
+
+      class Foo
+        # The identity property.
+        ‸prop bar
+      end
+      CRYSTAL
+
+    assert_expand_simple code,
+      original: "# The identity property.\nprop(bar)",
+      expanded: "@bar : Holder = Holder.new"
+  end
 end
