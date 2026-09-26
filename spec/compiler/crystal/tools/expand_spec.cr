@@ -625,9 +625,6 @@ describe "expand" do
     assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
 
-  # `PropagateDocVisitor` copies the macro call's doc onto the nodes the
-  # expansion generates, including ones nested inside an expression, where a
-  # comment cannot be written.
   it "does not emit a doc comment inside an expression" do
     code = <<-CRYSTAL
       class Holder
