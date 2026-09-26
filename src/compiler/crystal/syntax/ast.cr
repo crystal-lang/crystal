@@ -1679,9 +1679,13 @@ module Crystal
   class VisibilityModifier < ASTNode
     property modifier : Visibility
     property exp : ASTNode
-    property doc : String?
 
     def initialize(@modifier : Visibility, @exp)
+    end
+
+    # A visibility modifier is syntax around another node, so the doc belongs to wrapped node
+    def doc
+      @exp.doc
     end
 
     def accept_children(visitor)
