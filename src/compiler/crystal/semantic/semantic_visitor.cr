@@ -341,6 +341,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
+    if @program.macro_expansion_depth >= Program::MAX_MACRO_EXPANSION_DEPTH
+      node.raise "macro expansion nested more than #{Program::MAX_MACRO_EXPANSION_DEPTH} levels deep, probably a macro that expands to a call to itself"
+    end
+
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -372,7 +376,14 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
 
-    generated_nodes.accept self if accept
+    if accept
+      @program.macro_expansion_depth += 1
+      begin
+        generated_nodes.accept self
+      ensure
+        @program.macro_expansion_depth -= 1
+      end
+    end
     generated_nodes
   end
 

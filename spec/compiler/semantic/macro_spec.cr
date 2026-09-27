@@ -1922,6 +1922,58 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "errors on a macro that expands to a call to itself (#9413)" do
+    assert_error <<-CRYSTAL, "macro expansion nested more than 300 levels deep"
+      macro forever(n)
+        forever({{n}})
+      end
+
+      forever(1)
+      CRYSTAL
+  end
+
+  it "errors on a macro that expands to a call to itself inside a def (#9413)" do
+    assert_error <<-CRYSTAL, "macro expansion nested more than 300 levels deep"
+      macro forever(n)
+        forever({{n}})
+      end
+
+      def foo
+        forever(1)
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  it "expands a macro nested as deep as the expansion limit" do
+    assert_type(<<-CRYSTAL) { int32 }
+      macro down(n)
+        {% if n > 1 %}
+          down({{n - 1}})
+        {% else %}
+          1
+        {% end %}
+      end
+
+      down(300)
+      CRYSTAL
+  end
+
+  it "errors on a macro nested one level deeper than the expansion limit" do
+    assert_error <<-CRYSTAL, "macro expansion nested more than 300 levels deep"
+      macro down(n)
+        {% if n > 1 %}
+          down({{n - 1}})
+        {% else %}
+          1
+        {% end %}
+      end
+
+      down(301)
+      CRYSTAL
+  end
+
   describe "@caller" do
     it "returns an array of each call" do
       assert_type(<<-CRYSTAL) { int32 }

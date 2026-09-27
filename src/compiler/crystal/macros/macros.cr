@@ -19,6 +19,15 @@ class Crystal::Program
   property macro_expanded_hook : Proc(Nil)? = nil
   property macro_expansion_error_hook : Proc(::Exception?, Nil)? = nil
 
+  # How many macro expansions are currently being analyzed inside one another.
+  # A macro whose expansion calls itself would otherwise recurse until the
+  # compiler runs out of stack.
+  property macro_expansion_depth = 0
+
+  # The limit for `macro_expansion_depth`. Real code nests a few dozen levels at
+  # most. The bound matches the one for nested generic types.
+  MAX_MACRO_EXPANSION_DEPTH = 300
+
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     check_call_to_deprecated_macro a_macro, call
 
