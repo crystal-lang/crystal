@@ -1847,6 +1847,19 @@ module Crystal
             it "includes the generic_args of the instantiated type" do
               assert_macro("{{Array(Int32).name(generic_args: true)}}", "Array(Int32)")
             end
+
+            it "includes the generic_args of a tuple, named tuple or proc" do
+              assert_macro("{{Tuple(Int32).name(generic_args: true)}}", "Tuple(Int32)")
+              assert_macro("{{NamedTuple(a: Int32).name(generic_args: true)}}", "NamedTuple(a: Int32)")
+              assert_macro("{{Proc(Int32).name(generic_args: true)}}", "Proc(Int32)")
+            end
+
+            it "includes the generic_args of a metaclass" do
+              assert_macro("{{Array(Int32).class.name(generic_args: true)}}", "Array(Int32).class")
+              assert_macro("{{klass.class.name(generic_args: true)}}", "SomeType(A, B).class") do |program|
+                {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
+              end
+            end
           end
 
           describe false do
@@ -1858,6 +1871,33 @@ module Crystal
 
             it "does not include the generic_args of the instantiated type" do
               assert_macro("{{Array(Int32).name(generic_args: false)}}", "Array")
+            end
+
+            it "does not include the generic_args of a tuple, named tuple or proc" do
+              assert_macro("{{Tuple(Int32).name(generic_args: false)}}", "Tuple")
+              assert_macro("{{Tuple().name(generic_args: false)}}", "Tuple")
+              assert_macro("{{NamedTuple(a: Int32).name(generic_args: false)}}", "NamedTuple")
+              assert_macro("{{Proc(Int32).name(generic_args: false)}}", "Proc")
+            end
+
+            it "does not include the generic_args of a metaclass" do
+              assert_macro("{{Array(Int32).class.name(generic_args: false)}}", "Array.class")
+              assert_macro("{{Tuple(Int32).class.name(generic_args: false)}}", "Tuple.class")
+              assert_macro("{{klass.class.name(generic_args: false)}}", "SomeType.class") do |program|
+                {klass: TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))}
+              end
+              assert_macro("{{mod.class.name(generic_args: false)}}", "SomeType:Module") do |program|
+                {mod: TypeNode.new(GenericModuleType.new(program, program, "SomeType", ["A", "B"]))}
+              end
+              assert_macro("{{mod.class.name(generic_args: false)}}", "SomeType.class") do |program|
+                generic_module = GenericModuleType.new(program, program, "SomeType", ["A", "B"])
+                {mod: TypeNode.new(generic_module.instantiate([program.int32, program.string] of TypeVar))}
+              end
+            end
+
+            it "keeps the name of a non-generic metaclass and of Class" do
+              assert_macro("{{String.class.name(generic_args: false)}}", "String.class")
+              assert_macro("{{Class.name(generic_args: false)}}", "Class")
             end
           end
 
