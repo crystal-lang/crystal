@@ -63,7 +63,12 @@ module Crystal::System::Dir
   end
 
   def self.rewind(dir : DirHandle) : Nil
-    close(dir)
+    return if dir.iter_handle == LibC::INVALID_HANDLE_VALUE
+
+    if LibC.FindClose(dir.iter_handle) == 0
+      raise ::File::Error.from_winerror("Error rewinding directory")
+    end
+    dir.iter_handle = LibC::INVALID_HANDLE_VALUE
   end
 
   def self.info(dir : DirHandle, path) : ::File::Info
