@@ -65,7 +65,8 @@ jobs:
             http://apt.llvm.org/${{ matrix.codename }}/ \
             llvm-toolchain-${{ matrix.codename }}${{ !matrix.nightly && format('-{0}', matrix.llvm_version) || '' }} \
             main
-          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld
+          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
+          sudo ln -s /usr/bin/ld.lld-${{ matrix.llvm_version }} /usr/bin/ld.lld
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
