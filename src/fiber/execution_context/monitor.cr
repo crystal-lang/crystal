@@ -1,7 +1,10 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY              = 10.milliseconds
+    DEFAULT_EVERY   = 10.milliseconds
+    INCREMENT_EVERY = 20.milliseconds
+    MAXIMUM_EVERY   = 100.milliseconds
+
     INCREASE_PARALLELISM_EVERY = 100.milliseconds
     COLLECT_STACKS_EVERY       = 5.seconds
 
@@ -16,7 +19,23 @@ module Fiber::ExecutionContext
     def initialize(@every = DEFAULT_EVERY)
       @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY
+
+      # OPTIMIZE: use futex or alike for a lock-free wait/wake
+      @drifting = Atomic(Bool).new(false)
+      @mutex = Thread::Mutex.new
+      @condition = Thread::ConditionVariable.new
+
       @thread = Thread.new(name: "SYSMON") { run_loop }
+    end
+
+    def wake : Nil
+      return unless @drifting.get(:relaxed)
+
+      @mutex.synchronize do
+        if @drifting.swap(false, :relaxed)
+          @condition.signal
+        end
+      end
     end
 
     # TODO: maybe yield (ST/MT): detect schedulers that have been stuck running
@@ -42,6 +61,7 @@ module Fiber::ExecutionContext
         transfer_schedulers_blocked_on_syscall
         increase_parallelism(now)
         collect_stacks(now)
+        @busy ||= !system_idle?
       end
     end
 
@@ -49,21 +69,50 @@ module Fiber::ExecutionContext
     # precision and overall OS load), without counting the time to execute the
     # block.
     private def every(&)
-      remaining = @every
+      every = @every
+      remaining = every
 
       loop do
-        Thread.sleep(remaining)
+        signaled = true
 
+        @mutex.synchronize do
+          if every > MAXIMUM_EVERY && @drifting.get(:relaxed)
+            # program is idle and we reached maximum interval: sleep
+            @condition.wait(@mutex)
+          else
+            # regular interval or drifting away
+            @condition.wait(@mutex, remaining) { signaled = false }
+          end
+        end
+
+        @busy = false
         start = Crystal::System::Time.instant
         yield(start)
         stop = Crystal::System::Time.instant
 
+        # determine next interval based on activity
+        if signaled || @busy
+          every = @every
+        else
+          @drifting.set(true, :relaxed)
+          every += INCREMENT_EVERY
+        end
+
         # calculate remaining time for more steady wakeups (minimize exponential
         # delays)
-        remaining = (start + @every - stop).clamp(Time::Span.zero..)
+        remaining = (start + every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
+    end
+
+    private def system_idle? : Bool
+      ExecutionContext.each do |execution_context|
+        execution_context.each_scheduler do |scheduler|
+          return false unless scheduler.idle?
+        end
+      end
+      true
     end
 
     # Iterates each ExecutionContext::Scheduler and transfers the Scheduler for
@@ -80,6 +129,8 @@ module Fiber::ExecutionContext
           Crystal.trace :sched, "reassociate",
             scheduler: scheduler,
             syscall: scheduler.thread.current_fiber
+
+          @busy = true
 
           pool = ExecutionContext.thread_pool
           pool.detach(scheduler.thread)
@@ -130,7 +181,10 @@ module Fiber::ExecutionContext
           count = available
         end
 
-        execution_context.wake_scheduler(count)
+        if count > 0
+          @busy = true
+          execution_context.wake_scheduler(count)
+        end
       end
     end
 

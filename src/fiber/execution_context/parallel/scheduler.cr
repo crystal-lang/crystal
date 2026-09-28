@@ -268,6 +268,8 @@ module Fiber::ExecutionContext
         # don't increment the number of spinning threads since
         # `Parallel#wake_scheduler` already did
         @state = State::SPINNING
+
+        ExecutionContext.wake_monitor
       end
 
       private def run_evloop(blocking)
@@ -281,6 +283,10 @@ module Fiber::ExecutionContext
             fiber = runnable
           end
           size += 1
+        end
+
+        if blocking
+          ExecutionContext.wake_monitor
         end
 
         Crystal.trace :sched, "enqueue", size: size, fiber: fiber
@@ -340,6 +346,10 @@ module Fiber::ExecutionContext
 
       protected def active? : Bool
         (@state.running? && !syscall_flag?) || @state.spinning?
+      end
+
+      protected def idle? : Bool
+        @state.waiting? || @state.parked?
       end
 
       def status : String

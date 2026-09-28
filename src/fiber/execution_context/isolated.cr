@@ -206,6 +206,8 @@ module Fiber::ExecutionContext
         @waiting = false
         @enqueued = false
       end
+    ensure
+      ExecutionContext.wake_monitor
     end
 
     private def check_enqueued?
@@ -287,6 +289,14 @@ module Fiber::ExecutionContext
       io << ' ' << name << '>'
     end
 
+    protected def idle? : Bool
+      # consider syscalls in isolated fiber to be idle: it can't be detached and
+      # thus doesn't need the monitor thread to be running, and it would prevent
+      # the monitor thread from going to sleep when doing a long syscall such as
+      # `Fiber.syscall { Thread.sleep(1.hour) }`
+      @waiting || @syscall == SYSCALL_FLAG || !@running
+    end
+
     def status : String
       if @waiting
         "event-loop"
@@ -305,6 +315,8 @@ module Fiber::ExecutionContext
     # syscalls to block the fiber and the thread.
     def syscall(& : -> U) : U forall U
       yield
+    ensure
+      ExecutionContext.wake_monitor
     end
 
     protected def enter_syscall : UInt32
