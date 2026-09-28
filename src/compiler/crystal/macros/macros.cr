@@ -28,6 +28,24 @@ class Crystal::Program
   # most. The bound matches the one for nested generic types.
   MAX_MACRO_EXPANSION_DEPTH = 300
 
+  # Raises on *node* if expanding it would nest deeper than
+  # `MAX_MACRO_EXPANSION_DEPTH`.
+  def check_macro_expansion_depth(node : ASTNode) : Nil
+    if @macro_expansion_depth >= MAX_MACRO_EXPANSION_DEPTH
+      node.raise "macro expansion nested more than #{MAX_MACRO_EXPANSION_DEPTH} levels deep, probably an infinitely recursive macro"
+    end
+  end
+
+  # Analyzes what the block does as one more level of macro expansion.
+  def nest_macro_expansion(&)
+    @macro_expansion_depth += 1
+    begin
+      yield
+    ensure
+      @macro_expansion_depth -= 1
+    end
+  end
+
   def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type? = nil, a_def : Def? = nil)
     check_call_to_deprecated_macro a_macro, call
 
