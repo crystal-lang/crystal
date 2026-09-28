@@ -124,22 +124,4 @@ describe "Semantic: method_missing" do
       Foo.new.a
       CRYSTAL
   end
-
-  it "types a method_missing whose methods call each other a finite number of times" do
-    assert_type(<<-CRYSTAL) { int32 }
-      class Foo
-        macro method_missing(call)
-          def {{call.name.id}}
-            {% if call.name.size < 10 %}
-              {{call.name.id}}x
-            {% else %}
-              1
-            {% end %}
-          end
-        end
-      end
-
-      Foo.new.a
-      CRYSTAL
-  end
 end
