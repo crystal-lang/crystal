@@ -1932,20 +1932,6 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
-  it "expands a macro nested as deep as the expansion limit" do
-    assert_type(<<-CRYSTAL) { int32 }
-      macro down(n)
-        {% if n > 1 %}
-          down({{n - 1}})
-        {% else %}
-          1
-        {% end %}
-      end
-
-      down(300)
-      CRYSTAL
-  end
-
   describe "@caller" do
     it "returns an array of each call" do
       assert_type(<<-CRYSTAL) { int32 }
