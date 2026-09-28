@@ -9,15 +9,19 @@ module Crystal
   # directories are kept. We use the directory's modification
   # time for this.
   #
-  # A directory that was used recently is kept regardless, because the cache is
-  # shared by every compiler process: a build that is still writing to its
-  # directory must not have it removed by another one that happens to finish.
+  # The cache is shared by every compiler process, so a process holds a shared
+  # lock on a file in each directory it uses, and a directory that is locked is
+  # never removed, whatever its place in the ordering.
   class CacheDir
     def self.instance
       @@instance ||= new
     end
 
     @dir : String?
+
+    # The lock files of the directories this process uses, held open until it
+    # exits.
+    @locks = {} of String => File
 
     private def initialize
     end
@@ -49,15 +53,45 @@ module Crystal
         end
       end
       output_dir = File.join(dir, name)
-      Dir.mkdir_p(output_dir)
+      lock(output_dir)
       output_dir
     end
 
-    # How long a directory is kept after it was last used.
-    KEEP_RECENT = 1.hour
+    # The file in each cache directory that the lock is placed on.
+    LOCK_FILE = ".lock"
 
-    # Keeps the 10 most recently used directories in the cache, and any used
-    # within `KEEP_RECENT`, and removes all others.
+    # Creates *dir* and places a shared lock in it, which `cleanup` checks
+    # before removing a directory.
+    private def lock(dir : String) : Nil
+      return if @locks.has_key?(dir)
+
+      lock_path = File.join(dir, LOCK_FILE)
+      loop do
+        Dir.mkdir_p(dir)
+        file = File.open(lock_path, "a")
+        begin
+          file.flock_shared
+        rescue IO::Error
+          # The file system does not support locks; use the directory unlocked.
+          file.close
+          return
+        end
+
+        # Another process may have removed the directory before the lock was
+        # placed, which leaves this one on a deleted file.
+        if File.info?(lock_path).try &.same_file?(file.info)
+          @locks[dir] = file
+          return
+        end
+
+        file.close
+      rescue File::NotFoundError
+        # The directory was removed after it was created; create it again.
+      end
+    end
+
+    # Keeps the 10 most recently used directories in the cache, and any that
+    # another process holds a lock in, and removes all others.
     def cleanup
       dir = compute_dir
       entries = gather_cache_entries(dir)
@@ -127,14 +161,29 @@ module Crystal
     end
 
     private def cleanup_dirs(entries)
-      keep_after = Time.utc - KEEP_RECENT
-
       entries
         .compact_map { |dir| {dir, File.info?(dir) || next} }
         .sort_by! { |_, info| info.modification_time }
         .reverse!
         .skip(10)
-        .each { |dir, info| FileUtils.rm_rf(dir) if info.modification_time < keep_after }
+        .each { |dir, info| remove_unless_locked(dir, info) }
+    end
+
+    # Removes *path*, unless it is a directory in which another process holds
+    # a lock. The exclusive lock is held while removing, so a process that
+    # locks the directory at the same time notices it is gone.
+    private def remove_unless_locked(path : String, info : File::Info) : Nil
+      unless info.directory?
+        FileUtils.rm_rf(path)
+        return
+      end
+
+      File.open(File.join(path, LOCK_FILE), "a") do |file|
+        file.flock_exclusive(blocking: false)
+        FileUtils.rm_rf(path)
+      end
+    rescue IO::Error
+      # Locked by another process, or already removed
     end
 
     private def gather_cache_entries(dir)
