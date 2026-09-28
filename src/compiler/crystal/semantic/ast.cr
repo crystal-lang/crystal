@@ -614,7 +614,23 @@ module Crystal
   end
 
   class Call
+    include Annotatable
+
     property before_vars : MetaVars?
+
+    # Annotations on this call that the macro it expands to read through
+    # `Call#annotation` or `Call#annotations`. The macro is responsible
+    # for these, so they aren't forwarded to the macro's expansion.
+    getter consumed_annotations : Array(Annotation)?
+
+    def consume_annotations(annotations : Array(Annotation)?) : Nil
+      return unless annotations
+
+      consumed = @consumed_annotations ||= [] of Annotation
+      annotations.each do |ann|
+        consumed << ann unless consumed.any?(&.same?(ann))
+      end
+    end
 
     def clone_without_location
       cloned = previous_def

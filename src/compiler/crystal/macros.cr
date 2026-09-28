@@ -1332,6 +1332,45 @@ module Crystal::Macros
     # Returns this call's block argument, if any
     def block_arg : ASTNode | Nop
     end
+
+    # Returns the last `Annotation` with the given `type`
+    # attached to this macro call or `NilLiteral` if there are none.
+    #
+    # Annotations on a macro call are forwarded to the first node of its
+    # expansion that can be annotated. Once the macro reads the
+    # annotations of a given `type` through this method or `#annotations`,
+    # it is responsible for them and they are no longer forwarded. It can
+    # still apply them to a node of its choice by outputting them.
+    #
+    # ```
+    # annotation Route
+    # end
+    #
+    # macro get(name)
+    #   def {{name.id}}_path
+    #     {{ @caller.first.annotation(Route)[0] }}
+    #   end
+    # end
+    #
+    # @[Route("/users")]
+    # get users # => defines `users_path`, which returns "/users"
+    # ```
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this macro call, or an empty `ArrayLiteral` if there are none.
+    #
+    # See `#annotation` for how reading them affects their forwarding.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # macro call, or an empty `ArrayLiteral` if there are none.
+    #
+    # See `#annotation` for how reading them affects their forwarding.
+    def annotations : ArrayLiteral(Annotation)
+    end
   end
 
   # A call's named argument.

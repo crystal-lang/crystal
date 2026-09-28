@@ -1273,4 +1273,184 @@ describe "Semantic: annotation" do
       end
       CRYSTAL
   end
+
+  describe "on macro calls" do
+    it "finds annotation on the call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+
+        macro gen
+          {{ @caller.first.annotation(Foo)[0] }}
+        end
+
+        @[Foo(1)]
+        gen
+        CRYSTAL
+    end
+
+    it "can't find annotation on the call" do
+      assert_type(<<-CRYSTAL) { char }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen
+          {{ @caller.first.annotation(Foo) ? 1 : 'a' }}
+        end
+
+        @[Bar]
+        gen
+        CRYSTAL
+    end
+
+    it "finds annotations of a specific type on the call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen
+          {{ @caller.first.annotations(Foo).map(&.[0]) == [1, 3] ? 1 : 'a' }}
+        end
+
+        @[Foo(1)]
+        @[Bar(2)]
+        @[Foo(3)]
+        gen
+        CRYSTAL
+    end
+
+    it "finds all annotations on the call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen
+          {{ @caller.first.annotations.size == 2 ? 1 : 'a' }}
+        end
+
+        @[Foo]
+        @[Bar]
+        gen
+        CRYSTAL
+    end
+
+    it "finds annotation on a call inside a method" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+
+        macro gen
+          {{ @caller.first.annotation(Foo)[0] }}
+        end
+
+        def foo
+          @[Foo(1)]
+          gen
+        end
+
+        foo
+        CRYSTAL
+    end
+
+    it "doesn't forward annotations the macro reads" do
+      assert_type(<<-CRYSTAL) { char }
+        annotation Foo; end
+
+        macro gen(name)
+          {% @caller.first.annotation(Foo) %}
+          def {{name.id}}; end
+        end
+
+        class Moo
+          @[Foo]
+          gen foo
+        end
+
+        {{ Moo.methods.first.annotation(Foo) ? 1 : 'a' }}
+        CRYSTAL
+    end
+
+    it "only forwards annotations of types the macro doesn't read" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen(name)
+          {% @caller.first.annotation(Foo) %}
+          def {{name.id}}; end
+        end
+
+        class Moo
+          @[Foo]
+          @[Bar]
+          gen foo
+        end
+
+        {{ !Moo.methods.first.annotation(Foo) && Moo.methods.first.annotation(Bar) ? 1 : 'a' }}
+        CRYSTAL
+    end
+
+    it "doesn't forward any annotation if the macro reads all of them" do
+      assert_type(<<-CRYSTAL) { char }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen(name)
+          {% @caller.first.annotations %}
+          def {{name.id}}; end
+        end
+
+        class Moo
+          @[Foo]
+          @[Bar]
+          gen foo
+        end
+
+        {{ Moo.methods.first.annotations.empty? ? 'a' : 1 }}
+        CRYSTAL
+    end
+
+    it "lets the macro apply annotations it reads" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+
+        macro gen
+          def foo; end
+
+          {{ @caller.first.annotation(Foo) }}
+          def bar; end
+        end
+
+        class Moo
+          @[Foo(1)]
+          gen
+        end
+
+        {{ !Moo.methods.find(&.name.==("foo")).annotation(Foo) && Moo.methods.find(&.name.==("bar")).annotation(Foo)[0] == 1 ? 1 : 'a' }}
+        CRYSTAL
+    end
+
+    it "doesn't forward annotations the macro reads at the top level" do
+      assert_no_warning <<-CRYSTAL
+        macro gen(name)
+          {% @caller.first.annotation(Deprecated) %}
+          def {{name.id}}; end
+        end
+
+        @[Deprecated]
+        gen foo
+
+        foo
+        CRYSTAL
+    end
+
+    it "doesn't find what isn't an annotation on the call" do
+      assert_type(<<-CRYSTAL) { int32 }
+        macro gen
+          {{ @caller.first.annotations.empty? ? 1 : 'a' }}
+        end
+
+        @[Int32]
+        gen
+        CRYSTAL
+    end
+  end
 end
