@@ -188,7 +188,7 @@ module Fiber::ExecutionContext
     #
     # The new *maximum* can grow, in which case more schedulers are created to
     # eventually increase the parallelism through auto-scaling or manual scaling
-    # (see `#scale`).
+    # (see `#scale_up`).
     #
     # The new *maximum* can also shrink, in which case the overflow schedulers
     # are removed and told to shutdown immediately. The actual shutdown is
