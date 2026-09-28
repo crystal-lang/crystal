@@ -1165,32 +1165,36 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   end
 
   def run_hooks(type_with_hooks, current_type, kind : HookKind, node, call = nil)
-    type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
-      next if hook.kind != kind
+    # `inherited` hooks run for every ancestor.
+    while type_with_hooks
+      type_with_hooks.as?(ModuleType).try &.hooks.try &.each do |hook|
+        next if hook.kind != kind
 
-      expansion = expand_macro(hook.macro, node, visibility: :public) do
-        if call
-          @program.expand_macro hook.macro, call, current_type.instance_type
-        else
-          @program.expand_macro hook.macro.body, current_type.instance_type
+        expansion = expand_macro(hook.macro, node, visibility: :public) do
+          if call
+            @program.expand_macro hook.macro, call, current_type.instance_type
+          else
+            @program.expand_macro hook.macro.body, current_type.instance_type
+          end
         end
+
+        node.add_hook_expansion(expansion)
       end
 
-      node.add_hook_expansion(expansion)
-    end
+      break unless kind.inherited?
 
-    if kind.inherited?
       # In the case of:
       #
       #    class A(X); end
       #    class B < A(Int32);end
       #
       # we need to go from A(Int32) to A(X) to go up the hierarchy.
-      if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)
-        run_hooks(type_with_hooks.instance_type.generic_type.metaclass, current_type, kind, node)
-      elsif (superclass = type_with_hooks.instance_type.superclass)
-        run_hooks(superclass.metaclass, current_type, kind, node)
-      end
+      type_with_hooks =
+        if type_with_hooks.is_a?(GenericClassInstanceMetaclassType)
+          type_with_hooks.instance_type.generic_type.metaclass
+        else
+          type_with_hooks.instance_type.superclass.try &.metaclass
+        end
     end
   end
 
