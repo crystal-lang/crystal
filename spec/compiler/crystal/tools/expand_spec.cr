@@ -624,4 +624,42 @@ describe "expand" do
 
     assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
+
+  it "expands macro inside def called from an instance variable initializer" do
+    code = <<-CRYSTAL
+    macro foo
+      1
+    end
+
+    def bar
+      ‸foo
+    end
+
+    class Baz
+      @x : Int32 = bar
+    end
+
+    Baz.new
+    CRYSTAL
+
+    assert_expand_simple code, original: "foo", expanded: "1"
+  end
+
+  it "expands macro inside def called from a class variable initializer" do
+    code = <<-CRYSTAL
+    macro foo
+      1
+    end
+
+    def bar
+      ‸foo
+    end
+
+    class Baz
+      @@x : Int32 = bar
+    end
+    CRYSTAL
+
+    assert_expand_simple code, original: "foo", expanded: "1"
+  end
 end
