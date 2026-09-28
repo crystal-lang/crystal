@@ -212,10 +212,12 @@ class Thread
     Crystal::System::Thread.sleep(time)
   end
 
+  MAX_DELAY_ATTEMPTS_BEFORE_YIELD = 7
+
   # Delays execution for a brief moment.
   @[NoInline]
   def self.delay(backoff : Int32) : Int32
-    if backoff < 7
+    if backoff < MAX_DELAY_ATTEMPTS_BEFORE_YIELD
       backoff.times { Intrinsics.pause }
       backoff &+ 1
     else
