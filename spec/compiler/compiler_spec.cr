@@ -27,4 +27,36 @@ describe "Compiler" do
       end
     end
   end
+
+  it "cross-compiles with --emit=obj using a cold cache directory (#17506)" do
+    with_cold_cache_dir do
+      with_tempfile("cross_compile_source.cr") do |source_path|
+        File.write(source_path, "")
+        with_tempfile("cross_compile_output") do |output_path|
+          Crystal::Command.run ["build", "--cross-compile", "--prelude=empty", "--emit=obj", "--no-color", "-o", output_path, source_path]
+
+          # command.cr appends the object extension to `output_path`, and
+          # that file is the emitted object
+          objects = Dir.glob("#{output_path}*")
+          objects.size.should eq(1)
+          File.size(objects.first).should be > 0
+        end
+      end
+    end
+  end
+
+  it "cross-compiles with --emit=llvm-bc using a cold cache directory (#17506)" do
+    with_cold_cache_dir do
+      with_tempfile("cross_compile_source.cr") do |source_path|
+        File.write(source_path, "")
+        with_tempfile("cross_compile_output") do |output_path|
+          Crystal::Command.run ["build", "--cross-compile", "--prelude=empty", "--emit=llvm-bc", "--no-color", "-o", output_path, source_path]
+
+          bitcode = Dir.glob("#{output_path}*.bc")
+          bitcode.size.should eq(1)
+          File.size(bitcode.first).should be > 0
+        end
+      end
+    end
+  end
 end

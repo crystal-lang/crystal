@@ -449,9 +449,28 @@ module Crystal
         # LLVM reports file system errors (eg. a missing output directory)
         # as a plain error string; rewrap it so it surfaces as a proper
         # error message instead of a compiler bug report.
+        #
+        # Unlike the regular codegen path, nothing was compiled into the
+        # cache directory for this unit, so `CompilationUnit#emit` cannot
+        # be used here: it copies the object and bitcode files from the
+        # cache, crashing on a cold cache dir or silently copying files
+        # compiled for the host target. All emit targets are produced
+        # from the in-memory module instead; the object file itself is
+        # emitted to `output_filename` below, which is also what the
+        # `obj` emit target refers to.
         emit_filename = emit_base_filename || output_filename
         begin
-          unit.emit(@emit_targets, emit_filename)
+          if @emit_targets.asm?
+            target_machine.emit_asm_to_file llvm_mod, "#{emit_filename}.s"
+          end
+          if @emit_targets.llvm_ir?
+            llvm_mod.print_to_file "#{emit_filename}.ll"
+          end
+          if @emit_targets.llvm_bc?
+            memory_buffer = llvm_mod.write_bitcode_to_memory_buffer
+            File.write("#{emit_filename}.bc", memory_buffer.to_slice)
+            memory_buffer.dispose
+          end
         rescue ex : Exception
           raise CompilerError.new("Could not write output file '#{emit_filename}': #{ex.message}", :FAILURE)
         end
