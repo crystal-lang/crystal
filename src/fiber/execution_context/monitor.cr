@@ -1,9 +1,11 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY   = 10.milliseconds
-    INCREMENT_EVERY = 20.milliseconds
-    MAXIMUM_EVERY   = 100.milliseconds
+    # the monitor thread ticks every 10ms when the process is active; when the
+    # process becomes idle, the interval doubles until it reaches 1s where the
+    # monitor thread goes to sleep, after ~1.27s.
+    DEFAULT_EVERY = 10.milliseconds
+    MAXIMUM_EVERY = 1.second
 
     INCREASE_PARALLELISM_EVERY = 100.milliseconds
     COLLECT_STACKS_EVERY       = 5.seconds
@@ -95,7 +97,7 @@ module Fiber::ExecutionContext
           every = @every
         else
           @drifting.set(true, :relaxed)
-          every += INCREMENT_EVERY
+          every *= 2
         end
 
         # calculate remaining time for more steady wakeups (minimize exponential
