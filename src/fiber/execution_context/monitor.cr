@@ -39,6 +39,7 @@ module Fiber::ExecutionContext
     # OS.
     private def run_loop : Nil
       every do |now|
+        update_fast_times(now)
         transfer_schedulers_blocked_on_syscall
         increase_parallelism(now)
         collect_stacks(now)
@@ -64,6 +65,20 @@ module Fiber::ExecutionContext
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
+    end
+
+    private def update_fast_times(now) : Nil
+      return if now.duration_since(Time.fast_instant) < 100.milliseconds
+
+      Time.fast_instant = Time::Instant.new(
+        seconds: now.@seconds,
+        nanoseconds: now.@nanoseconds // 100_000_000 &* 100_000_000)
+
+      seconds, nanoseconds = Crystal::System::Time.realtime_coarse
+      Time.fast_utc = Time.new(
+        seconds: seconds,
+        nanoseconds: nanoseconds // 100_000_000 &* 100_000_000,
+        location: Time::Location::UTC)
     end
 
     # Iterates each ExecutionContext::Scheduler and transfers the Scheduler for
