@@ -284,7 +284,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def expand_macro(node, raise_on_missing_const = true, first_pass = false, accept = true)
     if expanded = node.expanded
-      forward_unconsumed_annotations(node)
+      forward_undeleted_annotations(node)
       @exp_nest -= 1
       eval_macro(node) do
         expanded.accept self if accept
@@ -369,7 +369,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     )
 
     node.doc ||= annotations_doc @annotations
-    forward_unconsumed_annotations(node) if node.is_a?(Call)
+    forward_undeleted_annotations(node) if node.is_a?(Call)
 
     if node_doc = node.doc
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
@@ -528,7 +528,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   # Makes the pending annotations available to the macro that *node*
-  # expands to, through `Call#annotation` and `Call#annotations`.
+  # expands to, through `Call#annotation` and `Call#annotations`, and to
+  # remove through `Call#delete_annotation` and `Call#delete_annotations`.
   # Annotations that don't name an annotation type are left out, and
   # are reported where they are forwarded to.
   private def attach_call_annotations(node : Call)
@@ -541,12 +542,12 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   # Keeps pending only the annotations that the macro *node* expands to
-  # didn't read, so that only those are forwarded to its expansion.
-  private def forward_unconsumed_annotations(node : Call)
-    return unless consumed = node.consumed_annotations
+  # didn't remove, so that only those are forwarded to its expansion.
+  private def forward_undeleted_annotations(node : Call)
+    return unless deleted = node.deleted_annotations
     return unless annotations = @annotations
 
-    annotations = annotations.reject { |ann| consumed.any?(&.same?(ann)) }
+    annotations = annotations.reject { |ann| deleted.any?(&.same?(ann)) }
     @annotations = annotations.empty? ? nil : annotations
   end
 

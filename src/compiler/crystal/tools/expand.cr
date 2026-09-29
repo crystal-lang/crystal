@@ -171,28 +171,28 @@ module Crystal
   class ExpandTransformer < Transformer
     property? expanded = false
     getter macro_calls = [] of Call
-    @consumed = Set(UInt64).new
+    @deleted = Set(UInt64).new
 
-    # An annotation that the macro call after it reads through
-    # `Call#annotation` belongs to that macro, which puts it where it
+    # An annotation that the macro call after it removes through
+    # `Call#delete_annotation` belongs to that macro, which puts it where it
     # chooses, so it is left out of the call's expansion. The call comes after
     # its annotations, so it has been visited by the time they are filtered.
     def transform(node : Expressions)
       result = super
       if result.is_a?(Expressions)
-        result.expressions.reject! { |exp| consumed?(exp) }
+        result.expressions.reject! { |exp| deleted?(exp) }
         result
       else
-        consumed?(result) ? Nop.new : result
+        deleted?(result) ? Nop.new : result
       end
     end
 
-    private def consumed?(node)
-      node.is_a?(Annotation) && @consumed.includes?(node.object_id)
+    private def deleted?(node)
+      node.is_a?(Annotation) && @deleted.includes?(node.object_id)
     end
 
     def transform(node : Call)
-      node.consumed_annotations.try &.each { |ann| @consumed << ann.object_id }
+      node.deleted_annotations.try &.each { |ann| @deleted << ann.object_id }
 
       if expanded = node.expanded
         self.expanded = true

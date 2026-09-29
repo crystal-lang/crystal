@@ -618,17 +618,18 @@ module Crystal
 
     property before_vars : MetaVars?
 
-    # Annotations on this call that the macro it expands to read through
-    # `Call#annotation` or `Call#annotations`. The macro is responsible
-    # for these, so they aren't forwarded to the macro's expansion.
-    getter consumed_annotations : Array(Annotation)?
+    # Annotations that the macro this call expands to removed through
+    # `Call#delete_annotation` or `Call#delete_annotations`. The macro is
+    # responsible for these, so they aren't forwarded to its expansion.
+    getter deleted_annotations : Array(Annotation)?
 
-    def consume_annotations(annotations : Array(Annotation)?) : Nil
-      return unless annotations
-
-      consumed = @consumed_annotations ||= [] of Annotation
+    # Removes *annotations* from this call, so they are no longer returned by
+    # `#annotation` and `#annotations` and aren't forwarded to the expansion.
+    def delete_annotations(annotations : Array(Annotation)) : Nil
+      deleted = @deleted_annotations ||= [] of Annotation
       annotations.each do |ann|
-        consumed << ann unless consumed.any?(&.same?(ann))
+        deleted << ann unless deleted.any?(&.same?(ann))
+        @annotations.try &.each_value &.reject!(&.same?(ann))
       end
     end
 

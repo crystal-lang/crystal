@@ -651,13 +651,13 @@ describe "Semantic: doc" do
       type.doc.should eq("Some description")
     end
 
-    it "attached to macro call that reads the annotation" do
+    it "attached to macro call that deletes the annotation" do
       result = semantic <<-CRYSTAL, wants_doc: true
         annotation Ann
         end
 
         macro gen_type
-          {% @caller.first.annotation(Ann) %}
+          {% @caller.first.delete_annotation(Ann) %}
           class Foo; end
         end
 

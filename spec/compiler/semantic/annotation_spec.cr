@@ -1350,12 +1350,13 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
 
-    it "doesn't forward annotations the macro reads" do
-      assert_type(<<-CRYSTAL) { char }
+    it "forwards annotations the macro only reads" do
+      assert_type(<<-CRYSTAL) { int32 }
         annotation Foo; end
 
         macro gen(name)
           {% @caller.first.annotation(Foo) %}
+          {% @caller.first.annotations %}
           def {{name.id}}; end
         end
 
@@ -1368,13 +1369,31 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
 
-    it "only forwards annotations of types the macro doesn't read" do
+    it "doesn't forward annotations the macro deletes" do
+      assert_type(<<-CRYSTAL) { char }
+        annotation Foo; end
+
+        macro gen(name)
+          {% @caller.first.delete_annotation(Foo) %}
+          def {{name.id}}; end
+        end
+
+        class Moo
+          @[Foo]
+          gen foo
+        end
+
+        {{ Moo.methods.first.annotation(Foo) ? 1 : 'a' }}
+        CRYSTAL
+    end
+
+    it "only forwards annotations of types the macro doesn't delete" do
       assert_type(<<-CRYSTAL) { int32 }
         annotation Foo; end
         annotation Bar; end
 
         macro gen(name)
-          {% @caller.first.annotation(Foo) %}
+          {% @caller.first.delete_annotations(Foo) %}
           def {{name.id}}; end
         end
 
@@ -1388,13 +1407,13 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
 
-    it "doesn't forward any annotation if the macro reads all of them" do
+    it "doesn't forward any annotation if the macro deletes all of them" do
       assert_type(<<-CRYSTAL) { char }
         annotation Foo; end
         annotation Bar; end
 
         macro gen(name)
-          {% @caller.first.annotations %}
+          {% @caller.first.delete_annotations %}
           def {{name.id}}; end
         end
 
@@ -1408,14 +1427,14 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
 
-    it "lets the macro apply annotations it reads" do
+    it "lets the macro apply annotations it deletes" do
       assert_type(<<-CRYSTAL) { int32 }
         annotation Foo; end
 
         macro gen
           def foo; end
 
-          {{ @caller.first.annotation(Foo) }}
+          {{ @caller.first.delete_annotation(Foo) }}
           def bar; end
         end
 
@@ -1428,10 +1447,10 @@ describe "Semantic: annotation" do
         CRYSTAL
     end
 
-    it "doesn't forward annotations the macro reads at the top level" do
+    it "doesn't forward annotations the macro deletes at the top level" do
       assert_no_warning <<-CRYSTAL
         macro gen(name)
-          {% @caller.first.annotation(Deprecated) %}
+          {% @caller.first.delete_annotation(Deprecated) %}
           def {{name.id}}; end
         end
 
@@ -1439,6 +1458,50 @@ describe "Semantic: annotation" do
         gen foo
 
         foo
+        CRYSTAL
+    end
+
+    it "deletes only the last annotation of the type with delete_annotation" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+
+        macro gen
+          {% deleted = @caller.first.delete_annotation(Foo) %}
+          {{ deleted[0] == 2 && @caller.first.annotations(Foo).map(&.[0]) == [1] ? 1 : 'a' }}
+        end
+
+        @[Foo(1)]
+        @[Foo(2)]
+        gen
+        CRYSTAL
+    end
+
+    it "returns what delete_annotations deleted, and no longer finds it" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+        annotation Bar; end
+
+        macro gen
+          {% deleted = @caller.first.delete_annotations(Foo) %}
+          {{ deleted.map(&.[0]) == [1, 3] && @caller.first.annotation(Foo).nil? && @caller.first.annotations.size == 1 ? 1 : 'a' }}
+        end
+
+        @[Foo(1)]
+        @[Bar(2)]
+        @[Foo(3)]
+        gen
+        CRYSTAL
+    end
+
+    it "returns nothing from delete_annotation if there is no such annotation" do
+      assert_type(<<-CRYSTAL) { int32 }
+        annotation Foo; end
+
+        macro gen
+          {{ @caller.first.delete_annotation(Foo).nil? && @caller.first.delete_annotations.empty? ? 1 : 'a' }}
+        end
+
+        gen
         CRYSTAL
     end
 
