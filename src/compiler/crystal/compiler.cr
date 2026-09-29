@@ -956,7 +956,7 @@ module Crystal
         target_machine = compiler.create_target_machine
         compiler.optimize llvm_mod, target_machine if optimize && !compiler.optimization_mode.o0?
         target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-        File.rename(temporary_object_name, file_name)
+        FileUtils.mv(temporary_object_name, file_name)
       end
 
       private def dump_llvm_ir
