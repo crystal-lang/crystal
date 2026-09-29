@@ -349,6 +349,9 @@ module Fiber::ExecutionContext
       end
 
       protected def idle? : Bool
+        # syscalls aren't idle: we need the monitor thread to run to detach the
+        # scheduler from the blocked thread; the reassociated scheduler won't be
+        # in syscall anymore and may become idle
         @state.waiting? || @state.parked?
       end
 

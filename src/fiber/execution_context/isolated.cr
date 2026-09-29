@@ -290,10 +290,9 @@ module Fiber::ExecutionContext
     end
 
     protected def idle? : Bool
-      # consider syscalls in isolated fiber to be idle: it can't be detached and
-      # thus doesn't need the monitor thread to be running, and it would prevent
-      # the monitor thread from going to sleep when doing a long syscall such as
-      # `Fiber.syscall { Thread.sleep(1.hour) }`
+      # syscalls in isolated fiber are idle: unlike parallel, the isolated
+      # thread can't be detached; it would prevent the monitor thread from
+      # going to sleep
       @waiting || @syscall == SYSCALL_FLAG || !@running
     end
 
