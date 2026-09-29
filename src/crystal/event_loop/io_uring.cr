@@ -913,7 +913,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # internals
 
   private def check_open(io)
-    raise IO::Error.new("Closed stream") if io.closed?
+    raise IO::ClosedError.new if io.closed?
   end
 
   private def cancel(fd, ring = self.ring)
