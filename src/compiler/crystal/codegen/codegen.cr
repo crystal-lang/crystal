@@ -318,6 +318,10 @@ module Crystal
       @modules = {"" => @main_module_info} of String => ModuleInfo
       @types_to_modules = {} of Type => ModuleInfo
 
+      # Whether to build the mapping from type IDs to their names. Currently
+      # required for raising `TypeCastError`.
+      @needs_typeinfo = false
+
       set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
@@ -539,6 +543,8 @@ module Crystal
       @unused_fun_defs.each do |node|
         codegen_fun node.real_name, node.external, @program, is_exported_fun: true
       end
+
+      codegen_typeinfo
 
       env_dump = ENV["DUMP"]?
       case env_dump
@@ -1618,26 +1624,18 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      map_name = "__crystal_type_id_to_class_name_map"
+      @needs_typeinfo = true
 
-      global = @main_mod.globals[map_name]?
+      ptr_name = "__crystal_type_id_to_class_name_ptr"
+
+      global = @llvm_mod.globals[ptr_name]?
       unless global
-        global = @main_mod.globals.add(@main_llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
-        global.linkage = LLVM::Linkage::Internal if @single_module
-        global.initializer = create_type_id_to_class_name_map
+        global = @llvm_mod.globals.add(llvm_type(@program.string).pointer, ptr_name)
+        global.linkage = @single_module ? LLVM::Linkage::Internal : LLVM::Linkage::External
         global.global_constant = true
       end
 
-      if @llvm_mod != @main_mod
-        global = @llvm_mod.globals[map_name]?
-        unless global
-          global = @llvm_mod.globals.add(@llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
-          global.linkage = LLVM::Linkage::External
-          global.global_constant = true
-        end
-      end
-
-      str_ptr = gep llvm_type(@program.string).array(@program.llvm_id.@ids.size), global, 0, type_id
+      str_ptr = gep llvm_type(@program.string), load(llvm_type(@program.string).pointer, global), type_id
       load llvm_type(@program.string), str_ptr
     end
 
@@ -1649,6 +1647,31 @@ module Crystal
       end
 
       @main_llvm_typer.llvm_type(@program.string).const_array(id_map)
+    end
+
+    def codegen_typeinfo : Nil
+      return unless @needs_typeinfo
+
+      ptr_name = "__crystal_type_id_to_class_name_ptr"
+      map_name = "__crystal_type_id_to_class_name_map"
+
+      str_type = @main_llvm_typer.llvm_type(@program.string)
+      map_type = str_type.array(@program.llvm_id.@ids.size)
+
+      map_global = @main_mod.globals.add(map_type, map_name)
+      map_global.linkage = LLVM::Linkage::Private
+      map_global.initializer = create_type_id_to_class_name_map
+      map_global.global_constant = true
+
+      ptr_global = @main_mod.globals[ptr_name]?
+      unless ptr_global
+        # The global is absent when not building in single-module mode and the
+        # top level never raises `TypeCastError`
+        ptr_global = @main_mod.globals.add(str_type.pointer, ptr_name)
+        ptr_global.linkage = LLVM::Linkage::External
+        ptr_global.global_constant = true
+      end
+      ptr_global.initializer = gep(map_type, map_global, 0, 0)
     end
 
     def visit(node : IsA)
