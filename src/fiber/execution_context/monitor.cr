@@ -158,11 +158,11 @@ module Fiber::ExecutionContext
 
         # how many schedulers are active (running, spinning)?
         active = execution_context.size
-        return if active == 0
+        next if active == 0
 
         # how many schedulers can be woken?
         available = capacity - active
-        return if available == 0
+        next if available == 0
 
         # don't wake more schedulers than currently active (scale active
         # parallelism to a factor of 2 max)
