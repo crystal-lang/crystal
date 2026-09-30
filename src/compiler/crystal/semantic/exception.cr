@@ -10,6 +10,7 @@ module Crystal
     getter line_number : Int32?
     getter column_number : Int32
     getter size : Int32
+    @diagnostic_message : DiagnosticMessage? = nil
 
     def color=(@color : Bool)
       inner.try &.color=(color)
@@ -39,14 +40,19 @@ module Crystal
     def initialize(message, @line_number, @column_number : Int32, @filename, @size, @inner = nil)
       @error_trace = true
 
+      if message.is_a?(DiagnosticMessage)
+        @diagnostic_message = message
+        message = message.text
+      end
+
       super(message)
     end
 
-    def self.new(message : String)
+    def self.new(message : String | DiagnosticMessage)
       new message, nil, 0, nil, 0
     end
 
-    def self.new(message : String, location : Location)
+    def self.new(message : String | DiagnosticMessage, location : Location)
       ex = new message, location.line_number, location.column_number, location.filename, 0
       wrap_macro_expression(ex, location)
     end
@@ -99,9 +105,9 @@ module Crystal
       # If the inner exception has no location it means that they came from virtual nodes.
       # In that case, get the deepest error message and only show that.
       if inner && !inner.has_location?
-        msg = deepest_error_message.to_s
+        msg = deepest_rendered_error_message
       else
-        msg = @message.to_s
+        msg = rendered_message
       end
 
       error_message_lines = msg.lines
@@ -159,6 +165,22 @@ module Crystal
         inner.deepest_error_message
       else
         @message
+      end
+    end
+
+    private def rendered_message
+      @diagnostic_message.try(&.render(@color)) || @message.to_s
+    end
+
+    protected def deepest_rendered_error_message
+      if inner = @inner
+        if inner.is_a?(TypeException)
+          inner.deepest_rendered_error_message
+        else
+          inner.deepest_error_message.to_s
+        end
+      else
+        rendered_message
       end
     end
   end
@@ -265,7 +287,8 @@ module Crystal
       name_size = node.name_size
 
       io << "    "
-      io << replace_leading_tabs_with_spaces(line.chomp)
+      displayed_line = replace_leading_tabs_with_spaces(line.chomp)
+      io << syntax_highlight_line(lines, line_number - 1, displayed_line)
       io.puts
 
       return unless name_location
