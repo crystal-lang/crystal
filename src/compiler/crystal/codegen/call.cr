@@ -381,12 +381,11 @@ class Crystal::CodeGenVisitor
       Phi.open(self, node, old_needs_value) do |phi|
         # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
+          result = nil
           if obj_type_id && !is_super
+            # If owner is not passed then it cannot possibly affect dispatch,
+            # while a super call always matches the obj type
             result = match_type_id(owner, a_def.owner, obj_type_id)
-          else
-            # If owner is not passed then it cannot possibly affect dispatch
-            # A super call always matches the obj type
-            result = int1(1)
           end
 
           node.args.each_with_index do |node_arg, i|
@@ -405,7 +404,7 @@ class Crystal::CodeGenVisitor
           end
 
           current_def_label, next_def_label = new_blocks "current_def", "next_def"
-          cond result, current_def_label, next_def_label
+          cond result.not_nil!, current_def_label, next_def_label
 
           position_at_end current_def_label
 
