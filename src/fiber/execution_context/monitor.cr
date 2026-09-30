@@ -22,8 +22,10 @@ module Fiber::ExecutionContext
       @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY
 
+      @busy = true
+      @signaled = Atomic(Bool).new(false)
+
       # OPTIMIZE: use futex or alike for a lock-free wait/wake
-      @drifting = Atomic(Bool).new(false)
       @mutex = Thread::Mutex.new
       @condition = Thread::ConditionVariable.new
 
@@ -31,10 +33,10 @@ module Fiber::ExecutionContext
     end
 
     def wake : Nil
-      return unless @drifting.get(:relaxed)
+      return if @signaled.get(:relaxed)
 
       @mutex.synchronize do
-        if @drifting.swap(false, :relaxed)
+        unless @signaled.swap(true, :relaxed)
           @condition.signal
         end
       end
@@ -72,37 +74,41 @@ module Fiber::ExecutionContext
     # block.
     private def every(&)
       every = @every
-      remaining = every
+      # elapsed = Time::Span.zero
+      start = Crystal::System::Time.instant
 
       loop do
-        signaled = true
-
         @mutex.synchronize do
-          if every > MAXIMUM_EVERY && @drifting.get(:relaxed)
-            # program is idle and we reached maximum interval: sleep
+          if @busy || @signaled.lazy_get
+            # noticed activity or awoken: reset to default every
+            every = @every
+          else
+            # idle and not signaled: double the current delay
+            every *= 2
+          end
+
+          if every > MAXIMUM_EVERY
+            # we reached the maximum interval: go to sleep
+            Crystal.trace :sched, "sysmon.sleep"
             @condition.wait(@mutex)
           else
-            # regular interval or drifting away
-            @condition.wait(@mutex, remaining) { signaled = false }
+            # regular interval or drifting away; calculate remaining time for
+            # more steady wakeups (minimize exponential delays)
+            timeout = (start + every - Crystal::System::Time.instant).clamp(Time::Span.zero..)
+            Crystal.trace :sched, "sysmon.wait", timeout: timeout
+            @condition.wait(@mutex, timeout) { }
+          end
+
+          # reset to default every after wakeup
+          if @signaled.lazy_get
+            @signaled.lazy_set(false)
+            every = @every
           end
         end
 
         @busy = false
         start = Crystal::System::Time.instant
         yield(start)
-        stop = Crystal::System::Time.instant
-
-        # determine next interval based on activity
-        if signaled || @busy
-          every = @every
-        else
-          @drifting.set(true, :relaxed)
-          every *= 2
-        end
-
-        # calculate remaining time for more steady wakeups (minimize exponential
-        # delays)
-        remaining = (start + every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
