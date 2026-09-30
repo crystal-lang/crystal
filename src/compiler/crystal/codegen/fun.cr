@@ -81,6 +81,7 @@ class Crystal::CodeGenVisitor
       context.type = self_type
       context.vars = LLVMVars.new
       context.block_context = nil
+      context.sret_pointer = nil
 
       @llvm_mod = fun_module_info.mod
       @llvm_context = @llvm_mod.context
@@ -127,7 +128,9 @@ class Crystal::CodeGenVisitor
         end
 
         if !is_fun_literal && self_type.passed_as_self?
-          context.vars["self"] = LLVMVar.new(context.fun.params.first, self_type, true)
+          # `self` comes right after the `sret` pointer, if there is one
+          self_index = context.sret_pointer ? 1 : 0
+          context.vars["self"] = LLVMVar.new(context.fun.params[self_index], self_type, true)
         end
 
         if is_closure
@@ -149,10 +152,10 @@ class Crystal::CodeGenVisitor
             context.vars.each do |name, var|
               next if var.debug_variable_created
 
-              # Self always comes as the first parameter, unless it's a closure:
-              # then it will be fetched from the closure data.
+              # Self always comes first (after the `sret` pointer, if any), unless
+              # it's a closure: then it will be fetched from the closure data.
               if name == "self" && !is_closure
-                declare_debug_for_function_argument(name, var.type, 1, var.pointer, location)
+                declare_debug_for_function_argument(name, var.type, context.sret_pointer ? 2 : 1, var.pointer, location)
                 # Method debug parameters are skipped as they were defined in create_local_copy_of_fun_args()
                 # due to LLVM variable dominance issue in some closure cases
               elsif args.none? { |arg| arg.name == name }
@@ -316,12 +319,6 @@ class Crystal::CodeGenVisitor
       llvm_arg_type
     end
 
-    llvm_return_type = {% if LibLLVM::IS_LT_150 %}
-                         llvm_return_type(target_def.type)
-                       {% else %}
-                         target_def.llvm_intrinsic? ? llvm_intrinsic_return_type(target_def.type) : llvm_return_type(target_def.type)
-                       {% end %}
-
     if is_closure
       llvm_args_types.insert(0, llvm_context.void_pointer)
       offset = 1
@@ -329,7 +326,26 @@ class Crystal::CodeGenVisitor
       offset = 0
     end
 
+    # Fun literals must match `llvm_proc_type`, so they never use `sret`
+    if !is_fun_literal && internal_sret?(target_def)
+      sret_type = llvm_type(target_def.type)
+      llvm_args_types.insert(0, sret_type.pointer)
+      offset += 1
+      llvm_return_type = llvm_context.void
+    else
+      llvm_return_type = {% if LibLLVM::IS_LT_150 %}
+                           llvm_return_type(target_def.type)
+                         {% else %}
+                           target_def.llvm_intrinsic? ? llvm_intrinsic_return_type(target_def.type) : llvm_return_type(target_def.type)
+                         {% end %}
+    end
+
     setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+
+    if sret_type
+      context.fun.add_attribute(LLVM::Attribute::StructRet, 1, sret_type)
+      context.sret_pointer = context.fun.params.first
+    end
 
     if @debug.variables?
       context.fun_debug_params.clear
@@ -528,7 +544,7 @@ class Crystal::CodeGenVisitor
     offset = is_closure ? 1 : 0
 
     abi_info = target_def.abi_info? ? abi_info(target_def) : nil
-    sret = abi_info && sret?(abi_info)
+    sret = (abi_info && sret?(abi_info)) || context.sret_pointer
     offset += 1 if sret
 
     target_def_vars = target_def.vars

@@ -76,7 +76,7 @@ module Crystal
       struct_type = llvm_type(union_type)
       store type_id(value, value_type), union_type_id(struct_type, union_pointer)
       casted_value_ptr = cast_to_pointer(union_value(struct_type, union_pointer), value_type)
-      store value, casted_value_ptr
+      store_lhs value, value_type, casted_value_ptr
     end
 
     def store_bool_in_union(target_type, union_pointer, value)
@@ -149,7 +149,7 @@ module Crystal
         # - cast the target pointer to Pointer(A | B)
         # - store the A | B from the value pointer into the casted target pointer
         casted_target_pointer = cast_to_pointer to_pointer, from_type
-        store load(llvm_type(from_type), from_pointer), casted_target_pointer
+        store_lhs from_pointer, from_type, casted_target_pointer
       else
         # Otherwise, the type ID and the value must be stored separately
         store_union_in_union to_type, to_pointer, from_type, from_pointer
