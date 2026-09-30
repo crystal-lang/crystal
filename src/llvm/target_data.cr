@@ -12,11 +12,21 @@ struct LLVM::TargetData
   end
 
   def abi_size(type)
-    LibLLVM.abi_size_of_type(self, type)
+    # Asking the size of void crashes the program, we definitely don't want that
+    if type.void?
+      0_u64
+    else
+      LibLLVM.abi_size_of_type(self, type)
+    end
   end
 
   def abi_alignment(type)
-    LibLLVM.abi_alignment_of_type(self, type)
+    # Asking the alignment of void crashes the program, we definitely don't want that
+    if type.void?
+      1_u32
+    else
+      LibLLVM.abi_alignment_of_type(self, type)
+    end
   end
 
   def to_unsafe

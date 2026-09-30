@@ -2266,7 +2266,7 @@ module Crystal
     end
 
     def pre_initialize_aggregate(type, struct_type, ptr)
-      memset ptr, int8(0), size_t(struct_type.size)
+      memset ptr, int8(0), size_t(@llvm_typer.size_of(struct_type))
       run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
@@ -2330,12 +2330,12 @@ module Crystal
     end
 
     def generic_malloc(type, &)
-      size = type.size
+      size = size_t(@llvm_typer.size_of(type))
 
       if malloc_fun = yield
         pointer = call malloc_fun, size
       else
-        pointer = call c_malloc_fun, size_t(size)
+        pointer = call c_malloc_fun, size
       end
 
       pointer_cast pointer, type.pointer
@@ -2350,7 +2350,7 @@ module Crystal
     end
 
     def generic_array_malloc(type, count, &)
-      size = builder.mul type.size, count
+      size = builder.mul size_t(@llvm_typer.size_of(type)), count
 
       if malloc_fun = yield
         pointer = call malloc_fun, size
