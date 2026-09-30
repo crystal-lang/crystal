@@ -127,8 +127,8 @@ module Fiber::ExecutionContext
   # :nodoc:
   def self.init_default_context : Nil
     @@thread_pool = ThreadPool.new
-    @@default = Parallel.default(1)
     @@monitor = Monitor.new
+    @@default = Parallel.default(1)
   end
 
   # Returns the default maximum parallelism. Can be used to resize the default
