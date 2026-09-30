@@ -446,9 +446,21 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        unit.emit(@emit_targets, emit_base_filename || output_filename)
+        # LLVM reports file system errors (eg. a missing output directory)
+        # as a plain error string; rewrap it so it surfaces as a proper
+        # error message instead of a compiler bug report.
+        emit_filename = emit_base_filename || output_filename
+        begin
+          unit.emit(@emit_targets, emit_filename)
+        rescue ex : Exception
+          raise CompilerError.new("Could not write output file '#{emit_filename}': #{ex.message}", :FAILURE)
+        end
 
-        target_machine.emit_obj_to_file llvm_mod, output_filename
+        begin
+          target_machine.emit_obj_to_file llvm_mod, output_filename
+        rescue ex : Exception
+          raise CompilerError.new("Could not write output file '#{output_filename}': #{ex.message}", :FAILURE)
+        end
       end
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)

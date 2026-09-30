@@ -4134,6 +4134,12 @@ module Crystal
       node_source(source, proc_notation).should eq "(A) -> R"
     end
 
+    it "ensure with `suffix` doesn't change the `suffix` property of the preceding exception handler" do
+      parser = Parser.new("begin; 1; rescue; 2; end ensure 3")
+      node = parser.parse.as(ExceptionHandler)
+      node.suffix.should be_false
+    end
+
     it "sets args_in_brackets to false for `a.b`" do
       parser = Parser.new("a.b")
       node = parser.parse.as(Call)

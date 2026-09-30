@@ -332,17 +332,18 @@ module Crystal
                 ex = value.tap(&.ensure = ensure_body)
               else
                 ex = atomic.value = ExceptionHandler.new(value, ensure: ensure_body)
+                ex.suffix = true
               end
             else
               if atomic.is_a?(ExceptionHandler)
                 ex = atomic.tap(&.ensure = ensure_body)
               else
                 ex = atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
+                ex.suffix = true
               end
             end
             ex.at(location).at_end(ensure_body)
             ex.ensure_location = ensure_location
-            ex.suffix = true
           else
             break
           end
