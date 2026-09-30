@@ -145,7 +145,7 @@ module Fiber::ExecutionContext
       end
 
       @mutex.synchronize do
-        raise RuntimeError.new("Can't resume dead fiber") if running?
+        raise RuntimeError.new("Can't resume dead fiber") unless running?
 
         @enqueued = true
 
@@ -222,8 +222,6 @@ module Fiber::ExecutionContext
         transition_to :running
         @enqueued = false
       end
-    ensure
-      ExecutionContext.wake_monitor
     end
 
     private def check_enqueued?
