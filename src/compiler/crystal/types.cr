@@ -674,6 +674,12 @@ module Crystal
       self
     end
 
+    # Returns this type as a type lookup would resolve it now. Only a generic
+    # instance can change: see `GenericInstanceType#revirtualized`.
+    def revirtualized : Type
+      self
+    end
+
     def depth
       0
     end
@@ -911,6 +917,19 @@ module Crystal
     getter macros : Hash(String, Array(Macro))?
     getter hooks : Array(Hook)?
     getter(parents) { [] of Type }
+
+    # Replaces *parent*, an instance of a generic type among this type's
+    # parents, with *replacement*, another instance of the same generic type.
+    # See `Program#revirtualize_generic_ancestors`.
+    def replace_generic_parent(parent : GenericInstanceType, replacement : Type) : Nil
+      return unless index = parents.index(&.same?(parent))
+
+      parents[index] = replacement
+      if parent.is_a?(GenericModuleInstanceType)
+        parent.raw_including_types.try &.reject!(&.same?(self))
+        replacement.add_including_type(self)
+      end
+    end
 
     def add_def(a_def)
       a_def.owner = self
@@ -1252,6 +1271,17 @@ module Crystal
     def superclass=(@superclass)
       @depth = superclass ? (superclass.depth + 1) : 0
       parents.push superclass if superclass
+    end
+
+    def replace_generic_parent(parent : GenericInstanceType, replacement : Type) : Nil
+      if parent.same?(superclass) && replacement.is_a?(GenericClassInstanceType)
+        @superclass = replacement
+        @depth = replacement.depth + 1
+        if parent.is_a?(GenericClassInstanceType) && parent.subclasses.reject!(&.same?(self))
+          replacement.add_subclass(self)
+        end
+      end
+      super
     end
 
     def add_subclass(subclass)
@@ -2005,6 +2035,35 @@ module Crystal
 
     def class_var_owner
       generic_type.class_var_owner
+    end
+
+    # Returns this instance with its type arguments virtualized as a type
+    # lookup would do now. A lookup virtualizes a class type argument only
+    # once the class has subclasses, so an argument resolved before then is
+    # exact, while the same type written afterwards resolves to a different
+    # instance whose argument is virtual.
+    def revirtualized : Type
+      new_type_vars = [] of TypeVar
+      type_vars.each_with_index do |(_, node), index|
+        unless node.is_a?(Var)
+          new_type_vars << node
+          next
+        end
+
+        type = node.type
+        if generic_type.splat_index == index && type.is_a?(TupleInstanceType)
+          type.tuple_types.each { |tuple_type| new_type_vars << revirtualized_type_var(tuple_type) }
+        else
+          new_type_vars << revirtualized_type_var(type)
+        end
+      end
+      generic_type.instantiate(new_type_vars)
+    end
+
+    # A type argument with unbound type parameters, such as `self` inside a
+    # generic type, is filled in per instantiation and left as it is.
+    private def revirtualized_type_var(type)
+      type.unbound? ? type : type.revirtualized.virtual_type
     end
 
     def parents
