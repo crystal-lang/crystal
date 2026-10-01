@@ -446,22 +446,10 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        # LLVM reports file system errors (eg. a missing output directory)
-        # as a plain error string; rewrap it so it surfaces as a proper
-        # error message instead of a compiler bug report.
         emit_filename = emit_base_filename || output_filename
-        begin
-          unit.emit(@emit_targets, emit_filename)
-        rescue ex : Exception
-          raise CompilerError.new("Could not write output file '#{emit_filename}': #{ex.message}", :FAILURE)
-        end
-
-        begin
-          target_machine.emit_obj_to_file llvm_mod, output_filename
-        rescue ex : Exception
-          raise CompilerError.new("Could not write output file '#{output_filename}': #{ex.message}", :FAILURE)
-        end
+        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
       end
+
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
@@ -963,31 +951,53 @@ module Crystal
         memory_buffer.dispose
       end
 
-      private def compile_to_object
+      private def compile_to_object(file_name = object_name, *, optimize = true)
         temporary_object_name = self.temporary_object_name
         target_machine = compiler.create_target_machine
-        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+        compiler.optimize llvm_mod, target_machine if optimize && !compiler.optimization_mode.o0?
         target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-        File.rename(temporary_object_name, object_name)
+        FileUtils.mv(temporary_object_name, file_name)
       end
 
       private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_targets : EmitTarget, output_filename)
+      def emit(emit_targets : EmitTarget, output_filename, *, from_cache = true)
+        filename = output_filename
+
         if emit_targets.asm?
-          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+          filename = "#{output_filename}.s"
+          compiler.target_machine.emit_asm_to_file llvm_mod, filename
         end
+
         if emit_targets.llvm_bc?
-          FileUtils.cp(bc_name, "#{output_filename}.bc")
+          filename = "#{output_filename}.bc"
+          if from_cache
+            FileUtils.cp(bc_name, filename)
+          else
+            llvm_mod.write_bitcode_to_file(filename)
+          end
         end
+
         if emit_targets.llvm_ir?
-          llvm_mod.print_to_file "#{output_filename}.ll"
+          filename = "#{output_filename}.ll"
+          llvm_mod.print_to_file filename
         end
+
         if emit_targets.obj?
-          FileUtils.cp(object_name, output_filename + @object_extension)
+          filename = "#{output_filename}#{@object_extension}"
+          if from_cache
+            FileUtils.cp(object_name, filename)
+          else
+            compile_to_object(filename, optimize: false)
+          end
         end
+      rescue ex
+        # LLVM reports file system errors (eg. a missing output directory)
+        # as a plain error string; rewrap it so it surfaces as a proper
+        # error message instead of a compiler bug report.
+        raise CompilerError.new("Could not write output file '#{filename}': #{ex.message}", :FAILURE)
       end
 
       def object_name
