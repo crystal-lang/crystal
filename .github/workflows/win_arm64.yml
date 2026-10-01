@@ -37,7 +37,7 @@ jobs:
         uses: crystal-lang/install-crystal@v1
         id: install-crystal
         with:
-          crystal: "1.21.0"
+          crystal: "1.21.1"
           arch: "x86_64"
 
       - name: Download Crystal source
