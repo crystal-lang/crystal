@@ -2086,6 +2086,8 @@ module Crystal
 
     def visit(node : MacroVar)
       check :MACRO_VAR
+
+      write_macro_slashes
       write "%"
       write node.name
 
