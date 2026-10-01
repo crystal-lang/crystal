@@ -59,7 +59,7 @@ jobs:
         if: ${{ inputs.arch == 'x86_64' }}
         id: install-crystal
         with:
-          crystal: "1.21.0"
+          crystal: "1.21.1"
 
       - name: Install Crystal (ARM64 stage-1 compiler)
         uses: actions/download-artifact@v8
