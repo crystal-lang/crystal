@@ -307,4 +307,49 @@ describe Doc::Generator do
 
       XML
   end
+
+  describe "macro generating method with conditional docs via @caller.first.doc_comment" do
+    it "uses default doc when caller has no doc comment" do
+      program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+        macro gen_method
+          {% if @caller && !@caller.first.doc_comment.empty? %}
+          # {{ @caller.first.doc_comment }}
+          {% else %}
+          # Default documentation.
+          {% end %}
+          def foo
+          end
+        end
+
+        class Foo
+          gen_method
+        end
+        CRYSTAL
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Default documentation.")
+    end
+
+    it "uses caller doc when provided" do
+      program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+        macro gen_method
+          {% if @caller && !@caller.first.doc_comment.empty? %}
+          # {{ @caller.first.doc_comment }}
+          {% else %}
+          # Default documentation.
+          {% end %}
+          def foo
+          end
+        end
+
+        class Foo
+          # Custom documentation.
+          gen_method
+        end
+        CRYSTAL
+      generator = Doc::Generator.new program, [""]
+      method = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      method.doc.should eq("Custom documentation.")
+    end
+  end
 end
