@@ -8,7 +8,11 @@
   };
 
   git-hooks.hooks = {
-    actionlint.enable = true;
+    # FIXME: actionlint is broken and seems to be abandoned.
+    # Other users of actionlint have switched to a fork kjanat/actionlint.
+    # We could do that as well either as a local override, or wait / contribute
+    # to upstream nixpkgs/git-hooks.nix.
+    # actionlint.enable = true;
     asciidoc-linter = {
       enable = true;
       name = "Asciidoc Linter";
