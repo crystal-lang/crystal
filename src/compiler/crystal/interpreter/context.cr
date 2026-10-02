@@ -433,7 +433,13 @@ class Crystal::Repl::Context
 
   getter? loader : Loader?
 
-  getter(loader : Loader) {
+  # Link flags the current loader was built from; lets `c_function` detect
+  # that a mid-session `require` introduced new libraries.
+  @loader_lib_flags : String?
+
+  getter(loader : Loader) { build_loader }
+
+  private def build_loader : Loader
     lib_flags = program.lib_flags
     # Execute and expand `subcommands`.
     lib_flags = lib_flags.gsub(/`(.*?)`/) { `#{$1}`.chomp }
@@ -454,6 +460,8 @@ class Crystal::Repl::Context
       args.concat(link_args)
     end
 
+    @loader_lib_flags = lib_flags
+
     Crystal::Loader.parse(args, dll_search_paths: dll_search_paths).tap do |loader|
       # FIXME: Part 2: This is a workaround for initial integration of the interpreter:
       # We append a handle to the current executable (i.e. the compiler program)
@@ -470,7 +478,7 @@ class Crystal::Repl::Context
         end
       end
     end
-  }
+  end
 
   # Extra DLL search paths to mimic compiled code's DLL-copying behavior
   # regarding `@[Link]` annotations. These directories should match the ones
@@ -494,6 +502,21 @@ class Crystal::Repl::Context
   end
 
   def c_function(name : String)
+    loader.find_symbol(name)
+  rescue ex : Loader::LoadError
+    # The loader is a snapshot of the program's link flags from when it was
+    # first built. A mid-session `require` may have introduced new `@[Link]`
+    # libraries since then (crystal-lang/crystal#12624): rebuild the loader
+    # with the current flags (dlopen'ing anything new) and retry once. If
+    # the flags didn't change, the symbol genuinely doesn't exist.
+    #
+    # The rebuild spawns sub-processes (pkg-config, backtick `ldflags`)
+    # which must be waited on with the native signal routing: the
+    # interpreted signal-loop is parked while we're compiling.
+    Crystal::System::Signal.with_native_writer do
+      raise ex if program.lib_flags == @loader_lib_flags
+      @loader = build_loader
+    end
     loader.find_symbol(name)
   end
 

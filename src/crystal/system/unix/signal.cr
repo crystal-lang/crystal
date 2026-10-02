@@ -164,8 +164,60 @@ module Crystal::System::Signal
   {% unless flag?(:interpreted) %}
     # :nodoc:
     def self.writer=(writer : IO::FileDescriptor)
+      @@original_writer ||= @@pipe[1]
+      @@interpreted_writer = writer
       @@pipe = {@@pipe[0], writer}
       writer
+    end
+
+    # The original (native) signal pipe writer, saved when the interpreter
+    # replaced it through `writer=` (see `Crystal::Interpreter#signal_descriptor`).
+    @@original_writer : IO::FileDescriptor?
+    @@interpreted_writer : IO::FileDescriptor?
+
+    # :nodoc:
+    #
+    # While no interpreted code is running (e.g. between REPL expressions),
+    # native code may still spawn and wait for sub-processes (macro backticks
+    # like `pkg-config`, the interpreted loader, ...). Their SIGCHLD must be
+    # processed by the native signal loop, so route signals back to the
+    # native pipe: the interpreted signal-loop fiber is parked whenever the
+    # interpreter isn't executing, and would otherwise never drain its pipe,
+    # deadlocking `Process#wait` forever.
+    def self.use_native_writer : Nil
+      if (writer = @@original_writer) && !writer.closed?
+        @@pipe = {@@pipe[0], writer}
+      end
+    end
+
+    # :nodoc:
+    #
+    # Counterpart of `use_native_writer`: route signals back to the
+    # interpreted program's pipe while interpreted code is executing, so
+    # interpreted `Signal` traps keep working.
+    def self.use_interpreted_writer : Nil
+      if (writer = @@interpreted_writer) && !writer.closed?
+        @@pipe = {@@pipe[0], writer}
+      end
+    end
+
+    # :nodoc:
+    #
+    # Runs the block with the native signal pipe active, restoring the
+    # previous routing afterwards. Compiler-side code that spawns and waits
+    # for sub-processes while interpreted code is being compiled (the
+    # interpreter's loader queries pkg-config, expands backtick `ldflags`)
+    # must use this: the interpreted signal-loop fiber is parked during
+    # compilation, so routing SIGCHLD to the interpreted pipe would deadlock
+    # the native `Process#wait`.
+    def self.with_native_writer(&)
+      previous = @@pipe[1]
+      use_native_writer
+      begin
+        yield
+      ensure
+        @@pipe = {@@pipe[0], previous}
+      end
     end
   {% end %}
 
