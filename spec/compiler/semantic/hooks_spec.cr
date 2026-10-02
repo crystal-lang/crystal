@@ -256,4 +256,24 @@ describe "Semantic: hooks" do
       Baz.baz
       CRYSTAL
   end
+
+  it "leaves finished hook expansions alone when cleanup is off" do
+    compiler = Compiler.new
+    compiler.no_codegen = true
+    compiler.no_cleanup = true
+    result = compiler.compile(Compiler::Source.new(".", <<-CRYSTAL), "fake-no-build")
+      record Item, name : Symbol
+
+      class Holder
+        macro finished
+          ITEMS = [Item.new(name: :a)] of Item
+        end
+      end
+
+      Holder::ITEMS
+      CRYSTAL
+
+    hook = result.program.finished_hooks.find! { |h| h.node.to_s.includes?("ITEMS") }
+    hook.node.to_s.should eq("ITEMS = [Item.new(name: :a)] of Item")
+  end
 end
