@@ -1935,7 +1935,7 @@ module Crystal
     end
 
     def including_types
-      instances = instantiated_types
+      instances = instantiated_types.reject(&.unbound?)
       subclasses.each do |subclass|
         if subclass.is_a?(GenericClassType)
           subtypes = subclass.including_types
