@@ -32,7 +32,7 @@ defaults:
 jobs:
   build-deps:
     name: Build dependencies
-    uses: ./.github/workflows/win_build_libs.yml
+    uses: $/.github/workflows/win_build_libs.yml
     with:
       arch: ${{ inputs.arch }}
       runs-on: ${{ inputs.runs-on }}
@@ -42,7 +42,7 @@ jobs:
   build-stage1:
     name: Build stage-1 compiler
     needs: [build-deps]
-    uses: ./.github/workflows/win_arm64.yml
+    uses: $/.github/workflows/win_arm64.yml
     if: ${{ inputs.arch == 'aarch64' }}
     with:
       arch: ${{ inputs.arch }}
@@ -50,7 +50,7 @@ jobs:
   build-release:
     name: Build compiler
     needs: [build-stage1]
-    uses: ./.github/workflows/win_build_portable.yml
+    uses: $/.github/workflows/win_build_portable.yml
     if: ${{ !cancelled() }}
     with:
       release: true
