@@ -496,31 +496,30 @@ class OptionParser
   end
 
   # Resolves the value for a *value_type* flag that had no inline value, consuming the next
-  # argument if appropriate (a `Required` flag always consumes it when present; an `Optional`
-  # flag only consumes it when it isn't itself a registered flag, and never under
-  # `gnu_optional_args?`). *flag* is only used to name the flag in a `MissingOption` error.
-  # Returns the resolved value (`nil` if none was consumed) and the, possibly incremented,
-  # *arg_index*.
+  # argument if appropriate.
   private def consume_next_arg_as_value(value_type : FlagValue, flag : String, arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : {String?, Int32}
     case value_type
     in FlagValue::Required
-      if next_value = args[arg_index + 1]?
+      next_value = args[arg_index + 1]?
+      if next_value
         handled_args << arg_index + 1
-        {next_value, arg_index + 1}
+        return {next_value, arg_index + 1}
       else
         @missing_option.call(flag)
-        {nil, arg_index}
       end
     in FlagValue::Optional
-      if !gnu_optional_args? && (next_value = args[arg_index + 1]?) && !@handlers.has_key?(next_value)
-        handled_args << arg_index + 1
-        {next_value, arg_index + 1}
-      else
-        {nil, arg_index}
+      unless gnu_optional_args?
+        next_value = args[arg_index + 1]?
+        if next_value && !@handlers.has_key?(next_value)
+          handled_args << arg_index + 1
+          return {next_value, arg_index + 1}
+        end
       end
     in FlagValue::None
-      {nil, arg_index}
+      # do nothing
     end
+
+    {nil, arg_index}
   end
 
   private def handle_bundled_short_options(arg : String, bundle : Array(Handler), arg_index : Int32, args : Array(String), handled_args : Array(Int32)) : Int32
