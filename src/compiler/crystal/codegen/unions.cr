@@ -168,13 +168,15 @@ module Crystal
       end
 
       if to_type.has_inner_pointers?
-        from_size = @llvm_typer.size_of(llvm_type(from_type))
-        to_size = @llvm_typer.size_of(llvm_type(to_type))
+        struct_type = llvm_type(to_type)
+        to_size = @llvm_typer.size_of(struct_type.struct_element_types[1])
+        from_size = @llvm_typer.size_of(llvm_type(from_type).struct_element_types[1])
 
         if from_size < to_size
           # source union is smaller than destination union,
           # zero the remaining bytes so we don't keep pointer references
-          pointer = gep(llvm_type(@program.int8), cast_to_void_pointer(to_pointer), size_t(from_size))
+          value_ptr = union_value(struct_type, to_pointer)
+          pointer = gep(llvm_type(@program.int8), cast_to_void_pointer(value_ptr), size_t(from_size))
           memset(pointer, int8(0), size_t(to_size - from_size))
         end
       end
