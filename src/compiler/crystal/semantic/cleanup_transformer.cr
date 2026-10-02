@@ -10,8 +10,19 @@ module Crystal
 
     def cleanup(node, inside_def = false)
       transformer = self.cleanup_transformer
+      # The transformer is shared by every cleanup pass. Scoping the
+      # `inside_def` nest count to this transform call keeps it from
+      # leaking into later passes (with the interpreter, `cleanup` runs
+      # repeatedly on new fragments and def bodies, and a leaked count
+      # makes type-level instance var initializers look like they are
+      # inside a def, so they aren't replaced by `Nop`).
+      old_def_nest_count = transformer.def_nest_count
       transformer.inside_def! if inside_def
-      node = node.transform(transformer)
+      begin
+        node = node.transform(transformer)
+      ensure
+        transformer.def_nest_count = old_def_nest_count
+      end
       puts node if ENV["AFTER"]? == "1"
       node
     end
@@ -79,6 +90,14 @@ module Crystal
 
     def inside_def!
       @def_nest_count += 1
+    end
+
+    def def_nest_count
+      @def_nest_count
+    end
+
+    def def_nest_count=(count)
+      @def_nest_count = count
     end
 
     def after_transform(node)
