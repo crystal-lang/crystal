@@ -310,6 +310,16 @@ class Crystal::Call
       attach_subclass_observer instance_type.base_type
     end
 
+    if defined_method_missing
+      # The method that `method_missing` just defined is analyzed inside this
+      # call, like a macro expansion, so a definition that calls another
+      # missing method nests one level deeper
+      program.check_macro_expansion_depth(self)
+      return program.nest_macro_expansion do
+        instantiate signature, matches, owner, self_type, with_autocast
+      end
+    end
+
     instantiate signature, matches, owner, self_type, with_autocast
   end
 
