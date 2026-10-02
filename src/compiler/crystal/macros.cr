@@ -1332,6 +1332,78 @@ module Crystal::Macros
     # Returns this call's block argument, if any
     def block_arg : ASTNode | Nop
     end
+
+    # Returns the last `Annotation` with the given `type`
+    # attached to this macro call or `NilLiteral` if there are none.
+    #
+    # Annotations on a macro call are forwarded to the first node of its
+    # expansion that can be annotated. Reading them doesn't change that; a
+    # macro that applies an annotation itself removes it first with
+    # `#delete_annotation` or `#delete_annotations`.
+    #
+    # ```
+    # annotation Route
+    # end
+    #
+    # macro get(name)
+    #   def {{name.id}}_path
+    #     {{ @caller.first.annotation(Route)[0] }}
+    #   end
+    # end
+    #
+    # @[Route("/users")]
+    # get users # => defines `users_path`, which returns "/users"
+    # ```
+    def annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Returns an array of annotations with the given `type`
+    # attached to this macro call, or an empty `ArrayLiteral` if there are none.
+    def annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Returns an array of all annotations attached to this
+    # macro call, or an empty `ArrayLiteral` if there are none.
+    def annotations : ArrayLiteral(Annotation)
+    end
+
+    # Removes the last `Annotation` with the given `type` from this macro call
+    # and returns it, or returns `NilLiteral` if there is none.
+    #
+    # A removed annotation is no longer returned by `#annotation` or
+    # `#annotations`, and isn't forwarded to the macro's expansion, so the
+    # macro can apply it where it chooses by outputting it.
+    #
+    # ```
+    # annotation Route
+    # end
+    #
+    # macro get(name)
+    #   {% route = @caller.first.delete_annotation(Route) %}
+    #   def {{name.id}}_path
+    #     {{ route[0] }}
+    #   end
+    # end
+    #
+    # @[Route("/users")]
+    # get users # => defines `users_path`, and `Route` isn't applied to it
+    # ```
+    def delete_annotation(type : TypeNode) : Annotation | NilLiteral
+    end
+
+    # Removes all annotations with the given `type` from this macro call and
+    # returns them, or an empty `ArrayLiteral` if there are none.
+    #
+    # See `#delete_annotation` for what removing them does.
+    def delete_annotations(type : TypeNode) : ArrayLiteral(Annotation)
+    end
+
+    # Removes all annotations from this macro call and returns them, or an
+    # empty `ArrayLiteral` if there are none.
+    #
+    # See `#delete_annotation` for what removing them does.
+    def delete_annotations : ArrayLiteral(Annotation)
+    end
   end
 
   # A call's named argument.
