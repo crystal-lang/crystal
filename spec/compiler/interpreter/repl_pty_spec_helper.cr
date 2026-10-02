@@ -1,9 +1,9 @@
 # Shared helpers for specs that drive the real `crystal i` REPL over a
 # PTY (the reply line editor needs a TTY with a non-zero window size).
 #
-# The paste rule (reverse-engineered in icr.cr): the line text and the
-# Enter key must be two separate writes with a pause between them, or
-# the editor treats them as a paste and never submits.
+# The paste rule (from the reply line editor's CharReader): the line text
+# and the Enter key must be two separate writes with a pause between them,
+# or the editor treats them as a paste and never submits.
 
 module ReplPty
   ANSI_ESCAPES = /\e\[[0-9;?]*[A-Za-z]/
@@ -47,8 +47,8 @@ class ReplPtySession
     slave_io = IO::FileDescriptor.new(slave)
     @master = IO::FileDescriptor.new(master)
     @master.read_timeout = 0.2.seconds
-    # The interpreter's line editor needs each write flushed immediately
-    # (icr's PTY backend does the same).
+    # The interpreter's line editor needs each write flushed immediately,
+    # or the bytes never reach the PTY.
     @master.sync = true
     @process = Process.new(bin, {"i"}, env: ReplPty.env,
       input: slave_io, output: slave_io, error: slave_io, chdir: __DIR__)
