@@ -160,7 +160,7 @@ class CSV::Builder
       when .rfc?
         value.each_byte do |byte|
           case byte.unsafe_chr
-          when @separator, @quote_char, '\n'
+          when @separator, @quote_char, '\r', '\n'
             return true
           else
             # keep scanning
