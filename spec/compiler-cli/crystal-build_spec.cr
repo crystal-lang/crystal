@@ -44,4 +44,15 @@ describe "`crystal build`" do
       .should(be_failure(1))
       .error.should(contain("Error: undefined method 'frobulate' for Int32"))
   end
+
+  {% if flag?(:linux) %}
+    it "links a shared library when symbol names contain @" do
+      with_tempfile("shared.cr", "libshared.so") do |source, output|
+        File.write(source, "fun answer : Int32\n  42\nend\n")
+
+        Process.capture_result(crystal, "build", "-Dwithout_main", "-o", output, "--link-flags=-shared", source)
+          .should(be_success)
+      end
+    end
+  {% end %}
 end
