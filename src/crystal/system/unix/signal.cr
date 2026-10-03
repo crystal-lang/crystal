@@ -114,17 +114,6 @@ module Crystal::System::Signal
     end
   end
 
-  # Replaces the signal pipe so the child process won't share the file
-  # descriptors of the parent process and send it received signals.
-  def self.after_fork
-    @@pipe.each do |pipe_io|
-      Crystal::EventLoop.remove(pipe_io)
-      pipe_io.file_descriptor_close { }
-    end
-  ensure
-    @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
-  end
-
   # Resets signal handlers to `SIG_DFL`. This avoids the child to receive
   # signals that would be sent to the parent process through the signal
   # pipe.
@@ -327,11 +316,5 @@ module Crystal::System::SignalChildHandler
         end
       end
     end
-  end
-
-  def self.after_fork
-    @@pending.clear
-    @@waiting.each_value(&.close)
-    @@waiting.clear
   end
 end

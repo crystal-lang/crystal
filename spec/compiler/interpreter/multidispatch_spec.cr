@@ -225,6 +225,42 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "does dispatch on a virtual struct read out of a nilable union" do
+      interpret(<<-CRYSTAL).should eq(12)
+        abstract struct Foo
+          abstract def foo : Int32
+        end
+
+        struct Bar < Foo
+          def foo : Int32
+            1
+          end
+        end
+
+        struct Baz < Foo
+          def foo : Int32
+            2
+          end
+        end
+
+        class Holder
+          @value : Foo?
+
+          def initialize(@value : Foo?)
+          end
+
+          def run : Int32
+            value = @value
+            return 0 if value.nil?
+
+            value.foo
+          end
+        end
+
+        Holder.new(Bar.new).run &* 10 &+ Holder.new(Baz.new).run &+ Holder.new(nil).run
+      CRYSTAL
+    end
+
     it "does dispatch on one argument with block" do
       interpret(<<-CRYSTAL).should eq(42)
         def foo(x : Char)

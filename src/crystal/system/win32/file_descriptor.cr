@@ -94,8 +94,6 @@ module Crystal::System::FileDescriptor
       case error = WinError.value
       when .error_access_denied?
         raise IO::Error.new "File not open for writing", target: self
-      when .error_broken_pipe?
-        return 0_u32
       else
         raise IO::Error.from_os_error("Error writing file", error, target: self)
       end

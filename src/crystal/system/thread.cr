@@ -33,6 +33,19 @@ module Crystal::System::Thread
   # private def system_wait_suspended : Nil
 
   # private def system_resume : Nil
+
+  # Called to initialize the object (usually a semaphore) for #wait and #wake.
+  # protected def init_semaphore : Nil
+
+  # Suspend a thread until #wake is called. Synchronizes with #wake so it won't
+  # block if #wake was called before (race).
+  #
+  # WARNING: must only be called on the current thread.
+  # def wait : Nil
+
+  # Wake a waiting thread. Synchronizes with #wait so it won't block if #wake
+  # has been called before (race).
+  # def wake : Nil
 end
 
 {% if flag?(:wasi) %}
@@ -144,6 +157,7 @@ class Thread
   # Creates and starts a new system thread.
   def initialize(@name : String? = nil, &@func : Thread ->)
     @system_handle = uninitialized Crystal::System::Thread::Handle
+    init_semaphore
     init_handle
   end
 
@@ -153,6 +167,7 @@ class Thread
     @func = ->(t : Thread) { }
     @system_handle = Crystal::System::Thread.current_handle
     @current_fiber = @main_fiber = Fiber.new(stack_address, self)
+    init_semaphore
 
     Thread.threads.push(self)
   end
@@ -197,10 +212,12 @@ class Thread
     Crystal::System::Thread.sleep(time)
   end
 
+  MAX_DELAY_ATTEMPTS_BEFORE_YIELD = 7
+
   # Delays execution for a brief moment.
   @[NoInline]
   def self.delay(backoff : Int32) : Int32
-    if backoff < 7
+    if backoff < MAX_DELAY_ATTEMPTS_BEFORE_YIELD
       backoff.times { Intrinsics.pause }
       backoff &+ 1
     else

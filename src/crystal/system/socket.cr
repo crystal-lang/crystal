@@ -130,6 +130,12 @@ module Crystal::System::Socket
   # private def system_tcp_keepalive_count
 
   # private def system_tcp_keepalive_count=(val : Int)
+
+  # IPAddress:
+
+  # def self.network_interface_to_index(name : String, & : Errno | WinError | WasiError ->) : Int
+
+  # def self.network_interface_from_index(index : Int, & : Errno | WinError | WasiError ->) : String
 end
 
 {% if flag?(:wasi) %}

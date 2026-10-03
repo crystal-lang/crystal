@@ -9,6 +9,7 @@ module Markd::Parser
     RULES = {
       Node::Type::Document      => Rule::Document.new,
       Node::Type::BlockQuote    => Rule::BlockQuote.new,
+      Node::Type::Alert         => Rule::BlockQuote.new, # Alerts and BlockQuotes are the same
       Node::Type::Heading       => Rule::Heading.new,
       Node::Type::CodeBlock     => Rule::CodeBlock.new,
       Node::Type::HTMLBlock     => Rule::HTMLBlock.new,
@@ -16,6 +17,7 @@ module Markd::Parser
       Node::Type::List          => Rule::List.new,
       Node::Type::Item          => Rule::Item.new,
       Node::Type::Paragraph     => Rule::Paragraph.new,
+      Node::Type::Table         => Rule::Table.new,
     }
 
     property! tip : Node?
@@ -23,6 +25,8 @@ module Markd::Parser
 
     getter line, current_line, blank, inline_lexer,
       indent, indented, next_nonspace, refmap
+
+    delegate gfm?, tagfilter?, to: @options
 
     def initialize(@options : Options)
       @inline_lexer = Inline.new(@options)
@@ -51,11 +55,11 @@ module Markd::Parser
     end
 
     def parse(source : String)
-      Utils.timer("block parsing", @options.time) do
+      Utils.timer("block parsing", @options.time?) do
         parse_blocks(source)
       end
 
-      Utils.timer("inline parsing", @options.time) do
+      Utils.timer("inline parsing", @options.time?) do
         process_inlines
       end
 
@@ -72,7 +76,7 @@ module Markd::Parser
       # ignore last blank line created by final newline
       lines_size -= 1 if source.ends_with?('\n')
 
-      while tip = tip?
+      while (tip = tip?)
         token(tip, lines_size)
       end
     end
@@ -120,7 +124,7 @@ module Markd::Parser
         # this is a little performance optimization
         unless @indented
           first_char = @line[@next_nonspace]?
-          unless first_char && (Rule::MAYBE_SPECIAL.includes?(first_char) || first_char.ascii_number?)
+          unless first_char && (Rule::MAYBE_SPECIAL.includes?(first_char) || first_char.ascii_number? || @line.match(Rule::TABLE_CELL_SEPARATOR))
             advance_next_nonspace
             break
           end
@@ -173,7 +177,7 @@ module Markd::Parser
           add_line
 
           # if HtmlBlock, check for end condition
-          if (container_type.html_block? && match_html_block?(container))
+          if container_type.html_block? && match_html_block?(container)
             token(container, @current_line)
           end
         elsif @offset < line.size && !@blank
@@ -194,7 +198,7 @@ module Markd::Parser
       @inline_lexer.refmap = @refmap
       while (event = walker.next)
         node, entering = event
-        if !entering && (node.type.paragraph? || node.type.heading?)
+        if !entering && (node.type.paragraph? || node.type.heading? || node.type.table_cell?)
           @inline_lexer.parse(node)
         end
       end
@@ -265,7 +269,7 @@ module Markd::Parser
       if @line.empty?
         @blank = true
       else
-        while char = @line[offset]?
+        while (char = @line[offset]?)
           case char
           when ' '
             offset += 1
@@ -289,7 +293,7 @@ module Markd::Parser
       nil
     end
 
-    def advance_offset(count, columns = false)
+    def advance_offset(count : Int32, columns = false)
       line = @line
       while count > 0 && (char = line[@offset]?)
         if char == '\t'
@@ -326,7 +330,7 @@ module Markd::Parser
     end
 
     private def match_html_block?(container : Node)
-      if block_type = container.data["html_block_type"]
+      if (block_type = container.data["html_block_type"])
         block_type = block_type.as(Int32)
         block_type >= 0 && block_type <= 4 && Rule::HTML_BLOCK_CLOSE[block_type].match(@line[@offset..-1])
       else

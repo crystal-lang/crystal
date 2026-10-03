@@ -1,5 +1,5 @@
 require "spec"
-require "../../../src/compiler/crystal/formatter"
+require "compiler/crystal/formatter"
 
 private def assert_format(input, output = input, strict = false, flags = nil, file = __FILE__, line = __LINE__, focus = false)
   it "formats #{input.inspect}", file, line, focus: focus do
@@ -2721,6 +2721,22 @@ describe Crystal::Formatter do
         \\{% x %}
       {% end %}
     end
+    CRYSTAL
+
+  # #17516
+  assert_format <<-CRYSTAL
+    {% begin %}
+      \\{% begin %}
+        \\%var
+      \\{% end %}
+    {% end %}
+    CRYSTAL
+  assert_format <<-CRYSTAL
+    {% begin %}
+      \\{% begin %}
+        %var
+      \\{% end %}
+    {% end %}
     CRYSTAL
 
   it "gives proper line number in syntax error inside macro" do

@@ -327,6 +327,10 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(call check_llvm_config)
 	$(CXX) -c $(CXXFLAGS) -o $@ $< $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
+$(O)/crystal-pu$(EXE): spec/support/process-utils.cr $(SOURCES)
+	@mkdir -p $(O)
+	$(EXPORT_CC) ./bin/crystal build $(FLAGS) -o $@ $<
+
 man/: $(MAN1PAGES)
 
 man/%.gz: man/%

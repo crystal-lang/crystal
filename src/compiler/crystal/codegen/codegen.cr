@@ -18,6 +18,9 @@ module Crystal
   ONCE_INIT              = "__crystal_once_init"
   ONCE                   = "__crystal_once"
 
+  TYPE_ID_TO_CLASS_NAME_PTR = "__crystal_type_id_to_class_name_ptr"
+  TYPE_ID_TO_CLASS_NAME_MAP = "__crystal_type_id_to_class_name_map"
+
   class Program
     def run(code, filename : String? = nil, debug = Debug::Default)
       parser = new_parser(code)
@@ -318,6 +321,10 @@ module Crystal
       @modules = {"" => @main_module_info} of String => ModuleInfo
       @types_to_modules = {} of Type => ModuleInfo
 
+      # Whether to build the mapping from type IDs to their names. Currently
+      # required for raising `TypeCastError`.
+      @needs_typeinfo = false
+
       set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
       @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
@@ -539,6 +546,8 @@ module Crystal
       @unused_fun_defs.each do |node|
         codegen_fun node.real_name, node.external, @program, is_exported_fun: true
       end
+
+      codegen_typeinfo
 
       env_dump = ENV["DUMP"]?
       case env_dump
@@ -957,22 +966,22 @@ module Crystal
     end
 
     def visit(node : SizeOf)
-      @last = trunc(llvm_size(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.size_of(llvm_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : InstanceSizeOf)
-      @last = trunc(llvm_struct_size(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.size_of(llvm_struct_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : AlignOf)
-      @last = trunc(llvm_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.align_of(llvm_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
     def visit(node : InstanceAlignOf)
-      @last = trunc(llvm_struct_alignment(node.exp.type.sizeof_type), llvm_context.int32)
+      @last = int32(@llvm_typer.align_of(llvm_struct_type(node.exp.type.sizeof_type)).to_i32)
       false
     end
 
@@ -1618,26 +1627,10 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      map_name = "__crystal_type_id_to_class_name_map"
+      @needs_typeinfo = true
 
-      global = @main_mod.globals[map_name]?
-      unless global
-        global = @main_mod.globals.add(@main_llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
-        global.linkage = LLVM::Linkage::Internal if @single_module
-        global.initializer = create_type_id_to_class_name_map
-        global.global_constant = true
-      end
-
-      if @llvm_mod != @main_mod
-        global = @llvm_mod.globals[map_name]?
-        unless global
-          global = @llvm_mod.globals.add(@llvm_typer.llvm_type(@program.string).array(@program.llvm_id.@ids.size), map_name)
-          global.linkage = LLVM::Linkage::External
-          global.global_constant = true
-        end
-      end
-
-      str_ptr = gep llvm_type(@program.string).array(@program.llvm_id.@ids.size), global, 0, type_id
+      type_id_map = load llvm_type(@program.string).pointer, define_type_id_to_class_name_ptr
+      str_ptr = gep llvm_type(@program.string), type_id_map, type_id
       load llvm_type(@program.string), str_ptr
     end
 
@@ -1649,6 +1642,31 @@ module Crystal
       end
 
       @main_llvm_typer.llvm_type(@program.string).const_array(id_map)
+    end
+
+    def codegen_typeinfo : Nil
+      return unless @needs_typeinfo
+
+      str_type = @main_llvm_typer.llvm_type(@program.string)
+      map_type = str_type.array(@program.llvm_id.@ids.size)
+
+      map_global = @main_mod.globals.add(map_type, TYPE_ID_TO_CLASS_NAME_MAP)
+      map_global.linkage = LLVM::Linkage::Private
+      map_global.initializer = create_type_id_to_class_name_map
+      map_global.global_constant = true
+
+      ptr_global = define_type_id_to_class_name_ptr(llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
+      ptr_global.initializer = gep(map_type, map_global, 0, 0)
+    end
+
+    private def define_type_id_to_class_name_ptr(*, llvm_mod = @llvm_mod, llvm_typer = @llvm_typer)
+      llvm_mod.globals[TYPE_ID_TO_CLASS_NAME_PTR]? || begin
+        llvm_type = llvm_typer.llvm_type(@program.string).pointer
+        global = llvm_mod.globals.add(llvm_type, TYPE_ID_TO_CLASS_NAME_PTR)
+        global.linkage = @single_module ? LLVM::Linkage::Internal : LLVM::Linkage::External
+        global.global_constant = true
+        global
+      end
     end
 
     def visit(node : IsA)
@@ -2266,7 +2284,7 @@ module Crystal
     end
 
     def pre_initialize_aggregate(type, struct_type, ptr)
-      memset ptr, int8(0), size_t(struct_type.size)
+      memset ptr, int8(0), size_t(@llvm_typer.size_of(struct_type))
       run_instance_vars_initializers(type, type, ptr)
 
       unless type.struct?
@@ -2330,10 +2348,10 @@ module Crystal
     end
 
     def generic_malloc(type, &)
-      size = type.size
+      size = @llvm_typer.size_of(type)
 
       if malloc_fun = yield
-        pointer = call malloc_fun, size
+        pointer = call malloc_fun, int64(size)
       else
         pointer = call c_malloc_fun, size_t(size)
       end
@@ -2350,7 +2368,7 @@ module Crystal
     end
 
     def generic_array_malloc(type, count, &)
-      size = builder.mul type.size, count
+      size = builder.mul int64(@llvm_typer.size_of(type)), count
 
       if malloc_fun = yield
         pointer = call malloc_fun, size

@@ -7,6 +7,7 @@ lib LibC
   SOCK_STREAM    =      1
   SOL_SOCKET     = 0xffff
   SO_BROADCAST   = 0x0020
+  SO_ERROR       = 0x1007
   SO_KEEPALIVE   = 0x0008
   SO_LINGER      = 0x0080
   SO_RCVBUF      = 0x1002

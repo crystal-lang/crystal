@@ -8,7 +8,7 @@ struct Crystal::EventLoop::IoUring::Event
   end
 
   getter type : Type
-  getter fiber : Fiber
+  getter! fiber : Fiber
   property! res : Int32
   property! wake_at : Time::Instant?
 

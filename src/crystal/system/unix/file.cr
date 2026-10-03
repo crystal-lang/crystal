@@ -79,24 +79,25 @@ module Crystal::System::File
     info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
   end
 
-  def self.exists?(path)
-    accessible?(path, LibC::F_OK)
+  def self.exists?(path, *, follow_symlinks = true)
+    accessible?(path, LibC::F_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.readable?(path) : Bool
-    accessible?(path, LibC::R_OK)
+  def self.readable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::R_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.writable?(path) : Bool
-    accessible?(path, LibC::W_OK)
+  def self.writable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::W_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.executable?(path) : Bool
-    accessible?(path, LibC::X_OK)
+  def self.executable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::X_OK, follow_symlinks: follow_symlinks)
   end
 
-  private def self.accessible?(path, flag)
-    LibC.access(path.check_no_null_byte, flag) == 0
+  private def self.accessible?(path, mode, *, follow_symlinks = true)
+    flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
+    LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)

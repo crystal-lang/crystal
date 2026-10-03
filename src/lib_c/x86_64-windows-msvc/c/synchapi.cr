@@ -39,4 +39,7 @@ lib LibC
   fun CreateWaitableTimerExW(lpTimerAttributes : SECURITY_ATTRIBUTES*, lpTimerName : LPWSTR, dwFlags : DWORD, dwDesiredAccess : DWORD) : HANDLE
   fun SetWaitableTimer(hTimer : HANDLE, lpDueTime : LARGE_INTEGER*, lPeriod : LONG, pfnCompletionRoutine : PTIMERAPCROUTINE*, lpArgToCompletionRoutine : Void*, fResume : BOOL) : BOOL
   fun CancelWaitableTimer(hTimer : HANDLE) : BOOL
+
+  fun CreateSemaphoreA(lpSemaphoreAttributes : SECURITY_ATTRIBUTES*, lInitialCount : LONG, lMaximumCount : LONG, name : LPSTR) : HANDLE
+  fun ReleaseSemaphore(hSemaphore : HANDLE, lReleaseCount : LONG, lpPreviousCount : LONG*) : BOOL
 end

@@ -204,34 +204,6 @@ struct Crystal::System::Process
     {% end %}
   end
 
-  # Only used by deprecated `::Process.fork`
-  def self.fork
-    {% raise("Process fork is unsupported with multithreaded mode") unless flag?(:without_mt) %}
-
-    pid, errno = lock_write do
-      pthread_disable_cancelstate do
-        block_signals do
-          pid = LibC.fork
-          {pid, Errno.value}
-        end
-      end
-    end
-
-    case pid
-    when 0
-      # forked process
-      ::Process.after_fork_child_callbacks.each(&.call)
-
-      nil
-    when -1
-      # forking process: error
-      raise RuntimeError.from_os_error("fork", errno)
-    else
-      # forking process: success
-      pid
-    end
-  end
-
   private def self.block_signals(&)
     newmask = uninitialized LibC::SigsetT
     oldmask = uninitialized LibC::SigsetT
@@ -267,26 +239,6 @@ struct Crystal::System::Process
         LibC.pthread_setcancelstate(cancel_state, nil)
       end
     {% end %}
-  end
-
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  # Only used by deprecated `::Process.fork(&)` and compiler `fork_codegen`
-  def self.fork(&)
-    pid = fork
-    return pid if pid
-
-    begin
-      yield
-      LibC._exit 0
-    rescue ex
-      ex.inspect_with_backtrace STDERR
-      STDERR.flush
-      LibC._exit 1
-    ensure
-      LibC._exit 254 # not reached
-    end
   end
 
   def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}

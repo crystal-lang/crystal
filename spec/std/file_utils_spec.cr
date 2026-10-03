@@ -527,20 +527,46 @@ describe "FileUtils" do
       with_tempfile("mv-source", "mv-target") do |source_path, target_path|
         path1 = File.join(source_path, "a")
         path2 = File.join(source_path, "b")
-        path3 = File.join(source_path, "c", "sub")
 
-        test_with_string_and_path(path1, path2, path3, target_path) do |arg1, arg2, arg3, arg4|
+        test_with_string_and_path(path1, path2, target_path) do |arg1, arg2, arg3|
           FileUtils.mkdir_p([path1, path2, target_path])
           path1 = File.join(path1, "a")
           path2 = File.join(path2, "b")
           File.write(path1, "")
           File.write(path2, "")
-          FileUtils.mv([arg1, arg2, arg3], arg4).should be_nil
+          FileUtils.mv([arg1, arg2], arg3).should be_nil
           File.exists?(path1).should be_false
           File.exists?(path2).should be_false
           File.exists?(File.join(target_path, "a")).should be_true
           File.exists?(File.join(target_path, "b")).should be_true
           FileUtils.rm_rf([path1, path2, target_path])
+        end
+      end
+    end
+
+    it "raises if a file doesn't exist" do
+      with_tempfile("mv-source", "target-path") do |source_path, target_path|
+        path1 = File.join(source_path, "a")
+        path2 = File.join(source_path, "b")
+        path3 = File.join(source_path, "c", "sub")
+
+        test_with_string_and_path(path1, path2, path3, target_path) do |arg1, arg2, arg3, arg4|
+          FileUtils.mkdir_p(File.dirname(path3))
+          FileUtils.mkdir_p(target_path)
+
+          File.write(path1, "")
+          File.write(path3, "")
+
+          expect_raises File::NotFoundError do
+            FileUtils.mv([arg1, arg2, arg3], arg4)
+          end
+
+          File.exists?(path1).should be_false
+          File.exists?(path2).should be_false
+          File.exists?(path3).should be_true
+          File.exists?(File.join(target_path, "a")).should be_true
+          File.exists?(File.join(target_path, "b")).should be_false
+          File.exists?(File.join(target_path, "c", "sub")).should be_false
         end
       end
     end
@@ -820,6 +846,22 @@ describe "FileUtils" do
           FileUtils.ln_sf(arg1, arg2)
           File.symlink?(path1).should be_false
           File.symlink?(path2).should be_true
+          FileUtils.rm_rf([path1, path2])
+        end
+      end
+    end
+
+    it "overwrites a destination dangling symlink" do
+      with_tempfile("ln_sf_src", "ln_sf_dst_dangling") do |path1, path2|
+        test_with_string_and_path(path1, path2) do |arg1, arg2|
+          FileUtils.touch([path1])
+          File.symlink(File.join(File.dirname(path2), "missing"), path2)
+          File.symlink?(path2).should be_true
+          File.exists?(path2).should be_false
+
+          FileUtils.ln_sf(arg1, arg2)
+          File.symlink?(path2).should be_true
+          File.realpath(path2).should eq File.realpath(path1)
           FileUtils.rm_rf([path1, path2])
         end
       end
