@@ -54,7 +54,7 @@ require "c/sys/socket"
 require "./io_uring/*"
 require "./timers"
 
-{% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+{% unless flag?(:without_mt) %}
   # Each scheduler has its own ring, so we can avoid mutexes around the
   # submission queue for example (Linux 6.13+) and otherwise try to make sure
   # the lock is only slightly contented.
@@ -82,9 +82,7 @@ require "./timers"
       end
     end
   end
-{% end %}
 
-{% unless flag?(:without_mt) %}
   # We must cancel pending R/W operations before we close the fd:
   #
   # 1. Closing a fd doesn't interrupt pending reads and writes in the linux
@@ -195,7 +193,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   @main_ring : Ring
   @tick = Atomic(UInt32).new(0_u32)
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # compiler can't type the ivar and fails to notice that it's always
     # initialized properly because of the compile time flag
     @rings = uninitialized Array(Ring?)
@@ -205,7 +203,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @main_ring = self.class.create_ring
     @timers = Timers(Event).new
 
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% unless flag?(:without_mt) %}
       @rings = Array(Ring?).new(parallelism) { nil }
       @rings[0] = @main_ring
     {% end %}
@@ -215,7 +213,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   private def ring : Ring
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext::Scheduler.current.__evloop_ring
     {% else %}
       @main_ring
@@ -223,7 +221,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   end
 
   private def ring? : Ring?
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext::Scheduler.current?.try(&.__evloop_ring?)
     {% else %}
       @main_ring
@@ -241,7 +239,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     enqueued
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     def run(blocking : Bool, & : Fiber ->) : Nil
       system_run(blocking) { |fiber| yield fiber }
     end
@@ -317,7 +315,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     Crystal.trace :evloop, "run", blocking: blocking
     enqueued = 0
 
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% unless flag?(:without_mt) %}
       # dereference @rings once (it may be replaced in parallel)
       rings = @rings
 
@@ -472,7 +470,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   private def interrupt_impl : Bool
     # search a waiting ring to wakeup
     waiting_ring =
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         @rings.find(&.try(&.waiting?))
       {% else %}
         @main_ring

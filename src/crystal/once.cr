@@ -103,7 +103,7 @@ module Crystal
       fiber = Fiber.current
 
       waiter =
-        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        {% if !flag?(:without_mt) %}
           if fiber.execution_context?
             Waiter.new(fiber)
           else
