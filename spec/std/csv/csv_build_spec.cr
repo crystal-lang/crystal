@@ -38,6 +38,17 @@ describe CSV do
       end, %("hello,world"\n))
     end
 
+    ["\r", "\rvalue", "va\rlue", "value\r", "va\nlue", "va\r\nlue"].each do |value|
+      it "quotes line breaks in #{value.inspect}" do
+        output = CSV.build do |csv|
+          csv.row value, "tail"
+        end
+
+        output.should eq %("#{value}",tail\n)
+        CSV.parse(output).should eq [[value, "tail"]]
+      end
+    end
+
     it "builds with custom separator" do
       assert_prints(CSV.build(separator: ';') do |csv|
         csv.row do |row|
