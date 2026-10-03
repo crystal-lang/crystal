@@ -78,7 +78,20 @@ struct Float
     !nan? && !infinite?
   end
 
+  # Returns `self` modulo *other*, using floored division.
+  #
+  # The result has the same sign as *other*.
+  #
+  # ```
+  # 13.0.modulo(4.0)   # => 1.0
+  # -13.0.modulo(4.0)  # => 3.0
+  # 13.0.modulo(-4.0)  # => -3.0
+  # -13.0.modulo(-4.0) # => -1.0
+  # ```
+  #
+  # Raises `DivisionByZeroError` if *other* is zero.
   def modulo(other)
+    # fallback implementation; `Float32` and `Float64` override this
     if other == 0.0
       raise DivisionByZeroError.new
     else
@@ -86,7 +99,40 @@ struct Float
     end
   end
 
+  # :ditto:
+  #
+  # This overload only applies to a `Float` that does not implement `#modulo`
+  # itself, such as `BigFloat`. `self - other * (self // other)` cannot be used
+  # when *other* is not finite: `self // other` is then zero or a not-a-number,
+  # and *other* times either one is a not-a-number for every dividend.
+  def modulo(other : Float::Primitive)
+    raise DivisionByZeroError.new if other == 0
+    return self.class.new(other) if other.nan?
+
+    if infinity = other.infinite?
+      # a finite dividend already lies inside the interval spanned by an
+      # infinite divisor when the two share a sign, and is one whole *other*
+      # away from it when they do not
+      return self == 0 || (self > 0) == (infinity > 0) ? self : self.class.new(other)
+    end
+
+    self - other * (self // other)
+  end
+
+  # Returns `self` remainder *other*, using truncated division.
+  #
+  # The result has the same sign as `self`.
+  #
+  # ```
+  # 13.0.remainder(4.0)   # => 1.0
+  # -13.0.remainder(4.0)  # => -1.0
+  # 13.0.remainder(-4.0)  # => 1.0
+  # -13.0.remainder(-4.0) # => -1.0
+  # ```
+  #
+  # Raises `DivisionByZeroError` if *other* is zero.
   def remainder(other)
+    # fallback implementation; `Float32` and `Float64` override this
     if other == 0.0
       raise DivisionByZeroError.new
     else
@@ -97,6 +143,26 @@ struct Float
 
       mod - other
     end
+  end
+
+  # :ditto:
+  #
+  # This overload only applies to a `Float` that does not implement
+  # `#remainder` itself, such as `BigFloat`. See `#modulo` for why a divisor
+  # that is not finite cannot go through the general formula.
+  def remainder(other : Float::Primitive)
+    raise DivisionByZeroError.new if other == 0
+    return self.class.new(other) if other.nan?
+    # a truncated remainder is the dividend whenever the divisor is larger in
+    # magnitude, and an infinity always is
+    return self if other.infinite?
+
+    mod = self % other
+    return self.class.zero if mod == 0.0
+    return mod if self > 0 && other > 0
+    return mod if self < 0 && other < 0
+
+    mod - other
   end
 
   # Writes this float to the given *io* in the given *format*.
@@ -275,6 +341,32 @@ struct Float32
   # Returns the greatest `Float32` that is less than `self`.
   def prev_float : Float32
     LibM.nextafter_f32(self, -INFINITY)
+  end
+
+  # :inherit:
+  def modulo(other : Number::Primitive) : Float32
+    raise DivisionByZeroError.new if other == 0
+
+    # `to_f32!` rather than `to_f32`, so that a divisor too large for `Float32`
+    # becomes an infinity instead of raising `OverflowError`
+    divisor = other.to_f32!
+    mod = LibM.fmod_f32(self, divisor)
+    if mod == 0
+      # `fmod` returns a zero with the sign of `self`, but a floored modulo
+      # must carry the sign of *other*
+      divisor < 0 ? -0.0_f32 : 0.0_f32
+    elsif (mod < 0) != (divisor < 0)
+      mod + divisor
+    else
+      mod
+    end
+  end
+
+  # :inherit:
+  def remainder(other : Number::Primitive) : Float32
+    raise DivisionByZeroError.new if other == 0
+
+    LibM.fmod_f32(self, other.to_f32!)
   end
 
   def **(other : Int32)
@@ -493,6 +585,30 @@ struct Float64
   # Returns the greatest `Float64` that is less than `self`.
   def prev_float : Float64
     LibM.nextafter_f64(self, -INFINITY)
+  end
+
+  # :inherit:
+  def modulo(other : Number::Primitive) : Float64
+    raise DivisionByZeroError.new if other == 0
+
+    divisor = other.to_f64
+    mod = LibM.fmod_f64(self, divisor)
+    if mod == 0
+      # `fmod` returns a zero with the sign of `self`, but a floored modulo
+      # must carry the sign of *other*
+      divisor < 0 ? -0.0 : 0.0
+    elsif (mod < 0) != (divisor < 0)
+      mod + divisor
+    else
+      mod
+    end
+  end
+
+  # :inherit:
+  def remainder(other : Number::Primitive) : Float64
+    raise DivisionByZeroError.new if other == 0
+
+    LibM.fmod_f64(self, other.to_f64)
   end
 
   def **(other : Int32)
