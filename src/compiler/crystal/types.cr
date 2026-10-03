@@ -1280,6 +1280,13 @@ module Crystal
         if parent.is_a?(GenericClassInstanceType) && parent.subclasses.reject!(&.same?(self))
           replacement.add_subclass(self)
         end
+
+        # A metaclass created before now, for example by a macro lookup in the
+        # class body, took the metaclass of the old superclass as its own.
+        metaclass = @metaclass
+        if metaclass.is_a?(MetaclassType) && metaclass.superclass.same?(parent.metaclass)
+          metaclass.replace_superclass(replacement.metaclass)
+        end
       end
       super
     end
@@ -3001,6 +3008,17 @@ module Crystal
 
     def metaclass
       program.class_type
+    end
+
+    # Replaces the superclass with *superclass*, the metaclass the superclass
+    # of `instance_type` has now. See `ClassType#replace_generic_parent`.
+    def replace_superclass(superclass : Type) : Nil
+      old_superclass = @superclass
+      @superclass = superclass
+      @depth = superclass.depth + 1
+      if index = parents.index(&.same?(old_superclass))
+        parents[index] = superclass
+      end
     end
 
     delegate abstract?, generic_nest, lookup_new_in_ancestors?,

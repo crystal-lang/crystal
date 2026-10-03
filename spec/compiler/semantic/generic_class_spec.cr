@@ -1388,6 +1388,23 @@ describe "Semantic: generic class" do
       CRYSTAL
   end
 
+  it "matches a generic superclass whose type argument gains a subclass later, after a macro call in the subclass" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Base(T)
+        macro rule(name)
+          def {{name.id}}; end
+        end
+      end
+      class Thing; end
+      class Sub < Base(Thing)
+        rule foo
+      end
+      class Later < Thing; end
+
+      x : Base(Thing).class = Sub
+      CRYSTAL
+  end
+
   it "reopens a class whose generic superclass's type argument gained a subclass" do
     assert_no_errors <<-CRYSTAL
       abstract class Base(T); end
