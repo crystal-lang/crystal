@@ -1,7 +1,12 @@
 module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
-    DEFAULT_EVERY              = 10.milliseconds
+    # the monitor thread ticks every 10ms when the process is active; when the
+    # process becomes idle, the interval doubles until it reaches 1s where the
+    # monitor thread goes to sleep, after ~1.27s.
+    DEFAULT_EVERY = 10.milliseconds
+    MAXIMUM_EVERY = 1.second
+
     INCREASE_PARALLELISM_EVERY = 100.milliseconds
     COLLECT_STACKS_EVERY       = 5.seconds
 
@@ -16,7 +21,25 @@ module Fiber::ExecutionContext
     def initialize(@every = DEFAULT_EVERY)
       @collect_stacks_next = Crystal::System::Time.instant + COLLECT_STACKS_EVERY
       @increase_parallelism_next = Crystal::System::Time.instant + INCREASE_PARALLELISM_EVERY
+
+      @busy = true
+      @signaled = Atomic(Bool).new(false)
+
+      # OPTIMIZE: use futex or alike for a lock-free wait/wake
+      @mutex = Thread::Mutex.new
+      @condition = Thread::ConditionVariable.new
+
       @thread = Thread.new(name: "SYSMON") { run_loop }
+    end
+
+    def wake : Nil
+      return if @signaled.get(:relaxed)
+
+      @mutex.synchronize do
+        unless @signaled.swap(true, :relaxed)
+          @condition.signal
+        end
+      end
     end
 
     # TODO: maybe yield (ST/MT): detect schedulers that have been stuck running
@@ -42,6 +65,7 @@ module Fiber::ExecutionContext
         transfer_schedulers_blocked_on_syscall
         increase_parallelism(now)
         collect_stacks(now)
+        @busy ||= !system_idle?
       end
     end
 
@@ -49,21 +73,54 @@ module Fiber::ExecutionContext
     # precision and overall OS load), without counting the time to execute the
     # block.
     private def every(&)
-      remaining = @every
+      every = @every
+      # elapsed = Time::Span.zero
+      start = Crystal::System::Time.instant
 
       loop do
-        Thread.sleep(remaining)
+        @mutex.synchronize do
+          if @busy || @signaled.lazy_get
+            # noticed activity or awoken: reset to default every
+            every = @every
+          else
+            # idle and not signaled: double the current delay
+            every *= 2
+          end
 
+          if every > MAXIMUM_EVERY
+            # we reached the maximum interval: go to sleep
+            Crystal.trace :sched, "sysmon.sleep"
+            @condition.wait(@mutex)
+          else
+            # regular interval or drifting away; calculate remaining time for
+            # more steady wakeups (minimize exponential delays)
+            timeout = (start + every - Crystal::System::Time.instant).clamp(Time::Span.zero..)
+            Crystal.trace :sched, "sysmon.wait", timeout: timeout
+            @condition.wait(@mutex, timeout) { }
+          end
+
+          # reset to default every after wakeup
+          if @signaled.lazy_get
+            @signaled.lazy_set(false)
+            every = @every
+          end
+        end
+
+        @busy = false
         start = Crystal::System::Time.instant
         yield(start)
-        stop = Crystal::System::Time.instant
-
-        # calculate remaining time for more steady wakeups (minimize exponential
-        # delays)
-        remaining = (start + @every - stop).clamp(Time::Span.zero..)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
+    end
+
+    private def system_idle? : Bool
+      ExecutionContext.each do |execution_context|
+        execution_context.each_scheduler do |scheduler|
+          return false unless scheduler.idle?
+        end
+      end
+      true
     end
 
     # Iterates each ExecutionContext::Scheduler and transfers the Scheduler for
@@ -80,6 +137,8 @@ module Fiber::ExecutionContext
           Crystal.trace :sched, "reassociate",
             scheduler: scheduler,
             syscall: scheduler.thread.current_fiber
+
+          @busy = true
 
           pool = ExecutionContext.thread_pool
           pool.detach(scheduler.thread)
@@ -105,11 +164,11 @@ module Fiber::ExecutionContext
 
         # how many schedulers are active (running, spinning)?
         active = execution_context.size
-        return if active == 0
+        next if active == 0
 
         # how many schedulers can be woken?
         available = capacity - active
-        return if available == 0
+        next if available == 0
 
         # don't wake more schedulers than currently active (scale active
         # parallelism to a factor of 2 max)
@@ -130,7 +189,10 @@ module Fiber::ExecutionContext
           count = available
         end
 
-        execution_context.wake_scheduler(count)
+        if count > 0
+          @busy = true
+          execution_context.wake_scheduler(count)
+        end
       end
     end
 

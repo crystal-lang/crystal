@@ -40,6 +40,17 @@ module Fiber::ExecutionContext
     include ExecutionContext
     include ExecutionContext::Scheduler
 
+    private enum State
+      RUNNING  = 0
+      WAITING
+      SYSCALL
+      SHUTDOWN
+
+      def idle?
+        !running?
+      end
+    end
+
     getter name : String
 
     @mutex = Thread::Mutex.new
@@ -54,9 +65,8 @@ module Fiber::ExecutionContext
       evloop
     end
 
-    getter? running : Bool = true
     @enqueued = false
-    @waiting = false
+    @state = State::RUNNING
 
     @wait_list = Crystal::PointerLinkedList(Fiber::PointerLinkedListNode).new
     @exception : Exception?
@@ -69,6 +79,10 @@ module Fiber::ExecutionContext
       @main_fiber = Fiber.new(@name, allocate_stack, self) { run }
       @thread = start_thread
       ExecutionContext.execution_contexts.push(self)
+    end
+
+    def running? : Bool
+      !@state.shutdown?
     end
 
     private def allocate_stack : Stack
@@ -131,13 +145,13 @@ module Fiber::ExecutionContext
       end
 
       @mutex.synchronize do
-        raise RuntimeError.new("Can't resume dead fiber") unless @running
+        raise RuntimeError.new("Can't resume dead fiber") unless running?
 
         @enqueued = true
 
-        if @waiting
+        if @state.waiting?
           # wake up the blocked thread
-          @waiting = false
+          transition_to :running
 
           if event_loop = @event_loop
             event_loop.interrupt
@@ -171,7 +185,8 @@ module Fiber::ExecutionContext
       @mutex.synchronize do
         loop do
           return if check_enqueued?
-          @waiting = true
+
+          transition_to :waiting
           @condition.wait(@mutex)
         end
       end
@@ -181,7 +196,8 @@ module Fiber::ExecutionContext
       loop do
         @mutex.synchronize do
           return if check_enqueued?
-          @waiting = true
+
+          transition_to :waiting
         end
 
         done = true
@@ -203,15 +219,15 @@ module Fiber::ExecutionContext
 
       # cleanup
       @mutex.synchronize do
-        @waiting = false
+        transition_to :running
         @enqueued = false
       end
     end
 
     private def check_enqueued?
       if @enqueued
+        transition_to :running
         @enqueued = false
-        @waiting = false
         true
       else
         false
@@ -232,7 +248,7 @@ module Fiber::ExecutionContext
       @exception = exception
     ensure
       @mutex.synchronize do
-        @running = false
+        transition_to :shutdown
         @wait_list.consume_each(&.value.enqueue)
       end
 
@@ -256,11 +272,11 @@ module Fiber::ExecutionContext
     # ctx.wait # => re-raises "fail"
     # ```
     def wait : Nil
-      if @running
+      if running?
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
         running = @mutex.synchronize do
-          @wait_list.push(pointerof(node)) if @running
-          @running
+          @wait_list.push(pointerof(node)) if running?
+          running?
         end
         Fiber.suspend if running
       end
@@ -287,14 +303,26 @@ module Fiber::ExecutionContext
       io << ' ' << name << '>'
     end
 
+    protected def idle? : Bool
+      @state.idle?
+    end
+
+    private def transition_to(new_state : State)
+      if @state.idle? && !new_state.idle?
+        ExecutionContext.wake_monitor
+      end
+      @state = new_state
+    end
+
     def status : String
-      if @waiting
-        "event-loop"
-      elsif @syscall == SYSCALL_FLAG
-        "syscall"
-      elsif @running
+      case @state
+      in .running?
         "running"
-      else
+      in .waiting?
+        "event-loop"
+      in .syscall?
+        "syscall"
+      in .shutdown?
         "shutdown"
       end
     end
@@ -302,18 +330,13 @@ module Fiber::ExecutionContext
     # :nodoc:
     #
     # An isolated fiber is locked to its system thread and we expect blocking
-    # syscalls to block the fiber and the thread.
+    # syscalls to block the fiber and the thread. Instead, we merely record the
+    # state change.
     def syscall(& : -> U) : U forall U
+      transition_to :syscall
       yield
-    end
-
-    protected def enter_syscall : UInt32
-      @syscall.lazy_set(SYSCALL_FLAG)
-    end
-
-    protected def leave_syscall?(value : UInt32) : Bool
-      @syscall.lazy_set(0_u32)
-      true
+    ensure
+      transition_to :running
     end
   end
 end
