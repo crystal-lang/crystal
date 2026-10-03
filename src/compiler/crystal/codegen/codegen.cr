@@ -2348,12 +2348,12 @@ module Crystal
     end
 
     def generic_malloc(type, &)
-      size = size_t(@llvm_typer.size_of(type))
+      size = @llvm_typer.size_of(type)
 
       if malloc_fun = yield
-        pointer = call malloc_fun, size
+        pointer = call malloc_fun, int64(size)
       else
-        pointer = call c_malloc_fun, size
+        pointer = call c_malloc_fun, size_t(size)
       end
 
       pointer_cast pointer, type.pointer
@@ -2368,7 +2368,7 @@ module Crystal
     end
 
     def generic_array_malloc(type, count, &)
-      size = builder.mul size_t(@llvm_typer.size_of(type)), count
+      size = builder.mul int64(@llvm_typer.size_of(type)), count
 
       if malloc_fun = yield
         pointer = call malloc_fun, size
