@@ -2640,6 +2640,18 @@ module Crystal
           end
         end
       end
+    elsif name.includes?('@')
+      # `@` is GNU symbol versioning in ELF dynamic symbols (`name@version`).
+      # Spell it `.40.`, matching the MSVC branch, and copy every other character.
+      String.build do |str|
+        name.each_char do |char|
+          if char == '@'
+            str << ".40."
+          else
+            str << char
+          end
+        end
+      end
     else
       name
     end
