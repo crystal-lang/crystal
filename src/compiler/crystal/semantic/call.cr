@@ -273,18 +273,46 @@ class Crystal::Call
     end
 
     if matches.empty?
-      defined_method_missing = owner.check_method_missing(signature, self)
-      if defined_method_missing
-        matches = owner.lookup_matches(signature, analyze_all: with_autocast)
-      elsif with_scope = @with_scope
-        defined_method_missing = with_scope.check_method_missing(signature, self)
-        if defined_method_missing
-          matches = with_scope.lookup_matches(signature, analyze_all: with_autocast)
-          @uses_with_scope = true
+      # Don't expand `method_missing` again for a method that is already
+      # being defined and analyzed through a `method_missing` expansion:
+      # the expansion invokes that same method with a signature that
+      # matches no def, so expanding again would recurse forever until
+      # the stack overflows. Let the lookup fail to report a proper error.
+      expanding_method_missing = program.expanding_method_missing?(owner, def_name)
+      method_missing_pushed = 0
+      unless expanding_method_missing
+        program.method_missing_expansions << {owner, def_name}
+        method_missing_pushed += 1
+        if (with_scope = @with_scope)
+          program.method_missing_expansions << {with_scope, def_name}
+          method_missing_pushed += 1
         end
+      end
+
+      begin
+        unless expanding_method_missing
+          defined_method_missing = owner.check_method_missing(signature, self)
+          if defined_method_missing
+            matches = owner.lookup_matches(signature, analyze_all: with_autocast)
+          elsif with_scope = @with_scope
+            defined_method_missing = with_scope.check_method_missing(signature, self)
+            if defined_method_missing
+              matches = with_scope.lookup_matches(signature, analyze_all: with_autocast)
+              @uses_with_scope = true
+            end
+          end
+        end
+
+        return finish_matches_in_type(owner, def_name, arg_types, named_args_types, matches, program_matches, with_autocast, signature, self_type)
+      ensure
+        method_missing_pushed.times { program.method_missing_expansions.pop }
       end
     end
 
+    finish_matches_in_type(owner, def_name, arg_types, named_args_types, matches, program_matches, with_autocast, signature, self_type)
+  end
+
+  private def finish_matches_in_type(owner, def_name, arg_types, named_args_types, matches, program_matches, with_autocast, signature, self_type)
     # Reject partial matches. Lookup in this method is intentionally
     # restricted to a single owner, so it requires full type coverage.
     partial_match = !matches.cover_all? && !owner.abstract_leaf?

@@ -308,6 +308,17 @@ module Crystal
     # in one branch of an `if` expression.
     getter(nil_var) { Var.new("<nil_var>", nil_type) }
 
+    # Tracks (type, method name) pairs for which a `method_missing` expansion
+    # is currently being defined and analyzed. An expansion whose generated
+    # method invokes that same method again with a signature that matches no
+    # def would trigger the expansion over and over, recursing forever until
+    # the stack overflows.
+    property(method_missing_expansions) { [] of {Type, String} }
+
+    def expanding_method_missing?(owner : Type, name : String) : Bool
+      method_missing_expansions.any? { |type, method| type.same?(owner) && method == name }
+    end
+
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
     private def define_crystal_constants
       if build_commit = Crystal::Config.build_commit

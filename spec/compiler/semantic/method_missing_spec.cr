@@ -110,4 +110,79 @@ describe "Semantic: method_missing" do
       end
       CRYSTAL
   end
+
+  it "errors instead of recursing when method_missing expansion calls same method with block and method takes no block" do
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'B#set!' (given 3, expected 2)"
+      class B
+        def set!(k : String, v : String)
+        end
+
+        macro method_missing(call)
+          set!({{ call.name.id.stringify }}, {{ call.args.splat }}) do
+            {{ call.block.body }}
+          end
+        end
+      end
+
+      B.new.comments nil do
+        1
+      end
+      CRYSTAL
+  end
+
+  it "errors instead of recursing when method_missing expansion calls same method with mismatching arg types" do
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'B#set!' (given 3, expected 2)"
+      class B
+        def set!(k : String, v : String, &)
+        end
+
+        macro method_missing(call)
+          set!({{ call.name.id.stringify }}, {{ call.args.splat }}) do
+            {{ call.block.body }}
+          end
+        end
+      end
+
+      B.new.comments nil do
+        1
+      end
+      CRYSTAL
+  end
+
+  it "compiles method_missing expansion that forwards a block to a method taking a block" do
+    assert_type(<<-CRYSTAL) { int32 }
+      class B
+        def set!(k, v, &)
+          yield
+        end
+
+        macro method_missing(call)
+          set!({{ call.name.id.stringify }}, {{ call.args.splat }}) do
+            {{ call.block.body }}
+          end
+        end
+      end
+
+      B.new.comments nil do
+        1
+      end
+      CRYSTAL
+  end
+
+  it "allows method_missing to define method of same name with different arity from another call site" do
+    assert_type(<<-CRYSTAL) { tuple_of([int32, int32]) }
+      class Foo
+        macro method_missing(call)
+          def {{call.name}}({{call.args.join(", ").id}})
+            {{call.args.size}}
+          end
+        end
+      end
+
+      foo = Foo.new
+      x = foo.bar(1)
+      y = foo.bar(1, 2)
+      {x, y}
+      CRYSTAL
+  end
 end
