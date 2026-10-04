@@ -38,9 +38,9 @@ describe "REPL module instance var initializers" do
       session.read_until("initial prompt", "icr:1>", 30.seconds)
 
       session.submit(%(class B123; include IO::Buffered; def initialize; end) \
-        %(; def unbuffered_read(slice : Bytes); 0; end) \
-        %(; def unbuffered_write(slice : Bytes); end) \
-        %(; def unbuffered_flush; end; def unbuffered_rewind; end; def unbuffered_close; end; end))
+                     %(; def unbuffered_read(slice : Bytes); 0; end) \
+                     %(; def unbuffered_write(slice : Bytes); end) \
+                     %(; def unbuffered_flush; end; def unbuffered_rewind; end; def unbuffered_close; end; end))
       session.read_until("class result", "=> nil", 30.seconds)
 
       session.submit(%(B123.new.sync?))

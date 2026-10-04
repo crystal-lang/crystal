@@ -21,7 +21,7 @@ describe "REPL require mid-session" do
       input: input, output: output, error: error)
 
     timed_out = false
-    watchdog = spawn do
+    spawn do
       sleep 60.seconds
       timed_out = true
       process.terminate rescue nil
