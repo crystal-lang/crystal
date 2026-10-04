@@ -362,6 +362,25 @@ struct Time
     start.elapsed
   end
 
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    # :nodoc:
+    class_setter fast_utc : Time = utc
+
+    # :nodoc:
+    class_setter fast_instant : Instant = instant
+
+    # Creates a new `Time` instance representing the current time from the
+    # coarse system clock in UTC.
+    #
+    # Magnitudes faster than `.utc` at the expense of precision (100ms).
+    class_getter fast_utc : Time
+
+    # Returns the current reading of the coarse monotonic clock.
+    #
+    # Magnitudes faster than `.instant` at the expense of precision (100ms).
+    class_getter fast_instant : Instant
+  {% end %}
+
   # Creates a new `Time` instance representing the current time from the
   # system clock observed in *location* (defaults to local time zone).
   def self.local(location : Location = Location.local) : Time
