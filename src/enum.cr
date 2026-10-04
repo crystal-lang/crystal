@@ -530,19 +530,16 @@ abstract struct Enum
                          max_charsize * 4
                        end
       %}
+      return nil if slice.size > {{ max_bytesize }}
       buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
       appender = buffer.to_unsafe.appender
-      byte_counter = 0
       reader = Char::Reader.new(slice)
       while reader.has_next?
         char = reader.current_char
         reader.next_char
 
         next if char == '-' || char == '_'
-        downcased = char.downcase
-        byte_counter += downcased.bytesize
-        return nil if byte_counter > {{ max_bytesize }}
-        downcased.each_byte { |b| appender << b }
+        char.downcase.each_byte { |b| appender << b }
       end
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
