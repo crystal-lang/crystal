@@ -24,20 +24,29 @@
 # string # => "---\nfoo:\n- 1\n- 2\nbar:\n  baz: qux\n"
 # ```
 class YAML::Builder
+  include Budget
+
   @box : Void*
 
   # By default the maximum nesting of sequences/mappings is 99. Nesting more
   # than this will result in a YAML::Error. Changing the value of this property
   # allows more/less nesting.
-  property max_nesting = 99
+  @[Deprecated("Use YAML::Options to configure limits")]
+  def max_nesting
+    @options.max_nesting
+  end
+
+  @[Deprecated("Use YAML::Options to configure limits")]
+  def max_nesting=(max_nesting)
+    @options.max_nesting = max_nesting
+  end
 
   # Creates a `YAML::Builder` that will write to the given `IO`.
-  def initialize(@io : IO)
+  def initialize(@io : IO, @options = Options.new(max_nesting: 99))
     @box = Box.box(io)
     @emitter = Pointer(Void).malloc(LibYAML::EMITTER_SIZE).as(LibYAML::Emitter*)
     @event = LibYAML::Event.new
     @closed = false
-    @nesting = 0
     LibYAML.yaml_emitter_initialize(@emitter)
     LibYAML.yaml_emitter_set_unicode(@emitter, 1)
     LibYAML.yaml_emitter_set_output(@emitter, ->(data, buffer, size) {
@@ -50,8 +59,8 @@ class YAML::Builder
   # Creates a `YAML::Builder` that writes to *io* and yields it to the block.
   #
   # After returning from the block the builder is closed.
-  def self.build(io : IO, & : self ->) : Nil
-    builder = new(io)
+  def self.build(io : IO, options = Options.new, & : self ->) : Nil
+    builder = new(io, options)
     yield builder ensure builder.close
   end
 
@@ -105,13 +114,11 @@ class YAML::Builder
   def start_sequence(anchor : String? = nil, tag : String? = nil, style : YAML::SequenceStyle = YAML::SequenceStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit sequence_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
-    increase_nesting
   end
 
   # Ends a sequence.
   def end_sequence : Nil
     emit sequence_end
-    decrease_nesting
   end
 
   # Starts a sequence, invokes the block, and the ends it.
@@ -124,13 +131,11 @@ class YAML::Builder
   def start_mapping(anchor : String? = nil, tag : String? = nil, style : YAML::MappingStyle = YAML::MappingStyle::ANY) : Nil
     implicit = tag ? 0 : 1
     emit mapping_start, get_anchor(anchor), string_to_unsafe(tag), implicit, style
-    increase_nesting
   end
 
   # Ends a mapping.
   def end_mapping : Nil
     emit mapping_end
-    decrease_nesting
   end
 
   # Starts a mapping, invokes the block, and then ends it.
@@ -155,7 +160,7 @@ class YAML::Builder
   # ```
   def alias(anchor : String) : Nil
     LibYAML.yaml_alias_event_initialize(pointerof(@event), anchor)
-    yaml_emit("alias")
+    yaml_emit("alias", EventKind::ALIAS)
   end
 
   # Emits the scalar `"<<"` followed by an alias to the given *anchor*.
@@ -206,14 +211,15 @@ class YAML::Builder
 
   private macro emit(event_name, *args)
     LibYAML.yaml_{{event_name}}_event_initialize(pointerof(@event), {{args.splat}})
-    yaml_emit({{event_name.stringify}})
+    yaml_emit({{event_name.stringify}}, EventKind::{{event_name.stringify.upcase.id}})
   end
 
-  private def yaml_emit(event_name)
+  private def yaml_emit(event_name, event_kind)
     ret = LibYAML.yaml_emitter_emit(@emitter, pointerof(@event))
     if ret != 1
       raise YAML::Error.new(build_libyaml_message(event_name))
     end
+    add_budget(event_kind)
   end
 
   private def build_libyaml_message(event_name)
@@ -225,15 +231,8 @@ class YAML::Builder
     end
   end
 
-  private def increase_nesting
-    @nesting += 1
-    if @nesting > @max_nesting
-      raise YAML::Error.new("Nesting of #{@nesting} is too deep")
-    end
-  end
-
-  private def decrease_nesting
-    @nesting -= 1
+  def raise(msg : String)
+    ::raise Error.new(msg)
   end
 end
 
@@ -254,17 +253,17 @@ module YAML
   # end
   # string # => "---\nfoo:\n- 1\n- 2\n"
   # ```
-  def self.build(&)
+  def self.build(options = Options.new(max_nesting: 99), &)
     String.build do |str|
-      build(str) do |yaml|
+      build(str, options) do |yaml|
         yield yaml
       end
     end
   end
 
   # Writes YAML into the given `IO`. A `YAML::Builder` is yielded to the block.
-  def self.build(io : IO, &) : Nil
-    YAML::Builder.build(io) do |yaml|
+  def self.build(io : IO, options = Options.new(max_nesting: 99), &) : Nil
+    YAML::Builder.build(io, options) do |yaml|
       yaml.stream do
         yaml.document do
           yield yaml
