@@ -510,14 +510,25 @@ class Crystal::Repl::Context
     # with the current flags (dlopen'ing anything new) and retry once. If
     # the flags didn't change, the symbol genuinely doesn't exist.
     #
-    # The rebuild spawns sub-processes (pkg-config, backtick `ldflags`)
-    # which must be waited on with the native signal routing: the
+    # The rebuild spawns sub-processes (pkg-config, backtick `ldflags`) which
+    # on Unix must be waited on with the native signal routing: the
     # interpreted signal-loop is parked while we're compiling.
-    Crystal::System::Signal.with_native_writer do
-      raise ex if program.lib_flags == @loader_lib_flags
-      @loader = build_loader
-    end
+    {% if flag?(:unix) %}
+      Crystal::System::Signal.with_native_writer do
+        rebuild_loader(ex)
+      end
+    {% else %}
+      rebuild_loader(ex)
+    {% end %}
     loader.find_symbol(name)
+  end
+
+  # Replaces `@loader` with one built from the current `program.lib_flags`,
+  # unless they're unchanged since the current loader was built — in that
+  # case the symbol genuinely doesn't exist and the error is re-raised.
+  private def rebuild_loader(ex : Loader::LoadError)
+    raise ex if program.lib_flags == @loader_lib_flags
+    @loader = build_loader
   end
 
   def align(size : Int32) : Int32
