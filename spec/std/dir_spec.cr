@@ -719,6 +719,14 @@ describe "Dir" do
     filenames.should contain("f1.txt")
   end
 
+  it "rewinds" do
+    Dir.open(datapath("dir")) do |dir|
+      first = dir.read
+      dir.rewind
+      dir.read.should eq(first)
+    end
+  end
+
   describe "#path" do
     it "returns init value" do
       path = datapath("dir")
