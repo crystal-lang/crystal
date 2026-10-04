@@ -85,6 +85,8 @@ class File::AccessDeniedError < File::Error
   def self.os_error?(error)
     error.in?(
       Errno::EACCES,
+      # Sandboxes and macOS privacy protection deny access with EPERM
+      Errno::EPERM,
       WinError::ERROR_ACCESS_DENIED,
       WinError::ERROR_PRIVILEGE_NOT_HELD,
     )
