@@ -679,6 +679,18 @@ module Math
   end
 end
 
+module Random
+  private def rand_range(range : Range(BigFloat, BigFloat)) : BigFloat
+    span = range.end - range.begin
+    if range.exclusive?
+      return range.begin + span*rand(1.0) if span > 0
+    else
+      return range.begin + span*rand if span >= 0
+    end
+    raise ArgumentError.new "Invalid range for rand: #{range}"
+  end
+end
+
 # :nodoc:
 struct String::Formatter(A)
   def int(flags, arg : BigFloat) : Nil
