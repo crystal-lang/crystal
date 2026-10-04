@@ -67,23 +67,22 @@ module Crystal
     end
 
     protected def self.exec(flag : Bool*, &)
-      @@spin.lock
+      while true
+        @@spin.lock
 
-      if flag.value
-        @@spin.unlock
-      elsif operation = processing?(flag)
-        check_reentrancy(operation)
-        wait_initializer(operation)
-      else
-        run_initializer(flag) { yield }
+        if flag.value
+          @@spin.unlock
+          return
+        elsif operation = processing?(flag)
+          check_reentrancy(operation)
+          # the initializer may fail, in which case the flag is still unset
+          # once it resumes us, and we try to initialize again
+          wait_initializer(operation)
+        else
+          run_initializer(flag) { yield }
+          return
+        end
       end
-
-      # safety check, and allows to safely call `Intrinsics.unreachable` in
-      # `__crystal_once`
-      return if flag.value
-
-      System.print_error "BUG: failed to initialize class variable or constant\n"
-      LibC._exit(1)
     end
 
     private def self.processing?(flag)
@@ -123,19 +122,26 @@ module Crystal
       waiter.suspend
     end
 
+    # Runs the initializer, then sets *flag*. The operation is on the stack, so
+    # it must leave the list even when the initializer raises, or a later
+    # lookup would read it after the stack frame is gone.
     private def self.run_initializer(flag, &)
       operation = Operation.new(flag, Fiber.current)
       @@operations.push pointerof(operation)
       @@spin.unlock
 
-      yield
+      initialized = false
+      begin
+        yield
+        initialized = true
+      ensure
+        @@spin.lock
+        flag.value = true if initialized
+        @@operations.delete pointerof(operation)
+        @@spin.unlock
 
-      @@spin.lock
-      flag.value = true
-      @@operations.delete pointerof(operation)
-      @@spin.unlock
-
-      operation.resume_all
+        operation.resume_all
+      end
     end
   end
 
