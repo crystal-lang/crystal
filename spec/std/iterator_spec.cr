@@ -700,7 +700,7 @@ describe Iterator do
 
   describe "uniq" do
     it "without block" do
-      iter = (1..8).each.map { |x| x % 3 }.uniq
+      iter = (1..8).each.map { |x| x % 3 }.uniq # ameba:disable Performance/ChainedCallWithNoBang
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(0)

@@ -1,4 +1,4 @@
-{% skip_file if flag?(:without_interpreter) %}
+{% skip_file if flag?(:without_interpreter) || flag?(:windows) %}
 
 require "./spec_helper"
 require "./repl_pty_spec_helper"
@@ -13,7 +13,9 @@ require "./repl_pty_spec_helper"
 
 describe "REPL type-level instance var initializers" do
   it "generic class initializer is not executed when the class is defined" do
-    session = ReplPtySession.new(ReplPty.compiler_bin)
+    bin = ReplPty.compiler_bin
+    ReplPty.check_repl_bin!(bin)
+    session = ReplPtySession.new(bin)
     begin
       session.read_until("initial prompt", "icr:1>", 30.seconds)
 
@@ -29,7 +31,9 @@ describe "REPL type-level instance var initializers" do
   end
 
   it "non-generic class initializer is not executed when the class is defined" do
-    session = ReplPtySession.new(ReplPty.compiler_bin)
+    bin = ReplPty.compiler_bin
+    ReplPty.check_repl_bin!(bin)
+    session = ReplPtySession.new(bin)
     begin
       session.read_until("initial prompt", "icr:1>", 30.seconds)
 

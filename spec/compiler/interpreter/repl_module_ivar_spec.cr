@@ -1,4 +1,4 @@
-{% skip_file if flag?(:without_interpreter) %}
+{% skip_file if flag?(:without_interpreter) || flag?(:windows) %}
 
 require "./spec_helper"
 require "./repl_pty_spec_helper"
@@ -14,7 +14,9 @@ require "./repl_pty_spec_helper"
 
 describe "REPL module instance var initializers" do
   it "class including a module defined in an earlier expression" do
-    session = ReplPtySession.new(ReplPty.compiler_bin)
+    bin = ReplPty.compiler_bin
+    ReplPty.check_repl_bin!(bin)
+    session = ReplPtySession.new(bin)
     begin
       session.read_until("initial prompt", "icr:1>", 30.seconds)
 
@@ -33,7 +35,9 @@ describe "REPL module instance var initializers" do
   end
 
   it "class including a prelude module (IO::Buffered) in a later expression" do
-    session = ReplPtySession.new(ReplPty.compiler_bin)
+    bin = ReplPty.compiler_bin
+    ReplPty.check_repl_bin!(bin)
+    session = ReplPtySession.new(bin)
     begin
       session.read_until("initial prompt", "icr:1>", 30.seconds)
 

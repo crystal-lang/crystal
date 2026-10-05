@@ -1,4 +1,4 @@
-{% skip_file if flag?(:without_interpreter) %}
+{% skip_file if flag?(:without_interpreter) || flag?(:windows) %}
 
 require "./spec_helper"
 require "./repl_pty_spec_helper"
@@ -37,7 +37,9 @@ describe "REPL require mid-session" do
   end
 
   it "require with C bindings after prelude (real REPL over a PTY)" do
-    session = ReplPtySession.new(ReplPty.compiler_bin)
+    bin = ReplPty.compiler_bin
+    ReplPty.check_repl_bin!(bin)
+    session = ReplPtySession.new(bin)
     begin
       session.read_until("initial prompt", "icr:1>", 30.seconds)
       session.submit(%(require "digest/sha1"))

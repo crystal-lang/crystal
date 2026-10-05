@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_interpreter) || flag?(:windows) %}
+
 # Shared helpers for specs that drive the real `crystal i` REPL over a
 # PTY (the reply line editor needs a TTY with a non-zero window size).
 #
@@ -11,6 +13,24 @@ module ReplPty
   def self.compiler_bin : String
     bin = File.expand_path("../../../.build/crystal", __DIR__)
     File.exists?(bin) ? bin : `sh -c 'command -v crystal'`.chomp
+  end
+
+  # Marks the current example pending unless `bin` can start a REPL. A
+  # compiler built without interpreter support (e.g. plain `make`) answers
+  # `crystal i --help` with an error on stderr and exit status 1, instead
+  # of printing usage and exiting 0 (the check happens before option
+  # parsing, so no REPL is spawned). These specs need an interpreter build
+  # of the *current* sources, e.g. `make interpreter=1`.
+  def self.check_repl_bin!(bin : String) : Nil
+    if bin.empty?
+      pending!("no crystal compiler found to drive the REPL over a PTY")
+    end
+    error = IO::Memory.new
+    process = Process.new(bin, {"i", "--help"}, error: error)
+    unless process.wait.success?
+      pending!("`#{bin}` cannot run `crystal i` (#{error.to_s.chomp.inspect}); " \
+               "build the compiler with interpreter support: `make interpreter=1`")
+    end
   end
 
   def self.env : Hash(String, String)
@@ -73,6 +93,9 @@ class ReplPtySession
         break
       rescue IO::TimeoutError
         # quiet window
+      rescue IO::Error
+        # EIO: the interpreter died and the slave side of the PTY closed.
+        break
       end
       return if output.includes?(want)
     end
