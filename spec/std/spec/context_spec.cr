@@ -34,7 +34,7 @@ describe Spec::ExampleGroup do
       child = Spec::ExampleGroup.new(root, "child", "f.cr", 1, 10, false, nil)
       grand_child = Spec::ExampleGroup.new(child, "grand_child", "f.cr", 2, 9, false, nil)
 
-      grand_child.report(:fail, "oops", "f.cr", 3, nil, nil)
+      grand_child.report_for_spec(:fail, "oops", "f.cr", 3, nil, nil)
 
       root.results_for(:fail).first.description.should eq("child grand_child oops")
     end

@@ -1,5 +1,15 @@
 require "../spec_helper"
 
+module Spec
+  class ExampleGroup
+    # Exposes the protected `#report` to the specs, which are outside the
+    # `Spec` namespace
+    def report_for_spec(status : Status, description, file, line, elapsed = nil, ex = nil)
+      report(status, description, file, line, elapsed, ex)
+    end
+  end
+end
+
 class FakeRootContext < Spec::RootContext
   def initialize
     super(Spec::CLI.new)

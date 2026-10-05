@@ -385,6 +385,117 @@ describe "Visibility modifiers" do
       CRYSTAL
   end
 
+  it "disallows invoking protected method from including type's own code (#16827)" do
+    assert_error <<-CRYSTAL, "protected method 'foo' called for NS::Foo"
+      module NS
+        module Mixin
+        end
+
+        class Foo
+          protected def foo
+            1
+          end
+        end
+      end
+
+      class Bar
+        include NS::Mixin
+
+        def bar
+          NS::Foo.new.foo
+        end
+      end
+
+      Bar.new.bar
+      CRYSTAL
+  end
+
+  it "disallows invoking protected method from top-level code when a namespaced module is included (#16827)" do
+    assert_error <<-CRYSTAL, "protected method 'foo' called for NS::Foo"
+      module NS
+        module Mixin
+        end
+
+        class Foo
+          protected def foo
+            1
+          end
+        end
+      end
+
+      include NS::Mixin
+
+      NS::Foo.new.foo
+      CRYSTAL
+  end
+
+  it "disallows invoking protected method from subclass's own code outside the superclass's namespace (#16827)" do
+    assert_error <<-CRYSTAL, "protected method 'foo' called for NS::Foo"
+      module NS
+        class Base
+        end
+
+        class Foo
+          protected def foo
+            1
+          end
+        end
+      end
+
+      class Bar < NS::Base
+        def bar
+          NS::Foo.new.foo
+        end
+      end
+
+      Bar.new.bar
+      CRYSTAL
+  end
+
+  it "allows invoking protected method from def defined in the same namespace and included elsewhere (#16827)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module NS
+        module Mixin
+          def bar
+            Foo.new.foo
+          end
+        end
+
+        class Foo
+          protected def foo
+            1
+          end
+        end
+      end
+
+      class Bar
+        include NS::Mixin
+      end
+
+      Bar.new.bar
+      CRYSTAL
+  end
+
+  it "allows invoking protected method of extended module" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module ClassMethods
+        protected def build
+          1
+        end
+      end
+
+      class Foo
+        extend ClassMethods
+
+        def self.build
+          super
+        end
+      end
+
+      Foo.build
+      CRYSTAL
+  end
+
   it "gives correct error on unknown call (#2838)" do
     assert_error <<-CRYSTAL, "undefined local variable or method 'foo'"
       private foo
