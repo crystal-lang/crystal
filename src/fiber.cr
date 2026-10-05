@@ -101,16 +101,49 @@ class Fiber
   end
 
   {% if flag?(:detect_deadlocks) %}
+    @__sync_locked : Nil | Sync::Deadlockable | Array(Sync::Deadlockable)
+
     # :nodoc:
-    #
-    # The list of locks currently held by this fiber.
-    getter(__sync_locked : Array(Sync::Deadlockable)) do
-      [] of Sync::Deadlockable
+    def __sync_locked(lock : Sync::Deadlockable) : Nil
+      case lock_or_locks = @__sync_locked
+      when Nil
+        @__sync_locked = lock
+      when Sync::Deadlockable
+        @__sync_locked = [lock_or_locks, lock]
+      when Array
+        lock_or_locks << lock
+      end
+    end
+
+    # :nodoc:
+    def __sync_unlocked(lock : Sync::Deadlockable) : Nil
+      if (locks = @__sync_locked).is_a?(Array)
+        locks.delete(lock)
+      else
+        @__sync_locked = nil
+      end
     end
 
     # :nodoc:
     def __sync_locked?(lock : Sync::Deadlockable) : Bool
-      @__sync_locked.try(&.includes?(lock)) || false
+      case lock_or_locks = @__sync_locked
+      when Sync::Deadlockable
+        lock_or_locks == lock
+      when Array
+        lock_or_locks.includes?(lock)
+      else
+        false
+      end
+    end
+
+    # :nodoc:
+    def each_sync_locked(&) : Nil
+      case lock_or_locks = @__sync_locked
+      when Sync::Deadlockable
+        yield lock_or_locks
+      when Array
+        lock_or_locks.each { |lock| yield lock }
+      end
     end
   {% end %}
 

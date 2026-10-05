@@ -79,7 +79,7 @@ module Sync
       @mu.rlock
 
       {% if flag?(:detect_deadlocks) %}
-        fiber.__sync_locked << self
+        fiber.__sync_locked(self)
       {% end %}
     end
 
@@ -92,7 +92,7 @@ module Sync
       @mu.runlock
 
       {% if flag?(:detect_deadlocks) %}
-        Fiber.current.__sync_locked.delete(self)
+        Fiber.current.__sync_unlocked(self)
       {% end %}
     end
 
@@ -115,7 +115,7 @@ module Sync
     def try_lock_write? : Bool
       if @mu.try_lock?
         unless @type.unchecked?
-          @locked_by = Fiber.current
+          self.locked_by = Fiber.current
           @counter = 1 if @type.reentrant?
         end
         true
@@ -211,7 +211,7 @@ module Sync
       @counter = counter if @type.reentrant?
 
       {% if flag?(:detect_deadlocks) %}
-        fiber.__sync_locked.push(self)
+        fiber.__sync_locked(self)
         detect_indirect_deadlock!(fiber) { unlock_write }
       {% end %}
     end
@@ -220,7 +220,7 @@ module Sync
       self.locked_by = nil
 
       {% if flag?(:detect_deadlocks) %}
-        Fiber.current.__sync_locked.delete(self)
+        Fiber.current.__sync_unlocked(self)
       {% end %}
     end
 

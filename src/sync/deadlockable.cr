@@ -51,7 +51,7 @@ module Sync
         return unless owner = locked_by?
 
         fiber = Fiber.current
-        fiber.__sync_locked.each do |owned_lock|
+        fiber.each_sync_locked do |owned_lock|
           # is the lock's owner waiting on any lock we own?
           if owned_lock.waiting?(owner)
             # deadlock! taint the other fiber, so both sides will raise an
