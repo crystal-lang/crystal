@@ -1,4 +1,5 @@
 name: Deploy new release
+
 on:
   push:
     tags:
@@ -8,7 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - name: Checkout
+      uses: actions/checkout@master
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1

@@ -736,6 +736,10 @@ module Crystal
         # In the case of an abstract struct we want to consider the union type
         # of all subtypes (if it's not abstract it's concrete and this will return self)
         virtual_type.remove_indirection
+      elsif void?
+        # Treat `Void` like `UInt8` so that methods like `Pointer(Void).malloc`
+        # behave like `Pointer(UInt8).malloc`
+        @program.uint8
       else
         devirtualize
       end
@@ -1003,6 +1007,11 @@ module Crystal
       unless parents.includes?(mod)
         parents.insert 0, mod
         mod.add_including_type(self)
+        if self.is_a?(GenericType)
+          # There might be existing instantiations of this generic type and
+          # we need to make sure they include the module, too (#8771).
+          self.backfill_including_type(mod)
+        end
       end
     end
 
@@ -1601,6 +1610,18 @@ module Crystal
     def each_instantiated_type(&)
       if types = @generic_types
         types.each_value { |type| yield type }
+      end
+    end
+
+    def backfill_including_type(mod : GenericModuleInstanceType)
+      each_instantiated_type do |instance|
+        mod.replace_type_parameters(instance).add_including_type(instance)
+      end
+    end
+
+    def backfill_including_type(mod)
+      each_instantiated_type do |instance|
+        mod.add_including_type(instance)
       end
     end
 
@@ -2870,10 +2891,15 @@ module Crystal
 
       add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
       metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", restriction: Path.global(@base_type.to_s))], Primitive.new("enum_new", self))
+      program.enum.add_subclass self
     end
 
     def parents
       @parents ||= [program.enum] of Type
+    end
+
+    def superclass
+      program.enum
     end
 
     def add_constant(name, value)
@@ -3345,6 +3371,12 @@ module Crystal
   # saved under a type types like any other type.
   class Const < NamedType
     property value : ASTNode
+
+    # Type restriction declared with `FOO : Int64 = 123` syntax. The value's
+    # inferred type must conform to this and number/symbol literals autocast
+    # to it.
+    property declared_type : ASTNode?
+
     property fake_def : Def?
     property? used = false
     property? visited = false

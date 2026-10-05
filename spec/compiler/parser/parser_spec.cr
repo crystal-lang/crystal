@@ -719,6 +719,13 @@ module Crystal
     it_parses "foo &.as?(T).bar", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
     it_parses "foo(\n  &.block\n)", Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
 
+    it_parses "foo(&.bar)/2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo(&.bar)/ 2", Call.new(Call.new("foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "bar"))), "/", 2.int32)
+    it_parses "foo do end/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+    it_parses "foo { }/ 2", Call.new(Call.new("foo", block: Block.new(body: Nop.new)), "/", 2.int32)
+
     it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
     it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
 
@@ -1801,6 +1808,22 @@ module Crystal
     it_parses "@a : Foo = 1", TypeDeclaration.new("@a".instance_var, "Foo".path, 1.int32)
     it_parses "@@a : Foo = 1", TypeDeclaration.new("@@a".class_var, "Foo".path, 1.int32)
 
+    it_parses "FOO : Int64 = 1", TypeDeclaration.new("FOO".path, "Int64".path, 1.int32)
+    it_parses "FOO : Foo::Bar = 1", TypeDeclaration.new("FOO".path, Path.new(["Foo", "Bar"]), 1.int32)
+    it_parses "Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"]), "Int64".path, 1.int32)
+    it_parses "::FOO : Int64 = 1", TypeDeclaration.new("FOO".path(global: true), "Int64".path, 1.int32)
+    it_parses "::Foo::BAR : Int64 = 1", TypeDeclaration.new(Path.new(["Foo", "BAR"], global: true), "Int64".path, 1.int32)
+    assert_syntax_warning "FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_warning "::FOO: Int64 = 1", "space required before colon in type declaration (run `crystal tool format` to fix this)"
+    assert_syntax_error "FOO : Int64", "expected '=' for constant type declaration"
+    assert_syntax_error "::FOO : Int64", "expected '=' for constant type declaration"
+
+    it "computes name_size for a TypeDeclaration whose var is a Path (#13443)" do
+      Parser.parse("FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("FOO".size)
+      Parser.parse("Foo::BAR : Int64 = 1").as(TypeDeclaration).name_size.should eq("Foo::BAR".size)
+      Parser.parse("::FOO : Int64 = 1").as(TypeDeclaration).name_size.should eq("::FOO".size)
+    end
+
     it_parses "Foo?", Generic.new("Union".path(global: true), ["Foo".path, "Nil".path(global: true)] of ASTNode)
     it_parses "a : Foo*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), ["Foo".path] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), ["Foo".path, 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
@@ -1839,8 +1862,12 @@ module Crystal
     it_parses "1.tap do |x|; 1; rescue; x; end", Call.new(1.int32, "tap", block: Block.new(["x".var], body: ExceptionHandler.new(1.int32, [Rescue.new("x".var)])))
 
     it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+    it_parses "1 rescue 2 ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
+    it_parses "begin; 1; rescue; 2; end ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
     it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
     it_parses "x = 1 ensure 2", Assign.new("x".var, ExceptionHandler.new(1.int32, ensure: 2.int32))
+    it_parses "x = 1 rescue 2 ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
+    it_parses "x = begin; 1; rescue; 2; end ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
     it_parses "a = 1; a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, [Rescue.new("a".var)])]
     it_parses "a = 1; yield a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), [Rescue.new("a".var)])]
 
@@ -3161,9 +3188,9 @@ module Crystal
         "/"   => "Unterminated regular expression",
         "%x[" => "Unterminated command literal",
         "`"   => "Unterminated command literal",
-        "%w[" => "Unterminated string array literal", # FIXME: #12277
-        "%W[" => "Unterminated string array literal", # FIXME: #12277
-        "%i[" => "Unterminated symbol array literal", # FIXME: #12277
+        "%w[" => "Unterminated string array literal",
+        "%W[" => "Unterminated string array literal",
+        "%i[" => "Unterminated symbol array literal",
         ":\"" => "unterminated quoted symbol",
       }
     end
@@ -3855,11 +3882,25 @@ module Crystal
       ensure_location.column_number.should eq(5)
     end
 
+    it "sets correct location of trailing ensure in an assignment" do
+      source = "foo = do_foo ensure bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo ensure bar")
+    end
+
     it "sets correct location of trailing rescue" do
       source = "foo rescue bar"
       parser = Parser.new(source)
       node = parser.parse.as(ExceptionHandler).rescues.should_not(be_nil)[0]
       node_source(source, node).should eq("rescue bar")
+    end
+
+    it "sets correct location of trailing rescue in an assignment" do
+      source = "foo = do_foo rescue bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo rescue bar")
     end
 
     it "sets correct location of call name" do
@@ -4091,6 +4132,12 @@ module Crystal
       path = inputs.first.should be_a(Path)
       node_source(source, path).should eq "A"
       node_source(source, proc_notation).should eq "(A) -> R"
+    end
+
+    it "ensure with `suffix` doesn't change the `suffix` property of the preceding exception handler" do
+      parser = Parser.new("begin; 1; rescue; 2; end ensure 3")
+      node = parser.parse.as(ExceptionHandler)
+      node.suffix.should be_false
     end
 
     it "sets args_in_brackets to false for `a.b`" do

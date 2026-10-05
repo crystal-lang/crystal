@@ -134,8 +134,9 @@ class Socket
           if zone_id = zone.to_i?
             raise Error.new("Invalid IPv6 link-local zone index '#{zone}' in address '#{address}'") unless zone_id.positive?
           else
-            zone_id = LibC.if_nametoindex(zone).to_i
-            raise Error.new("IPv6 link-local zone interface '#{zone}' not found (in address '#{address}')") unless zone_id.positive?
+            zone_id = Crystal::System::Socket.network_interface_to_index(zone) do |os_error|
+              raise Error.from_os_error("IPv6 link-local zone interface '#{zone}' not found (in address '#{address}')", os_error)
+            end.to_i
           end
         end
         addr = v6(v6_fields, port.to_u16!, zone_id)
@@ -790,23 +791,12 @@ class Socket
     # This helper method exists to look up the interface name based on the
     # associated zone_id property.
     def link_local_interface : String | Nil
-      {% unless LibC.has_method?(:if_nametoindex) %}
-        raise NotImplementedError.new "Socket::Address.link_local_interface"
-      {% end %}
       return nil if @zone_id.zero?
       return nil unless (@family == Socket::Family::INET6 && link_local?)
-      buf = uninitialized StaticArray(UInt8, LibC::IF_NAMESIZE)
-      result = LibC.if_indextoname(@zone_id, buf)
-      if result.null?
-        message = "Failed to look up interface name for index #{@zone_id}"
-        {% if flag?(:windows) %}
-          # In windows it is not possible to determine an error code here
-          raise Error.new(message)
-        {% else %}
-          raise Error.from_errno(message)
-        {% end %}
+
+      Crystal::System::Socket.network_interface_from_index(@zone_id) do |os_error|
+        raise Error.from_os_error("Failed to look up interface name for index #{@zone_id}", os_error)
       end
-      String.new(buf.to_unsafe)
     end
 
     protected def self.endian_swap(x : Int::Primitive) : Int::Primitive

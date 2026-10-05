@@ -332,8 +332,9 @@ describe Process::Status do
 
   describe "#description" do
     it "with exit status" do
-      Process::Status[0].description.should eq "Process exited normally"
-      Process::Status[255].description.should eq "Process exited normally"
+      Process::Status[0].description.should eq "Process exited with status 0"
+      Process::Status[1].description.should eq "Process exited with status 1"
+      Process::Status[255].description.should eq "Process exited with status 255"
     end
 
     it "on interrupt" do

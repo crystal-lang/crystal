@@ -54,8 +54,9 @@ require "./lib_crypto"
   @[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs --silence-errors libssl || printf %s '-lssl -lcrypto'`")]
 {% end %}
 {% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
-  @[Link(dll: {{ "libssl-#{LibSSL::VERSION_MAJOR.id}-x64.dll" }})]
-  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-x64.dll" }})]
+  {% suffix = flag?(:aarch64) ? "arm64" : "x64" %}
+  @[Link(dll: {{ "libssl-#{LibSSL::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
+  @[Link(dll: {{ "libcrypto-#{LibCrypto::VERSION_MAJOR.id}-#{suffix.id}.dll" }})]
 {% end %}
 lib LibSSL
   alias Int = LibC::Int

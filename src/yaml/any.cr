@@ -316,7 +316,18 @@ struct YAML::Any
   end
 
   # See `Object#hash(hasher)`
-  def_hash raw
+  def hash(hasher)
+    case object = @raw
+    when Array, Hash
+      object.exec_recursive(:hash) { hasher = object.hash(hasher) }
+      hasher
+    when Set
+      object.@hash.exec_recursive(:hash) { hasher = object.hash(hasher) }
+      hasher
+    else
+      object.hash(hasher)
+    end
+  end
 
   # :nodoc:
   def to_yaml(io) : Nil

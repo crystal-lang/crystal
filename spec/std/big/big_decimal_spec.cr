@@ -437,6 +437,21 @@ describe BigDecimal do
       typeof(Float64::NAN <=> 1.to_big_d).should eq(Int32?)
       typeof(Float32::NAN <=> 1.to_big_d).should eq(Int32?)
     end
+
+    it "compares against infinities" do
+      (1.to_big_d <=> Float64::INFINITY).should eq(-1)
+      (1.to_big_d <=> -Float64::INFINITY).should eq(1)
+      (1.to_big_d <=> Float32::INFINITY).should eq(-1)
+      (1.to_big_d <=> -Float32::INFINITY).should eq(1)
+
+      (Float64::INFINITY <=> 1.to_big_d).should eq(1)
+      (-Float64::INFINITY <=> 1.to_big_d).should eq(-1)
+      (Float32::INFINITY <=> 1.to_big_d).should eq(1)
+      (-Float32::INFINITY <=> 1.to_big_d).should eq(-1)
+
+      typeof(1.to_big_d <=> Float64::INFINITY).should eq(Int32?)
+      typeof(Float64::INFINITY <=> 1.to_big_d).should eq(Int32?)
+    end
   end
 
   it "keeps precision" do

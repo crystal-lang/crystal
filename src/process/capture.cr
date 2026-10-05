@@ -5,12 +5,7 @@ class Process
     getter result : Result
 
     def initialize(@args : Enumerable(String), @result : Result)
-      description = if code = result.status.exit_code?
-                      "Process exited with status #{code}"
-                    else
-                      result.status.description
-                    end
-      super("Command #{args.inspect} failed: #{description}")
+      super("Command #{args.inspect} failed: #{result.status.description}")
     end
   end
 

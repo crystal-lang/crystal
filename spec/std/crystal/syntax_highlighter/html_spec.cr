@@ -128,6 +128,9 @@ describe Crystal::SyntaxHighlighter::HTML do
 
     it_highlights "Set{1, 2, 3}", %(<span class="t">Set</span>{<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>})
 
+    # Typed constant declarations (#13443)
+    it_highlights "FOO : Int64 = 123", %(<span class="t">FOO</span> : <span class="t">Int64</span> <span class="o">=</span> <span class="n">123</span>)
+
     it_highlights "foo(/Name: /)", %(foo(<span class="s">/Name: /</span>))
     it_highlights "foo[/Name: /]", %(foo[<span class="s">/Name: /</span>])
     it_highlights "Foo{/Name: /}", %(<span class="t">Foo</span>{<span class="s">/Name: /</span>})

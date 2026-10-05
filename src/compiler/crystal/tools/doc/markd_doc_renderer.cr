@@ -19,7 +19,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     new obj.type, options
   end
 
-  def heading(node : Markd::Node, entering : Bool)
+  def heading(node : Markd::Node, entering : Bool) : Nil
     tag_name = HEADINGS[node.data["level"].as(Int32) - 1]
     if entering
       anchor = collect_text(node)
@@ -131,7 +131,7 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
     language
   end
 
-  def code_block_body(node : Markd::Node, language : String?)
+  def code_block_body(node : Markd::Node, language : String?) : Nil
     code = node.text.chomp
     if language == "crystal"
       literal(SyntaxHighlighter::HTML.highlight! code)
@@ -169,18 +169,18 @@ class Crystal::Doc::MarkdDocRenderer < Markd::HTMLRenderer
       type.program.lookup_macro(name, args_count)
   end
 
-  def text(node : Markd::Node, entering : Bool)
+  def text(node : Markd::Node, entering : Bool) : Nil
     output(sanitize(node))
   end
 
-  def html_block(node : Markd::Node, entering : Bool)
+  def html_block(node : Markd::Node, entering : Bool) : Nil
     newline
     content = @options.safe? ? "<!-- raw HTML omitted -->" : sanitize(node)
     literal(content)
     newline
   end
 
-  def html_inline(node : Markd::Node, entering : Bool)
+  def html_inline(node : Markd::Node, entering : Bool) : Nil
     content = @options.safe? ? "<!-- raw HTML omitted -->" : sanitize(node)
     literal(content)
   end

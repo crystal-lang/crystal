@@ -636,4 +636,38 @@ describe XML do
   it ".libxml2_version" do
     XML.libxml2_version.should match /2\.\d+\.\d+/
   end
+
+  describe "#line_number" do
+    it "returns the line number of a node in the source document" do
+      doc = XML.parse(<<-XML)
+        <?xml version='1.0' encoding='UTF-8'?>
+        <people>
+          <person/>
+        </people>
+        XML
+
+      root = doc.root.should_not(be_nil)
+      root.line_number.should eq(2)
+      root.first_element_child.should_not(be_nil).line_number.should eq(3)
+    end
+
+    it "reports line numbers greater than 65535 with the BIG_LINES option" do
+      newlines = 70_000
+      # libxml2 stores big line numbers in the PSVI field of text nodes, so the
+      # element needs some text content for `xmlGetLineNo` to recover the value.
+      xml = "#{"\n" * (newlines - 1)}<root>x</root>"
+
+      # Without BIG_LINES the raw 16-bit `line` field saturates at 65535, which
+      # is exactly why `#line_number` must go through `xmlGetLineNo`.
+      XML.parse(xml).root.should_not(be_nil).line_number.should eq(65_535)
+
+      doc = XML.parse(xml, XML::ParserOptions.default | XML::ParserOptions::BIG_LINES)
+      doc.root.should_not(be_nil).line_number.should eq(newlines)
+    end
+
+    it "returns nil when the line number is not available" do
+      # The document node itself carries no source line.
+      XML.parse("<root/>").line_number.should be_nil
+    end
+  end
 end

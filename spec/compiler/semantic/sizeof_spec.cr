@@ -72,6 +72,18 @@ describe "Semantic: sizeof" do
       CRYSTAL
   end
 
+  it "gives error if using instance_sizeof on Void" do
+    assert_error <<-CRYSTAL, "instance_sizeof can only be used with a class, but Void is a Void"
+      instance_sizeof(Void)
+      CRYSTAL
+  end
+
+  it "gives error if using instance_sizeof on NoReturn" do
+    assert_error <<-CRYSTAL, "instance_sizeof can only be used with a class, but NoReturn is a NoReturn"
+      instance_sizeof(NoReturn)
+      CRYSTAL
+  end
+
   it "gives error if using instance_sizeof on a generic type without type vars" do
     assert_error "instance_sizeof(Array)", "can't take instance size of uninstantiated generic type Array(T)"
   end

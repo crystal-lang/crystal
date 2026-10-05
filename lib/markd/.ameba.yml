@@ -1,0 +1,20 @@
+Metrics/CyclomaticComplexity:
+  Excluded:
+    - spec/**/*
+    - src/markd/utils.cr
+    - src/markd/rules/heading.cr
+    - src/markd/rules/list.cr
+    - src/markd/parsers/inline.cr
+    - src/markd/parsers/block.cr
+    - src/markd/renderer.cr
+
+Naming/BlockParameterName:
+  Enabled: false
+
+Style/ParenthesesAroundCondition:
+  Enabled: true
+  AllowSafeAssignment: true
+
+Lint/NotNil:
+  Excluded:
+    - src/markd/parsers/inline.cr

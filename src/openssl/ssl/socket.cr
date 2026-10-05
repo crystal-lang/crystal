@@ -295,12 +295,8 @@ abstract class OpenSSL::SSL::Socket < IO
     {% if OpenSSL.has_constant?(:KTLS) %}
       io = bio.io
 
-      if @context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS) && io.is_a?(::Socket)
+      if @context.options.includes?(OpenSSL::SSL::Options::ENABLE_KTLS) && io.is_a?(IO::Buffered)
         if io.read_buffering?
-          unless io.@in_buffer_rem.empty?
-            raise Error.new("TLS handshake with KTLS enabled requires the read buffer to be empty")
-          end
-
           io.read_buffering = false
           begin
             return yield

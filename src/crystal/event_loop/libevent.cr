@@ -17,13 +17,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def initialize(parallelism : Int32)
   end
 
-  {% if flag?(:without_mt) %}
-    # Reinitializes the event loop after a fork.
-    def after_fork : Nil
-      event_base.reinit
-    end
-  {% end %}
-
   def run(blocking : Bool) : Bool
     flags = LibEvent2::EventLoopFlags::Once
     flags |= blocking ? LibEvent2::EventLoopFlags::NoExitOnEmpty : LibEvent2::EventLoopFlags::NonBlock
@@ -35,19 +28,19 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     # scheduler must wait on the evloop at any time
     include Lock
 
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
+    def run(blocking : Bool, &callback : Fiber ->) : Nil
       Crystal.trace :evloop, "run", blocking: blocking
-      @runnables = queue
+      @callback = callback
       run(blocking)
     ensure
-      @runnables = nil
+      @callback = nil
     end
 
     def callback_enqueue(fiber : Fiber) : Nil
-      if queue = @runnables
-        queue.value.push(fiber)
+      if callback = @callback
+        callback.call(fiber)
       else
-        raise "BUG: libevent callback executed outside of #run(queue*, blocking) call"
+        raise "BUG: libevent callback executed outside of #run(blocking, &) call"
       end
     end
   {% end %}
@@ -261,17 +254,19 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    ret = LibC.connect(socket.fd, address, address.size)
+    return unless ret == -1
+
+    errno = Errno.value
+
     loop do
-      if LibC.connect(socket.fd, address, address.size) == 0
-        return
-      end
-      case Errno.value
-      when Errno::EISCONN
-        return
+      case errno
       when Errno::EINPROGRESS, Errno::EALREADY
         socket.evented_wait_writable(timeout: timeout) do
           return IO::TimeoutError.new("connect timed out")
         end
+        errno = Crystal::System::Socket.system_error(socket.fd)
+        return if errno.none?
       else
         return ::Socket::ConnectError.from_errno("connect")
       end

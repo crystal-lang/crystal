@@ -140,9 +140,13 @@ end
 def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
   compile_file(source_file, flags: flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
-    status = Process.run executable_file, args: runtime_args, output: output, error: error
+    {% if flag?(:wasm32) %}
+      pending! "Executing a process is not supported on this platform"
+    {% else %}
+      status = Process.run executable_file, args: runtime_args, output: output, error: error
 
-    {status, output.to_s, error.to_s}
+      {status, output.to_s, error.to_s}
+    {% end %}
   end
 end
 

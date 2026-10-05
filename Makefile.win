@@ -12,6 +12,10 @@ all: ##
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
 ##   $ make -f Makefile.win crystal release=1 interpreter=1
+## Build all assets for a package install (compiler)
+##   $ make -f Makefile.win build
+## Build and install crystal package
+##   $ make -f Makefile.win build && sudo make -f Makefile.win install
 ## Run tests
 ##   $ make -f Makefile.win test
 ## Run stdlib tests
@@ -78,6 +82,7 @@ ifeq ($(LLVM_VERSION),)
 LLVM_CONFIG  ?=
 LLVM_VERSION := $(if $(LLVM_CONFIG),$(shell "$(LLVM_CONFIG)" --version))
 endif
+LLVM_HOST_TARGET ?= $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --host-target))
 
 LLVM_EXT_DIR = src\llvm\ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)\llvm_ext.obj
@@ -105,7 +110,7 @@ check_llvm_config = $(eval \
 	)
 
 .PHONY: all
-all: crystal ## Build all files (currently crystal only) [default]
+all: crystal
 
 .PHONY: test
 test: spec ## Run tests
@@ -151,7 +156,15 @@ docs: ## Generate standard library documentation
 	.\bin\crystal docs src\docs_main.cr $(DOCS_OPTIONS) --project-name=Crystal --project-version=$(CRYSTAL_VERSION) --source-refname=$(CRYSTAL_CONFIG_BUILD_COMMIT)
 
 .PHONY: crystal
-crystal: $(O)\crystal.exe ## Build the compiler
+crystal: $(O)\crystal.exe ## Build the compiler [default]
+
+.PHONY: build
+build: ## Build all files for a package install (currently the compiler)
+
+# bake-format off: Mbake bug with Duplicate target rule https://github.com/EbodShojaei/bake/issues/106
+build: release := 1
+build: crystal
+# bake-format on
 
 .PHONY: deps llvm_ext
 deps: $(DEPS) ## Build dependencies
@@ -259,6 +272,11 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)\llvm_ext.cc
 	@rem - warning C4624: '...': destructor was implicitly defined as deleted
 	$(CXX) /nologo /c $(CXXFLAGS) /WX /wd4244 /wd4624 /wd4530 "/Fo$@" "$<" $(if $(LLVM_CONFIG),$(shell $(LLVM_CONFIG) --cxxflags))
 
+$(O)\crystal-pu.exe: spec\support\process-utils.cr $(SOURCES)
+	@$(call MKDIR,"$(O)")
+	$(call export_vars)
+	.\bin\crystal build $(FLAGS) -o $@ $<
+
 .PHONY: clean
 clean: clean_crystal ## Clean up built directories and files
 	$(call RM,"$(LLVM_EXT_OBJ)")
@@ -301,7 +319,7 @@ rc: ## Write compiler resource script to standard output
 	echo             VALUE "ProductName",      "Crystal"& \
 	echo             VALUE "ProductVersion",   "$(ver_full)"& \
 	echo             VALUE "FileVersion",      "$(ver_full)"& \
-	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_CONFIG), $(shell $(LLVM_CONFIG) --host-target))"& \
+	echo             VALUE "FileDescription",  "Crystal$(if $(LLVM_HOST_TARGET), $(LLVM_HOST_TARGET))"& \
 	echo             VALUE "Comments",         "$(if $(LLVM_VERSION),LLVM $(LLVM_VERSION))"& \
 	echo             VALUE "InternalName",     "crystal.exe"& \
 	echo             VALUE "OriginalFilename", "crystal.exe"& \

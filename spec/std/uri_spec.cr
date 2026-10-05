@@ -651,6 +651,14 @@ describe "URI" do
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/./.././../tail").should eq URI.parse("http://foo.com/bar/quux/tail")
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/dotdot/dotdot/./../../.././././tail").should eq URI.parse("http://foo.com/bar/quux/tail")
       URI.parse("http://foo.com/bar/baz").resolve("quux/./dotdot/../dotdot/../dot/./tail/..").should eq URI.parse("http://foo.com/bar/quux/dot/")
+
+      URI.new(path: "foo").resolve("bar").should eq URI.new(path: "bar")
+      URI.new(path: "").resolve("bar").should eq URI.new(path: "bar")
+      URI.new(path: "foo").resolve("").should eq URI.new(path: "foo")
+      URI.new(path: "foo/baz").resolve("").should eq URI.new(path: "foo/baz")
+      URI.new(path: "/").resolve("bar").should eq URI.new(path: "/bar")
+      URI.new(path: "foo/").resolve("bar").should eq URI.new(path: "foo/bar")
+      URI.new(path: "foo/baz").resolve("bar").should eq URI.new(path: "foo/bar")
     end
 
     it "removes dot-segments" do

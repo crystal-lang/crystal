@@ -7,9 +7,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Tables #[72](https://github.com/icyleaf/markd/pull/72) thanks @[ralsina](https://github.com/ralsina)
+- Alerts #[94](https://github.com/icyleaf/markd/pull/94) thanks @[ralsina](https://github.com/ralsina)
+- Extended Autolinks #[86](https://github.com/icyleaf/markd/pull/86) thanks @[ralsina](https://github.com/ralsina)
+- Tartrazine code block syntax highlighting #[67](https://github.com/icyleaf/markd/pull/81) thanks @[zw963](https://github.com/zw963).
+- Tagfilter option for GFM #[64](https://github.com/icyleaf/markd/pull/64) thanks @[nobodywasishere](https://github.com/nobodywasishere).
+- Task list / checkbox support for GFM #[63](https://github.com/icyleaf/markd/pull/63) thanks @[nobodywasishere](https://github.com/nobodywasishere).
+- Strikethrough support for GFM #[62](https://github.com/icyleaf/markd/pull/62) thanks @[nobodywasishere](https://github.com/nobodywasishere).
+- Emoji support for GFM #[61](https://github.com/icyleaf/markd/pull/61) thanks @[nobodywasishere](https://github.com/nobodywasishere).
+
+### Fixed
+
+- Large numbers failing to be parsed as starts of lists #[81](https://github.com/icyleaf/markd/pull/81)
+
 ### TODO
 
-- GFM support
+- Full GFM support
+
+## [0.6.0] (2025-03-?)
+
+Welcome new maintainer @[nobodywasishere](https://github.com/nobodywasishere) who brought support for gfm new features.
+
+- Add matrix platform and Cyrstal version to github action. #[59](https://github.com/icyleaf/markd/pull/59) thanks @[devnote-dev](https://github.com/devnote-dev)
+- Correct version check for Crystal::VERSION. #[60](https://github.com/icyleaf/markd/pull/60) thanks @[nobodywasishere](https://github.com/nobodywasishere)
+- Add GitHub emoji support. #[61](https://github.com/icyleaf/markd/pull/61) thanks @[nobodywasishere](https://github.com/nobodywasishere)
+- Implement strikethrough support. #[62](https://github.com/icyleaf/markd/pull/62) thanks @[nobodywasishere](https://github.com/nobodywasishere)
+- [gfm] Add tagfilter option. #[64](https://github.com/icyleaf/markd/pull/64) thanks @[nobodywasishere](https://github.com/nobodywasishere)
+- [gfm] Add task list support. #[65](https://github.com/icyleaf/markd/pull/65) thanks @[nobodywasishere](https://github.com/nobodywasishere)
+- Add tartrazine render code block. #[67](https://github.com/icyleaf/markd/pull/67) thanks @[zw963](https://github.com/zw963)
+- [gfm] Add table support. #[72](https://github.com/icyleaf/markd/pull/72) thanks @[ralsina](https://github.com/ralsina)
 
 ## [0.5.0] (2022-06-14)
 
@@ -76,7 +104,8 @@ No changelog.
 
 - [initial implementation](https://github.com/icyleaf/markd/milestone/1?closed=1)
 
-[Unreleased]: https://github.com/icyleaf/markd/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/icyleaf/markd/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/icyleaf/markd/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/icyleaf/markd/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/icyleaf/markd/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/icyleaf/markd/compare/v0.4.0...v0.4.1

@@ -872,6 +872,8 @@ describe Indexable do
     it { SafeIndexable.new(3, 1).repeated_combinations(0).should eq([[] of Int32]) }
     it { SafeIndexable.new(3, 1).repeated_combinations(4).should eq([[1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 1, 3], [1, 1, 2, 2], [1, 1, 2, 3], [1, 1, 3, 3], [1, 2, 2, 2], [1, 2, 2, 3], [1, 2, 3, 3], [1, 3, 3, 3], [2, 2, 2, 2], [2, 2, 2, 3], [2, 2, 3, 3], [2, 3, 3, 3], [3, 3, 3, 3]]) }
     it { expect_raises(ArgumentError, "Size must be positive") { [1].repeated_combinations(-1) } }
+    it { ([] of Int32).each_repeated_combination(2).to_a.should eq([] of Array(Int32)) }
+    it { ([] of Int32).each_repeated_combination(0).to_a.should eq([[] of Int32]) }
 
     it "accepts a block" do
       sums = [] of Int32

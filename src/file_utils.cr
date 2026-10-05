@@ -223,7 +223,7 @@ module FileUtils
       dest_path = File.join(dest_path, File.basename(src_path))
     end
 
-    rm_rf(dest_path) if File.exists?(dest_path)
+    rm_rf(dest_path) if File.exists?(dest_path, follow_symlinks: false)
     File.symlink(src_path, dest_path)
   end
 
@@ -334,7 +334,6 @@ module FileUtils
     raise ArgumentError.new("No such directory : #{dest}") unless Dir.exists?(dest)
     srcs.each do |src|
       mv(src, File.join(dest, File.basename(src)))
-    rescue File::Error
     end
   end
 

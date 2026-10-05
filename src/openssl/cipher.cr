@@ -161,6 +161,29 @@ class OpenSSL::Cipher
     LibCrypto.evp_cipher_flags(cipher).includes?(LibCrypto::CipherFlags::EVP_CIPH_FLAG_AEAD_CIPHER)
   end
 
+  # Returns the authentication tag for an AEAD cipher (e.g. AES-GCM).
+  # Must be called after `#final` during encryption.
+  # Raises `Error` if the cipher is not authenticated.
+  def gcm_tag : Bytes
+    raise Error.new("Cipher is not authenticated") unless authenticated?
+    tag = Bytes.new(LibCrypto::EVP_GCM_TLS_TAG_LEN)
+    if LibCrypto.evp_cipher_ctx_ctrl(@ctx, LibCrypto::EVP_CTRL_GCM_GET_TAG, tag.size, tag.to_unsafe.as(Void*)) != 1
+      raise Error.new "EVP_CIPHER_CTX_ctrl GET_TAG"
+    end
+    tag
+  end
+
+  # Sets the authentication tag for an AEAD cipher (e.g. AES-GCM).
+  # Must be called before `#final` during decryption.
+  # Raises `Error` if the cipher is not authenticated.
+  def gcm_tag=(tag : Bytes) : Bytes
+    raise Error.new("Cipher is not authenticated") unless authenticated?
+    if LibCrypto.evp_cipher_ctx_ctrl(@ctx, LibCrypto::EVP_CTRL_GCM_SET_TAG, tag.size, tag.to_unsafe.as(Void*)) != 1
+      raise Error.new "EVP_CIPHER_CTX_ctrl SET_TAG"
+    end
+    tag
+  end
+
   private def cipherinit(cipher = nil, engine = nil, key = nil, iv = nil, enc = -1)
     if LibCrypto.evp_cipherinit_ex(@ctx, cipher, engine, key, iv, enc) != 1
       raise Error.new "EVP_CipherInit_ex"

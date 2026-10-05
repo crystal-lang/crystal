@@ -41,6 +41,35 @@ describe "Semantic: method_missing" do
       CRYSTAL
   end
 
+  it "exposes the original call location in method_missing (#7104)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      class Foo
+        macro method_missing(call)
+          {% raise "missing call location" unless call.filename && call.line_number == 8 && call.column_number == 1 %}
+          1
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "points a method_missing call.raise at the original call (#7104)" do
+    ex = assert_error(<<-CRYSTAL, "missing bar")
+      class Foo
+        macro method_missing(call)
+          {% call.raise "missing bar" %}
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+
+    ex.to_s.should contain "error in line 7"
+    ex.column_number.should eq 9
+    ex.size.should eq 3
+  end
+
   it "errors if method_missing expands to an incorrect method" do
     assert_error <<-CRYSTAL, "wrong method_missing expansion"
       class Foo

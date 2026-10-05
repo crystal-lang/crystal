@@ -346,6 +346,29 @@ class XML::Node
     nil
   end
 
+  # Returns the line number in the source document where this Node was parsed,
+  # or `nil` if the information is not available (for example, a Node that was
+  # not parsed from a document).
+  #
+  # Line numbers greater than `65535` are only reported when the document was
+  # parsed with the `XML::ParserOptions::BIG_LINES` option, which is not part of
+  # `XML::ParserOptions.default`.
+  #
+  # ```
+  # doc = XML.parse(<<-XML)
+  #   <?xml version='1.0' encoding='UTF-8'?>
+  #   <people>
+  #     <person/>
+  #   </people>
+  #   XML
+  # doc.root.not_nil!.line_number                              # => 2
+  # doc.root.not_nil!.first_element_child.not_nil!.line_number # => 3
+  # ```
+  def line_number : Int64?
+    line_number = LibXML.xmlGetLineNo(@node)
+    line_number.to_i64 unless line_number == -1
+  end
+
   # Returns the name for this Node.
   def name : String
     if document?
@@ -385,9 +408,11 @@ class XML::Node
   # Returns the namespace for this node or `nil` if not found.
   def namespace : Namespace?
     case type
-    when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      nil
-    else
+    # These types use xmlAttr or xmlNode representation which both have a
+    # namespace field.
+    when Type::ATTRIBUTE_NODE, Type::ELEMENT_NODE, Type::TEXT_NODE,
+         Type::CDATA_SECTION_NODE, Type::ENTITY_REF_NODE, Type::PI_NODE,
+         Type::COMMENT_NODE, Type::DOCUMENT_FRAG_NODE, Type::XINCLUDE_START, Type::XINCLUDE_END
       ns = @node.value.ns
       ns ? Namespace.new(document, ns) : nil
     end

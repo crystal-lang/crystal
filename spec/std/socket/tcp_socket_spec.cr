@@ -85,6 +85,8 @@ describe TCPSocket, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
@@ -99,6 +101,8 @@ describe TCPSocket, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}

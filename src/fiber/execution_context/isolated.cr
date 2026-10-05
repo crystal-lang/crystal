@@ -184,19 +184,21 @@ module Fiber::ExecutionContext
           @waiting = true
         end
 
+        done = true
+
         # wait on the event loop
-        list = Fiber::List.new
-        event_loop.run(pointerof(list), blocking: true)
+        event_loop.run(blocking: true) do |fiber|
+          # sanity check
+          unless fiber == @main_fiber
+            raise RuntimeError.new("Concurrency is disabled in isolated contexts")
+          end
 
-        # restart if the evloop got interrupted
-        next unless fiber = list.pop?
-
-        # sanity check
-        unless fiber == @main_fiber && list.empty?
-          raise RuntimeError.new("Concurrency is disabled in isolated contexts")
+          # can't just return because EventLoop::LibEvent#run captures the block
+          done = true
         end
 
-        break
+        # the evloop got interrupted: retry
+        break if done
       end
 
       # cleanup

@@ -248,6 +248,50 @@ describe "ASTNode#inspect" do
   expect_inspect %(foo : Int32 = 1), <<-CRYSTAL
       TypeDeclaration[Var["foo"], Path["Int32"], value: NumberLiteral["1", :i32]]
       CRYSTAL
+
+  # Typed constant declarations (#13443)
+  expect_inspect %(FOO : Int64 = 1), <<-CRYSTAL
+      TypeDeclaration[Path["FOO"], Path["Int64"], value: NumberLiteral["1", :i32]]
+      CRYSTAL
+  expect_inspect %(::FOO : Int64 = 1), <<-CRYSTAL
+      TypeDeclaration[
+        Path.global("FOO"),
+        Path["Int64"],
+        value: NumberLiteral["1", :i32]
+      ]
+      CRYSTAL
+  expect_inspect %(Foo::BAR : Int64 = 1), <<-CRYSTAL
+      TypeDeclaration[
+        Path["Foo", "BAR"],
+        Path["Int64"],
+        value: NumberLiteral["1", :i32]
+      ]
+      CRYSTAL
+  expect_inspect %(::Foo::BAR : Int64 = 1), <<-CRYSTAL
+      TypeDeclaration[
+        Path.global("Foo", "BAR"),
+        Path["Int64"],
+        value: NumberLiteral["1", :i32]
+      ]
+      CRYSTAL
+  expect_inspect %(FOO : String = "hey"), <<-CRYSTAL
+      TypeDeclaration[Path["FOO"], Path["String"], value: StringLiteral["hey"]]
+      CRYSTAL
+  expect_inspect %(FOO : ::Int32 = -5), <<-CRYSTAL
+      TypeDeclaration[
+        Path["FOO"],
+        Path.global("Int32"),
+        value: NumberLiteral["-5", :i32]
+      ]
+      CRYSTAL
+  expect_inspect %(PAIR : Tuple(Int32, String) = {1, "x"}), <<-CRYSTAL
+      TypeDeclaration[
+        Path["PAIR"],
+        Generic[Path["Tuple"], [Path["Int32"], Path["String"]]],
+        value: TupleLiteral[NumberLiteral["1", :i32], StringLiteral["x"]]
+      ]
+      CRYSTAL
+
   expect_inspect %(foo = uninitialized Int32), <<-CRYSTAL
       UninitializedVar[Var["foo"], Path["Int32"]]
       CRYSTAL

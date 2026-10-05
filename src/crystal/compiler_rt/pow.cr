@@ -12,7 +12,7 @@ private macro __pow_impl(name, one, float_type)
       a *= a
     end
 
-    recip ? 1 / r : r
+    recip ? {{float_type}}.new(1) / r : r
   end
 end
 

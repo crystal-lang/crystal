@@ -315,6 +315,7 @@ module Crystal
             rescue_body = parse_op_assign
             rescues = [Rescue.new(rescue_body).at(rescue_location).at_end(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
+              location = atomic.value.location
               atomic.value = ex = ExceptionHandler.new(atomic.value, rescues)
             else
               atomic = ex = ExceptionHandler.new(atomic, rescues)
@@ -326,13 +327,23 @@ module Crystal
             next_token_skip_space
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
-              atomic.value = ex = ExceptionHandler.new(atomic.value, ensure: ensure_body)
+              location = atomic.value.location
+              if (value = atomic.value).is_a?(ExceptionHandler)
+                ex = value.tap(&.ensure = ensure_body)
+              else
+                ex = atomic.value = ExceptionHandler.new(value, ensure: ensure_body)
+                ex.suffix = true
+              end
             else
-              atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)
+              if atomic.is_a?(ExceptionHandler)
+                ex = atomic.tap(&.ensure = ensure_body)
+              else
+                ex = atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
+                ex.suffix = true
+              end
             end
             ex.at(location).at_end(ensure_body)
             ex.ensure_location = ensure_location
-            ex.suffix = true
           else
             break
           end
@@ -1241,7 +1252,7 @@ module Crystal
           set_visibility parse_var_or_call
         end
       when .const?
-        parse_generic_or_custom_literal
+        parse_const
       when .instance_var?
         if @in_macro_expression && @token.value == "@type"
           @is_macro_def = true
@@ -1273,13 +1284,15 @@ module Crystal
       end
     end
 
-    def parse_type_declaration(var)
+    def parse_type_declaration(var, is_const = false)
       next_token_skip_space_or_newline
       var_type = parse_bare_proc_type
       skip_space
       if @token.type.op_eq?
         next_token_skip_space_or_newline
         value = parse_op_assign_no_control
+      elsif is_const
+        raise "expected '=' for constant type declaration"
       end
       TypeDeclaration.new(var, var_type, value).at(var).at_end(value || var_type)
     end
@@ -1319,10 +1332,19 @@ module Crystal
       end
     end
 
-    def parse_generic_or_custom_literal
-      type = parse_generic(expression: true)
+    def parse_const(global = false, location = @token.location)
+      type = parse_generic global, location, expression: true
+      space_after_name = @token.type.space?
       skip_space
-      parse_custom_literal type
+
+      if @no_type_declaration == 0 && @token.type.op_colon? && type.is_a?(Path)
+        unless space_after_name
+          warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
+        end
+        parse_type_declaration(type, is_const: true)
+      else
+        parse_custom_literal type
+      end
     end
 
     def parse_custom_literal(type)
@@ -1474,6 +1496,7 @@ module Crystal
 
       check_ident :end
       slash_is_not_regex!
+      @wants_regex = false
       next_token_skip_space
 
       if rescues || a_ensure
@@ -1609,6 +1632,7 @@ module Crystal
         skip_space_or_newline
         check :OP_RPAREN
         end_location = token_end_location
+        @wants_regex = false
         next_token_skip_space
       else
         skip_space
@@ -4595,6 +4619,7 @@ module Crystal
           check :OP_RCURLY
           end_location = token_end_location
           slash_is_not_regex!
+          @wants_regex = false
           next_token_skip_space
           {body, end_location}
         end
@@ -5098,9 +5123,7 @@ module Crystal
       when .ident?
         set_visibility parse_var_or_call global: true, location: location
       when .const?
-        ident = parse_generic global: true, location: location, expression: true
-        skip_space
-        parse_custom_literal ident
+        parse_const global: true, location: location
       else
         unexpected_token
       end

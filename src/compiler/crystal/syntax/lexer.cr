@@ -1720,7 +1720,7 @@ module Crystal
         next_char :MACRO_LITERAL
         @token.value = "%"
         @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
-        @token.raw = "%"
+        @token.raw = "\\%"
         return @token
       end
 
@@ -2608,6 +2608,15 @@ module Crystal
 
     private def consume_variable(token_type : Token::Kind, start)
       if ident_start?(current_char)
+        if current_char.uppercase? || current_char.titlecase?
+          case token_type
+          when .instance_var?
+            @warnings.add_warning_at(@token.location, "uppercase instance variables are deprecated")
+          when .class_var?
+            @warnings.add_warning_at(@token.location, "uppercase class variables are deprecated")
+          end
+        end
+
         while ident_part?(next_char)
           # Nothing to do
         end

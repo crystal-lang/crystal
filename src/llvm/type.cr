@@ -12,6 +12,7 @@ struct LLVM::Type
     new LibLLVM.function_type(return_type, (arg_types.to_unsafe.as(LibLLVM::TypeRef*)), arg_types.size, varargs ? 1 : 0)
   end
 
+  @[Deprecated("Use `LLVM::TargetData#abi_size` instead")]
   def size
     # Asking the size of void crashes the program, we definitely don't want that
     if void?
@@ -21,6 +22,7 @@ struct LLVM::Type
     end
   end
 
+  @[Deprecated("Use `LLVM::TargetData#abi_alignment` instead")]
   def alignment
     # Asking the alignment of void crashes the program, we definitely don't want that
     if void?
@@ -145,11 +147,17 @@ struct LLVM::Type
   end
 
   def const_int(value) : Value
-    if !value.is_a?(Int128) && !value.is_a?(UInt128) && int_width != 128
-      Value.new LibLLVM.const_int(self, value, 0)
-    else
-      encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
+    int_width = self.int_width
+
+    if int_width <= 64
+      mask = ~(UInt64::MAX << int_width)
+      Value.new LibLLVM.const_int(self, mask & value, 0)
+    elsif int_width <= 128
+      mask = ~(UInt64::MAX << (int_width - 64))
+      encoded_value = UInt64[value.to_u64!, mask & (value >> 64)]
       Value.new LibLLVM.const_int_of_arbitrary_precision(self, encoded_value.size, encoded_value)
+    else
+      raise NotImplementedError.new("LLVM::Type#const_int")
     end
   end
 

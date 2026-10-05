@@ -7,12 +7,14 @@ module Markd
       Text
       Strong
       Emphasis
+      Strikethrough
       Link
       Image
       Heading
       List
       Item
       BlockQuote
+      Alert
       ThematicBreak
       Code
       CodeBlock
@@ -23,6 +25,9 @@ module Markd
 
       CustomInLine
       CustomBlock
+      Table
+      TableCell
+      TableRow
 
       def container?
         CONTAINER_TYPES.includes?(self)
@@ -34,14 +39,19 @@ module Markd
       Type::Paragraph,
       Type::Strong,
       Type::Emphasis,
+      Type::Strikethrough,
       Type::Link,
       Type::Image,
       Type::Heading,
       Type::List,
       Type::Item,
       Type::BlockQuote,
+      Type::Alert,
       Type::CustomInLine,
       Type::CustomBlock,
+      Type::Table,
+      Type::TableRow,
+      Type::TableCell,
     }
 
     alias DataValue = String | Int32 | Bool
@@ -74,7 +84,7 @@ module Markd
       child.unlink
       child.parent = self
 
-      if last = last_child?
+      if (last = last_child?)
         last.next = child
         child.prev = last
         @last_child = child
@@ -87,9 +97,9 @@ module Markd
     def insert_after(sibling : Node)
       sibling.unlink
 
-      if nxt = next?
+      if (nxt = next?)
         nxt.prev = sibling
-      elsif parent = parent?
+      elsif (parent = parent?)
         parent.last_child = sibling
       end
       sibling.next = nxt
@@ -100,15 +110,15 @@ module Markd
     end
 
     def unlink
-      if prev = prev?
+      if (prev = prev?)
         prev.next = next?
-      elsif parent = parent?
+      elsif (parent = parent?)
         parent.first_child = next?
       end
 
-      if nxt = next?
+      if (nxt = next?)
         nxt.prev = prev?
-      elsif parent = parent?
+      elsif (parent = parent?)
         parent.last_child = prev?
       end
 
@@ -148,7 +158,7 @@ module Markd
         entering = @entering
 
         if entering && current.type.container?
-          if first_child = current.first_child?
+          if (first_child = current.first_child?)
             @current = first_child
             @entering = true
           else
@@ -156,7 +166,7 @@ module Markd
           end
         elsif current == @root
           @current = nil
-        elsif nxt = current.next?
+        elsif current.next?
           @current = current.next?
           @entering = true
         else

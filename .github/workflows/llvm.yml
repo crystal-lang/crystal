@@ -47,35 +47,40 @@ jobs:
           - {llvm_version: 20, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 21, runs-on: ubuntu-24.04, codename: noble}
           - {llvm_version: 22, runs-on: ubuntu-24.04, codename: noble}
-          - {runs-on: ubuntu-24.04, codename: noble}
-    name: "LLVM ${{ matrix.llvm_version || 'Nightly' }}"
+          - {llvm_version: 23, runs-on: ubuntu-24.04, codename: noble}
+          - {llvm_version: 24, runs-on: ubuntu-24.04, codename: noble, nightly: true}
+    name: "LLVM ${{ matrix.llvm_version }}${{ matrix.nightly && ' (nightly)' }}"
     steps:
       - name: Checkout Crystal source
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Install LLVM ${{ matrix.llvm_version || 'Nightly' }}
+      - name: Install LLVM ${{ matrix.nightly && 'Nightly' || matrix.llvm_version }}
         run: |
           sudo apt remove 'llvm-*' 'libllvm*'
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
           sudo apt-add-repository -y \
             deb \
             http://apt.llvm.org/${{ matrix.codename }}/ \
-            llvm-toolchain-${{ matrix.codename }}${{ matrix.llvm_version && format('-{0}', matrix.llvm_version) || '' }} \
+            llvm-toolchain-${{ matrix.codename }}${{ !matrix.nightly && format('-{0}', matrix.llvm_version) || '' }} \
             main
-          sudo apt install -y llvm${{ matrix.llvm_version && format('-{0}', matrix.llvm_version) || '' }}-dev lld
+          sudo apt install -y llvm-${{ matrix.llvm_version }}-dev lld-${{ matrix.llvm_version }}
+          sudo ln -s /usr/bin/ld.lld-${{ matrix.llvm_version }} /usr/bin/ld.lld
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: "1.20.3"
+          crystal: "1.21.1"
 
       - name: Build libllvm_ext
         run: make -B deps
 
       - name: Test compiler_spec
-        run: make compiler_spec junit_output=.junit/compiler_spec.xml
+        run: |
+          # patch for ubuntu-22.04 whose PCRE2 doesn't support binary Unicode properties
+          sed -i 's/\\p{Emoji_Presentation}//g' lib/markd/src/markd/rule.cr
+          make compiler_spec junit_output=.junit/compiler_spec.xml
 
       - name: Integration test
         run: make crystal std_spec threads=1 junit_output=.junit/std_spec.xml

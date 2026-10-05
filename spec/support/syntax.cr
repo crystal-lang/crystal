@@ -1,5 +1,5 @@
 require "spec"
-require "../../src/compiler/crystal/syntax"
+require "compiler/crystal/syntax"
 
 include Crystal
 
