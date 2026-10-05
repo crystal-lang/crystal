@@ -52,7 +52,8 @@ class Process
     {% else %}
       File::Info.executable?(path)
     {% end %}
-  rescue File::AccessDeniedError
+  rescue File::Error
+    # Skip all file errors
     false
   end
 

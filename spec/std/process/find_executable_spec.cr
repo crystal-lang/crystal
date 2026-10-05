@@ -223,5 +223,31 @@ describe "Process.find_executable" do
         end
       end
     end
+
+    it "skips a PATH entry it can't inspect" do
+      with_tempfile("loop-path") do |loop_dir|
+        Dir.mkdir_p(loop_dir)
+        File.symlink("foo", File.join(loop_dir, "foo"))
+
+        error = expect_raises(File::Error) { File.info?(File.join(loop_dir, "foo")) }
+        error.os_error.should eq Errno::ELOOP
+        Process.find_executable("foo", path: loop_dir).should be_nil
+      end
+    end
+
+    it "finds an executable after a PATH entry it can't inspect" do
+      with_tempfile("loop-then-accessible", "accessible") do |loop_dir, allowed_dir|
+        Dir.mkdir_p(loop_dir)
+        Dir.mkdir_p(allowed_dir)
+        File.symlink("foo", File.join(loop_dir, "foo"))
+
+        allowed_exe = File.join(allowed_dir, "foo")
+        File.write(allowed_exe, "")
+        File.chmod(allowed_exe, 0o755)
+
+        path = {loop_dir, allowed_dir}.join(Process::PATH_DELIMITER)
+        Process.find_executable("foo", path: path).should eq allowed_exe
+      end
+    end
   {% end %}
 end

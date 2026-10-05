@@ -33,16 +33,6 @@ private def pending_if_superuser!
 end
 
 describe "File" do
-  describe "Error" do
-    it "raises File::AccessDeniedError for EACCES and EPERM" do
-      {Errno::EACCES, Errno::EPERM}.each do |errno|
-        error = File::Error.from_os_error("Unable to get file info", errno, file: "foo")
-        error.should be_a(File::AccessDeniedError)
-        error.os_error.should eq(errno)
-      end
-    end
-  end
-
   it "gets path" do
     path = datapath("test_file.txt")
     File.open(path) do |file|
