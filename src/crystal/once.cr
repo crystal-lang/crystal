@@ -84,9 +84,6 @@ module Crystal
 
       System.print_error "BUG: failed to initialize class variable or constant\n"
       LibC._exit(1)
-    rescue ex
-      System.print_exception "Failed to initialize class variable or constant", ex
-      LibC._exit(1)
     end
 
     private def self.processing?(flag)
@@ -131,12 +128,17 @@ module Crystal
       @@operations.push pointerof(operation)
       @@spin.unlock
 
-      yield
+      begin
+        yield
+      rescue ex
+      end
 
       @@spin.lock
-      flag.value = true
+      flag.value = true unless ex
       @@operations.delete pointerof(operation)
       @@spin.unlock
+
+      raise ex if ex
 
       operation.resume_all
     end
