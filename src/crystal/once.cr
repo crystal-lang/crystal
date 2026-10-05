@@ -85,7 +85,7 @@ module Crystal
       System.print_error "BUG: failed to initialize class variable or constant\n"
       LibC._exit(1)
     rescue ex
-      System.print_error "BUG: failed to initialize class variable or constant: %s (%s)\n", ex.message, ex.class.name
+      System.print_exception "Failed to initialize class variable or constant", ex
       LibC._exit(1)
     end
 
