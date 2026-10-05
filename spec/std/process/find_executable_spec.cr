@@ -227,11 +227,17 @@ describe "Process.find_executable" do
     it "skips a PATH entry it can't inspect" do
       with_tempfile("loop-path") do |loop_dir|
         Dir.mkdir_p(loop_dir)
-        File.symlink("foo", File.join(loop_dir, "foo"))
+        loop = File.join(loop_dir, "foo")
+        File.symlink("foo", loop)
 
-        error = expect_raises(File::Error) { File.info?(File.join(loop_dir, "foo")) }
-        error.os_error.should eq Errno::ELOOP
-        Process.find_executable("foo", path: loop_dir).should be_nil
+        begin
+          error = expect_raises(File::Error) { File.info?(loop) }
+          error.os_error.should eq Errno::ELOOP
+          Process.find_executable("foo", path: loop_dir).should be_nil
+        ensure
+          # FileUtils.rm_r follows the symlink and fails on the loop
+          File.delete(loop)
+        end
       end
     end
 
@@ -239,14 +245,19 @@ describe "Process.find_executable" do
       with_tempfile("loop-then-accessible", "accessible") do |loop_dir, allowed_dir|
         Dir.mkdir_p(loop_dir)
         Dir.mkdir_p(allowed_dir)
-        File.symlink("foo", File.join(loop_dir, "foo"))
+        loop = File.join(loop_dir, "foo")
+        File.symlink("foo", loop)
 
         allowed_exe = File.join(allowed_dir, "foo")
         File.write(allowed_exe, "")
         File.chmod(allowed_exe, 0o755)
 
-        path = {loop_dir, allowed_dir}.join(Process::PATH_DELIMITER)
-        Process.find_executable("foo", path: path).should eq allowed_exe
+        begin
+          path = {loop_dir, allowed_dir}.join(Process::PATH_DELIMITER)
+          Process.find_executable("foo", path: path).should eq allowed_exe
+        ensure
+          File.delete(loop)
+        end
       end
     end
   {% end %}
