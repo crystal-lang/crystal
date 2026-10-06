@@ -5,20 +5,21 @@ if ! LLVM_CONFIG=$(command -v "$LLVM_CONFIG"); then
   # shellcheck disable=SC2013
   for version in $(cat "$(dirname "$0")/llvm-versions.txt"); do
     LLVM_CONFIG=$(
-    ([ "${llvm_config_version#"$version"}" != "$llvm_config_version" ] && command -v llvm-config) || \
-    command -v llvm-config-"${version%.*}" || \
-    command -v llvm-config-"$version" || \
-    command -v "llvm-config${version%.*}${version#*.}" || \
-    command -v llvm-config"${version%.*}" || \
-    command -v llvm-config"$version" || \
-    command -v llvm"${version%.*}"-config)
+      ([ "${llvm_config_version#"$version"}" != "$llvm_config_version" ] && command -v llvm-config) ||
+        command -v llvm-config-"${version%.*}" ||
+        command -v llvm-config-"$version" ||
+        command -v "llvm-config${version%.*}${version#*.}" ||
+        command -v llvm-config"${version%.*}" ||
+        command -v llvm-config"$version" ||
+        command -v llvm"${version%.*}"-config
+    )
     [ "$LLVM_CONFIG" ] && break
   done
 fi
 
 if [ "$LLVM_CONFIG" ]; then
   case "$(uname -s)" in
-    MINGW32_NT*|MINGW64_NT*)
+    MINGW32_NT* | MINGW64_NT*)
       printf "%s" "$(cygpath -w "$LLVM_CONFIG")"
       ;;
     *)

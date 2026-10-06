@@ -611,7 +611,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         closure_self = lookup_closured_var?("self")
         if closure_self
           if closure_self.type.passed_by_value?
-            ivar_offset, ivar_size = get_closured_self_pointer(closure_self, target.name, node: node)
+            _, ivar_size = get_closured_self_pointer(closure_self, target.name, node: node)
             pointer_set ivar_size, node: node
           else
             ivar_offset = ivar_offset(closure_self.type, target.name)
@@ -1032,7 +1032,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     closured_self = lookup_closured_var?("self")
     if closured_self
-      ivar_offset, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
+      _, ivar_size = get_closured_self_pointer(closured_self, node.name, node: node)
       pointer_get ivar_size, node: node
     else
       ivar_offset = ivar_offset(scope, node.name)
@@ -2514,14 +2514,16 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if obj.type == var_type
       pointerof_local_var_or_closured_var(var, node: obj)
+    elsif var_type.is_a?(MixedUnionType) && obj.type.remove_indirection.is_a?(MixedUnionType)
+      # The narrowed type is a union too, and a union starts with the type_id
+      # the outer one already holds, so the pointer is the same.
+      pointerof_local_var_or_closured_var(var, node: obj)
     elsif var_type.is_a?(MixedUnionType) && obj.type.struct?
       # Get pointer of var
       pointerof_local_var_or_closured_var(var, node: obj)
 
       # Add 8 to it, to reach the union value
       pointer_add_constant 8, node: obj
-    elsif var_type.is_a?(MixedUnionType) && obj.type.is_a?(MixedUnionType)
-      pointerof_local_var_or_closured_var(var, node: obj)
     elsif var_type.is_a?(VirtualType) && var_type.struct? && var_type.abstract?
       if obj.type.is_a?(MixedUnionType)
         # If downcasting to a mix of the subtypes, it's a union type and it
@@ -2963,8 +2965,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       end
 
     if target_while = @while
-      target_while = @while.not_nil!
-
       upcast node, exp_type, target_while.type
 
       jump 0, node: nil

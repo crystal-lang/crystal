@@ -1362,4 +1362,18 @@ describe "Semantic: generic class" do
       Bar(Int32).new.@foo
       CRYSTAL
   end
+
+  it "backfills included type to existing instantiations (#8771)" do
+    assert_type(<<-CRYSTAL) { generic_module("Dexable", types["String"]) }
+      module Dexable(T)
+      end
+
+      struct Uple(T)
+        extend Dexable(Uple(String))
+        include Dexable(T)
+      end
+
+      Uple(String).new.as(Dexable(String))
+      CRYSTAL
+  end
 end

@@ -17,7 +17,7 @@ struct Crystal::EventLoop::IOCP::Timer
 
   # The absolute time, against the monotonic clock, at which a timed event shall
   # trigger. Nil for IO events without a timeout.
-  getter! wake_at : Time::Span
+  getter! wake_at : Time::Instant
 
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
@@ -27,8 +27,7 @@ struct Crystal::EventLoop::IOCP::Timer
 
   def initialize(@type : Type, @fiber, timeout : Time::Span? = nil)
     if timeout
-      seconds, nanoseconds = System::Time.monotonic
-      now = Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
+      now = Crystal::System::Time.instant
       @wake_at = now + timeout
     end
   end

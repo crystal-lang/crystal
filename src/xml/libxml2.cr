@@ -186,6 +186,7 @@ lib LibXML
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int
   fun xmlNodeGetContent(node : Node*) : UInt8*
+  fun xmlGetLineNo(node : Node*) : LibC::Long
   fun xmlNodeSetContent(node : Node*, content : UInt8*)
   fun xmlNodeSetName(node : Node*, name : UInt8*)
   fun xmlUnlinkNode(node : Node*)
@@ -383,6 +384,8 @@ lib LibXML
   {% if compare_versions(LibXML::VERSION, "2.14.0") >= 0 %}
     fun xmlSaveSetIndentString(SaveCtxPtr, UInt8*)
   {% end %}
+
+  $xmlFree : (Void* -> Void)
 
   fun xmlFreeDoc(Doc*)
   fun xmlFreeNode(Node*)

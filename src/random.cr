@@ -54,8 +54,8 @@ module Random
   DEFAULT = PCG32.new
 
   # :nodoc:
-  thread_local(thread_default : ::Random) do
-    ::Random::PCG32.new.as(::Random)
+  thread_local(thread_default : ::Random::PCG32) do
+    ::Random::PCG32.new
   end
 
   # :nodoc:
@@ -479,6 +479,11 @@ module Random
   # cryptographically quality PRNG such as `Random::ISAAC` or ChaCha20.
   def hex(n : Int = 16) : String
     random_bytes(n).hexstring
+  end
+
+  # See `#split`.
+  def self.split : Random
+    thread_default.split.as(Random)
   end
 
   # See `#next_bool`.

@@ -448,6 +448,47 @@ describe "Semantic: if" do
       CRYSTAL
   end
 
+  it "doesn't add Nil to var assigned in && condition with method call (#15739)" do
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
+      def foo
+        if true && (x = 1) == 1
+          x
+        else
+          0
+        end
+      end
+      foo
+      CRYSTAL
+  end
+
+  it "types var assigned in && condition correctly when used after (#15739)" do
+    assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
+      def bar : Int32
+        1
+      end
+
+      def foo
+        if true && (x = bar) > 0
+          x
+        else
+          0
+        end
+      end
+      foo
+      CRYSTAL
+  end
+
+  it "allows chained comparisons of 4+ expressions (#16361)" do
+    assert_type(<<-CRYSTAL, inject_primitives: true) { bool }
+      def a; 1; end
+      def b; 2; end
+      def c; 3; end
+      def d; 4; end
+
+      a < b < c < d
+      CRYSTAL
+  end
+
   it "includes pointer types in falsey branch" do
     assert_type(<<-CRYSTAL) { nilable union_of bool, pointer_of(int32), int32 }
       def foo

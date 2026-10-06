@@ -311,6 +311,23 @@ describe "Semantic: super" do
       CRYSTAL
   end
 
+  it "errors on implicit super in `#initialize` with partially-matching argument" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Foo#initialize' to be Int32, not (Int32 | Nil)"
+      class Foo
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+          super
+        end
+      end
+
+      Bar.new(1 || nil)
+      CRYSTAL
+  end
+
   it "calls super in module method (1) (#556)" do
     assert_type(<<-CRYSTAL) { int32 }
       class Parent

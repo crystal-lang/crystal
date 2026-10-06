@@ -224,6 +224,8 @@ module Crystal
               {{ parts.map { |ch| operator1[ch] || "" }.join("") }}
             {% elsif member.starts_with?("MAGIC_") %}
               {{ "__#{member[6..-1].id}__" }}
+            {% elsif member == "UNDERSCORE" %}
+              "_"
             {% else %}
               {{ member.stringify }}
             {% end %}
@@ -299,6 +301,10 @@ module Crystal
       SYMBOL_ARRAY
       COMMAND
       HEREDOC
+
+      def array?
+        string_array? || symbol_array?
+      end
     end
 
     record DelimiterState,

@@ -36,13 +36,13 @@ describe HTTP do
 
     it "parses and is UTC (#2744)" do
       date = "Mon, 09 Sep 2011 23:36:00 GMT"
-      parsed_time = HTTP.parse_time(date).not_nil!
+      parsed_time = HTTP.parse_time(date).should_not(be_nil)
       parsed_time.utc?.should be_true
     end
 
     it "parses and is local (#2744)" do
       date = "Mon, 09 Sep 2011 23:36:00 -0300"
-      parsed_time = HTTP.parse_time(date).not_nil!
+      parsed_time = HTTP.parse_time(date).should_not(be_nil)
       parsed_time.offset.should eq -3 * 3600
       parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
     end
@@ -89,6 +89,33 @@ describe HTTP do
 
       expect_raises(ArgumentError, "String contained invalid character") do
         HTTP.quote_string("foo\u{7F}bar")
+      end
+    end
+  end
+
+  describe ".validate_token" do
+    it "accepts valid token" do
+      HTTP.validate_token("foo").should eq "foo"
+      HTTP.validate_token("foo-bar+baz").should eq "foo-bar+baz"
+    end
+
+    it "rejects empty token" do
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("")
+      end
+    end
+
+    it "rejects invalid tokens" do
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo bar")
+      end
+
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo(bar)")
+      end
+
+      expect_raises(ArgumentError, "Invalid HTTP token") do
+        HTTP.validate_token("foo@bar")
       end
     end
   end

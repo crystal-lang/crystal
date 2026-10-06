@@ -1,4 +1,3 @@
-require "set"
 require "../program"
 require "../syntax/transformer"
 
@@ -509,6 +508,15 @@ module Crystal
       end
       values = [Var.new(var_name).at(expressions)] of ASTNode
       MultiAssign.new(targets, values).at(expressions)
+    end
+
+    def transform(node : Union)
+      if node.singleton?
+        # If the union has just one type, return that instead of a union
+        node.types.first
+      else
+        super
+      end
     end
   end
 end

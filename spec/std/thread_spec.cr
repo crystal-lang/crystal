@@ -45,8 +45,8 @@ pending_interpreted describe: Thread do
   end
 
   it "names the thread" do
-    {% if flag?(:execution_context) %}
-      Thread.current.name.should eq("DEFAULT-0")
+    {% if Fiber.has_constant?(:ExecutionContext) %}
+      Thread.current.name.should match(/DEFAULT-\d+/)
     {% else %}
       Thread.current.name.should be_nil
     {% end %}

@@ -47,9 +47,9 @@ describe System::Group do
 
   describe ".find_by?(*, name)" do
     it "returns a group by name" do
-      group = System::Group.find_by?(name: GROUP_NAME).not_nil!
+      group = System::Group.find_by?(name: GROUP_NAME)
 
-      group.should be_a(System::Group)
+      group = group.should be_a(System::Group)
       group.name.should eq(GROUP_NAME)
       group.id.should eq(GROUP_ID)
     end
@@ -62,9 +62,9 @@ describe System::Group do
 
   describe ".find_by?(*, id)" do
     it "returns a group by id" do
-      group = System::Group.find_by?(id: GROUP_ID).not_nil!
+      group = System::Group.find_by?(id: GROUP_ID)
 
-      group.should be_a(System::Group)
+      group = group.should be_a(System::Group)
       group.id.should eq(GROUP_ID)
       group.name.should eq(GROUP_NAME)
     end

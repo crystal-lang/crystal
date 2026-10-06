@@ -1,6 +1,7 @@
 require "./mu"
 require "./type"
 require "./errors"
+require "./lockable"
 
 module Sync
   # A multiple readers and exclusive writer lock to protect critical sections.
@@ -17,7 +18,11 @@ module Sync
   # guarantee that nothing else is accessing said resources.
   #
   # The implementation doesn't favor readers or writers in particular.
+  #
+  # NOTE: Consider `Shared(T)` to protect a value `T` with a `RWLock`.
   class RWLock
+    include Lockable
+
     def initialize(@type : Type = :checked)
       @counter = 0
       @mu = MU.new
@@ -27,7 +32,11 @@ module Sync
     #
     # Multiple fibers can acquire the shared (read) lock at the same time. The
     # block will never run concurrently to an exclusive (write) lock.
-    def read(& : -> U) : U forall U
+    #
+    # WARNING: the shared lock is technically reentrant but any attempt to
+    # relock read can result in a deadlock if another fiber is trying to lock
+    # write!
+    def read(& : -> _)
       lock_read
       begin
         yield
@@ -44,9 +53,12 @@ module Sync
 
     # Acquires the shared (read) lock.
     #
-    # The shared lock is always reentrant, multiple fibers can lock it multiple
-    # times each, and never checked. Blocks the calling fiber while the
-    # exclusive (write) lock is held.
+    # Multiple fibers can acquire the shared (read) lock at the same time.
+    # Blocks the calling fiber if the exclusive (write) lock is held.
+    #
+    # WARNING: the shared lock is technically reentrant but any attempt to
+    # relock read can result in a deadlock if another fiber is trying to lock
+    # write!
     def lock_read : Nil
       @mu.rlock
     end
@@ -65,7 +77,7 @@ module Sync
     # Only one fiber can acquire the exclusive (write) lock at the same time.
     # The block will never run concurrently to a shared (read) lock or another
     # exclusive (write) lock.
-    def write(& : -> U) : U forall U
+    def write(& : -> _)
       lock_write
       begin
         yield
@@ -77,7 +89,18 @@ module Sync
     # Tries to acquire the exclusive (write) lock without blocking. Returns true
     # when acquired, otherwise returns false immediately.
     def try_lock_write? : Bool
-      @mu.try_lock?
+      if @mu.try_lock?
+        unless @type.unchecked?
+          @locked_by = Fiber.current
+          @counter = 1 if @type.reentrant?
+        end
+        true
+      elsif @type.reentrant? && owns_lock?
+        @counter += 1
+        true
+      else
+        false
+      end
     end
 
     # Acquires the exclusive (write) lock. Blocks the calling fiber while the
@@ -86,7 +109,7 @@ module Sync
       unless @mu.try_lock?
         unless @type.unchecked?
           if owns_lock?
-            raise Error::Deadlock.new unless @type.reentrant?
+            raise Error::Deadlock.new("Can't lock rwlock recursively") unless @type.reentrant?
             @counter += 1
             return
           end
@@ -118,6 +141,27 @@ module Sync
         @locked_by = nil
       end
       @mu.unlock
+    end
+
+    protected def wait(cv : Pointer(CV)) : Nil
+      counter = 1
+
+      unless @type.unchecked?
+        if @mu.held?
+          raise Error.new("Can't unlock Sync::RWLock locked by another fiber") unless owns_lock?
+          @locked_by = nil
+          counter, @counter = @counter, 0 if @type.reentrant?
+        elsif !@mu.rheld?
+          raise Error.new("Can't unlock Sync::RWLock that isn't locked")
+        end
+      end
+
+      cv.value.wait pointerof(@mu)
+
+      unless @type.unchecked? || @mu.rheld?
+        @locked_by = Fiber.current
+        @counter = counter if @type.reentrant?
+      end
     end
 
     protected def owns_lock? : Bool

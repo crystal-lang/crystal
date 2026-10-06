@@ -3,14 +3,9 @@ require "termios"
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
 {% end %}
-require "crystal/fd_lock"
 
 # :nodoc:
 module Crystal::System::FileDescriptor
-  {% if IO.has_constant?(:Evented) %}
-    include IO::Evented
-  {% end %}
-
   # Platform-specific type to represent a file descriptor handle to the operating
   # system.
   alias Handle = Int32
@@ -19,15 +14,13 @@ module Crystal::System::FileDescriptor
   STDOUT_HANDLE = 1
   STDERR_HANDLE = 2
 
-  @fd_lock = FdLock.new
-
   private def system_blocking?
     flags = FileDescriptor.fcntl(fd, LibC::F_GETFL)
     !flags.bits_set? LibC::O_NONBLOCK
   end
 
   private def system_blocking=(value)
-    @fd_lock.reference { FileDescriptor.set_blocking(fd, value) }
+    FileDescriptor.set_blocking(fd, value)
   end
 
   protected def self.get_blocking(fd : Handle)
@@ -79,7 +72,7 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_fcntl(cmd, arg = 0)
-    @fd_lock.reference { FileDescriptor.fcntl(fd, cmd, arg) }
+    FileDescriptor.fcntl(fd, cmd, arg)
   end
 
   def self.system_info(fd)
@@ -94,11 +87,11 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_info
-    @fd_lock.reference { FileDescriptor.system_info(fd) }
+    FileDescriptor.system_info(fd)
   end
 
   private def system_seek(offset, whence : IO::Seek) : Nil
-    seek_value = @fd_lock.reference { LibC.lseek(fd, offset, whence) }
+    seek_value = LibC.lseek(fd, offset, whence)
 
     if seek_value == -1
       raise IO::Error.from_errno "Unable to seek", target: self
@@ -116,34 +109,24 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    other.@fd_lock.reference do
-      @fd_lock.reference do
-        {% if LibC.has_method?(:dup3) %}
-          flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
-          if LibC.dup3(other.fd, fd, flags) == -1
-            raise IO::Error.from_errno("Could not reopen file descriptor")
-          end
-        {% else %}
-          Process.lock_read do
-            if LibC.dup2(other.fd, fd) == -1
-              raise IO::Error.from_errno("Could not reopen file descriptor")
-            end
-            self.close_on_exec = other.close_on_exec?
-          end
-        {% end %}
+    {% if LibC.has_method?(:dup3) %}
+      flags = other.close_on_exec? ? LibC::O_CLOEXEC : 0
+      if LibC.dup3(other.fd, fd, flags) == -1
+        raise IO::Error.from_errno("Could not reopen file descriptor")
       end
-    end
+    {% else %}
+      Process.lock_read do
+        if LibC.dup2(other.fd, fd) == -1
+          raise IO::Error.from_errno("Could not reopen file descriptor")
+        end
+        self.close_on_exec = other.close_on_exec?
+      end
+    {% end %}
 
     # Mark the handle open, since we had to have dup'd a live handle.
     @closed = false
 
     event_loop.reopened(self)
-  end
-
-  private def system_close
-    if @fd_lock.try_close? { event_loop.shutdown(self) }
-      event_loop.close(self)
-    end
   end
 
   def file_descriptor_close(&) : Nil
@@ -179,45 +162,43 @@ module Crystal::System::FileDescriptor
     fd unless fd == -1
   end
 
-  private def system_flock_shared(blocking)
-    flock LibC::FlockOp::SH, blocking
-  end
+  private def system_lock(blocking : Bool, exclusive : Bool) : Nil
+    flags = exclusive ? LibC::FlockOp::EX : LibC::FlockOp::SH
 
-  private def system_flock_exclusive(blocking)
-    flock LibC::FlockOp::EX, blocking
-  end
+    # 1st attempt (always non-blocking)
+    ret = LibC.flock(fd, flags | LibC::FlockOp::NB)
+    errno = Errno.value
 
-  private def system_flock_unlock
-    flock LibC::FlockOp::UN
-  end
+    while true
+      return if ret == 0
 
-  private def flock(op : LibC::FlockOp, retry : Bool) : Nil
-    op |= LibC::FlockOp::NB
-
-    if retry
-      until flock(op)
-        sleep 0.1.seconds
-      end
-    else
-      flock(op) || raise IO::Error.from_errno("Error applying file lock: file is already locked", target: self)
-    end
-  end
-
-  private def flock(op) : Bool
-    if 0 == @fd_lock.reference { LibC.flock(fd, op) }
-      true
-    else
-      errno = Errno.value
-      if errno.in?(Errno::EAGAIN, Errno::EWOULDBLOCK)
-        false
+      case errno
+      when Errno::EINTR
+        # retry
+      when Errno::EWOULDBLOCK, Errno::EAGAIN
+        raise IO::Error.from_os_error("Error applying file lock: file is already locked", errno, target: self) unless blocking
       else
-        raise IO::Error.from_os_error("Error applying or removing file lock", errno, target: self)
+        raise IO::Error.from_os_error("Error applying file lock", errno, target: self)
       end
+
+      ret, errno =
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          ::Fiber.syscall { {LibC.flock(fd, flags), Errno.value} }
+        {% else %}
+          # poll at regular intervals (no unlock event)
+          sleep 100.milliseconds
+          {LibC.flock(fd, flags | LibC::FlockOp::NB), Errno.value}
+        {% end %}
     end
+  end
+
+  private def system_unlock : Nil
+    ret = LibC.flock(fd, LibC::FlockOp::UN)
+    raise IO::Error.from_errno("Error removing file lock", target: self) unless ret == 0
   end
 
   private def system_fsync(flush_metadata = true) : Nil
-    ret = @fd_lock.reference do
+    ret =
       if flush_metadata
         LibC.fsync(fd)
       else
@@ -227,7 +208,6 @@ module Crystal::System::FileDescriptor
           LibC.fdatasync(fd)
         {% end %}
       end
-    end
 
     if ret != 0
       raise IO::Error.from_errno("Error syncing file", target: self)
@@ -254,19 +234,11 @@ module Crystal::System::FileDescriptor
     pipe_fds
   end
 
-  def self.pread(file, buffer, offset)
-    bytes_read = file.@fd_lock.reference do
-      LibC.pread(file.fd, buffer, buffer.size, offset).to_i64
-    end
-
-    if bytes_read == -1
-      raise IO::Error.from_errno("Error reading file", target: file)
-    end
-
-    bytes_read
-  end
-
   def self.from_stdio(fd)
+    if Crystal.stdio_closed?(fd)
+      return IO::FileDescriptor.new(closed: true)
+    end
+
     # If we have a TTY for stdin/out/err, it is possibly a shared terminal.
     # We need to reopen it to use O_NONBLOCK without causing other programs to break
 
@@ -395,13 +367,5 @@ module Crystal::System::FileDescriptor
       termios.c_cc[LibC::VTIME] = 0
     {% end %}
     termios
-  end
-
-  private def system_read(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.read(self, slice) }
-  end
-
-  private def system_write(slice : Bytes) : Int32
-    @fd_lock.reference { event_loop.write(self, slice) }
   end
 end

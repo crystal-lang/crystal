@@ -37,14 +37,14 @@ module OpenSSL::SSL::HostnameValidation
 
         case current_name.type
         when LibCrypto::GEN_DNS
-          dns_name = LibCrypto.asn1_string_data(current_name.value)
+          dns_name = LibCrypto.asn1_string_get0_data(current_name.value)
           dns_name_len = LibCrypto.asn1_string_length(current_name.value)
           return Result::MalformedCertificate if dns_name_len != LibC.strlen(dns_name)
 
           pattern = String.new(dns_name, dns_name_len)
           return Result::MatchFound if matches_hostname?(pattern, hostname)
         when LibCrypto::GEN_IPADD
-          data = Slice.new(LibCrypto.asn1_string_data(current_name.value), LibCrypto.asn1_string_length(current_name.value))
+          data = Slice.new(LibCrypto.asn1_string_get0_data(current_name.value), LibCrypto.asn1_string_length(current_name.value))
 
           case data.size
           when 4
@@ -90,7 +90,7 @@ module OpenSSL::SSL::HostnameValidation
     asn1 = LibCrypto.x509_name_entry_get_data(name_entry)
     return Result::Error if asn1.null?
 
-    str = LibCrypto.asn1_string_data(asn1)
+    str = LibCrypto.asn1_string_get0_data(asn1)
     str_len = LibCrypto.asn1_string_length(asn1)
     return Result::MalformedCertificate if str_len != LibC.strlen(str)
 

@@ -225,6 +225,42 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "does dispatch on a virtual struct read out of a nilable union" do
+      interpret(<<-CRYSTAL).should eq(12)
+        abstract struct Foo
+          abstract def foo : Int32
+        end
+
+        struct Bar < Foo
+          def foo : Int32
+            1
+          end
+        end
+
+        struct Baz < Foo
+          def foo : Int32
+            2
+          end
+        end
+
+        class Holder
+          @value : Foo?
+
+          def initialize(@value : Foo?)
+          end
+
+          def run : Int32
+            value = @value
+            return 0 if value.nil?
+
+            value.foo
+          end
+        end
+
+        Holder.new(Bar.new).run &* 10 &+ Holder.new(Baz.new).run &+ Holder.new(nil).run
+      CRYSTAL
+    end
+
     it "does dispatch on one argument with block" do
       interpret(<<-CRYSTAL).should eq(42)
         def foo(x : Char)
@@ -433,6 +469,46 @@ describe Crystal::Repl::Interpreter do
         end
 
         foo("b" || nil)
+      CRYSTAL
+    end
+
+    it "doesn't reuse a cached dispatch chain when a later call site sees a wider target_defs set (#16810)" do
+      # Two call sites against the same union type. The second site
+      # instantiates `G(C)`, which adds an extra `target_def` to the
+      # multidispatch. With the old cache key (`obj_type` + `signature`
+      # only) both sites would share a dispatch chain built for the
+      # first one, and the new type would fall through into the
+      # `unreachable` else branch.
+      interpret(<<-CRYSTAL).should eq(42 * 1000 + 42)
+        module M1; end
+        module M2; end
+
+        class G(T)
+          include M1
+          def my_check
+            42
+          end
+        end
+
+        alias V = Int32 | M1 | M2 | Nil
+
+        class C
+          include M2
+        end
+
+        class Object
+          def my_check
+            0
+          end
+        end
+
+        v1 = G(M2 | C).new.as(V)
+        res1 = v1.my_check
+
+        v2 = G(C).new.as(V)
+        res2 = v2.my_check
+
+        res1 &* 1000 &+ res2
       CRYSTAL
     end
   end

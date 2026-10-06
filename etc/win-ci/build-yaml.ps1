@@ -10,7 +10,7 @@ param(
 Setup-Git -Path $BuildTree -Url https://github.com/yaml/libyaml.git -Ref $Version
 
 Run-InDirectory $BuildTree {
-    $args = "-DBUILD_TESTING=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
+    $args = "-DBUILD_TESTING=OFF -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.10"
     if ($Dynamic) {
         $args = "-DBUILD_SHARED_LIBS=ON $args"
     } else {

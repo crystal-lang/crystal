@@ -1,5 +1,5 @@
 name: crystal
-version: 1.19.0-dev
+version: 1.22.0-dev
 
 authors:
   - Crystal Core Team <crystal@manas.tech>
@@ -7,7 +7,7 @@ authors:
 description: |
   The Crystal standard library and compiler.
 
-crystal: ">= 1.0"
+crystal: ">= 1.13.0"
 
 dependencies:
   markd:

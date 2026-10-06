@@ -173,7 +173,6 @@ class IO::Delimited < IO
         # Otherwise, we can read up to past that byte for now
         slice.copy_from(peek[0, index + 1])
         @io.skip(index + 1)
-        slice += index + 1
         return index + 1
       end
     end
@@ -186,7 +185,6 @@ class IO::Delimited < IO
       safe_to_read = peek[0, index + 1]
       slice.copy_from(safe_to_read)
       @io.skip(safe_to_read.size)
-      slice += safe_to_read.size
       return safe_to_read.size
     end
 

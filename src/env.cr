@@ -4,15 +4,43 @@ require "crystal/system/env"
 #
 # ### Example
 #
+# Assuming the following example is invoked with the `HOST=localhost` and
+# `PORT=5000` environment variables:
+#
 # ```
-# # Set env var PORT to a default if not already set
-# ENV["PORT"] ||= "5000"
-# # Later use that env var.
-# puts ENV["PORT"].to_i
+# p ENV["HOST"]                       # => "localhost"
+# p ENV["PORT"].to_i                  # => 5000
+# p ENV.fetch("TLS_PORT", "443").to_i # => 443
 # ```
 #
 # NOTE: All keys and values are strings. You must take care to cast other types
 # at runtime, e.g. integer port numbers.
+#
+# ### Safety
+#
+# Modifying the environment in single-threaded programs is safe. Modifying the
+# environment is also always safe on Windows.
+#
+# Modifying the environment in multi-threaded programs on other targets is
+# always unsafe, and can cause a mere read to segfault! At best, memory will be
+# leaked every time the environment is modified.
+#
+# The problem is that POSIX systems don't guarantee a thread safe implementation
+# of the `getenv`, `setenv` and `putenv` libc functions. Any thread that gets an
+# environment variable while another thread sets an environment variable may
+# segfault. The Crystal runtime implementation of `ENV` itself is protected by a
+# readers-writer lock, but we can't protect against external libraries,
+# including libc calls made by the stdlib, to call `getenv` internally without
+# holding the read lock while a crystal fiber with the write lock calls
+# `setenv`.
+#
+# The only safe solution is to consider `ENV` to be immutable, and to never call
+# `ENV.[]=`, `ENV.delete` or `ENV.clear` in your programs. If you really need
+# to, you must make sure that no other thread has been started (beware of
+# libraries that may start threads without your knowledge).
+#
+# NOTE: Passing environment variables to a child process should use the `env`
+# arg of `Process.run` and `Process.new`.
 module ENV
   extend Enumerable({String, String})
 
@@ -34,6 +62,9 @@ module ENV
   # If *value* is `nil`, the environment variable is deleted.
   #
   # If *key* or *value* contains a null-byte an `ArgumentError` is raised.
+  #
+  # WARNING: It is recommended to never set environment variables. See the
+  # Safety section of `ENV` for details.
   def self.[]=(key : String, value : String?)
     Crystal::System::Env.set(key, value)
 
@@ -90,6 +121,9 @@ module ENV
 
   # Removes the environment variable named *key*. Returns the previous value if
   # the environment variable existed, otherwise returns `nil`.
+  #
+  # WARNING: It is recommended to never delete environment variables. See the
+  # Safety section of `ENV` for details.
   def self.delete(key : String) : String?
     if value = self[key]?
       Crystal::System::Env.set(key, nil)
@@ -113,6 +147,8 @@ module ENV
     end
   end
 
+  # WARNING: It is recommended to never delete environment variables. See the
+  # Safety section of `ENV` for details.
   def self.clear : Nil
     keys.each { |k| delete k }
   end

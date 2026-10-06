@@ -178,10 +178,10 @@ module Spec
       end
     end
 
-    @start_time : Time::Span? = nil
+    @start_time : Time::Instant? = nil
 
     def run
-      @start_time = Time.monotonic
+      @start_time = Time.instant
 
       at_exit do |status|
         # Do not run specs if the process is exiting on an error
@@ -288,7 +288,7 @@ module Spec
     end
 
     def finish_run
-      elapsed_time = Time.monotonic - @start_time.not_nil!
+      elapsed_time = @start_time.not_nil!.elapsed
       root_context.finish(elapsed_time, @aborted)
       exit 1 if !root_context.succeeded || @aborted || (focus? && ENV["SPEC_FOCUS_NO_FAIL"]? != "1")
     end

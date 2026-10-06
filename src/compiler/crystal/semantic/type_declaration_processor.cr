@@ -264,7 +264,7 @@ struct Crystal::TypeDeclarationProcessor
       if extender = find_extending_type(owner)
         raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_decl.location)
       end
-    elsif owner.metaclass?
+    elsif owner.metaclass? || !owner.is_a?(InstanceVarContainer)
       raise TypeException.new("can't declare instance variables in #{owner}", type_decl.location)
     end
 
@@ -378,7 +378,7 @@ struct Crystal::TypeDeclarationProcessor
       if extender = find_extending_type(owner)
         raise TypeException.new("can't declare instance variables in #{owner} because #{extender} extends it", type_info.location)
       end
-    elsif owner.metaclass?
+    elsif owner.metaclass? || !owner.is_a?(InstanceVarContainer)
       raise TypeException.new("can't declare instance variables in #{owner}", type_info.location)
     end
 
@@ -530,11 +530,17 @@ struct Crystal::TypeDeclarationProcessor
       end
     end
 
-    # Get all instance vars assigned in all the initialize methods
+    # Get all instance vars assigned in all the initialize methods, plus
+    # any that the type itself explicitly declared (`@x : Int32`).
+    # Declared-but-never-assigned ivars must still be checked so
+    # subclasses that override `initialize` are required to initialize
+    # them — without this they could silently leave the ivar uninitialized
+    # and segfault at access time (#16729).
     all_instance_vars = [] of String
     infos.each do |info|
       info.instance_vars.try { |ivars| all_instance_vars.concat(ivars) }
     end
+    @explicit_instance_vars[owner]?.try &.each_key { |name| all_instance_vars << name }
     all_instance_vars.uniq!
 
     # Then check which ones are assigned in all of them

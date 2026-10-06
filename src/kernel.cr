@@ -563,7 +563,7 @@ end
 # to the invoking environment.
 #
 # Registered `at_exit` procs are executed.
-def exit(status = 0) : NoReturn
+def exit(status : Int32 | Process::Status = 0) : NoReturn
   status = Crystal::AtExitHandlers.run status
   Crystal.ignore_stdio_errors { STDOUT.flush }
   Crystal.ignore_stdio_errors { STDERR.flush }
@@ -577,30 +577,12 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if !flag?(:preview_mt) && flag?(:unix) %}
-  class Process
-    # :nodoc:
-    #
-    # Hooks are defined here due to load order problems.
-    def self.after_fork_child_callbacks
-      @@after_fork_child_callbacks ||= [
-        # reinit event loop first:
-        -> { Crystal::EventLoop.current.after_fork },
-
-        # reinit signal handling:
-        ->Crystal::System::Signal.after_fork,
-        ->Crystal::System::SignalChildHandler.after_fork,
-
-        # additional reinitialization
-        ->Random::DEFAULT.new_seed,
-        -> { Random.thread_default.new_seed },
-      ] of -> Nil
-    end
-  end
+{% if flag?(:win32) && (!flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context)) %}
+  Crystal::EventLoop::IOCP.start_forwarder_thread
 {% end %}
 
 {% unless flag?(:interpreted) || flag?(:wasm32) %}
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     Fiber::ExecutionContext.init_default_context
   {% else %}
     Crystal::Scheduler.init

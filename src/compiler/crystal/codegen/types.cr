@@ -168,12 +168,6 @@ module Crystal
     end
   end
 
-  class TypeDefType
-    def llvm_name(io)
-      typedef.llvm_name(io)
-    end
-  end
-
   class Const
     property initializer : LLVM::Value?
 

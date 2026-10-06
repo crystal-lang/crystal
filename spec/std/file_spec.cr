@@ -55,44 +55,55 @@ describe "File" do
       ret = LibC.mkfifo(path, File::DEFAULT_CREATE_PERMISSIONS)
       raise RuntimeError.from_errno("mkfifo") unless ret == 0
 
-      # FIXME: open(2) will block when opening a fifo file until another thread
-      #        or process also opened the file
-      writer = nil
-      thread = new_thread do
-        writer = File.new(path, "w")
-      end
-
       rbuf = Bytes.new(5120)
       wbuf = Bytes.new(5120)
       Random::Secure.random_bytes(wbuf)
 
-      File.open(path, "r") do |reader|
-        # opened fifo for read: wait for thread to open for write
-        thread.join
-
-        reader.read_timeout = 1.second
-        writer.not_nil!.write_timeout = 1.second
-
+      {% if Fiber.has_constant?(:ExecutionContext) %}
         WaitGroup.wait do |wg|
-          wg.spawn do
-            64.times do |i|
-              reader.read_fully(rbuf)
+          # one fiber may block on open(2) (depends on the event loop) but the
+          # monitor thread will notice and move the scheduler to another thread,
+          # unblocking the other fiber
+          wg.spawn(name: "fifo:write") do
+            File.open(path, "w") do |writer|
+              64.times { |i| writer.write(wbuf) }
             end
           end
 
-          wg.spawn do
-            64.times do |i|
-              writer.not_nil!.write(wbuf)
+          wg.spawn(name: "fifo:read") do
+            File.open(path, "r") do |reader|
+              64.times { |i| reader.read_fully(rbuf) }
             end
-            writer.not_nil!.close
           end
         end
-      end
+      {% else %}
+        # open(2) will block when opening a fifo file until another thread or
+        # process also opened the file; so we must explicitly start a thread
+        writer = nil
+        thread = new_thread { writer = File.new(path, "w") }
+
+        File.open(path, "r") do |reader|
+          WaitGroup.wait do |wg|
+            # opened fifo for read: wait for thread to open for write
+            thread.join
+
+            wg.spawn(name: "fifo:read") do
+              64.times { |i| reader.read_fully(rbuf) }
+            end
+
+            wg.spawn(name: "fifo:write") do
+              64.times { |i| writer.not_nil!.write(wbuf) }
+              writer.not_nil!.close
+            end
+          end
+        ensure
+          writer.try(&.close)
+        end
+      {% end %}
 
       rbuf.should eq(wbuf)
     ensure
       File.delete(path) if path
-      writer.try(&.close)
     end
   {% end %}
 
@@ -214,6 +225,34 @@ describe "File" do
 
     it "gives true for null file (#15019)" do
       File.exists?(File::NULL).should be_true
+    end
+
+    describe "follow_symlinks: false" do
+      it "gives true" do
+        File.exists?(datapath("test_file.txt"), follow_symlinks: false).should be_true
+      end
+
+      it "gives false" do
+        File.exists?(datapath("non_existing_file.txt"), follow_symlinks: false).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.exists?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
+      end
+
+      it "checks existence of symlink" do
+        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+          File.exists?(good_path, follow_symlinks: false).should be_true
+          File.exists?(bad_path, follow_symlinks: false).should be_true
+        end
+      end
+
+      it "gives true for null file (#15019)" do
+        File.exists?(File::NULL, follow_symlinks: false).should be_true
+      end
     end
   end
 
@@ -562,6 +601,41 @@ describe "File" do
     end
   end
 
+  long_path = "a" * 1000
+  describe ".info" do
+    it "raises for too long pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '#{long_path}': (File ?name too long|The system cannot find the path specified)/) do
+        File.info(long_path)
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '': (No such file or directory|The system cannot find the path specified)/) do
+        File.info("")
+      end
+    end
+
+    it "raises for invalid pathname" do
+      expect_raises(File::NotFoundError, /Unable to get file info: '<': (No such file or directory|The filename, directory name, or volume label syntax is incorrect)/) do
+        File.info("<")
+      end
+    end
+  end
+
+  describe ".info?" do
+    it "returns nil for too long pathname" do
+      File.info?(long_path).should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("").should be_nil
+    end
+
+    it "returns nil for invalid pathname" do
+      File.info?("<").should be_nil
+    end
+  end
+
   describe "File::Info" do
     it "gets for this file" do
       info = File.info(datapath("test_file.txt"))
@@ -664,6 +738,28 @@ describe "File" do
           File::Info.executable?(bad_path).should be_false
         end
       end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          pending! if {{ flag?(:win32) }}
+          with_tempfile("good_symlink_x.txt") do |good_path|
+            crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+            File.symlink(File.expand_path(crystal), good_path)
+            File::Info.executable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives true for a symlink to a non-existent file" do
+          pending! if {{ flag?(:win32) }}
+          with_tempfile("missing_symlink_x.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.executable?(missing_path, follow_symlinks: false).should be_true
+
+            # File.chmod(missing_path, 0o444)#, follow_symlinks: false)
+            # File::Info.executable?(missing_path, follow_symlinks: false).should be_false
+          end
+        end
+      end
     end
 
     describe ".readable?" do
@@ -721,6 +817,22 @@ describe "File" do
           File::Info.readable?(missing_path).should be_false
         end
       end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          with_tempfile("good_symlink_r.txt") do |good_path|
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File::Info.readable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives false for a symlink to a non-existent file" do
+          with_tempfile("missing_symlink_r.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.readable?(missing_path, follow_symlinks: false).should be_true
+          end
+        end
+      end
     end
 
     describe ".writable?" do
@@ -764,6 +876,22 @@ describe "File" do
         with_tempfile("missing_symlink_w.txt") do |missing_path|
           File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
           File::Info.writable?(missing_path).should be_false
+        end
+      end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          with_tempfile("good_symlink_w.txt") do |good_path|
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File::Info.writable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives false for a symlink to a non-existent file" do
+          with_tempfile("missing_symlink_w.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.writable?(missing_path, follow_symlinks: false).should be_true
+          end
         end
       end
     end

@@ -39,6 +39,10 @@ describe "String" do
       "há日本語"[1..nil].should eq("á日本語")
     end
 
+    it "gets with exclusive range without end" do
+      "há日本語"[1...nil].should eq("á日本語")
+    end
+
     it "gets with range without beginning" do
       "há日本語"[nil..2].should eq("há日")
     end
@@ -749,6 +753,20 @@ describe "String" do
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
     end
 
+    it "handles consecutive spaces (#17199)" do
+      assert_prints "a  b".titleize, "A  B"
+      assert_prints "a  b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a _b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a_ b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a__b".titleize(underscore_to_space: true), "A  B"
+
+      assert_prints "á  é".titleize, "Á  É"
+      assert_prints "á  é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á _é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á_ é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á__é".titleize(underscore_to_space: true), "Á  É"
+    end
+
     describe "with IO" do
       it { String.build { |io| "foo_Bar".titleize io }.should eq "Foo_bar" }
       it { String.build { |io| "foo_bar".titleize io }.should eq "Foo_bar" }
@@ -960,6 +978,12 @@ describe "String" do
   describe "empty?" do
     it { "a".empty?.should be_false }
     it { "".empty?.should be_true }
+  end
+
+  describe "present?" do
+    it { "a".present?.should be_true }
+    it { "".present?.should be_false }
+    it { " \t\n".present?.should be_false }
   end
 
   describe "blank?" do
@@ -1459,6 +1483,9 @@ describe "String" do
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
       it { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      it "splits by a multibyte separator" do
+        "a💥b💥c".split("💥").should eq(["a", "b", "c"])
+      end
       it { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
@@ -2021,6 +2048,13 @@ describe "String" do
       "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
     end
 
+    it "empty match + advanced offset" do
+      "a  b".gsub(/(?= )/, "-").should eq "a- - b"
+      "┬  7".gsub(/(?= )/, "-").should eq "┬- - 7"
+      "a  ".gsub(/(?<= )/, "-").should eq "a - -"
+      "┬  ".gsub(/(?<= )/, "-").should eq "┬ - -"
+    end
+
     it "empty string" do
       "ab".gsub("", "-").should eq "-a-b-"
       "┬7".gsub("", "-").should eq "-┬-7-"
@@ -2396,6 +2430,7 @@ describe "String" do
 
     it "works when match is empty, multibyte char" do
       "\u{80}\u{800}\u{10000}".scan(/()/).map(&.begin).should eq([0, 1, 2, 3])
+      " Äa".scan(/(?=(\S))/).map(&.[1]).should eq(["Ä", "a"])
     end
 
     it "works with strings with block" do
@@ -2463,19 +2498,19 @@ describe "String" do
 
   it "#match_full" do
     pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
-    "foo".match_full(/foo/).not_nil![0].should eq "foo"
+    "foo".match_full(/foo/).should_not(be_nil)[0].should eq "foo"
     "fooo".match_full(/foo/).should be_nil
     "ofoo".match_full(/foo/).should be_nil
-    "pattern".match_full(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    "pattern".match_full(/(\A)?pattern(\z)?/).should_not(be_nil)[0].should eq "pattern"
     "_pattern_".match_full(/(\A)?pattern(\z)?/).should be_nil
   end
 
   it "#match_full!" do
     pending! if {{ Regex::Engine.resolve.name == "Regex::PCRE" }}
-    "foo".match_full!(/foo/).not_nil![0].should eq "foo"
+    "foo".match_full!(/foo/).should_not(be_nil)[0].should eq "foo"
     expect_raises(Regex::Error) { "fooo".match_full!(/foo/) }
     expect_raises(Regex::Error) { "ofoo".match_full!(/foo/) }
-    "pattern".match_full!(/(\A)?pattern(\z)?/).not_nil![0].should eq "pattern"
+    "pattern".match_full!(/(\A)?pattern(\z)?/).should_not(be_nil)[0].should eq "pattern"
     expect_raises(Regex::Error) { "_pattern_".match_full!(/(\A)?pattern(\z)?/) }
   end
 
@@ -2725,6 +2760,8 @@ describe "String" do
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
   it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
   it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
+  it_iterates "#each_line(remove_empty: true)", [] of String, "\n\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", [] of String, ("\n" * 100_000).each_line(remove_empty: true)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
@@ -2857,6 +2894,9 @@ describe "String" do
       "h".compare("zzz", case_insensitive: true).should eq(-1)
       "ä".compare("äA", case_insensitive: true).should eq(-1)
       "äÄ".compare("äÄ", case_insensitive: true).should eq(0)
+      "".compare("äbc", case_insensitive: true).should eq(-1)
+      "äbc".compare("", case_insensitive: true).should eq(1)
+      "".compare("", case_insensitive: true).should eq(0)
       "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic).should eq(0)
       "".compare("abc", case_insensitive: true).should eq(-1)
       "abc".compare("", case_insensitive: true).should eq(1)
@@ -2865,13 +2905,25 @@ describe "String" do
 
     it "compares case-insensitive, multiple chars after case conversion (#4513)" do
       "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄﬄﬄ".compare("fflfflffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄ".compare("FFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬀﬀﬀ".compare("ﬀﬀﬀF", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFFL".compare("Fﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬄ".compare("FFFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
     end
 
+    it "treats invalid code units as replacement char in an non-optimizable string" do
+      "ö\xC0".compare("ö\xE0", case_insensitive: true).should eq(-1)
+      "ö\xE0".compare("ö\xC0", case_insensitive: true).should eq(1)
+      "ö\xC0".compare("öa", case_insensitive: true).should eq(1)
+      "öa".compare("ö\xC0", case_insensitive: true).should eq(-1)
+    end
+
     it "treats invalid code units as replacement char in an otherwise ascii string" do
-      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
-      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(-1)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(1)
       "\xC0".compare("a", case_insensitive: true).should eq(1)
       "a".compare("\xC0", case_insensitive: true).should eq(-1)
     end

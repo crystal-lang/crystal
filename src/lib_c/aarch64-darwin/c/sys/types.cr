@@ -5,6 +5,7 @@ lib LibC
   alias BlkcntT = LongLong
   alias BlksizeT = Int
   alias ClockT = ULong
+  alias ClockidT = Int
   alias DevT = Int
   alias GidT = UInt
   alias IdT = UInt

@@ -134,7 +134,7 @@ class Crystal::ABI
           info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
+        test "does with structs larger than 128 bits" do |abi, ctx|
           str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
           arg_types = [str]
           return_type = str

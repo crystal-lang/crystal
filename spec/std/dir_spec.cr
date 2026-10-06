@@ -1,11 +1,11 @@
 require "./spec_helper"
 require "../support/env"
 
-private def unset_tempdir(&)
+private def reset_tempdir(tmp_path = nil, &)
   {% if flag?(:windows) %}
-    with_env("TMP": nil, "TEMP": nil, "USERPROFILE": nil) { yield }
+    with_env("TMP": tmp_path, "TEMP": nil, "USERPROFILE": nil) { yield }
   {% else %}
-    with_env("TMPDIR": nil) { yield }
+    with_env("TMPDIR": tmp_path) { yield }
   {% end %}
 end
 
@@ -444,7 +444,7 @@ describe "Dir" do
     it "root pattern" do
       {% if flag?(:windows) %}
         Dir["C:/"].should eq ["C:\\"]
-        Dir["/"].should eq [Path[Dir.current].anchor.not_nil!.to_s]
+        Dir["/"].should eq [Path[Dir.current].anchor.should_not(be_nil).to_s]
       {% else %}
         Dir["/"].should eq ["/"]
       {% end %}
@@ -494,12 +494,16 @@ describe "Dir" do
 
       it "ignores hidden files" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/*/", match_hidden: false).should be_empty
       end
 
       it "ignores hidden files recursively" do
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match: :none).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match: :none).should be_empty
         Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*", match_hidden: false).should be_empty
+        Dir.glob("#{Path[datapath].to_posix}/dir/dots/**/*/", match_hidden: false).should be_empty
       end
     end
 
@@ -624,7 +628,14 @@ describe "Dir" do
   describe ".current" do
     # can't use backtick in interpreted code (#12241)
     pending_interpreted "matches shell" do
-      Dir.current.should eq(`#{{{ flag?(:win32) ? "cmd /c cd" : "pwd" }}}`.chomp)
+      pwd = Process.capture(
+        {% if flag?(:win32) %}
+          ["cmd", "/c", "cd"]
+        {% else %}
+          "pwd"
+        {% end %}
+      ).chomp
+      Dir.current.should eq(pwd)
     end
 
     # Skip spec on Windows due to weak support for symlinks and $PWD.
@@ -661,7 +672,7 @@ describe "Dir" do
 
   describe ".tempdir" do
     it "returns default directory for tempfiles" do
-      unset_tempdir do
+      reset_tempdir do
         {% if flag?(:windows) %}
           # GetTempPathW defaults to the Windows directory when %TMP%, %TEMP%
           # and %USERPROFILE% are not set.
@@ -677,9 +688,8 @@ describe "Dir" do
     end
 
     it "returns configure directory for tempfiles" do
-      unset_tempdir do
-        tmp_path = Path["my_temporary_path"].expand.to_s
-        ENV[{{ flag?(:windows) ? "TMP" : "TMPDIR" }}] = tmp_path
+      tmp_path = Path["my_temporary_path"].expand.to_s
+      reset_tempdir(tmp_path) do
         Dir.tempdir.should eq tmp_path
       end
     end

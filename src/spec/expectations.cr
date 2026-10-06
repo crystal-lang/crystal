@@ -496,7 +496,10 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
-      unless expectation.match self
+      # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
+      if expectation.match self
+        self
+      else
         failure_message ||= expectation.failure_message(self)
         fail(failure_message, file, line)
       end
@@ -516,6 +519,7 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
+      # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -552,6 +556,8 @@ module Spec
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
+      else
+        self
       end
     end
   end

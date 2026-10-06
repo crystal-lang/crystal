@@ -221,17 +221,27 @@ class File < IO::FileDescriptor
 
   # Returns whether the file given by *path* exists.
   #
-  # Symbolic links are dereferenced, possibly recursively. Returns `false` if a
-  # symbolic link refers to a non-existent file.
-  #
   # ```
   # File.delete("foo") if File.exists?("foo")
   # File.exists?("foo") # => false
   # File.write("foo", "foo")
   # File.exists?("foo") # => true
   # ```
-  def self.exists?(path : Path | String) : Bool
-    Crystal::System::File.exists?(path.to_s)
+  #
+  # If `follow_symlinks` is `true`, it dereferences symbolic links, possibly
+  # recursively, and returns `false` if *path* is a symbolic link referring to
+  # a non-existent file.
+  #
+  # If `follow_symlinks` is `false`, returns `true` if the symlink exists,
+  # regardless of whether it points to an existing file.
+  #
+  # ```
+  # File.symlink("non-existent", "bar")
+  # File.exists?("bar")                         # => false
+  # File.exists?("bar", follow_symlinks: false) # => true
+  # ```
+  def self.exists?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+    Crystal::System::File.exists?(path.to_s, follow_symlinks: follow_symlinks)
   end
 
   # Returns `true` if *path1* and *path2* represents the same file.
@@ -741,7 +751,7 @@ class File < IO::FileDescriptor
   # for writing.
   def truncate(size = 0) : Nil
     flush
-    system_truncate(size)
+    @fd_lock.reference { system_truncate(size) }
   end
 
   # Yields an `IO` to read a section inside this file.
@@ -778,7 +788,7 @@ class File < IO::FileDescriptor
   # file.chown(gid: 100)
   # ```
   def chown(uid : Int = -1, gid : Int = -1) : Nil
-    system_chown(uid, gid)
+    @fd_lock.reference { system_chown(uid, gid) }
   end
 
   # Changes the permissions of the specified file.
@@ -791,12 +801,12 @@ class File < IO::FileDescriptor
   # file.info.permissions.value # => 0o700
   # ```
   def chmod(permissions : Int | Permissions) : Nil
-    system_chmod(permissions)
+    @fd_lock.reference { system_chmod(permissions) }
   end
 
   # Sets the access and modification times
   def utime(atime : Time, mtime : Time) : Nil
-    system_utime(atime, mtime)
+    @fd_lock.reference { system_utime(atime, mtime) }
   end
 
   # Attempts to set the access and modification times

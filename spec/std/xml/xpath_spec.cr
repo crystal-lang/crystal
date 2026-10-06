@@ -89,7 +89,7 @@ module XML
       nodes = doc.xpath("//atom:feed", namespaces: {"atom" => "http://www.w3.org/2005/Atom"}).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
-      ns = nodes[0].namespace.not_nil!
+      ns = nodes[0].namespace.should_not(be_nil)
       ns.href.should eq("http://www.w3.org/2005/Atom")
       ns.prefix.should be_nil
     end
@@ -105,7 +105,7 @@ module XML
       nodes = doc.xpath("//openSearch:feed/openSearch:something").as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("something")
-      ns = nodes[0].namespace.not_nil!
+      ns = nodes[0].namespace.should_not(be_nil)
       ns.href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
       ns.prefix.should eq("openSearch")
     end
@@ -116,10 +116,10 @@ module XML
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
         </feed>
         ))
-      nodes = doc.xpath("//xmlns:feed", namespaces: doc.root.not_nil!.namespaces).as(NodeSet)
+      nodes = doc.xpath("//xmlns:feed", namespaces: doc.root.should_not(be_nil).namespaces).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
-      ns = nodes[0].namespace.not_nil!
+      ns = nodes[0].namespace.should_not(be_nil)
       ns.href.should eq("http://www.w3.org/2005/Atom")
       ns.prefix.should be_nil
     end
@@ -130,10 +130,10 @@ module XML
         <openSearch:feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
         </openSearch:feed>
         ))
-      nodes = doc.xpath("//openSearch:feed", namespaces: doc.root.not_nil!.namespaces).as(NodeSet)
+      nodes = doc.xpath("//openSearch:feed", namespaces: doc.root.should_not(be_nil).namespaces).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
-      ns = nodes[0].namespace.not_nil!
+      ns = nodes[0].namespace.should_not(be_nil)
       ns.href.should eq("http://a9.com/-/spec/opensearchrss/1.0/")
       ns.prefix.should eq("openSearch")
     end
@@ -196,7 +196,7 @@ module XML
           <person id="2"/>
         </feed>
         ))
-      node = doc.xpath_node("//feed/person[@id=$value]", variables: {"value" => 2}).not_nil!
+      node = doc.xpath_node("//feed/person[@id=$value]", variables: {"value" => 2}).should_not(be_nil)
       node["id"].should eq("2")
     end
 

@@ -53,10 +53,7 @@ class XML::Attributes
     prop = find_prop(name)
     return unless prop
 
-    value = ""
-    if content = LibXML.xmlNodeGetContent(prop)
-      value = String.new(content)
-    end
+    value = XML.node_content_to_string(prop)
 
     if node = @node.document.cached?(prop)
       # can't call xmlUnsetProp: it would free the node

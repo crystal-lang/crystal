@@ -35,7 +35,7 @@ module Crystal::System::File
     if ret == 0
       ::File::Info.new(stat)
     else
-      if Errno.value.in?(Errno::ENOENT, Errno::ENOTDIR)
+      if ::File::NotFoundError.os_error?(Errno.value)
         nil
       else
         raise ::File::Error.from_errno("Unable to get file info", file: path)
@@ -79,24 +79,25 @@ module Crystal::System::File
     info?(path, follow_symlinks) || raise ::File::Error.from_errno("Unable to get file info", file: path)
   end
 
-  def self.exists?(path)
-    accessible?(path, LibC::F_OK)
+  def self.exists?(path, *, follow_symlinks = true)
+    accessible?(path, LibC::F_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.readable?(path) : Bool
-    accessible?(path, LibC::R_OK)
+  def self.readable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::R_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.writable?(path) : Bool
-    accessible?(path, LibC::W_OK)
+  def self.writable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::W_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.executable?(path) : Bool
-    accessible?(path, LibC::X_OK)
+  def self.executable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::X_OK, follow_symlinks: follow_symlinks)
   end
 
-  private def self.accessible?(path, flag)
-    LibC.access(path.check_no_null_byte, flag) == 0
+  private def self.accessible?(path, mode, *, follow_symlinks = true)
+    flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
+    LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)
@@ -109,7 +110,7 @@ module Crystal::System::File
   end
 
   private def system_chown(uid : Int, gid : Int)
-    ret = @fd_lock.reference { LibC.fchown(fd, uid, gid) }
+    ret = LibC.fchown(fd, uid, gid)
     raise ::File::Error.from_errno("Error changing owner", file: path) if ret == -1
   end
 
@@ -120,7 +121,7 @@ module Crystal::System::File
   end
 
   private def system_chmod(mode)
-    if @fd_lock.reference { LibC.fchmod(fd, mode) } == -1
+    if LibC.fchmod(fd, mode) == -1
       raise ::File::Error.from_errno("Error changing permissions", file: path)
     end
   end
@@ -129,7 +130,7 @@ module Crystal::System::File
     err = LibC.unlink(path.check_no_null_byte)
     if err != -1
       true
-    elsif !raise_on_missing && Errno.value == Errno::ENOENT
+    elsif !raise_on_missing && ::File::NotFoundError.os_error?(Errno.value)
       false
     else
       raise ::File::Error.from_errno("Error deleting file", file: path)
@@ -158,7 +159,7 @@ module Crystal::System::File
     buf = uninitialized UInt8[4096]
     bytesize = LibC.readlink(path, buf, buf.size)
     if bytesize == -1
-      if Errno.value.in?(Errno::EINVAL, Errno::ENOENT, Errno::ENOTDIR)
+      if ::File::NotFoundError.os_error?(Errno.value) || Errno.value == Errno::EINVAL
         yield
       end
 
@@ -201,12 +202,12 @@ module Crystal::System::File
             timespecs = uninitialized LibC::Timespec[2]
             timespecs[0] = Crystal::System::Time.to_timespec(atime)
             timespecs[1] = Crystal::System::Time.to_timespec(mtime)
-            @fd_lock.reference { LibC.futimens(fd, timespecs) }
+            LibC.futimens(fd, timespecs)
           {% elsif LibC.has_method?("futimes") %}
             timevals = uninitialized LibC::Timeval[2]
             timevals[0] = Crystal::System::Time.to_timeval(atime)
             timevals[1] = Crystal::System::Time.to_timeval(mtime)
-            @fd_lock.reference { LibC.futimes(fd, timevals) }
+            LibC.futimes(fd, timevals)
           {% else %}
             {% raise "Missing futimens & futimes" %}
           {% end %}
@@ -217,7 +218,7 @@ module Crystal::System::File
   end
 
   private def system_truncate(size) : Nil
-    code = @fd_lock.reference { LibC.ftruncate(fd, size) }
+    code = LibC.ftruncate(fd, size)
     if code != 0
       raise ::File::Error.from_errno("Error truncating file", file: path)
     end

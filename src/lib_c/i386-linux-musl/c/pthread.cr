@@ -3,6 +3,9 @@ require "./sys/types"
 lib LibC
   PTHREAD_MUTEX_ERRORCHECK = 2
 
+  PTHREAD_CANCEL_ENABLE  = 0
+  PTHREAD_CANCEL_DISABLE = 1
+
   fun pthread_attr_destroy(x0 : PthreadAttrT*) : Int
   fun pthread_attr_getstack(x0 : PthreadAttrT*, x1 : Void**, x2 : SizeT*) : Int
   fun pthread_condattr_destroy(x0 : PthreadCondattrT*) : Int
@@ -27,5 +30,6 @@ lib LibC
   fun pthread_mutex_trylock(x0 : PthreadMutexT*) : Int
   fun pthread_mutex_unlock(x0 : PthreadMutexT*) : Int
   fun pthread_self : PthreadT
+  fun pthread_setcancelstate(Int, Int*) : Int
   fun pthread_setname_np(PthreadT, Char*) : Int
 end

@@ -32,7 +32,7 @@ def with_tempfile(*paths, file = __FILE__, &)
   ensure
     if SPEC_TEMPFILE_CLEANUP
       paths.each do |path|
-        FileUtils.rm_rf(path) if File.exists?(path)
+        FileUtils.rm_rf(path) if File.exists?(path, follow_symlinks: false)
       end
     end
   end
@@ -80,7 +80,7 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
         if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
           # we won't be cross-compiling the specs binaries, so host and target
           # bits are identical
-          bits = {{ flag?(:bits64) ? "x64" : "x86" }}
+          bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
           cl = Process.quote(msvc_path.join("bin", "Host#{bits}", bits, cl).to_s)
         end
       end

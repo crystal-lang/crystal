@@ -527,9 +527,9 @@ module XML
         reader.expand?.should be_nil
         reader.read # <root id="1">
         node = reader.expand?
-        node.should be_a(XML::Node)
-        node.not_nil!.attributes["id"].content.should eq("1")
-        node.not_nil!.xpath_node("child").should be_a(XML::Node)
+        node = node.should be_a(XML::Node)
+        node.attributes["id"].content.should eq("1")
+        node.xpath_node("child").should be_a(XML::Node)
       end
 
       it "is only available until the next read" do
@@ -537,11 +537,11 @@ module XML
         reader.read # <root>
         reader.read # <child>
         node = reader.expand?
-        node.should be_a(XML::Node)
-        node.not_nil!.xpath_node("subchild").should be_a(XML::Node)
+        node = node.should be_a(XML::Node)
+        node.xpath_node("subchild").should be_a(XML::Node)
         reader.read # <subchild/>
         reader.read # </child>
-        node.not_nil!.xpath_node("subchild").should be_nil
+        node.xpath_node("subchild").should be_nil
       end
     end
 
@@ -578,5 +578,11 @@ module XML
         reader.errors.map(&.to_s).should eq ["Opening and ending tag mismatch: people line 1 and foo"]
       end
     end
+  end
+
+  it "parses entity declarations without a namespace" do
+    input = %(<?xml version="1.0"?><!DOCTYPE d [<!ENTITY e "expanded">]><d>&e;</d>)
+    doc = XML.parse(input)
+    doc.children.first.children.first.namespace.should be_nil, "Expected namespace of entity declaration to be nil"
   end
 end

@@ -23,12 +23,16 @@ class HTTP::Server::RequestProcessor
   end
 
   def process(input : IO, output : IO) : Nil
-    response = Response.new(output)
+    process(IO::Stapled.new(input, output))
+  end
+
+  def process(io : IO) : Nil
+    response = Response.new(io)
 
     begin
       until @wants_close
         request = HTTP::Request.from_io(
-          input,
+          io,
           max_request_line_size: max_request_line_size,
           max_headers_size: max_headers_size,
         )
@@ -43,9 +47,26 @@ class HTTP::Server::RequestProcessor
           return
         end
 
+        original_body = request.body
+
+        # RFC 9112, Section 6.1: reject & close on ambiguous body content to
+        # prevent request smuggling
+        if request.headers.has_key?("Content-Length") && request.headers.has_key?("Transfer-Encoding")
+          response.respond_with_status(HTTP::Status::BAD_REQUEST)
+          return
+        end
+
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        context = Context.new(request, response)
+        if io.responds_to?(:remote_address)
+          remote_address = io.remote_address
+        end
+
+        if io.responds_to?(:local_address)
+          local_address = io.local_address
+        end
+        context = Context.new(request, response,
+          remote_address: remote_address, local_address: local_address)
 
         Log.with_context do
           @handler.call(context)
@@ -63,12 +84,30 @@ class HTTP::Server::RequestProcessor
           response.output.close
         end
 
-        output.flush
+        io.flush
 
         # If there is an upgrade handler, hand over
         # the connection to it and return
         if upgrade_handler = response.upgrade_handler
-          upgrade_handler.call(output)
+          # Ensure that the original request body has been entirely consumed,
+          # by skipping to the end of it.
+          # Otherwise the upgraded connection would contain unconsumed parts of
+          # the request body.
+          case original_body
+          when FixedLengthContent, ChunkedContent
+            original_body.skip_to_end
+          when Nil
+            # No request body
+          else
+            # Unexpected request body type
+            # At this point the request handler has already initiated the
+            # connection upgrade, so we cannot respond with an 400 error here.
+            # Instead we drop the connection before continuing with the upgrade.
+            io.close
+            return
+          end
+
+          upgrade_handler.call(io)
           return
         end
 
@@ -79,16 +118,22 @@ class HTTP::Server::RequestProcessor
 
         # The request body is either FixedLengthContent or ChunkedContent.
         # In case it has not entirely been consumed by the handler, the connection is
-        # closed the connection even if keep alive was requested.
-        case body = request.body
+        # closed even if keep alive was requested.
+        case original_body
         when FixedLengthContent
-          if body.read_remaining > 0
+          if original_body.read_remaining > 0
             # Close the connection if there are bytes remaining
             break
           end
         when ChunkedContent
           # Close the connection if the IO has still bytes to read.
-          break unless body.closed?
+          break unless original_body.closed?
+        when Nil
+          # No request body
+          next
+        else
+          # Unexpected request body type
+          break
         end
       end
     rescue IO::Error

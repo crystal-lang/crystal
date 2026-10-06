@@ -270,8 +270,6 @@ module Crystal
       end
 
       # Splat args
-      splat_size = 0
-
       if splat_index
         splat_arg = args[splat_index]
 

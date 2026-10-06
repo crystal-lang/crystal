@@ -19,7 +19,7 @@ describe "Block inference" do
       end
       CRYSTAL
     result = semantic input
-    input.last.as(Call).block.not_nil!.body.type.should eq(result.program.int32)
+    input.last.as(Call).block.should_not(be_nil).body.type.should eq(result.program.int32)
   end
 
   it "infer type of block parameter" do
@@ -34,7 +34,7 @@ describe "Block inference" do
       CRYSTAL
     result = semantic input
     mod = result.program
-    input.last.as(Call).block.not_nil!.args[0].type.should eq(mod.int32)
+    input.last.as(Call).block.should_not(be_nil).args[0].type.should eq(mod.int32)
   end
 
   it "infer type of local variable" do

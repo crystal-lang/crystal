@@ -574,9 +574,10 @@ module Crystal
 
       a_if = nil
       final_if = nil
+      temp_var = temp_vars.try(&.first)
+
       node.whens.each do |wh|
-        final_comp = nil
-        wh.conds.each do |cond|
+        comps = wh.conds.compact_map do |cond|
           next if cond.is_a?(Underscore)
 
           if node_cond.is_a?(TupleLiteral)
@@ -592,20 +593,48 @@ module Crystal
                   comp = sub_comp
                 end
               end
+              comp
             else
-              comp = case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
+              case_when_comparison(TupleLiteral.new(temp_vars.not_nil!.clone), cond).at(cond)
             end
           else
             temp_var = temp_vars.try &.first
-            comp = case_when_comparison(temp_var, cond).at(cond)
+            case_when_comparison(temp_var, cond).at(cond)
+          end
+        end
+
+        if comps.present? && comps.all?(IsA)
+          # From:
+          #     case foo
+          #     when Bar, Baz
+          #       qux
+          #     end
+          #
+          # To:
+          #
+          #     if foo.is_a?(Bar)
+          #       qux
+          #     elsif foo.is_a?(Baz)
+          #       qux
+          #     end
+          comps.each do |comp|
+            wh_if = If.new(comp, wh.body.clone).at(wh)
+            if a_if
+              a_if.else = wh_if
+            else
+              final_if = wh_if
+            end
+            a_if = wh_if
           end
 
-          next unless comp
+          next
+        end
 
-          if final_comp
-            final_comp = Or.new(final_comp, comp).at(final_comp)
+        final_comp = comps.reduce(nil) do |memo, comp|
+          if memo
+            Or.new(memo, comp).at(memo)
           else
-            final_comp = comp
+            comp
           end
         end
 

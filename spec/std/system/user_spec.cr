@@ -58,9 +58,9 @@ describe System::User do
 
   describe ".find_by?(*, name)" do
     it "returns a user by name" do
-      user = System::User.find_by?(name: USER_NAME).not_nil!
+      user = System::User.find_by?(name: USER_NAME)
 
-      user.should be_a(System::User)
+      user = user.should be_a(System::User)
       normalized_username(user.username).should eq(normalized_username(USER_NAME))
       user.id.should eq(USER_ID)
     end
@@ -73,9 +73,9 @@ describe System::User do
 
   describe ".find_by?(*, id)" do
     it "returns a user by id" do
-      user = System::User.find_by?(id: USER_ID).not_nil!
+      user = System::User.find_by?(id: USER_ID)
 
-      user.should be_a(System::User)
+      user = user.should be_a(System::User)
       user.id.should eq(USER_ID)
       normalized_username(user.username).should eq(normalized_username(USER_NAME))
     end

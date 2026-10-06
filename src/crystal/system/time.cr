@@ -20,6 +20,11 @@ module Crystal::System::Time
 
   # Returns the system's current local time zone
   # def self.load_localtime : ::Time::Location?
+
+  def self.instant
+    seconds, nanoseconds = Crystal::System::Time.monotonic
+    ::Time::Instant.new(seconds: seconds, nanoseconds: nanoseconds)
+  end
 end
 
 {% if flag?(:unix) %}

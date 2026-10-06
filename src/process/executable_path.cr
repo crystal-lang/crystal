@@ -52,11 +52,15 @@ class Process
     {% else %}
       File::Info.executable?(path)
     {% end %}
+  rescue File::AccessDeniedError
+    false
   end
 
   # Searches an executable, checking for an absolute path, a path relative to
   # *pwd* or absolute path, then eventually searching in directories declared
   # in *path*.
+  #
+  # Inaccessible search candidates are skipped.
   def self.find_executable(name : Path | String, path : String? = ENV["PATH"]?, pwd : Path | String = Dir.current) : String?
     find_executable_possibilities(Path.new(name), path, pwd) do |p|
       return p.to_s if file_executable?(p)

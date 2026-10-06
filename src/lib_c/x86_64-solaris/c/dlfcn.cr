@@ -3,7 +3,7 @@ lib LibC
   RTLD_NOW     = 0x00002
   RTLD_GLOBAL  = 0x00100
   RTLD_LOCAL   = 0x00000
-  RTLD_DEFAULT = Pointer(Void).new(-2)
+  RTLD_DEFAULT = Pointer(Void).new(-2.to_u64!)
   RTLD_NEXT    = Pointer(Void).new(-1.to_u64!)
 
   struct DlInfo

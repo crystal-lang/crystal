@@ -1,6 +1,6 @@
 {% raise("Please use `make test` or `bin/crystal` when running specs, or set the i_know_what_im_doing flag if you know what you're doing") unless env("CRYSTAL_HAS_WRAPPER") || flag?("i_know_what_im_doing") %}
 
-ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
+Crystal::Config.path = "#{__DIR__}/../src"
 
 require "spec"
 
@@ -73,9 +73,8 @@ private def inject_primitives(node : ASTNode)
 end
 
 def semantic(node : ASTNode, *, warnings = nil, wants_doc = false, flags = nil)
-  program = new_program
+  program = new_program(flags.try(&.split))
   program.warnings = warnings if warnings
-  program.flags.concat(flags.split) if flags
   program.wants_doc = wants_doc
   node = program.normalize node
   node = program.semantic node
@@ -97,8 +96,7 @@ def top_level_semantic(node : ASTNode, wants_doc = false)
 end
 
 def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, line = __LINE__)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   from_nodes = parse(from, filename: filename)
   to_nodes = program.normalize(from_nodes)
   to_nodes_str = to_nodes.to_s.strip
@@ -136,15 +134,13 @@ def assert_expand(from_nodes : ASTNode, to, *, flags = nil, file = __FILE__, lin
 end
 
 def assert_expand(from_nodes : ASTNode, *, flags = nil, file = __FILE__, line = __LINE__, &)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   to_nodes = LiteralExpander.new(program).expand(from_nodes)
   yield to_nodes, program
 end
 
 def assert_expand_named(from : String, to, *, generic = nil, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
-  program = new_program
-  program.flags.concat(flags.split) if flags
+  program = new_program(flags.try(&.split))
   from_nodes = parse(from, filename: filename)
   generic_type = generic.path if generic
   case from_nodes
@@ -207,9 +203,8 @@ def assert_macro_error(macro_body, message = nil, *, flags = nil, file = __FILE_
 end
 
 def prepare_macro_call(macro_body, flags = nil, &)
-  program = new_program
   flags = flags.split if flags.is_a?(String)
-  program.flags.concat(flags) if flags
+  program = new_program(flags)
   program.top_level_semantic_complete = true
   args = yield program
 
@@ -228,10 +223,35 @@ def codegen(code, *, inject_primitives = true, single_module = false, debug = Cr
   result.program.codegen(result.node, single_module: single_module, debug: debug)[""].mod
 end
 
-private def new_program
+def compile(*codes, prelude = "empty", debug = Crystal::Debug::None, target = nil)
+  sources = codes.map_with_index do |code, index|
+    Compiler::Source.new("file#{index}.cr", code)
+  end.to_a
+
+  compiler = create_spec_compiler
+  compiler.prelude = prelude
+  compiler.debug = debug
+  compiler.stdout = IO::Memory.new # don't print anything
+
+  if target
+    compiler.cross_compile = true # skip linker
+    compiler.codegen_target = Crystal::Codegen::Target.new(target)
+  end
+
+  with_temp_executable("crystal-spec-output") do |output_filename|
+    compiler.compile(sources, output_filename)
+  end
+end
+
+private def new_program(flags = nil)
   program = Program.new
   program.color = false
+  if flags
+    program.user_flags.concat(flags)
+    program.flags.concat(flags)
+  end
   apply_program_flags(program.flags)
+  program.define_crystal_constants
   program
 end
 
@@ -314,12 +334,11 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
     with_temp_executable("crystal-spec-output", file: file) do |output_filename|
       compiler.compile Compiler::Source.new("spec", code), output_filename
 
-      output = `#{Process.quote(output_filename)}`
+      output = Process.capture(output_filename)
       return SpecRunOutput.new(output)
     end
   else
-    program = new_program
-    program.flags.concat(flags) if flags
+    program = new_program(flags)
     program.run(code, filename: filename, debug: debug)
   end
 end
@@ -332,8 +351,7 @@ def run(code, return_type : T.class, filename : String? = nil, inject_primitives
   if code.includes?(%(require "prelude"))
     fail "TODO: support the prelude in typed codegen specs", file: file
   else
-    program = new_program
-    program.flags.concat(flags) if flags
+    program = new_program(flags)
     program.run(code, return_type: T, filename: filename, debug: debug)
   end
 end

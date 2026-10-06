@@ -588,7 +588,7 @@ class Crystal::Call
   end
 
   private def raise_undefined_method(owner, def_name, obj)
-    check_macro_wrong_number_of_arguments(def_name)
+    check_macro_wrong_number_of_arguments(owner, def_name)
 
     owner_trace = obj.try &.find_owner_trace(owner.program, owner)
     similar_name = owner.lookup_similar_def_name(def_name, self.args.size, block)
@@ -896,10 +896,14 @@ class Crystal::Call
     end
   end
 
-  def check_macro_wrong_number_of_arguments(def_name)
+  def check_macro_wrong_number_of_arguments(owner, def_name)
     return if (obj = self.obj) && !obj.is_a?(Path)
 
-    macros = in_macro_target &.lookup_macros(def_name)
+    macros = if obj
+               owner.lookup_macros(def_name)
+             else
+               in_macro_target &.lookup_macros(def_name)
+             end
     return unless macros.is_a?(Array(Macro))
 
     if msg = single_def_error_message(macros, named_args)

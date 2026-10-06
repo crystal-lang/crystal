@@ -17,19 +17,19 @@ private macro __mul_impl(name, type, n)
       end
       return result
     end
-    sa = a >> {{n - 1}}
+    sa = a.unsafe_shr({{n - 1}})
     abs_a = (a ^ sa) &- sa
-    sb = b >> {{n - 1}}
+    sb = b.unsafe_shr({{n - 1}})
     abs_b = (b ^ sb) &- sb
     if abs_a < 2 || abs_b < 2
       return result
     end
     if sa == sb
-      if abs_a > ({{type}}::MAX // abs_b)
+      if abs_a > {{type}}::MAX.unsafe_div(abs_b)
         overflow.value = 1
       end
     else
-      if abs_a > ({{type}}::MIN // ({{type}}.new(0) &- abs_b))
+      if abs_a > {{type}}::MIN.unsafe_div({{type}}.new!(0) &- abs_b)
         overflow.value = 1
       end
     end

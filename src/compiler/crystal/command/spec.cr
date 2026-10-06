@@ -17,14 +17,17 @@ class Crystal::Command
     compiler = new_compiler
     link_flags = [] of String
     parse_with_crystal_opts do |opts|
-      opts.banner = "Usage: crystal spec [options] [files] [runtime_options]\n\nOptions:"
+      opts.banner = "Usage: crystal spec [options] [files] [-- runtime_options]\n\nOptions:"
       setup_simple_compiler_options compiler, opts
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
         puts
 
-        runtime_options = Spec::CLI.new.option_parser
+        # Short flag `-p` might collied with the same parser flag (short for `--progress`),
+        # so we don't show it here. It still works when passed as an explicit argument to the
+        # runner process (e.g. `crystal spec -- -p`).
+        runtime_options = Spec::CLI.new.build_option_parser(without_p: true)
         runtime_options.banner = "Runtime options (passed to spec runner):"
         puts runtime_options
         exit
@@ -54,7 +57,7 @@ class Crystal::Command
         if filename =~ /\A(.+?)\:(\d+)\Z/
           file, line = $1, $2
           unless File.file?(file)
-            error "'#{file}' is not a file"
+            abort! "'#{file}' is not a file", :USAGE_ERROR
           end
           target_filenames << file
           locations << {file, line}
@@ -65,7 +68,7 @@ class Crystal::Command
           elsif File.file?(filename)
             target_filenames << filename
           else
-            error "'#{filename}' is not a file"
+            abort! "'#{filename}' is not a file", :USAGE_ERROR
           end
         end
       end

@@ -31,7 +31,7 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
     operations << {:del, fd, closing}
   end
 
-  private def system_set_timer(time : Time::Span?) : Nil
+  private def system_set_timer(time : Time::Instant?) : Nil
   end
 end
 

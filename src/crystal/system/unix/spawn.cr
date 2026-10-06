@@ -2,9 +2,7 @@ require "c/signal"
 require "c/unistd"
 
 struct Crystal::System::Process
-  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
-    prepared_args = prepare_args(command, args, shell)
-
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir, &)
     r, w = FileDescriptor.system_pipe
 
     envp = Env.make_envp(env, clear_env)
@@ -47,7 +45,9 @@ struct Crystal::System::Process
         # we thus read it in the same as order as written
         buf = uninitialized StaticArray(UInt8, 4)
         reader_pipe.read_fully(buf.to_slice)
-        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32)))
+        raise_exception_from_errno(prepared_args[0], Errno.new(buf.unsafe_as(Int32))) do |errno, command|
+          yield errno, command
+        end
       else
         raise RuntimeError.new("BUG: Invalid error response received from subprocess")
       end
@@ -59,24 +59,33 @@ struct Crystal::System::Process
   end
 
   private def self.fork_for_exec
-    block_signals do |sigmask|
-      case pid = lock_write { LibC.fork }
-      when 0
-        # forked process
+    pid, errno = lock_write do
+      pthread_disable_cancelstate do
+        block_signals do |sigmask|
+          pid = LibC.fork
+          if pid == 0
+            # forked process
 
-        Crystal::System::Signal.after_fork_before_exec
+            Crystal::System::Signal.after_fork_before_exec
 
-        # reset sigmask (inherited on exec)
-        LibC.sigemptyset(sigmask)
-
-        nil
-      when -1
-        # forking process: error
-        raise RuntimeError.from_errno("fork")
-      else
-        # forking process: success
-        pid
+            # reset sigmask (inherited on exec)
+            LibC.sigemptyset(sigmask)
+          end
+          {pid, Errno.value}
+        end
       end
+    end
+
+    case pid
+    when 0
+      # forked process
+      nil
+    when -1
+      # forking process: error
+      raise RuntimeError.from_os_error("fork", errno)
+    else
+      # forking process: success
+      pid
     end
   end
 

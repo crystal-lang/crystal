@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-tool-unreachable - Identify methods that are never called
 
 == Synopsis
+
 *crystal tool unreachable* [options] [source...]
 
 == Description
@@ -18,9 +20,9 @@ of lines with columns separated by tab.
 
 Output fields:
 
-*count*::	 sum of all calls to this method (only with *--tallies* option; otherwise skipped)
-*location*::	 pathname, line and column, all separated by colon name
-*lines*::	 length of the def in lines annotations
+*count*::  sum of all calls to this method (only with *--tallies* option; otherwise skipped)
+*location*::  pathname, line and column, all separated by colon name
+*lines*::  length of the def in lines annotations
 
 == Options
 

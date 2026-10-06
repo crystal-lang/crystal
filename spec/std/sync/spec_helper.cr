@@ -3,7 +3,7 @@ require "wait_group"
 
 module Sync
   def self.eventually(timeout : Time::Span = 1.second, &)
-    start = Time.monotonic
+    start = Time.instant
 
     loop do
       Fiber.yield
@@ -11,7 +11,7 @@ module Sync
       begin
         yield
       rescue ex
-        raise ex if (Time.monotonic - start) > timeout
+        raise ex if start.elapsed > timeout
       else
         break
       end
@@ -36,4 +36,21 @@ module Sync
       raise ex
     end
   end
+
+  module FakeContext
+    def self.spawn(*, name : String? = nil, &block : ->) : Fiber
+      ::spawn(name: name, &block)
+    end
+  end
+
+  CONCURRENT =
+    {% if Fiber.has_constant?(:ExecutionContext) %}
+      ctx = Fiber::ExecutionContext.current
+      if ctx.is_a?(Fiber::ExecutionContext::Parallel) && ctx.capacity > 1
+        ctx = Fiber::ExecutionContext::Concurrent.new("CONCURRENT")
+      end
+      ctx
+    {% else %}
+      FakeContext
+    {% end %}
 end

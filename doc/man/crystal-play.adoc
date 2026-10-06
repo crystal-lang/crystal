@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-play - Run the Crystal playground
 
 == Synopsis
+
 *crystal play* [options] [file]
 
 == Description

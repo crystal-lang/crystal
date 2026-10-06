@@ -5,11 +5,25 @@ require "crystal/digest/md5"
 {% if flag?(:msvc) %}
   require "./loader"
 {% end %}
-{% if flag?(:preview_mt) %}
+{% unless flag?(:without_mt) %}
   require "wait_group"
 {% end %}
 
 module Crystal
+  # This exception describes an error in the compiler.
+  # It usually leads to an unsuccessful process exit.
+  class CompilerError < Exception
+    getter status
+
+    def self.new(message, exit : Command::Exit)
+      new message, status: exit.to_i
+    end
+
+    def initialize(message, *, @status : Int32 = 1)
+      super message
+    end
+  end
+
   @[Flags]
   enum Debug
     LineNumbers
@@ -83,8 +97,8 @@ module Crystal
     property? no_codegen = false
 
     # Maximum number of LLVM modules that are compiled in parallel
-    property n_threads : Int32 = {% if flag?(:preview_mt) %}
-      ENV["CRYSTAL_WORKERS"]?.try(&.to_i?) || 4
+    property n_threads : Int32 = {% if Fiber.has_constant?(:ExecutionContext) %}
+      Fiber::ExecutionContext.default_workers_count
     {% elsif flag?(:win32) %}
       1
     {% else %}
@@ -281,13 +295,16 @@ module Crystal
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
+      program.user_flags.concat @flags
       program.flags.concat @flags
+      program.define_crystal_constants
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
       program.show_error_trace = show_error_trace?
       program.progress_tracker = @progress_tracker
       program.warnings = @warnings
+      program.optimization_mode = @optimization_mode
       program
     end
 
@@ -360,7 +377,7 @@ module Crystal
 
       {% if LibLLVM::IS_LT_170 %}
         # initialize the legacy pass manager once in the main thread/process
-        # before we start codegen in threads (MT) or processes (fork)
+        # before we start codegen in threads (MT)
         init_llvm_legacy_pass_manager unless optimization_mode.o0?
       {% end %}
 
@@ -429,10 +446,10 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        unit.emit(@emit_targets, emit_base_filename || output_filename)
-
-        target_machine.emit_obj_to_file llvm_mod, output_filename
+        emit_filename = emit_base_filename || output_filename
+        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
       end
+
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
@@ -465,7 +482,7 @@ module Crystal
             extra_suffix = static? ? "-static" : "-dynamic"
             search_result = Loader.search_libraries(Process.parse_arguments_windows(link_args.join(' ').gsub('\n', ' ')), extra_suffix: extra_suffix)
             if not_found = search_result.not_found?
-              error "Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}"
+              raise CompilerError.new("Cannot locate the .lib files for the following libraries: #{not_found.join(", ")}", :FAILURE)
             end
 
             link_args = search_result.remaining_args.concat(search_result.library_paths).map { |arg| Process.quote_windows(arg) }
@@ -498,6 +515,7 @@ module Crystal
       elsif program.has_flag?("win32") && program.has_flag?("gnu")
         link_flags = @link_flags || ""
         link_flags += " -Wl,--stack,0x800000"
+        link_flags = use_modern_linker(link_flags)
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
         cmd = %(#{DEFAULT_LINKER} #{Process.quote_windows(object_names)} -o #{Process.quote_windows(output_filename)} #{link_flags} #{lib_flags}).gsub('\n', ' ')
@@ -528,7 +546,25 @@ module Crystal
           link_flags += " -L/usr/local/lib"
         end
 
+        link_flags = use_modern_linker(link_flags)
+
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      end
+    end
+
+    # Tests if `mold` or `lld` are available and prefers them as linkers over
+    # the default `ld`. Only works when `cc` is the linker driver and can be
+    # disabled with `--link-flags=-fuse-ld=bfd`.
+    private def use_modern_linker(link_flags)
+      return link_flags unless DEFAULT_LINKER == "cc"
+      return link_flags if link_flags.includes?("-fuse-ld=")
+
+      if Process.find_executable("mold")
+        link_flags + " -fuse-ld=mold"
+      elsif Process.find_executable("ld.lld")
+        link_flags + " -fuse-ld=lld"
+      else
+        link_flags
       end
     end
 
@@ -549,11 +585,11 @@ module Crystal
           end
           unless $?.success?
             error_io.rewind
-            error "Error executing subcommand for linker flags: #{command.inspect}: #{error_io}"
+            raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{error_io}", :FAILURE)
           end
           output.chomp
         rescue exc
-          error "Error executing subcommand for linker flags: #{command.inspect}: #{exc}"
+          raise CompilerError.new("Error executing subcommand for linker flags: #{command.inspect}: #{exc}", :FAILURE)
         end
       end
     end
@@ -579,7 +615,7 @@ module Crystal
 
       # We check again because maybe this directory was created in between (maybe with a macro run)
       if Dir.exists?(output_filename)
-        error "can't use `#{output_filename}` as output filename because it's a directory"
+        raise CompilerError.new("can't use `#{output_filename}` as output filename because it's a directory", :USAGE_ERROR)
       end
 
       output_filename = File.expand_path(output_filename)
@@ -601,20 +637,18 @@ module Crystal
     end
 
     private def parallel_codegen(units, n_threads)
-      {% if flag?(:preview_mt) %}
+      {% if !flag?(:without_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
-      {% elsif LibC.has_method?("fork") %}
-        fork_codegen(units, n_threads)
       {% else %}
-        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+        sequential_codegen(units)
       {% end %}
     end
 
     private def mt_codegen(units, n_threads)
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
-      mutex = Mutex.new
+      mutex = Sync::Mutex.new
 
       n_threads.times do
         wg.spawn do
@@ -642,119 +676,6 @@ module Crystal
       channel.close
 
       wg.wait
-    end
-
-    private def fork_codegen(units, n_threads)
-      workers = fork_workers(n_threads) do |input, output|
-        while i = input.gets(chomp: true).presence
-          unit = units[i.to_i]
-          unit.compile
-          result = {name: unit.name, reused: unit.reused_previous_compilation?}
-          output.puts result.to_json
-        end
-      rescue ex
-        result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
-        output.puts result.to_json
-      end
-
-      overqueue = 1
-      indexes = Atomic(Int32).new(0)
-      channel = Channel(String).new(n_threads)
-      completed = Channel(Nil).new(n_threads)
-
-      workers.each do |pid, input, output|
-        spawn do
-          overqueued = 0
-
-          overqueue.times do
-            if (index = indexes.add(1)) < units.size
-              input.puts index
-              overqueued += 1
-            end
-          end
-
-          while (index = indexes.add(1)) < units.size
-            input.puts index
-
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          overqueued.times do
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          input << '\n'
-          input.close
-          output.close
-
-          Process.new(pid).wait
-          completed.send(nil)
-        end
-      end
-
-      spawn do
-        n_threads.times { completed.receive }
-        channel.close
-      end
-
-      while response = channel.receive?
-        result = JSON.parse(response)
-
-        if ex = result["exception"]?
-          Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
-          ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
-          exit 1
-        end
-
-        if @progress_tracker.stats?
-          if result["reused"].as_bool
-            name = result["name"].as_s
-            unit = units.find! { |unit| unit.name == name }
-            unit.reused_previous_compilation = true
-          end
-        end
-        @progress_tracker.stage_progress += 1
-      end
-    end
-
-    private def fork_workers(n_threads, &)
-      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
-
-      n_threads.times do
-        iread, iwrite = IO.pipe
-        oread, owrite = IO.pipe
-
-        iwrite.flush_on_newline = true
-        owrite.flush_on_newline = true
-
-        pid = Crystal::System::Process.fork do
-          iwrite.close
-          oread.close
-
-          yield iread, owrite
-
-          iread.close
-          owrite.close
-          exit 0
-        end
-
-        iread.close
-        owrite.close
-
-        workers << {pid, iwrite, oread}
-      end
-
-      workers
     end
 
     private def print_macro_run_stats(program)
@@ -863,15 +784,11 @@ module Crystal
       {% if LibLLVM::IS_LT_130 %}
         optimize_with_pass_manager(llvm_mod)
       {% else %}
-        {% if LibLLVM::IS_LT_170 %}
-          # PassBuilder doesn't support Os and Oz before LLVM 17
-          if @optimization_mode.os? || @optimization_mode.oz?
-            return optimize_with_pass_manager(llvm_mod)
-          end
-        {% end %}
+        optimization_mode = @optimization_mode
+        optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
-          LLVM.run_passes(llvm_mod, "default<#{@optimization_mode}>", target_machine, options)
+          LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
     end
@@ -906,7 +823,7 @@ module Crystal
           # abnormal exit
           exit_code = 1
         end
-        error "execution of command failed with exit status #{status}: #{command}", exit_code: exit_code
+        raise CompilerError.new("execution of command failed with exit status #{status}: #{command}", status: exit_code)
       end
     end
 
@@ -914,14 +831,10 @@ module Crystal
       verbose_info = "\nRun with `--verbose` to print the full linker command." unless verbose?
       case exc_class
       when File::AccessDeniedError
-        error "Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: Permission denied#{verbose_info}", :FAILURE)
       else
-        error "Could not execute linker: `#{linker_name}`: File not found#{verbose_info}"
+        raise CompilerError.new("Could not execute linker: `#{linker_name}`: File not found#{verbose_info}", :FAILURE)
       end
-    end
-
-    private def error(msg, exit_code = 1)
-      Crystal.error msg, @color, exit_code, stderr: stderr
     end
 
     private def colorize(obj)
@@ -1038,31 +951,53 @@ module Crystal
         memory_buffer.dispose
       end
 
-      private def compile_to_object
+      private def compile_to_object(file_name = object_name, *, optimize = true)
         temporary_object_name = self.temporary_object_name
         target_machine = compiler.create_target_machine
-        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+        compiler.optimize llvm_mod, target_machine if optimize && !compiler.optimization_mode.o0?
         target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-        File.rename(temporary_object_name, object_name)
+        FileUtils.mv(temporary_object_name, file_name)
       end
 
       private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_targets : EmitTarget, output_filename)
+      def emit(emit_targets : EmitTarget, output_filename, *, from_cache = true)
+        filename = output_filename
+
         if emit_targets.asm?
-          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+          filename = "#{output_filename}.s"
+          compiler.target_machine.emit_asm_to_file llvm_mod, filename
         end
+
         if emit_targets.llvm_bc?
-          FileUtils.cp(bc_name, "#{output_filename}.bc")
+          filename = "#{output_filename}.bc"
+          if from_cache
+            FileUtils.cp(bc_name, filename)
+          else
+            llvm_mod.write_bitcode_to_file(filename)
+          end
         end
+
         if emit_targets.llvm_ir?
-          llvm_mod.print_to_file "#{output_filename}.ll"
+          filename = "#{output_filename}.ll"
+          llvm_mod.print_to_file filename
         end
+
         if emit_targets.obj?
-          FileUtils.cp(object_name, output_filename + @object_extension)
+          filename = "#{output_filename}#{@object_extension}"
+          if from_cache
+            FileUtils.cp(object_name, filename)
+          else
+            compile_to_object(filename, optimize: false)
+          end
         end
+      rescue ex
+        # LLVM reports file system errors (eg. a missing output directory)
+        # as a plain error string; rewrap it so it surfaces as a proper
+        # error message instead of a compiler bug report.
+        raise CompilerError.new("Could not write output file '#{filename}': #{ex.message}", :FAILURE)
       end
 
       def object_name

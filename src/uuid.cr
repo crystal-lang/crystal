@@ -45,8 +45,12 @@ struct UUID
     V4 = 4
     # SHA1 hash and namespace.
     V5 = 5
+    # Reordered date-time and NodeID address, for improved DB locality.
+    V6 = 6
     # Prefixed with a UNIX timestamp with millisecond precision, filled in with randomness.
     V7 = 7
+    # Custom format for experimental or vendor-specific use cases.
+    V8 = 8
   end
 
   # A Domain represents a Version 2 domain (DCE security).
@@ -325,6 +329,46 @@ struct UUID
     end
   {% end %}
 
+  # Generates an RFC 9562 v6 UUID.
+  #
+  # UUIDv6 is a field-compatible version of UUIDv1 with the timestamp bits
+  # reordered to be most-significant-first, making the UUID lexicographically
+  # sortable by creation time.
+  #
+  # The sequence number *clock_seq* should be monotonically increasing across
+  # invocations; only 14 bits are used. If not provided, the current
+  # millisecond sub-second value is used. If *node_id* is not provided, a
+  # pseudo-random node ID is generated with the multicast bit set as
+  # recommended by RFC 4122 section 4.5.
+  def self.v6(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
+    tl = Time.local
+    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000_u64
+    seq = ((clock_seq || (tl.nanosecond / 1000000).to_u16) & 0x3fff_u16) | 0x8000_u16
+
+    # Unlike v1, v6 stores the 60-bit timestamp most-significant-bits first:
+    # bytes 0-3: T[59:28], bytes 4-5: T[27:12], bytes 6-7: ver(4) | T[11:0]
+    time_high = UInt32.new((now >> 28) & 0xffffffff_u64)
+    time_mid = UInt16.new((now >> 12) & 0xffff_u64)
+    time_low_and_version = UInt16.new(0x6000_u16 | (now & 0x0fff_u64).to_u16)
+
+    uuid = uninitialized UInt8[16]
+    IO::ByteFormat::BigEndian.encode(time_high, uuid.to_slice[0..3])
+    IO::ByteFormat::BigEndian.encode(time_mid, uuid.to_slice[4..5])
+    IO::ByteFormat::BigEndian.encode(time_low_and_version, uuid.to_slice[6..7])
+    IO::ByteFormat::BigEndian.encode(seq, uuid.to_slice[8..9])
+
+    if node_id
+      6.times do |i|
+        uuid.to_slice[10 + i] = node_id[i]
+      end
+    else
+      Random::Secure.random_bytes(uuid.to_slice[10..15])
+      uuid[10] |= 0x01_u8
+    end
+
+    new(uuid, version: UUID::Version::V6, variant: UUID::Variant::RFC4122)
+  end
+
   # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
   # chronologically (with 1ms precision) by their raw or hexstring
   # representation.
@@ -347,6 +391,38 @@ struct UUID
     value[8] = (value[8] & 0x0F) | 0x80
 
     new(value, variant: :rfc9562, version: :v7)
+  end
+
+  # Generates an RFC 9562 v8 UUID from *custom_bytes*.
+  #
+  # UUIDv8 is an RFC-compatible format for experimental or vendor-specific
+  # use cases where the caller defines the meaning of all 128 bits. Exactly
+  # **6 bits** of *custom_bytes* are unconditionally overwritten:
+  #
+  # * **Bits 48–51** (high nibble of byte 6) get set to `0x8` (version 8)
+  # * **Bits 64–65** (two high bits of byte 8) get set to `0b10` (RFC 9562 variant)
+  #
+  # All remaining 122 bits are preserved exactly as supplied. Callers must
+  # account for this when designing their custom layout; avoid placing
+  # meaningful data in those 6 bit positions.
+  #
+  # Example: embedding a 16-bit shard ID and a 32-bit sequence number.
+  # ```
+  # require "uuid"
+  #
+  # buf = StaticArray(UInt8, 16).new(0_u8)
+  # IO::ByteFormat::BigEndian.encode(shard_id, buf.to_slice[0, 2])
+  # IO::ByteFormat::BigEndian.encode(seq, buf.to_slice[2, 4])
+  # # bytes 6 and 8 will have 6 bits overwritten; leave them as padding
+  # uuid = UUID.v8(buf)
+  # ```
+  def self.v8(custom_bytes : StaticArray(UInt8, 16)) : self
+    new(custom_bytes, version: UUID::Version::V8, variant: UUID::Variant::RFC4122)
+  end
+
+  # :ditto:
+  def self.v8(custom_bytes : Slice(UInt8)) : self
+    new(custom_bytes, version: UUID::Version::V8, variant: UUID::Variant::RFC4122)
   end
 
   # Generates an empty UUID.
@@ -403,7 +479,9 @@ struct UUID
     when 3 then Version::V3
     when 4 then Version::V4
     when 5 then Version::V5
+    when 6 then Version::V6
     when 7 then Version::V7
+    when 8 then Version::V8
     else        Version::Unknown
     end
   end
@@ -471,7 +549,7 @@ struct UUID
   class Error < Exception
   end
 
-  {% for v in %w(1 2 3 4 5 7) %}
+  {% for v in %w(1 2 3 4 5 6 7 8) %}
     # Returns `true` if UUID is a V{{ v.id }}, `false` otherwise.
     def v{{ v.id }}?
       variant == Variant::RFC4122 && version == Version::V{{ v.id }}

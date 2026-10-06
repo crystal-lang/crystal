@@ -3,10 +3,6 @@ require "./visitor"
 
 module Crystal
   class ASTNode
-    def inspect(io : IO) : Nil
-      to_s(io)
-    end
-
     def to_s(io : IO, macro_expansion_pragmas = nil, emit_doc = false, emit_location_pragmas : Bool = false) : Nil
       visitor = ToSVisitor.new(io, macro_expansion_pragmas: macro_expansion_pragmas, emit_doc: emit_doc, emit_location_pragmas: emit_location_pragmas)
       self.accept visitor
@@ -136,13 +132,16 @@ module Crystal
     end
 
     def visit_interpolation(node, &)
-      node.expressions.each do |exp|
-        if exp.is_a?(StringLiteral)
-          @str << yield exp.value
+      node.expressions.chunks(&.is_a?(StringLiteral)).each do |(is_string, exps)|
+        if is_string
+          value = exps.join(&.as(StringLiteral).value)
+          @str << yield value
         else
-          @str << "\#{"
-          exp.accept(self)
-          @str << '}'
+          exps.each do |exp|
+            @str << "\#{"
+            exp.accept(self)
+            @str << '}'
+          end
         end
       end
     end
@@ -1146,15 +1145,20 @@ module Crystal
     end
 
     def visit(node : Union)
-      node.types.join(@str, " | ", &.accept self)
+      @str << "(" if node.parens?
+
+      if node.singleton?
+        drop_parens_for_proc_notation(node.types.first, &.accept(self))
+      else
+        node.types.join(@str, " | ", &.accept self)
+      end
+
+      @str << ")" if node.parens?
       false
     end
 
     def visit(node : Metaclass)
-      needs_parens = node.name.is_a?(Union)
-      @str << '(' if needs_parens
       node.name.accept self
-      @str << ')' if needs_parens
       @str << ".class"
       false
     end
@@ -1868,7 +1872,7 @@ module Crystal
           # call arguments
           node.declared_type.is_a?(ProcNotation)
         else
-          false
+          node.is_a?(ProcNotation)
         end
 
       drop_parens_for_proc_notation(outermost_type_is_proc_notation) { yield node }

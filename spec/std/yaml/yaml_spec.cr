@@ -23,6 +23,18 @@ describe "YAML" do
       doc["friends"][0].as_h.should be(doc.as_h)
     end
 
+    it "parses recursive mapping keys (hash)" do
+      doc = YAML.parse "? &1 {*1 : }"
+      hash = doc.as_h.keys[0].as_h
+      hash.keys[0].as_h.should be(hash)
+    end
+
+    it "parses recursive mapping keys (array)" do
+      doc = YAML.parse("{&x [*x]: 0}")
+      array = doc.as_h.keys[0].as_a
+      array[0].as_a.should be(array)
+    end
+
     it "parses alias to scalar" do
       doc = YAML.parse("---\n- &x foo\n- *x\n")
       doc.should eq(["foo", "foo"])
@@ -101,38 +113,34 @@ describe "YAML" do
       end
 
       it "has correct line/number info (#2585)" do
-        begin
-          YAML.parse <<-YAML
+        YAML.parse <<-YAML
             ---
             level_one:
             - name: "test"
                attributes:
                  one: "broken"
             YAML
-          fail "expected YAML.parse to raise"
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(4)
-          ex.column_number.should eq(4)
-        end
+        fail "expected YAML.parse to raise"
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(4)
+        ex.column_number.should eq(4)
       end
 
       it "has correct line/number info (2)" do
-        begin
-          parser = YAML::PullParser.new <<-MSG
+        parser = YAML::PullParser.new <<-MSG
 
               authors:
                 - [foo] bar
             MSG
 
-          parser.read_stream do
-            parser.read_document do
-              parser.read_scalar
-            end
+        parser.read_stream do
+          parser.read_document do
+            parser.read_scalar
           end
-        rescue ex : YAML::ParseException
-          ex.line_number.should eq(2)
-          ex.column_number.should eq(3)
         end
+      rescue ex : YAML::ParseException
+        ex.line_number.should eq(2)
+        ex.column_number.should eq(3)
       end
 
       it "has correct message (#4006)" do

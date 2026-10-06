@@ -6,9 +6,11 @@
 :man source: crystal {crystal_version}
 
 == Name
+
 crystal-spec - Compile and run Crystal spec files
 
 == Synopsis
+
 *crystal spec* [options] [files]
 
 == Options
@@ -24,7 +26,7 @@ Define a compile-time flag. This is useful to conditionally define types, method
 with *--target-triple*  or the hosts default, if none is given.
 *--error-trace*::
 Show full error trace.
-*-O* _LEVEL_::	 Optimization mode: 0 (default), 1, 2, 3. See *OPTIMIZATIONS* for details.
+*-O* _LEVEL_:: Optimization mode: 0 (default), 1, 2, 3. See *OPTIMIZATIONS* for details.
 *--release*::
 Compile in release mode. Equivalent to *-O3 --single-module*
 *-s*, *--stats*::

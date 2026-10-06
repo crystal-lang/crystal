@@ -63,6 +63,10 @@ Lint/LiteralsComparison:
 Lint/NotNil:
   Enabled: false
 
+# BUG: https://github.com/crystal-ameba/ameba/issues/605
+Lint/SpecFocus:
+  Enabled: false
+
 Lint/RandZero:
   Excluded:
   # Explicit tests
@@ -76,6 +80,8 @@ Lint/SpecFilename:
   Excluded:
   - spec/compiler/data/**/*
   - spec/compiler/lexer/lexer_objects/strings.cr
+  - spec/compiler-cli/fixtures/**/*
+  - spec/compiler-cli/support/**/*
   - spec/debug/**/*
   - spec/llvm-ir/**/*
   - spec/std/float_printer/ryu_printf_test_cases.cr

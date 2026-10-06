@@ -308,7 +308,7 @@ class Crystal::CodeGenVisitor
   # because it was of higher rank
   def codegen_trunc_binary_op_result(t1, t2, result)
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      result = trunc result, llvm_type(t1)
+      trunc result, llvm_type(t1)
     else
       result
     end
@@ -887,7 +887,7 @@ class Crystal::CodeGenVisitor
     type = context.type.remove_typedef.as(PointerInstanceType)
 
     casted_ptr = cast_to_void_pointer(call_args[0])
-    size = builder.mul call_args[1], llvm_size(type.element_type)
+    size = builder.mul call_args[1], int64(@llvm_typer.size_of(@llvm_typer.llvm_type(type.element_type)))
     reallocated_ptr = realloc casted_ptr, size
     cast_to_pointer reallocated_ptr, type.element_type
   end

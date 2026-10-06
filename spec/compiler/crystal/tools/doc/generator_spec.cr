@@ -280,13 +280,13 @@ describe Doc::Generator do
       pseudo_def.doc = "Foo"
       doc_method = Doc::Method.new generator, doc_type, pseudo_def, false
       doc_method.name.should eq "typeof"
-      doc_method.doc.not_nil!.should contain %(NOTE: This is a pseudo-method)
+      doc_method.doc.should_not(be_nil).should contain %(NOTE: This is a pseudo-method)
 
       regular_def = Def.new "pseudo_bar"
       regular_def.doc = "Foo"
       doc_method = Doc::Method.new generator, doc_type, regular_def, false
       doc_method.name.should eq "pseudo_bar"
-      doc_method.doc.not_nil!.should_not contain %(NOTE: This is a pseudo-method)
+      doc_method.doc.should_not(be_nil).should_not contain %(NOTE: This is a pseudo-method)
     end
   end
 

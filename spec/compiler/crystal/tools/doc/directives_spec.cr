@@ -42,9 +42,26 @@ describe Crystal::Doc::Generator do
         CRYSTAL
 
       generator = Doc::Generator.new program, [""]
-      a_def = generator.type(program.types["Foo"]).lookup_method("foo").not_nil!
+      a_def = generator.type(program.types["Foo"]).lookup_method("foo").should_not(be_nil)
       a_def.doc.should eq("Some docs")
       a_def.visibility.should eq("private")
+    end
+
+    it "shows documentation for private macros" do
+      program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+        class Foo
+          # :showdoc:
+          #
+          # Some docs
+          private macro foo
+          end
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      a_macro = generator.type(program.types["Foo"]).lookup_macro("foo").should_not(be_nil)
+      a_macro.doc.should eq("Some docs")
+      a_macro.visibility.should eq("private")
     end
 
     it "shows documentation for nested objects if a lib is marked with :showdoc:" do

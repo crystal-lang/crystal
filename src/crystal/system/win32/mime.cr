@@ -12,7 +12,11 @@ module Crystal::System::MIME
       WindowsRegistry.open?(LibC::HKEY_CLASSES_ROOT, name) do |sub_handle|
         content_type = WindowsRegistry.get_string(sub_handle, CONTENT_TYPE)
         if content_type
-          ::MIME.register String.from_utf16(name), content_type
+          begin
+            ::MIME.register String.from_utf16(name), content_type
+          rescue ArgumentError
+            # skip registry entries with an invalid Content Type value
+          end
         end
       end
     end

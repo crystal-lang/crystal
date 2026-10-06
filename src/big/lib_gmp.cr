@@ -212,7 +212,7 @@ lib LibGMP
   fun mpq_cmp = __gmpq_cmp(op1 : MPQ*, op2 : MPQ*) : Int
   fun mpq_cmp_z = __gmpq_cmp_z(op1 : MPQ*, op2 : MPZ*) : Int
   fun mpq_cmp_ui = __gmpq_cmp_ui(op1 : MPQ*, num2 : UI, den2 : UI) : Int
-  fun mpq_cmp_si = __gmpq_cmp_si(op1 : MPQ*, num2 : SI, den2 : SI) : Int
+  fun mpq_cmp_si = __gmpq_cmp_si(op1 : MPQ*, num2 : SI, den2 : UI) : Int
   fun mpq_equal = __gmpq_equal(op1 : MPQ*, op2 : MPQ*) : Int
 
   # MPF
@@ -260,7 +260,7 @@ lib LibGMP
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
   fun mpf_sqrt = __gmpf_sqrt(rop : MPF*, op : MPF*)
-  fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : SI)
+  fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : UI)
   fun mpf_mul_2exp = __gmpf_mul_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
   fun mpf_div_2exp = __gmpf_div_2exp(rop : MPF*, op1 : MPF*, op2 : BitcntT)
 

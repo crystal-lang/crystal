@@ -6,6 +6,7 @@ require "c/ntdll"
 require "../system/win32/iocp"
 require "../system/win32/waitable_timer"
 require "./timers"
+require "./lock"
 require "./iocp/*"
 
 # :nodoc:
@@ -22,15 +23,56 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     true
   end
 
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    # Creates a global IOCP instance, then forwards the completion events to their
+    # original instance (through a dedicated thread), because:
+    #
+    # We can't associate an OVERLAPPED operation to an IOCP instance.
+    # We can only assign a FILE or SOCKET to a single IOCP for its whole lifetime.
+    # Each EventLoop can only receive completion events for its execution context.
+    #
+    # WARNING: the global IOCP instance MUST only receive completion events for
+    # OVERLAPPED operations on FILE and SOCKET handles. Other completion events
+    # must be sent to the local IOCP instances.
+    @@global = System::IOCP.new
+
+    def self.start_forwarder_thread : Nil
+      Thread.new("IOCP") do
+        buffer = uninitialized LibC::OVERLAPPED_ENTRY[64]
+
+        while true
+          ret = LibC.GetQueuedCompletionStatusEx(@@global.handle, buffer, buffer.size, out removed, LibC::INFINITE, 0)
+          System.panic("GetQueuedCompletionStatusEx", WinError.value) if ret == 0
+
+          overlapped_entry = buffer.to_unsafe
+          removed.times do
+            overlapped = overlapped_entry.value.lpOverlapped
+            operation = System::IOCP::OverlappedOperation.unbox(overlapped)
+
+            ret = LibC.PostQueuedCompletionStatus(
+              operation.iocp_handle,
+              overlapped_entry.value.dwNumberOfBytesTransferred,
+              overlapped_entry.value.lpCompletionKey,
+              overlapped,
+            )
+            System.panic "PostQueuedCompletionStatus", WinError.value if ret == 0
+
+            overlapped_entry += 1
+          end
+        end
+      end
+    end
+  {% end %}
+
   @waitable_timer : System::WaitableTimer?
   @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
 
-  def initialize
-    @mutex = Thread::Mutex.new
+  def initialize(parallelism : Int32)
+    @timers_mutex = Thread::Mutex.new
     @timers = Timers(Timer).new
 
-    # the completion port
+    # the local completion port
     @iocp = System::IOCP.new
 
     # custom completion to interrupt a blocking run
@@ -47,13 +89,18 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  # Returns the base IO Completion Port.
   def iocp_handle : LibC::HANDLE
     @iocp.handle
   end
 
   def create_completion_port(handle : LibC::HANDLE) : LibC::HANDLE
-    iocp = LibC.CreateIoCompletionPort(handle, @iocp.handle, nil, 0)
+    iocp_handle =
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        @@global.handle
+      {% else %}
+        @iocp.handle
+      {% end %}
+    iocp = LibC.CreateIoCompletionPort(handle, iocp_handle, nil, 0)
     raise IO::Error.from_winerror("CreateIoCompletionPort") if iocp.null?
 
     # all overlapped operations may finish synchronously, in which case we do
@@ -79,11 +126,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     enqueued
   end
 
-  {% if flag?(:execution_context) %}
+  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      run_impl(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      run_impl(blocking) { |fiber| yield fiber }
     end
+
+    # the evloop has a single IOCP instance for the context and only one
+    # scheduler must wait on the evloop at any time
+    include EventLoop::Lock
   {% end %}
 
   # Runs the event loop and enqueues the fiber for the next upcoming event or
@@ -91,36 +142,25 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   private def run_impl(blocking : Bool, &) : Nil
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
-    if @waitable_timer
-      timeout = blocking ? LibC::INFINITE : 0_i64
-    elsif blocking
-      if time = @mutex.synchronize { @timers.next_ready? }
-        # convert absolute time of next timer to relative time, expressed in
-        # milliseconds, rounded up
-        seconds, nanoseconds = System::Time.monotonic
-        relative = time - Time::Span.new(seconds: seconds, nanoseconds: nanoseconds)
-        timeout = (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000).clamp(0_i64..)
-      else
-        timeout = LibC::INFINITE
-      end
-    else
-      timeout = 0_i64
-    end
-
-    # the array must be at least as large as `overlapped_entries` in
-    # `System::IOCP#wait_queued_completions`
+    overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
     events = uninitialized FiberEvent[64]
     size = 0
 
-    @iocp.wait_queued_completions(timeout) do |fiber|
+    removed = @iocp.wait_queued_completions(overlapped_entries.to_slice, run_timeout(blocking))
+
+    removed.times do |i|
+      overlapped_entry = overlapped_entries.to_unsafe + i
+      next unless fiber = handle_event(overlapped_entry)
+
       if (event = fiber.@resume_event) && event.wake_at?
         events[size] = event
         size += 1
       end
+
       yield fiber
     end
 
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       # cancel the timeout of completed operations
       events.to_slice[0...size].each do |event|
         @timers.delete(pointerof(event.@timer))
@@ -137,6 +177,47 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
 
     @interrupted.set(false, :release)
+  end
+
+  private def handle_event(overlapped_entry)
+    if (ptr = Pointer(Void).new(overlapped_entry.value.lpCompletionKey)).null?
+      # IO operation
+      operation = System::IOCP::OverlappedOperation.unbox(overlapped_entry.value.lpOverlapped)
+
+      Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
+
+      operation.done!
+      operation.@fiber
+    else
+      # other kind of completion event
+      completion_key = ptr.as(System::IOCP::CompletionKey)
+
+      Crystal.trace :evloop, "completion",
+        tag: completion_key.tag.to_s,
+        bytes: overlapped_entry.value.dwNumberOfBytesTransferred,
+        fiber: completion_key.fiber
+
+      System::IOCP::CompletionKey.unregister(completion_key)
+
+      completion_key.reset_fiber?
+    end
+  end
+
+  private def run_timeout(blocking)
+    if @waitable_timer
+      blocking ? LibC::INFINITE : 0_i64
+    elsif blocking
+      if time = @timers_mutex.synchronize { @timers.next_ready? }
+        # convert absolute time to relative time, expressed in milliseconds,
+        # rounded up; cannot use `::Time.instant` that could be mocked
+        relative = time.duration_since(Crystal::System::Time.instant)
+        (relative.to_i * 1000 + (relative.nanoseconds + 999_999) // 1_000_000)
+      else
+        LibC::INFINITE
+      end
+    else
+      0_i64
+    end
   end
 
   private def process_timer(timer : Pointer(Timer), &)
@@ -162,20 +243,20 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   protected def add_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       is_next_ready = @timers.add(timer)
       rearm_waitable_timer(timer.value.wake_at, interruptible: true) if is_next_ready
     end
   end
 
   protected def delete_timer(timer : Pointer(Timer)) : Nil
-    @mutex.synchronize do
+    @timers_mutex.synchronize do
       _, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
     end
   end
 
-  protected def rearm_waitable_timer(time : Time::Span?, interruptible : Bool) : Nil
+  protected def rearm_waitable_timer(time : Time::Instant?, interruptible : Bool) : Nil
     if waitable_timer = @waitable_timer
       raise "BUG: @timer_packet was not initialized!" unless @timer_packet
       status = @iocp.cancel_wait_completion_packet(@timer_packet, true)
@@ -268,7 +349,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def read(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    System::IOCP.overlapped_operation(file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
+    System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "ReadFile", file_descriptor.read_timeout) do |overlapped|
       ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
       {ret, byte_count}
     end.to_i32
@@ -278,8 +359,15 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::System::IOCP#wait_readable(FileDescriptor)")
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "ReadFile", file_descriptor.read_timeout, offset: offset) do |overlapped|
+      ret = LibC.ReadFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
+      {ret, byte_count}
+    end.to_i32
+  end
+
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
-    bytes_written = System::IOCP.overlapped_operation(file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
+    bytes_written = System::IOCP.overlapped_operation(@iocp.handle, file_descriptor, "WriteFile", file_descriptor.write_timeout, writing: true) do |overlapped|
       overlapped.offset = UInt64::MAX if file_descriptor.system_append?
 
       ret = LibC.WriteFile(file_descriptor.windows_handle, slice, slice.size, out byte_count, overlapped)
@@ -308,10 +396,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def shutdown(file_descriptor : Crystal::System::FileDescriptor) : Nil
+    LibC.CancelIoEx(file_descriptor.windows_handle, nil)
   end
 
   def close(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    LibC.CancelIoEx(file_descriptor.windows_handle, nil) unless file_descriptor.system_blocking?
     file_descriptor.file_descriptor_close
   end
 
@@ -336,7 +424,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def read(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSARecv", socket.read_timeout, connreset_is_error: false) do |overlapped|
       flags = 0_u32
       ret = LibC.WSARecv(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), overlapped, nil)
       {ret, bytes_received}
@@ -355,7 +443,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   def write(socket : ::Socket, slice : Bytes) : Int32
     wsabuf = wsa_buffer(slice)
 
-    bytes = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
+    bytes = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSASend", socket.write_timeout) do |overlapped|
       ret = LibC.WSASend(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -372,7 +460,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def send_to(socket : ::Socket, slice : Bytes, address : ::Socket::Address) : Int32
     wsabuf = wsa_buffer(slice)
-    bytes_written = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
+    bytes_written = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSASendTo", socket.write_timeout) do |overlapped|
       ret = LibC.WSASendTo(socket.fd, pointerof(wsabuf), 1, out bytes_sent, 0, address, address.size, overlapped, nil)
       {ret, bytes_sent}
     end
@@ -398,7 +486,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     wsabuf = wsa_buffer(slice)
 
     flags = 0_u32
-    bytes_read = System::IOCP.wsa_overlapped_operation(socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
+    bytes_read = System::IOCP.wsa_overlapped_operation(@iocp.handle, socket, socket.fd, "WSARecvFrom", socket.read_timeout) do |overlapped|
       ret = LibC.WSARecvFrom(socket.fd, pointerof(wsabuf), 1, out bytes_received, pointerof(flags), sockaddr, pointerof(addrlen), overlapped, nil)
       {ret, bytes_received}
     end
@@ -407,51 +495,145 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
-    socket.overlapped_connect(socket.fd, "ConnectEx", timeout) do |overlapped|
+    System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
       # This is: LibC.ConnectEx(fd, address, address.size, nil, 0, nil, overlapped)
-      Crystal::System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, overlapped.to_unsafe)
+      result = System::Socket.connect_ex.call(socket.fd, address.to_unsafe, address.size, Pointer(Void).null, 0_u32, Pointer(UInt32).null, operation.to_unsafe)
+
+      if result == 0
+        case error = WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        when .wsaeaddrnotavail?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        else
+          return ::Socket::Error.from_os_error("ConnectEx", error)
+        end
+      else
+        return nil
+      end
+
+      operation.wait_for_result(timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaeconnrefused?
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        when .error_operation_aborted?
+          # FIXME: Not sure why this is necessary
+          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
+        end
+      end
+
+      nil
     end
   end
 
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
-    socket.system_accept do |client_handle|
-      address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
+    client_handle, blocking = self.socket(socket.family, socket.type, socket.protocol, nil)
+    socket.initialize_handle(client_handle)
 
-      # buffer_size is set to zero to only accept the connection and don't receive any data.
-      # That will be a different operation.
-      #
-      # > If dwReceiveDataLength is zero, accepting the connection will not result in a receive operation.
-      # > Instead, AcceptEx completes as soon as a connection arrives, without waiting for any data.
-      #
-      # TODO: Investigate benefits from receiving data here directly. It's hard to integrate into the event loop and socket API.
-      buffer_size = 0
-      output_buffer = Bytes.new(address_size * 2 + buffer_size)
+    address_size = sizeof(LibC::SOCKADDR_STORAGE) + 16
 
-      success = socket.overlapped_accept(socket.fd, "AcceptEx") do |overlapped|
-        # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
-        received_bytes = uninitialized UInt32
-        Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
-          output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
-          address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes), overlapped.to_unsafe)
-      end
+    # buffer_size is set to zero to only accept the connection (2 addresses) and
+    # not receive any data (out of scope)
+    buffer_size = 0
+    output_buffer = Bytes.new(address_size * 2 + buffer_size)
 
-      if success
-        # AcceptEx does not automatically set the socket options on the accepted
-        # socket to match those of the listening socket, we need to ask for that
-        # explicitly with SO_UPDATE_ACCEPT_CONTEXT
-        System::Socket.setsockopt client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd
+    success = overlapped_accept(socket) do |overlapped|
+      # This is: LibC.AcceptEx(fd, client_handle, output_buffer, buffer_size, address_size, address_size, out received_bytes, overlapped)
+      received_bytes = uninitialized UInt32
+      Crystal::System::Socket.accept_ex.call(socket.fd, client_handle,
+        output_buffer.to_unsafe.as(Void*), buffer_size.to_u32!,
+        address_size.to_u32!, address_size.to_u32!, pointerof(received_bytes),
+        overlapped.to_unsafe)
+    end
 
-        true
-      else
-        false
-      end
+    if success
+      # AcceptEx does not automatically set the socket options on the accepted
+      # socket to match those of the listening socket, we need to ask for that
+      # explicitly with SO_UPDATE_ACCEPT_CONTEXT
+      System::Socket.setsockopt(client_handle, LibC::SO_UPDATE_ACCEPT_CONTEXT, socket.fd)
+      {client_handle, blocking}
+    else
+      LibC.closesocket(client_handle)
+      nil
     end
   end
 
+  private def overlapped_accept(socket, &)
+    System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
+      result = yield operation
+
+      if result == 0
+        case WinError.wsa_value
+        when .wsa_io_pending?
+          # the operation is running asynchronously; do nothing
+        else
+          return false
+        end
+      else
+        return true
+      end
+
+      operation.wait_for_result(socket.read_timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .wsaenotsock?
+          return false
+        when .error_operation_aborted?
+          # if the socket is closed then accept was aborted by an explicit
+          # shutdown before close, otherwise we manually canceled because of a
+          # timeout
+          return false if socket.closed?
+          raise IO::TimeoutError.new("AcceptEx timed out (overlapped_accept)")
+        end
+      end
+
+      true
+    end
+  end
+
+  # TODO: return WinError instead of raising exceptions
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64
+    # can't send more than 2,147,483,646 bytes at once
+    len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
+
+    file_handle = LibC::HANDLE.new(fd)
+
+    # store the current file pointer because TransmitFile may advance the file
+    # pointer in some cases (e.g. offset == file.pos).
+    LibC.SetFilePointerEx(file_handle, 0, out original_pos, IO::Seek::Current)
+
+    Crystal::System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
+      operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
+      operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
+
+      ret = Crystal::System::Socket.transmit_file
+        .call(socket.fd, file_handle, len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
+      return len.to_i64 if ret == 1
+
+      error = WinError.wsa_value
+
+      unless error == WinError::ERROR_IO_PENDING || error == WinError::WSA_IO_PENDING
+        raise IO::Error.from_os_error("TransmitFile", error, target: socket)
+      end
+
+      operation.wait_for_result(socket.@write_timeout) do |error|
+        case error
+        when .wsa_io_incomplete?, .error_operation_aborted?
+          raise IO::TimeoutError.new("TransmitFile timed out", target: socket)
+        else
+          raise IO::Error.from_os_error("TransmitFile", error, target: socket)
+        end
+      end
+    ensure
+      LibC.SetFilePointerEx(file_handle, original_pos, nil, IO::Seek::Set)
+    end.to_i64
+  end
+
   def shutdown(socket : ::Socket) : Nil
+    LibC.shutdown(socket.fd, LibC::SH_BOTH)
+    LibC.CancelIoEx(Pointer(Void).new(socket.fd), nil)
   end
 
   def close(socket : ::Socket) : Nil
-    raise NotImplementedError.new("Crystal::System::IOCP#close(Socket)")
+    socket.socket_close
   end
 end

@@ -1,4 +1,3 @@
-require "colorize"
 require "../syntax/ast"
 
 class Crystal::Command
@@ -44,7 +43,7 @@ class Crystal::Command
           end
         end
       else
-        Crystal.error "file or directory does not exist: #{path}", @color, leading_error: false
+        raise CompilerError.new("file or directory does not exist: #{path}", :USAGE_ERROR)
       end
     end
   end

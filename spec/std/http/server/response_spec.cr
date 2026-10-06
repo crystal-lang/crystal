@@ -162,6 +162,22 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
   end
 
+  it "gets content type" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.content_type.should be_nil
+    response.content_type = "text/plain"
+    response.content_type.should eq "text/plain"
+  end
+
+  it "gets content length" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.content_length.should be_nil
+    response.content_length = 10
+    response.content_length.should eq 10
+  end
+
   it "sets content type after headers sent" do
     io = IO::Memory.new
     response = Response.new(io)

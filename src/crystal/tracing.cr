@@ -6,6 +6,7 @@ module Crystal
     @[Flags]
     enum Section
       GC
+      Thread
       Sched
       Evloop
 
@@ -48,7 +49,7 @@ module Crystal
 
         def initialize
           @buf = uninitialized UInt8[N]
-          @int_buf = uninitialized UInt8[20] # max 64-bit integers
+          @int_buf = uninitialized UInt8[40] # max 128-bit integers
           @size = 0
         end
 
@@ -82,7 +83,15 @@ module Crystal
           write value.name || '?'
         end
 
-        {% if flag?(:execution_context) %}
+        def write(value : Thread) : Nil
+          {% if flag?(:linux) %}
+            write Pointer(Void).new(value.@system_handle)
+          {% else %}
+            write value.@system_handle
+          {% end %}
+        end
+
+        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
           def write(value : Fiber::ExecutionContext) : Nil
             write value.name
           end
@@ -95,6 +104,14 @@ module Crystal
         def write(value : Pointer) : Nil
           write "0x"
           write System.to_int_slice(@int_buf.to_slice, value.address, 16, true, 2)
+        end
+
+        def write(value : Int128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
+        end
+
+        def write(value : UInt128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
         end
 
         def write(value : Int::Signed) : Nil
@@ -147,22 +164,24 @@ module Crystal
         {% if flag?(:win32) %}
           buf = uninitialized UInt16[256]
 
-          # FIXME: use `System.wstr_literal` after #15746 is available
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           parse_sections(buf.to_slice[0...len]) if len > 0
 
-          name = UInt16.static_array({% for chr in "CRYSTAL_TRACE_FILE".chars %}{{chr.ord}}, {% end %} 0)
+          name = System.wstr_literal "CRYSTAL_TRACE_FILE"
           len = LibC.GetEnvironmentVariableW(name, buf, buf.size)
           if len > 0
             @@handle = open_trace_file(buf.to_slice[0...len])
           else
             @@handle = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
           end
+
+          # don't propagate to sub-processes
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE", nil)
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE_FILE", nil)
         {% else %}
-          if ptr = LibC.getenv("CRYSTAL_TRACE")
-            len = LibC.strlen(ptr)
-            parse_sections(Slice.new(ptr, len)) if len > 0
+          if (ptr = LibC.getenv("CRYSTAL_TRACE")) && (len = LibC.strlen(ptr)) > 0
+            parse_sections(Slice.new(ptr, len))
           end
 
           if (ptr = LibC.getenv("CRYSTAL_TRACE_FILE")) && (LibC.strlen(ptr) > 0)
@@ -170,6 +189,10 @@ module Crystal
           else
             @@handle = 2
           end
+
+          # don't propagate to sub-processes
+          LibC.unsetenv("CRYSTAL_TRACE")
+          LibC.unsetenv("CRYSTAL_TRACE_FILE")
         {% end %}
       end
 

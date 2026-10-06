@@ -105,7 +105,9 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
 
       ivar_visitor = MainVisitor.new(program, meta_vars: i.meta_vars)
       ivar_visitor.scope = scope.metaclass
-      value.accept ivar_visitor
+      ivar_visitor.pushing_type(scope.as(ModuleType)) do
+        value.accept ivar_visitor
+      end
     end
   end
 end

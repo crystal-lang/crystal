@@ -120,8 +120,7 @@ class XML::Node
   # Returns the content for this Node. An empty string is
   # returned if the node has no content.
   def content : String
-    content = LibXML.xmlNodeGetContent(self)
-    content ? String.new(content) : ""
+    XML.node_content_to_string(to_unsafe)
   end
 
   # Sets the Node's content to a Text node containing string.
@@ -347,6 +346,29 @@ class XML::Node
     nil
   end
 
+  # Returns the line number in the source document where this Node was parsed,
+  # or `nil` if the information is not available (for example, a Node that was
+  # not parsed from a document).
+  #
+  # Line numbers greater than `65535` are only reported when the document was
+  # parsed with the `XML::ParserOptions::BIG_LINES` option, which is not part of
+  # `XML::ParserOptions.default`.
+  #
+  # ```
+  # doc = XML.parse(<<-XML)
+  #   <?xml version='1.0' encoding='UTF-8'?>
+  #   <people>
+  #     <person/>
+  #   </people>
+  #   XML
+  # doc.root.not_nil!.line_number                              # => 2
+  # doc.root.not_nil!.first_element_child.not_nil!.line_number # => 3
+  # ```
+  def line_number : Int64?
+    line_number = LibXML.xmlGetLineNo(@node)
+    line_number.to_i64 unless line_number == -1
+  end
+
   # Returns the name for this Node.
   def name : String
     if document?
@@ -386,9 +408,11 @@ class XML::Node
   # Returns the namespace for this node or `nil` if not found.
   def namespace : Namespace?
     case type
-    when Type::DOCUMENT_NODE, Type::ATTRIBUTE_DECL, Type::DTD_NODE, Type::ELEMENT_DECL
-      nil
-    else
+    # These types use xmlAttr or xmlNode representation which both have a
+    # namespace field.
+    when Type::ATTRIBUTE_NODE, Type::ELEMENT_NODE, Type::TEXT_NODE,
+         Type::CDATA_SECTION_NODE, Type::ENTITY_REF_NODE, Type::PI_NODE,
+         Type::COMMENT_NODE, Type::DOCUMENT_FRAG_NODE, Type::XINCLUDE_START, Type::XINCLUDE_END
       ns = @node.value.ns
       ns ? Namespace.new(document, ns) : nil
     end
@@ -445,12 +469,16 @@ class XML::Node
 
   protected def each_namespace(& : Namespace ->)
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
+    return unless ns_list
 
-    if ns_list
-      while ns_list.value
-        yield Namespace.new(document, ns_list.value)
-        ns_list += 1
+    begin
+      ns = ns_list
+      while ns.value
+        yield Namespace.new(document, ns.value)
+        ns += 1
       end
+    ensure
+      XML.free(ns_list.as(Void*))
     end
   end
 
@@ -721,12 +749,14 @@ class XML::Node
   protected def unlink_cached_children(node : LibXML::Node*) : Nil
     child = node.value.children
     while child
-      if obj = cached?(node)
+      # save next pointer before unlinking, as `xmlUnlinkNode` clears it
+      next_child = child.value.next
+      if obj = cached?(child)
         obj.unlink
       else
         unlink_cached_children(child)
       end
-      child = child.value.next
+      child = next_child
     end
   end
 end

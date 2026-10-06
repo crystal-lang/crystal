@@ -23,7 +23,7 @@ module Crystal::System::Signal
   @@handlers = {} of ::Signal => Handler
   @@sigset = Sigset.new
   class_property child_handler : Handler?
-  @@mutex = Mutex.new(:unchecked)
+  @@mutex = Sync::Mutex.new(:unchecked)
 
   def self.trap(signal, handler) : Nil
     @@mutex.synchronize do
@@ -114,17 +114,6 @@ module Crystal::System::Signal
     end
   end
 
-  # Replaces the signal pipe so the child process won't share the file
-  # descriptors of the parent process and send it received signals.
-  def self.after_fork
-    @@pipe.each do |pipe_io|
-      Crystal::EventLoop.remove(pipe_io)
-      pipe_io.file_descriptor_close { }
-    end
-  ensure
-    @@pipe = IO.pipe(read_blocking: false, write_blocking: true)
-  end
-
   # Resets signal handlers to `SIG_DFL`. This avoids the child to receive
   # signals that would be sent to the parent process through the signal
   # pipe.
@@ -148,7 +137,7 @@ module Crystal::System::Signal
       {% end %}
     end
   ensure
-    {% unless flag?(:preview_mt) %}
+    {% if flag?(:without_mt) %}
       @@pipe.each(&.file_descriptor_close)
     {% end %}
   end
@@ -188,15 +177,21 @@ module Crystal::System::Signal
     # amount larger than a typical stack frame, 4096 bytes here.
     addr = info.value.si_addr
 
-    is_stack_overflow =
-      begin
-        stack_top = ::Fiber.current.@stack.pointer - 4096
-        stack_bottom = ::Fiber.current.@stack.bottom
-        stack_top <= addr < stack_bottom
-      rescue e
-        Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
-        false
-      end
+    current_fiber = ::Fiber.current?
+
+    is_stack_overflow = false
+
+    if current_fiber
+      is_stack_overflow =
+        begin
+          stack_top = current_fiber.@stack.pointer - 4096
+          stack_bottom = current_fiber.@stack.bottom
+          stack_top <= addr < stack_bottom
+        rescue e
+          Crystal::System.print_error "Error while trying to determine if a stack overflow has occurred. Probable memory corruption\n"
+          false
+        end
+    end
 
     if is_stack_overflow
       Crystal::System.print_error "Stack overflow (e.g., infinite or very deep recursion)\n"
@@ -281,7 +276,7 @@ module Crystal::System::SignalChildHandler
 
   @@pending = {} of LibC::PidT => Int32
   @@waiting = {} of LibC::PidT => Channel(Int32)
-  @@mutex = Mutex.new(:unchecked)
+  @@mutex = Sync::Mutex.new(:unchecked)
 
   def self.wait(pid : LibC::PidT) : Channel(Int32)
     channel = Channel(Int32).new(1)
@@ -321,11 +316,5 @@ module Crystal::System::SignalChildHandler
         end
       end
     end
-  end
-
-  def self.after_fork
-    @@pending.clear
-    @@waiting.each_value(&.close)
-    @@waiting.clear
   end
 end

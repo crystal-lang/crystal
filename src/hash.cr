@@ -1084,7 +1084,7 @@ class Hash(K, V)
   # h.put(1, "one") { "didn't exist" } # => "didn't exist"
   # h.put(1, "uno") { "didn't exist" } # => "one"
   # h.put(2, "two") { |key| key.to_s } # => "2"
-  # h                                  # => {1 => "one", 2 => "two"}
+  # h                                  # => {1 => "uno", 2 => "two"}
   # ```
   def put(key : K, value : V, &)
     updated_entry = upsert(key, value)
@@ -1192,8 +1192,12 @@ class Hash(K, V)
   # ```
   def [](key)
     fetch(key) do
-      if (block = @block) && key.is_a?(K)
-        block.call(self, key.as(K))
+      if block = @block
+        unless key.is_a?(K)
+          raise KeyError.new "Invalid key type: expected #{K}, got #{key.class}"
+        end
+
+        block.call(self, key)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -1851,7 +1855,7 @@ class Hash(K, V)
   # # => {"key1" => "value1", "key2" => "value2", "key3" => "value3"}
   # ```
   def self.zip(ary1 : Array(K), ary2 : Array(V))
-    hash = {} of K => V
+    hash = Hash(K, V).new(initial_capacity: ary1.size)
     ary1.each_with_index do |key, i|
       hash[key] = ary2[i]
     end

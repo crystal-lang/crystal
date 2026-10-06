@@ -622,4 +622,29 @@ describe "Code gen: module" do
       foo(a)
       CRYSTAL
   end
+
+  it "rebuilds dispatch when new generic instantiation flows through Array(Module) element (#16947)" do
+    output = run(<<-CRYSTAL).to_string
+      require "prelude"
+
+      module Foo
+      end
+
+      class GenericFoo(T)
+        include Foo
+      end
+
+      class ArrayFoo
+        include Foo
+      end
+
+      class SubArrayFoo < ArrayFoo
+      end
+
+      puts [] of Foo
+      puts [GenericFoo(String).new] of Foo
+      nil
+      CRYSTAL
+    output.should contain("GenericFoo(String)")
+  end
 end
