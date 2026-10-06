@@ -2,10 +2,12 @@ module Crystal
   module DWARF
     class Backtraces
       property debug_abbrev : Bytes?
+      property debug_addr : Bytes?
       property debug_info : Bytes?
       property debug_line : Bytes?
       property debug_line_str : Bytes?
       property debug_str : Bytes?
+      property debug_str_offsets : Bytes?
 
       # The decoded table for resolving function names; parsed once from the
       # debug info and debug abbrev sections; the table is much smaller than the
@@ -15,11 +17,19 @@ module Crystal
       # OPTIMIZE: reduce the table row size, for example using offsets (u32)
       # instead of absolute PCs (u64) to save 8 bytes out of every entry.
       @function_names = Slice({LibC::SizeT, LibC::SizeT, UInt8*}).empty
+      @str_offsets : StrOffsets?
+
+      # Unlike function names, a decompressed table of file and line numbers
+      # quickly allocates several megabytes of memory, much more than the
+      # compressed DEBUG_LINE section. Instead, we build an index of offsets and
+      # line registers to quickly find a sub-section and resume the iteration.
+      @line_numbers = Slice({Line::Registers, Int32, Int32}).empty
 
       @initialized = false
 
       def build_caches : Nil
         preload_function_names
+        preload_line_numbers
         @initialized = true
       end
 
@@ -34,6 +44,9 @@ module Crystal
           m = l &+ (r &- l) // 2
           low_pc, high_pc, cstring = a.to_unsafe[m]
 
+          # high PC is defined as "the address of the first location past the
+          # last instruction associated with the entity", so the range should
+          # exclude high PC, but in practice PC can be equal to high PC
           if low_pc <= pc <= high_pc
             return Bytes.new(cstring, LibC.strlen(cstring))
           end
@@ -93,12 +106,15 @@ module Crystal
         DWARF.each_info(debug_info) do |info|
           abbrev_table = debug_abbrev + info.debug_abbrev_offset
           abbrev_index = abbrev_indexes[info.debug_abbrev_offset] ||= parse_abbrev_indexes(abbrev_table)
+          addr = nil
+          @str_offsets = nil
 
           info.each do |abbrev_code|
             offset = abbrev_index[abbrev_code &- 1]
 
             DWARF.abbrev_at(abbrev_table + offset) do |abbrev|
-              if abbrev.tag == DW_TAG_subprogram
+              case abbrev.tag
+              when DW_TAG_subprogram
                 low_pc = nil
                 high_pc = nil
                 name_form = nil
@@ -109,12 +125,20 @@ module Crystal
 
                   case attr.at
                   when DW_AT_low_pc
-                    low_pc = value.as(LibC::SizeT)
+                    case attr.form
+                    when DW_FORM_addr
+                      low_pc = value.as(LibC::SizeT)
+                    when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
+                      low_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
+                    end
                   when DW_AT_high_pc
-                    if attr.form == DW_FORM_addr
+                    case attr.form
+                    when DW_FORM_addr
                       high_pc = value.as(LibC::SizeT)
-                    elsif value.responds_to?(:to_u64)
-                      high_pc = low_pc.as(LibC::SizeT) + value.to_u64
+                    when DW_FORM_addrx, DW_FORM_addrx1, DW_FORM_addrx2, DW_FORM_addrx3, DW_FORM_addrx4
+                      high_pc = addr.try(&.address_at(value.as(UInt8 | UInt16 | UInt32)))
+                    when DW_FORM_udata, DW_FORM_data1, DW_FORM_data2, DW_FORM_data4, DW_FORM_data8, DW_FORM_data16
+                      high_pc = low_pc.as(LibC::SizeT) + value.as(UInt8 | UInt16 | UInt32 | UInt64 | UInt128)
                     end
                   when DW_AT_name
                     name_form = attr.form
@@ -122,8 +146,21 @@ module Crystal
                   end
                 end
 
-                if low_pc && high_pc && name_form && name_value
-                  yield low_pc, high_pc, name_form, name_value
+                if low_pc && name_form && name_value
+                  yield low_pc, high_pc || low_pc, name_form, name_value
+                end
+              when DW_TAG_compile_unit
+                abbrev.each_attribute do |attr|
+                  case attr.at
+                  when DW_AT_addr_base
+                    value = info.read_attribute_value(attr.form, attr.const_value)
+                    addr = DWARF.addr_at?(@debug_addr, value.as(UInt8 | UInt16 | UInt32))
+                  when DW_AT_str_offsets_base
+                    value = info.read_attribute_value(attr.form, attr.const_value)
+                    @str_offsets = DWARF.str_offsets_at?(@debug_str_offsets, value.as(UInt8 | UInt16 | UInt32))
+                  else
+                    info.skip_attribute_value(attr.form)
+                  end
                 end
               else
                 abbrev.each_attribute do |attr|
@@ -133,6 +170,8 @@ module Crystal
             end
           end
         end
+      ensure
+        @str_offsets = nil
       end
 
       private def parse_abbrev_indexes(abbrev_table)
@@ -145,7 +184,10 @@ module Crystal
       end
 
       def lookup_line_number(pc : Int) : {Bytes, Bytes, UInt32, UInt32} | Nil
-        each_line_number do |sequence, low_pc, limit_pc, file_index, line, column|
+        return unless @initialized
+        return unless i = bsearch_line_number_index(pc)
+
+        resume_each_line_number(i) do |sequence, low_pc, limit_pc, file_index, line, column|
           if low_pc <= pc < limit_pc
             directory, file = file_and_directory_at(sequence, file_index)
             return directory, file, line, column
@@ -153,20 +195,68 @@ module Crystal
         end
       end
 
-      def each_line_number(&) : Nil
-        return unless @initialized
+      private def bsearch_line_number_index(pc)
+        a = @line_numbers
+        l, r = 0, a.size
+
+        while l < r
+          m = l + (r - l) // 2
+          addr = (a.to_unsafe + m).value[0].address
+
+          # rightmost binary search
+          if addr > pc
+            r = m
+          else
+            l = m + 1
+          end
+        end
+
+        r - 1 if r > 0
+      end
+
+      private def preload_line_numbers
         return unless debug_line = @debug_line
 
-        DWARF.each_line_sequence(debug_line) do |sequence|
-          # state of the previous entry in the matrix
-          address = 0_u64
-          file_index = 0_u32
-          line = 0_u32
-          column = 0_u32
+        # the index should always be smaller than the debug section, but we
+        # still add some leeway to avoid edge situations
+        bytesize = debug_line.bytesize + 256 * 1024
 
-          registers = Line::Registers.new(sequence.default_is_stmt?)
+        table = memory_map(bytesize, Tuple(Line::Registers, Int32, Int32)) do |slice|
+          size = 0
 
-          sequence.read_statement_program(pointerof(registers)) do
+          DWARF.each_line_sequence(debug_line) do |sequence, sequence_offset|
+            registers = Line::Registers.new(sequence.default_is_stmt?)
+            n = 0_u32
+
+            sequence.read_statement_program(pointerof(registers)) do |offset|
+              if (n & 127) == 0
+                slice[size] = {registers, sequence_offset, offset}
+                size += 1
+              end
+              n &+= 1
+            end
+          end
+
+          size
+        end
+
+        @line_numbers = table if table
+      end
+
+      private def resume_each_line_number(i, &) : Nil
+        return unless debug_line = @debug_line
+
+        registers, sequence_offset, program_offset = @line_numbers.to_unsafe[i]
+
+        # state of the previous entry in the matrix
+        address = registers.address
+        file_index = registers.file
+        line = registers.line
+        column = registers.column
+
+        i = -1
+        DWARF.line_sequence_at(debug_line + sequence_offset) do |sequence|
+          sequence.resume_statement_program(pointerof(registers), program_offset) do
             unless address.zero? || line.zero?
               yield pointerof(sequence), address, registers.address, file_index, line, column
             end
@@ -235,6 +325,8 @@ module Crystal
           decode_strp(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Bytes.empty
         end
@@ -248,6 +340,8 @@ module Crystal
           decode_strp_pointer(@debug_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
         when DW_FORM_line_strp
           decode_strp_pointer(@debug_line_str, value.as(UInt8 | UInt16 | UInt32 | UInt64))
+        when DW_FORM_strx, DW_FORM_strx1, DW_FORM_strx2, DW_FORM_strx3, DW_FORM_strx4
+          decode_strx_pointer(value.as(UInt8 | UInt16 | UInt32 | UInt64))
         else
           Pointer(UInt8).null
         end
@@ -265,6 +359,22 @@ module Crystal
       private def decode_strp_pointer(bytes, offset)
         if bytes && (0 <= offset < bytes.size)
           bytes.to_unsafe + offset
+        else
+          Pointer(UInt8).null
+        end
+      end
+
+      private def decode_strx(offset)
+        if str_offsets = @str_offsets
+          decode_strp(@debug_str, str_offsets[offset])
+        else
+          Bytes.empty
+        end
+      end
+
+      private def decode_strx_pointer(offset)
+        if str_offsets = @str_offsets
+          decode_strp_pointer(@debug_str, str_offsets[offset])
         else
           Pointer(UInt8).null
         end

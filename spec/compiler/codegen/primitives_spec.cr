@@ -437,4 +437,52 @@ describe "Code gen: primitives" do
       LibFoo.enum_value(1)
       CRYSTAL
   end
+
+  it "codegens 32-bit allocation primitives properly, with __crystal_* (#17530)" do
+    compile(<<-CRYSTAL, target: "i386-linux-gnu")
+      struct Pointer(T)
+        @[Primitive(:pointer_malloc)]
+        def self.malloc(size : UInt64)
+        end
+
+        @[Primitive(:pointer_realloc)]
+        def realloc(size : UInt64) : self
+        end
+      end
+
+      fun __crystal_malloc_atomic64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      fun __crystal_malloc64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      x = Pointer(Int32).malloc(3) # atomic
+      y = Pointer(Void*).malloc(4) # non-atomic
+      z = y.realloc(5)
+      CRYSTAL
+  end
+
+  it "codegens 32-bit allocation primitives properly, without __crystal_* (#17530)" do
+    compile(<<-CRYSTAL, target: "i386-linux-gnu")
+      struct Pointer(T)
+        @[Primitive(:pointer_malloc)]
+        def self.malloc(size : UInt64)
+        end
+
+        @[Primitive(:pointer_realloc)]
+        def realloc(size : UInt64) : self
+        end
+      end
+
+      x = Pointer(Int32).malloc(3) # atomic
+      y = Pointer(Void*).malloc(4) # non-atomic
+      z = y.realloc(5)
+      CRYSTAL
+  end
 end

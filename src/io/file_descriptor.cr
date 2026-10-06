@@ -30,6 +30,14 @@ class IO::FileDescriptor < IO
   # The time to wait when reading before raising an `IO::TimeoutError`.
   property read_timeout : Time::Span?
 
+  # Immediately exits the process when failing to write to this file descriptor
+  # due to a broken pipe error.
+  #
+  # This property is implicitly set on `STDOUT` and `STDERR` in order to emulate
+  # the default behaviour of `SIGPIPE` to terminate a process when its output
+  # pipe is closed. It is disabled on any other file descriptor.
+  property? exit_on_broken_pipe : Bool = false
+
   # Sets the number of seconds to wait when reading before raising an `IO::TimeoutError`.
   @[Deprecated("Use `#read_timeout=(Time::Span?)` instead.")]
   def read_timeout=(read_timeout : Number) : Number
@@ -87,7 +95,9 @@ class IO::FileDescriptor < IO
 
   # :nodoc:
   def self.from_stdio(fd : Handle) : self
-    Crystal::System::FileDescriptor.from_stdio(fd)
+    Crystal::System::FileDescriptor.from_stdio(fd).tap do |io|
+      io.exit_on_broken_pipe = true
+    end
   end
 
   # Returns whether I/O operations on this file descriptor block the current
@@ -345,6 +355,12 @@ class IO::FileDescriptor < IO
   private def unbuffered_write(slice : Bytes) : Nil
     until slice.empty?
       slice += @fd_lock.write { system_write(slice) }
+    end
+  rescue exc : IO::Error
+    if (exc.os_error == Errno::EPIPE || exc.os_error.in?(WinError::ERROR_BROKEN_PIPE, WinError::ERROR_NO_DATA)) && exit_on_broken_pipe?
+      LibC.exit 141 # 128 + LibC::SIGPIPE (=13)
+    else
+      raise exc
     end
   end
 

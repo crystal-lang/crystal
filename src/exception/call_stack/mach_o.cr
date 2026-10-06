@@ -7,11 +7,13 @@ lib LibC
 end
 
 struct Exception::CallStack
-  DEBUG_LINE_STR = "__debug_line_str"
-  DEBUG_STR      = "__debug_str"
-  DEBUG_LINE     = "__debug_line"
-  DEBUG_ABBREV   = "__debug_abbrev"
-  DEBUG_INFO     = "__debug_info"
+  DEBUG_LINE_STR    = "__debug_line_str"
+  DEBUG_STR         = "__debug_str"
+  DEBUG_LINE        = "__debug_line"
+  DEBUG_ABBREV      = "__debug_abbrev"
+  DEBUG_INFO        = "__debug_info"
+  DEBUG_ADDR        = "__debug_addr"
+  DEBUG_STR_OFFSETS = "__debug_str_offsets"
 
   @@base_address = LibC::Long.new(0)
 

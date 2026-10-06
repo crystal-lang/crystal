@@ -141,13 +141,11 @@ class HTTP::Request
 
   def body=(body : String) : String
     @body = IO::Memory.new(body)
-    self.content_length = body.bytesize
     body
   end
 
   def body=(body : Bytes) : Bytes
     @body = IO::Memory.new(body)
-    self.content_length = body.size
     body
   end
 
@@ -155,7 +153,6 @@ class HTTP::Request
   end
 
   def body=(@body : Nil) : Nil
-    @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
   def to_io(io : IO) : Nil
@@ -174,7 +171,7 @@ class HTTP::Request
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
-    status = HTTP.parse_headers_and_body(io, max_headers_size: max_headers_size) do |headers, body|
+    status = HTTP.parse_headers_and_body(io, decompress: false, max_headers_size: max_headers_size) do |headers, body|
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 

@@ -69,7 +69,15 @@ module Fiber::ExecutionContext
       protected def reschedule : Nil
         Crystal.trace :sched, "reschedule"
         if fiber = quick_dequeue?
-          resume fiber unless fiber == thread.current_fiber
+          unless fiber == thread.current_fiber
+            unless try_resume(fiber)
+              # failed to resume fiber in a timely manner, resume the main fiber
+              # to resolve any deadlock such as 2+ schedulers trying to resume
+              # the other scheduler's running fiber
+              enqueue fiber
+              resume main_fiber
+            end
+          end
         else
           # nothing to do: switch back to the main loop to spin/wait/park
           resume main_fiber
@@ -77,6 +85,12 @@ module Fiber::ExecutionContext
       end
 
       protected def resume(fiber : Fiber) : Nil
+        until try_resume(fiber)
+          Thread.yield
+        end
+      end
+
+      private def try_resume(fiber) : Bool
         Crystal.trace :sched, "resume", fiber: fiber
 
         # in a multithreaded environment the fiber may be dequeued before its
@@ -91,13 +105,19 @@ module Fiber::ExecutionContext
             raise "BUG: tried to resume dead fiber #{fiber} (#{inspect})"
           end
 
-          # OPTIMIZE: if the thread saving the fiber context has been preempted,
-          # this will block the current thread from progressing... shall we
-          # abort and reenqueue the fiber after MAX attempts?
+          if attempts == Thread::MAX_DELAY_ATTEMPTS_BEFORE_YIELD
+            # this is taking too long: maybe the thread saving the fiber
+            # context has been preempted, or we reached a deadlock where 2+
+            # schedulers quickly dequeued the other scheduler's running fiber
+            return false
+          end
+
           attempts = Thread.delay(attempts)
         end
 
         swapcontext(fiber)
+
+        true
       end
 
       private def quick_dequeue? : Fiber?
@@ -162,7 +182,16 @@ module Fiber::ExecutionContext
           if fiber = find_next_runnable
             spin_stop
             @state = State::RUNNING
-            resume fiber
+            unless try_resume(fiber)
+              # this is taking too long: maybe the thread saving the fiber
+              # context has been preempted, abort so we don't stop this
+              # scheduler from progressing
+              #
+              # OPTIMIZE: we re-enqueue the fiber so #find_next_runnable might
+              # just dequeue it again if it's the only fiber in the local queue,
+              # without looking up at the global queue or the event loop
+              enqueue(fiber)
+            end
           else
             # the event loop enqueued a fiber (or was interrupted) or the
             # scheduler was unparked: go for the next iteration
@@ -188,7 +217,7 @@ module Fiber::ExecutionContext
           return if @shutdown
 
           # usually empty but the scheduler may have been transferred to another
-          # thread with queued fibers
+          # thread with queued fibers, or a quick dequeue has been aborted
           yield @runnables.shift?
 
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)

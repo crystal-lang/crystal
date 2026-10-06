@@ -13,7 +13,7 @@ env:
 
 jobs:
   wasm32-test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     container: crystallang/crystal:1.21.0-build
     steps:
       - name: Download Crystal source

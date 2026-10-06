@@ -189,6 +189,119 @@ describe "Char::Reader" do
     end
   end
 
+  context "with byte slice" do
+    it "iterates through empty slice" do
+      reader = Char::Reader.new(Bytes.empty)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(0)
+      reader.error.should be_nil
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through empty slice at end" do
+      reader = Char::Reader.new(at_end: Bytes.empty)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(0)
+      reader.error.should be_nil
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through string of size one" do
+      reader = Char::Reader.new("a".to_slice)
+      reader.pos.should eq(0)
+      reader.current_char.should eq('a')
+      reader.has_next?.should be_true
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through string slice" do
+      reader = Char::Reader.new("há日本語".to_slice)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(104)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(225)
+
+      reader.pos.should eq(1)
+      reader.current_char.ord.should eq(225)
+
+      reader.next_char.ord.should eq(26085)
+      reader.next_char.ord.should eq(26412)
+      reader.next_char.ord.should eq(35486)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through sub string slice" do
+      reader = Char::Reader.new("abcdefg".to_slice[2, 3])
+      reader.pos.should eq(0)
+      reader.current_char.should eq('c')
+      reader.has_next?.should be_true
+
+      reader.next_char.should eq('d')
+      reader.pos.should eq(1)
+      reader.next_char.should eq('e')
+      reader.has_next?.should be_true
+      reader.next_char.should eq('\0')
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through sub string slice" do
+      reader = Char::Reader.new("há日本語".to_slice[1, 8])
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(225)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(26085)
+      reader.pos.should eq(2)
+      reader.next_char.ord.should eq(26412)
+      # reader.has_next?.should be_false
+
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "#peek_next_char at end" do
+      reader = Char::Reader.new("abcdefg".to_slice[2, 3])
+      reader.next_char
+      reader.peek_next_char.should eq('e')
+      reader.next_char.should eq('e')
+      reader.has_next?.should be_true
+      reader.peek_next_char.should eq('\0')
+      reader.next_char.should eq('\0')
+
+      expect_raises IndexError do
+        reader.peek_next_char
+      end
+    end
+  end
+
   describe "#each" do
     it "yields chars" do
       reader = Char::Reader.new("abc")

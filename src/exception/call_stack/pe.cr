@@ -1,11 +1,13 @@
 require "crystal/system/win32/pe"
 
 struct Exception::CallStack
-  DEBUG_LINE_STR = ".debug_line_str"
-  DEBUG_STR      = ".debug_str"
-  DEBUG_LINE     = ".debug_line"
-  DEBUG_ABBREV   = ".debug_abbrev"
-  DEBUG_INFO     = ".debug_info"
+  DEBUG_LINE_STR    = ".debug_line_str"
+  DEBUG_STR         = ".debug_str"
+  DEBUG_LINE        = ".debug_line"
+  DEBUG_ABBREV      = ".debug_abbrev"
+  DEBUG_INFO        = ".debug_info"
+  DEBUG_ADDR        = ".debug_addr"
+  DEBUG_STR_OFFSETS = ".debug_str_offsets"
 
   @@base_address = 0_u64
   @@coff_symbols : Hash(Int32, Array(Crystal::System::PE::COFFSymbol))?

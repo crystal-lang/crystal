@@ -23,12 +23,16 @@ class HTTP::Server::RequestProcessor
   end
 
   def process(input : IO, output : IO) : Nil
-    response = Response.new(output)
+    process(IO::Stapled.new(input, output))
+  end
+
+  def process(io : IO) : Nil
+    response = Response.new(io)
 
     begin
       until @wants_close
         request = HTTP::Request.from_io(
-          input,
+          io,
           max_request_line_size: max_request_line_size,
           max_headers_size: max_headers_size,
         )
@@ -54,12 +58,12 @@ class HTTP::Server::RequestProcessor
 
         response.version = request.version
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        if input.responds_to?(:remote_address)
-          remote_address = input.remote_address
+        if io.responds_to?(:remote_address)
+          remote_address = io.remote_address
         end
 
-        if input.responds_to?(:local_address)
-          local_address = input.local_address
+        if io.responds_to?(:local_address)
+          local_address = io.local_address
         end
         context = Context.new(request, response,
           remote_address: remote_address, local_address: local_address)
@@ -80,12 +84,30 @@ class HTTP::Server::RequestProcessor
           response.output.close
         end
 
-        output.flush
+        io.flush
 
         # If there is an upgrade handler, hand over
         # the connection to it and return
         if upgrade_handler = response.upgrade_handler
-          upgrade_handler.call(output)
+          # Ensure that the original request body has been entirely consumed,
+          # by skipping to the end of it.
+          # Otherwise the upgraded connection would contain unconsumed parts of
+          # the request body.
+          case original_body
+          when FixedLengthContent, ChunkedContent
+            original_body.skip_to_end
+          when Nil
+            # No request body
+          else
+            # Unexpected request body type
+            # At this point the request handler has already initiated the
+            # connection upgrade, so we cannot respond with an 400 error here.
+            # Instead we drop the connection before continuing with the upgrade.
+            io.close
+            return
+          end
+
+          upgrade_handler.call(io)
           return
         end
 

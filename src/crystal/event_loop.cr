@@ -2,25 +2,20 @@ abstract class Crystal::EventLoop
   def self.backend_class
     {% if flag?(:wasi) %}
       Crystal::EventLoop::Wasi
-    {% elsif flag?(:unix) %}
-      # TODO: enable more targets by default (need manual tests or fixes)
-      {% if flag?("evloop=io_uring") %}
-        if Crystal::EventLoop::IoUring.supported?
-          Crystal::EventLoop::IoUring
-        else
-          System.panic "io_uring_setup", Errno::ENOSYS
-        end
-      {% elsif flag?("evloop=libevent") %}
-        Crystal::EventLoop::LibEvent
+    {% elsif flag?("evloop=io_uring") %}
+      if Crystal::EventLoop::IoUring.supported?
+        Crystal::EventLoop::IoUring
+      else
+        System.panic "io_uring_setup", Errno::ENOSYS
+      end
+    {% elsif flag?("evloop=libevent") %}
+      Crystal::EventLoop::LibEvent
+    {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) || flag?(:solaris) %}
       # The native async solution on Solaris (Illumos) are Event Ports, but both
       # `epoll` and `timerfd` are supported, and the epoll event loop works.
-      {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) || flag?(:solaris) %}
-        Crystal::EventLoop::Epoll
-      {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
-        Crystal::EventLoop::Kqueue
-      {% else %}
-        Crystal::EventLoop::LibEvent
-      {% end %}
+      Crystal::EventLoop::Epoll
+    {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:bsd) %}
+      Crystal::EventLoop::Kqueue
     {% elsif flag?(:win32) %}
       Crystal::EventLoop::IOCP
     {% else %}
@@ -161,18 +156,14 @@ end
 
 {% if flag?(:wasi) %}
   require "./event_loop/wasi"
-{% elsif flag?(:unix) %}
-  {% if flag?("evloop=io_uring") %}
-    require "./event_loop/io_uring"
-  {% elsif flag?("evloop=libevent") %}
-    require "./event_loop/libevent"
-  {% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) || flag?(:solaris) %}
-    require "./event_loop/epoll"
-  {% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:freebsd) || flag?(:openbsd) %}
-    require "./event_loop/kqueue"
-  {% else %}
-    require "./event_loop/libevent"
-  {% end %}
+{% elsif flag?("evloop=io_uring") %}
+  require "./event_loop/io_uring"
+{% elsif flag?("evloop=libevent") %}
+  require "./event_loop/libevent"
+{% elsif flag?("evloop=epoll") || flag?(:android) || flag?(:linux) || flag?(:solaris) %}
+  require "./event_loop/epoll"
+{% elsif flag?("evloop=kqueue") || flag?(:darwin) || flag?(:bsd) %}
+  require "./event_loop/kqueue"
 {% elsif flag?(:win32) %}
   require "./event_loop/iocp"
 {% else %}
