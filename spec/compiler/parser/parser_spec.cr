@@ -657,6 +657,43 @@ module Crystal
     it_parses "foo(\n1)", "foo".call(1.int32)
     it_parses "::foo", Call.new("foo", [] of ASTNode, nil, nil, nil, true)
 
+    ["", "()"].each do |suffix|
+      it_parses "foo = 1; ::foo#{suffix}", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", global: true),
+      ]
+    end
+
+    it_parses "foo = 1; ::foo /bar/", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar"), global: true),
+    ]
+    it_parses "foo = 1; ::foo /bar/i", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar", Regex::CompileOptions::IGNORE_CASE), global: true),
+    ]
+
+    [" / ", "/", "/ "].each do |separator|
+      it_parses "foo = 1; ::foo#{separator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new(Call.new("foo", global: true), "/", "bar".call),
+      ]
+    end
+
+    ["+", "-"].each do |operator|
+      [" #{operator} ", operator, "#{operator} "].each do |separator|
+        it_parses "foo = 1; ::foo#{separator}bar", [
+          Assign.new("foo".var, 1.int32),
+          Call.new(Call.new("foo", global: true), operator, "bar".call),
+        ]
+      end
+
+      it_parses "foo = 1; ::foo #{operator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", [Call.new("bar".call, operator)] of ASTNode, global: true),
+      ]
+    end
+
     it_parses "foo + 1", Call.new("foo".call, "+", 1.int32)
     it_parses "foo +1", Call.new("foo", 1.int32)
     it_parses "foo +1.0", Call.new("foo", 1.float64)
