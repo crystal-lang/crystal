@@ -43,7 +43,7 @@ describe HTTP::WebSocket do
     it "can read a small text packet" do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
@@ -55,7 +55,7 @@ describe HTTP::WebSocket do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(3)
 
@@ -94,7 +94,7 @@ describe HTTP::WebSocket do
         0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f]
 
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(10)
 
@@ -112,7 +112,7 @@ describe HTTP::WebSocket do
     it "read ping packet" do
       data = Bytes[0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
@@ -125,7 +125,7 @@ describe HTTP::WebSocket do
         0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x80, 0x02, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
 
@@ -161,7 +161,7 @@ describe HTTP::WebSocket do
       data.copy_from(header)
 
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(0x010000)
 
@@ -172,7 +172,7 @@ describe HTTP::WebSocket do
     it "can read a close packet" do
       data = Bytes[0x88, 0x00]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
