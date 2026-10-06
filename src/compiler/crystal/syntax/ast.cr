@@ -798,6 +798,22 @@ module Crystal
       name.size
     end
 
+    # Returns whether this variable's name is a keyword that cannot be used as
+    # a local variable name.
+    def invalid_name?
+      case @name
+      when "begin", "nil", "true", "false", "yield", "with", "abstract",
+           "def", "macro", "require", "case", "select", "if", "unless", "include",
+           "extend", "class", "struct", "module", "enum", "while", "until", "return",
+           "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
+           "instance_sizeof", "typeof", "private", "protected", "asm", "out",
+           "self", "in", "end", "alignof", "instance_alignof"
+        true
+      else
+        false
+      end
+    end
+
     def clone_without_location
       Var.new(@name)
     end

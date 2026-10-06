@@ -11,6 +11,32 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "allows macros to consume type declarations with invalid local variable names" do
+    assert_type(<<-CRYSTAL) { bool }
+      macro consume(declaration)
+        {{ declaration.value }}
+      end
+
+      consume true : Bool = false
+      CRYSTAL
+  end
+
+  it "allows macros to transform type declarations with keyword names" do
+    assert_type(<<-CRYSTAL) { bool }
+      class Foo
+        macro define_getter(declaration)
+          def {{ declaration.var.id }}
+            {{ declaration.value }}
+          end
+        end
+
+        define_getter end : Bool = false
+      end
+
+      Foo.new.end
+      CRYSTAL
+  end
+
   it "errors if macro uses undefined variable" do
     assert_error "macro foo(x) {{y}} end; foo(1)",
       "undefined macro variable 'y'"

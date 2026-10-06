@@ -1074,7 +1074,7 @@ module Crystal
       when .magic_dir?
         node_and_next_token MagicConstant.expand_dir_node(@token.location)
       when .ident?
-        # NOTE: Update `Parser#invalid_internal_name?` keyword list
+        # NOTE: Update `Var#invalid_name?` keyword list
         # when adding or removing keyword to handle here.
         if keyword = @token.value.as?(Keyword)
           case keyword
@@ -4151,10 +4151,10 @@ module Crystal
         name_location = @token.location
         external_name_token = @token.dup
         if @token.type.ident?
-          if @token.keyword? && invalid_internal_name?(@token.value)
+          external_name = @token.value.to_s
+          if @token.keyword? && Var.new(external_name).invalid_name?
             invalid_internal_name = @token.dup
           end
-          external_name = @token.value.to_s
           next_token
         else
           external_name = parse_string_without_interpolation("external name")
@@ -4172,11 +4172,11 @@ module Crystal
 
       case @token.type
       when .ident?
-        if @token.keyword? && invalid_internal_name?(@token.value)
+        param_name = @token.value.to_s
+        if @token.keyword? && Var.new(param_name).invalid_name?
           raise "cannot use '#{@token}' as a parameter name", @token
         end
 
-        param_name = @token.value.to_s
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4205,7 +4205,7 @@ module Crystal
         #
         # The external name defaults to the internal one unless otherwise
         # specified (i.e. `def method(foo @select)`).
-        if invalid_internal_name?(param_name)
+        if Var.new(param_name).invalid_name?
           external_name ||= param_name
           param_name = temp_arg_name
         end
@@ -4227,7 +4227,7 @@ module Crystal
         end
 
         # Same case as :INSTANCE_VAR for things like @select
-        if invalid_internal_name?(param_name)
+        if Var.new(param_name).invalid_name?
           external_name ||= param_name
           param_name = temp_arg_name
         end
@@ -4268,40 +4268,6 @@ module Crystal
       skip_space
 
       {param_name, external_name, found_space, uses_param}
-    end
-
-    def invalid_internal_name?(keyword)
-      case keyword
-      when Keyword
-        case keyword
-        # These names are handled as keyword by `Parser#parse_atomic_without_location`.
-        # We cannot assign value into them and never reference them,
-        # so they are invalid internal name.
-        when .begin?, Keyword::NIL, .true?, .false?, .yield?, .with?, .abstract?,
-             .def?, .macro?, .require?, .case?, .select?, .if?, .unless?, .include?,
-             .extend?, .class?, .struct?, .module?, .enum?, .while?, .until?, .return?,
-             .next?, .break?, .lib?, .fun?, .alias?, .pointerof?, .sizeof?, .offsetof?,
-             .instance_sizeof?, .typeof?, .private?, .protected?, .asm?, .out?,
-             .self?, Keyword::IN, .end?, .alignof?, .instance_alignof?
-          true
-        else
-          false
-        end
-      when String
-        case keyword
-        when "begin", "nil", "true", "false", "yield", "with", "abstract",
-             "def", "macro", "require", "case", "select", "if", "unless", "include",
-             "extend", "class", "struct", "module", "enum", "while", "until", "return",
-             "next", "break", "lib", "fun", "alias", "pointerof", "sizeof", "offsetof",
-             "instance_sizeof", "typeof", "private", "protected", "asm", "out",
-             "self", "in", "end", "alignof", "instance_alignof"
-          true
-        else
-          false
-        end
-      else
-        false
-      end
     end
 
     def check_valid_param_name(token : Token = @token)
@@ -4696,11 +4662,11 @@ module Crystal
 
       case @token.type
       when .ident?
-        if @token.keyword? && invalid_internal_name?(@token.value)
+        param_name = @token.value.to_s
+        if @token.keyword? && Var.new(param_name).invalid_name?
           raise "cannot use '#{@token}' as a block parameter name", @token
         end
 
-        param_name = @token.value.to_s
         check_valid_param_name
 
         if all_names.includes?(param_name)

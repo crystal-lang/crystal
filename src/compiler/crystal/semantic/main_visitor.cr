@@ -415,6 +415,10 @@ module Crystal
     def visit(node : TypeDeclaration)
       case var = node.var
       when Var
+        if var.invalid_name?
+          node.raise "can't use keyword '#{var.name}' as a local variable name"
+        end
+
         if @meta_vars[var.name]?
           node.raise "variable '#{var.name}' already declared"
         end

@@ -26,6 +26,15 @@ describe "Semantic: var" do
     assert_type("a : Int32 = 1") { int32 }
   end
 
+  it "errors if a type declaration uses an invalid local variable name" do
+    assert_error "true : Bool = false",
+      "can't use keyword 'true' as a local variable name"
+  end
+
+  it "allows a type declaration to use a contextual keyword as a local variable name" do
+    assert_type("type : Bool = false") { bool }
+  end
+
   it "reports undefined local variable or method" do
     assert_error <<-CRYSTAL, "undefined local variable or method 'something'"
       def foo
