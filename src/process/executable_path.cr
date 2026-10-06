@@ -53,7 +53,6 @@ class Process
       File::Info.executable?(path)
     {% end %}
   rescue File::Error
-    # Skip all file errors
     false
   end
 
