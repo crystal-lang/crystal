@@ -178,6 +178,34 @@ describe HTTP::WebSocket do
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
     end
+
+    it "server rejects unmasked frames" do
+      IO::Stapled.pipe do |io1, io2|
+        # Unmasked frame with payload "foobar"
+        io2.write Bytes[129, 6, 102, 111, 111, 98, 97, 114]
+
+        buffer = Bytes.new(6)
+        server = HTTP::WebSocket::Protocol.new(io1)
+
+        # BUG: Server should reject unmasked
+        server.receive(buffer)
+        buffer.should eq "foobar".to_slice
+      end
+    end
+
+    it "client rejects masked frames" do
+      IO::Stapled.pipe do |io1, io2|
+        # Masked frame with payload "foobar"
+        io1.write Bytes[129, 134, 69, 235, 78, 53, 35, 132, 33, 87, 36, 153]
+
+        buffer = Bytes.new(6)
+        client = HTTP::WebSocket::Protocol.new(io2, masked: true)
+
+        # BUG: Client should reject masked
+        client.receive(buffer)
+        buffer.should eq "foobar".to_slice
+      end
+    end
   end
 
   describe "send" do
