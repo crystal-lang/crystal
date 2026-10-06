@@ -187,9 +187,15 @@ describe HTTP::WebSocket do
         buffer = Bytes.new(6)
         server = HTTP::WebSocket::Protocol.new(io1)
 
-        # BUG: Server should reject unmasked
-        server.receive(buffer)
-        buffer.should eq "foobar".to_slice
+        expect_raises(Exception, "Protocol error: expected masked frame") do
+          server.receive(buffer)
+        end
+
+        client = HTTP::WebSocket::Protocol.new(io2, masked: true)
+        info = client.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+        info.size.should eq 2
+        IO::ByteFormat::NetworkEndian.decode(UInt16, buffer).should eq HTTP::WebSocket::CloseCode::ProtocolError.value
       end
     end
 
@@ -201,9 +207,15 @@ describe HTTP::WebSocket do
         buffer = Bytes.new(6)
         client = HTTP::WebSocket::Protocol.new(io2, masked: true)
 
-        # BUG: Client should reject masked
-        client.receive(buffer)
-        buffer.should eq "foobar".to_slice
+        expect_raises(Exception, "Protocol error: expected unmasked frame") do
+          client.receive(buffer)
+        end
+
+        server = HTTP::WebSocket::Protocol.new(io1)
+        info = server.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+        info.size.should eq 2
+        IO::ByteFormat::NetworkEndian.decode(UInt16, buffer).should eq HTTP::WebSocket::CloseCode::ProtocolError.value
       end
     end
   end
