@@ -1,5 +1,6 @@
 require "./polling"
 require "../system/unix/kqueue"
+require "c/sys/stat"
 
 class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   # the following are arbitrary numbers to identify specific events
@@ -118,12 +119,22 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     @kqueue.kevent(kevents.to_slice) do
+      error = Errno.value
       {% if flag?(:freebsd) %}
         # FreeBSD rejects EVFILT_WRITE after a pipe's peer closes. Reads can
         # still drain buffered data, and neither direction can block again.
-        return true if Errno.value == Errno::EPIPE
+        return true if error == Errno::EPIPE
+      {% elsif flag?(:netbsd) %}
+        if error == Errno::EBADF && LibC.fstat(fd, out stat) == 0 && (stat.st_mode & LibC::S_IFMT) == LibC::S_IFIFO
+          # NetBSD reports EBADF for a closed pipe peer. Validate the installed
+          # read filter so a bad fd or kqueue still raises.
+          @kqueue.kevent(fd, LibC::EVFILT_READ, LibC::EV_ENABLE, udata: kevents[0].udata) do
+            raise RuntimeError.from_os_error("kevent", error)
+          end
+          return true
+        end
       {% end %}
-      raise RuntimeError.from_errno("kevent")
+      raise RuntimeError.from_os_error("kevent", error)
     end
     false
   end
@@ -147,7 +158,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     @kqueue.kevent(kevents.to_slice) do
-      {% if flag?(:freebsd) %}
+      {% if flag?(:freebsd) || flag?(:netbsd) %}
         # A failed write registration leaves the read filter installed.
         # It is deleted before the missing write filter returns ENOENT.
         return if Errno.value == Errno::ENOENT
