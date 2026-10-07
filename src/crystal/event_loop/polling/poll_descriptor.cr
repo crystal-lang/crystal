@@ -28,7 +28,10 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     end
 
     @event_loop = event_loop
-    event_loop.system_add(fd, index)
+    if event_loop.system_add(fd, index)
+      @readers.ready_all { }
+      @writers.ready_all { }
+    end
     current.try(&.system_del(fd, closing: false))
   end
 

@@ -12,6 +12,7 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   end
 
   getter operations = [] of {Symbol, Int32, Arena::Index | Bool}
+  property always_ready = false
 
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
   end
@@ -19,8 +20,9 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   def interrupt : Nil
   end
 
-  protected def system_add(fd : Int32, index : Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Arena::Index) : Bool
     operations << {:add, fd, index}
+    always_ready
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil
@@ -49,6 +51,26 @@ describe Crystal::EventLoop::Polling::Waiters do
       evloop.operations.should eq([
         {:add, fd, index},
       ])
+    end
+
+    it "does not wait when registration reports a pipe that cannot block" do
+      fd = Int32::MAX
+      pd = Crystal::EventLoop::Polling::PollDescriptor.new
+      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
+      evloop = Crystal::EventLoop::Polling::FakeLoop.new
+      evloop.always_ready = true
+
+      [evloop, Crystal::EventLoop::Polling::FakeLoop.new].each do |owner|
+        pd.take_ownership(owner, fd, index)
+
+        2.times do
+          reader = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+          writer = Crystal::EventLoop::Polling::Event.new(:io_write, Fiber.current)
+          pd.@readers.add(pointerof(reader)).should be_false
+          pd.@writers.add(pointerof(writer)).should be_false
+        end
+        pd.empty?.should be_true
+      end
     end
 
     it "moves a poll descriptor to another evloop instance" do

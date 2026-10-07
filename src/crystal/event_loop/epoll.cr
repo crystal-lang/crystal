@@ -81,10 +81,11 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @eventfd.write(1) unless @interrupted.swap(true, :relaxed)
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Bool
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64
     events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
     @epoll.add(fd, events, u64: index.to_u64)
+    false
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil

@@ -100,7 +100,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Bool
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
     # register both read and write events
@@ -118,8 +118,14 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     @kqueue.kevent(kevents.to_slice) do
+      {% if flag?(:freebsd) %}
+        # FreeBSD rejects EVFILT_WRITE after a pipe's peer closes. Reads can
+        # still drain buffered data, and neither direction can block again.
+        return true if Errno.value == Errno::EPIPE
+      {% end %}
       raise RuntimeError.from_errno("kevent")
     end
+    false
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil
@@ -141,6 +147,11 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     @kqueue.kevent(kevents.to_slice) do
+      {% if flag?(:freebsd) %}
+        # A failed write registration leaves the read filter installed.
+        # It is deleted before the missing write filter returns ENOENT.
+        return if Errno.value == Errno::ENOENT
+      {% end %}
       raise RuntimeError.from_errno("kevent")
     end
   end
