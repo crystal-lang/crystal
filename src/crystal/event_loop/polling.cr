@@ -563,7 +563,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   private def check_open(io : IO)
-    raise IO::Error.new("Closed stream") if io.closed?
+    raise IO::ClosedError.new if io.closed?
   end
 
   # internals: timers

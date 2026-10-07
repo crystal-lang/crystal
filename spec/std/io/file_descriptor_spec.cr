@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "../../support/channel"
 require "../../support/finalize"
 
 class IO::FileDescriptor
@@ -210,6 +211,49 @@ describe IO::FileDescriptor do
       {% end %}
     end
   end
+
+  {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
+    it "does not map EBADF to IO::ClosedError" do
+      IO.pipe do |_r, w|
+        error = expect_raises(IO::Error, "File not open for reading") do
+          w.read(Bytes.new(1))
+        end
+        error.should_not be_a(IO::ClosedError)
+      end
+    end
+  {% end %}
+
+  {% if flag?(:unix) %}
+    it "raises IO::ClosedError when closed during a blocking read" do
+      ch = Channel(SpecChannelStatus).new(1)
+      failure = nil
+
+      IO.pipe do |r, _w|
+        f = spawn do
+          ch.send(:begin)
+          error = expect_raises(IO::ClosedError, "Closed stream") do
+            r.read(Bytes.new(1))
+          end
+          error.should be_a(IO::Error)
+          ch.send(:end)
+        rescue ex
+          failure = ex
+          ch.send(:end)
+        end
+
+        schedule_timeout(ch)
+
+        ch.receive.should eq(SpecChannelStatus::Begin)
+        wait_until_blocked(f)
+
+        r.close
+        ch.receive.should eq(SpecChannelStatus::End)
+        if ex = failure
+          raise ex
+        end
+      end
+    end
+  {% end %}
 
   typeof(STDIN.noecho { })
   typeof(STDIN.noecho!)
