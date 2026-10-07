@@ -788,6 +788,7 @@ module Crystal
         optimization_mode = OptimizationMode::O2 if optimization_mode.os? || optimization_mode.oz?
 
         LLVM::PassBuilderOptions.new do |options|
+          options.set_merge_functions(true) unless debug.variables?
           LLVM.run_passes(llvm_mod, "default<#{optimization_mode}>", target_machine, options)
         end
       {% end %}
