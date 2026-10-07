@@ -133,7 +133,7 @@ class Crystal::CodeGenVisitor
         # "inside" this catchpad. More information on this is available in the link above.
         @catch_pad = builder.catch_pad catch_switch, [void_ptr_type_descriptor, int32(0), caught_exception_ptr]
 
-        # builder.printf("catchpad entered #{node.location}\n", catch_pad: @catch_pad)
+        # printf("catchpad entered #{node.location}\n")
 
         caught_exception = load exception_llvm_type, caught_exception_ptr
         exception_type_id = type_id(caught_exception, exception_type)
