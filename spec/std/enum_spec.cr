@@ -334,6 +334,7 @@ describe Enum do
 
     PrivateEnum.parse("FOO").should eq(PrivateEnum::FOO)
     PrivateEnum.parse("BAR").should eq(PrivateEnum::BAR)
+    PrivateEnum.parse("B_____________________________________________________________AR").should eq(PrivateEnum::BAR)
     PrivateEnum.parse("QUX").should eq(PrivateEnum::QUX)
 
     SpecEnumWithCaseSensitiveMembers.parse("foo").should eq SpecEnumWithCaseSensitiveMembers::FOO
