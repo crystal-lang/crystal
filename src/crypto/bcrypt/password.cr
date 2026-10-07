@@ -1,16 +1,21 @@
 require "../bcrypt"
 require "../subtle"
 
-# Generate, read and verify `Crypto::Bcrypt` hashes.
+# Generate, read, and verify `Crypto::Bcrypt` password hashes.
+#
+# Use `.create` to hash a new plaintext password with a random salt,
+# and `.new` to load and parse an existing hash string for verification via `#verify`.
 #
 # NOTE: To use `Password`, you must explicitly import it with `require "crypto/bcrypt/password"`
 #
 # ```
 # require "crypto/bcrypt/password"
 #
+# # Hash a new password for storage
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
-# # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
+# password.to_s # => "$2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq"
 #
+# # Verify candidates against the hash
 # password.verify("wrong secret") # => false
 # password.verify("super secret") # => true
 # ```
@@ -19,14 +24,18 @@ require "../subtle"
 class Crypto::Bcrypt::Password
   private SUPPORTED_VERSIONS = ["2", "2a", "2b", "2y"]
 
-  # Hashes a password.
+  # Hashes a plaintext *password* using the bcrypt algorithm with a randomly generated salt.
+  #
+  # Returns a `Password` instance containing the generated hash, ready for storage or verification.
   #
   # ```
   # require "crypto/bcrypt/password"
   #
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
-  # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
+  # password.to_s # => "$2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq"
   # ```
+  #
+  # Raises `Crypto::Bcrypt::Error` if *cost* is not in `4..31` or *password* exceeds 71 bytes.
   def self.create(password : String, cost : Int32 = DEFAULT_COST) : self
     new(Bcrypt.hash_secret(password, cost).to_s)
   end
@@ -36,7 +45,10 @@ class Crypto::Bcrypt::Password
   getter salt : String
   getter digest : String
 
-  # Loads a bcrypt hash.
+  # Loads and parses an existing formatted bcrypt hash string (such as one retrieved from storage).
+  #
+  # NOTE: This method does **not** hash a plaintext password. To hash a new password,
+  # use `.create`.
   #
   # ```
   # require "crypto/bcrypt/password"
@@ -45,7 +57,13 @@ class Crypto::Bcrypt::Password
   # password.version # => "2a"
   # password.salt    # => "X6rw/jDiLBuzHV./JjBNXe"
   # password.digest  # => "8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya"
+  #
+  # # Passing a plaintext password raises an error:
+  # Crypto::Bcrypt::Password.new("my_password") # => raises Crypto::Bcrypt::Error (Invalid hash string)
   # ```
+  #
+  # Raises `Crypto::Bcrypt::Error` if *raw_hash* is not a valid modular crypt format hash string,
+  # has an unsupported version, or contains an invalid cost, salt size, or digest size.
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
     raise Error.new("Invalid hash string") unless parts.size == 4
@@ -61,7 +79,9 @@ class Crypto::Bcrypt::Password
     raise Error.new("Invalid digest size") unless digest.size == 31
   end
 
-  # Verifies a password against the hash.
+  # Verifies a plaintext *password* against the hash using constant-time comparison.
+  #
+  # Returns `true` if *password* matches the hash, `false` otherwise.
   #
   # ```
   # require "crypto/bcrypt/password"
