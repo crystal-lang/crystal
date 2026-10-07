@@ -235,7 +235,6 @@ describe "Process.find_executable" do
           error.os_error.should eq Errno::ELOOP
           Process.find_executable("foo", path: loop_dir).should be_nil
         ensure
-          # FileUtils.rm_r follows the symlink and fails on the loop
           File.delete(loop)
         end
       end
