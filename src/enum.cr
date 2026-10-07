@@ -520,13 +520,13 @@ abstract struct Enum
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
       {%
-        max_charsize = @type.constants.map(&.size).sort.last
         max_bytesize = if compare_versions(Crystal::VERSION, "1.22.0") >= 0
                          @type.constants.map(&.bytesize).sort.last
                        else
                          # Without `StringLiteral#bytesize` we have no means to figure out how
                          # much space we actually need. So we calculate the worst case based on
                          # char size.
+                         max_charsize = @type.constants.map(&.size).sort.last
                          max_charsize * 4
                        end
       %}
