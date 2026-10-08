@@ -100,53 +100,6 @@ class Fiber
     fibers.each { |fiber| yield fiber }
   end
 
-  {% if flag?(:detect_deadlocks) %}
-    @__sync_locked : Nil | Sync::Deadlockable | Array(Sync::Deadlockable)
-
-    # :nodoc:
-    def __sync_locked(lock : Sync::Deadlockable) : Nil
-      case lock_or_locks = @__sync_locked
-      when Nil
-        @__sync_locked = lock
-      when Sync::Deadlockable
-        @__sync_locked = [lock_or_locks, lock]
-      when Array
-        lock_or_locks << lock
-      end
-    end
-
-    # :nodoc:
-    def __sync_unlocked(lock : Sync::Deadlockable) : Nil
-      if (locks = @__sync_locked).is_a?(Array)
-        locks.delete(lock)
-      else
-        @__sync_locked = nil
-      end
-    end
-
-    # :nodoc:
-    def __sync_locked?(lock : Sync::Deadlockable) : Bool
-      case lock_or_locks = @__sync_locked
-      when Sync::Deadlockable
-        lock_or_locks == lock
-      when Array
-        lock_or_locks.includes?(lock)
-      else
-        false
-      end
-    end
-
-    # :nodoc:
-    def each_sync_locked(&) : Nil
-      case lock_or_locks = @__sync_locked
-      when Sync::Deadlockable
-        yield lock_or_locks
-      when Array
-        lock_or_locks.each { |lock| yield lock }
-      end
-    end
-  {% end %}
-
   {% begin %}
   # Creates a new `Fiber` instance.
   #
@@ -462,4 +415,12 @@ class Fiber
   def exec_recursive_clone_hash
     @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
   end
+
+  {% if flag?(:detect_deadlocks) %}
+    # :nodoc:
+    #
+    # Locks that the current fiber currently holds.
+    # See `Sync::Deadlockable` for details.
+    property? owned_locks : Nil | Sync::Deadlockable | Array(Sync::Deadlockable)
+  {% end %}
 end

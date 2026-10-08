@@ -3,9 +3,9 @@
 #
 # Roughly:
 #
-# Whenever a lock is acquired, the lock object is added to a fiber local array,
-# and consequently when a lock is release, the lock object is removed from that
-# array.
+# Whenever a lock is acquired, the lock object is added to the fiber local array
+# `Fiber#owned_locks`, and consequently when a lock is released, the lock object
+# is removed from that array.
 #
 # After failing to acquire a lock, the lock will iterate the list of acquired
 # locks, and see if the current owner is waiting on any other held lock. If so,
@@ -20,6 +20,9 @@
 module Sync
   # :nodoc:
   module Deadlockable
+    # While most usages could merely check `Fiber#owned_locks`, to be able to
+    # check for deadlocks across multiple locks, we need to know the current
+    # owner of the lock.
     @locked_by = Atomic(Fiber?).new(nil)
 
     private def locked_by? : Fiber?
@@ -51,7 +54,7 @@ module Sync
         return unless owner = locked_by?
 
         fiber = Fiber.current
-        fiber.each_sync_locked do |owned_lock|
+        Deadlockable.each_lock_owned_by(fiber) do |owned_lock|
           # is the lock's owner waiting on any lock we own?
           if owned_lock.waiting?(owner)
             # deadlock! taint the other fiber, so both sides will raise an
@@ -104,6 +107,46 @@ module Sync
 
       protected def waiting?(fiber)
         @mu.waiting?(fiber)
+      end
+
+      # :nodoc:
+      private def acquired_lock(fiber : Fiber) : Nil
+        case lock_or_locks = fiber.owned_locks?
+        when Nil
+          fiber.owned_locks = self
+        when Sync::Deadlockable
+          fiber.owned_locks = [lock_or_locks, self]
+        when Array
+          lock_or_locks << self
+        end
+      end
+
+      private def released_lock(fiber : Fiber) : Nil
+        if (locks = fiber.owned_locks?).is_a?(Array)
+          locks.delete(self)
+        else
+          fiber.owned_locks = nil
+        end
+      end
+
+      protected def owns_lock?(fiber : Fiber) : Bool
+        case lock_or_locks = fiber.owned_locks?
+        when Sync::Deadlockable
+          lock_or_locks == self
+        when Array
+          lock_or_locks.includes?(self)
+        else
+          false
+        end
+      end
+
+      protected def self.each_lock_owned_by(fiber : Fiber, &) : Nil
+        case lock_or_locks = fiber.owned_locks?
+        when Sync::Deadlockable
+          yield lock_or_locks
+        when Array
+          lock_or_locks.each { |lock| yield lock }
+        end
       end
     {% end %}
   end

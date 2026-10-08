@@ -112,7 +112,7 @@ module Sync
       @counter = counter if @type.reentrant?
 
       {% if flag?(:detect_deadlocks) %}
-        fiber.__sync_locked(self)
+        acquired_lock(fiber)
         detect_indirect_deadlock!(fiber) { unlock }
       {% end %}
     end
@@ -121,7 +121,7 @@ module Sync
       self.locked_by = nil
 
       {% if flag?(:detect_deadlocks) %}
-        Fiber.current.__sync_unlocked(self)
+        released_lock(Fiber.current)
       {% end %}
     end
 

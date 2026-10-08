@@ -65,7 +65,7 @@ module Sync
       {% if flag?(:detect_deadlocks) %}
         fiber = Fiber.current
 
-        if fiber.__sync_locked?(self)
+        if owns_lock?(fiber)
           message =
             if fiber == locked_by?
               "Can't acquire read lock while holding the write lock"
@@ -79,7 +79,7 @@ module Sync
       @mu.rlock
 
       {% if flag?(:detect_deadlocks) %}
-        fiber.__sync_locked(self)
+        acquired_lock(fiber)
       {% end %}
     end
 
@@ -92,7 +92,7 @@ module Sync
       @mu.runlock
 
       {% if flag?(:detect_deadlocks) %}
-        Fiber.current.__sync_unlocked(self)
+        released_lock(Fiber.current)
       {% end %}
     end
 
@@ -148,7 +148,7 @@ module Sync
 
       {% if flag?(:detect_deadlocks) %}
         fiber = Fiber.current
-        if fiber.__sync_locked?(self)
+        if owns_lock?(fiber)
           raise Error::Deadlock.new("Can't acquire write lock while holding the read lock", fiber, fiber, self, self)
         end
       {% end %}
@@ -211,7 +211,7 @@ module Sync
       @counter = counter if @type.reentrant?
 
       {% if flag?(:detect_deadlocks) %}
-        fiber.__sync_locked(self)
+        acquired_lock(fiber)
         detect_indirect_deadlock!(fiber) { unlock_write }
       {% end %}
     end
@@ -220,7 +220,7 @@ module Sync
       self.locked_by = nil
 
       {% if flag?(:detect_deadlocks) %}
-        Fiber.current.__sync_unlocked(self)
+        released_lock(Fiber.current)
       {% end %}
     end
 
