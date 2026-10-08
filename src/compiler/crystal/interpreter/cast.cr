@@ -273,7 +273,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
+  private def cast_tuple(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType, *, downcast = false)
     from_aligned_size = aligned_sizeof_type(from)
     to_element_offset = 0
 
@@ -290,8 +290,12 @@ class Crystal::Repl::Compiler
       # but then move forward (subtracting) to reach the element in `from`.
       copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
-      # Then upcast it to the target tuple element type
-      upcast node, from_element_type, to_element_type
+      # Then cast it to the target tuple element type
+      if downcast
+        downcast node, from_element_type, to_element_type
+      else
+        upcast node, from_element_type, to_element_type
+      end
 
       # the new value is stack-aligned; adjust as necessary to follow the
       # element's natural alignment inside the target type
@@ -314,7 +318,7 @@ class Crystal::Repl::Compiler
     end
   end
 
-  private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+  private def cast_named_tuple(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType, *, downcast = false)
     from_aligned_size = aligned_sizeof_type(from)
     to_element_offset = 0
 
@@ -341,8 +345,12 @@ class Crystal::Repl::Compiler
       # but then move forward (subtracting) to reach the element in `from`.
       copy_from(from_aligned_size - from_element_offset + to_element_offset, from_inner_size, node: nil)
 
-      # Then upcast it to the target tuple element type
-      upcast node, from_element_type, to_element_type
+      # Then cast it to the target tuple element type
+      if downcast
+        downcast node, from_element_type, to_element_type
+      else
+        upcast node, from_element_type, to_element_type
+      end
 
       # the new value is stack-aligned; adjust as necessary to follow the
       # element's natural alignment inside the target type
@@ -482,6 +490,20 @@ class Crystal::Repl::Compiler
 
   private def downcast_distinct(node : ASTNode, from : Type, to : NoReturnType)
     # Nothing
+  end
+
+  private def downcast_distinct(node : ASTNode, from : TupleInstanceType, to : TupleInstanceType)
+    cast_tuple(node, from, to, downcast: true)
+
+    # Pop the original tuple
+    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
+  end
+
+  private def downcast_distinct(node : ASTNode, from : NamedTupleInstanceType, to : NamedTupleInstanceType)
+    cast_named_tuple(node, from, to, downcast: true)
+
+    # Pop the original tuple
+    pop_from_offset aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil
   end
 
   private def downcast_distinct(node : ASTNode, from : Type, to : Type)

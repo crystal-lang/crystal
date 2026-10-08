@@ -44,6 +44,18 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "downcasts a tuple to one with narrower element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = {pick(true), 'b'}
+        a = {3, 'c'}
+        a[0]
+      CRYSTAL
+    end
+
     it "discards tuple access" do
       interpret(<<-CRYSTAL).should eq(1)
         foo = {1, 2}
