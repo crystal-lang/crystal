@@ -686,7 +686,19 @@ class Crystal::Repl::Compiler
   end
 
   private def accept_call_args(node : Call)
-    node.args.each { |arg| request_value(arg) }
+    target_def = node.target_def
+
+    node.args.each_with_index do |arg, i|
+      # Autocast a number literal, as in `Color.new(1)` for a `UInt128` enum
+      if arg.is_a?(NumberLiteral) &&
+         (target_def_arg = target_def.args[i]?) &&
+         (target_def_var_type = target_def.vars.try(&.[target_def_arg.name]?).try(&.type)) &&
+         target_def_var_type != arg.type
+        compile_call_arg(arg, arg.type, target_def_arg.type, target_def_var_type)
+      else
+        request_value(arg)
+      end
+    end
   end
 
   private def primitive_convert(node : ASTNode, body : Primitive, owner : Type, checked : Bool)
