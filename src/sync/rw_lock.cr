@@ -62,7 +62,7 @@ module Sync
     # relock read can result in a deadlock if another fiber is trying to lock
     # write!
     def lock_read : Nil
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         fiber = Fiber.current
 
         if owns_lock?(fiber)
@@ -78,7 +78,7 @@ module Sync
 
       @mu.rlock
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         acquired_lock(fiber)
       {% end %}
     end
@@ -91,7 +91,7 @@ module Sync
     def unlock_read : Nil
       @mu.runlock
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         released_lock(Fiber.current)
       {% end %}
     end
@@ -146,7 +146,7 @@ module Sync
         return
       end
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         fiber = Fiber.current
         if owns_lock?(fiber)
           raise Error::Deadlock.new("Can't acquire write lock while holding the read lock", fiber, fiber, self, self)
@@ -154,7 +154,7 @@ module Sync
       {% end %}
 
       @mu.lock_slow do
-        {% if flag?(:detect_deadlocks) %} detect_deadlock! {% end %}
+        {% unless flag?(:with_deadlocks) %} detect_deadlock! {% end %}
       end
 
       set_owner
@@ -210,7 +210,7 @@ module Sync
       self.locked_by = fiber
       @counter = counter if @type.reentrant?
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         acquired_lock(fiber)
         detect_indirect_deadlock!(fiber) { unlock_write }
       {% end %}
@@ -219,7 +219,7 @@ module Sync
     private def unset_owner : Nil
       self.locked_by = nil
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         released_lock(Fiber.current)
       {% end %}
     end

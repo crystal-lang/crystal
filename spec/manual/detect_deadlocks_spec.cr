@@ -3,8 +3,8 @@ require "sync/mutex"
 require "sync/rw_lock"
 require "wait_group"
 
-{% unless flag?(:detect_deadlocks) %}
-  {% nil.warning "WARNING: detecting deadlocks requires the -Ddetect_deadlock compilation flag" %}
+{% if flag?(:with_deadlocks) %}
+  {% nil.warning "WARNING: detecting deadlocks is incompatible with the -Dwithout_deadlocks compilation flag" %}
 {% end %}
 
 class Sync::Error::Deadlock

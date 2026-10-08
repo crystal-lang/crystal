@@ -416,7 +416,7 @@ class Fiber
     @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
   end
 
-  {% if flag?(:detect_deadlocks) %}
+  {% unless flag?(:with_deadlocks) %}
     # :nodoc:
     #
     # Locks that the current fiber currently holds.

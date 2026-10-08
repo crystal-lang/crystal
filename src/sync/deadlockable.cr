@@ -26,22 +26,22 @@ module Sync
     @locked_by = Atomic(Fiber?).new(nil)
 
     private def locked_by? : Fiber?
-      {% if flag?(:detect_deadlocks) %}
-        @locked_by.get(:relaxed)
-      {% else %}
+      {% if flag?(:with_deadlocks) %}
         @locked_by.lazy_get
+      {% else %}
+        @locked_by.get(:relaxed)
       {% end %}
     end
 
     private def locked_by=(fiber : Fiber?)
-      {% if flag?(:detect_deadlocks) %}
-        @locked_by.set(fiber, :relaxed)
-      {% else %}
+      {% if flag?(:with_deadlocks) %}
         @locked_by.lazy_set(fiber)
+      {% else %}
+        @locked_by.set(fiber, :relaxed)
       {% end %}
     end
 
-    {% if flag?(:detect_deadlocks) %}
+    {% unless flag?(:with_deadlocks) %}
       @mu : Sync::MU
       @tainted : Array({Fiber, Fiber, Deadlockable})?
 

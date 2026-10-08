@@ -55,7 +55,7 @@ module Sync
       end
 
       @mu.lock_slow do
-        {% if flag?(:detect_deadlocks) %} detect_deadlock! {% end %}
+        {% unless flag?(:with_deadlocks) %} detect_deadlock! {% end %}
       end
 
       set_owner
@@ -111,7 +111,7 @@ module Sync
       self.locked_by = fiber
       @counter = counter if @type.reentrant?
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         acquired_lock(fiber)
         detect_indirect_deadlock!(fiber) { unlock }
       {% end %}
@@ -120,7 +120,7 @@ module Sync
     private def unset_owner : Nil
       self.locked_by = nil
 
-      {% if flag?(:detect_deadlocks) %}
+      {% unless flag?(:with_deadlocks) %}
         released_lock(Fiber.current)
       {% end %}
     end

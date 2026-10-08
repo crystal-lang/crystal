@@ -8,7 +8,7 @@ describe Sync::RWLock do
     lock = Sync::RWLock.new
     lock.lock_read
 
-    {% unless flag?(:detect_deadlocks) %}
+    {% if flag?(:with_deadlocks) %}
       lock.lock_read # <= safe because no attempt to lock write (yet)
     {% end %}
 
@@ -20,7 +20,7 @@ describe Sync::RWLock do
     sleep(10.milliseconds)
     done.should be_false
 
-    {% unless flag?(:detect_deadlocks) %}
+    {% if flag?(:with_deadlocks) %}
       lock.unlock_read
       sleep(10.milliseconds)
       done.should be_false
