@@ -63,6 +63,48 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "calls a method on a variable that holds a named tuple with wider element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        struct NamedTuple
+          def foo
+            self[:x]
+          end
+        end
+
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = {x: pick(true)}
+        a = {x: 3}
+        a.foo
+      CRYSTAL
+    end
+
+    it "calls a method on a union variable that holds a named tuple with wider element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        struct NamedTuple
+          def foo
+            self[:x]
+          end
+        end
+
+        struct Nil
+          def foo
+            0
+          end
+        end
+
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = 1 > 0 ? {x: pick(true)} : nil
+        a = 1 > 0 ? {x: 3} : nil
+        a.foo
+      CRYSTAL
+    end
+
     it "discards named tuple (#12383)" do
       interpret(<<-CRYSTAL).should eq(3)
         1 + ({a: 1, b: 2, c: 3, d: 4}; 2)
