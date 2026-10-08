@@ -35,6 +35,18 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "downcasts a union to a named tuple with narrower element types than its member" do
+      interpret(<<-CRYSTAL).should eq(3)
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = 1 > 0 ? {x: 'b', y: pick(true)} : 5
+        a = {x: 'c', y: 3}
+        a[:y]
+      CRYSTAL
+    end
+
     it "discards named tuple (#12383)" do
       interpret(<<-CRYSTAL).should eq(3)
         1 + ({a: 1, b: 2, c: 3, d: 4}; 2)

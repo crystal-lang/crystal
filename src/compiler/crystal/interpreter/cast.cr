@@ -422,6 +422,17 @@ class Crystal::Repl::Compiler
   end
 
   private def downcast_distinct(node : ASTNode, from : MixedUnionType, to : PrimitiveType | EnumType | NonGenericClassType | GenericClassInstanceType | GenericClassInstanceMetaclassType | NilableType | NilableProcType | NilableReferenceUnionType | ReferenceUnionType | MetaclassType | VirtualType | VirtualMetaclassType)
+    # The upcast to a union stores a tuple as the member it is compatible with,
+    # so take it out as that member and cast it to `to`.
+    case to
+    when TupleInstanceType, NamedTupleInstanceType
+      unless from.union_types.any? &.==(to)
+        compatible_type = from.union_types.find! { |ut| to.implements?(ut) }
+        remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(compatible_type), node: nil)
+        return downcast(node, compatible_type, to)
+      end
+    end
+
     remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(to), node: nil)
   end
 
