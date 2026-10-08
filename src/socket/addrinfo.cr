@@ -40,6 +40,8 @@ class Socket
     #   `IO::TimeoutError` is raised. Currently this is only supported on
     #   Windows.
     #
+    # Raises `Socket::Error` if *service* is a port number that is out of range.
+    #
     # Example:
     # ```
     # require "socket"
@@ -148,6 +150,12 @@ class Socket
     end
 
     private def self.getaddrinfo(domain, service, family, type, protocol, timeout, &)
+      # *service* may also be a service name, which is resolved by
+      # `getaddrinfo`. Only a port number can be validated up front.
+      if service.is_a?(Int) && !IPAddress.valid_port?(service)
+        raise Socket::Error.new("Invalid port number: #{service}")
+      end
+
       # RFC 3986 says:
       # > When a non-ASCII registered name represents an internationalized domain name
       # > intended for resolution via the DNS, the name must be transformed to the IDNA

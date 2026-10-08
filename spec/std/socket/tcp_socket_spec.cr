@@ -41,16 +41,9 @@ describe TCPSocket, tags: "network" do
       {% end %}
 
       it "raises when port is negative" do
-        error = expect_raises(Socket::Addrinfo::Error) do
+        expect_raises(Socket::Error, "Invalid port number: -12") do
           TCPSocket.new(address, -12)
         end
-        error.os_error.should eq({% if flag?(:win32) %}
-          WinError::WSATYPE_NOT_FOUND
-        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
-          Errno.new(LibC::EAI_SERVICE)
-        {% else %}
-          Errno.new(LibC::EAI_NONAME)
-        {% end %})
       end
 
       {% if flag?(:dragonfly) %}
