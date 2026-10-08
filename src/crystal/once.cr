@@ -128,12 +128,17 @@ module Crystal
       @@operations.push pointerof(operation)
       @@spin.unlock
 
-      yield
+      begin
+        yield
+      rescue ex
+      end
 
       @@spin.lock
-      flag.value = true
+      flag.value = true unless ex
       @@operations.delete pointerof(operation)
       @@spin.unlock
+
+      raise ex if ex
 
       operation.resume_all
     end
