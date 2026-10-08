@@ -92,6 +92,26 @@ class Crystal::Repl::Compiler
     end
   end
 
+  # Whether a value of type `from` holds a tuple that must be cast to be read
+  # as `to`, because `to` narrows its element types.
+  private def needs_tuple_value_cast?(from : Type, to : Type) : Bool
+    case from
+    when TupleInstanceType, NamedTupleInstanceType
+      from != to
+    when MixedUnionType
+      case to
+      when MixedUnionType
+        from.union_types.any? { |union_type| needs_value_cast_inside_union?(union_type, to) }
+      when TupleInstanceType, NamedTupleInstanceType
+        !from.union_types.includes?(to)
+      else
+        false
+      end
+    else
+      false
+    end
+  end
+
   private def needs_value_cast_inside_union?(value_type, union_type)
     # A type needs a special cast if:
     # 1. It's a tuple or named tuple
@@ -406,18 +426,47 @@ class Crystal::Repl::Compiler
     # It might happen that some types inside the union `from_type` are not inside `to_type`,
     # for example with named tuple of same keys with different order. In that case we need cast
     # those value to the correct type before finally storing them in the target union.
-    needs_union_value_cast = from.union_types.any? do |from_element|
-      needs_value_cast_inside_union?(from_element, to)
+    types_needing_cast = from.union_types.select do |union_type|
+      needs_value_cast_inside_union?(union_type, to)
     end
 
-    if needs_union_value_cast # Compute the values that need a cast
-      node.raise "BUG: missing mixed union downcast from #{from} to #{to}"
+    end_jumps = [] of Int32
+
+    types_needing_cast.each do |type_needing_cast|
+      compatible_type = to.union_types.find! do |union_type|
+        type_needing_cast.implements?(union_type) || union_type.implements?(type_needing_cast)
+      end
+
+      # Check if the union's type id is the one of `type_needing_cast`
+      get_union_type_id(aligned_sizeof_type(from), node: node)
+      put_i32 type_id(type_needing_cast), node: node
+      cmp_i32 node: node
+      cmp_eq node: node
+      branch_unless 0, node: nil
+      cond_jump_location = patch_location
+
+      # Take the value out, cast it to the compatible type and put it in `to`
+      remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(type_needing_cast), node: nil)
+      if type_needing_cast.implements?(compatible_type)
+        upcast(node, type_needing_cast, compatible_type)
+      else
+        downcast(node, type_needing_cast, compatible_type)
+      end
+      put_in_union(type_id(compatible_type), aligned_sizeof_type(compatible_type), aligned_sizeof_type(to), node: nil)
+      jump 0, node: nil
+      end_jumps << patch_location
+
+      patch_jump(cond_jump_location)
     end
 
     difference = aligned_sizeof_type(from) - aligned_sizeof_type(to)
 
     if difference > 0
       pop(difference, node: nil)
+    end
+
+    end_jumps.each do |end_jump|
+      patch_jump(end_jump)
     end
   end
 
