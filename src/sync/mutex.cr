@@ -101,28 +101,8 @@ module Sync
       end
     end
 
-    protected def owns_lock? : Bool
-      locked_by? == Fiber.current
-    end
-
     private def set_owner(counter = 1) : Nil
-      fiber = Fiber.current
-
-      self.locked_by = fiber
-      @counter = counter if @type.reentrant?
-
-      {% unless flag?(:with_deadlocks) %}
-        acquired_lock(fiber)
-        detect_indirect_deadlock!(fiber) { unlock }
-      {% end %}
-    end
-
-    private def unset_owner : Nil
-      self.locked_by = nil
-
-      {% unless flag?(:with_deadlocks) %}
-        released_lock(Fiber.current)
-      {% end %}
+      set_owner(counter) { unlock }
     end
 
     # :nodoc:

@@ -114,10 +114,7 @@ module Sync
     # when acquired, otherwise returns false immediately.
     def try_lock_write? : Bool
       if @mu.try_lock?
-        unless @type.unchecked?
-          self.locked_by = Fiber.current
-          @counter = 1 if @type.reentrant?
-        end
+        set_owner unless @type.unchecked?
         true
       elsif @type.reentrant? && owns_lock?
         @counter += 1
@@ -200,28 +197,8 @@ module Sync
       end
     end
 
-    protected def owns_lock? : Bool
-      locked_by? == Fiber.current
-    end
-
     private def set_owner(counter = 1) : Nil
-      fiber = Fiber.current
-
-      self.locked_by = fiber
-      @counter = counter if @type.reentrant?
-
-      {% unless flag?(:with_deadlocks) %}
-        acquired_lock(fiber)
-        detect_indirect_deadlock!(fiber) { unlock_write }
-      {% end %}
-    end
-
-    private def unset_owner : Nil
-      self.locked_by = nil
-
-      {% unless flag?(:with_deadlocks) %}
-        released_lock(Fiber.current)
-      {% end %}
+      set_owner(counter) { unlock_write }
     end
 
     # :nodoc:
