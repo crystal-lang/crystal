@@ -100,13 +100,15 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
     # register both read and write events
-    kevents = uninitialized LibC::Kevent[2]
+    changes = uninitialized LibC::Kevent[2]
+    receipts = uninitialized LibC::Kevent[2]
+
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
-      kevent = kevents.to_unsafe + i
+      kevent = changes.to_unsafe + i
       udata =
         {% if flag?(:bits64) %}
           Pointer(Void).new(index.to_u64)
@@ -114,12 +116,20 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
           # assuming 32-bit target: pass the generation as udata (ident is the fd/index)
           Pointer(Void).new(index.generation)
         {% end %}
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: udata)
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR | LibC::EV_RECEIPT, udata: udata)
     end
 
-    @kqueue.kevent(kevents.to_slice) do
+    @kqueue.kevent(changes.to_slice, receipts.to_slice) do
       raise RuntimeError.from_errno("kevent")
     end
+
+    # check if kevent succeeded or failed to register an event
+    r0 = receipts.to_unsafe
+    r1 = receipts.to_unsafe + 1
+    registered = RegisteredEvents::NONE
+    registered |= RegisteredEvents::READ if r0.value.data == 0
+    registered |= RegisteredEvents::WRITE if r1.value.data == 0
+    registered
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil
@@ -134,14 +144,16 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     Crystal.trace :evloop, "kevent", op: "del", fd: fd
 
     # unregister both read and write events
-    kevents = uninitialized LibC::Kevent[2]
+    changes = uninitialized LibC::Kevent[2]
+    receipts = uninitialized LibC::Kevent[2]
+
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
-      kevent = kevents.to_unsafe + i
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE)
+      kevent = changes.to_unsafe + i
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE | LibC::EV_RECEIPT)
     end
 
-    @kqueue.kevent(kevents.to_slice) do
-      raise RuntimeError.from_errno("kevent")
+    @kqueue.kevent(changes.to_slice, receipts.to_slice) do
+      raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
     end
   end
 
