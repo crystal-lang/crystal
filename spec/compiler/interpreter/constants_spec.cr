@@ -9,6 +9,35 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "interprets a complex constant assigned in a finished hook" do
+      interpret(<<-CRYSTAL).should eq(3)
+        macro finished
+          A = 1 + 2
+        end
+
+        def a
+          A
+        end
+
+        a
+      CRYSTAL
+    end
+
+    it "doesn't leave a complex constant's value on the stack in a finished hook" do
+      interpret(<<-CRYSTAL).should eq(1)
+        macro finished
+          A = 1 + 2
+        end
+
+        def a
+          A
+        end
+
+        a if 1 > 2
+        1
+      CRYSTAL
+    end
+
     it "interprets constant literal" do
       interpret(<<-CRYSTAL).should eq(123)
         A = 123
