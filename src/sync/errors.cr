@@ -38,13 +38,7 @@ module Sync
     end
 
     private def self.to_name(lock, i = nil)
-      type =
-        case lock
-        when Mutex  then "mutex"
-        when RWLock then "rwlock"
-        else             "lock"
-        end
-      "#{type}#{i} (0x#{lock.object_id.to_s(16)})"
+      "#{lock.class.name.downcase}#{i} (0x#{lock.object_id.to_s(16)})"
     end
   end
 end
