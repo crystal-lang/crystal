@@ -100,6 +100,7 @@ module Crystal
                 initialize_owner = initialize.owner
 
                 new_method = initialize.expand_new_from_initialize(type)
+                new_method.qualify_restriction_paths(initialize_owner)
                 type.metaclass.as(ModuleType).add_def(new_method)
               end
 
@@ -107,7 +108,9 @@ module Crystal
               new_methods.each do |new_method|
                 next if new_method.new?
 
-                type.metaclass.as(ModuleType).add_def(new_method.clone)
+                copied_method = new_method.clone
+                copied_method.qualify_restriction_paths(new_method.owner.instance_type)
+                type.metaclass.as(ModuleType).add_def(copied_method)
               end
             end
           else
@@ -121,6 +124,19 @@ module Crystal
   end
 
   class Def
+    # A def copied to a subclass is looked up from the subclass, which can
+    # live in another namespace than *scope*, the type that declared the def.
+    # This makes the paths in its restrictions that resolve to a type in
+    # *scope* absolute. Type parameters and free variables are left alone,
+    # as they resolve in the subclass.
+    def qualify_restriction_paths(scope : Type)
+      visitor = QualifyRestrictionPaths.new(scope, free_vars)
+      args.each &.restriction.try &.accept(visitor)
+      double_splat.try &.restriction.try &.accept(visitor)
+      block_arg.try &.restriction.try &.accept(visitor)
+      return_type.try &.accept(visitor)
+    end
+
     def expand_new_from_initialize(instance_type)
       new_def = expand_new_signature_from_initialize(instance_type)
       new_def.fill_body_from_initialize(instance_type)
@@ -341,6 +357,40 @@ module Crystal
       end
 
       expansion
+    end
+  end
+
+  class QualifyRestrictionPaths < Visitor
+    def initialize(@scope : Type, @free_vars : Array(String)?)
+    end
+
+    def visit(node : Path)
+      return false if node.global?
+
+      if name = node.single_name?
+        return false if @free_vars.try(&.includes?(name)) || @scope.type_var?(name)
+      end
+
+      type = @scope.lookup_path(node)
+      if type.is_a?(NamedType) && !type.is_a?(TypeParameter) && (names = absolute_names(type))
+        node.names = names
+        node.global = true
+      end
+
+      false
+    end
+
+    def visit(node : ASTNode)
+      true
+    end
+
+    private def absolute_names(type)
+      names = [] of String
+      while type.is_a?(NamedType) && !type.is_a?(Program)
+        names.unshift type.name
+        type = type.namespace
+      end
+      names if type.is_a?(Program)
     end
   end
 end
