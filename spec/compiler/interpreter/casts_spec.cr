@@ -350,6 +350,17 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "does as? to the type the value already has" do
+      interpret(<<-CRYSTAL).should eq(2)
+        x = 1
+        if y = x.as?(Int32)
+          y + 1
+        else
+          0
+        end
+        CRYSTAL
+    end
+
     it "does as? with no resulting type (#12327)" do
       interpret(<<-CRYSTAL).should eq(42)
         if nil.as?(Int32)
