@@ -2401,20 +2401,21 @@ module Crystal
     end
 
     def self.constants(type)
-      if type.types.empty?
+      types = constants_of(type)
+      if types.nil? || types.empty?
         empty_no_return_array
       else
-        names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
+        names = types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
         ArrayLiteral.new names
       end
     end
 
     def self.has_constant?(type, name)
-      BoolLiteral.new(type.types.has_key?(name))
+      BoolLiteral.new(!!constants_of(type).try(&.has_key?(name)))
     end
 
     def self.constant(type, name)
-      type = type.types[name]?
+      type = constants_of(type).try(&.[name]?)
       case type
       when Const
         type.value
@@ -2423,6 +2424,16 @@ module Crystal
       else
         NilLiteral.new
       end
+    end
+
+    # The constants a `TypeNode` reports, which are those of the type that
+    # declares them: a virtual type answers for its base type and a generic
+    # instance for its generic type, which is also where path lookup finds
+    # them. A type with none of its own, such as a union, has no table.
+    private def self.constants_of(type)
+      type = type.devirtualize
+      type = type.generic_type if type.is_a?(GenericInstanceType)
+      type.types?
     end
 
     def self.methods(type)
