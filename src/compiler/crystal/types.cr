@@ -2417,7 +2417,10 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "Proc("
+      io << "Proc"
+      return unless generic_args
+
+      io << '('
       arg_types.each do |type|
         type = type.devirtualize unless codegen
         type.to_s_with_options(io, codegen: codegen)
@@ -2539,7 +2542,10 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "Tuple("
+      io << "Tuple"
+      return unless generic_args
+
+      io << '('
       @tuple_types.join(io, ", ") do |tuple_type|
         tuple_type = tuple_type.devirtualize unless codegen
         tuple_type.to_s_with_options(io, skip_union_parens: true, codegen: codegen)
@@ -2661,7 +2667,10 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      io << "NamedTuple("
+      io << "NamedTuple"
+      return unless generic_args
+
+      io << '('
       @entries.join(io, ", ") do |entry|
         Symbol.quote_for_named_argument(io, entry.name)
         io << ": "
@@ -2971,6 +2980,14 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
+      # `@name` includes the generic arguments of a generic instance type, and
+      # `Class` has a name of its own
+      unless generic_args || same?(program.class_type)
+        instance_type.to_s_with_options(io, generic_args: false, codegen: codegen)
+        io << (instance_type.module? ? ":Module" : ".class")
+        return
+      end
+
       if codegen
         if (namespace = instance_type.namespace).is_a?(FileModule)
           namespace.to_s_with_options(io, generic_args: false, codegen: codegen)
@@ -3050,7 +3067,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s_with_options(io, codegen: codegen)
+      instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
       io << ".class"
     end
 
@@ -3104,7 +3121,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen : Bool = false) : Nil
-      instance_type.to_s_with_options(io, codegen: codegen)
+      instance_type.to_s_with_options(io, generic_args: generic_args, codegen: codegen)
       io << ".class"
     end
 
