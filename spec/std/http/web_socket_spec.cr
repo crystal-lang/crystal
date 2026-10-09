@@ -40,10 +40,10 @@ end
 
 private def protocol_pair(&)
   IO::Stapled.pipe do |io1, io2|
-    pr1 = HTTP::WebSocket::Protocol.new(io1)
-    pr2 = HTTP::WebSocket::Protocol.new(io2)
+    client = HTTP::WebSocket::Protocol.new(io1, masked: true)
+    server = HTTP::WebSocket::Protocol.new(io2)
 
-    yield pr1, pr2
+    yield client, server
   end
 end
 
