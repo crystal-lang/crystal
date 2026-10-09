@@ -12,6 +12,13 @@ class Crystal::CodeGenVisitor
     end
 
     if target_defs.size > 1
+      # Check if this is multi-dispatch on block return type:
+      # all target_defs should have a narrowed_block_return_type set.
+      if target_defs.all?(&.narrowed_block_return_type) && node.block
+        codegen_call_with_block_result_dispatch node, target_defs
+        return false
+      end
+
       codegen_dispatch node, target_defs
       return false
     end
@@ -327,6 +334,68 @@ class Crystal::CodeGenVisitor
     func = target_def_fun(target_def, self_type)
 
     codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises?, target_def.type)
+  end
+
+  # Multi-dispatch on block return type. The block returns a union; each
+  # target_def handles a subset of the union members. We evaluate the block
+  # once at the call site, then dispatch based on the actual result type.
+  # Each typed_def's body sees yield as returning the narrowed cached value.
+  def codegen_call_with_block_result_dispatch(node, target_defs)
+    block = node.block.not_nil!
+    old_needs_value = @needs_value
+
+    # Allocate block vars (e.g. temp vars from cleanup_transformer's expansion
+    # of operators like `||` and `&&`) before evaluating the block body.
+    # Without this, codegen for the expanded body would fail to find the temp vars.
+    undef_vars block.vars, block
+    alloca_non_closured_vars block.vars, block
+
+    # Evaluate the block body once and capture the result.
+    @needs_value = true
+    request_value(block.body)
+    block_result = @last
+    block_result_type = block.body.type
+
+    result_type_id = type_id(block_result, block_result_type)
+
+    # Set up a phi to collect the result of whichever branch runs.
+    Phi.open(self, node, old_needs_value) do |phi|
+      target_defs.each do |a_def|
+        narrowed_type = a_def.narrowed_block_return_type.not_nil!
+
+        # Check if the runtime block result type matches this typed_def's narrowed type.
+        match_result = match_type_id(block_result_type, narrowed_type, result_type_id)
+
+        current_def_label, next_def_label = new_blocks "current_def", "next_def"
+        cond match_result, current_def_label, next_def_label
+
+        position_at_end current_def_label
+
+        # Build a sub-call targeting only this typed_def.
+        # Pass the block so codegen sets up block_context for yield.
+        # cached_block_result tells visit(Yield) to use the cached value
+        # instead of re-evaluating the block body.
+        sub_call = Call.new(node.obj, node.name, node.args, block).at(node)
+        sub_call.scope = node.scope
+        sub_call.with_scope = node.with_scope
+        sub_call.uses_with_scope = node.uses_with_scope?
+        sub_call.target_defs = [a_def] of Def
+        sub_call.set_type(a_def.type)
+
+        # Wrap the call's codegen in a context with cached_block_result set.
+        # Tying it to the specific block scopes it to OUR yield only.
+        with_cloned_context do
+          context.cached_block_result = {block, block_result, block_result_type}
+          accept sub_call
+        end
+
+        phi.add @last, a_def.type
+        position_at_end next_def_label
+      end
+      unreachable
+    end
+
+    @needs_value = old_needs_value
   end
 
   def codegen_dispatch(node, target_defs)

@@ -120,6 +120,12 @@ module Crystal
     # Context information associated with this match
     getter context : MatchContext
 
+    # When this match handles a narrowed subset of the block's return type union
+    # (multi-dispatch on block return), this is the narrowed return type.
+    # nil means no narrowing (block return matches the restriction exactly, or
+    # there's no block restriction to narrow against).
+    property narrowed_block_return_type : Type?
+
     def initialize(@def, @arg_types, @context, @named_arg_types = nil)
     end
 
