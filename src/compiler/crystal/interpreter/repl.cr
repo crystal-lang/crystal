@@ -62,7 +62,7 @@ class Crystal::Repl
     prelude_node = parse_prelude
     other_node = parse_file(filename)
     file_node = FileNode.new(other_node, filename)
-    exps = Expressions.new([prelude_node, file_node] of ASTNode)
+    exps = Expressions.new([*init_runtime_node, prelude_node, file_node] of ASTNode)
 
     interpret_and_exit_on_error(exps)
 
@@ -70,20 +70,31 @@ class Crystal::Repl
     interpret_exit
   end
 
+  # Not an entrypoint (no __crystal_main in interpreter) but stdlib may need to
+  # initialize the runtime before anything else.
+  #
+  # Defines an empty function in case the selected prelude doesn't define one.
+  private def init_runtime_node
+    [
+      FunDef.new("__crystal_init_runtime", body: Expressions.new, return_type: Path.global("Nil")),
+      Call.new("__crystal_init_runtime", global: true),
+    ] of ASTNode
+  end
+
   def run_code(code, argv = [] of String)
     @interpreter.argv = argv
 
     prelude_node = parse_prelude
     other_node = parse_code(code)
-    exps = Expressions.new([prelude_node, other_node] of ASTNode)
+    exps = Expressions.new([*init_runtime_node, prelude_node, other_node] of ASTNode)
 
     interpret(exps)
   end
 
   def load_prelude
-    node = parse_prelude
+    prelude_node = parse_prelude
 
-    interpret_and_exit_on_error(node)
+    interpret_and_exit_on_error(Expressions.new([*init_runtime_node, prelude_node]))
   end
 
   private def interpret(node : ASTNode)
