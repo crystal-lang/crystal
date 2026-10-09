@@ -119,10 +119,16 @@ module Fiber::ExecutionContext
   end
 
   # :nodoc:
+  def self.wake_monitor : Nil
+    monitor = @@monitor.not_nil!("expected execution context monitor to have been setup")
+    monitor.wake
+  end
+
+  # :nodoc:
   def self.init_default_context : Nil
     @@thread_pool = ThreadPool.new
-    @@default = Parallel.default(1)
     @@monitor = Monitor.new
+    @@default = Parallel.default(1)
   end
 
   # Returns the default maximum parallelism. Can be used to resize the default
