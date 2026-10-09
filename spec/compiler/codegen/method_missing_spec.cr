@@ -431,4 +431,36 @@ describe "Code gen: method_missing" do
       end
       CRYSTAL
   end
+
+  it "finds method_missing in a module with 'with ... yield' (#17393)" do
+    run(<<-CRYSTAL).to_i.should eq(10)
+      module Moo
+        macro method_missing(call)
+          @{{call.name.id}}
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def initialize(@x : Int32)
+        end
+      end
+
+      class Bar
+        include Moo
+
+        def initialize(@x : Int32)
+        end
+      end
+
+      def bar(x : Moo, &)
+        with x yield
+      end
+
+      bar(Foo.new(10).as(Moo)) do
+        x
+      end
+      CRYSTAL
+  end
 end
