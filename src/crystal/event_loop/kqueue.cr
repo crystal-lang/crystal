@@ -100,6 +100,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
   end
 
+  @[NoInline]
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
@@ -124,11 +125,9 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     # check if kevent succeeded or failed to register an event
-    r0 = receipts.to_unsafe
-    r1 = receipts.to_unsafe + 1
     registered = RegisteredEvents::None
-    registered |= RegisteredEvents::READ if r0.value.data == 0
-    registered |= RegisteredEvents::WRITE if r1.value.data == 0
+    registered |= RegisteredEvents::READ if receipts[0].data == 0
+    registered |= RegisteredEvents::WRITE if receipts[1].data == 0
     registered
   end
 
