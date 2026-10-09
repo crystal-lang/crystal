@@ -11,6 +11,12 @@ class Crystal::Call
   property expanded_macro : Macro?
   property? uses_with_scope = false
 
+  # The with scope acts as the receiver of a call that uses it, so dispatch
+  # has to be decided on its type rather than on the enclosing scope.
+  def with_scope_for_dispatch : Type?
+    with_scope if uses_with_scope?
+  end
+
   class RetryLookupWithLiterals < ::Exception
     def initialize
       self.callstack = Exception::CallStack.empty
