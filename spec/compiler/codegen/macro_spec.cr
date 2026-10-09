@@ -1923,4 +1923,25 @@ describe "Code gen: macro" do
     run("{{ flag?(:foo) ? 1 : 0 }}", flags: %w(foo)).to_i.should eq(1)
     run("{{ flag?(:foo) ? 1 : 0 }}", Int32, flags: %w(foo)).should eq(1)
   end
+
+  it "correctly reports the call site line inside nested macros (#17399)" do
+    run(<<-CRYSTAL, filename: "foo.cr", inject_primitives: false).to_i.should eq(15)
+      macro phase(subject)
+        {{ subject.line_number }}
+      end
+
+      macro task
+        phase({{ "x" }})
+      end
+
+      macro build(&block)
+        task
+        {{ block.body }}
+      end
+
+      build do
+        task
+      end
+      CRYSTAL
+  end
 end
