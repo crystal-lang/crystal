@@ -435,6 +435,13 @@ class Crystal::CodeGenVisitor
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
 
+    # Inlined calls and primitives don't go through `codegen_call_or_invoke`,
+    # so their instructions need the call's debug location set here,
+    # otherwise they are attributed to whatever line was last emitted
+    if @debug.line_numbers? && (location = node.location)
+      set_current_debug_location location
+    end
+
     # Try to inline the call
     if try_inline_call(target_def, body, self_type, call_args)
       return
