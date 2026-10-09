@@ -413,7 +413,7 @@ module Spec
         exception_as_string = ex.to_s
         case message
         when Regex
-          unless exception_as_string =~ message
+          unless exception_as_string.matches?(message)
             expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
             fail expectation_failed_message, file, line
           end
