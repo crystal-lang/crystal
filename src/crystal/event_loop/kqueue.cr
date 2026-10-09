@@ -126,7 +126,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     # check if kevent succeeded or failed to register an event
     r0 = receipts.to_unsafe
     r1 = receipts.to_unsafe + 1
-    registered = RegisteredEvents::NONE
+    registered = RegisteredEvents::None
     registered |= RegisteredEvents::READ if r0.value.data == 0
     registered |= RegisteredEvents::WRITE if r1.value.data == 0
     registered

@@ -680,7 +680,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   @[Flags]
   enum RegisteredEvents
-    NONE
     READ
     WRITE
   end
