@@ -558,4 +558,51 @@ describe "Code gen: generic class type" do
       Bar.new.t_incr
       CRYSTAL
   end
+
+  it "dispatches with an overload restricted to a generic class without instances (#12472)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class Gen(T) < Base
+      end
+
+      def call(x : Base)
+        1
+      end
+
+      def call(x : Gen)
+        2
+      end
+
+      base = Base.new || Child.new
+      call(base)
+      CRYSTAL
+  end
+
+  it "passes a value narrowed to a generic class without instances" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class Gen(T) < Base
+      end
+
+      def gen(x : Gen)
+        2
+      end
+
+      def foo(x : Base)
+        x.is_a?(Gen) ? gen(x) : 1
+      end
+
+      foo(Base.new || Child.new)
+      CRYSTAL
+  end
 end
