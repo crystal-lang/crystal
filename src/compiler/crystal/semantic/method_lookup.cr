@@ -506,7 +506,7 @@ module Crystal
         # If the subtype is non-abstract but doesn't cover all,
         # we need to check if a parent covers it
         if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
-          unless covered_by_superclass?(subtype, type_to_matches)
+          unless covered_by_superclass?(subtype, type_to_matches, signature, analyze_all)
             return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
           end
         end
@@ -532,11 +532,17 @@ module Crystal
       Matches.new(matches, !!(matches && matches.size > 0), self)
     end
 
-    def covered_by_superclass?(subtype, type_to_matches)
+    def covered_by_superclass?(subtype, type_to_matches, signature, analyze_all)
       superclass = subtype.superclass
       while superclass && superclass != base_type
+        # A subclass of a generic instance is also a subclass of its generic
+        # type, so it can be visited before its superclass has been recorded
         superclass_matches = type_to_matches.try &.[superclass]?
-        if superclass_matches && superclass_matches.cover_all?
+        superclass_matches ||= begin
+          superclass_virtual_lookup = virtual_lookup(superclass.virtual_type)
+          virtual_lookup(superclass).lookup_matches_with_modules(signature, superclass_virtual_lookup, superclass_virtual_lookup, analyze_all: analyze_all)
+        end
+        if superclass_matches.cover_all?
           return true
         end
         superclass = superclass.superclass
