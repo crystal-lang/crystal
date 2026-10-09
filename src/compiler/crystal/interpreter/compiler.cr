@@ -222,6 +222,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       node,
       closure_owner: closure_owner,
       parent_closure_context: parent_closure_context,
+      self_type: compiled_def.owner,
     )
 
     # If any def argument is closured, we need to store it in the closure
@@ -851,10 +852,12 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     lookup_closured_var?(name, parent_context, indexes)
   end
 
-  private def prepare_closure_context(vars_owner, closure_owner = vars_owner, parent_closure_context = nil)
+  private def prepare_closure_context(vars_owner, closure_owner = vars_owner, parent_closure_context = nil, self_type = nil)
     closure_self_type = nil
     if closure_owner.is_a?(Def) && closure_owner.self_closured?
-      closure_self_type = closure_owner.owner
+      # A module method called with `super` has the module as its owner, so
+      # take `self`'s type from the compiled def
+      closure_self_type = self_type || closure_owner.owner
     end
 
     closured_vars, closured_vars_bytesize = compute_closured_vars(vars_owner.vars, closure_owner)
