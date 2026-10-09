@@ -1096,7 +1096,7 @@ module Crystal
           if args.empty?
             wrong_number_of_arguments "macro 'HashLiteral#select'", args.size, "1+"
           end
-          filtered = entries.select { |entry| args.any? &.==(entry.key) }
+          filtered = entries.select { |entry| args.includes?(entry.key) }
           HashLiteral.new(filtered)
         end
       when "reject"
@@ -1120,7 +1120,7 @@ module Crystal
           if args.empty?
             wrong_number_of_arguments "macro 'HashLiteral#reject'", args.size, "1+"
           end
-          filtered = entries.reject { |entry| args.any? &.==(entry.key) }
+          filtered = entries.reject { |entry| args.includes?(entry.key) }
           HashLiteral.new(filtered)
         end
       else
