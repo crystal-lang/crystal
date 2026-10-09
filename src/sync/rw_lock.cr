@@ -50,7 +50,22 @@ module Sync
     # Tries to acquire the shared (read) lock without blocking. Returns true
     # when acquired, otherwise returns false immediately.
     def try_lock_read? : Bool
-      @mu.try_rlock?
+      success = @mu.try_rlock?
+
+      {% unless flag?(:with_deadlocks) %}
+        if success && !@type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            # don't relock read (it can deadlock)
+            @mu.runlock
+            return false
+          else
+            acquired_lock(fiber)
+          end
+        end
+      {% end %}
+
+      success
     end
 
     # Acquires the shared (read) lock.
@@ -63,23 +78,24 @@ module Sync
     # write!
     def lock_read : Nil
       {% unless flag?(:with_deadlocks) %}
-        fiber = Fiber.current
-
-        if owns_lock?(fiber)
-          message =
-            if fiber == locked_by?
-              "Can't acquire read lock while holding the write lock"
-            else
-              "Can't acquire read lock recursively"
-            end
-          raise Error::Deadlock.new(message, fiber, fiber, self, self)
+        unless @type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            message =
+              if fiber == locked_by?
+                "Can't acquire read lock while holding the write lock"
+              else
+                "Can't acquire read lock recursively"
+              end
+            raise Error::Deadlock.new(message, fiber, fiber, self, self)
+          end
         end
       {% end %}
 
       @mu.rlock
 
       {% unless flag?(:with_deadlocks) %}
-        acquired_lock(fiber)
+        acquired_lock(Fiber.current) unless @type.unchecked?
       {% end %}
     end
 

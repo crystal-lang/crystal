@@ -110,6 +110,22 @@ describe Sync::Deadlockable do
         end
       end
     end
+
+    it "try_lock_read? -> lock_read" do
+      expect_raises(Sync::Error::Deadlock, "Can't acquire read lock recursively") do
+        Sync.timeout do
+          rwlock = Sync::RWLock.new
+          rwlock.try_lock_read?.should be_true
+          rwlock.read { fail "expected nested lock_read to raise" }
+          rwlock.unlock_read
+        end
+      end
+    end
+
+    it "lock_read -> try_lock_read?" do
+      rwlock = Sync::RWLock.new
+      rwlock.read { rwlock.try_lock_read?.should be_false }
+    end
   end
 
   describe "scenarios" do
