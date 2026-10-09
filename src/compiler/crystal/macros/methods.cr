@@ -2282,6 +2282,14 @@ module Crystal
               TypeNode.new(tuple_type)
             end
           end
+        elsif type.is_a?(NamedTupleInstanceType)
+          if type.entries.empty?
+            empty_no_return_array
+          else
+            ArrayLiteral.map(type.entries) do |entry|
+              TypeNode.new(entry.type)
+            end
+          end
         else
           if type.type_vars.empty?
             empty_no_return_array
