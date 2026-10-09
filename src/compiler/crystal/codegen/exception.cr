@@ -179,7 +179,7 @@ class Crystal::CodeGenVisitor
             a_rescue_types.each do |type|
               rescue_type = type.type.instance_type.virtual_type
               rescue_type_cond = match_any_type_id(rescue_type, exception_type_id)
-              cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
+              cond = or(cond, rescue_type_cond)
             end
             cond cond.not_nil!, this_rescue_block, next_rescue_block
           else
