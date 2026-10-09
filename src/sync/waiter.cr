@@ -10,7 +10,14 @@ module Sync
 
     include Crystal::PointerLinkedList::Node
 
-    property cv_mu : Pointer(MU)
+    @cv_mu : MU*
+
+    def cv_mu : MU*
+      @cv_mu
+    end
+
+    def cv_mu=(@cv_mu : MU*)
+    end
 
     def initialize(@type : Type, @cv_mu : Pointer(MU) = Pointer(MU).null)
       # protects against spurious wakeups (invalid manual fiber enqueues) that
