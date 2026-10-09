@@ -108,7 +108,7 @@ module Sync
       @mu.runlock
 
       {% unless flag?(:with_deadlocks) %}
-        released_lock(Fiber.current)
+        released_lock(Fiber.current) unless @type.unchecked?
       {% end %}
     end
 
