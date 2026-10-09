@@ -25,7 +25,7 @@ module Sync
     # owner of the lock.
     @locked_by = Atomic(Fiber?).new(nil)
 
-    protected def owns_lock? : Bool
+    private def owns_lock? : Bool
       locked_by? == Fiber.current
     end
 
