@@ -38,12 +38,21 @@ private class MalformerHandler
   end
 end
 
+private def protocol_pair(&)
+  IO::Stapled.pipe do |io1, io2|
+    client = HTTP::WebSocket::Protocol.new(io1, masked: true)
+    server = HTTP::WebSocket::Protocol.new(io2)
+
+    yield client, server
+  end
+end
+
 describe HTTP::WebSocket do
   describe "Protocol#receive" do
     it "can read a small text packet" do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
@@ -55,7 +64,7 @@ describe HTTP::WebSocket do
       data = Bytes[0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(3)
 
@@ -94,7 +103,7 @@ describe HTTP::WebSocket do
         0x01, 0x03, 0x48, 0x65, 0x6c, 0x80, 0x02, 0x6c, 0x6f]
 
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(10)
 
@@ -112,7 +121,7 @@ describe HTTP::WebSocket do
     it "read ping packet" do
       data = Bytes[0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
@@ -125,7 +134,7 @@ describe HTTP::WebSocket do
         0x89, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f,
         0x80, 0x02, 0x6c, 0x6f]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
 
@@ -161,7 +170,7 @@ describe HTTP::WebSocket do
       data.copy_from(header)
 
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(0x010000)
 
@@ -172,11 +181,82 @@ describe HTTP::WebSocket do
     it "can read a close packet" do
       data = Bytes[0x88, 0x00]
       io = IO::Memory.new(data)
-      ws = HTTP::WebSocket::Protocol.new(io)
+      ws = HTTP::WebSocket::Protocol.new(io, masked: true)
 
       buffer = Bytes.new(64)
       result = ws.receive(buffer)
       assert_close_packet result, 0, final: true
+    end
+
+    it "server rejects unmasked frames" do
+      IO::Stapled.pipe do |io1, io2|
+        # Unmasked frame with payload "foobar"
+        io2.write Bytes[129, 6, 102, 111, 111, 98, 97, 114]
+
+        buffer = Bytes.new(6)
+        server = HTTP::WebSocket::Protocol.new(io1)
+
+        expect_raises(Exception, "Protocol error: expected masked frame") do
+          server.receive(buffer)
+        end
+
+        client = HTTP::WebSocket::Protocol.new(io2, masked: true)
+        info = client.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+        info.size.should eq 2
+        IO::ByteFormat::NetworkEndian.decode(UInt16, buffer).should eq HTTP::WebSocket::CloseCode::ProtocolError.value
+      end
+    end
+
+    it "client rejects masked frames" do
+      IO::Stapled.pipe do |io1, io2|
+        # Masked frame with payload "foobar"
+        io1.write Bytes[129, 134, 69, 235, 78, 53, 35, 132, 33, 87, 36, 153]
+
+        buffer = Bytes.new(6)
+        client = HTTP::WebSocket::Protocol.new(io2, masked: true)
+
+        expect_raises(Exception, "Protocol error: expected unmasked frame") do
+          client.receive(buffer)
+        end
+
+        server = HTTP::WebSocket::Protocol.new(io1)
+        info = server.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+        info.size.should eq 2
+        IO::ByteFormat::NetworkEndian.decode(UInt16, buffer).should eq HTTP::WebSocket::CloseCode::ProtocolError.value
+      end
+    end
+  end
+
+  describe "#receive" do
+    it "reads ping packet in between fragmented packet" do
+      protocol_pair do |a, b|
+        a.send "Hel".to_slice, :text, :none
+        a.ping "Foo"
+        a.send "lo".to_slice, :text
+
+        HTTP::WebSocket.new(b).receive?.should eq "Hello"
+
+        buffer = Bytes.new(16)
+        info = a.receive(buffer)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::PONG
+
+        buffer[0, info.size].should eq "Foo".to_slice
+      end
+    end
+
+    it "rejects invalid packets" do
+      protocol_pair do |a, b|
+        a.send Bytes.empty, :ping, :none
+
+        ws = HTTP::WebSocket.new(b)
+        ws.receive?.should be_nil
+        ws.closed?.should be_true
+
+        info = a.receive(Bytes.empty)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+      end
     end
   end
 

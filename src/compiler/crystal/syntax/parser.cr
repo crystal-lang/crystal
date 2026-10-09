@@ -4443,7 +4443,7 @@ module Crystal
         name = @token.type.to_s
       end
 
-      is_var = var?(name)
+      is_var = !global && var?(name)
 
       # If the name is a var and '+' or '-' follow, never treat the name as a call
       if is_var && next_comes_plus_or_minus?

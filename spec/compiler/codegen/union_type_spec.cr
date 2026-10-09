@@ -109,6 +109,33 @@ describe "Code gen: union type" do
       CRYSTAL
   end
 
+  it "zeroes remaining bytes on assigns union to larger union with inner pointers" do
+    run(<<-CRYSTAL).to_u64.should eq(0_u64)
+      b = uninitialized Nil | Bool
+      pointerof(b).value = false
+      u = uninitialized Bool | {Void*, Void*} | Nil
+      pointerof(u).value = {Pointer(Void).new(0xffffffffffffffff_u64), Pointer(Void).new(0xffffffffffffffff_u64)}
+      pointerof(u).value = b
+
+      address = pointerof(u).address &+ sizeof(typeof(u)) &- sizeof(Void*)
+      Pointer(Void*).new(address).value.address
+      CRYSTAL
+  end
+
+  it "zeroes remaining bytes on assigns value to larger union with inner pointers" do
+    run(<<-CRYSTAL).to_u64.should eq(0_u64)
+      struct Payload
+        @pointer = Pointer(Void*).new(0xffffffffffffffff_u64)
+      end
+      u = uninitialized Tuple(Payload, Payload) | Payload | Nil
+      pointerof(u).value = {Payload.new, Payload.new}
+      pointerof(u).value = Payload.new
+
+      address = pointerof(u).address &+ sizeof(typeof(u)) &- sizeof(Void*)
+      Pointer(Void*).new(address).value.address
+      CRYSTAL
+  end
+
   it "assigns union to larger union" do
     run(<<-CRYSTAL).to_string.should eq("d")
       require "prelude"
