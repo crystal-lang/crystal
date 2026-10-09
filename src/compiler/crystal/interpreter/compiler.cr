@@ -688,10 +688,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         pop(sizeof(Pointer(Void)), node: nil) # pop the bool value
 
         call compiled_def, node: nil
-
-        # Why we dup: check the Var case (it's similar)
-        dup(aligned_sizeof_type(const.value.type), node: nil) if @wants_value
         set_const index, aligned_sizeof_type(const.value), node: nil
+
+        # The assignment is typed `Nil`, not as the constant's value
+        put_nil node: nil if @wants_value
       elsif @wants_value
         # This is probably the last constant defined in a file, and it's a throw-away value
         put_nil node: node
