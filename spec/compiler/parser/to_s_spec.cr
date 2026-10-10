@@ -176,6 +176,10 @@ describe "ASTNode#to_s" do
   expect_to_s "enum A : B\nend"
   expect_to_s "# doc\ndef foo\nend", emit_doc: true
   expect_to_s "class Foo\n  # doc\n  def foo\n  end\nend", emit_doc: true
+  expect_to_s "# doc\nprivate def foo\nend", emit_doc: true
+  expect_to_s "# doc\nprotected def foo\nend", emit_doc: true
+  expect_to_s "# doc\nprivate class Foo\nend", emit_doc: true
+  expect_to_s "# doc\nprivate FOO = 1", emit_doc: true
   expect_to_s "foo[x, y, a: 1, b: 2]"
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
@@ -961,4 +965,16 @@ describe "ASTNode#to_s" do
       end
     %}
     CRYSTAL
+
+  # `PropagateDocVisitor` copies a macro call's doc onto the generated node, so
+  # the doc can sit on the expression while the modifier around it has none.
+  it "does to_s of a visibility modifier whose expression carries the doc" do
+    a_def = Def.new("foo")
+    a_def.doc = "doc"
+    node = VisibilityModifier.new(:private, a_def)
+
+    str = IO::Memory.new
+    node.to_s(str, emit_doc: true)
+    str.to_s.should eq("# doc\nprivate def foo\nend")
+  end
 end
