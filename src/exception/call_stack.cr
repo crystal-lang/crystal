@@ -72,7 +72,12 @@ struct Exception::CallStack
     end)
 
     if cache_miss
-      pc = decode_address(ip)
+      # The IP of a caller frame is its return address: the instruction
+      # *after* the call. It may belong to another line, or even to the next
+      # function when the call is the last instruction (e.g. a call to a
+      # `NoReturn` method). We look up the address of the call instruction
+      # instead.
+      pc = decode_address(ip) &- 1
       file, line_number, column_number = decode_line_number(pc)
 
       unless @@skip.includes?(file)
