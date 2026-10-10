@@ -237,6 +237,75 @@ describe "Code gen: sizeof" do
       CRYSTAL
   end
 
+  it "doesn't precompute sizeof of struct with an abstract struct instance variable" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      struct Holder
+        def initialize(@base : Base, @x : Int32)
+        end
+      end
+
+      z = sizeof(Holder)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      holder = uninitialized Holder
+      z == sizeof(typeof(holder))
+      CRYSTAL
+  end
+
+  it "doesn't precompute sizeof of union and tuple with an abstract struct" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      union_size = sizeof(Base | Nil)
+      tuple_size = sizeof({Base, Int32})
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      union = nil.as(Base | Nil)
+      tuple = uninitialized {Base, Int32}
+      union_size == sizeof(typeof(union)) && tuple_size == sizeof(typeof(tuple))
+      CRYSTAL
+  end
+
+  it "doesn't precompute instance_sizeof of class with an abstract struct instance variable" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      class Holder
+        def initialize(@base : Base)
+        end
+      end
+
+      z = instance_sizeof(Holder)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      holder = Holder.new(Foo.new(1))
+      z == instance_sizeof(typeof(holder))
+      CRYSTAL
+  end
+
   it "doesn't precompute sizeof of module (#7741)" do
     run(<<-CRYSTAL).to_i.should eq(16)
       module Base

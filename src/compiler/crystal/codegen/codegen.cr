@@ -985,6 +985,23 @@ module Crystal
       false
     end
 
+    def visit(node : OffsetOf)
+      type = node.offsetof_type.type
+      index = node.element_index
+
+      offset =
+        if type.extern_union? || type.is_a?(StaticArrayInstanceType)
+          0_u64
+        elsif type.struct? || type.is_a?(TupleInstanceType)
+          @llvm_typer.offset_of(llvm_type(type.sizeof_type), index)
+        else
+          @llvm_typer.offset_of(llvm_struct_type(type.sizeof_type), index + 1)
+        end
+
+      @last = int32(offset.to_i32)
+      false
+    end
+
     def visit(node : Include)
       node.hook_expansions.try &.each do |hook|
         accept hook

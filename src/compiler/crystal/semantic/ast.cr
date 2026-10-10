@@ -677,6 +677,11 @@ module Crystal
     end
   {% end %}
 
+  class OffsetOf
+    # The index of the element whose offset is taken
+    property! element_index : Int32
+  end
+
   class ClassDef
     property! resolved_type : ClassType
   end
