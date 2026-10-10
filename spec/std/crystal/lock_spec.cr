@@ -9,7 +9,7 @@ describe Crystal::Lock do
     lock.lock do
       called = 1
 
-      expect_raises(Sync::Error::Deadlock) do
+      expect_raises(Sync::Error::Deadlock, "Can't lock recursively") do
         lock.lock { called = 2 }
       end
     end

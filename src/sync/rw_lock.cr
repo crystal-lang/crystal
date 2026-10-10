@@ -2,6 +2,7 @@ require "./mu"
 require "./type"
 require "./errors"
 require "./lockable"
+require "./deadlockable"
 
 module Sync
   # A multiple readers and exclusive writer lock to protect critical sections.
@@ -22,6 +23,7 @@ module Sync
   # NOTE: Consider `Shared(T)` to protect a value `T` with a `RWLock`.
   class RWLock
     include Lockable
+    include Deadlockable
 
     def initialize(@type : Type = :checked)
       @counter = 0
@@ -48,7 +50,22 @@ module Sync
     # Tries to acquire the shared (read) lock without blocking. Returns true
     # when acquired, otherwise returns false immediately.
     def try_lock_read? : Bool
-      @mu.try_rlock?
+      success = @mu.try_rlock?
+
+      {% unless flag?(:with_deadlocks) %}
+        if success && !@type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            # don't relock read (it can deadlock)
+            @mu.runlock
+            return false
+          else
+            acquired_lock(fiber)
+          end
+        end
+      {% end %}
+
+      success
     end
 
     # Acquires the shared (read) lock.
@@ -60,7 +77,26 @@ module Sync
     # relock read can result in a deadlock if another fiber is trying to lock
     # write!
     def lock_read : Nil
+      {% unless flag?(:with_deadlocks) %}
+        unless @type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            message =
+              if fiber == locked_by?
+                "Can't acquire read lock while holding the write lock"
+              else
+                "Can't acquire read lock recursively"
+              end
+            raise Error::Deadlock.new(message, fiber, fiber, self, self)
+          end
+        end
+      {% end %}
+
       @mu.rlock
+
+      {% unless flag?(:with_deadlocks) %}
+        acquired_lock(Fiber.current) unless @type.unchecked?
+      {% end %}
     end
 
     # Releases the shared (read) lock.
@@ -70,6 +106,10 @@ module Sync
     # behavior) then it must unlock that many times.
     def unlock_read : Nil
       @mu.runlock
+
+      {% unless flag?(:with_deadlocks) %}
+        released_lock(Fiber.current) unless @type.unchecked?
+      {% end %}
     end
 
     # Acquires the exclusive (write) lock for the duration of the block.
@@ -90,10 +130,7 @@ module Sync
     # when acquired, otherwise returns false immediately.
     def try_lock_write? : Bool
       if @mu.try_lock?
-        unless @type.unchecked?
-          @locked_by = Fiber.current
-          @counter = 1 if @type.reentrant?
-        end
+        set_owner unless @type.unchecked?
         true
       elsif @type.reentrant? && owns_lock?
         @counter += 1
@@ -106,21 +143,34 @@ module Sync
     # Acquires the exclusive (write) lock. Blocks the calling fiber while the
     # shared or exclusive (write) lock is held.
     def lock_write : Nil
-      unless @mu.try_lock?
-        unless @type.unchecked?
-          if owns_lock?
-            raise Error::Deadlock.new("Can't lock rwlock recursively") unless @type.reentrant?
-            @counter += 1
-            return
-          end
-        end
+      if @mu.try_lock?
+        set_owner unless @type.unchecked?
+      elsif @type.unchecked?
         @mu.lock_slow
+      else
+        lock_slow
+      end
+    end
+
+    private def lock_slow : Nil
+      if owns_lock?
+        raise Error.deadlock(Fiber.current, self) unless @type.reentrant?
+        @counter += 1
+        return
       end
 
-      unless @type.unchecked?
-        @locked_by = Fiber.current
-        @counter = 1 if @type.reentrant?
+      {% unless flag?(:with_deadlocks) %}
+        fiber = Fiber.current
+        if owns_lock?(fiber)
+          raise Error::Deadlock.new("Can't acquire write lock while holding the read lock", fiber, fiber, self, self)
+        end
+      {% end %}
+
+      @mu.lock_slow do
+        {% unless flag?(:with_deadlocks) %} detect_deadlock! {% end %}
       end
+
+      set_owner
     end
 
     # Releases the exclusive (write) lock.
@@ -128,7 +178,7 @@ module Sync
       unless @type.unchecked?
         unless owns_lock?
           message =
-            if @locked_by
+            if locked_by?
               "Can't unlock Sync::RWLock locked by another fiber"
             else
               "Can't unlock Sync::RWLock that isn't locked"
@@ -138,7 +188,7 @@ module Sync
         if @type.reentrant?
           return unless (@counter -= 1) == 0
         end
-        @locked_by = nil
+        unset_owner
       end
       @mu.unlock
     end
@@ -149,7 +199,7 @@ module Sync
       unless @type.unchecked?
         if @mu.held?
           raise Error.new("Can't unlock Sync::RWLock locked by another fiber") unless owns_lock?
-          @locked_by = nil
+          unset_owner
           counter, @counter = @counter, 0 if @type.reentrant?
         elsif !@mu.rheld?
           raise Error.new("Can't unlock Sync::RWLock that isn't locked")
@@ -159,13 +209,12 @@ module Sync
       cv.value.wait pointerof(@mu)
 
       unless @type.unchecked? || @mu.rheld?
-        @locked_by = Fiber.current
-        @counter = counter if @type.reentrant?
+        set_owner(counter)
       end
     end
 
-    protected def owns_lock? : Bool
-      @locked_by == Fiber.current
+    private def set_owner(counter = 1) : Nil
+      set_owner(counter) { unlock_write }
     end
 
     # :nodoc:

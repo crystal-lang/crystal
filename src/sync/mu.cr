@@ -52,6 +52,7 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def try_lock? : Bool
       # uncontended
       word, success = @word.compare_and_set(UNLOCKED, WLOCK, :acquire, :relaxed)
@@ -66,6 +67,7 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def try_rlock? : Bool
       # uncontended
       word, success = @word.compare_and_set(UNLOCKED, RLOCK, :acquire, :relaxed)
@@ -80,34 +82,46 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def lock : Nil
       unless try_lock?
         lock_slow
       end
     end
 
+    @[AlwaysInline]
     def rlock : Nil
       unless try_rlock?
         rlock_slow
       end
     end
 
-    def lock_slow
+    @[NoInline]
+    def lock_slow : Nil
+      lock_slow { }
+    end
+
+    @[NoInline]
+    def rlock_slow : Nil
+      rlock_slow { }
+    end
+
+    def lock_slow(&before_suspend) : Nil
       waiter = Waiter.new(:writer)
 
       lock_slow_impl(pointerof(waiter),
         zero_to_acquire: ANY_LOCK,
         add_on_acquire: WLOCK,
         set_on_waiting: WRITER_WAITING,
-        clear_on_acquire: WRITER_WAITING)
+        clear_on_acquire: WRITER_WAITING) { yield }
     end
 
-    def rlock_slow
+    def rlock_slow(&before_suspend) : Nil
       waiter = Waiter.new(:reader)
 
       lock_slow_impl(pointerof(waiter),
         zero_to_acquire: WLOCK | WRITER_WAITING,
-        add_on_acquire: RLOCK)
+        add_on_acquire: RLOCK) { yield }
     end
 
     # Called from CV#wait after a cv waiter has been transferred to mu then
@@ -125,10 +139,10 @@ module Sync
         set_on_waiting = 0_u32
         clear_on_acquire = 0_u32
       end
-      lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting, clear_on_acquire, clear)
+      lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting, clear_on_acquire, clear) { }
     end
 
-    private def lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting = 0_u32, clear_on_acquire = 0_u32, clear = 0_u32) : Nil
+    private def lock_slow_impl(waiter, zero_to_acquire, add_on_acquire, set_on_waiting = 0_u32, clear_on_acquire = 0_u32, clear = 0_u32, &before_suspend) : Nil
       long_wait = 0_u32
       zero_to_acquire |= LONG_WAIT
       set_on_waiting |= WAITING
@@ -159,6 +173,13 @@ module Sync
             end
             release_spinlock
 
+            begin
+              yield
+            rescue exception
+              abort_wait(waiter)
+              raise exception
+            end
+
             # wait...
             waiter.value.wait
             # ...resumed
@@ -184,6 +205,25 @@ module Sync
       end
     end
 
+    protected def abort_wait(waiter) : Nil
+      acquire_spinlock
+
+      if waiter.value.linked?
+        # waiter is still queued, cleanup
+        @waiters.delete(waiter)
+        release_spinlock
+      else
+        # waiter is a designated waker, act as one
+        release_spinlock
+
+        waiter.value.wait
+
+        acquire_spinlock
+        wake_waiters
+      end
+    end
+
+    @[AlwaysInline]
     def unlock : Nil
       # uncontended
       word, success = @word.compare_and_set(WLOCK, UNLOCKED, :release, :relaxed)
@@ -205,6 +245,7 @@ module Sync
       unlock_slow
     end
 
+    @[AlwaysInline]
     def runlock : Nil
       # uncontended
       word, success = @word.compare_and_set(RLOCK, UNLOCKED, :release, :relaxed)
@@ -226,10 +267,12 @@ module Sync
       runlock_slow
     end
 
+    @[NoInline]
     def unlock_slow : Nil
       unlock_slow_impl(sub_on_release: WLOCK)
     end
 
+    @[NoInline]
     def runlock_slow : Nil
       unlock_slow_impl(sub_on_release: RLOCK)
     end
@@ -250,42 +293,47 @@ module Sync
           # spinlock, and release the lock (early)
           _, success = @word.compare_and_set(word, (word | SPINLOCK | DESIGNATED_WAKER) &- sub_on_release, :acquire_release, :relaxed)
           if success
-            # spinlock is held, resume a single writer, or resume all readers
-            wake = Crystal::PointerLinkedList(Waiter).new
-            writer_waiting = 0_u32
-
-            if first_waiter = @waiters.shift?
-              wake.push(first_waiter)
-
-              if first_waiter.value.reader?
-                @waiters.each do |waiter|
-                  if waiter.value.reader?
-                    @waiters.delete(waiter)
-                    wake.push(waiter)
-                  else
-                    # found a writer, prevent new readers from locking
-                    writer_waiting = WRITER_WAITING
-                  end
-                end
-              end
-            end
-
-            # update flags
-            clear = 0_u32
-            clear |= DESIGNATED_WAKER if wake.empty? # nothing to wake => no designated waker
-            clear |= WAITING if @waiters.empty?      # no more waiters => nothing waiting
-
-            release_spinlock(set: writer_waiting, clear: clear)
-
-            wake.consume_each do |waiter|
-              waiter.value.wake
-            end
-
+            # spinlock is held
+            wake_waiters
             return
           end
         end
 
         attempts = Thread.delay(attempts)
+      end
+    end
+
+    # Resume a single writer or resume all readers.
+    # The spinlock must have been acquired; it will be released before returning.
+    protected def wake_waiters : Nil
+      wake = Crystal::PointerLinkedList(Waiter).new
+      writer_waiting = 0_u32
+
+      if first_waiter = @waiters.shift?
+        wake.push(first_waiter)
+
+        if first_waiter.value.reader?
+          @waiters.each do |waiter|
+            if waiter.value.reader?
+              @waiters.delete(waiter)
+              wake.push(waiter)
+            else
+              # found a writer, prevent new readers from locking
+              writer_waiting = WRITER_WAITING
+            end
+          end
+        end
+      end
+
+      # update flags
+      clear = 0_u32
+      clear |= DESIGNATED_WAKER if wake.empty? # nothing to wake => no designated waker
+      clear |= WAITING if @waiters.empty?      # no more waiters => nothing waiting
+
+      release_spinlock(set: writer_waiting, clear: clear)
+
+      wake.consume_each do |waiter|
+        waiter.value.wake
       end
     end
 
@@ -297,6 +345,21 @@ module Sync
     def rheld? : Bool
       word = @word.get(:relaxed)
       (word & RMASK) != 0
+    end
+
+    private def acquire_spinlock
+      attempts = 0
+
+      while true
+        word = @word.get(:relaxed)
+
+        if (word & SPINLOCK) == 0
+          _, success = @word.compare_and_set(word, word | SPINLOCK, :acquire, :relaxed)
+          return if success
+        end
+
+        attempts = Thread.delay(attempts)
+      end
     end
 
     private def release_spinlock(set = 0_u32, clear = 0_u32)
@@ -385,6 +448,26 @@ module Sync
       # no need to set waiting (it's already true) but we must tell CV#wait
       # that the waiter has been transferred and is no longer a CV waiter
       waiter.value.cv_mu = Pointer(MU).null
+    end
+
+    # Returns true if *fiber* is currently in the waiters list.
+    def waiting?(fiber : Fiber) : Bool
+      found = false
+
+      unless @waiters.empty?
+        acquire_spinlock
+
+        @waiters.each do |waiter|
+          if waiter.value.@fiber == fiber
+            found = true
+            break
+          end
+        end
+
+        release_spinlock
+      end
+
+      found
     end
   end
 end

@@ -45,5 +45,9 @@ module Sync
       @waiting.set(false, :relaxed)
       @fiber.enqueue
     end
+
+    def linked? : Bool
+      !@previous.null?
+    end
   end
 end
