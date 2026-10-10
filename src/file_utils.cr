@@ -412,7 +412,9 @@ module FileUtils
   # FileUtils.rm_r("file.cr")
   # ```
   def rm_r(path : Path | String) : Nil
-    if Dir.exists?(path) && !File.symlink?(path)
+    # Check for a symlink first: `Dir.exists?` follows it, and fails for a
+    # symlink loop
+    if !File.symlink?(path) && Dir.exists?(path)
       Dir.each_child(path) do |entry|
         src = File.join(path, entry)
         rm_r(src)
