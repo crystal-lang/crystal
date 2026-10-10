@@ -21,6 +21,25 @@ describe "Code gen: C ABI x86_64" do
     str.should contain("declare void @foo({ i64 })")
   end
 
+  it "passes struct less than 64 bits containing float and int as { i64 }" do
+    mod = codegen(<<-CRYSTAL)
+      lib LibFoo
+        struct Struct
+          x : Float32
+          y : Int16
+        end
+
+        fun foo(s : Struct)
+      end
+
+      s = LibFoo::Struct.new
+      LibFoo.foo(s)
+      CRYSTAL
+    str = mod.to_s
+    str.should contain("call void @foo({ i64 }")
+    str.should contain("declare void @foo({ i64 })")
+  end
+
   it "passes struct less than 64 bits as { i64 } in varargs" do
     mod = codegen(<<-CRYSTAL)
       lib LibFoo
