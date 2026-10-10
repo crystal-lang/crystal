@@ -64,4 +64,52 @@ describe "Code gen: offsetof" do
       (pointerof(x).as(Void*) + offsetof(Int32[4], @buffer).to_i64).as(Int32*).value == x.@buffer
       CRYSTAL
   end
+
+  it "doesn't precompute offsetof of struct field after an abstract struct field" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      struct Holder
+        def initialize(@base : Base, @x : Int32)
+        end
+      end
+
+      z = offsetof(Holder, @x)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      holder = uninitialized Holder
+      z == pointerof(holder.@x).address &- pointerof(holder).address
+      CRYSTAL
+  end
+
+  it "doesn't precompute offsetof of class field after an abstract struct field" do
+    run(<<-CRYSTAL).to_b.should be_true
+      abstract struct Base
+      end
+
+      struct Foo(T) < Base
+        def initialize(@x : T)
+        end
+      end
+
+      class Holder
+        def initialize(@base : Base, @x : Int32)
+        end
+      end
+
+      z = offsetof(Holder, @x)
+
+      Foo({Int32, Int32, Int32, Int32})
+
+      holder = Holder.new(Foo.new(1), 2)
+      z == pointerof(holder.@x).address &- holder.as(Void*).address
+      CRYSTAL
+  end
 end
