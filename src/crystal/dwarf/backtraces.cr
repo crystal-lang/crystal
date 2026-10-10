@@ -25,6 +25,12 @@ module Crystal
       # line registers to quickly find a sub-section and resume the iteration.
       @line_numbers = Slice({Line::Registers, Int32, Int32}).empty
 
+      # Unlike function names, a decompressed table of file and line numbers
+      # quickly allocates several megabytes of memory, much more than the
+      # compressed DEBUG_LINE section. Instead, we build an index of offsets and
+      # line registers to quickly find a sub-section and resume the iteration.
+      @line_numbers = Slice({Line::Registers, Int32, Int32}).empty
+
       @initialized = false
 
       def build_caches : Nil

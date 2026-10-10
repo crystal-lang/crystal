@@ -192,19 +192,17 @@ class HTTP::WebSocket
 
       case info.opcode
       in .ping?
-        @current_message.write @buffer[0, info.size]
-        if info.final
-          message = @current_message.to_s
-          do_ping(message)
-          @current_message.clear
+        unless info.final
+          close CloseCode::ProtocolError
+          return nil
         end
+        do_ping(String.new(@buffer[0, info.size]))
       in .pong?
-        @current_message.write @buffer[0, info.size]
-        if info.final
-          message = @current_message.to_s
-          @on_pong.try &.call(message)
-          @current_message.clear
+        unless info.final
+          close CloseCode::ProtocolError
+          return nil
         end
+        @on_pong.try &.call(String.new(@buffer[0, info.size]))
       in .text?
         unless @current_message_opcode.in?(nil, info.opcode)
           close CloseCode::ProtocolError

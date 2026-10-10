@@ -46,6 +46,8 @@ class HTTP::WebSocket::Protocol
     @mask_offset = 0
     @opcode = Opcode::CONTINUATION
     @remaining = 0_u64
+
+    # If true, outgoing data is masked and incoming data is unmasked.
     @masked = !!masked
   end
 
@@ -188,8 +190,19 @@ class HTTP::WebSocket::Protocol
     opcode = read_opcode
     @remaining = read_size
 
-    # Read mask, if needed
-    if masked?
+    header_masked = (@header[1] & 0x80_u8) != 0_u8
+
+    if @masked
+      if header_masked
+        close :ProtocolError
+        raise "Protocol error: expected unmasked frame"
+      end
+    else
+      if !header_masked
+        close :ProtocolError
+        raise "Protocol error: expected masked frame"
+      end
+
       @io.read_fully(@mask.to_slice)
       @mask_offset = 0
     end
@@ -232,7 +245,7 @@ class HTTP::WebSocket::Protocol
   private def read_payload(buffer)
     count = Math.min(@remaining, buffer.size)
     @io.read_fully(buffer[0, count])
-    if masked?
+    unless @masked
       count.times do |i|
         buffer[i] ^= @mask[@mask_offset & 0b11] # x & 0b11 == x % 4
         @mask_offset += 1
@@ -247,10 +260,6 @@ class HTTP::WebSocket::Protocol
 
   private def final?
     (@header[0] & 0x80_u8) != 0_u8
-  end
-
-  private def masked?
-    (@header[1] & 0x80_u8) != 0_u8
   end
 
   def ping(message = nil)
