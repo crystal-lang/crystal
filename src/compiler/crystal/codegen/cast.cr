@@ -159,7 +159,7 @@ class Crystal::CodeGenVisitor
     # 2. It's not inside the target union
     # 3. There's a compatible type inside the target union
     return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
-    !union_type.union_types.any?(&.==(value_type)) &&
+    !union_type.union_types.includes?(value_type) &&
       union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
@@ -184,7 +184,7 @@ class Crystal::CodeGenVisitor
     when TupleInstanceType, NamedTupleInstanceType
       # It might happen that `value_type` is not of the union but it's compatible with one of them.
       # We need to first cast the value to the compatible type and then store it in the value.
-      unless target_type.union_types.any? &.==(value_type)
+      unless target_type.union_types.includes?(value_type)
         compatible_type = target_type.union_types.find! { |ut| value_type.implements?(ut) }
         value = upcast(value, compatible_type, value_type)
         return assign(target_pointer, target_type, compatible_type, value)
@@ -431,7 +431,7 @@ class Crystal::CodeGenVisitor
     # We need to first cast the value to the compatible type and to to_type
     case to_type
     when TupleInstanceType, NamedTupleInstanceType
-      unless from_type.union_types.any? &.==(to_type)
+      unless from_type.union_types.includes?(to_type)
         compatible_type = from_type.union_types.find! { |ut| to_type.implements?(ut) }
         value = downcast(value, compatible_type, from_type, true)
         value = downcast(value, to_type, compatible_type, true)
@@ -640,7 +640,7 @@ class Crystal::CodeGenVisitor
     # We need to first cast the value to the compatible type and to to_type
     case from_type
     when TupleInstanceType, NamedTupleInstanceType
-      unless to_type.union_types.any? &.==(from_type)
+      unless to_type.union_types.includes?(from_type)
         compatible_type = to_type.union_types.find! { |ut| from_type.implements?(ut) }
         value = upcast(value, compatible_type, from_type)
         return upcast(value, to_type, compatible_type)
