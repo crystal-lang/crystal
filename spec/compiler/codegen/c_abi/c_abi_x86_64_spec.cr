@@ -179,4 +179,54 @@ describe "Code gen: C ABI x86_64" do
       str.should contain("sret(%\"struct.LibFoo::Struct\") %0, i32") # sret goes as first argument
     end
   end
+
+  it "returns struct less than 64 bits with an explicit `return` inside top-level fun (#14392)" do
+    mod = codegen(<<-CRYSTAL)
+      lib LibFoo
+        struct Struct
+          x : Int8
+          y : Int16
+        end
+      end
+
+      fun foo : LibFoo::Struct
+        return LibFoo::Struct.new
+      end
+
+      foo
+      CRYSTAL
+    str = mod.to_s
+    str.should contain("define { i64 } @foo()")
+    str.should contain("call { i64 } @foo()")
+  end
+
+  it "returns struct bigger than 128 bits with an explicit `return` inside top-level fun (#14392)" do
+    mod = codegen(<<-CRYSTAL)
+      lib LibFoo
+        struct Struct
+          x : Int64
+          y : Int64
+          z : Int8
+        end
+      end
+
+      fun foo : LibFoo::Struct
+        return LibFoo::Struct.new
+      end
+
+      foo
+      CRYSTAL
+    str = mod.to_s
+
+    if LibLLVM::IS_LT_120
+      str.should contain %(define void @foo(%"struct.LibFoo::Struct"* sret %0))
+      str.should contain %(call void @foo(%"struct.LibFoo::Struct"* sret %0))
+    elsif LibLLVM::IS_LT_150
+      str.should contain %(define void @foo(%"struct.LibFoo::Struct"* sret(%"struct.LibFoo::Struct") %0))
+      str.should contain %(call void @foo(%"struct.LibFoo::Struct"* sret(%"struct.LibFoo::Struct") %0))
+    else
+      str.should contain %(define void @foo(ptr sret(%"struct.LibFoo::Struct") %0))
+      str.should contain %(call void @foo(ptr sret(%"struct.LibFoo::Struct") %0))
+    end
+  end
 end

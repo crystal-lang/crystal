@@ -533,7 +533,7 @@ module Crystal
 
     def finish
       clear_current_debug_location if @debug.line_numbers?
-      codegen_return @main_ret_type
+      codegen_return @main_ret_type, nil
 
       # If there are no instructions in the alloca block and the
       # const block, we just removed them (less noise)
@@ -872,22 +872,48 @@ module Crystal
     def codegen_return_node(node, node_type)
       old_last = @last
 
-      execute_ensures_until(node.target.as(Def))
+      target_def = node.target.as(Def)
+      execute_ensures_until(target_def)
 
       @last = old_last
 
       if return_phi = context.return_phi
         return_phi.add @last, node_type
       else
-        codegen_return node_type
+        codegen_return node_type, target_def
       end
     end
 
-    def codegen_return(type : NoReturnType | Nil)
-      unreachable
-    end
+    def codegen_return(return_type : Type?, target_def : Def?)
+      case return_type
+      when NoReturnType, Nil
+        unreachable
+        return
+      end
 
-    def codegen_return(type : Type)
+      # Check if the def must use the C calling convention and the return
+      # value must be either casted or passed by sret
+      if target_def && target_def.c_calling_convention? && target_def.abi_info?
+        if return_type.proc?
+          @last = check_proc_is_not_closure(@last, return_type)
+        end
+
+        abi_info = abi_info(target_def)
+        abi_ret_type = abi_info.return_type
+        if cast = abi_ret_type.cast
+          casted_last = pointer_cast @last, cast.pointer
+          last = load cast, casted_last
+          ret last
+          return
+        end
+
+        if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
+          store load(llvm_type(return_type), @last), context.fun.params[0]
+          ret
+          return
+        end
+      end
+
       return if @builder.end
 
       method_type = context.return_type.not_nil!
@@ -898,7 +924,7 @@ module Crystal
       elsif method_type.no_return?
         unreachable
       else
-        value = upcast(@last, method_type, type)
+        value = upcast(@last, method_type, return_type)
         ret to_rhs(value, method_type)
       end
     end
