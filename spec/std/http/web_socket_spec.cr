@@ -260,6 +260,22 @@ describe HTTP::WebSocket do
     end
   end
 
+  describe "#receive" do
+    it "rejects mixed opcode continuation" do
+      protocol_pair do |a, b|
+        a.send "Foo".to_slice, :text, :none
+        a.send "Bar".to_slice, :binary
+
+        ws = HTTP::WebSocket.new(b)
+        ws.receive?.should be_nil
+        ws.closed?.should be_true
+
+        info = a.receive(Bytes.empty)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+      end
+    end
+  end
+
   describe "send" do
     it "sends long data with correct header" do
       big_string = "abcdefghijklmnopqrstuvwxyz" * (IO::DEFAULT_BUFFER_SIZE // 4)
