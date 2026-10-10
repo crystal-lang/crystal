@@ -46,6 +46,49 @@ describe "Backtrace" do
     end
   end
 
+  it "resolves the line of the call, not of the return address", tags: %w[slow] do
+    with_tempfile("source_file") do |source_file|
+      File.write source_file, <<-CRYSTAL
+        def callee1(x)
+          raise "boom" if x > 1
+          x
+        end
+
+        def callee2
+          callee1(2)
+          puts "after"
+        end
+
+        def callee3
+          raise "boom"
+        end
+
+        def callee4
+          callee3
+        end
+
+        ARGV.empty? ? callee2 : callee4
+        CRYSTAL
+
+      compile_file(source_file) do |executable_file|
+        file = Regex.escape(source_file)
+        column = {% if flag?(:msvc) %} "" {% else %} ":\\d+" {% end %}
+
+        error = IO::Memory.new
+        Process.run(executable_file, error: error)
+        error.to_s.should match(/^  from #{file}:2#{column} in 'callee1'$/m)
+        # the instruction after the call belongs to line 8
+        error.to_s.should match(/^  from #{file}:7#{column} in 'callee2'$/m)
+
+        error = IO::Memory.new
+        Process.run(executable_file, ["x"], error: error)
+        # the calls are the last instructions of `NoReturn` methods
+        error.to_s.should match(/^  from #{file}:12#{column} in 'callee3'$/m)
+        error.to_s.should match(/^  from #{file}:16#{column} in 'callee4'$/m)
+      end
+    end
+  end
+
   it "prints exception backtrace to stderr", tags: %w[slow] do
     sample = datapath("exception_backtrace_sample")
 
