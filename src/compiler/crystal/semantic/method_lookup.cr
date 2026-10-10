@@ -426,6 +426,7 @@ module Crystal
 
       type_to_matches = nil
       matches = base_type_matches.matches
+      subtypes_matches = nil
       changes = nil
 
       # Traverse all subtypes
@@ -515,14 +516,20 @@ module Crystal
           if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
             # No need to add matches if for an abstract class without subclasses
           else
-            # We need to insert the matches before the previous ones
-            # because subtypes are more specific matches
-            if matches
-              subtype_matches_matches.concat matches
-            end
-            matches = subtype_matches_matches
+            subtypes_matches ||= [] of Array(Match)
+            subtypes_matches << subtype_matches_matches
           end
         end
+      end
+
+      # Each subtype's matches go before the previous ones, because subtypes
+      # are more specific matches. Joined once here, as appending the previous
+      # matches to each subtype's grows with the square of the subtypes.
+      if subtypes_matches
+        all_matches = [] of Match
+        subtypes_matches.reverse_each { |subtype_matches_matches| all_matches.concat subtype_matches_matches }
+        matches.try { |base_matches| all_matches.concat base_matches }
+        matches = all_matches
       end
 
       changes.try &.each do |change|
