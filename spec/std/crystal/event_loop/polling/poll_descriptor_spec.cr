@@ -19,8 +19,9 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   def interrupt : Nil
   end
 
-  protected def system_add(fd : Int32, index : Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
     operations << {:add, fd, index}
+    RegisteredEvents::READ
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil
