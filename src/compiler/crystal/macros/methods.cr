@@ -668,7 +668,7 @@ module Crystal
           case arg
           when RegexLiteral
             regex = regex_value(arg)
-            BoolLiteral.new(!!(@value =~ regex))
+            BoolLiteral.new(@value.matches?(regex))
           else
             BoolLiteral.new(false)
           end

@@ -7,8 +7,8 @@ abstract class Crystal::ABI
   def initialize(target_machine : LLVM::TargetMachine)
     @target_data = target_machine.data_layout
     triple = target_machine.triple
-    @osx = !!(triple =~ /apple/)
-    @windows = !!(triple =~ /windows/)
+    @osx = triple.includes?("apple")
+    @windows = triple.includes?("windows")
   end
 
   def self.from(target_machine : LLVM::TargetMachine) : self

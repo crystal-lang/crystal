@@ -4,5 +4,5 @@ end
 
 regex = Regex.new(ARGV[0])
 while str = STDIN.gets
-  STDOUT.print(str) if str =~ regex
+  STDOUT.print(str) if str.matches?(regex)
 end
