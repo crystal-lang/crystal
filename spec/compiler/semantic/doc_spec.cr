@@ -651,6 +651,26 @@ describe "Semantic: doc" do
       type.doc.should eq("Some description")
     end
 
+    it "attached to macro call that deletes the annotation" do
+      result = semantic <<-CRYSTAL, wants_doc: true
+        annotation Ann
+        end
+
+        macro gen_type
+          {% @caller.first.delete_annotation(Ann) %}
+          class Foo; end
+        end
+
+        # Some description
+        @[Ann]
+        gen_type
+        CRYSTAL
+      program = result.program
+      type = program.types["Foo"]
+      type.doc.should eq("Some description")
+      type.annotation(program.types["Ann"].as(AnnotationType)).should be_nil
+    end
+
     it "attached to macro call that produces multiple types" do
       result = semantic <<-CRYSTAL, wants_doc: true
         annotation Ann
