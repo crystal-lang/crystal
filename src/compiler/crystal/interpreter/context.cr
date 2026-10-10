@@ -128,12 +128,21 @@ class Crystal::Repl::Context
   # Checks out a stack from the stack pool and yields it to the given block.
   # Once the block returns, the stack is returned to the pool.
   # The stack is not cleared after or before it's used.
+  #
+  # The stack holds references to objects of the interpreted program, but
+  # the GC doesn't allocate it, so it's added to the GC roots while checked out.
   def checkout_stack(& : UInt8* -> _)
     stack = @stack_pool.checkout
+    {% unless flag?(:gc_none) %}
+      LibGC.add_roots(stack.pointer, stack.bottom)
+    {% end %}
 
     begin
       yield stack.pointer.as(UInt8*)
     ensure
+      {% unless flag?(:gc_none) %}
+        LibGC.remove_roots(stack.pointer, stack.bottom)
+      {% end %}
       @stack_pool.release(stack)
     end
   end
