@@ -261,6 +261,32 @@ describe "Code gen: sizeof" do
       CRYSTAL
   end
 
+  it "doesn't precompute sizeof of struct with a module in an instance variable (#13688)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      module Interface
+      end
+
+      struct OwnCell(T)
+        include Interface
+
+        def initialize(@x : T)
+        end
+      end
+
+      struct Holder
+        def initialize(@value : Int32 | Interface)
+        end
+      end
+
+      z = sizeof(Holder)
+
+      OwnCell({Int32, Int32, Int32, Int32})
+
+      holder = uninitialized Holder
+      z == sizeof(typeof(holder))
+      CRYSTAL
+  end
+
   it "doesn't precompute sizeof of union and tuple with an abstract struct" do
     run(<<-CRYSTAL).to_b.should be_true
       abstract struct Base
