@@ -533,6 +533,12 @@ class Crystal::Call
       restriction = def_arg.restriction
       if restriction
         expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
+
+        # A union of types that share a parent is looked up as that parent,
+        # but the restriction still only accepts the union's members
+        if restriction.is_a?(Union) && expected_type && !expected_type.is_a?(UnionType)
+          expected_type = restriction
+        end
       end
     end
     expected_type ||= def_arg.restriction.not_nil!
