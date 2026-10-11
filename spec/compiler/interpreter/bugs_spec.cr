@@ -211,6 +211,28 @@ describe Crystal::Repl::Interpreter do
      CRYSTAL
     end
 
+    it "doesn't error if def body is InstanceVar and virtual dispatch has only one subclass (#16278)" do
+      interpret(<<-CRYSTAL).should eq(0)
+        abstract class A
+          abstract def foo : Int32
+
+          def bar
+            foo
+          end
+        end
+
+        class B < A
+          @test = 0
+
+          def foo : Int32
+            @test
+          end
+        end
+
+        B.new.as(A).bar
+      CRYSTAL
+    end
+
     it "handles self in inlined method with arguments (#16210)" do
       interpret(<<-CRYSTAL, prelude: "prelude").should eq(%("hello"))
         class Foo
