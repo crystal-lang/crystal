@@ -186,7 +186,7 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
-        codegen_return(target_def)
+        codegen_return target_def.body.type?, target_def
 
         br_from_alloca_to_entry
       end
@@ -234,34 +234,6 @@ class Crystal::CodeGenVisitor
 
       LLVMTypedFunction.new(context.fun_type, context.fun)
     end
-  end
-
-  def codegen_return(target_def : Def)
-    # Check if this def must use the C calling convention and the return
-    # value must be either casted or passed by sret
-    if target_def.c_calling_convention? && target_def.abi_info?
-      return_type = target_def.body.type
-      if return_type.proc?
-        @last = check_proc_is_not_closure(@last, return_type)
-      end
-
-      abi_info = abi_info(target_def)
-      abi_ret_type = abi_info.return_type
-      if cast = abi_ret_type.cast
-        casted_last = pointer_cast @last, cast.pointer
-        last = load cast, casted_last
-        ret last
-        return
-      end
-
-      if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(llvm_type(return_type), @last), context.fun.params[0]
-        ret
-        return
-      end
-    end
-
-    codegen_return target_def.body.type?
   end
 
   def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
