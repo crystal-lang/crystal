@@ -1,6 +1,22 @@
 require "../../spec_helper"
 
 describe "Semantic: annotation" do
+  it "types an annotation that ends a block as nil" do
+    assert_type(<<-CRYSTAL) { nil_type }
+      annotation Foo
+      end
+
+      def foo
+        yield
+      end
+
+      foo do
+        1
+        @[Foo]
+      end
+      CRYSTAL
+  end
+
   it "declares annotation" do
     result = semantic(<<-CRYSTAL)
       annotation Foo

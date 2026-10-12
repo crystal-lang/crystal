@@ -578,6 +578,7 @@ module Crystal
     end
 
     def visit(node : Annotation)
+      @last = llvm_nil
       false
     end
 

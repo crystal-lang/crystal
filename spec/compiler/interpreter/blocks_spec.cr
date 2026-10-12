@@ -3,6 +3,23 @@ require "./spec_helper"
 
 describe Crystal::Repl::Interpreter do
   context "blocks" do
+    it "interprets a block that ends with an annotation" do
+      interpret(<<-CRYSTAL).should be_true
+        annotation Foo
+        end
+
+        def foo
+          yield
+        end
+
+        x = foo do
+          1
+          @[Foo]
+        end
+        x.nil?
+        CRYSTAL
+    end
+
     it "interprets simplest block" do
       interpret(<<-CRYSTAL).should eq(1)
         def foo

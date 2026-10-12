@@ -1,6 +1,37 @@
 require "../../spec_helper"
 
 describe "Code gen: block" do
+  it "returns nil from a block that ends with an annotation" do
+    run(<<-CRYSTAL).to_b.should be_true
+      annotation Foo
+      end
+
+      def foo
+        yield
+      end
+
+      x = foo do
+        1
+        @[Foo]
+      end
+      x.nil?
+      CRYSTAL
+  end
+
+  it "returns nil from a def that ends with an annotation" do
+    run(<<-CRYSTAL).to_b.should be_true
+      annotation Foo
+      end
+
+      def foo
+        1
+        @[Foo]
+      end
+
+      foo.nil?
+      CRYSTAL
+  end
+
   it "generate inline" do
     run(<<-CRYSTAL).to_i.should eq(1)
       def foo

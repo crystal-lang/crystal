@@ -3227,6 +3227,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
   end
 
   def visit(node : Annotation)
+    return false unless @wants_value
+
+    put_nil node: node
     false
   end
 

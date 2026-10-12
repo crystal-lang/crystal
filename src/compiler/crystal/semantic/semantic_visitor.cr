@@ -181,6 +181,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def visit(node : Annotation)
     annotations = @annotations ||= [] of Annotation
     annotations << node
+
+    # The annotation applies to the next node; as an expression of its own
+    # (e.g. the last one of a block) it's nil
+    node.set_type(@program.nil)
     false
   end
 
