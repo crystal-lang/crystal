@@ -28,6 +28,13 @@ describe "Backtrace" do
     output.should_not contain("src/raise.cr")
   end
 
+  it "prints file line:column", tags: %w[slow] do
+    source_file = datapath("backtrace_sample_noreturn")
+    _, _, error = compile_and_run_file(source_file)
+    error.should match(/backtrace_sample_noreturn:2(:3)? in 'show'/)
+    error.should match(/backtrace_sample_noreturn:7(:3)? in 'run'/)
+  end
+
   it "doesn't relativize paths outside of current dir (#10169)", tags: %w[slow] do
     with_tempfile("source_file") do |source_file|
       source_path = Path.new(source_file)
