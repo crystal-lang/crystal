@@ -449,5 +449,25 @@ module Sync
       # that the waiter has been transferred and is no longer a CV waiter
       waiter.value.cv_mu = Pointer(MU).null
     end
+
+    # Returns true if *fiber* is currently in the waiters list.
+    def waiting?(fiber : Fiber) : Bool
+      found = false
+
+      unless @waiters.empty?
+        acquire_spinlock
+
+        @waiters.each do |waiter|
+          if waiter.value.@fiber == fiber
+            found = true
+            break
+          end
+        end
+
+        release_spinlock
+      end
+
+      found
+    end
   end
 end
