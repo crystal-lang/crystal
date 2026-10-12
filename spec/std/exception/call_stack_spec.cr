@@ -49,42 +49,58 @@ describe "Backtrace" do
   it "resolves the line of the call, not of the return address", tags: %w[slow] do
     with_tempfile("source_file") do |source_file|
       File.write source_file, <<-CRYSTAL
-        def callee1(x)
-          raise "boom" if x > 1
-          x
-        end
-
-        def callee2
-          callee1(2)
-          puts "after"
-        end
-
-        def callee3
+        def always_raise
           raise "boom"
         end
 
-        def callee4
-          callee3
+        def maybe_raise(really)
+          raise "boom" if really
         end
 
-        ARGV.empty? ? callee2 : callee4
+        def last_statement_noreturn
+          puts "A"
+          always_raise
+        end
+
+        def last_statement
+          puts "B"
+          maybe_raise(true)
+        end
+
+        def not_last_statement
+          maybe_raise(true)
+          puts "C"
+        end
+
+        case ARGV[0]?
+        when "A" then last_statement_noreturn
+        when "B" then last_statement
+        else          not_last_statement
+        end
         CRYSTAL
 
       compile_file(source_file) do |executable_file|
         file = Regex.escape(source_file)
         column = {% if flag?(:msvc) %} "" {% else %} ":\\d+" {% end %}
+        backtrace = ->(arg : String?) do
+          error = IO::Memory.new
+          Process.run(executable_file, arg ? [arg] : [] of String, error: error)
+          error.to_s
+        end
 
-        error = IO::Memory.new
-        Process.run(executable_file, error: error)
-        error.to_s.should match(/^  from #{file}:2#{column} in 'callee1'$/m)
-        # the instruction after the call belongs to line 8
-        error.to_s.should match(/^  from #{file}:7#{column} in 'callee2'$/m)
+        # the call is the last instruction, so the return address is the
+        # first instruction of the next method
+        error = backtrace.call("A")
+        error.should match(/^  from #{file}:2#{column} in 'always_raise'$/m)
+        error.should match(/^  from #{file}:11#{column} in 'last_statement_noreturn'$/m)
 
-        error = IO::Memory.new
-        Process.run(executable_file, ["x"], error: error)
-        # the calls are the last instructions of `NoReturn` methods
-        error.to_s.should match(/^  from #{file}:12#{column} in 'callee3'$/m)
-        error.to_s.should match(/^  from #{file}:16#{column} in 'callee4'$/m)
+        error = backtrace.call("B")
+        error.should match(/^  from #{file}:6#{column} in 'maybe_raise'$/m)
+        error.should match(/^  from #{file}:16#{column} in 'last_statement'$/m)
+
+        # the instruction after the call belongs to the next line
+        error = backtrace.call(nil)
+        error.should match(/^  from #{file}:20#{column} in 'not_last_statement'$/m)
       end
     end
   end

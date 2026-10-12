@@ -72,12 +72,7 @@ struct Exception::CallStack
     end)
 
     if cache_miss
-      # The IP of a caller frame is its return address: the instruction
-      # *after* the call. It may belong to another line, or even to the next
-      # function when the call is the last instruction (e.g. a call to a
-      # `NoReturn` method). We look up the address of the call instruction
-      # instead.
-      pc = decode_address(ip) &- 1
+      pc = decode_address(call_address(ip))
       file, line_number, column_number = decode_line_number(pc)
 
       unless @@skip.includes?(file)
@@ -90,6 +85,19 @@ struct Exception::CallStack
     end
 
     line
+  end
+
+  # The IP of a caller frame is its return address: the instruction *after*
+  # the call. It may belong to the next line, or even to the next function
+  # when the call is the last instruction (e.g. a call to a `NoReturn`
+  # method), so we look up the call instruction before it instead. The
+  # interpreter's frames aren't addresses.
+  private def self.call_address(ip)
+    {% if flag?(:interpreted) %}
+      ip
+    {% else %}
+      Pointer(Void).new(ip.address &- 1)
+    {% end %}
   end
 
   private def self.format_backtrace_frame(file, line_number, column_number, function, ip) : String
