@@ -2,6 +2,7 @@ require "./mu"
 require "./type"
 require "./errors"
 require "./lockable"
+require "./deadlockable"
 
 module Sync
   # A mutual exclusion lock to protect critical sections.
@@ -16,6 +17,7 @@ module Sync
   # NOTE: Consider `Exclusive(T)` to protect a value `T` with a `Mutex`.
   class Mutex
     include Lockable
+    include Deadlockable
 
     def initialize(@type : Type = :checked)
       @counter = 0
@@ -60,7 +62,7 @@ module Sync
       unless @type.unchecked?
         unless owns_lock?
           message =
-            if @locked_by
+            if locked_by?
               "Can't unlock Sync::Mutex locked by another fiber"
             else
               "Can't unlock Sync::Mutex that isn't locked"
@@ -93,19 +95,6 @@ module Sync
       unless @type.unchecked?
         set_owner(counter)
       end
-    end
-
-    protected def owns_lock? : Bool
-      @locked_by == Fiber.current
-    end
-
-    private def set_owner(counter = 1) : Nil
-      @locked_by = Fiber.current
-      @counter = counter if @type.reentrant?
-    end
-
-    private def unset_owner : Nil
-      @locked_by = nil
     end
 
     # :nodoc:

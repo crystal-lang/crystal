@@ -2,6 +2,7 @@ require "./mu"
 require "./type"
 require "./errors"
 require "./lockable"
+require "./deadlockable"
 
 module Sync
   # A multiple readers and exclusive writer lock to protect critical sections.
@@ -22,6 +23,7 @@ module Sync
   # NOTE: Consider `Shared(T)` to protect a value `T` with a `RWLock`.
   class RWLock
     include Lockable
+    include Deadlockable
 
     def initialize(@type : Type = :checked)
       @counter = 0
@@ -90,10 +92,7 @@ module Sync
     # when acquired, otherwise returns false immediately.
     def try_lock_write? : Bool
       if @mu.try_lock?
-        unless @type.unchecked?
-          @locked_by = Fiber.current
-          @counter = 1 if @type.reentrant?
-        end
+        set_owner unless @type.unchecked?
         true
       elsif @type.reentrant? && owns_lock?
         @counter += 1
@@ -130,7 +129,7 @@ module Sync
       unless @type.unchecked?
         unless owns_lock?
           message =
-            if @locked_by
+            if locked_by?
               "Can't unlock Sync::RWLock locked by another fiber"
             else
               "Can't unlock Sync::RWLock that isn't locked"
@@ -163,19 +162,6 @@ module Sync
       unless @type.unchecked? || @mu.rheld?
         set_owner(counter)
       end
-    end
-
-    protected def owns_lock? : Bool
-      @locked_by == Fiber.current
-    end
-
-    private def set_owner(counter = 1) : Nil
-      @locked_by = Fiber.current
-      @counter = counter if @type.reentrant?
-    end
-
-    private def unset_owner : Nil
-      @locked_by = nil
     end
 
     # :nodoc:
