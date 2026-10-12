@@ -12,7 +12,7 @@ module Crystal
 
     def lock(&)
       unless @mu.try_lock?
-        raise Sync::Error::Deadlock.new if deadlock?
+        raise Sync::Error::Deadlock.new("Can't lock recursively") if deadlock?
         @mu.lock_slow
       end
 

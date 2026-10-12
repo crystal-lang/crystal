@@ -415,4 +415,12 @@ class Fiber
   def exec_recursive_clone_hash
     @exec_recursive_clone_hash ||= Hash(UInt64, UInt64).new
   end
+
+  {% unless flag?(:with_deadlocks) %}
+    # :nodoc:
+    #
+    # Locks that the current fiber currently holds.
+    # See `Sync::Deadlockable` for details.
+    property? owned_locks : Nil | Sync::Deadlockable | Array(Sync::Deadlockable)
+  {% end %}
 end
