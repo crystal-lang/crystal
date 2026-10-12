@@ -159,7 +159,14 @@ class HTTP::Request
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
+    if @body.nil? && @method.in?("POST", "PUT") && !headers.has_key?("Content-Length") && !headers.has_key?("Transfer-Encoding")
+      # A user agent should send Content-Length for a method that defines a
+      # meaning for content, even when it's empty (RFC 9110, section 8.6)
+      headers.serialize(io)
+      io << "Content-Length: 0\r\n\r\n"
+    else
+      HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
+    end
   end
 
   # :nodoc:
