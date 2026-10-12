@@ -261,6 +261,30 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "does dispatch on a virtual struct narrowed to a generic struct" do
+      interpret(<<-CRYSTAL).should eq(1)
+        abstract struct Foo
+        end
+
+        struct Bar(T) < Foo
+          def initialize(@value : T)
+          end
+
+          def value
+            @value
+          end
+        end
+
+        foo = 1 > 0 ? Bar.new(1).as(Foo) : Bar.new('a')
+        if foo.is_a?(Bar)
+          x = foo.value
+          x.is_a?(Int32) ? x : 2
+        else
+          0
+        end
+      CRYSTAL
+    end
+
     it "does dispatch on one argument with block" do
       interpret(<<-CRYSTAL).should eq(42)
         def foo(x : Char)
