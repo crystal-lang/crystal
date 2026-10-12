@@ -188,9 +188,7 @@ end
 
   {% if flag?(:interpreted) %}
     # the interpreter doesn't call Crystal.main(&)
-    fun __crystal_init_runtime : Nil
-      Crystal.init_runtime
-    end
+    Crystal.init_runtime
   {% elsif flag?(:win32) %}
     require "./system/win32/wmain"
   {% elsif flag?(:wasi) %}
