@@ -59,11 +59,12 @@ class Crystal::Repl::Compiler
         branch_unless 0, node: nil
         cond_jump_location = patch_location
 
-        # We need to upcast from type_needing_cast to compatible_type
+        # Take the value out, as it might be smaller than the union, and upcast it
+        remove_from_union(aligned_sizeof_type(from), aligned_sizeof_type(type_needing_cast), node: nil)
         upcast(node, type_needing_cast, compatible_type)
 
-        # Then we need to set the correct union type id
-        put_union_type_id(type_id(compatible_type), aligned_sizeof_type(to), node: node)
+        # Then put it in the target union
+        put_in_union(type_id(compatible_type), aligned_sizeof_type(compatible_type), aligned_sizeof_type(to), node: nil)
 
         # Then jump to the end
         jump 0, node: nil
