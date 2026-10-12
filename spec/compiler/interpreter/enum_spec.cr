@@ -27,5 +27,19 @@ describe Crystal::Repl::Interpreter do
         blue.value
       CRYSTAL
     end
+
+    it "does enum value of a 128-bit enum inside its method" do
+      interpret(<<-CRYSTAL).should eq(5)
+        enum Color : UInt128
+          Red
+
+          def int_value
+            value
+          end
+        end
+
+        Color.new(5_u128).int_value.to_i32!
+      CRYSTAL
+    end
   end
 end
