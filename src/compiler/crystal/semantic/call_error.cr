@@ -534,9 +534,8 @@ class Crystal::Call
       if restriction
         expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
 
-        # A union of types that share a parent is looked up as that parent,
-        # but the restriction still only accepts the union's members
-        if restriction.is_a?(Union) && expected_type && !expected_type.is_a?(UnionType)
+        # mismatch restriction applies on the union of descendant types, not the virtualized type
+        if restriction.is_a?(Union) && expected_type.is_a?(VirtualType | VirtualMetaclassType)
           expected_type = restriction
         end
       end
