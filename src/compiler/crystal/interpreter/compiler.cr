@@ -2514,6 +2514,10 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     if obj.type == var_type
       pointerof_local_var_or_closured_var(var, node: obj)
+    elsif needs_tuple_value_cast?(var_type, obj.type.remove_indirection)
+      # Pass a copy cast to the narrowed tuple type, which is laid out
+      # differently. Tuples are immutable, so the method can't tell.
+      assign_to_temporary_and_return_pointer(obj)
     elsif var_type.is_a?(MixedUnionType) && obj.type.remove_indirection.is_a?(MixedUnionType)
       # The narrowed type is a union too, and a union starts with the type_id
       # the outer one already holds, so the pointer is the same.
