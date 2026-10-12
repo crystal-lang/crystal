@@ -1682,6 +1682,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     if obj_type == to_type
       node.obj.accept self
 
+      # The cast always succeeds, but its type is still nilable
+      upcast node.obj, obj_type, node.type if @wants_value
+
       return false
     end
 
