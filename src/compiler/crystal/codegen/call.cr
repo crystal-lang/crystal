@@ -64,6 +64,13 @@ class Crystal::CodeGenVisitor
       if obj.type.passed_as_self? || obj.target_const
         request_value(obj)
       end
+    when Var
+      # Do not request the self argument for non-generic metaclasses. This
+      # avoids loading its type ID and, in the case of module metaclasses,
+      # possibly allocating a new ID.
+      if obj.type.passed_as_self? || obj.name != "self"
+        request_value(obj)
+      end
     when ASTNode
       # Always accept obj: even if it's not passed as self this might
       # involve intermediate calls with side effects.
