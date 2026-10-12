@@ -448,18 +448,18 @@ def Union.from_json_object_key?(key : String)
   {% begin %}
     # String must come last because any key can be parsed into a String.
     # So, we give a chance first to other types in the union to be parsed.
-    {% string_type = T.find { |type| type == ::String } %}
+    {% has_string_type = T.includes?(::String) %}
 
     {% for type in T %}
-      {% unless type == string_type %}
+      {% unless type == ::String %}
         if result = {{ type }}.from_json_object_key?(key)
           return result
         end
       {% end %}
     {% end %}
 
-    {% if string_type %}
-      if result = {{ string_type }}.from_json_object_key?(key)
+    {% if has_string_type %}
+      if result = String.from_json_object_key?(key)
         return result
       end
     {% end %}
