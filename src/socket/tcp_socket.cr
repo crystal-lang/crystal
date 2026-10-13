@@ -26,8 +26,8 @@ class TCPSocket < IPSocket
     #
     # You may limit the DNS resolution time with `dns_timeout` and limit the
     # connection time to the remote server with `connect_timeout`. Both values
-    # must be in seconds (integers or floats).
-    def initialize(host : String, port, dns_timeout = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+    # should be `Time::Span`.
+    def initialize(host : String, port, dns_timeout : Time::Span? = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
       Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
         super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
         connect(addrinfo, timeout: connect_timeout) do |error|
@@ -37,6 +37,12 @@ class TCPSocket < IPSocket
       end
     end
   {% end %}
+
+  # :ditto:
+  @[Deprecated("Use `.new(String, _, Time::Span?)` instead.")]
+  def initialize(host : String, port, dns_timeout : Number, connect_timeout = nil, blocking = nil)
+    initialize(host, port, dns_timeout.seconds, connect_timeout, blocking: blocking)
+  end
 
   protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP)
     super family, type, protocol
