@@ -38,6 +38,12 @@ class Fiber
         @main_thread = Thread.current
       end
 
+      # The main thread of the process. Its scheduler must never be migrated
+      # to another thread (see `Fiber::ExecutionContext::Monitor`).
+      protected def main_thread : Thread
+        @main_thread
+      end
+
       protected def checkout(scheduler)
         thread = nil
 

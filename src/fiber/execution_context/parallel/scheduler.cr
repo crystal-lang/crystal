@@ -29,6 +29,11 @@ module Fiber::ExecutionContext
       protected property! thread : Thread
       protected property main_fiber : Fiber
 
+      # :nodoc:
+      protected def thread? : Thread?
+        @thread
+      end
+
       @global_queue : GlobalQueue
       @runnables : Runnables(256)
       @event_loop : Crystal::EventLoop
