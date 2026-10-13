@@ -40,7 +40,7 @@ class Crystal::Program
     end
 
     @progress_tracker.stage("Semantic (cleanup)") do
-      cleanup_types
+      cleanup_types if cleanup
       cleanup_files
     end
 
