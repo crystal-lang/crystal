@@ -97,7 +97,8 @@ module Crystal
           rescue ex
             1
           end
-        LibC.exit(exit(status , ex))
+        status = exit(status , ex) rescue 1
+        LibC.exit(status)
       })
       Fiber::ExecutionContext.thread_pool.enter_main_thread_loop(main_user_code_fiber)
 
