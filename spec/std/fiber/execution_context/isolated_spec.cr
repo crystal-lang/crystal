@@ -14,7 +14,7 @@ describe Fiber::ExecutionContext::Isolated do
       20.times do
         client.write "ping".to_slice
         client.read_fully(buf)
-        replies += 1 if String.new(buf) == "pong"
+        replies += 1 if buf == "pong".to_slice
       end
     end
 
