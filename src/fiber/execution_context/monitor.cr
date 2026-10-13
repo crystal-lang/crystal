@@ -2,13 +2,12 @@ module Fiber::ExecutionContext
   # :nodoc:
   class Monitor
     # the monitor thread ticks every 10ms when the process is active; when the
-    # process becomes idle, the interval doubles until it reaches 1s where the
-    # monitor thread goes to sleep, after ~1.27s.
-    DEFAULT_EVERY = 10.milliseconds
-    MAXIMUM_EVERY = 1.second
-
+    # process becomes idle, the interval doubles until it reaches the maximum
+    # interval where the monitor thread goes to sleep.
+    DEFAULT_EVERY              = 10.milliseconds
     INCREASE_PARALLELISM_EVERY = 100.milliseconds
     COLLECT_STACKS_EVERY       = 5.seconds
+    MAXIMUM_EVERY              = COLLECT_STACKS_EVERY * 2
 
     @thread : Thread?
 
@@ -61,11 +60,14 @@ module Fiber::ExecutionContext
     # usage can lead to keep memory allocated when it could be released to the
     # OS.
     private def run_loop : Nil
-      every do |now|
+      every do |now, last_iteration|
         transfer_schedulers_blocked_on_syscall
         increase_parallelism(now)
-        collect_stacks(now)
         @busy ||= !system_idle?
+
+        # reset last iteration flag if we notice any activity
+        last_iteration = false if @busy
+        collect_stacks(now, last_iteration)
       end
     end
 
@@ -74,29 +76,34 @@ module Fiber::ExecutionContext
     # block.
     private def every(&)
       every = @every
-      # elapsed = Time::Span.zero
       start = Crystal::System::Time.instant
+      last_iteration = false
 
       loop do
         @mutex.synchronize do
           if @busy || @signaled.lazy_get
             # noticed activity or awoken: reset to default every
             every = @every
+            last_iteration = false
           else
             # idle and not signaled: double the current delay
             every *= 2
           end
 
-          if every > MAXIMUM_EVERY
+          if last_iteration
             # we reached the maximum interval: go to sleep
-            Crystal.trace :sched, "sysmon.sleep"
+            Crystal.trace :thread, "sysmon.sleep", busy: @busy, signaled: @signaled.lazy_get
             @condition.wait(@mutex)
+            last_iteration = false
           else
             # regular interval or drifting away; calculate remaining time for
             # more steady wakeups (minimize exponential delays)
             timeout = (start + every - Crystal::System::Time.instant).clamp(Time::Span.zero..)
-            Crystal.trace :sched, "sysmon.wait", timeout: timeout
-            @condition.wait(@mutex, timeout) { }
+            Crystal.trace :thread, "sysmon.wait", timeout: timeout.to_nanoseconds, busy: @busy, signaled: @signaled.lazy_get
+
+            @condition.wait(@mutex, timeout) do
+              last_iteration = (every * 2) > MAXIMUM_EVERY
+            end
           end
 
           # reset to default every after wakeup
@@ -108,7 +115,7 @@ module Fiber::ExecutionContext
 
         @busy = false
         start = Crystal::System::Time.instant
-        yield(start)
+        yield(start, last_iteration)
       rescue exception
         Crystal.print_error_buffered("BUG: %s#every crashed", self.class.name, exception: exception)
       end
@@ -199,12 +206,16 @@ module Fiber::ExecutionContext
     # Iterates each execution context and collects unused fiber stacks.
     #
     # OPTIMIZE: should maybe happen during GC collections (?)
-    private def collect_stacks(now)
-      return unless @collect_stacks_next <= now
+    private def collect_stacks(now, last_iteration)
+      return unless @collect_stacks_next <= now || last_iteration
       @collect_stacks_next = now + COLLECT_STACKS_EVERY
 
-      Crystal.trace :sched, "collect_stacks" do
-        ExecutionContext.each(&.stack_pool?.try(&.collect))
+      Crystal.trace :thread, "collect_stacks" do
+        if last_iteration
+          ExecutionContext.each(&.stack_pool?.try(&.clear))
+        else
+          ExecutionContext.each(&.stack_pool?.try(&.collect))
+        end
       end
     end
   end
