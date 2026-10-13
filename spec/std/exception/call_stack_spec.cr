@@ -28,11 +28,18 @@ describe "Backtrace" do
     output.should_not contain("src/raise.cr")
   end
 
-  it "prints file line:column", tags: %w[slow] do
+  it "prints file line:column for the call instruction (followed by no return)", tags: %w[slow] do
     source_file = datapath("backtrace_sample_noreturn")
     _, _, error = compile_and_run_file(source_file)
     error.should match(/backtrace_sample_noreturn:2(:3)? in 'show'/)
     error.should match(/backtrace_sample_noreturn:7(:3)? in 'run'/)
+  end
+
+  it "prints file line:column for the call instruction (not last statement)", tags: %w[slow] do
+    source_file = datapath("backtrace_sample_notlast")
+    _, _, error = compile_and_run_file(source_file)
+    error.should match(/backtrace_sample_notlast:2(:3)? in 'maybe_raise'/)
+    error.should match(/backtrace_sample_notlast:6(:3)? in 'not_last_statement'/)
   end
 
   it "doesn't relativize paths outside of current dir (#10169)", tags: %w[slow] do
