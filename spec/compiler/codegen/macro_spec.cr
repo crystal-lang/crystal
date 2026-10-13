@@ -1903,6 +1903,159 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  describe "constants of a type that does not declare them itself" do
+    # A virtual type answers for its base type, and a generic instance for its
+    # generic type.
+    virtual = <<-CRYSTAL
+      class Base
+        FOO = 1
+      end
+
+      class Sub < Base
+      end
+
+      class Holder
+        def initialize(@value : Base)
+        end
+
+        def value
+          @value
+        end
+      end
+      CRYSTAL
+
+    generic = <<-CRYSTAL
+      class Crate(T)
+        BAR = 2
+
+        def initialize(@value : T)
+        end
+      end
+      CRYSTAL
+
+    it "responds to has_constant? on a virtual type" do
+      run(<<-CRYSTAL).to_b.should be_true
+        #{virtual}
+        def probe(x : T) forall T
+          {{ T.has_constant?("FOO") }}
+        end
+
+        probe(Holder.new(Sub.new).value)
+        CRYSTAL
+    end
+
+    it "gets a constant through a virtual type" do
+      run(<<-CRYSTAL).to_i.should eq(1)
+        #{virtual}
+        def probe(x : T) forall T
+          {{ T.constant("FOO") }}
+        end
+
+        probe(Holder.new(Sub.new).value)
+        CRYSTAL
+    end
+
+    it "responds to has_constant? on a generic instance" do
+      run(<<-CRYSTAL).to_b.should be_true
+        #{generic}
+        def probe(x : T) forall T
+          {{ T.has_constant?("BAR") }}
+        end
+
+        probe(Crate.new(1))
+        CRYSTAL
+    end
+
+    it "gets a constant through a generic instance" do
+      run(<<-CRYSTAL).to_i.should eq(2)
+        #{generic}
+        def probe(x : T) forall T
+          {{ T.constant("BAR") }}
+        end
+
+        probe(Crate.new(1))
+        CRYSTAL
+    end
+
+    it "lists the constants of a generic instance" do
+      run(<<-CRYSTAL).to_i.should eq(1)
+        #{generic}
+        def probe(x : T) forall T
+          {{ T.constants.size }}
+        end
+
+        probe(Crate.new(1))
+        CRYSTAL
+    end
+
+    # `Crate(Int32)+` is virtual over a generic instance, so it only reaches
+    # `Crate` if it is devirtualized first and then resolved to its generic.
+    it "gets a constant through a virtual type over a generic instance" do
+      run(<<-CRYSTAL).to_i.should eq(2)
+        #{generic}
+        class IntCrate < Crate(Int32)
+          def initialize
+            super(1)
+          end
+        end
+
+        class Holder(X)
+          def initialize(@value : X)
+          end
+
+          def value
+            @value
+          end
+        end
+
+        def probe(x : T) forall T
+          {{ T.constant("BAR") }}
+        end
+
+        probe(Holder(Crate(Int32)).new(IntCrate.new).value)
+        CRYSTAL
+    end
+
+    it "gets a constant through a generic module instance" do
+      run(<<-CRYSTAL).to_i.should eq(3)
+        module Gen(T)
+          GEN = 3
+        end
+
+        class Impl
+          include Gen(Int32)
+        end
+
+        {% for ancestor in Impl.ancestors %}
+          {% if ancestor.name(generic_args: false) == "Gen" %}
+            {{ ancestor.constant("GEN") }}
+          {% end %}
+        {% end %}
+        CRYSTAL
+    end
+
+    it "answers has_constant? on a virtual metaclass" do
+      run(<<-CRYSTAL).to_b.should be_false
+        #{virtual}
+        def probe(x : T) forall T
+          {{ T.has_constant?("FOO") }}
+        end
+
+        probe(Holder.new(Sub.new).value.class)
+        CRYSTAL
+    end
+
+    it "answers has_constant? on a union, which has no constants" do
+      run(<<-CRYSTAL).to_b.should be_false
+        def probe(x : T) forall T
+          {{ T.has_constant?("FOO") }}
+        end
+
+        probe(1 || 'a')
+        CRYSTAL
+    end
+  end
+
   it "does block unpacking inside macro expression (#13707)" do
     run(<<-CRYSTAL).to_i.should eq(10)
       {% begin %}
