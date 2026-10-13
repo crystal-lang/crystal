@@ -268,7 +268,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
         errno = Crystal::System::Socket.system_error(socket.fd)
         return if errno.none?
       else
-        return ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_os_error("connect", errno)
       end
     end
   end

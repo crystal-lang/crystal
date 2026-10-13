@@ -40,10 +40,10 @@ end
 
 private def protocol_pair(&)
   IO::Stapled.pipe do |io1, io2|
-    pr1 = HTTP::WebSocket::Protocol.new(io1)
-    pr2 = HTTP::WebSocket::Protocol.new(io2)
+    client = HTTP::WebSocket::Protocol.new(io1, masked: true)
+    server = HTTP::WebSocket::Protocol.new(io2)
 
-    yield pr1, pr2
+    yield client, server
   end
 end
 
@@ -249,6 +249,22 @@ describe HTTP::WebSocket do
     it "rejects invalid packets" do
       protocol_pair do |a, b|
         a.send Bytes.empty, :ping, :none
+
+        ws = HTTP::WebSocket.new(b)
+        ws.receive?.should be_nil
+        ws.closed?.should be_true
+
+        info = a.receive(Bytes.empty)
+        info.opcode.should eq HTTP::WebSocket::Protocol::Opcode::CLOSE
+      end
+    end
+  end
+
+  describe "#receive" do
+    it "rejects mixed opcode continuation" do
+      protocol_pair do |a, b|
+        a.send "Foo".to_slice, :text, :none
+        a.send "Bar".to_slice, :binary
 
         ws = HTTP::WebSocket.new(b)
         ws.receive?.should be_nil

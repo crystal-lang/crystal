@@ -11,6 +11,7 @@ lib LibC
   EV_ENABLE  = 0x0004_u16
   EV_ONESHOT = 0x0010_u32
   EV_CLEAR   = 0x0020_u32
+  EV_RECEIPT = 0x0040_u16
   EV_EOF     = 0x8000_u32
   EV_ERROR   = 0x4000_u32
 

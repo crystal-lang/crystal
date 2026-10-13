@@ -336,7 +336,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
         errno = Crystal::System::Socket.system_error(socket.fd)
         return if errno.none?
       else
-        return ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_os_error("connect", errno)
       end
     end
   end
@@ -678,8 +678,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # from the system event's user data.
   private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
+  @[Flags]
+  enum RegisteredEvents
+    READ
+    WRITE
+  end
+
   # Add *fd* to the polling system, setting *index* as user data.
-  protected abstract def system_add(fd : Int32, index : Arena::Index) : Nil
+  protected abstract def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #
