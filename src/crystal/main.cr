@@ -137,7 +137,7 @@ module Crystal
   def self.exit(status : Int32, exception : Exception?) : Int32
     status = Crystal::AtExitHandlers.run status, exception
 
-    if exception
+    if exception && !STDERR.closed?
       STDERR.print "Unhandled exception: "
       exception.inspect_with_backtrace(STDERR)
     end
