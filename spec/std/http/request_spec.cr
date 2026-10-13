@@ -202,11 +202,11 @@ module HTTP
         req.content_length.should be_nil
         String.build do |io|
           req.to_io(io)
-        end.should eq "PATCH / HTTP/1.1\r\n\r\n"
+        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
       end
 
-      it "serializes POST and PUT without body with Content-Length: 0" do
-        {"POST", "PUT"}.each do |method|
+      it "serializes POST, PUT and PATCH without body with Content-Length: 0" do
+        {"POST", "PUT", "PATCH"}.each do |method|
           String.build do |io|
             Request.new(method, "/").to_io(io)
           end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
