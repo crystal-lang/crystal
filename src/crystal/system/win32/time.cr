@@ -26,6 +26,11 @@ module Crystal::System::Time
     {% end %}
   end
 
+  def self.realtime_coarse : {Int64, Int32}
+    LibC.GetSystemTimeAsFileTime(out filetime)
+    filetime_to_seconds_and_nanoseconds(filetime)
+  end
+
   def self.filetime_to_seconds_and_nanoseconds(filetime) : {Int64, Int32}
     since_epoch = (filetime.dwHighDateTime.to_u64 << 32) | filetime.dwLowDateTime.to_u64
 
