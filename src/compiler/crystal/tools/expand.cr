@@ -171,8 +171,29 @@ module Crystal
   class ExpandTransformer < Transformer
     property? expanded = false
     getter macro_calls = [] of Call
+    @deleted = Set(UInt64).new
+
+    # An annotation that the macro call after it removes through
+    # `Call#delete_annotation` belongs to that macro, which puts it where it
+    # chooses, so it is left out of the call's expansion. The call comes after
+    # its annotations, so it has been visited by the time they are filtered.
+    def transform(node : Expressions)
+      result = super
+      if result.is_a?(Expressions)
+        result.expressions.reject! { |exp| deleted?(exp) }
+        result
+      else
+        deleted?(result) ? Nop.new : result
+      end
+    end
+
+    private def deleted?(node)
+      node.is_a?(Annotation) && @deleted.includes?(node.object_id)
+    end
 
     def transform(node : Call)
+      node.deleted_annotations.try &.each { |ann| @deleted << ann.object_id }
+
       if expanded = node.expanded
         self.expanded = true
         macro_calls << node
