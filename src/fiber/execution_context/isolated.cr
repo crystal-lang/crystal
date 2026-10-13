@@ -86,6 +86,11 @@ module Fiber::ExecutionContext
     end
 
     # :nodoc:
+    protected def thread? : Thread?
+      @thread
+    end
+
+    # :nodoc:
     def execution_context : Isolated
       self
     end
