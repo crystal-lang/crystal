@@ -202,6 +202,7 @@ class Fiber
         current_fiber = thread.current_fiber
 
         GC.lock_read
+        GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack.bottom)
         thread.current_fiber = fiber
         Fiber.swapcontext(pointerof(current_fiber.@context), pointerof(fiber.@context))
         GC.unlock_read
