@@ -69,16 +69,16 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   # Creates a timeout event (timeout action of select expression).
   def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
-    timeout_event = nil.as(Crystal::EventLoop::LibEvent::Event?)
-    timeout_event = event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      f = data.as(Fiber)
-      if select_action = timeout_event.try(&.timeout_select_action)
+    data = Crystal::EventLoop::LibEvent::TimeoutData.new(fiber)
+    event_base.new_event(-1, LibEvent2::EventFlags::None, data) do |s, flags, data|
+      timeout_data = data.as(Crystal::EventLoop::LibEvent::TimeoutData)
+      if select_action = timeout_data.timeout_select_action
         if select_action.time_expired?
           {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
-            event_loop.callback_enqueue(f)
+            event_loop.callback_enqueue(timeout_data.fiber)
           {% else %}
-            f.enqueue
+            timeout_data.fiber.enqueue
           {% end %}
         end
       end
