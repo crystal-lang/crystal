@@ -455,6 +455,8 @@ describe Channel do
             end
           end
 
+          ctx.scale_up(4)
+
           select
           when ex = result.receive
             raise ex
