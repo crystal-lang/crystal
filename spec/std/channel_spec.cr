@@ -414,6 +414,57 @@ describe Channel do
           m.should be_nil
         end
       end
+
+      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        it "thread safety" do
+          ctx = Fiber::ExecutionContext::Parallel.new("workers", 4)
+
+          received = Atomic(Int64).new(0)
+          timeouts = Atomic(Int64).new(0)
+          errors = Atomic(Int64).new(0)
+          result = Channel(Exception).new
+          running = true
+
+          200.times do
+            ch = Channel(Int32).new
+
+            ctx.spawn do
+              while running
+                sleep (rand(1000) + 500).nanoseconds
+                select
+                when ch.send(1)
+                when timeout(1.microsecond)
+                end
+              end
+            ensure
+              ch.close
+            end
+
+            ctx.spawn do
+              while running
+                begin
+                  select
+                  when v = ch.receive?
+                    break if v.nil?
+                  when timeout(1.microsecond)
+                  end
+                rescue ex
+                  result.send(ex)
+                end
+              end
+            end
+          end
+
+          select
+          when ex = result.receive
+            raise ex
+          when timeout 100.milliseconds
+            # success
+          end
+        ensure
+          running = false
+        end
+      {% end %}
     end
   end
 
