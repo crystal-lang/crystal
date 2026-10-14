@@ -11,6 +11,7 @@ struct Crystal::EventLoop::IoUring::Event
   getter! fiber : Fiber
   property! res : Int32
   property! wake_at : Time::Instant?
+  property timeout_select_action : Channel::TimeoutAction?
 
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   property? timed_out : Bool = false

@@ -9,6 +9,8 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   class Event
     include Crystal::EventLoop::Event
 
+    property timeout_select_action : Channel::TimeoutAction?
+
     VERSION = String.new(LibEvent2.event_get_version)
 
     def self.callback(&block : Int32, LibEvent2::EventFlags, Void* ->)
@@ -19,7 +21,8 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       @freed = false
     end
 
-    def add(timeout : Time::Span) : Nil
+    def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
+      @timeout_select_action = timeout_select_action
       timeval = LibC::Timeval.new(
         tv_sec: LibC::TimeT.new(timeout.to_seconds),
         tv_usec: timeout.nanoseconds // 1_000
