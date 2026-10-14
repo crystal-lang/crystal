@@ -212,6 +212,14 @@ module HTTP
           end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
         end
       end
+
+      it "serializes POST and PUT without body with Content-Length: 0" do
+        {"POST", "PUT"}.each do |method|
+          String.build do |io|
+            Request.new(method, "/").to_io(io)
+          end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+        end
+      end
     end
 
     describe "#content_length=" do
