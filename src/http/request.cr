@@ -159,7 +159,7 @@ class HTTP::Request
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
+    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version, expecting_body: @method.in?("POST", "PUT"))
   end
 
   # :nodoc:
