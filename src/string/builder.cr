@@ -43,13 +43,13 @@ class String::Builder < IO
     count = slice.size
 
     increase_capacity_by count
-    slice.copy_to(@buffer + real_bytesize, count)
+    slice.copy_to(buffer + bytesize, count)
     @bytesize += count
   end
 
   def write_byte(byte : UInt8) : Nil
     increase_capacity_by 1
-    @buffer[real_bytesize] = byte
+    buffer[bytesize] = byte
 
     @bytesize += 1
 
@@ -102,7 +102,7 @@ class String::Builder < IO
     @finished = true
 
     real_bytesize = real_bytesize()
-    @buffer[real_bytesize] = 0_u8
+    buffer[bytesize] = 0_u8
     real_bytesize += 1
 
     # Try to reclaim some memory if capacity is bigger than what we need
