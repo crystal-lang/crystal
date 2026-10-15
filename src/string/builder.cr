@@ -43,13 +43,13 @@ class String::Builder < IO
     count = slice.size
 
     increase_capacity_by count
-    slice.copy_to(@buffer + real_bytesize, count)
+    slice.copy_to(buffer + bytesize, count)
     @bytesize += count
   end
 
   def write_byte(byte : UInt8) : Nil
     increase_capacity_by 1
-    @buffer[real_bytesize] = byte
+    buffer[bytesize] = byte
 
     @bytesize += 1
 
@@ -101,13 +101,12 @@ class String::Builder < IO
     raise "Can only invoke 'to_s' once on String::Builder" if @finished
     @finished = true
 
-    real_bytesize = real_bytesize()
-    @buffer[real_bytesize] = 0_u8
-    real_bytesize += 1
+    total_bytesize = total_bytesize()
+    buffer[bytesize] = 0_u8
 
     # Try to reclaim some memory if capacity is bigger than what we need
-    if @capacity > real_bytesize
-      resize_to_capacity(real_bytesize)
+    if @capacity > total_bytesize
+      resize_to_capacity(total_bytesize)
     end
 
     String.set_crystal_type_id(@buffer)
@@ -116,14 +115,14 @@ class String::Builder < IO
     str
   end
 
-  private def real_bytesize
-    @bytesize + String::HEADER_SIZE
+  private def total_bytesize
+    @bytesize + String::HEADER_SIZE + 1
   end
 
   private def increase_capacity_by(count)
-    raise IO::EOFError.new if count >= Int32::MAX - real_bytesize
+    raise IO::EOFError.new if count >= Int32::MAX - total_bytesize
 
-    new_bytesize = real_bytesize + count
+    new_bytesize = total_bytesize + count
     return if new_bytesize <= @capacity
 
     new_capacity = calculate_new_capacity(new_bytesize)
