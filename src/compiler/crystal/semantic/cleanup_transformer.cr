@@ -68,6 +68,8 @@ module Crystal
 
     # The current method we are processing
     @current_def : Def?
+    @visiting = [] of Def
+    @pending = ({} of Def => Set(Def)).compare_by_identity
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
@@ -592,6 +594,7 @@ module Crystal
         end
 
         current_def = @current_def
+        @visiting << current_def if current_def
 
         target_defs.each do |target_def|
           if @transformed.add?(target_def)
@@ -602,11 +605,23 @@ module Crystal
               @def_nest_count -= 1
               @current_def = current_def
             end
+          elsif current_def && !current_def.raises? && !target_def.raises? && @visiting.any? { |t| t.object_id == target_def.object_id }
+            # cycle detected: can't decide if target_def raises, yet
+            set = @pending[target_def] ||= Set(Def).new.compare_by_identity
+            @visiting.each { |t| set.add(t) }
           end
 
           # If the current call targets a method that raises, the method
           # where the call happens also raises.
           current_def.raises = true if current_def && target_def.raises?
+        end
+
+        if current_def
+          @visiting.pop
+
+          # propagate raises state of unresolved cycle to dependents
+          target_defs = @pending.delete(current_def)
+          target_defs.try(&.each { |target_def| target_def.raises = true }) if current_def.raises?
         end
 
         if node.target_defs.not_nil!.empty?
