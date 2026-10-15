@@ -2960,6 +2960,12 @@ describe "String" do
     end
   end
 
+  it "grows considering space for trailing zero byte" do
+    builder = String::Builder.new
+    65.times { builder << 'x' }
+    builder.capacity.should eq 128
+  end
+
   {% unless flag?(:without_iconv) %}
     describe "encode" do
       it "encodes" do
