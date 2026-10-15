@@ -418,6 +418,19 @@ describe "FileUtils" do
         end
       end
     end
+
+    it "deletes a symlink loop" do
+      with_tempfile("rm_r-loop") do |path|
+        test_with_string_and_path(path) do |arg|
+          Dir.mkdir(path)
+          link_path = File.join(path, "loop")
+          File.symlink(link_path, link_path)
+
+          FileUtils.rm_r(arg)
+          Dir.exists?(path).should be_false
+        end
+      end
+    end
   end
 
   describe ".rm_rf" do
