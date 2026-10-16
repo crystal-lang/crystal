@@ -462,7 +462,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       when .sleep?
         event.value.timed_out = true
       else
-        raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}\n")
+        raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}")
       end
 
       yield fiber
