@@ -298,35 +298,38 @@ describe "Semantic: exception" do
 
   it "marks method as raises, though recursive cycle (#17644)" do
     result = assert_type(<<-CRYSTAL) { int32 }
-      require "primitives"
-
       @[Raises]
       def foo
         -1
       end
 
-      def s3(n)
-        helper(n)
-        n == 0 ? foo : n
+      def foo1(first)
+        foo2 if first
+        foo4 if first
+        foo
       end
 
-      def helper(n)
-        s1(n + 1) if n > 100
+      def foo2
+        foo3
       end
 
-      def s2(n)
-        s3(n)
+      def foo3
+        foo1(false)
       end
 
-      def s1(n)
-        s2(n)
+      def foo4
+        foo2
       end
 
-      s3(1)
-      s1(0)
+      foo1(true)
+      foo2
+      foo3
+      foo4
       CRYSTAL
-    call = result.node.as(Expressions).expressions.last.as(Call)
-    call.target_defs.should_not(be_nil).first.raises?.should be_true
+    [-1, -2, -3, -4].each do |index|
+      call = result.node.as(Expressions).expressions[index].as(Call)
+      call.target_defs.should_not(be_nil).first.raises?.should be_true
+    end
   end
 
   it "marks proc literal as raises" do

@@ -69,7 +69,8 @@ module Crystal
     # The current method we are processing
     @current_def : Def?
     @visiting = [] of Def
-    @pending = ({} of Def => Set(Def)).compare_by_identity
+    @pending_callers = ({} of Def => Set(Def)).compare_by_identity
+    @pending_callees = ({} of Def => Def).compare_by_identity
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
@@ -605,10 +606,29 @@ module Crystal
               @def_nest_count -= 1
               @current_def = current_def
             end
-          elsif current_def && !current_def.raises? && !target_def.raises? && @visiting.any? { |t| t.object_id == target_def.object_id }
-            # cycle detected: can't decide if target_def raises, yet
-            set = @pending[target_def] ||= Set(Def).new.compare_by_identity
-            @visiting.each { |t| set.add(t) }
+
+            # propagate raises state of unresolved cycle to dependents
+            callers = @pending_callers.delete(target_def)
+            if target_def.raises?
+              callers.try &.each do |caller_def|
+                caller_def.raises = true
+                @pending_callees.delete(caller_def)
+              end
+            end
+          elsif current_def && !current_def.raises? && !target_def.raises?
+            if @visiting.any?(&.same?(target_def))
+              # cycle detected: can't decide if target_def raises, yet
+              callers = @pending_callers.put_if_absent(target_def) { Set(Def).new.compare_by_identity }
+              @visiting.each do |caller_def|
+                callers << caller_def
+                @pending_callees[caller_def] = target_def
+              end
+            elsif existing_target_def = @pending_callees[target_def]?
+              # no cycles here, but target_def is already part of a pending
+              # cycle: append this def to that same cycle
+              @pending_callers[existing_target_def] << current_def
+              @pending_callees[current_def] = existing_target_def
+            end
           end
 
           # If the current call targets a method that raises, the method
@@ -616,13 +636,7 @@ module Crystal
           current_def.raises = true if current_def && target_def.raises?
         end
 
-        if current_def
-          @visiting.pop
-
-          # propagate raises state of unresolved cycle to dependents
-          target_defs = @pending.delete(current_def)
-          target_defs.try(&.each { |target_def| target_def.raises = true }) if current_def.raises?
-        end
+        @visiting.pop if current_def
 
         if node.target_defs.not_nil!.empty?
           exps = [] of ASTNode
