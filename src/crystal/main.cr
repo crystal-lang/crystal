@@ -49,7 +49,6 @@ module Crystal
     end
   {% end %}
 
-  {% begin %}
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes runtime requirements (GC, ...)
@@ -77,13 +76,37 @@ module Crystal
   # Note that the above is really just an example, almost the
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
+  #
+  # @[Deprecated("Crystal.main(&) is unsafe since Crystal 1.23. Use Crystal.main(argc, argv) instead.")]
   def self.main(&block : ->)
-    {% unless flag?(:win32) %} init_stdio_closed {% end %}
-    {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
-
-    GC.init
     init_runtime
+    run_main(&block)
+  end
 
+  # :nodoc:
+  #
+  # Manually initializes parts of the corelib and stdlib that must be setup
+  # before we can execute main user code, that will initialize globals, runtime
+  # (kernel) then run the actual program.
+  def self.init_runtime : Nil
+    {% unless flag?(:interpreted) %}
+      {% unless flag?(:win32) %} init_stdio_closed {% end %}
+      {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
+      GC.init
+    {% end %}
+
+    Thread.init
+    Fiber.init
+    Thread.current # define main thread & main fiber
+    Crystal::Once.init
+
+    {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
+      Fiber::ExecutionContext.init
+    {% end %}
+  end
+
+  {% begin %}
+  private def self.run_main(&block : ->) : Int32
     {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
       # Run main user code in a fiber so the main program doesn't run on a
       # thread's stack. This avoids situations where thread B would pick and
@@ -118,23 +141,6 @@ module Crystal
   {% end %}
 
   # :nodoc:
-  #
-  # Manually initializes parts of the stdlib that must be setup before we can
-  # execute main user code, that will initialize globals, runtime (kernel) then
-  # run the actual program.
-  def self.init_runtime : Nil
-    Thread.init
-    Fiber.init
-    Thread.current # define main thread & main fiber
-
-    Crystal::Once.init
-
-    {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
-      Fiber::ExecutionContext.init
-    {% end %}
-  end
-
-  # :nodoc:
   def self.exit(status : Int32, exception : Exception?) : Int32
     status = Crystal::AtExitHandlers.run status, exception
 
@@ -157,8 +163,11 @@ module Crystal
 
   # Main method run by all Crystal programs at startup.
   #
-  # This setups up the GC, invokes your program, rescuing
-  # any handled exception, and then runs `at_exit` handlers.
+  # - Initializes runtime requirements (GC, ...)
+  # - Invokes the given *block*
+  # - Handles unhandled exceptions
+  # - Invokes `at_exit` handlers
+  # - Flushes `STDOUT` and `STDERR`
   #
   # This method is automatically invoked for you, so you
   # don't need to invoke it.
@@ -186,12 +195,20 @@ module Crystal
   # is not setup yet, so nothing that allocates memory
   # in Crystal (like `new` for classes) can be used.
   def self.main(argc : Int32, argv : UInt8**)
-    main do
-      main_user_code(argc, argv)
-    end
+    init_runtime
+    run_main_with_user_code(argc, argv)
   rescue ex
     Crystal::System.print_exception "Unhandled exception", ex
     1
+  end
+
+  # DO NOT MANUALLY INLINE: this must be a distinct method because run_main
+  # captures the block and silently closures the argc and argv variables,
+  # which silently initializes the GC before we call init_runtime (oh no).
+  private def self.run_main_with_user_code(argc : Int32, argv : UInt8**)
+    run_main do
+      main_user_code(argc, argv)
+    end
   end
 
   # Executes the main user code. This normally is executed
