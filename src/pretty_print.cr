@@ -185,6 +185,17 @@ class PrettyPrint
     end
   end
 
+  # :nodoc:
+  def instance_var(name : String, value) : Nil
+    group do
+      text name
+      nest do
+        breakable ""
+        value.pretty_print(self)
+      end
+    end
+  end
+
   # Outputs any buffered data.
   def flush : Nil
     @buffer.each do |data|
