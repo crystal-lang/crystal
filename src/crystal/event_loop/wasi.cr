@@ -34,7 +34,15 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
+    path.check_no_null_byte
+
+    fd = LibC.open(path, flags, permissions)
+    return Errno.value if fd == -1
+
+    # A descriptor from a WASI filesystem is blocking; there is no non-blocking
+    # mode to switch to, so the caller is told what is true rather than what was
+    # asked for.
+    {fd, true}
   end
 
   # TODO: LibWasi.fd_read
