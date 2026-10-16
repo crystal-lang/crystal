@@ -12,6 +12,9 @@ struct Crystal::EventLoop::IoUring::Event
   property! res : Int32
   property! wake_at : Time::Instant?
 
+  # True if an IO event has timed out (i.e. we're past `#wake_at`).
+  property? timed_out : Bool = false
+
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
 
