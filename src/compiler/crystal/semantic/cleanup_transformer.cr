@@ -626,7 +626,8 @@ module Crystal
             elsif existing_target_def = @pending_callees[target_def]?
               # no cycles here, but target_def is already part of a pending
               # cycle: append this def to that same cycle
-              @pending_callers[existing_target_def] << current_def
+              callers = @pending_callers.put_if_absent(existing_target_def) { Set(Def).new.compare_by_identity }
+              callers << current_def
               @pending_callees[current_def] = existing_target_def
             end
           end
