@@ -1,5 +1,7 @@
 require "c/fcntl"
-require "termios"
+{% unless flag?(:wasm) %}
+  require "termios"
+{% end %}
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
 {% end %}

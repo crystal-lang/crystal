@@ -34,7 +34,7 @@ module Crystal::System::FileDescriptor
     raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
   end
 
-  private def system_lock(blocking, exclusive)
+  private def system_lock(blocking : Bool, exclusive : Bool) : Nil
     raise NotImplementedError.new "Crystal::System::File#system_lock"
   end
 
