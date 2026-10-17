@@ -79,6 +79,20 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
+  it "#adjacent_to?" do
+    (10..100).adjacent_to?(1..10).should be_true
+    (10..100).adjacent_to?(1...10).should be_true
+    (10..100).adjacent_to?(1..9).should be_true
+    (10..100).adjacent_to?(1...9).should be_false
+    (10..100).adjacent_to?(100..200).should be_true
+    (10..100).adjacent_to?(101..200).should be_true
+    (10..100).adjacent_to?(99..200).should be_false
+    (10..100).adjacent_to?(102..200).should be_false
+    (10..100).adjacent_to?(11..100).should be_false
+    (10..100).adjacent_to?(20..30).should be_false
+    (10..100).adjacent_to?(200..300).should be_false
+  end
+
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
