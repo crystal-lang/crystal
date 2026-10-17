@@ -455,10 +455,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
       case event.value.type
       when .select_timeout?
-        next unless select_action = fiber.timeout_select_action
-        fiber.timeout_select_action = nil
+        next unless select_action = event.value.timeout_select_action
         next unless select_action.time_expired?
-        fiber.@timeout_event.as(FiberEvent).clear
+        event.value.wake_at = nil
       when .sleep?
         event.value.timed_out = true
       else
