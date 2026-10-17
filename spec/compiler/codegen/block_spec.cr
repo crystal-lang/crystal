@@ -1661,4 +1661,84 @@ describe "Code gen: block" do
       end
       CRYSTAL
   end
+
+  it "unpacks the tuples yielded by every target of a call whose receiver's type grows" do
+    run(<<-CRYSTAL).to_f64.should eq(6.5)
+      class Pair(K, V)
+        def initialize(@key : K, @value : V)
+        end
+
+        def each(& : {K, V} ->)
+          yield({@key, @value})
+        end
+      end
+
+      def pairs(&)
+        yield Pair.new(1, 2)
+        yield Pair.new(3, 4.5)
+      end
+
+      sum = 0.0
+      pairs do |pair|
+        pair.each do |key, value|
+          sum += value
+        end
+      end
+      sum
+      CRYSTAL
+  end
+
+  it "types the targets of a call with a block again if they used typeof, when the receiver's hierarchy grows" do
+    run(<<-CRYSTAL).to_i.should eq(16)
+      abstract class Foo
+      end
+
+      class Bar(T) < Foo
+        def initialize(@value : T)
+        end
+
+        def each(&)
+          x = uninitialized typeof(yield @value)
+          sizeof(typeof(x))
+        end
+      end
+
+      foo = Bar.new(1).as(Foo)
+      size = foo.each { |x| x }
+      Bar.new(1_i64)
+      size
+      CRYSTAL
+  end
+
+  it "types the targets of a call with a block again if they used typeof, when the block's type grows" do
+    run(<<-CRYSTAL).to_i64.should eq(Int64::MAX)
+      abstract class Foo
+      end
+
+      class Bar(T) < Foo
+        def initialize(@value : T)
+        end
+
+        def value
+          @value
+        end
+
+        def each(&)
+          value = yield
+          if value.is_a?(typeof(yield))
+            value
+          else
+            0
+          end
+        end
+      end
+
+      def use(foo : Foo, other : Foo)
+        foo.each { other.value }
+      end
+
+      use(Bar.new(1).as(Foo), Bar.new(1).as(Foo))
+      use(Bar.new(1).as(Foo), Bar.new(9223372036854775807_i64).as(Foo)).to_i64!
+      CRYSTAL
+  end
 end

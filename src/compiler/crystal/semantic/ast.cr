@@ -150,6 +150,15 @@ module Crystal
     property? self_closured = false
     property? captured_block = false
 
+    # `true` if typing this def expanded a macro or typed a `typeof`, either
+    # directly or in a def it calls that isn't cached in its owner (such as one
+    # it passes a block to). Both use the types known at that moment, which can
+    # grow while the program is typed: a macro's output can depend on a type's
+    # subclasses, and a `typeof` used as a type (as in `x.is_a?(typeof(y))`)
+    # doesn't follow later changes to `y`'s type. So typing the def again later
+    # can give a different result.
+    property? depends_on_typing_time = false
+
     # `true` if this def has the `@[NoInline]` annotation
     property? no_inline = false
 

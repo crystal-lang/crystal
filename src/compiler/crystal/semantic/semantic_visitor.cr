@@ -341,6 +341,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
+    @typed_def.try &.depends_on_typing_time = true
+
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
