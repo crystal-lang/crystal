@@ -42,6 +42,17 @@ describe HTTP::Server::Response do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
   end
 
+  it "raises IO::ClosedError when headers change after close" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.close
+
+    error = expect_raises(IO::ClosedError, "Closed stream") do
+      response.status = :not_found
+    end
+    error.should be_a(IO::Error)
+  end
+
   it "does not automatically add the `content-length` header if the response is a 304" do
     io = IO::Memory.new
     response = Response.new(io)
