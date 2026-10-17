@@ -1663,54 +1663,64 @@ describe "Code gen: block" do
   end
 
   it "unpacks the tuples yielded by every target of a call whose receiver's type grows" do
-    run(<<-CRYSTAL).to_string.should eq("a1b2.0")
-      require "prelude"
+    run(<<-CRYSTAL).to_f64.should eq(6.5)
+      class Pair(K, V)
+        def initialize(@key : K, @value : V)
+        end
 
-      ints = {"a" => 1}
-      floats = {"b" => 2.0}
-      str = ""
-
-      {ints, floats}.each do |hash|
-        hash.each do |key, value|
-          str += key + value.to_s
+        def each(& : {K, V} ->)
+          yield({@key, @value})
         end
       end
 
-      str
+      def pairs(&)
+        yield Pair.new(1, 2)
+        yield Pair.new(3, 4.5)
+      end
+
+      sum = 0.0
+      pairs do |pair|
+        pair.each do |key, value|
+          sum += value
+        end
+      end
+      sum
       CRYSTAL
   end
 
   it "types the targets of a call with a block again if they used typeof, when the receiver's hierarchy grows" do
     run(<<-CRYSTAL).to_i.should eq(16)
-      require "prelude"
-
       abstract class Foo
       end
 
       class Bar(T) < Foo
+        def initialize(@value : T)
+        end
+
         def each(&)
-          x = uninitialized typeof(yield T.zero)
+          x = uninitialized typeof(yield @value)
           sizeof(typeof(x))
         end
       end
 
-      foo = Bar(Int32).new.as(Foo)
+      foo = Bar.new(1).as(Foo)
       size = foo.each { |x| x }
-      Bar(Int64).new
+      Bar.new(1_i64)
       size
       CRYSTAL
   end
 
   it "types the targets of a call with a block again if they used typeof, when the block's type grows" do
-    run(<<-CRYSTAL).to_string.should eq("9223372036854775807")
-      require "prelude"
-
+    run(<<-CRYSTAL).to_i64.should eq(Int64::MAX)
       abstract class Foo
       end
 
       class Bar(T) < Foo
+        def initialize(@value : T)
+        end
+
         def value
-          T::MAX
+          @value
         end
 
         def each(&)
@@ -1718,7 +1728,7 @@ describe "Code gen: block" do
           if value.is_a?(typeof(yield))
             value
           else
-            raise "unreachable"
+            0
           end
         end
       end
@@ -1727,8 +1737,8 @@ describe "Code gen: block" do
         foo.each { other.value }
       end
 
-      use(Bar(Int32).new.as(Foo), Bar(Int32).new.as(Foo))
-      use(Bar(Int32).new.as(Foo), Bar(Int64).new.as(Foo)).to_s
+      use(Bar.new(1).as(Foo), Bar.new(1).as(Foo))
+      use(Bar.new(1).as(Foo), Bar.new(9223372036854775807_i64).as(Foo)).to_i64!
       CRYSTAL
   end
 end
