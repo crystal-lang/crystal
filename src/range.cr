@@ -264,6 +264,39 @@ struct Range(B, E)
     @exclusive
   end
 
+  # Returns `true` if this range is adjacent to *other*, meaning that the end of
+  # one range is the beginning of the other, or if the end of one range is the
+  # predecessor of the beginning of the other, or if the beginning of one range
+  # is the successor of the end of the other.
+  #
+  # ```
+  # (10..100).adjacent_to?(1..10)    # => true
+  # (10..100).adjacent_to?(1...10)   # => true
+  # (10..100).adjacent_to?(100..200) # => true
+  # (10..100).adjacent_to?(101..200) # => true
+  # (10..100).adjacent_to?(99..200)  # => false
+  # (10..100).adjacent_to?(102..200) # => false
+  # ```
+  def adjacent_to?(other : Range) : Bool
+    if (begin_value = @begin) && (other_end = other.end)
+      return true if begin_value == other_end
+      unless other.exclusive?
+        return true if begin_value.responds_to?(:pred) && begin_value.pred == other_end
+        return true if other_end.responds_to?(:succ) && other_end.succ == begin_value
+      end
+    end
+
+    if (end_value = @end) && (other_begin = other.begin)
+      return true if end_value == other_begin
+      unless exclusive?
+        return true if end_value.responds_to?(:succ) && end_value.succ == other_begin
+        return true if other_begin.responds_to?(:pred) && other_begin.pred == end_value
+      end
+    end
+
+    false
+  end
+
   # Returns `true` if this range includes the given *value*.
   #
   # ```
