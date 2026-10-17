@@ -114,6 +114,13 @@ class Crystal::CodeGenVisitor
           context.fun.add_attribute "frame-pointer", value: "non-leaf"
         end
 
+        # LLVM's MergeFunctions only merges functions with equal attributes,
+        # so this lets it merge instances of a method, but not different
+        # methods, which a backtrace would then confuse
+        if location = target_def.location.try(&.expanded_location)
+          context.fun.add_attribute "crystal-def", value: "#{location} #{target_def.name}"
+        end
+
         new_entry_block
 
         if is_closure
