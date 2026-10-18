@@ -11,42 +11,51 @@ module Crystal::System::Time
   NANOSECONDS_PER_SECOND =   1_000_000_000
 
   def self.compute_utc_seconds_and_nanoseconds : {Int64, Int32}
-    ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
+    ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out ts)
     raise RuntimeError.from_errno("clock_gettime") unless ret == 0
-    {timespec.tv_sec.to_i64 + UNIX_EPOCH_IN_SECONDS, timespec.tv_nsec.to_i}
+    {UNIX_EPOCH_IN_SECONDS + ts.tv_sec, ts.tv_nsec.to_i}
   end
 
-  private def self.clock_gettime(&)
-    # Chose the best monotonic steady clock with nanosecond precision that ticks
-    # while the system is suspended. See https://github.com/crystal-lang/rfcs/pull/15
-    clock = {% if flag?(:darwin) %}
-              # CLOCK_MONOTONIC on Darwin has 1 microsecond resolution, but
-              # CLOCK_MONOTONIC_RAW has a higher resolution.
-              LibC::CLOCK_MONOTONIC_RAW
-            {% elsif flag?(:linux) %}
-              # On Linux, `CLOCK_MONOTONIC` does not count suspended time, but
-              # but `CLOCK_BOOTTIME` does.
-              LibC::CLOCK_BOOTTIME
-            {% else %}
-              # On all other systems, `CLOCK_MONOTONIC` includes suspended time.
-              LibC::CLOCK_MONOTONIC
-            {% end %}
+  def self.realtime_coarse : {Int64, Int32}
+    {% if LibC.has_constant?(:CLOCK_REALTIME_COARSE) %}
+      LibC::CLOCK_REALTIME_COARSE
+    {% elsif LibC.has_constant?(:CLOCK_REALTIME_FAST) %}
+      LibC::CLOCK_REALTIME_FAST
+    {% else %}
+      LibC::CLOCK_REALTIME
+    {% end %}
 
-    ret = LibC.clock_gettime(clock, out tp)
-    yield unless ret == 0
-    tp
+    ret = LibC.clock_gettime(clock_monotonic, out ts)
+    raise RuntimeError.new("clock_gettime") unless ret == 0
+    {UNIX_EPOCH_IN_SECONDS + ts.tv_sec, ts.tv_nsec.to_i}
+  end
+
+  # Chose the best monotonic steady clock with nanosecond precision that ticks
+  # while the system is suspended. See https://github.com/crystal-lang/rfcs/pull/15
+  def self.clock_monotonic
+    {% if flag?(:darwin) %}
+      # CLOCK_MONOTONIC on Darwin has 1 microsecond resolution, but
+      # CLOCK_MONOTONIC_RAW has a higher resolution.
+      LibC::CLOCK_MONOTONIC_RAW
+    {% elsif flag?(:linux) %}
+      # On Linux, `CLOCK_MONOTONIC` does not count suspended time, but
+      # but `CLOCK_BOOTTIME` does.
+      LibC::CLOCK_BOOTTIME
+    {% else %}
+      # On all other systems, `CLOCK_MONOTONIC` includes suspended time.
+      LibC::CLOCK_MONOTONIC
+    {% end %}
   end
 
   def self.monotonic : {Int64, Int32}
-    tp = clock_gettime do
-      raise RuntimeError.from_errno("clock_gettime()")
-    end
-    {tp.tv_sec.to_i64, tp.tv_nsec.to_i32}
+    ret = LibC.clock_gettime(clock_monotonic, out ts)
+    raise RuntimeError.new("clock_gettime") unless ret == 0
+    {ts.tv_sec.to_i64, ts.tv_nsec.to_i32}
   end
 
   def self.ticks : UInt64
-    tp = clock_gettime { }
-    tp.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ tp.tv_nsec.to_u64!
+    LibC.clock_gettime(clock_monotonic, out ts)
+    ts.tv_sec.to_u64! &* NANOSECONDS_PER_SECOND &+ ts.tv_nsec.to_u64!
   end
 
   def self.to_timespec(time : ::Time)
