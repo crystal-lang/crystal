@@ -504,6 +504,55 @@ describe "Call errors" do
         CRYSTAL
     end
   end
+
+  it "errors on argument type mismatch for a with ... yield scope, without a receiver" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Lib::Holder(Int32)#take' to be Int32 or Lib::Other, not String"
+      module Lib
+        class Other
+        end
+
+        class Holder(T)
+          def take(value : Other) : Nil
+          end
+
+          def take(value : T) : Nil
+          end
+        end
+
+        def self.open(&)
+          with Holder(Int32).new yield
+        end
+      end
+
+      Lib.open { take "wrong" }
+      CRYSTAL
+  end
+
+  it "errors on argument type mismatch listing both the current and the with ... yield scope" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'take' to be Char, Int32 or Lib::Other, not String"
+      module Lib
+        class Other
+        end
+
+        class Holder(T)
+          def take(value : Other) : Nil
+          end
+
+          def take(value : T) : Nil
+          end
+        end
+
+        def self.open(&)
+          with Holder(Int32).new yield
+        end
+      end
+
+      def take(value : Char) : Nil
+      end
+
+      Lib.open { take "wrong" }
+      CRYSTAL
+  end
 end
 
 private def tuple_new
