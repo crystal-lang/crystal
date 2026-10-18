@@ -658,4 +658,44 @@ describe "Semantic: virtual" do
       Bar.new.foo
       CRYSTAL
   end
+
+  it "finds the method of a generic superclass instance for a subclass of it" do
+    assert_type(<<-CRYSTAL) { int32 }
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar(T) < Foo
+        def foo : Int32
+          1
+        end
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.as(Foo).foo
+      CRYSTAL
+  end
+
+  it "reports the subclass that lacks the method, not a subclass of a generic instance" do
+    assert_error <<-CRYSTAL, "undefined method 'foo' for Qux"
+      abstract class Foo
+      end
+
+      class Bar(T) < Foo
+        def foo
+          1
+        end
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      class Qux < Foo
+      end
+
+      Baz.new.as(Foo).foo
+      CRYSTAL
+  end
 end
