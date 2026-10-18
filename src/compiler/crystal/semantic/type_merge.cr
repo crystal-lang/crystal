@@ -120,19 +120,39 @@ module Crystal
       all_types = [types.shift] of Type
 
       types.each do |t2|
-        not_found = all_types.all? do |t1|
-          ancestor = Type.least_common_ancestor(t1.devirtualize, t2.devirtualize)
-          if ancestor && virtual_root?(ancestor)
-            all_types.delete t1
-            all_types << ancestor.virtual_type
-            false
+        t2_devirt = t2.devirtualize
+        absorbed = false
+
+        all_types.each do |t1|
+          t1_devirt = t1.devirtualize
+          ancestor = Type.least_common_ancestor(t1_devirt, t2_devirt)
+          next unless ancestor && virtual_root?(ancestor)
+
+          ancestor_virtual = ancestor.virtual_type
+
+          if ancestor == t1_devirt
+            # `t2` is absorbed into the existing `t1`. Any other entry in
+            # `all_types` already failed to merge with `t1`, so nothing
+            # else can be absorbed by the same ancestor here.
+            all_types.delete(t1)
+            all_types << ancestor_virtual unless all_types.includes?(ancestor_virtual)
           else
-            true
+            # The ancestor is `t2` (or — in principle — a third common
+            # supertype). Other existing `all_types` entries may also
+            # implement it, so sweep them out. Without this step a later
+            # element that *also* implements `ancestor` would be left
+            # behind, breaking commutativity for 3+-type unions like
+            # `B | C | A` where `B` and `C` both include the module `A`
+            # (#10788, #15752).
+            all_types.reject! { |t| t.devirtualize.implements?(ancestor) }
+            all_types << ancestor_virtual
           end
+
+          absorbed = true
+          break
         end
-        if not_found
-          all_types << t2
-        end
+
+        all_types << t2 unless absorbed
       end
 
       all_types
