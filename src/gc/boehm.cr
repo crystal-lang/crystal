@@ -94,6 +94,7 @@ lib LibGC
   fun collect_a_little = GC_collect_a_little : Int
   fun collect = GC_gcollect
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
+  fun remove_roots = GC_remove_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
   fun is_disabled = GC_is_disabled : Int
