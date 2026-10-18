@@ -242,4 +242,84 @@ describe "Semantic: new" do
       Foo::Bar::Baz(Int32).new(1).foo
       CRYSTAL
   end
+
+  it "looks up the restrictions of an inherited initialize in its namespace" do
+    assert_type <<-CRYSTAL { types["Bar"] }
+      module Foo
+        class Rule
+        end
+
+        class Base(T)
+          def initialize(rules : Array(Rule), value : T)
+          end
+        end
+      end
+
+      class Bar < Foo::Base(Int32)
+      end
+
+      Bar.new([] of Foo::Rule, 1)
+      CRYSTAL
+  end
+
+  it "looks up the restrictions of an inherited initialize in its namespace for a generic subclass" do
+    assert_type <<-CRYSTAL { generic_class "Bar", int32 }
+      module Foo
+        class Rule
+        end
+
+        class Base(T)
+          def initialize(rules : Array(Rule))
+          end
+        end
+      end
+
+      class Bar(U) < Foo::Base(U)
+      end
+
+      Bar(Int32).new([] of Foo::Rule)
+      CRYSTAL
+  end
+
+  it "looks up the restrictions of an inherited self.new in its namespace" do
+    assert_type <<-CRYSTAL { types["Bar"] }
+      module Foo
+        class Rule
+        end
+
+        class Base(T)
+          def self.new(rule : Rule, value : Int32)
+            new
+          end
+        end
+      end
+
+      class Bar < Foo::Base(Int32)
+      end
+
+      Bar.new(Foo::Rule.new, 1)
+      CRYSTAL
+  end
+
+  it "doesn't let a type in the subclass' namespace shadow an inherited initialize's restriction" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'Bar.new' to be Foo::Rule, not Rule"
+      class Rule
+      end
+
+      module Foo
+        class Rule
+        end
+
+        class Base(T)
+          def initialize(rule : Rule)
+          end
+        end
+      end
+
+      class Bar < Foo::Base(Int32)
+      end
+
+      Bar.new(Rule.new)
+      CRYSTAL
+  end
 end
