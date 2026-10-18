@@ -492,6 +492,10 @@ abstract struct Enum
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
+  def self.parse(slice : Bytes) : self
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{String.new(slice)}")
+  end
+
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
@@ -508,30 +512,37 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
+    parse? string.to_slice
+  end
+
+  def self.parse?(slice : Bytes) : self?
     {% begin %}
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
       {%
-        max_charsize = @type.constants.map(&.size).sort.last
         max_bytesize = if compare_versions(Crystal::VERSION, "1.22.0") >= 0
                          @type.constants.map(&.bytesize).sort.last
                        else
                          # Without `StringLiteral#bytesize` we have no means to figure out how
                          # much space we actually need. So we calculate the worst case based on
                          # char size.
+                         max_charsize = @type.constants.map(&.size).sort.last
                          max_charsize * 4
                        end
       %}
       buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
       appender = buffer.to_unsafe.appender
-      char_counter = 0
-      string.each_char do |char|
+      byte_counter = 0
+      reader = Char::Reader.new(slice)
+      while reader.has_next?
+        char = reader.current_char
+        reader.next_char
+
         next if char == '-' || char == '_'
-        char_counter += 1
-        return nil if char_counter > {{ max_charsize }}
-        char.downcase &.each_byte do |byte|
-          appender << byte
-        end
+        downcased = char.downcase
+        byte_counter += downcased.bytesize
+        return nil if byte_counter > {{ max_bytesize }}
+        downcased.each_byte { |b| appender << b }
       end
       # Temporarily map all constants to their normalized value in order to
       # avoid duplicates in the `case` conditions.
