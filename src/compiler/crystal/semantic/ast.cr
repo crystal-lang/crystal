@@ -707,7 +707,7 @@ module Crystal
     property? external_var : Bool = false
     property real_name : String
     property! fun_def : FunDef
-    property call_convention : LLVM::CallConvention?
+    property call_convention : Crystal::CallConvention?
     property wasm_import_module : String?
 
     property? dead = false
