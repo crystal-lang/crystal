@@ -73,8 +73,24 @@ module Fiber::ExecutionContext
     # its queue is empty and another scheduler in the context is blocked on the
     # event loop.
     private def transfer_schedulers_blocked_on_syscall : Nil
+      main_thread = ExecutionContext.thread_pool.main_thread
+
       ExecutionContext.each do |execution_context|
         execution_context.each_scheduler do |scheduler|
+          # Never migrate the scheduler attached to the main thread: the
+          # current fiber may hold the C stack of the program's entry point
+          # (e.g. a GUI runloop such as AppKit's `[NSApplication run]` that
+          # called back into Crystal). That stack must stay on the main
+          # pthread: C and Objective-C frameworks keep per-thread state
+          # (autorelease pools, thread-local storage, GL contexts, ...), and
+          # resuming it on another pthread corrupts them.
+          #
+          # This check must happen before `#detach_syscall?`, which consumes
+          # the syscall flag: clearing it without transferring the scheduler
+          # would make the blocked thread believe it was detached and migrate
+          # the fiber itself (via `ThreadPool#checkin`).
+          next if scheduler.thread? == main_thread
+
           next unless scheduler.detach_syscall?
 
           Crystal.trace :sched, "reassociate",

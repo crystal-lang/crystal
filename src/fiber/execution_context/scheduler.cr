@@ -12,6 +12,7 @@ module Fiber::ExecutionContext
     end
 
     protected abstract def thread : Thread
+    protected abstract def thread? : Thread?
     protected abstract def execution_context : ExecutionContext
 
     # Instantiates a fiber and enqueues it into the scheduler's local queue.
