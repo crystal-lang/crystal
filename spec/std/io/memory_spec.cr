@@ -494,6 +494,12 @@ describe IO::Memory do
     expect_raises(IO::EOFError) do
       io.skip(6)
     end
+
+    io.rewind
+    expect_raises(ArgumentError, "Negative bytes_count") do
+      io.skip(-1)
+    end
+    io.pos.should eq(0)
   end
 
   it "skips_to_end" do
