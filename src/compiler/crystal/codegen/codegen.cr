@@ -423,7 +423,7 @@ module Crystal
     end
 
     def wrap_builder(builder)
-      CrystalLLVMBuilder.new builder, llvm_typer, c_printf_fun
+      CrystalLLVMBuilder.new builder, llvm_typer
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
