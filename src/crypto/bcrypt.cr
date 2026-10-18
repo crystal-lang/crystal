@@ -9,7 +9,8 @@ require "./subtle"
 # [this comment](https://security.stackexchange.com/questions/39849/does-bcrypt-have-a-maximum-password-length#answer-39851)
 # on stackoverflow).
 #
-# Refer to `Crypto::Bcrypt::Password` for a higher level interface.
+# For most password storage and verification use cases, prefer the higher-level
+# `Crypto::Bcrypt::Password` interface (`require "crypto/bcrypt/password"`).
 #
 # About the Cost
 #
@@ -51,13 +52,19 @@ class Crypto::Bcrypt
     )
   {% end %}
 
-  # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
+  # Hashes the *password* using the bcrypt algorithm with a randomly generated salt.
+  #
+  # Uses 16 random bytes obtained via `Random::Secure.random_bytes` for the salt.
+  # This is the recommended method for generating password hashes when using `Crypto::Bcrypt` directly.
+  # For higher-level password management, see `Crypto::Bcrypt::Password.create`.
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # Crypto::Bcrypt.hash_secret "secret"
+  # Crypto::Bcrypt.hash_secret("secret") # => "$2a$11$..."
   # ```
+  #
+  # Raises `Error` if *cost* is not in `4..31` or *password* exceeds 71 bytes.
   def self.hash_secret(password : String, cost : Int32 = DEFAULT_COST) : String
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
@@ -67,14 +74,24 @@ class Crypto::Bcrypt
 
   # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* and *cost*.
   #
-  # *salt* must be a base64 encoded string of 16 bytes (128 bits).
+  # *salt* must be a base64-encoded string representing exactly 16 bytes (128 bits) of decoded data.
+  #
+  # NOTE: For standard password hashing, prefer `.hash_secret` or `Crypto::Bcrypt::Password.create`,
+  # which automatically generate a cryptographically secure random salt. Supplying a manual salt
+  # is intended for low-level compatibility and test vectors.
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret", "CJjskaIgXR32DJYjVyNPdA=="
+  # # Pre-encoded 16-byte salt (22 base64 characters plus padding)
+  # password = Crypto::Bcrypt.new("secret", "CJjskaIgXR32DJYjVyNPdA==")
   # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
+  #
+  # # Passing a raw string that does not decode to 16 bytes raises:
+  # Crypto::Bcrypt.new("secret", "salt_of_16_chars") # => raises Crypto::Bcrypt::Error (Invalid salt size)
   # ```
+  #
+  # Raises `Error` if *salt* does not decode to 16 bytes, *cost* is not in `4..31`, or *password* exceeds 71 bytes.
   def self.new(password : String, salt : String, cost : Int32 = DEFAULT_COST) : self
     # We make a clone here to we don't keep a mutable reference to the original string
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
@@ -86,14 +103,18 @@ class Crypto::Bcrypt
   getter salt : Bytes
   getter cost : Int32
 
-  # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* in bytes and *cost*.
+  # Creates a new `Crypto::Bcrypt` object from the given *password* bytes with *salt* bytes and *cost*.
+  #
+  # *salt* must have a size of exactly 16 bytes (`SALT_SIZE`).
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret".to_slice, "salt_of_16_chars".to_slice
-  # password.digest
+  # password = Crypto::Bcrypt.new("secret".to_slice, "salt_of_16_chars".to_slice)
+  # password.digest # => Bytes[20, 176, 41, 229, 234, 155, 26, 77, 155, 51, 133, 158, 47, 169, 137, 170, 170, 30, 139, 188, 58, 65, 56, 106]
   # ```
+  #
+  # Raises `Error` if *salt* size is not 16 bytes, *cost* is not in `4..31`, or *password* size is not in `1..72`.
   def initialize(@password : Bytes, @salt : Bytes, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == SALT_SIZE
