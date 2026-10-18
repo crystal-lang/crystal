@@ -14,6 +14,11 @@ module Crystal
     @macro_expansion_pragmas : Hash(Int32, Array(Lexer::LocPragma))?
     @current_arg_type : DefArgType = :none
 
+    # A doc comment can only be written where a statement starts, so it is
+    # emitted for a node reached at that position and not for one nested
+    # inside an expression.
+    @at_statement = true
+
     # Represents the root level `Expressions` instance within a `MacroExpression`.
     @root_level_macro_expressions : Expressions? = nil
 
@@ -37,7 +42,9 @@ module Crystal
     end
 
     def visit_any(node)
-      if @emit_doc && (doc = node.doc) && !doc.empty?
+      at_statement, @at_statement = @at_statement, false
+
+      if @emit_doc && at_statement && (doc = node.doc) && !doc.empty?
         doc.each_line(chomp: true) do |line|
           @str << "# "
           @str << line
@@ -294,6 +301,7 @@ module Crystal
               write_extra_newlines (last_node || exp).end_location, exp.location
 
               append_indent unless node.keyword.paren? && i == 0
+              @at_statement = true
               exp.accept self
 
               if (root = @root_level_macro_expressions) && root.same?(node) && i == node.expressions.size - 1
@@ -1823,6 +1831,7 @@ module Crystal
     def accept_with_indent(node : Expressions)
       with_indent do
         append_indent unless node.keyword.none?
+        @at_statement = true
         node.accept self
       end
       newline unless node.keyword.none?
@@ -1834,6 +1843,7 @@ module Crystal
     def accept_with_indent(node : ASTNode)
       with_indent do
         append_indent
+        @at_statement = true
         node.accept self
       end
       newline
