@@ -700,7 +700,11 @@ describe Iterator do
 
   describe "uniq" do
     it "without block" do
-      iter = (1..8).each.map { |x| x % 3 }.uniq # ameba:disable Performance/ChainedCallWithNoBang
+      # The chain is split into two statements: ameba's --fix rewrites
+      # `.map {}.uniq` into `uniq!` even when disabled by an inline
+      # directive, but `Iterator#uniq!` does not exist.
+      mapped = (1..8).each.map { |x| x % 3 }
+      iter = mapped.uniq
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should eq(0)

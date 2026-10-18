@@ -91,7 +91,21 @@ class Crystal::Repl
 
     node = @program.normalize(node)
     node = @program.semantic(node, main_visitor: @main_visitor)
-    @interpreter.interpret(node, @main_visitor.meta_vars)
+
+    # Route signals to the interpreted program's pipe (if its kernel set one
+    # up) while interpreted code runs.
+    {% if flag?(:unix) %}
+      Crystal::System::Signal.use_interpreted_writer
+    {% end %}
+    value = @interpreter.interpret(node, @main_visitor.meta_vars)
+    value
+  ensure
+    # Between expressions the interpreted signal-loop fiber is parked: restore
+    # the native pipe so native Process#wait (macro backticks, the loader's
+    # pkg-config calls, ...) keeps receiving SIGCHLD instead of deadlocking.
+    {% if flag?(:unix) %}
+      Crystal::System::Signal.use_native_writer
+    {% end %}
   end
 
   private def interpret_and_exit_on_error(node : ASTNode)

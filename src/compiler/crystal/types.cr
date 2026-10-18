@@ -1149,6 +1149,7 @@ module Crystal
   class NonGenericModuleType < ModuleType
     include InstanceVarContainer
     include ClassVarContainer
+    include InstanceVarInitializerContainer
     include SubclassObservable
 
     def add_including_type(type)
@@ -1156,6 +1157,25 @@ module Crystal
 
       including_types = @including_types ||= [] of Type
       including_types.push type
+
+      # With the interpreter's incremental (per-expression) semantic, like
+      # the REPL, the type declaration and instance var initializer passes
+      # of a module run as soon as the module is defined, possibly before
+      # another type includes the module in a later expression. Propagate
+      # the module's declared instance vars and initializers to the new
+      # including type, like `TypeDeclarationProcessor` and
+      # `add_instance_var_initializer` do for types that already include
+      # this module. In a one-shot compilation this is a no-op because all
+      # includes are processed before those passes run.
+      if type.is_a?(NonGenericClassType) || type.is_a?(NonGenericModuleType)
+        instance_vars.each do |name, ivar|
+          next if type.lookup_instance_var?(name)
+          type.declare_instance_var(name, ivar.type)
+        end
+        @instance_vars_initializers.try &.each do |initializer|
+          type.add_instance_var_initializer(initializer.name, initializer.value, initializer.meta_vars)
+        end
+      end
 
       notify_subclass_added
     end
@@ -1199,6 +1219,11 @@ module Crystal
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
+      # Store it on the module itself so that types including this module
+      # later (the interpreter's incremental semantic) can pick it up in
+      # `add_including_type`.
+      super
+
       add_instance_var_initializer @including_types, name, value, meta_vars
     end
   end
