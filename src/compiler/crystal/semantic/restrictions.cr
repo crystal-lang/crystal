@@ -519,39 +519,221 @@ module Crystal
   end
 
   class Macro
-    def overrides?(other : Macro)
-      # If they have different number of arguments, splat index or presence of
-      # double splat, no override.
-      if args.size != other.args.size ||
-         splat_index != other.splat_index ||
-         !!double_splat != !!other.double_splat
-        return false
+    # The following definitions are for the most part identical to the same
+    # checks used by def overload ordering
+
+    def compare_strictness(other : Macro)
+      # NOTE: unlike defs, macros never overload by presence of a block
+      # parameter
+
+      self_named_args = self.named_arguments
+      other_named_args = other.named_arguments
+
+      # Required named parameter in self, no corresponding named parameter in
+      # other; neither is stricter than the other
+      unless other.double_splat
+        self_named_args.try &.each do |self_arg|
+          unless self_arg.default_value
+            unless other_named_args.try &.any?(&.external_name.== self_arg.external_name)
+              return nil
+            end
+          end
+        end
       end
 
-      self_named_args = self.required_named_arguments
-      other_named_args = other.required_named_arguments
+      unless self.double_splat
+        other_named_args.try &.each do |other_arg|
+          unless other_arg.default_value
+            unless self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+              return nil
+            end
+          end
+        end
+      end
 
-      # If both don't have named arguments, override.
-      return true if !self_named_args && !other_named_args
+      self_stricter = true
+      other_stricter = true
 
-      # If one has required named args and the other doesn't, no override.
-      return false unless self_named_args && other_named_args
+      # TODO: Compare all corresponding parameters based on subsumption order
 
-      self_names = self_named_args.map(&.external_name)
-      other_names = other_named_args.map(&.external_name)
+      # The overload order is fully defined at this point if either macro
+      # already isn't stricter than the other
+      # return stricter_pair_to_num(self_stricter, other_stricter) if !self_stricter || !other_stricter
 
-      # If different named arguments names, no override.
-      return false unless self_names == other_names
+      # Combine the specificities from positional and all named signatures
+      self_stricter, other_stricter = compare_specific_positional(other)
 
-      true
+      if self_named_args || other_named_args
+        self_named_args.try &.each do |self_arg|
+          other_arg = other_named_args.try &.find(&.external_name.== self_arg.external_name)
+          self_n, other_n = compare_specific_named(other, self_arg, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+
+        other_named_args.try &.each do |other_arg|
+          next if self_named_args.try &.any?(&.external_name.== other_arg.external_name)
+          self_n, other_n = compare_specific_named(other, nil, other_arg)
+          self_is_not_stricter if !self_n
+          other_is_not_stricter if !other_n
+        end
+      else
+        # If there are no named parameters at all, `(**ns)` is less specific than `()`
+        if self.double_splat && !other.double_splat
+          self_is_not_stricter
+        elsif other.double_splat && !self.double_splat
+          other_is_not_stricter
+        end
+      end
+
+      stricter_pair_to_num(self_stricter, other_stricter)
     end
 
-    def required_named_arguments
-      if (splat_index = self.splat_index) && splat_index != args.size - 1
-        args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by! &.external_name
-      else
-        nil
+    private macro self_is_not_stricter
+      self_stricter = false
+      return nil if !other_stricter
+    end
+
+    private macro other_is_not_stricter
+      other_stricter = false
+      return nil if !self_stricter
+    end
+
+    # Compares two macros based on whether one macro's positional parameters are
+    # more specific than the other's.
+    #
+    # Required parameters are more specific than optional parameters, and single
+    # splat parameters are the least specific.
+    def compare_specific_positional(other : Macro)
+      # If self has more required positional parameters than other, the last
+      # one in self must correspond to an optional or splat parameter in other,
+      # otherwise other has no corresponding parameter and `compare_strictness`
+      # would have already returned; hence, self is stricter than other in this
+      # case.
+      self_min_size, self_max_size = self.min_max_args_sizes
+      other_min_size, other_max_size = other.min_max_args_sizes
+
+      if self_min_size > other_min_size
+        self_is_stricter
+      elsif other_min_size > self_min_size
+        other_is_stricter
       end
+
+      # Bare splats aren't single splat parameters
+      if self_splat_index = self.splat_index
+        self_splat_index = nil if self.args[self_splat_index].name.empty?
+      end
+      if other_splat_index = other.splat_index
+        other_splat_index = nil if other.args[other_splat_index].name.empty?
+      end
+
+      case {self_splat_index, other_splat_index}
+      in {nil, nil}
+        # Consider `(x0, x1 = 0, x2 = 0)` and `(y0, y1 = 0)`; both overloads can
+        # take 1 or 2 arguments, but only self could take 3, so other is stricter
+        # than self.
+        if self_max_size > other_max_size
+          other_is_stricter
+        elsif other_max_size > self_max_size
+          self_is_stricter
+        end
+      in {nil, Int32}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Int32, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Int32, Int32}
+        # Consider `(x0, *xs)` and `(y0, y1 = 0, *ys)`; here `y1` corresponds to
+        # `xs`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_splat_index < other_splat_index
+          other_is_stricter
+        elsif other_splat_index < self_splat_index
+          self_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    # Compares two defs based on whether one def's given named parameter is more
+    # specific than the other's.
+    def compare_specific_named(other : Macro, self_arg : Arg?, other_arg : Arg?)
+      self_arg_required = self_arg && !self_arg.default_value
+      other_arg_required = other_arg && !other_arg.default_value
+
+      # `n` is required in self, but not required in other; `n`'s corresponding
+      # parameter in other must be optional or splat, so self is stricter than
+      # the other
+      if self_arg_required && !other_arg_required
+        self_is_stricter
+      elsif other_arg_required && !self_arg_required
+        other_is_stricter
+      end
+
+      self_arg_optional = self_arg && self_arg.default_value
+      other_arg_optional = other_arg && other_arg.default_value
+
+      case {self.double_splat, other.double_splat}
+      in {nil, nil}
+        # Consider `(*, n = 0)` and `()`; both overloads can take no named
+        # arguments, but only self could take `n`, so other is stricter than
+        # self.
+        if self_arg_optional && !other_arg_optional
+          other_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          self_is_stricter
+        end
+      in {nil, Arg}
+        # other has a splat parameter, self doesn't; self is stricter than the other
+        self_is_stricter
+      in {Arg, nil}
+        # self has a splat parameter, other doesn't; other is stricter than self
+        other_is_stricter
+      in {Arg, Arg}
+        # Consider `(*, **ms)` and `(*, n = 0, **ns)`; here `n` corresponds to
+        # `ms`, and splat parameter is less specific than optional parameter, so
+        # other is stricter than self.
+        if self_arg_optional && !other_arg_optional
+          self_is_stricter
+        elsif other_arg_optional && !self_arg_optional
+          other_is_stricter
+        end
+      end
+
+      no_differences
+    end
+
+    private macro self_is_stricter
+      return {true, false}
+    end
+
+    private macro other_is_stricter
+      return {false, true}
+    end
+
+    private macro no_differences
+      return {true, true}
+    end
+
+    private def stricter_pair_to_num(self_stricter, other_stricter)
+      case {self_stricter, other_stricter}
+      in {true, true}   then 0
+      in {true, false}  then -1
+      in {false, true}  then 1
+      in {false, false} then nil
+      end
+    end
+
+    protected def named_arguments
+      if (splat_index = self.splat_index) && splat_index != args.size - 1
+        args[splat_index + 1..]
+      end
+    end
+
+    protected def required_named_arguments
+      named_arguments.try &.reject!(&.default_value).sort_by!(&.external_name)
     end
   end
 
