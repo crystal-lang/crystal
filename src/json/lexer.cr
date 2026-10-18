@@ -152,6 +152,12 @@ abstract class JSON::Lexer
   private def consume_string_with_buffer(&)
     @buffer.clear
     yield
+    consume_string_tail
+  end
+
+  # Consumes the rest of a string, starting after the last char consumed
+  # so far, appending to `@buffer`, and sets the token's value from it.
+  private def consume_string_tail
     while true
       case char = next_char
       when '\0'
@@ -245,11 +251,7 @@ abstract class JSON::Lexer
       end
     when '1'..'9'
       append_number_char
-      char = next_char
-      while '0' <= char <= '9'
-        append_number_char
-        char = next_char
-      end
+      char = consume_digits
 
       case char
       when '.'
@@ -273,10 +275,8 @@ abstract class JSON::Lexer
       unexpected_char
     end
 
-    while '0' <= char <= '9'
-      append_number_char
-      char = next_char
-    end
+    append_number_char
+    char = consume_digits
 
     if char.in?('e', 'E')
       consume_exponent
@@ -299,10 +299,8 @@ abstract class JSON::Lexer
     end
 
     if '0' <= char <= '9'
-      while '0' <= char <= '9'
-        append_number_char
-        char = next_char
-      end
+      append_number_char
+      consume_digits
     else
       unexpected_char
     end
@@ -310,6 +308,18 @@ abstract class JSON::Lexer
     @token.kind = :float
 
     number_end
+  end
+
+  # Consumes the run of digits following the current char (which must be
+  # a single-byte char, already appended to the number) and returns the
+  # first non-digit char, leaving it as the current char.
+  private def consume_digits : Char
+    char = next_char
+    while '0' <= char <= '9'
+      append_number_char
+      char = next_char
+    end
+    char
   end
 
   private def next_char

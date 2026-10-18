@@ -15,6 +15,7 @@ class JSON::Builder
   alias State = StartState | DocumentStartState | ArrayState | ObjectState | DocumentEndState
 
   @indent : String?
+  @state : State
 
   # By default the maximum nesting of arrays/objects is 99. Nesting more
   # than this will result in a JSON::Error. Changing the value of this property
@@ -23,18 +24,17 @@ class JSON::Builder
 
   # Creates a `JSON::Builder` that will write to the given `IO`.
   def initialize(@io : IO)
-    @state = [StartState.new] of State
+    @state = StartState.new
+    @parent_states = [] of State
     @current_indent = 0
     @escape = Escape.new(io)
   end
 
   # Starts a document.
   def start_document : Nil
-    case @state.last
-    when StartState
-      @state[-1] = DocumentStartState.new
-    when DocumentEndState
-      @state[-1] = DocumentStartState.new
+    case @state
+    when StartState, DocumentEndState
+      @state = DocumentStartState.new
     else
       raise JSON::Error.new("Starting document before ending previous one")
     end
@@ -42,7 +42,7 @@ class JSON::Builder
 
   # Signals the end of a JSON document.
   def end_document : Nil
-    case @state.last
+    case @state
     when StartState
       raise JSON::Error.new("Empty JSON")
     when DocumentStartState
@@ -147,36 +147,39 @@ class JSON::Builder
       raise ""
     end
 
+    # Escape sequence for every byte that needs escaping inside a JSON
+    # string, or `nil` if the byte can be written verbatim. Indexed by byte
+    # value; bytes above 0x7F are part of UTF-8 sequences and never escaped.
+    ESCAPES = begin
+      escapes = Slice(String?).new(256, nil)
+      0x20.times do |i|
+        escapes[i] = "\\u%04x" % i
+      end
+      escapes['\b'.ord] = "\\b"
+      escapes['\t'.ord] = "\\t"
+      escapes['\n'.ord] = "\\n"
+      escapes['\f'.ord] = "\\f"
+      escapes['\r'.ord] = "\\r"
+      escapes['"'.ord] = "\\\""
+      escapes['\\'.ord] = "\\\\"
+      escapes[0x7f] = "\\u007f" # DEL, escaped as an ASCII control character
+      escapes
+    end
+
     def write(slice : Bytes) : Nil
+      escapes = ESCAPES
       cursor = start = slice.to_unsafe
       fin = cursor + slice.bytesize
 
       while cursor < fin
-        case byte = cursor.value
-        when '\\' then escape = "\\\\"
-        when '"'  then escape = "\\\""
-        when '\b' then escape = "\\b"
-        when '\f' then escape = "\\f"
-        when '\n' then escape = "\\n"
-        when '\r' then escape = "\\r"
-        when '\t' then escape = "\\t"
-        when .<(0x20), 0x7f # Char#ascii_control?
+        if escape = escapes.unsafe_fetch(cursor.value)
           @io.write_string Slice.new(start, cursor - start)
-          @io << "\\u00"
-          @io << '0' if byte < 0x10
-          byte.to_s(@io, 16)
+          @io << escape
           cursor += 1
           start = cursor
-          next
         else
           cursor += 1
-          next
         end
-
-        @io.write_string Slice.new(start, cursor - start)
-        @io << escape
-        cursor += 1
-        start = cursor
       end
 
       @io.write_string Slice.new(start, cursor - start)
@@ -197,15 +200,16 @@ class JSON::Builder
   def start_array : Nil
     start_scalar
     increase_indent
-    @state.push ArrayState.new(empty: true)
+    @parent_states.push @state
+    @state = ArrayState.new(empty: true)
     @io << '['
   end
 
   # Writes the end of an array.
   def end_array : Nil
-    case state = @state.last
+    case state = @state
     when ArrayState
-      @state.pop
+      @state = @parent_states.pop
     else
       raise JSON::Error.new("Can't do end_array: not inside an array")
     end
@@ -226,18 +230,19 @@ class JSON::Builder
   def start_object : Nil
     start_scalar
     increase_indent
-    @state.push ObjectState.new(empty: true, name: true)
+    @parent_states.push @state
+    @state = ObjectState.new(empty: true, name: true)
     @io << '{'
   end
 
   # Writes the end of an object.
   def end_object : Nil
-    case state = @state.last
+    case state = @state
     when ObjectState
       unless state.name
         raise JSON::Error.new("Missing object value")
       end
-      @state.pop
+      @state = @parent_states.pop
     else
       raise JSON::Error.new("Can't do end_object: not inside an object")
     end
@@ -316,7 +321,7 @@ class JSON::Builder
   # Returns `true` if the next thing that must pushed into this
   # builder is an object key (so a string) or the end of an object.
   def next_is_object_key? : Bool
-    state = @state.last
+    state = @state
     state.is_a?(ObjectState) && state.name
   end
 
@@ -327,7 +332,7 @@ class JSON::Builder
 
   private def start_scalar(string = false)
     object_value = false
-    case state = @state.last
+    case state = @state
     when DocumentStartState
       # okay
     when StartState
@@ -347,14 +352,14 @@ class JSON::Builder
   end
 
   private def end_scalar(string = false)
-    case state = @state.last
+    case state = @state
     when DocumentStartState
-      @state[-1] = DocumentEndState.new
+      @state = DocumentEndState.new
     when ArrayState
-      @state[-1] = ArrayState.new(empty: false)
+      @state = ArrayState.new(empty: false)
     when ObjectState
       colon if state.name
-      @state[-1] = ObjectState.new(empty: false, name: !state.name)
+      @state = ObjectState.new(empty: false, name: !state.name)
     else
       raise "Bug: unexpected state: #{state.class}"
     end
