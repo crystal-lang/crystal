@@ -52,6 +52,7 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def try_lock? : Bool
       # uncontended
       word, success = @word.compare_and_set(UNLOCKED, WLOCK, :acquire, :relaxed)
@@ -66,6 +67,7 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def try_rlock? : Bool
       # uncontended
       word, success = @word.compare_and_set(UNLOCKED, RLOCK, :acquire, :relaxed)
@@ -80,18 +82,21 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def lock : Nil
       unless try_lock?
         lock_slow
       end
     end
 
+    @[AlwaysInline]
     def rlock : Nil
       unless try_rlock?
         rlock_slow
       end
     end
 
+    @[NoInline]
     def lock_slow
       waiter = Waiter.new(:writer)
 
@@ -102,6 +107,7 @@ module Sync
         clear_on_acquire: WRITER_WAITING)
     end
 
+    @[NoInline]
     def rlock_slow
       waiter = Waiter.new(:reader)
 
@@ -184,6 +190,7 @@ module Sync
       end
     end
 
+    @[AlwaysInline]
     def unlock : Nil
       # uncontended
       word, success = @word.compare_and_set(WLOCK, UNLOCKED, :release, :relaxed)
@@ -205,6 +212,7 @@ module Sync
       unlock_slow
     end
 
+    @[AlwaysInline]
     def runlock : Nil
       # uncontended
       word, success = @word.compare_and_set(RLOCK, UNLOCKED, :release, :relaxed)
@@ -226,10 +234,12 @@ module Sync
       runlock_slow
     end
 
+    @[NoInline]
     def unlock_slow : Nil
       unlock_slow_impl(sub_on_release: WLOCK)
     end
 
+    @[NoInline]
     def runlock_slow : Nil
       unlock_slow_impl(sub_on_release: RLOCK)
     end
