@@ -20,7 +20,7 @@ require "./tcp_socket"
 # ```
 #
 # Options:
-# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *host* local address or hostname to bind on (e.g. `127.0.0.1`, `::1`, or `localhost`), or `::` to bind on all local addresses. When a hostname is given, attempts to bind and listen to each resolved address in order and returns on the first success.
 # - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
 # - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
@@ -33,6 +33,17 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
+  #
+  # NOTE: When *host* is a hostname, `TCPServer` resolves the name using the
+  # system resolver, attempts to bind and listen on each resolved IP address in
+  # order, and returns as soon as an address succeeds, skipping all remaining
+  # candidates.
+  #
+  # For example, `localhost` typically resolves to `::1` first and then `127.0.0.1`.
+  # The server binds and listens on `::1` and skips `127.0.0.1`, thus only
+  # accepting IPv6 connections (connections addressed to `127.0.0.1` may be refused).
+  # To bind explicitly to IPv4 loopback, use `127.0.0.1`. To listen on all local
+  # addresses for both IPv4 and IPv6, pass `::` or use `.new(port)`.
   def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
