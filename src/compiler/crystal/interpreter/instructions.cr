@@ -1411,7 +1411,8 @@ require "./repl"
         push:       true,
         code:       begin
           if pointer.null?
-            false
+            # A null pointer is nil
+            type_from_type_id(filter_type_id).nilable?
           else
             type_id = pointer.as(Int32*).value
             type = type_from_type_id(type_id)
