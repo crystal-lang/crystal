@@ -239,7 +239,8 @@ class Crystal::Codegen::Target
     end
 
     target = LLVM::Target.from_triple(self.to_s)
-    machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, reloc: reloc, code_model: code_model).not_nil!
+    emulated_tls = true if emulated_tls?
+    machine = target.create_target_machine(self.to_s, cpu, features, opt_level, reloc, code_model, emulated_tls).not_nil!
     # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.
@@ -247,6 +248,10 @@ class Crystal::Codegen::Target
     # for background info
     machine.enable_global_isel = false
     machine
+  end
+
+  def emulated_tls?
+    android? || openbsd? || (windows? && gnu?)
   end
 
   def to_s(io : IO) : Nil
