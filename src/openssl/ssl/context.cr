@@ -258,7 +258,6 @@ abstract class OpenSSL::SSL::Context
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       NO_RENEGOTIATION,
-      ENABLE_KTLS,
     ))
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
