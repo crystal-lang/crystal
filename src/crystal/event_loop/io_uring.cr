@@ -125,11 +125,11 @@ require "./timers"
 
 class Crystal::EventLoop::IoUring < Crystal::EventLoop
   def self.default_file_blocking?
-    false
+    true
   end
 
   def self.default_socket_blocking?
-    false
+    true
   end
 
   # While io_uring was introduced in Linux 5.1, some features and opcodes that
