@@ -250,6 +250,7 @@ end
   #
   # This will set the exception's callstack if it hasn't been already.
   # Re-raising a previously caught exception won't replace the callstack.
+  @[Raises]
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -263,6 +264,7 @@ end
 {% end %}
 
 # Raises an Exception with the *message*.
+@[Raises]
 def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
@@ -270,12 +272,14 @@ end
 {% if flag?(:win32) && !flag?(:gnu) %}
   # :nodoc:
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+  @[Raises]
   def raise_without_backtrace(exception : Exception) : NoReturn
     LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
   end
 {% else %}
   # :nodoc:
   {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+  @[Raises]
   def raise_without_backtrace(exception : Exception) : NoReturn
     unwind_ex = Pointer(LibUnwind::Exception).malloc
     unwind_ex.value.exception_class = LibC::SizeT.zero

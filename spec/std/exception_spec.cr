@@ -6,7 +6,39 @@ private class FooError < Exception
   end
 end
 
+private class RaisingMessageError < Exception
+  def message : String?
+    raise ArgumentError.new("message")
+  end
+end
+
+private class RaisingNameError < Exception
+  def self.name : String
+    raise "name"
+  end
+end
+
+private def rescue_message(ex : Exception)
+  ex.message
+rescue error
+  error.message
+end
+
+private def rescue_class_name(ex : Exception)
+  ex.class.name
+rescue error
+  error.message
+end
+
 describe "Exception" do
+  it "rescues an exception raised by an overridden #message" do
+    rescue_message(RaisingMessageError.new).should eq("message")
+  end
+
+  it "rescues an exception raised by an overridden .name" do
+    rescue_class_name(RaisingNameError.new).should eq("name")
+  end
+
   it "allows subclassing #message" do
     ex = FooError.new("foo?")
     ex.message.should eq("foo? -- bar!")
