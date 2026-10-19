@@ -2,6 +2,15 @@ require "spec"
 require "log"
 require "../../support/retry"
 
+private class FailingBackend < Log::Backend
+  getter messages = [] of String
+
+  def write(entry : Log::Entry)
+    raise IO::Error.new("write failed") if entry.message == "fail"
+    messages << entry.message
+  end
+end
+
 class Log
   describe Dispatcher do
     it "create dispatcher from enum" do
@@ -43,6 +52,14 @@ class Log
       backend.dispatch Entry.new("source", :info, "message", Log::Metadata.empty, nil)
       backend.close
       backend.entries.size.should eq(1)
+    end
+
+    it "keeps dispatching after a backend raises" do
+      backend = FailingBackend.new(AsyncDispatcher.new(buffer_size: 1))
+      backend.dispatch Entry.new("source", :info, "fail", Log::Metadata.empty, nil)
+      3.times { |i| backend.dispatch Entry.new("source", :info, "message #{i}", Log::Metadata.empty, nil) }
+      backend.close
+      backend.messages.should eq(["message 0", "message 1", "message 2"])
     end
 
     it "can be closed twice" do
