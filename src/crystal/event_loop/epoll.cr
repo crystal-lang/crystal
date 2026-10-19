@@ -1,3 +1,4 @@
+require "c/sys/wait"
 require "./polling"
 require "../system/unix/epoll"
 require "../system/unix/eventfd"
@@ -80,6 +81,56 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     # the atomic makes sure we only write once
     @eventfd.write(1) unless @interrupted.swap(true, :relaxed)
   end
+
+  # process interface, see Crystal::EventLoop::Process
+
+  def wait(process : System::Process) : ::Process::Status
+    {% if flag?(:solaris) %}
+      raise NotImplementedError.new("Crystal::EventLoop::Epoll#wait(process)")
+    {% else %}
+      siginfo = uninitialized LibC::SiginfoT
+
+      if pidfd = process.pidfd?
+        pidfd_wait(pidfd, pointerof(siginfo))
+      else
+        Fiber.syscall do
+          ret = LibC.waitid(LibC::P_PID, process.pid, pointerof(siginfo), LibC::WEXITED)
+          raise RuntimeError.from_errno("waitid") if ret == -1
+        end
+      end
+
+      if siginfo.si_code == LibC::CLD_EXITED
+        ::Process::Status[siginfo.si_status]
+      else
+        ::Process::Status[Signal.new(siginfo.si_status)]
+      end
+    {% end %}
+  end
+
+  def pidfd_blocking?
+    false
+  end
+
+  private def pidfd_wait(pidfd, siginfo)
+    io = IO::FileDescriptor.new(handle: pidfd, close_on_finalize: false)
+
+    loop do
+      Errno.value = Errno::NONE
+      ret = LibC.waitid(LibC::P_PIDFD, pidfd, siginfo, LibC::WEXITED)
+      return if ret == 0
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        wait_readable(io, nil) { }
+      else
+        raise RuntimeError.from_os_error("waitid", errno)
+      end
+    ensure
+      self.class.remove_impl(io)
+    end
+  end
+
+  # internals
 
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64

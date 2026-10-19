@@ -19,6 +19,10 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   def interrupt : Nil
   end
 
+  def wait(process : System::Process) : ::Process::Status
+    ::Process::Status[0]
+  end
+
   protected def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
     operations << {:add, fd, index}
     RegisteredEvents::READ
@@ -34,6 +38,12 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
 
   private def system_set_timer(time : Time::Instant?) : Nil
   end
+
+  {% if flag?(:linux) %}
+    def pidfd_blocking?
+      false
+    end
+  {% end %}
 end
 
 describe Crystal::EventLoop::Polling::Waiters do

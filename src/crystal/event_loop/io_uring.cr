@@ -51,6 +51,7 @@ end
 
 require "c/poll"
 require "c/sys/socket"
+require "c/sys/wait"
 require "./io_uring/*"
 require "./timers"
 
@@ -567,6 +568,53 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
     FiberEvent.new(:select_timeout, fiber)
+  end
+
+  # process interface, see Crystal::EventLoop::Process
+
+  def wait(process : System::Process) : ::Process::Status
+    siginfo = uninitialized LibC::SiginfoT
+
+    if System::IoUring.supports_opcode?(LibC::IORING_OP_WAITID) # Linux 6.5
+      ret = async(LibC::IORING_OP_WAITID) do |sqe|
+        sqe.value.len = LibC::P_PIDFD
+        sqe.value.fd = process.pidfd
+        sqe.value.file_index = LibC::WEXITED
+        sqe.value.addr2 = pointerof(siginfo).address.to_u64!
+      end
+      raise RuntimeError.from_os_error("waitid", Errno.new(-ret)) if ret < 0
+    else
+      pidfd_wait(process.pidfd, pointerof(siginfo))
+    end
+
+    if siginfo.si_code == LibC::CLD_EXITED
+      ::Process::Status[siginfo.si_status]
+    else
+      ::Process::Status[Signal.new(siginfo.si_status)]
+    end
+  end
+
+  def pidfd_blocking? : Bool
+    System::IoUring.supports_opcode?(LibC::IORING_OP_WAITID)
+  end
+
+  private def pidfd_wait(pidfd, siginfo)
+    io = IO::FileDescriptor.new(handle: pidfd, close_on_finalize: false)
+
+    loop do
+      Errno.value = Errno::NONE
+      ret = LibC.waitid(LibC::P_PIDFD, pidfd, siginfo, LibC::WEXITED)
+      return if ret == 0
+
+      case errno = Errno.value
+      when Errno::EAGAIN
+        wait_readable(io)
+      else
+        raise RuntimeError.from_os_error("waitid", errno)
+      end
+    ensure
+      self.class.remove_impl(io)
+    end
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor

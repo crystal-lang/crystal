@@ -140,11 +140,13 @@ abstract class Crystal::EventLoop
 end
 
 require "./event_loop/file_descriptor"
+require "./event_loop/process"
 
 abstract class Crystal::EventLoop
   # The FileDescriptor interface is always needed, so we include it right in
   # the main interface.
   include FileDescriptor
+  include Process
 
   # The socket module is empty by default and filled with abstract defs when
   # crystal/system/socket.cr is required.

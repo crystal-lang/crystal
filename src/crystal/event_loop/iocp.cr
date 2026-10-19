@@ -317,6 +317,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     FiberEvent.new(:select_timeout, fiber)
   end
 
+  def wait(process : System::Process) : ::Process::Status
+    raise NotImplementedError.new("Crystal::EventLoop::IOCP#wait(process)")
+  end
+
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe(!!read_blocking, !!write_blocking)
     create_completion_port(LibC::HANDLE.new(r)) unless read_blocking
