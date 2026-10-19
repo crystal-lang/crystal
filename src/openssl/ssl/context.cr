@@ -258,11 +258,7 @@ abstract class OpenSSL::SSL::Context
       NO_TLS_V1_1,
       NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       NO_RENEGOTIATION,
-      ENABLE_KTLS,
     ))
-    {% if OpenSSL.has_constant?(:KTLS) %}
-      remove_options(OpenSSL::SSL::Options::ENABLE_KTLS)
-    {% end %}
     add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     # OpenSSL does not support reading from the system root certificate store on
