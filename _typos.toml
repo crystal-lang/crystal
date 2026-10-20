@@ -1,5 +1,6 @@
 [default.extend-words]
 flate = "flate"
+sigfault = "sigfault"
 
 [default.extend-identifiers]
 ACCES = "ACCES"
@@ -26,7 +27,6 @@ SEH = "SEH"
 setup_seh_handler = "setup_seh_handler"
 usri4_parms = "usri4_parms"
 msg_controllen = "msg_controllen"
-__crystal_sigfault_handler = "__crystal_sigfault_handler"
 TunkShif = "TunkShif"
 
 [default]
