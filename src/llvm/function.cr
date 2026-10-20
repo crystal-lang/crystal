@@ -59,19 +59,17 @@ struct LLVM::Function
     attrs
   end
 
-  @[Deprecated]
+  @[Deprecated("Use `#global_value_type` instead")]
   def function_type
-    Type.new LibLLVM.get_element_type(LibLLVM.type_of(self))
+    global_value_type
   end
 
-  @[Deprecated]
   def return_type
-    Type.new(LibLLVM.get_element_type(LibLLVM.type_of(self))).return_type
+    Type.new LibLLVM.get_return_type(global_value_type)
   end
 
-  @[Deprecated]
   def varargs?
-    Type.new(LibLLVM.get_element_type(LibLLVM.type_of(self))).varargs?
+    LibLLVM.is_function_var_arg(global_value_type) != 0
   end
 
   def params
