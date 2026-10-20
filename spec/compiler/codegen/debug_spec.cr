@@ -241,7 +241,12 @@ describe "Code gen: debug" do
   it "keeps literal constants inlined in debug mode" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       A = 1
-      A
+
+      def foo
+        A
+      end
+
+      foo
       CRYSTAL
 
     str = mod.to_s
