@@ -139,7 +139,7 @@ describe "Semantic: closure" do
   end
 
   it "marks method as self closured if instance var is read" do
-    result = assert_type(<<-CRYSTAL) { int32 }
+    result = semantic(<<-CRYSTAL)
       class Foo
         @x : Int32?
 
@@ -149,15 +149,14 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      1
       CRYSTAL
     node = result.node.as(Expressions)
-    call = node.expressions[-2].as(Call)
+    call = node.expressions.last.as(Call)
     call.target_def.self_closured?.should be_true
   end
 
   it "marks method as self closured if instance var is written" do
-    result = assert_type(<<-CRYSTAL) { int32 }
+    result = semantic(<<-CRYSTAL)
       class Foo
         def foo
           -> { @x = 1 }
@@ -165,10 +164,79 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      1
       CRYSTAL
     node = result.node.as(Expressions)
-    call = node.expressions[-2].as(Call)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks instance method as self closured if class var is read (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def foo
+          -> { @@x }
+        end
+      end
+
+      Foo.new.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks instance method as self closured if class var is written (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def foo
+          -> { @@x = 1 }
+        end
+      end
+
+      Foo.new.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks class method as self closured if class var is read via virtual metaclass (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def self.foo
+          -> { @@x }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.as(Foo.class).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks class method as self closured if class var is written via virtual metaclass (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def self.foo
+          -> { @@x = 1 }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.as(Foo.class).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
     call.target_def.self_closured?.should be_true
   end
 
