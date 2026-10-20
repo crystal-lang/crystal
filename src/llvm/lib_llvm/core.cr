@@ -148,6 +148,8 @@ lib LibLLVM
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : LLVM::Linkage)
   fun set_dll_storage_class = LLVMSetDLLStorageClass(global : ValueRef, class : LLVM::DLLStorageClass)
 
+  fun global_get_value_type = LLVMGlobalGetValueType(global : ValueRef) : TypeRef
+
   fun set_alignment = LLVMSetAlignment(v : ValueRef, bytes : UInt)
 
   fun add_global = LLVMAddGlobal(m : ModuleRef, ty : TypeRef, name : Char*) : ValueRef
