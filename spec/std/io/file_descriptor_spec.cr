@@ -6,7 +6,7 @@ class IO::FileDescriptor
 end
 
 private CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
-private SUBSYSTEM_WINDOWS = {{ flag?(:msvc) ? "--link-flags=/SUBSYSTEM:WINDOWS" : "--link-flags=-mwindows" }}
+private SUBSYSTEM_WINDOWS       = {{ flag?(:msvc) ? "--link-flags=/SUBSYSTEM:WINDOWS" : "--link-flags=-mwindows" }}
 
 describe IO::FileDescriptor do
   describe "#initialize" do
