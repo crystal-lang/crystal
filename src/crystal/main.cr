@@ -4,7 +4,31 @@ lib LibCrystalMain
 end
 
 module Crystal
-  {% if !flag?(:win32) %}
+  {% if flag?(:win32) %}
+    # On Windows, if a program is compiled for the Windows subsystem (either
+    # `/SUBSYSTEM:WINDOWS` or `-mwindows` depending on the compiler), then it
+    # will not have a console at all, meaning the standard streams are all
+    # invalid handles, unless redirected to a file.
+    #
+    # Instead, during runtime initialization, we attempt to attach the current
+    # process to the parent process's console, if it has one. This makes the
+    # standard stream behavior more consistent with non-Windows platforms, in
+    # particular when invoking `crystal run` on a source file.
+
+    # :nodoc:
+    private def self.init_stdio : Nil
+      # No error handling needed; `ERROR_ACCESS_DENIED` is when the current
+      # process already has a console, for any other error value the standard
+      # streams are as good as being closed
+      LibC.AttachConsole(LibC::ATTACH_PARENT_PROCESS)
+    end
+
+    # :nodoc:
+    def self.stdio_closed?(fd)
+      file_type = LibC.GetFileType(LibC::HANDLE.new(fd))
+      file_type == LibC::FILE_TYPE_UNKNOWN && LibC.GetLastError != 0
+    end
+  {% else %}
     # On POSIX targets, any closed fd can be recycled, and that includes fd 0, 1
     # and 2 that only have special meaning, not special treatment. If stdout is
     # closed, then the next call to open or socket will recycle fd 1.
@@ -23,7 +47,7 @@ module Crystal
     @@stdio_closed = uninitialized {Bool, Bool, Bool}
 
     # :nodoc:
-    private def self.init_stdio_closed : Nil
+    private def self.init_stdio : Nil
       # check for closed stdio fds
       closed_stdin = LibC.fcntl(0, LibC::F_GETFL) == -1
       closed_stdout = LibC.fcntl(1, LibC::F_GETFL) == -1
@@ -41,11 +65,6 @@ module Crystal
     # :nodoc:
     def self.stdio_closed?(fd)
       @@stdio_closed[fd]
-    end
-  {% else %}
-    # :nodoc:
-    def self.stdio_closed?(fd)
-      false
     end
   {% end %}
 
@@ -77,7 +96,7 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
-    {% unless flag?(:win32) %} init_stdio_closed {% end %}
+    init_stdio
     {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
 

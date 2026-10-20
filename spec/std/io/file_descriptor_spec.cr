@@ -6,6 +6,7 @@ class IO::FileDescriptor
 end
 
 private CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
+private SUBSYSTEM_WINDOWS = {{ flag?(:msvc) ? "--link-flags=/SUBSYSTEM:WINDOWS" : "--link-flags=-mwindows" }}
 
 describe IO::FileDescriptor do
   describe "#initialize" do
@@ -104,6 +105,15 @@ describe IO::FileDescriptor do
       io.to_s.should eq("foo\n")
     end
   end
+
+  {% if flag?(:win32) %}
+    it "inherits the parent console in a window-mode application", tags: %w[slow] do
+      code = %q(print "")
+      compile_source(code, flags: [SUBSYSTEM_WINDOWS]) do |binpath|
+        Process.run(binpath, output: :inherit).success?.should be_true
+      end
+    end
+  {% end %}
 
   it "does not close if close_on_finalize is false" do
     pipes = [] of IO::FileDescriptor
