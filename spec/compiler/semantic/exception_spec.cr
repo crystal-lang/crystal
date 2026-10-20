@@ -296,7 +296,7 @@ describe "Semantic: exception" do
     call.target_defs.should_not(be_nil).first.raises?.should be_true
   end
 
-  it "marks method as raises, though recursive cycle (#17644)" do
+  it "marks method as raises through recursive cycle (#17644)" do
     result = assert_type(<<-CRYSTAL) { int32 }
       @[Raises]
       def foo
