@@ -52,12 +52,13 @@ class Crypto::Bcrypt::Password
     raise Error.new("Invalid hash version") unless SUPPORTED_VERSIONS.includes?(parts[1])
 
     @version = parts[1]
-    @cost = parts[2].to_i
+    @cost = parts[2].to_i? || raise Error.new("Invalid cost")
     @salt = parts[3][0..21]
-    @digest = parts[3][22..-1]
+    @digest = parts[3][22..]? || ""
 
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == 22
+    raise Error.new("Invalid salt") unless salt.each_char.all? { |char| Base64::ALPHABET.includes?(char) }
     raise Error.new("Invalid digest size") unless digest.size == 31
   end
 
