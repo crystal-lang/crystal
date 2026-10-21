@@ -81,10 +81,6 @@ module Fiber::ExecutionContext
       ExecutionContext.execution_contexts.push(self)
     end
 
-    def running? : Bool
-      !@state.shutdown?
-    end
-
     private def allocate_stack : Stack
       # no stack pool: we directly allocate a stack; it will be automatically
       # released when the thread is returned to the thread pool
@@ -145,7 +141,7 @@ module Fiber::ExecutionContext
       end
 
       @mutex.synchronize do
-        raise RuntimeError.new("Can't resume dead fiber") unless running?
+        raise RuntimeError.new("Can't resume dead fiber") if @state.shutdown?
 
         @enqueued = true
 
@@ -272,13 +268,13 @@ module Fiber::ExecutionContext
     # ctx.wait # => re-raises "fail"
     # ```
     def wait : Nil
-      if running?
+      unless @state.shutdown?
         node = Fiber::PointerLinkedListNode.new(Fiber.current)
-        running = @mutex.synchronize do
-          @wait_list.push(pointerof(node)) if running?
-          running?
+        shutdown = @mutex.synchronize do
+          @wait_list.push(pointerof(node)) unless @state.shutdown?
+          @state.shutdown?
         end
-        Fiber.suspend if running
+        Fiber.suspend unless shutdown
       end
 
       if exception = @exception
