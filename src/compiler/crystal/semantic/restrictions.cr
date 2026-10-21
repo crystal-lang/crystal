@@ -415,6 +415,7 @@ module Crystal
 
       if self_splat_index && other_splat_index
         min = Math.min(self_min_size, other_min_size)
+        min = Math.min(min, self_splat_index) if self_splat_index == other_splat_index
       else
         min = Math.min(max_size, other.max_size)
       end
