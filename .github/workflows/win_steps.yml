@@ -42,6 +42,7 @@ jobs:
   build-release:
     name: Build compiler
     uses: $/.github/workflows/win_build_portable.yml
+    needs: [build-deps]
     with:
       release: true
       arch: ${{ inputs.arch }}
