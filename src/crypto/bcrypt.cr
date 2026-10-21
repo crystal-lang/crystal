@@ -83,10 +83,11 @@ class Crypto::Bcrypt
   # Returns the bytes bcrypt derives the hash from: the *password* followed by its NUL terminator.
   # Only the first 72 bytes are used, so the terminator of a 72-byte password is left out.
   private def self.password_bytes(password : String) : Bytes
-    raise Error.new("Invalid password size") if password.bytesize > PASSWORD_RANGE.end
+    bytesize = password.bytesize
+    bytesize += 1 if bytesize < PASSWORD_RANGE.end
 
-    # We make a clone here to we don't keep a mutable reference to the original string
-    password.to_unsafe.to_slice(Math.min(password.bytesize + 1, PASSWORD_RANGE.end)).clone
+    # We make a clone here so we don't keep a mutable reference to the original string
+    password.to_unsafe.to_slice(bytesize).clone
   end
 
   getter password : Bytes
