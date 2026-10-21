@@ -70,6 +70,10 @@ module Fiber::ExecutionContext
       GC.unlock_read
     end
 
+    # Returns true if the scheduler is in an idle state, that is neither running
+    # a fiber or in a syscall, but waiting on the event loop, or parked.
+    protected abstract def idle? : Bool
+
     # Returns the current status of the scheduler. For example `"running"`,
     # `"event-loop"` or `"parked"`.
     abstract def status : String
