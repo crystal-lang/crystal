@@ -41,6 +41,14 @@ class Fiber
       end
     end
 
+    # Removes and frees all the stacks from the pool, returning memory to the
+    # operating system.
+    def clear : Nil
+      while stack = shift?
+        Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
+      end
+    end
+
     def collect_loop(every = 5.seconds) : Nil
       loop do
         sleep every
