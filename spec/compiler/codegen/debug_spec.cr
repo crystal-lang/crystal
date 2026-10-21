@@ -407,6 +407,27 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "emits debug location for inlined calls and primitives (#15360)" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      class Foo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      a = foo.x
+      b = a &* 2
+      CRYSTAL
+
+    str = mod.to_s
+    main = str[/^define [^\n]+ @__crystal_main\(.+?^}/m]
+    debug_line_of(str, main, /getelementptr inbounds %Foo,/).should eq(10)
+    debug_line_of(str, main, / = mul i32 /).should eq(11)
+  end
+
   it "doesn't fail if Proc self is closured (#16382)" do
     codegen <<-CRYSTAL, debug: Crystal::Debug::All
       struct Proc
@@ -420,4 +441,12 @@ describe "Code gen: debug" do
       -> { }.partial.call
       CRYSTAL
   end
+end
+
+# Returns the line number of the debug location attached to the first instruction in *function* matching *pattern*.
+# *ir* is the whole module.
+private def debug_line_of(ir, function, pattern)
+  instruction = function.each_line.find!(&.matches?(pattern))
+  dbg_id = instruction[/!dbg (![0-9]+)/, 1]
+  ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
 end
