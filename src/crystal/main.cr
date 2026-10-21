@@ -100,6 +100,7 @@ module Crystal
     # so we explicitly initialize their class vars, then init crystal/once
     Thread.init
     Fiber.init
+    Thread.current # define main thread & main fiber
     Crystal::Once.init
   end
 
