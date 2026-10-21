@@ -77,11 +77,15 @@ struct Crystal::System::Process
     ret = LibC.GetExitCodeProcess(@process_handle, out exit_code)
     raise RuntimeError.from_winerror("GetExitCodeProcess") if ret == 0
 
-    exit_code
+    ::Process::Status[exit_code]
   end
 
   def exists?
     Crystal::System::Process.exists?(@pid)
+  end
+
+  def signal(signal : Signal) : Nil
+    Crystal::System::Process.signal(@pid, signal.value)
   end
 
   def terminate(*, graceful)

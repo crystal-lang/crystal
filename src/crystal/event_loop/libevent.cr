@@ -115,6 +115,10 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
+  def wait(process : System::Process) : ::Process::Status
+    raise NotImplementedError.new("Crystal::EventLoop::LibEvent#wait(process)")
+  end
+
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     r, w = System::FileDescriptor.system_pipe
     System::FileDescriptor.set_blocking(r, false) unless read_blocking

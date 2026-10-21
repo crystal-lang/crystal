@@ -109,7 +109,7 @@ enum Signal : Int32
   # portable alternative which also works on Windows.
   def trap(&handler : Signal ->) : Nil
     {% if @type.has_constant?("CHLD") %}
-      if self == CHLD
+      if self == CHLD && !Crystal::System::Process.supports_evented_waitid?
         Crystal::System::Signal.child_handler = handler
         return
       end
@@ -130,7 +130,9 @@ enum Signal : Int32
   # ```
   def trap_handler?
     {% if @type.has_constant?("CHLD") %}
-      return Crystal::System::Signal.child_handler if self == CHLD
+      if self == CHLD && !Crystal::System::Process.supports_evented_waitid?
+        return Crystal::System::Signal.child_handler
+      end
     {% end %}
     Crystal::System::Signal.trap_handler?(self)
   end

@@ -1,0 +1,3 @@
+lib LibC
+  PIDFD_NONBLOCK = O_NONBLOCK
+end

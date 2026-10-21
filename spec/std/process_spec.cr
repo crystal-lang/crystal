@@ -103,7 +103,8 @@ describe Process do
     end
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
-      200.times { Process.new([exe, "pu", "exit", "0"]) }
+      processes = Array(Process).new(200)
+      200.times { processes << Process.new([exe, "pu", "exit", "0"]) }
 
       # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
@@ -111,6 +112,8 @@ describe Process do
       # the processes above have now been queued after completion; if this last
       # one finishes at all, nothing was broken by the GC
       Process.run(exe, ["pu", "exit", "0"])
+    ensure
+      processes.each(&.wait) if processes
     end
 
     it "accepts tuple args" do
@@ -172,7 +175,8 @@ describe Process do
     end
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
-      200.times { Process.new(exe, ["pu", "exit", "0"]) }
+      processes = Array(Process).new(200)
+      200.times { processes << Process.new([exe, "pu", "exit", "0"]) }
 
       # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
@@ -180,6 +184,8 @@ describe Process do
       # the processes above have now been queued after completion; if this last
       # one finishes at all, nothing was broken by the GC
       Process.run(exe, ["pu", "exit", "0"])
+    ensure
+      processes.each(&.wait) if processes
     end
   end
 

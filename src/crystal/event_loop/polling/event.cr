@@ -14,6 +14,7 @@ struct Crystal::EventLoop::Polling::Event
     IoWrite
     Sleep
     SelectTimeout
+    WaitProcess
   end
 
   getter type : Type

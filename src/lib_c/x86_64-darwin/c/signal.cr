@@ -44,6 +44,8 @@ lib LibC
   SIG_DFL = SighandlerT.new(Pointer(Void).new(0_u64), Pointer(Void).null)
   SIG_IGN = SighandlerT.new(Pointer(Void).new(1_u64), Pointer(Void).null)
 
+  CLD_EXITED = 1
+
   SA_ONSTACK = 0x0001
   SA_RESTART = 0x0002
   SA_SIGINFO = 0x0040

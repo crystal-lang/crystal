@@ -48,6 +48,8 @@ lib LibC
     val : ULong[16] # (1024 / (8 * sizeof(ULong)))
   end
 
+  CLD_EXITED = 1
+
   SA_ONSTACK = 0x08000000
   SA_RESTART = 0x10000000
   SA_SIGINFO = 0x00000004
@@ -57,8 +59,27 @@ lib LibC
     si_errno : Int
     si_code : Int
     __pad0 : Int
-    si_addr : Void*               # Assuming the segfault form of siginfo_t
-    __pad1 : StaticArray(Int, 26) # __SI_PAD_SIZE (28) - sizeof(void*) / sizeof(int) = 26
+    _sifields : SiginfoT___sifields
+  end
+
+  union SiginfoT___sifields
+    _pad : Int[28]
+    _sigchld : SiginfoT___sifields___sigchld
+    _sigfault : SiginfoT___sifields___sigfault
+  end
+
+  struct SiginfoT___sifields___sigchld
+    si_pid : PidT
+    si_uid : UidT
+    si_status : Int
+    si_utime : ClockT
+    si_stime : ClockT
+  end
+
+  struct SiginfoT___sifields___sigfault
+    si_addr : Void*
+    si_addr_lsb : Short
+    # _bounds : omitted
   end
 
   alias SigactionHandlerT = (Int, SiginfoT*, Void*) ->
@@ -88,4 +109,18 @@ lib LibC
   fun sigdelset(SigsetT*, Int) : Int
   fun sigismember(SigsetT*, Int) : Int
   fun sigsuspend(SigsetT*) : Int
+end
+
+struct LibC::SiginfoT
+  def si_addr : Void*
+    _sifields._sigfault.si_addr
+  end
+
+  def si_pid : PidT
+    _sifields._sigchld.si_pid
+  end
+
+  def si_status : Int
+    _sifields._sigchld.si_status
+  end
 end

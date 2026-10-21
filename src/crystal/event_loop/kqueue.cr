@@ -1,3 +1,4 @@
+require "c/sys/wait"
 require "./polling"
 require "../system/unix/kqueue"
 
@@ -37,6 +38,8 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       elsif kevent.value.filter == LibC::EVFILT_TIMER
         # nothing special
         timer_triggered = true
+      elsif kevent.value.filter == LibC::EVFILT_PROC
+        yield kevent.value.udata.as(Event*).value.fiber
       else
         process_io(kevent) { |fiber| yield fiber }
       end
@@ -99,6 +102,45 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)
     end
   end
+
+  # process interface, See Crystal::EventLoop::Process
+
+  def wait(process : System::Process) : ::Process::Status
+    siginfo = LibC::SiginfoT.new
+
+    while true
+      ret = LibC.waitid(LibC::P_PID, process.pid, pointerof(siginfo), LibC::WEXITED | LibC::WNOHANG)
+      raise RuntimeError.from_errno("waitid") if ret == -1
+      break unless siginfo.si_signo == 0 && siginfo.si_pid == 0
+
+      event = Event.new(:wait_process, Fiber.current)
+      kevent = uninitialized LibC::Kevent
+      receipt = uninitialized LibC::Kevent
+
+      System::Kqueue.set(pointerof(kevent),
+        process.pid,
+        LibC::EVFILT_PROC,
+        LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_RECEIPT,
+        LibC::NOTE_EXIT,
+        udata: pointerof(event).as(Void*))
+      @kqueue.kevent(pointerof(kevent).to_slice(1), pointerof(receipt).to_slice(1)) do
+        raise RuntimeError.from_errno("kevent")
+      end
+
+      # suspend if the event has successfully been added
+      if receipt.data == 0
+        Fiber.suspend
+      end
+    end
+
+    if siginfo.si_code == LibC::CLD_EXITED
+      return ::Process::Status[siginfo.si_status]
+    else
+      return ::Process::Status[Signal.new(siginfo.si_status)]
+    end
+  end
+
+  # internals
 
   @[NoInline]
   protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents

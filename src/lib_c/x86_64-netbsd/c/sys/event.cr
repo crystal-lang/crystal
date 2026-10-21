@@ -3,6 +3,7 @@ require "../time"
 lib LibC
   EVFILT_READ  = 0_u32
   EVFILT_WRITE = 1_u32
+  EVFILT_PROC  = 4_u32
   EVFILT_TIMER = 6_u32
   EVFILT_USER  = 8_u32
 
@@ -17,6 +18,7 @@ lib LibC
 
   NOTE_NSECONDS = 0x00000003_u32
   NOTE_TRIGGER  = 0x01000000_u32
+  NOTE_EXIT     = 0x80000000_u32
 
   struct Kevent
     ident : SizeT # UintptrT

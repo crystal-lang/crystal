@@ -86,6 +86,8 @@ describe "Signal" do
       Signal::CHLD.ignore
       child = Process.new("true")
       child.wait # doesn't block forever
+    ensure
+      Signal::CHLD.reset
     end
 
     it "CHLD.trap is called after default Crystal child handler" do
@@ -113,16 +115,18 @@ describe "Signal" do
       end
 
       Process.new("true").wait
-      Fiber.yield
+      sleep(1.millisecond)
 
       call_count.should eq(1)
 
       Signal::CHLD.reset
 
       Process.new("true").wait
-      Fiber.yield
+      sleep(1.millisecond)
 
       call_count.should eq(1)
+    ensure
+      Signal::CHLD.reset
     end
 
     # TODO: test Signal::X.reset

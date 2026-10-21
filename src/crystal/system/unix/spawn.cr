@@ -29,16 +29,19 @@ struct Crystal::System::Process
 
     LibC.close(w)
     reader_pipe = IO::FileDescriptor.new(r)
+    failed = false
 
     begin
       case reader_pipe.read_byte
       when nil
         # Pipe was closed, no error
       when 0
+        failed = true
         # Error message coming
         message = reader_pipe.gets_to_end
         raise RuntimeError.new("Error executing process: '#{prepared_args[0]}': #{message}")
       when 1
+        failed = true
         # Errno coming
         # can't use IO#read_bytes(Int32) because we skipped system/network
         # endianness check when writing the integer while read_bytes would;
@@ -53,9 +56,29 @@ struct Crystal::System::Process
       end
     ensure
       reader_pipe.close
+
+      if failed
+        # No process object will be returned to the caller to reap this child.
+        # This also runs when the error callback returns from the caller.
+        process = new(pid)
+        begin
+          process.wait
+        ensure
+          process.release
+        end
+      end
     end
 
     pid
+  end
+
+  private def self.wait_and_release(pid)
+    process = new(pid)
+    begin
+      process.wait
+    ensure
+      process.release
+    end
   end
 
   private def self.fork_for_exec

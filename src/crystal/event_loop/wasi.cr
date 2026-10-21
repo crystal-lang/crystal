@@ -29,6 +29,10 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_timeout_event")
   end
 
+  def wait(process : System::Process) : ::Process::Status
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop#wait(process)")
+  end
+
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
   end
