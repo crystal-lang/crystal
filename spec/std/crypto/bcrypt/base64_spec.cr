@@ -43,9 +43,9 @@ describe "Crypto::Bcrypt::Base64" do
   end
 
   it "stops decoding at an invalid character" do
-    Crypto::Bcrypt::Base64.decode("!M.X", 3).to_a.should be_empty
-    Crypto::Bcrypt::Base64.decode("T!.X", 3).to_a.should be_empty
-    Crypto::Bcrypt::Base64.decode("TM!X", 3).to_a.should eq(UInt8[0x54])
-    Crypto::Bcrypt::Base64.decode("TM.!", 3).to_a.should eq(UInt8[0x54, 0xe0])
+    Crypto::Bcrypt::Base64.decode("!M.X", 3).should be_empty
+    Crypto::Bcrypt::Base64.decode("T!.X", 3).should be_empty
+    Crypto::Bcrypt::Base64.decode("TM!X", 3).should eq(Bytes[0x54])
+    Crypto::Bcrypt::Base64.decode("TM.!", 3).should eq(Bytes[0x54, 0xe0])
   end
 end
