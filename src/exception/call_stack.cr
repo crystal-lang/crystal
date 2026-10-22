@@ -73,6 +73,11 @@ struct Exception::CallStack
 
     if cache_miss
       pc = decode_address(ip)
+      {% unless flag?(:interpreted) %}
+        # *ip* is a return address: the instruction after the call, which can belong to another line, or to none.
+        # The call itself is the instruction before it.
+        pc &-= 1
+      {% end %}
       file, line_number, column_number = decode_line_number(pc)
 
       unless @@skip.includes?(file)

@@ -46,6 +46,33 @@ describe "Backtrace" do
     end
   end
 
+  it "prints the location of the call rather than of the code after it", tags: %w[slow] do
+    with_tempfile("source_file") do |source_file|
+      # The instruction after the `raise` call belongs to the code after the `if`, not to line 3
+      File.write source_file, <<-CRYSTAL
+        def callee1(x)
+          if x > 0
+            raise "foo"
+          end
+          x
+        end
+
+        begin
+          callee1(1)
+        rescue ex
+          puts ex.backtrace.join('\n')
+        end
+        CRYSTAL
+      _, output, _ = compile_and_run_file(source_file)
+
+      {% if flag?(:msvc) %}
+        output.should match(/^#{Regex.escape(source_file)}:3 in 'callee1'/m)
+      {% else %}
+        output.should match(/^#{Regex.escape(source_file)}:3:5 in 'callee1'/m)
+      {% end %}
+    end
+  end
+
   it "prints exception backtrace to stderr", tags: %w[slow] do
     sample = datapath("exception_backtrace_sample")
 
