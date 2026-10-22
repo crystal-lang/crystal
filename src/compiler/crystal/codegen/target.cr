@@ -185,7 +185,7 @@ class Crystal::Codegen::Target
   end
 
   def win32?
-    msvc? || gnu?
+    msvc? || mingw?
   end
 
   def armhf?
