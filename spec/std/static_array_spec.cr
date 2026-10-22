@@ -13,6 +13,42 @@ describe "StaticArray" do
     a[0].should eq(1)
     a[1].should eq(1)
     a[2].should eq(1)
+
+    zeros = StaticArray(Int32, 64).new 0
+    zeros.each { |x| x.should eq(0) }
+
+    nils = StaticArray(Nil, 32).new nil
+    nils.each { |x| x.should be_nil }
+
+    falses = StaticArray(Bool, 32).new false
+    falses.each { |x| x.should be_false }
+
+    trues = StaticArray(Bool, 32).new true
+    trues.each { |x| x.should be_true }
+
+    bytes = StaticArray(UInt8, 128).new 42_u8
+    bytes.each { |x| x.should eq(42_u8) }
+
+    i8s = StaticArray(Int8, 128).new -5_i8
+    i8s.each { |x| x.should eq(-5_i8) }
+
+    single_zero = StaticArray(Int32, 1).new 0
+    single_zero[0].should eq(0)
+
+    single_byte = StaticArray(UInt8, 1).new 99_u8
+    single_byte[0].should eq(99_u8)
+
+    large_zero = StaticArray(Int64, 1024).new 0_i64
+    large_zero.all?(&.zero?).should be_true
+
+    floats = StaticArray(Float64, 32).new 0.0_f64
+    floats.each { |x| x.should eq(0.0_f64) }
+
+    chars = StaticArray(Char, 16).new 'x'
+    chars.each { |c| c.should eq('x') }
+
+    tuples = StaticArray(NamedTuple(x: Int32, y: Int32), 10).new({x: 1, y: 2})
+    tuples.each { |p| p.should eq({x: 1, y: 2}) }
   end
 
   it "creates with new and block" do
