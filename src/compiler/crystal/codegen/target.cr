@@ -180,12 +180,20 @@ class Crystal::Codegen::Target
     windows? && environment_parts.includes?("msvc")
   end
 
+  def mingw?
+    windows? && gnu?
+  end
+
   def win32?
-    windows? && (msvc? || gnu?)
+    msvc? || mingw?
   end
 
   def armhf?
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
+  end
+
+  def x86?
+    @architecture.in?("x86_64", "i386")
   end
 
   def avr?
