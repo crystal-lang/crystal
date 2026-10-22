@@ -377,6 +377,44 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "doesn't attribute branch entries, merges and def epilogue to the previous line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      lib LibC
+        fun exit(status : Int32) : NoReturn
+      end
+
+      struct Int32
+        def ===(other : Int32)
+          self == other
+        end
+      end
+
+      class Foo
+        @status = 1
+
+        def foo(value : Int32)
+          case value
+          when 1
+            10
+          when 2
+            20
+          else
+            LibC.exit(@status)
+          end
+        end
+      end
+
+      Foo.new.foo(1)
+      CRYSTAL
+
+    str = mod.to_s
+    foo = str[/^define [^\n]+ @"\*Foo#foo<Int32>:Int32"\(.+?^}/m]
+    debug_line_of(str, foo, / = phi /).should eq(0)
+    debug_line_of(str, foo, /^\s+ret /).should eq(0)
+    debug_line_of(str, foo, /getelementptr inbounds %Foo,/).should eq(0)
+    debug_line_of(str, foo, /call void @exit/).should eq(21)
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
@@ -420,4 +458,12 @@ describe "Code gen: debug" do
       -> { }.partial.call
       CRYSTAL
   end
+end
+
+# Returns the line number of the debug location attached to the first instruction in *function* matching *pattern*.
+# *ir* is the whole module.
+private def debug_line_of(ir, function, pattern)
+  instruction = function.each_line.find!(&.matches?(pattern))
+  dbg_id = instruction[/!dbg (![0-9]+)/, 1]
+  ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
 end

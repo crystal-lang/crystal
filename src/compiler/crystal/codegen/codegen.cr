@@ -279,6 +279,8 @@ module Crystal
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
+    getter debug : Debug
+
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
                    @debug = Debug::Default,
@@ -1065,6 +1067,7 @@ module Crystal
 
     def codegen_if_branch(phi, node, branch_block, last)
       position_at_end branch_block
+      set_artificial_debug_location if @debug.line_numbers?
       accept node
       phi.add @last, node.type?, last
     end

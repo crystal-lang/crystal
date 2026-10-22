@@ -521,6 +521,16 @@ module Crystal
       end
     end
 
+    # Attributes the next instructions to no source line (line 0), in the scope of the current location.
+    # This is for code that belongs to no single line, such as the merge after branches or a def's epilogue,
+    # so that debuggers and coverage tools don't attribute it to the last line emitted.
+    def set_artificial_debug_location
+      return unless location = @current_debug_location
+      return unless scope = get_current_debug_scope(location)
+
+      builder.set_current_debug_location(di_builder.create_debug_location(0, 0, scope), di_builder.context)
+    end
+
     def clear_current_debug_location
       @current_debug_location = nil
 
