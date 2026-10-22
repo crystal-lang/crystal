@@ -3600,7 +3600,6 @@ module Crystal
       unless var
         undefined_class_variable(node, class_var_owner)
       end
-      check_self_closured
       var
     end
 
