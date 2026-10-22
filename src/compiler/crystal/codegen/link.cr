@@ -121,7 +121,7 @@ module Crystal
 
   class Program
     def lib_flags(cross_compiling : Bool = false)
-      has_flag?("msvc") ? lib_flags_windows(cross_compiling) : lib_flags_posix(cross_compiling)
+      codegen_target.msvc? ? lib_flags_windows(cross_compiling) : lib_flags_posix(cross_compiling)
     end
 
     private def lib_flags_windows(cross_compiling)
@@ -129,7 +129,7 @@ module Crystal
 
       # Add CRYSTAL_LIBRARY_PATH locations, so the linker preferentially
       # searches user-given library paths.
-      if has_flag?("msvc")
+      if codegen_target.msvc?
         CrystalLibraryPath.paths.each do |path|
           flags << quote_flag("/LIBPATH:#{path}", cross_compiling)
         end
@@ -186,7 +186,7 @@ module Crystal
 
     private def quote_flag(flag, cross_compiling)
       if cross_compiling
-        has_flag?("windows") ? Process.quote_windows(flag) : Process.quote_posix(flag)
+        codegen_target.windows? ? Process.quote_windows(flag) : Process.quote_posix(flag)
       else
         Process.quote(flag)
       end
@@ -245,8 +245,9 @@ module Crystal
       {% if flag?(:msvc) %}
         if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
           if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
-            host_bits = {{ flag?(:aarch64) ? "ARM64" : flag?(:bits64) ? "x64" : "x86" }}
-            target_bits = has_flag?("aarch64") ? "arm64" : has_flag?("bits64") ? "x64" : "x86"
+            host_target = Crystal::Config.host_target
+            host_bits = host_target.architecture == "aarch64" ? "ARM64" : codegen_target.architecture == "x86_64" ? "x64" : "x86"
+            target_bits = codegen_target.architecture == "aarch64" ? "arm64" : codegen_target.architecture == "x86_64" ? "x64" : "x86"
 
             # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
             # that is normally expected on the MSVC developer command prompt
