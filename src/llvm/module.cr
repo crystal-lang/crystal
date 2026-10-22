@@ -49,6 +49,16 @@ class LLVM::Module
     add_flag(module_flag, key, @context.int32.const_int(val))
   end
 
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : String)
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+    )
+  end
+
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
     LibLLVM.add_module_flag(
       self,
