@@ -33,6 +33,10 @@ class LLVM::Module
     LibLLVM.set_module_data_layout(self, data)
   end
 
+  def inline_asm=(assembly : String)
+    LibLLVM.set_module_inline_asm2(self, assembly, assembly.bytesize)
+  end
+
   def dump
     LibLLVM.dump_module(self)
   end
