@@ -171,8 +171,12 @@ end
   # :nodoc:
   @[Raises]
   fun __crystal_raise(ex : Void*) : NoReturn
-    Crystal::System.print_error "EXITING: __crystal_raise called"
-    LibC.exit(1)
+    {% if compare_versions(Crystal::LLVM_VERSION, "1.24.0") < 0 %}
+      Crystal::System.print_error "EXITING: __crystal_raise called"
+      LibC.exit(1)
+    {% else %}
+      LibIntrinsics.wasm_throw(0, ex)
+    {% end %}
   end
 
   # :nodoc:
@@ -239,7 +243,7 @@ end
   end
 {% end %}
 
-{% if flag?(:wasm32) %}
+{% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "1.24.0") < 0 %}
   def raise(exception : Exception) : NoReturn
     Crystal::System.print_error "EXITING: Attempting to raise:\n%s\n", exception.inspect_with_backtrace
     LibIntrinsics.debugtrap
@@ -267,24 +271,22 @@ def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
 
-{% if flag?(:win32) && !flag?(:gnu) %}
-  # :nodoc:
-  {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
-  def raise_without_backtrace(exception : Exception) : NoReturn
+# :nodoc:
+{% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
+def raise_without_backtrace(exception : Exception) : NoReturn
+  {% if flag?(:win32) && !flag?(:gnu) %}
     LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
-  end
-{% else %}
-  # :nodoc:
-  {% if flag?(:interpreted) %} @[Primitive(:interpreter_raise_without_backtrace)] {% end %}
-  def raise_without_backtrace(exception : Exception) : NoReturn
+  {% elsif flag?(:wasm32) %}
+    LibIntrinsics.wasm_throw(0, exception.as(Void*)) # 0 == CPP_EXCEPTION tag
+  {% else %}
     unwind_ex = Pointer(LibUnwind::Exception).malloc
     unwind_ex.value.exception_class = LibC::SizeT.zero
     unwind_ex.value.exception_cleanup = LibC::SizeT.zero
     unwind_ex.value.exception_object = exception.as(Void*)
     unwind_ex.value.exception_type_id = exception.crystal_type_id
     __crystal_raise(unwind_ex)
-  end
-{% end %}
+  {% end %}
+end
 
 # :nodoc:
 fun __crystal_raise_string(message : UInt8*)
