@@ -37,6 +37,7 @@ lib LibLLVM
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : Char*, c : ContextRef) : ModuleRef
   fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : SizeT*) : Char*
   fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : Char*, len : SizeT)
+  fun set_module_inline_asm2 = LLVMSetModuleInlineAsm2(mod : ModuleRef, asm : Char*, len : SizeT)
   fun set_target = LLVMSetTarget(m : ModuleRef, triple : Char*)
   fun add_module_flag = LLVMAddModuleFlag(m : ModuleRef, behavior : ModuleFlagBehavior, key : Char*, key_len : SizeT, val : MetadataRef)
   fun dump_module = LLVMDumpModule(m : ModuleRef)
