@@ -1,6 +1,8 @@
 require "./spec_helper"
 require "spec/helpers/iterate"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 struct RangeSpecIntWrapper
   include Comparable(self)
@@ -117,7 +119,7 @@ describe "Range" do
       (1...11).step(2).sum.should eq 25
     end
 
-    it "called with no block is specialized for performance (BigInt)" do
+    pending_wasm32 "called with no block is specialized for performance (BigInt)" do
       (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
       (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
     end
@@ -157,7 +159,7 @@ describe "Range" do
       (0_u32...10_u32).bsearch { |x| x >= 10 }.should be_nil
     end
 
-    it "BigInt" do
+    pending_wasm32 "BigInt" do
       (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
     end
 

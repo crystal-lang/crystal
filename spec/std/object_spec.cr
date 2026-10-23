@@ -532,7 +532,7 @@ describe Object do
     0x12345678.unsafe_as(Tuple(UInt8, UInt8, UInt8, UInt8)).should eq({0x78, 0x56, 0x34, 0x12})
   end
 
-  it "calls #finalize on #clone'd objects" do
+  pending_wasm32 "calls #finalize on #clone'd objects" do
     obj = TestObjectWithFinalize.new
     assert_finalizes("clone") { obj.clone }
   end

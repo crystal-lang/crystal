@@ -1,5 +1,7 @@
 require "./spec_helper"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "spec/helpers/iterate"
 require "../support/number"
 
@@ -321,7 +323,8 @@ describe "Int" do
     it { 24.gcd(40).should eq(8) } # common divisor
 
     it "doesn't silently overflow" { 614_889_782_588_491_410_i64.gcd(53).should eq(1) }
-    it "raises on too big result to fit in result type" do
+
+    pending_wasm32 "raises on too big result to fit in result type" do
       expect_raises(OverflowError, "Arithmetic overflow") { Int64::MIN.gcd(1) }
     end
   end
@@ -1105,7 +1108,7 @@ describe "Int" do
     {% end %}
   end
 
-  it "compares signed vs. unsigned integers" do
+  pending_wasm32 "compares signed vs. unsigned integers" do
     {% begin %}
       signed_ints = [
         Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX,
@@ -1181,7 +1184,7 @@ describe "Int" do
       -10.bit_length.should eq(4)
     end
 
-    it "for BigInt" do
+    pending_wasm32 "for BigInt" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
       (10.to_big_i ** 3010).bit_length.should eq(10000)
