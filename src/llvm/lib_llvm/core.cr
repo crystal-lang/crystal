@@ -187,6 +187,8 @@ lib LibLLVM
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, vals : ValueRef*, count : UInt) : ValueRef
 
+  fun token_type_in_context = LLVMTokenTypeInContext(c : ContextRef) : TypeRef
+
   {% unless LibLLVM::IS_LT_180 %}
     fun create_operand_bundle = LLVMCreateOperandBundle(tag : Char*, tag_len : SizeT, args : ValueRef*, num_args : UInt) : OperandBundleRef
     fun dispose_operand_bundle = LLVMDisposeOperandBundle(bundle : OperandBundleRef)
