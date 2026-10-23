@@ -75,6 +75,10 @@ class LLVM::Context
     Type.new LibLLVM.ppc_fp128_type_in_context(self)
   end
 
+  def token : Type
+    Type.new LibLLVM.token_type_in_context(self)
+  end
+
   def pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
