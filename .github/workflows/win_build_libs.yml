@@ -229,7 +229,7 @@ jobs:
         if: inputs.arch == 'aarch64'
         uses: actions/setup-python@v7
         with:
-          python-version: '3.14'
+          python-version: '3.15'
 
       - name: Enable Developer Command Prompt
         uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
