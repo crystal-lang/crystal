@@ -20,7 +20,7 @@ lib LibC
   O_RDWR     = O_RDONLY | O_WRONLY
   O_WRONLY   = 0x10000000
 
-  AT_FDCWD            =  -100
+  AT_FDCWD            =    -2
   AT_SYMLINK_NOFOLLOW = 0x100
   AT_REMOVEDIR        = 0x200
   AT_SYMLINK_FOLLOW   = 0x400
