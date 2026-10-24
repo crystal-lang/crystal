@@ -1707,7 +1707,7 @@ module Crystal
     def special_c_struct_or_union_new_with_named_args(node, type, named_args)
       exps = [] of ASTNode
 
-      temp_name = @program.new_temp_var_name
+      temp_name = @program.new_temp_var_name(node)
 
       new_call = Call.new(node.obj, "new").at(node)
 

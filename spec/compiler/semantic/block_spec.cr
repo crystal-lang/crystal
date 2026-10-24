@@ -1604,4 +1604,21 @@ describe "Block inference" do
       Foo.new.bar(1_i64) { "hi" }
       CRYSTAL
   end
+
+  it "names the missing parameters of a captured block with filename" do
+    result = semantic <<-CRYSTAL
+      def foo(&block : Int32, Int32 -> Int32)
+        block
+      end
+
+      #<loc:"foo.cr",1,1>foo { |x| x }
+      #<loc:"bar.cr",1,1>foo { |x| x }
+      CRYSTAL
+
+    calls = result.node.as(Expressions).expressions.select(Call)
+    calls.map { |call| call.block.not_nil!.fun_literal.as(ProcLiteral).def.args.map(&.name) }.should eq([
+      ["x", "__temp_cd6ae5dd_1"],
+      ["x", "__temp_fbcf3d84_1"],
+    ])
+  end
 end
