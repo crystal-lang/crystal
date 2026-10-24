@@ -62,7 +62,7 @@ jobs:
         run: |
           bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi --link-flags="-z stack-size=8388608" -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_mt
         env:
-          CRYSTAL_LIBRARY_PATH: "/tmp/wasi-sdk/share/wasi-sysroot/lib/wasm32-wasip1:/tmp/wasi-sdk/lib/clang/23/lib/wasm32-unknown-wasip1:/tmp/pcre2/build"
+          CRYSTAL_LIBRARY_PATH: "/tmp/wasi-sdk/share/wasi-sysroot/lib/wasm32-wasip1:/tmp/pcre2/build"
 
       - name: "Run wasm32_std_spec.wasm"
         run: |
