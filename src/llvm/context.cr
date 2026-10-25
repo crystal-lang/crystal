@@ -8,6 +8,14 @@ class LLVM::Context
     @builders = [] of LLVM::Builder
   end
 
+  # Whether values other than globals keep the names given to them. Discarded
+  # names make the bitcode of a module independent of the names the frontend
+  # chose, so an unchanged module's cached object file is reused even when a
+  # temporary variable elsewhere was renumbered.
+  def discard_value_names=(discard : Bool)
+    LibLLVM.context_set_discard_value_names(self, discard)
+  end
+
   def new_module(name : String) : Module
     Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end

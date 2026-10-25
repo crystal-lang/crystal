@@ -633,6 +633,7 @@ class Crystal::CodeGenVisitor
 
       @modules[type_name] ||= begin
         llvm_context = LLVM::Context.new
+        llvm_context.discard_value_names = @discard_value_names
         # LLVM::Context.register(llvm_context, type_name)
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
