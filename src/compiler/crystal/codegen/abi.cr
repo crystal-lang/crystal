@@ -24,6 +24,10 @@ abstract class Crystal::ABI
       ARM.new(llvm_typer)
     when /avr/
       AVR.new(llvm_typer, llvm_typer.target_machine.cpu)
+    when /ppc64le|ppc64.+(?:freebsd|musl)/
+      PPC64.new(llvm_typer, PPC64::ELFv2)
+    when /ppc64/
+      PPC64.new(llvm_typer, PPC64::ELFv1)
     when /ppc/
       PPC.new(llvm_typer)
     when /wasm32/
