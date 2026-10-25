@@ -4032,7 +4032,7 @@ module Crystal
         allow_restrictions = false
       else
         param_location = @token.location
-        param_name, external_name, found_space, _uses_param = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
+        param_name, external_name, found_space, _uses_param, param_name_location = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
 
         params.each do |param|
           if param.name == param_name
@@ -4114,6 +4114,7 @@ module Crystal
       raise "BUG: param_name is nil" unless param_name
 
       param = Arg.new(param_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(param_location)
+      param.name_location = param_name_location
       params << param
       push_var param
 
@@ -4126,7 +4127,7 @@ module Crystal
       if @token.type.op_rparen? || @token.type.newline? || @token.type.op_colon?
         param_name = ""
       else
-        param_name, _external_name, found_space, uses_param = parse_param_name(name_location, extra_assigns, allow_external_name: false)
+        param_name, _external_name, found_space, uses_param, param_name_location = parse_param_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_param
       end
 
@@ -4142,6 +4143,7 @@ module Crystal
       end
 
       block_param = Arg.new(param_name, restriction: type_spec, parsed_annotations: annotations).at(name_location)
+      block_param.name_location = param_name_location
 
       push_var block_param
 
@@ -4186,6 +4188,7 @@ module Crystal
         end
 
         param_name = @token.value.to_s
+        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4197,6 +4200,7 @@ module Crystal
       when .instance_var?
         # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         param_name = @token.value.to_s[1..-1]
+        param_name_location = name_location_after_prefix(@token.location, "@")
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4217,6 +4221,7 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
+          param_name_location = nil
         end
 
         ivar = InstanceVar.new(@token.value.to_s).at(location)
@@ -4231,6 +4236,7 @@ module Crystal
         do_next_token = true
       when .class_var?
         param_name = @token.value.to_s[2..-1]
+        param_name_location = name_location_after_prefix(@token.location, "@@")
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4239,6 +4245,7 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
+          param_name_location = nil
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
@@ -4260,6 +4267,7 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           param_name = external_name
+          param_name_location = name_location
           if external_name_token.nil?
             raise "missing external name token"
           end
@@ -4276,7 +4284,11 @@ module Crystal
 
       skip_space
 
-      {param_name, external_name, found_space, uses_param}
+      {param_name, external_name, found_space, uses_param, param_name_location}
+    end
+
+    private def name_location_after_prefix(location, prefix)
+      Location.new(location.filename, location.line_number, location.column_number + prefix.size)
     end
 
     def invalid_internal_name?(keyword)
