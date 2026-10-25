@@ -211,6 +211,9 @@ lib LibLLVM
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : UInt)
 
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
+  {% unless IS_LT_240 %}
+    fun create_builder_for_module = LLVMCreateBuilderForModule(m : ModuleRef) : BuilderRef
+  {% end %}
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun dispose_builder = LLVMDisposeBuilder(builder : BuilderRef)

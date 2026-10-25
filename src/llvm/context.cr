@@ -12,9 +12,13 @@ class LLVM::Context
     Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
-  def new_builder : Builder
-    # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
-    builder = Builder.new(LibLLVM.create_builder_in_context(self))
+  def new_builder(mod : Module? = nil) : Builder
+    builder =
+      {% if LibLLVM::IS_LT_240 %}
+        Builder.new(LibLLVM.create_builder_in_context(self))
+      {% else %}
+        Builder.new(mod ? LibLLVM.create_builder_for_module(mod) : LibLLVM.create_builder_in_context(self))
+      {% end %}
     @builders << builder
     builder
   end
