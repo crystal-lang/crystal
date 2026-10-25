@@ -26,6 +26,8 @@ abstract class Crystal::ABI
       ARM.new(target_machine)
     when /avr/
       AVR.new(target_machine, target_machine.cpu)
+    when /ppc/
+      PPC.new(target_machine)
     when /wasm32/
       Wasm32.new(target_machine)
     else
