@@ -143,11 +143,11 @@ module Crystal
     end
 
     # Returns `true` if `type`'s size (`sizeof` for values, `instance_sizeof`
-    # for references) is a constant, in particular if it doesn't depend on
-    # `type`'s generic type parameters. `type` is never a generic instance.
+    # for references) is a constant that doesn't depend on `type`'s generic type
+    # parameters. `type` is never a generic instance.
     def constant_type_size?(type)
       case type
-      when GenericUnionType, StaticArrayType, TupleType, NamedTupleType
+      when GenericUnionType, StaticArrayType, TupleType, NamedTupleType, GenericReferenceStorageType
         false
       when PointerType, ProcType
         true
@@ -162,10 +162,9 @@ module Crystal
       end
     end
 
-    # Returns `true` if `sizeof(type)` is a constant, in particular if it
-    # doesn't depend on `type`'s generic type parameters. Unlike
-    # `#constant_type_size?`, here `type` can be a generic instance, but not an
-    # uninstantiated generic.
+    # Returns `true` if `sizeof(type)` is a constant that doesn't depend on
+    # `type`'s generic type parameters. Unlike `#constant_type_size?`, here
+    # `type` can be a generic instance, but not an uninstantiated generic.
     def constant_ivar_size?(type)
       return true unless type.unbound? || type.is_a?(GenericType)
 
@@ -192,6 +191,8 @@ module Crystal
         type.tuple_types.all? { |t| constant_ivar_size?(t) }
       when NamedTupleInstanceType
         type.entries.all? { |entry| constant_ivar_size?(entry.type) }
+      when ReferenceStorageType
+        constant_ivar_size?(type.reference_type)
       when GenericModuleInstanceType
         # TODO: verify
         type.generic_type.each_instantiated_type do |instance|
