@@ -2,18 +2,23 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi_x86.rs
 class Crystal::ABI::X86 < Crystal::ABI
-  def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : LLVM::Context)
+  def abi_info(args_types : Array(Type), return_type : Type) : FunctionType
+    atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
+    rty = @llvm_typer.llvm_c_return_type(return_type)
+    ret_def = !rty.void?
+    context = @llvm_typer.llvm_context
+
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = compute_arg_types(atys, context)
     FunctionType.new arg_tys, ret_ty
   end
 
   def size(type : LLVM::Type)
-    target_data.abi_size(type).to_i32
+    @llvm_typer.size_of(type).to_i32
   end
 
   def align(type : LLVM::Type)
-    target_data.abi_alignment(type).to_i32
+    @llvm_typer.align_of(type).to_i32
   end
 
   private def compute_return_type(rty, ret_def, context)
@@ -29,7 +34,7 @@ class Crystal::ABI::X86 < Crystal::ABI
       # Clang's ABI handling is in lib/CodeGen/TargetInfo.cpp
 
       if osx? || windows?
-        case target_data.abi_size(rty)
+        case size(rty)
         when 1 then ret_value(rty, context.int8)
         when 2 then ret_value(rty, context.int16)
         when 4 then ret_value(rty, context.int32)
@@ -48,7 +53,7 @@ class Crystal::ABI::X86 < Crystal::ABI
     atys.map do |t|
       case t.kind
       when LLVM::Type::Kind::Struct
-        size = target_data.abi_size(t)
+        size = size(t)
         if size == 0
           ArgType.ignore(t)
         else

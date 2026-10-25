@@ -1,24 +1,17 @@
-require "spec"
-require "llvm"
-require "compiler/crystal/codegen/abi/avr"
+require "../../../spec_helper"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:avr) %}
   LLVM.init_avr
 {% end %}
 
-private def abi
-  triple = "avr-unknown-unknown-atmega328p"
-  target = LLVM::Target.from_triple(triple)
-  machine = target.create_target_machine(triple)
-  machine.enable_global_isel = false
-  Crystal::ABI::AVR.new(machine)
-end
-
-private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
+private def test(msg, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg do
-    abi = abi()
-    ctx = LLVM::Context.new
-    block.call(abi, ctx)
+    program = Crystal::Program.new
+    program.codegen_target = Crystal::Codegen::Target.new("avr-unknown-unknown-atmega328p")
+    program.target_machine = program.codegen_target.to_target_machine(cpu: "atmega328p")
+    abi = Crystal::ABI::AVR.new(program.llvm_typer)
+    ctx = program.llvm_typer.llvm_context
+    block.call(abi, ctx, program)
   end
 end
 
@@ -99,10 +92,20 @@ class Crystal::ABI
       end
 
       describe "abi_info" do
-        {% for bits in [1, 8, 16, 32, 64] %}
-          test "int{{bits}}" do |abi, ctx|
+        test "int1" do |abi, ctx, program|
+          arg_type = ArgType.direct(ctx.int1)
+          info = abi.abi_info([program.bool], program.bool)
+          info.arg_types.size.should eq(1)
+          info.arg_types[0].should eq(arg_type)
+          info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
+          info.return_type.should eq(arg_type)
+          info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
+        end
+
+        {% for bits in [8, 16, 32, 64] %}
+          test "int{{bits}}" do |abi, ctx, program|
             arg_type = ArgType.direct(ctx.int{{bits}})
-            info = abi.abi_info([ctx.int{{bits}}], ctx.int{{bits}}, true, ctx)
+            info = abi.abi_info([program.int{{bits}}], program.int{{bits}})
             info.arg_types.size.should eq(1)
             info.arg_types[0].should eq(arg_type)
             info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
@@ -111,9 +114,9 @@ class Crystal::ABI
           end
         {% end %}
 
-        test "float" do |abi, ctx|
+        test "float" do |abi, ctx, program|
           arg_type = ArgType.direct(ctx.float)
-          info = abi.abi_info([ctx.float], ctx.float, true, ctx)
+          info = abi.abi_info([program.float32], program.float32)
           info.arg_types.size.should eq(1)
           info.arg_types[0].should eq(arg_type)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
@@ -121,9 +124,9 @@ class Crystal::ABI
           info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
-        test "double" do |abi, ctx|
+        test "double" do |abi, ctx, program|
           arg_type = ArgType.direct(ctx.double)
-          info = abi.abi_info([ctx.double], ctx.double, true, ctx)
+          info = abi.abi_info([program.float64], program.float64)
           info.arg_types.size.should eq(1)
           info.arg_types[0].should eq(arg_type)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
@@ -131,16 +134,16 @@ class Crystal::ABI
           info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
-        test "multiple arguments" do |abi, ctx|
-          args = Array.new(9) { ctx.int16 }
-          info = abi.abi_info(args, ctx.int8, false, ctx)
+        test "multiple arguments" do |abi, ctx, program|
+          args = Array.new(9) { program.int16 }
+          info = abi.abi_info(args, program.int8)
           info.arg_types.size.should eq(9)
           info.arg_types.each(&.kind.should eq(Crystal::ABI::ArgKind::Direct))
         end
 
-        test "multiple arguments above registers" do |abi, ctx|
-          args = Array.new(5) { ctx.int32 }
-          info = abi.abi_info(args, ctx.int8, false, ctx)
+        test "multiple arguments above registers" do |abi, ctx, program|
+          args = Array.new(5) { program.int32 }
+          info = abi.abi_info(args, program.int8)
           info.arg_types.size.should eq(5)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
@@ -149,41 +152,41 @@ class Crystal::ABI
           info.arg_types[4].kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
 
-        test "struct args within 18 bytes" do |abi, ctx|
+        test "struct args within 18 bytes" do |abi, ctx, program|
           args = [
-            ctx.int8,                           # rounded to 2 bytes
-            ctx.struct([ctx.int32, ctx.int32]), # 8 bytes
-            ctx.struct([ctx.int32, ctx.int32]), # 8 bytes
+            program.int8,                                             # rounded to 2 bytes
+            program.extern_struct_of([program.int32, program.int32]), # 8 bytes
+            program.extern_struct_of([program.int32, program.int32]), # 8 bytes
           ]
-          info = abi.abi_info(args, ctx.void, false, ctx)
+          info = abi.abi_info(args, program.void)
           info.arg_types.size.should eq(3)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.arg_types[2].kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
-        test "struct args over 18 bytes" do |abi, ctx|
+        test "struct args over 18 bytes" do |abi, ctx, program|
           args = [
-            ctx.int32,                          # 4 bytes
-            ctx.struct([ctx.int32, ctx.int32]), # 8 bytes
-            ctx.struct([ctx.int32, ctx.int32]), # 8 bytes
+            program.int32,                                            # 4 bytes
+            program.extern_struct_of([program.int32, program.int32]), # 8 bytes
+            program.extern_struct_of([program.int32, program.int32]), # 8 bytes
           ]
-          info = abi.abi_info(args, ctx.void, false, ctx)
+          info = abi.abi_info(args, program.void)
           info.arg_types.size.should eq(3)
           info.arg_types[0].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.arg_types[1].kind.should eq(Crystal::ABI::ArgKind::Direct)
           info.arg_types[2].kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
 
-        test "returns struct within 8 bytes" do |abi, ctx|
-          rty = ctx.struct([ctx.int32, ctx.int32])
-          info = abi.abi_info([] of LLVM::Type, rty, true, ctx)
+        test "returns struct within 8 bytes" do |abi, ctx, program|
+          rty = program.extern_struct_of([program.int32, program.int32])
+          info = abi.abi_info([] of Crystal::Type, rty)
           info.return_type.kind.should eq(Crystal::ABI::ArgKind::Direct)
         end
 
-        test "returns struct over 8 bytes" do |abi, ctx|
-          rty = ctx.struct([ctx.int32, ctx.int32, ctx.int8])
-          info = abi.abi_info([] of LLVM::Type, rty, true, ctx)
+        test "returns struct over 8 bytes" do |abi, ctx, program|
+          rty = program.extern_struct_of([program.int32, program.int32, program.int8])
+          info = abi.abi_info([] of Crystal::Type, rty)
           info.return_type.kind.should eq(Crystal::ABI::ArgKind::Indirect)
         end
       end

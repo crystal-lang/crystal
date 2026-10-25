@@ -6,7 +6,12 @@ class Crystal::ABI::X86_64 < Crystal::ABI
   MAX_INT_REGS = 6 # %rdi, %rsi, %rdx, %rcx, %r8, %r9
   MAX_SSE_REGS = 8 # %xmm0-%xmm7
 
-  def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : LLVM::Context) : Crystal::ABI::FunctionType
+  def abi_info(args_types : Array(Type), return_type : Type) : FunctionType
+    atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
+    rty = @llvm_typer.llvm_c_return_type(return_type)
+    ret_def = !rty.void?
+    context = @llvm_typer.llvm_context
+
     # registers available to pass arguments directly: int_regs can hold integers
     # and pointers, sse_regs can hold floats and doubles
     available_int_regs = MAX_INT_REGS

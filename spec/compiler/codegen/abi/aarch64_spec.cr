@@ -1,24 +1,16 @@
-require "spec"
-require "llvm"
-require "compiler/crystal/codegen/abi/aarch64"
+require "../../../spec_helper"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:aarch64) %}
   LLVM.init_aarch64
 {% end %}
 
-private def abi
-  triple = "aarch64-unknown-linux-gnu"
-  target = LLVM::Target.from_triple(triple)
-  machine = target.create_target_machine(triple)
-  machine.enable_global_isel = false
-  Crystal::ABI::AArch64.new(machine)
-end
-
-private def test(msg, &block : Crystal::ABI, LLVM::Context ->)
+private def test(msg, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg do
-    abi = abi()
-    ctx = LLVM::Context.new
-    block.call(abi, ctx)
+    program = Crystal::Program.new
+    program.codegen_target = Crystal::Codegen::Target.new("aarch64-unknown-linux-gnu")
+    abi = Crystal::ABI::AArch64.new(program.llvm_typer)
+    ctx = program.llvm_typer.llvm_context
+    block.call(abi, ctx, program)
   end
 end
 
@@ -99,10 +91,10 @@ class Crystal::ABI
       end
 
       describe "abi_info" do
-        test "does with primitives" do |abi, ctx|
-          arg_types = [ctx.int32, ctx.int64]
-          return_type = ctx.int8
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+        test "does with primitives" do |abi, ctx, program|
+          arg_types = [program.int32, program.int64]
+          return_type = program.int8
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(2)
 
           info.arg_types[0].should eq(ArgType.direct(ctx.int32))
@@ -110,52 +102,56 @@ class Crystal::ABI
           info.return_type.should eq(ArgType.direct(ctx.int8))
         end
 
-        test "does with structs less than 64 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int8, ctx.int16])
+        test "does with structs less than 64 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int8, program.int16])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.int32))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.int32))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.int32))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.int32))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int16])
+        test "does with structs between 64 and 128 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int16])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.int64.array(2)))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.int64.array(2)))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.int64.array(2)))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.int64.array(2)))
         end
 
-        test "does with structs larger than 128 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
+        test "does with structs larger than 128 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int64, program.int8])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, nil))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, nil))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with homogeneous structs" do |abi, ctx|
-          str = ctx.struct([ctx.float, ctx.float, ctx.float, ctx.float])
+        test "does with homogeneous structs" do |abi, ctx, program|
+          str = program.extern_struct_of([program.float32, program.float32, program.float32, program.float32])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, ctx.float.array(4)))
-          info.return_type.should eq(ArgType.direct(str, ctx.float.array(4)))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, ctx.float.array(4)))
+          info.return_type.should eq(ArgType.direct(llvm_str, ctx.float.array(4)))
         end
       end
     {% end %}
