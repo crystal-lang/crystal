@@ -100,7 +100,7 @@ class Crystal::ABI
         test "does with primitives" do |abi, ctx, program|
           arg_types = [program.int32, program.int64]
           return_type = program.int8
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(2)
 
           info.arg_types[0].should eq(ArgType.direct(ctx.int32))
@@ -113,7 +113,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -126,7 +126,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -139,7 +139,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -153,7 +153,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -167,7 +167,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -180,7 +180,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -193,7 +193,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -212,7 +212,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -225,7 +225,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -238,7 +238,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -251,7 +251,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -264,7 +264,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -275,7 +275,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -286,7 +286,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
@@ -299,7 +299,7 @@ class Crystal::ABI
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
+          info = abi.abi_info(arg_types, return_type)
           info.arg_types.size.should eq(1)
 
           llvm_str = program.llvm_typer.llvm_type(str)
