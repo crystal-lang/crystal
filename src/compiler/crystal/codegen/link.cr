@@ -246,8 +246,8 @@ module Crystal
         if msvc_path = Crystal::System::VisualStudio.find_latest_msvc_path
           if win_sdk_libpath = Crystal::System::WindowsSDK.find_win10_sdk_libpath
             host_target = Crystal::Config.host_target
-            host_bits = host_target.architecture == "aarch64" ? "ARM64" : codegen_target.architecture == "x86_64" ? "x64" : "x86"
-            target_bits = codegen_target.architecture == "aarch64" ? "arm64" : codegen_target.architecture == "x86_64" ? "x64" : "x86"
+            host_bits = host_target.aarch64? ? "ARM64" : codegen_target.x86_64? ? "x64" : "x86"
+            target_bits = codegen_target.aarch64? ? "arm64" : codegen_target.x86_64? ? "x64" : "x86"
 
             # MSVC build tools and Windows SDK found; recreate `LIB` environment variable
             # that is normally expected on the MSVC developer command prompt

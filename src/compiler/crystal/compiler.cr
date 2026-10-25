@@ -353,7 +353,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       {% if LibLLVM::IS_LT_130 %}
-        if @codegen_target.architecture == "aarch64"
+        if @codegen_target.aarch64?
           stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
           exit 1
         end
@@ -507,7 +507,7 @@ module Crystal
         end
 
         {linker, cmd, nil}
-      elsif codegen_target.architecture == "wasm32"
+      elsif codegen_target.wasm?
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
       elsif codegen_target.avr?

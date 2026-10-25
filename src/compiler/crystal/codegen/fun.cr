@@ -102,7 +102,7 @@ class Crystal::CodeGenVisitor
         {% if LibLLVM::IS_LT_150 %}
           context.fun.add_attribute LLVM::Attribute::UWTable
         {% else %}
-          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.codegen_target.architecture == "aarch64" ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
+          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.codegen_target.aarch64? ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
         {% end %}
 
         if @frame_pointers.always?
@@ -221,7 +221,7 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      if @program.codegen_target.architecture == "wasm32"
+      if @program.codegen_target.wasm?
         if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
           context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
           context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)

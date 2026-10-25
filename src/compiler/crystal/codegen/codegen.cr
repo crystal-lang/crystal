@@ -386,7 +386,7 @@ module Crystal
       llvm_mod.data_layout = @program.target_machine.data_layout
 
       # enable branch authentication instructions (BTI)
-      if @program.codegen_target.architecture == "aarch64"
+      if @program.codegen_target.aarch64?
         if @program.has_flag?("branch-protection=bti")
           llvm_mod.add_flag(:override, "branch-target-enforcement", 1)
         end
