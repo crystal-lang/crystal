@@ -339,9 +339,16 @@ module Crystal
       exit 1
     end
 
+    # Local value names are kept only when someone will read the IR; without
+    # them, a module's bitcode does not change when the frontend renumbers a
+    # temporary variable elsewhere, so its cached object file is reused.
+    private def keep_value_names? : Bool
+      !@emit_targets.none? || dump_ll?
+    end
+
     private def bc_flags_changed?(output_dir)
       bc_flags_changed = true
-      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}"
+      current_bc_flags = "#{@codegen_target}|#{@mcpu}|#{@mattr}|#{@link_flags}|#{@mcmodel}|#{keep_value_names? ? "names" : ""}"
       bc_flags_filename = "#{output_dir}/bc_flags#{optimization_mode.suffix}"
       if File.file?(bc_flags_filename)
         previous_bc_flags = File.read(bc_flags_filename).strip
@@ -361,7 +368,8 @@ module Crystal
 
       llvm_modules = @progress_tracker.stage("Codegen (crystal)") do
         program.codegen node, debug: debug, frame_pointers: frame_pointers,
-          single_module: @single_module || @cross_compile || !@emit_targets.none?
+          single_module: @single_module || @cross_compile || !@emit_targets.none?,
+          keep_value_names: keep_value_names?
       end
 
       output_dir = CacheDir.instance.directory_for(sources)

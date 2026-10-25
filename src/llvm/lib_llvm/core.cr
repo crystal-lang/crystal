@@ -22,6 +22,7 @@ lib LibLLVM
   {% end %}
 
   fun create_context = LLVMContextCreate : ContextRef
+  fun context_set_discard_value_names = LLVMContextSetDiscardValueNames(c : ContextRef, discard : Bool)
   fun dispose_context = LLVMContextDispose(c : ContextRef)
 
   fun get_md_kind_id_in_context = LLVMGetMDKindIDInContext(c : ContextRef, name : Char*, s_len : UInt) : UInt
