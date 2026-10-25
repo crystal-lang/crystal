@@ -4,18 +4,11 @@ require "../../../spec_helper"
   LLVM.init_aarch64
 {% end %}
 
-private def abi
-  triple = "aarch64-unknown-linux-gnu"
-  target = LLVM::Target.from_triple(triple)
-  machine = target.create_target_machine(triple)
-  machine.enable_global_isel = false
-  Crystal::ABI::AArch64.new(machine)
-end
-
 private def test(msg, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg do
-    abi = abi()
     program = Crystal::Program.new
+    program.codegen_target = Crystal::Codegen::Target.new("aarch64-unknown-linux-gnu")
+    abi = Crystal::ABI::AArch64.new(program.llvm_typer)
     ctx = program.llvm_typer.llvm_context
     block.call(abi, ctx, program)
   end

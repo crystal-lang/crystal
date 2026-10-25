@@ -1,33 +1,31 @@
 # Based on https://github.com/rust-lang/rust/blob/29ac04402d53d358a1f6200bea45a301ff05b2d1/src/librustc_trans/trans/cabi.rs
 abstract class Crystal::ABI
-  getter target_data : LLVM::TargetData
   getter? osx : Bool
   getter? windows : Bool
 
-  def initialize(target_machine : LLVM::TargetMachine)
-    @target_data = target_machine.data_layout
-    triple = target_machine.triple
+  def initialize(@llvm_typer : LLVMTyper)
+    triple = @llvm_typer.target_machine.triple
     @osx = !!(triple =~ /apple/)
     @windows = !!(triple =~ /windows/)
   end
 
-  def self.from(target_machine : LLVM::TargetMachine) : self
-    triple = target_machine.triple
+  def self.from(llvm_typer : LLVMTyper) : self
+    triple = llvm_typer.target_machine.triple
     case triple
     when /x86_64.+windows-(?:msvc|gnu)/
-      X86_Win64.new(target_machine)
+      X86_Win64.new(llvm_typer)
     when /x86_64|amd64/
-      X86_64.new(target_machine)
+      X86_64.new(llvm_typer)
     when /i386|i486|i586|i686/
-      X86.new(target_machine)
+      X86.new(llvm_typer)
     when /aarch64|arm64/
-      AArch64.new(target_machine)
+      AArch64.new(llvm_typer)
     when /arm/
-      ARM.new(target_machine)
+      ARM.new(llvm_typer)
     when /avr/
-      AVR.new(target_machine, target_machine.cpu)
+      AVR.new(llvm_typer, llvm_typer.target_machine.cpu)
     when /wasm32/
-      Wasm32.new(target_machine)
+      Wasm32.new(llvm_typer)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end

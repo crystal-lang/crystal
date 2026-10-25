@@ -4,18 +4,12 @@ require "../../../spec_helper"
   LLVM.init_x86
 {% end %}
 
-private def abi(win64 = false)
-  triple = win64 ? "x86_64-windows-msvc" : LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
-  target = LLVM::Target.from_triple(triple)
-  machine = target.create_target_machine(triple)
-  machine.enable_global_isel = false
-  win64 ? Crystal::ABI::X86_Win64.new(machine) : Crystal::ABI::X86_64.new(machine)
-end
-
 private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg, file: file, line: line do
-    abi = abi(win64)
+    triple = win64 ? "x86_64-windows-msvc" : LLVM.default_target_triple.gsub(/^(.+?)-/, "x86_64-")
     program = Crystal::Program.new
+    program.codegen_target = Crystal::Codegen::Target.new(triple)
+    abi = win64 ? Crystal::ABI::X86_Win64.new(program.llvm_typer) : Crystal::ABI::X86_64.new(program.llvm_typer)
     ctx = program.llvm_typer.llvm_context
     block.call(abi, ctx, program)
   end

@@ -12,8 +12,8 @@ class Crystal::ABI::AVR < Crystal::ABI
     "attiny40",
   ]
 
-  def initialize(target_machine : LLVM::TargetMachine, mcpu : String? = nil)
-    super target_machine
+  def initialize(llvm_typer : LLVMTyper, mcpu : String? = nil)
+    super llvm_typer
 
     # "Reduced Tiny" core devices only have 16 General Purpose Registers
     if mcpu.in?(AVRTINY)
@@ -26,11 +26,11 @@ class Crystal::ABI::AVR < Crystal::ABI
   end
 
   def align(type : LLVM::Type) : Int32
-    target_data.abi_alignment(type).to_i32
+    @llvm_typer.align_of(type).to_i32
   end
 
   def size(type : LLVM::Type) : Int32
-    target_data.abi_size(type).to_i32
+    @llvm_typer.size_of(type).to_i32
   end
 
   # Follows AVR GCC, while Clang (and Rust) are incompatible, despite LLVM

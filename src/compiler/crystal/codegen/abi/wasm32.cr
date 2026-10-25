@@ -13,11 +13,11 @@ class Crystal::ABI::Wasm32 < Crystal::ABI
   end
 
   def align(type : LLVM::Type)
-    target_data.abi_alignment(type).to_i32
+    @llvm_typer.align_of(type).to_i32
   end
 
   def size(type : LLVM::Type)
-    target_data.abi_size(type).to_i32
+    @llvm_typer.size_of(type).to_i32
   end
 
   private def aggregate?(type)
