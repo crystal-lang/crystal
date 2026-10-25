@@ -24,6 +24,8 @@ abstract class Crystal::ABI
       ARM.new(llvm_typer)
     when /avr/
       AVR.new(llvm_typer, llvm_typer.target_machine.cpu)
+    when /ppc/
+      PPC.new(llvm_typer)
     when /wasm32/
       Wasm32.new(llvm_typer)
     else
