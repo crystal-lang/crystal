@@ -167,6 +167,9 @@ module Spec
       @results = Status.values.to_h { |status| {status, [] of Result} }
     end
 
+    # Whether the spec runner has started but the specs are still being defined
+    property? defining = false
+
     def run
       print_order_message(cli.stdout)
 
@@ -334,6 +337,13 @@ module Spec
       ensure
         @spec_nesting = false
       end
+    end
+
+    # Expectations matched while the specs are still being defined (for
+    # example directly inside a `describe` block) would abort the whole run
+    # when they fail, so they are rejected even when they match.
+    def check_expectation(method, file, line)
+      raise OutsideExampleError.new("Can't call `#{method}` outside of an example or hook", file, line) if @defining
     end
 
     protected def around_all(&block : ExampleGroup::Procsy ->)
