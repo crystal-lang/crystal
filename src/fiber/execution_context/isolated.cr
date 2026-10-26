@@ -184,7 +184,7 @@ module Fiber::ExecutionContext
           @waiting = true
         end
 
-        done = true
+        done = false
 
         # wait on the event loop
         event_loop.run(blocking: true) do |fiber|

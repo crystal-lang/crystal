@@ -2059,6 +2059,14 @@ describe "String" do
       "ab".gsub("", "-").should eq "-a-b-"
       "┬7".gsub("", "-").should eq "-┬-7-"
     end
+
+    it "very long match with empty string" do
+      str = "a" * 0x40000
+      str.gsub(str, "").should eq ""
+
+      str = "┬7" * 0x20000
+      str.gsub(str, "").should eq ""
+    end
   end
 
   it "scans using $~" do

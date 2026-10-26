@@ -168,7 +168,6 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       System::IoUring.supports_opcode?(LibC::IORING_OP_POLL_ADD) &&         # 5.1
       System::IoUring.supports_opcode?(LibC::IORING_OP_READ) &&             # 5.6
       System::IoUring.supports_opcode?(LibC::IORING_OP_RECVMSG) &&          # 5.3
-      System::IoUring.supports_opcode?(LibC::IORING_OP_TIMEOUT) &&          # 5.4
       System::IoUring.supports_opcode?(LibC::IORING_OP_SEND) &&             # 5.6
       System::IoUring.supports_opcode?(LibC::IORING_OP_SHUTDOWN) &&         # 5.11
       System::IoUring.supports_opcode?(LibC::IORING_OP_SOCKET) &&           # 5.19 (unused, smoke test for EBADR/IORING_ASYNC_CANCEL_FD)
@@ -454,11 +453,15 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     timers.to_slice[0, count].each do |event|
       fiber = event.value.fiber
 
-      if event.value.type.select_timeout?
-        next unless select_action = fiber.timeout_select_action
-        fiber.timeout_select_action = nil
+      case event.value.type
+      when .select_timeout?
+        next unless select_action = event.value.timeout_select_action
         next unless select_action.time_expired?
-        fiber.@timeout_event.as(FiberEvent).clear
+        event.value.wake_at = nil
+      when .sleep?
+        event.value.timed_out = true
+      else
+        raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}")
       end
 
       yield fiber
@@ -553,16 +556,20 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
   # fiber interface, see Crystal::EventLoop
 
   def sleep(duration : Time::Span) : Nil
-    async_impl(:sleep) do |event|
-      event.value.timeout = duration
+    event = Event.new(:sleep, Fiber.current)
+    event.wake_at = System::Time.instant + duration
+    add_timer pointerof(event)
 
-      ring.submit do |sqe|
-        sqe.value.opcode = LibC::IORING_OP_TIMEOUT
-        sqe.value.user_data = event.address.to_u64!
-        sqe.value.addr = event.value.timespec.address.to_u64!
-        sqe.value.len = 1
-      end
-    end
+    Fiber.suspend
+
+    # safety check
+    return if event.timed_out?
+
+    # try to avoid a double resume if possible, but another thread might be
+    # running the evloop and dequeue the event in parallel, so a "can't resume
+    # dead fiber" can still happen in a MT execution context.
+    delete_timer(pointerof(event))
+    raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
   def create_timeout_event(fiber : Fiber) : FiberEvent
