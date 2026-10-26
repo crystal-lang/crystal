@@ -4200,7 +4200,7 @@ module Crystal
       when .instance_var?
         # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         param_name = @token.value.to_s[1..-1]
-        param_name_location = name_location_after_prefix(@token.location, "@")
+        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4236,7 +4236,7 @@ module Crystal
         do_next_token = true
       when .class_var?
         param_name = @token.value.to_s[2..-1]
-        param_name_location = name_location_after_prefix(@token.location, "@@")
+        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4285,10 +4285,6 @@ module Crystal
       skip_space
 
       {param_name, external_name, found_space, uses_param, param_name_location}
-    end
-
-    private def name_location_after_prefix(location, prefix)
-      Location.new(location.filename, location.line_number, location.column_number + prefix.size)
     end
 
     def invalid_internal_name?(keyword)

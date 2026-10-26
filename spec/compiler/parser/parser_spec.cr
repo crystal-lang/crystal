@@ -3486,11 +3486,11 @@ module Crystal
       {"def foo(bar baz : Int32 = 1); end", 13},
       {"def foo(*bar); end", 10},
       {"def foo(**bar); end", 11},
-      {"def foo(@bar); end", 10},
-      {"def foo(@@bar); end", 11},
-      {"def foo(baz @bar); end", 14},
+      {"def foo(@bar); end", 9},
+      {"def foo(@@bar); end", 9},
+      {"def foo(baz @bar); end", 13},
       {"def foo(&bar); end", 10},
-      {"def foo(&@bar); end", 11},
+      {"def foo(&@bar); end", 10},
       {"macro foo(bar baz); end", 15},
     }.each do |source, column_number|
       it "sets location of parameter name in #{source.inspect}" do

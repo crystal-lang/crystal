@@ -1373,8 +1373,9 @@ module Crystal
     property parsed_annotations : Array(Annotation)?
 
     # The location of the internal name, which differs from `#location`
-    # if the parameter has an external name (i.e. `baz` in `bar baz`),
-    # or is an instance/class variable parameter (i.e. `baz` in `@baz`).
+    # if the parameter has an external name (i.e. `baz` in `bar baz`).
+    # For instance/class variable parameters it points at the prefix
+    # (i.e. `@baz` in `bar @baz`).
     property name_location : Location?
 
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
