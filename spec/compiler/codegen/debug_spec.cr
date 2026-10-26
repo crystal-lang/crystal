@@ -241,7 +241,12 @@ describe "Code gen: debug" do
   it "keeps literal constants inlined in debug mode" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
       A = 1
-      A
+
+      def foo
+        A
+      end
+
+      foo
       CRYSTAL
 
     str = mod.to_s
@@ -443,6 +448,27 @@ describe "Code gen: debug" do
 
       Int32
       CRYSTAL
+  end
+
+  it "emits debug location for inlined calls and primitives (#15360)" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      class Foo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      a = foo.x
+      b = a &* 2
+      CRYSTAL
+
+    str = mod.to_s
+    main = str[/^define [^\n]+ @__crystal_main\(.+?^}/m]
+    debug_line_of(str, main, /getelementptr inbounds %Foo,/).should eq(10)
+    debug_line_of(str, main, / = mul i32 /).should eq(11)
   end
 
   it "doesn't fail if Proc self is closured (#16382)" do

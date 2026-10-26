@@ -304,6 +304,24 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "codegens `llvm.prefetch.*` from a non-main LLVM module (#17636)" do
+    p0 = {% if LibLLVM::IS_LT_150 %} "p0i8" {% else %} "p0" {% end %}
+
+    compile(<<-CRYSTAL)
+      lib Intrinsics
+        fun prefetch = "llvm.prefetch.#{p0}"(address : Void*, rw : Int32, locality : Int32, cache_type : Int32)
+      end
+
+      class Foo
+        def self.foo(p : Void*)
+          Intrinsics.prefetch(p, 0, 3, 1)
+        end
+      end
+
+      Foo.foo(Pointer(Void).new(0_u64))
+      CRYSTAL
+  end
+
   it "gets crystal class instance type id" do
     run(<<-CRYSTAL).to_b.should be_true
       class Foo

@@ -32,7 +32,7 @@ module Crystal
     end
 
     def evaluate(node, debug = Debug::Default)
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -96,7 +96,7 @@ module Crystal
           LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -285,7 +285,8 @@ module Crystal
                    @single_module : Bool = false,
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
-                   @llvm_context : LLVM::Context = LLVM::Context.new)
+                   @llvm_context : LLVM::Context = LLVM::Context.new,
+                   main_returns_value : Bool = false)
       @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
@@ -293,7 +294,11 @@ module Crystal
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
-      @main_ret_type = node.type? || @program.nil_type
+
+      @main_ret_type = @program.nil_type
+      if main_returns_value && (node_type = node.type?)
+        @main_ret_type = node_type
+      end
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       main_type = LLVM::Type.function([llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, main_type)
