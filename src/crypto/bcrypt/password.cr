@@ -58,7 +58,7 @@ class Crypto::Bcrypt::Password
 
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == 22
-    raise Error.new("Invalid salt") unless salt.each_char.all? { |char| Base64::ALPHABET.includes?(char) }
+    raise Error.new("Invalid salt") unless salt.each_char.all?(&.in?(Base64::ALPHABET))
     raise Error.new("Invalid digest size") unless digest.size == 31
   end
 
