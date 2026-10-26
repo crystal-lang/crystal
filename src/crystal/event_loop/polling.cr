@@ -464,9 +464,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   private def resume_all(io)
-    return unless (index = io.__evloop_data).valid?
-
-    Polling.arena.free(index) do |pd|
+    # look up the poll descriptor by fd instead of `io.__evloop_data` that
+    # another thread may be setting right now (see `#wait`)
+    Polling.arena.free_at(io.fd) do |pd|
       pd.value.@readers.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
@@ -535,16 +535,29 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       # OPTIMIZE: failing to allocate may be a simple conflict with 2 fibers
       # starting to read or write on the same fd, we may want to detect any
       # error situation instead of returning and retrying a syscall
-      return false unless Polling.arena.allocate_at?(io.fd) do |pd, index|
-                            # register the fd with the event loop (once), it should usually merely add
-                            # the fd to the current evloop but may "transfer" the ownership from
-                            # another event loop:
-                            io.__evloop_data = index
-                            pd.value.take_ownership(self, io.fd, index)
+      closed = false
 
-                            event = Event.new(type, Fiber.current, index, timeout)
-                            yield pd, pointerof(event)
-                          end
+      index = Polling.arena.allocate_at?(io.fd) do |pd, index|
+        # another thread may have closed the IO after `#resume_all` released
+        # the poll descriptor: don't register the fd, the poll descriptor
+        # would outlive it and be found by the next IO with the same fd
+        next if closed = io.closed?
+
+        # register the fd with the event loop (once), it should usually merely add
+        # the fd to the current evloop but may "transfer" the ownership from
+        # another event loop:
+        io.__evloop_data = index
+        pd.value.take_ownership(self, io.fd, index)
+
+        event = Event.new(type, Fiber.current, index, timeout)
+        yield pd, pointerof(event)
+      end
+      return false unless index
+
+      if closed
+        Polling.arena.free(index) { }
+        return false
+      end
     end
 
     if event.wake_at?
