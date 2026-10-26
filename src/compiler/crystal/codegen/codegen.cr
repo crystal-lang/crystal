@@ -319,7 +319,7 @@ module Crystal
       @argv = @main.params[1]
       @argv.name = "argv"
 
-      @builder = new_builder(@main_llvm_context)
+      @builder = new_builder(@main_mod)
       @main_builder = @builder
 
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
@@ -411,8 +411,8 @@ module Crystal
       llvm_mod
     end
 
-    def new_builder(llvm_context)
-      wrap_builder(llvm_context.new_builder)
+    def new_builder(llvm_mod)
+      wrap_builder(llvm_mod.new_builder)
     end
 
     # Here we only initialize simple constants, those
