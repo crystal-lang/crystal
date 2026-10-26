@@ -333,6 +333,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
         wait_writable(socket, timeout) do
           return IO::TimeoutError.new("Connect timed out")
         end
+        return IO::Error.new("Closed stream") if socket.closed?
         errno = Crystal::System::Socket.system_error(socket.fd)
         return if errno.none?
       else
