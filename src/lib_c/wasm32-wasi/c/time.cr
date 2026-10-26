@@ -1,8 +1,15 @@
 require "./sys/types"
 
 lib LibC
-  CLOCK_MONOTONIC = 1
-  CLOCK_REALTIME  = 0
+  {% if flag?(:wasip1) %}
+    CLOCK_MONOTONIC = 1
+    CLOCK_REALTIME  = 0
+  {% else %}
+    $_CLOCK_MONOTONIC : UInt8
+    $_CLOCK_REALTIME : UInt8
+    CLOCK_MONOTONIC = pointerof(LibC._CLOCK_MONOTONIC).as(ClockidT)
+    CLOCK_REALTIME  = pointerof(LibC._CLOCK_REALTIME).as(ClockidT)
+  {% end %}
 
   struct Tm
     tm_sec : Int
