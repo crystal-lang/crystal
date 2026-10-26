@@ -527,10 +527,6 @@ module Crystal
       !@builder.end
     end
 
-    def type
-      context.type.not_nil!
-    end
-
     def finish
       clear_current_debug_location if @debug.line_numbers?
       codegen_return @main_ret_type, nil
