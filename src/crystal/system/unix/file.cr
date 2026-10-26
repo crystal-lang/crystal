@@ -98,7 +98,7 @@ module Crystal::System::File
   private def self.accessible?(path, mode, *, follow_symlinks = true)
     path.check_no_null_byte
 
-    {% if flag?(:dragonfly) || flag?(:openbsd) || flag?(:solaris) %}
+    {% if flag?(:dragonfly) || flag?(:openbsd) || flag?(:solaris) || flag?(:wasi) %}
       unless follow_symlinks
         ret = LibC.lstat(path, out stat)
         return false if ret == -1

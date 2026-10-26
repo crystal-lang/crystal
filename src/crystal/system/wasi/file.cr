@@ -24,8 +24,4 @@ module Crystal::System::File
   def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
     raise NotImplementedError.new "Crystal::System::File.utime"
   end
-
-  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    raise NotImplementedError.new "Crystal::System::File.delete"
-  end
 end
