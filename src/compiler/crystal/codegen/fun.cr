@@ -28,7 +28,14 @@ class Crystal::CodeGenVisitor
       # `self_type` is the lib type and merely serves to ensure that the
       # function does not have an automatic `%self` parameter.
       func = typed_fun?(@llvm_mod, mangled_name)
-      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+      func ||= codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+
+      if @program.has_flag?("wasm32") && (wasm_import_module = target_def.wasm_import_module)
+        func.func.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
+        func.func.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
+      end
+
+      func
     else
       self_type_mod = type_module(self_type).mod
       func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
