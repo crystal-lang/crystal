@@ -1001,7 +1001,7 @@ class Crystal::CodeGenVisitor
     if value = call_args.first?
       codegen_primitive_class_crystal_instance_type_id_with_type(context.type, value)
     else
-      type_id(context.type.instance_type)
+      type_id(context.type.instance_type, remove_indirection: false)
     end
   end
 

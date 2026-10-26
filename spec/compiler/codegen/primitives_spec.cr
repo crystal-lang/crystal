@@ -323,7 +323,7 @@ describe "Code gen: primitives" do
   end
 
   it "gets crystal class instance type id" do
-    run(<<-CRYSTAL).to_b.should be_true
+    run(<<-CRYSTAL, Bool).should be_true
       class Foo
       end
 
@@ -345,6 +345,38 @@ describe "Code gen: primitives" do
       bar = Bar.crystal_instance_type_id
 
       foo_v == foo && bar_v == bar && foo_v != bar_v
+  end
+
+  it "gets crystal class instance type id of modules whose including types are a union" do
+    run(<<-CRYSTAL, Bool).should be_true
+      module Foo
+      end
+
+      class Bar
+        include Foo
+      end
+
+      class Bar2
+        include Foo
+      end
+
+      Foo.crystal_instance_type_id != Union(Bar, Bar2).crystal_instance_type_id
+      CRYSTAL
+  end
+
+  it "gets crystal class instance type id of modules whose including types are a virtual class" do
+    run(<<-CRYSTAL, Bool).should be_true
+      module Foo
+      end
+
+      class Bar
+        include Foo
+      end
+
+      class Bar2 < Bar
+      end
+
+      Foo.crystal_instance_type_id != Bar.crystal_instance_type_id
       CRYSTAL
   end
 
