@@ -29,6 +29,8 @@ class Crystal::Codegen::Target
       @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
+    when .starts_with?("wasm")
+      @environment = "wasip1" if @environment == "wasi"
     else
       # no need to tweak the architecture
     end
@@ -91,6 +93,8 @@ class Crystal::Codegen::Target
       "solaris"
     when .android?
       "android"
+    when .wasi?
+      "wasi"
     else
       environment
     end
@@ -210,6 +214,10 @@ class Crystal::Codegen::Target
 
   def avr?
     @architecture == "avr"
+  end
+
+  def wasm?
+    @architecture.starts_with?("wasm")
   end
 
   def embedded?

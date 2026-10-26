@@ -108,6 +108,9 @@ class Crystal::Program
       flags.add cpu
     end
 
+    flags.add "wasm" if target.wasm?
+    flags.add "wasi" if target.wasi?
+
     flags
   end
 end
