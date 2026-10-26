@@ -7,10 +7,9 @@ class Crystal::ABI::AArch64 < Crystal::ABI
     atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
     rty = @llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
-    context = @llvm_typer.llvm_context
 
-    ret_ty = compute_return_type(rty, ret_def, context)
-    arg_tys = atys.map { |aty| compute_arg_type(aty, context) }
+    ret_ty = compute_return_type(rty, ret_def)
+    arg_tys = atys.map { |aty| compute_arg_type(aty) }
     FunctionType.new(arg_tys, ret_ty)
   end
 
@@ -86,11 +85,11 @@ class Crystal::ABI::AArch64 < Crystal::ABI
     end
   end
 
-  private def compute_return_type(rty, ret_def, context)
+  private def compute_return_type(rty, ret_def)
     if !ret_def
-      ArgType.direct(context.void)
+      ArgType.direct(llvm_context.void)
     elsif register?(rty)
-      non_struct(rty, context)
+      non_struct(rty)
     elsif homog_agg = homogeneous_aggregate?(rty)
       base_type, members = homog_agg
       ArgType.direct(rty, base_type.array(members))
@@ -98,15 +97,15 @@ class Crystal::ABI::AArch64 < Crystal::ABI
       size = size(rty)
       if size <= 16
         cast = if size <= 1
-                 context.int8
+                 llvm_context.int8
                elsif size <= 2
-                 context.int16
+                 llvm_context.int16
                elsif size <= 4
-                 context.int32
+                 llvm_context.int32
                elsif size <= 8
-                 context.int64
+                 llvm_context.int64
                else
-                 context.int64.array(((size + 7) // 8).to_u64)
+                 llvm_context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(rty, cast)
       else
@@ -115,9 +114,9 @@ class Crystal::ABI::AArch64 < Crystal::ABI
     end
   end
 
-  private def compute_arg_type(aty, context)
+  private def compute_arg_type(aty)
     if register?(aty)
-      non_struct(aty, context)
+      non_struct(aty)
     elsif homog_agg = homogeneous_aggregate?(aty)
       base_type, members = homog_agg
       ArgType.direct(aty, base_type.array(members))
@@ -125,17 +124,17 @@ class Crystal::ABI::AArch64 < Crystal::ABI
       size = size(aty)
       if size <= 16
         cast = if size == 0
-                 context.int64.array(0)
+                 llvm_context.int64.array(0)
                elsif size <= 1
-                 context.int8
+                 llvm_context.int8
                elsif size <= 2
-                 context.int16
+                 llvm_context.int16
                elsif size <= 4
-                 context.int32
+                 llvm_context.int32
                elsif size <= 8
-                 context.int64
+                 llvm_context.int64
                else
-                 context.int64.array(((size + 7) // 8).to_u64)
+                 llvm_context.int64.array(((size + 7) // 8).to_u64)
                end
         ArgType.direct(aty, cast)
       else
@@ -156,8 +155,8 @@ class Crystal::ABI::AArch64 < Crystal::ABI
     end
   end
 
-  private def non_struct(type, context)
-    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
+  private def non_struct(type)
+    attr = type == llvm_context.int1 ? LLVM::Attribute::ZExt : nil
     ArgType.direct(type, attr: attr)
   end
 end

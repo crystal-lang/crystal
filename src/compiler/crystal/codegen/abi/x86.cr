@@ -6,10 +6,9 @@ class Crystal::ABI::X86 < Crystal::ABI
     atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
     rty = @llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
-    context = @llvm_typer.llvm_context
 
-    ret_ty = compute_return_type(rty, ret_def, context)
-    arg_tys = compute_arg_types(atys, context)
+    ret_ty = compute_return_type(rty, ret_def)
+    arg_tys = compute_arg_types(atys)
     FunctionType.new arg_tys, ret_ty
   end
 
@@ -21,9 +20,9 @@ class Crystal::ABI::X86 < Crystal::ABI
     @llvm_typer.align_of(type).to_i32
   end
 
-  private def compute_return_type(rty, ret_def, context)
+  private def compute_return_type(rty, ret_def)
     if !ret_def
-      ArgType.direct(context.void)
+      ArgType.direct(llvm_context.void)
     elsif rty.kind == LLVM::Type::Kind::Struct
       # Returning a structure. Most often, this will use
       # a hidden first argument. On some platforms, though,
@@ -35,21 +34,21 @@ class Crystal::ABI::X86 < Crystal::ABI
 
       if osx? || windows?
         case size(rty)
-        when 1 then ret_value(rty, context.int8)
-        when 2 then ret_value(rty, context.int16)
-        when 4 then ret_value(rty, context.int32)
-        when 8 then ret_value(rty, context.int64)
+        when 1 then ret_value(rty, llvm_context.int8)
+        when 2 then ret_value(rty, llvm_context.int16)
+        when 4 then ret_value(rty, llvm_context.int32)
+        when 8 then ret_value(rty, llvm_context.int64)
         else        ret_pointer(rty)
         end
       else
         ret_pointer(rty)
       end
     else
-      non_struct(rty, context)
+      non_struct(rty)
     end
   end
 
-  private def compute_arg_types(atys, context)
+  private def compute_arg_types(atys)
     atys.map do |t|
       case t.kind
       when LLVM::Type::Kind::Struct
@@ -60,7 +59,7 @@ class Crystal::ABI::X86 < Crystal::ABI
           ArgType.indirect(t, LLVM::Attribute::ByVal)
         end
       else
-        non_struct(t, context)
+        non_struct(t)
       end
     end
   end
@@ -73,8 +72,8 @@ class Crystal::ABI::X86 < Crystal::ABI
     ArgType.indirect(type, LLVM::Attribute::StructRet)
   end
 
-  private def non_struct(type, context)
-    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
+  private def non_struct(type)
+    attr = type == llvm_context.int1 ? LLVM::Attribute::ZExt : nil
     ArgType.direct(type, attr: attr)
   end
 end

@@ -10,7 +10,6 @@ class Crystal::ABI::X86_64 < Crystal::ABI
     atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
     rty = @llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
-    context = @llvm_typer.llvm_context
 
     # registers available to pass arguments directly: int_regs can hold integers
     # and pointers, sse_regs can hold floats and doubles
@@ -18,18 +17,18 @@ class Crystal::ABI::X86_64 < Crystal::ABI
     available_sse_regs = MAX_SSE_REGS
 
     if ret_def
-      ret_ty, _, _ = x86_64_type(rty, LLVM::Attribute::StructRet, context) { |cls| sret?(cls) }
+      ret_ty, _, _ = x86_64_type(rty, LLVM::Attribute::StructRet) { |cls| sret?(cls) }
       if ret_ty.kind.indirect?
         # return value is a caller-allocated struct which is passed in %rdi,
         # so we have 1 less register available for passing arguments
         available_int_regs -= 1
       end
     else
-      ret_ty = ArgType.direct(context.void)
+      ret_ty = ArgType.direct(llvm_context.void)
     end
 
     arg_tys = atys.map do |arg_type|
-      abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, LLVM::Attribute::ByVal, context) { |cls| pass_by_val?(cls) }
+      abi_type, needed_int_regs, needed_sse_regs = x86_64_type(arg_type, LLVM::Attribute::ByVal) { |cls| pass_by_val?(cls) }
       if available_int_regs >= needed_int_regs && available_sse_regs >= needed_sse_regs
         available_int_regs -= needed_int_regs
         available_sse_regs -= needed_sse_regs
@@ -49,9 +48,9 @@ class Crystal::ABI::X86_64 < Crystal::ABI
 
   # returns the LLVM type (with attributes) and the number of integer and SSE
   # registers needed to pass this value directly (ie. not using the stack)
-  def x86_64_type(type, ind_attr, context, &) : Tuple(ArgType, Int32, Int32)
+  def x86_64_type(type, ind_attr, &) : Tuple(ArgType, Int32, Int32)
     if int_register?(type)
-      attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
+      attr = type == llvm_context.int1 ? LLVM::Attribute::ZExt : nil
       {ArgType.direct(type, attr: attr), 1, 0}
     elsif sse_register?(type)
       {ArgType.direct(type), 0, 1}
@@ -62,7 +61,7 @@ class Crystal::ABI::X86_64 < Crystal::ABI
       else
         needed_int_regs = cls.count(&.int?)
         needed_sse_regs = cls.count(&.sse?)
-        {ArgType.direct(type, llreg(context, cls)), needed_int_regs, needed_sse_regs}
+        {ArgType.direct(type, llreg(cls)), needed_int_regs, needed_sse_regs}
       end
     end
   end
@@ -241,30 +240,30 @@ class Crystal::ABI::X86_64 < Crystal::ABI
     reg_classes.fill(RegClass::Memory)
   end
 
-  def llreg(context, reg_classes) : LLVM::Type
+  def llreg(reg_classes) : LLVM::Type
     types = Array(LLVM::Type).new
     i = 0
     e = reg_classes.size
     while i < e
       case reg_classes[i]
       when RegClass::Int
-        types << context.int64
+        types << llvm_context.int64
       when RegClass::SSEFv
         vec_len = llvec_len(reg_classes[i + 1..-1])
-        vec_type = context.float.vector(vec_len * 2)
+        vec_type = llvm_context.float.vector(vec_len * 2)
         types << vec_type
         i += vec_len
         next
       when RegClass::SSEFs
-        types << context.float
+        types << llvm_context.float
       when RegClass::SSEDs
-        types << context.double
+        types << llvm_context.double
       else
         raise "Unhandled RegClass: #{reg_classes[i]}"
       end
       i += 1
     end
-    context.struct(types)
+    llvm_context.struct(types)
   end
 
   def llvec_len(reg_classes) : Int32
