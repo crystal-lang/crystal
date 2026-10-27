@@ -227,10 +227,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     in .sleep?, .timeout?
       timer.value.timed_out!
     in .select_timeout?
-      return unless select_action = fiber.timeout_select_action
-      fiber.timeout_select_action = nil
+      return unless select_action = timer.value.timeout_select_action
       return unless select_action.time_expired?
-      fiber.@timeout_event.as(FiberEvent).clear
+      timer.value.wake_at = nil
     end
 
     yield fiber

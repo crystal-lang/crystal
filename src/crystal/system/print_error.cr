@@ -95,7 +95,7 @@ module Crystal::System
 
       case fmt_ptr.value
       when 's'
-        read_arg(String | Pointer(UInt8)) do |arg|
+        read_arg(String | Bytes | Pointer(UInt8)) do |arg|
           yield to_string_slice(arg)
         end
       when 'd'
@@ -134,14 +134,21 @@ module Crystal::System
   end
 
   private def self.to_string_slice(str)
-    if str.is_a?(UInt8*)
+    case str
+    in String
+      str.to_slice
+    in Bytes
+      if str.empty?
+        "(null)".to_slice
+      else
+        str
+      end
+    in Pointer(UInt8)
       if str.null?
         "(null)".to_slice
       else
         Slice.new(str, LibC.strlen(str))
       end
-    else
-      str.to_s.to_slice
     end
   end
 

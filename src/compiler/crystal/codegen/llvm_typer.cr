@@ -280,6 +280,10 @@ module Crystal
       llvm_type(type, wants_size)
     end
 
+    private def create_llvm_struct_type(type : ReferenceStorageType, wants_size)
+      llvm_type(type, wants_size)
+    end
+
     private def create_llvm_struct_type(type : InstanceVarContainer, wants_size)
       if type.extern_union?
         return create_llvm_c_union_struct_type(type, wants_size)
@@ -580,11 +584,10 @@ module Crystal
     end
 
     def size_of(type)
-      if type.void?
-        0_u64
-      else
-        @layout.size_in_bytes type
-      end
+      # NOTE: this is identical to `#size_in_bytes` unless the LLVM type's
+      # natural size is not a multiple of its natural alignment, which can only
+      # occur in types like the 80-bit long double
+      @layout.abi_size(type)
     end
 
     def offset_of(type, element_index)
@@ -592,11 +595,7 @@ module Crystal
     end
 
     def align_of(type)
-      if type.void?
-        1_u32
-      else
-        @layout.abi_alignment(type)
-      end
+      @layout.abi_alignment(type)
     end
 
     def size_t

@@ -7,11 +7,13 @@ lib LibC
 end
 
 struct Exception::CallStack
-  DEBUG_LINE_STR = "__debug_line_str"
-  DEBUG_STR      = "__debug_str"
-  DEBUG_LINE     = "__debug_line"
-  DEBUG_ABBREV   = "__debug_abbrev"
-  DEBUG_INFO     = "__debug_info"
+  DEBUG_LINE_STR    = "__debug_line_str"
+  DEBUG_STR         = "__debug_str"
+  DEBUG_LINE        = "__debug_line"
+  DEBUG_ABBREV      = "__debug_abbrev"
+  DEBUG_INFO        = "__debug_info"
+  DEBUG_ADDR        = "__debug_addr"
+  DEBUG_STR_OFFSETS = "__debug_str_offsets"
 
   @@base_address = LibC::Long.new(0)
 
@@ -22,13 +24,8 @@ struct Exception::CallStack
     end
   end
 
-  # DWARF uses fixed addresses but Darwin loads executables at a random
-  # address, so we must remove the load offset from the IP to match the
-  # addresses in DWARF sections.
-  #
-  # See https://en.wikipedia.org/wiki/Address_space_layout_randomization
   protected def self.decode_address(ip)
-    ip.address &- @@base_address
+    ip.address &- @@base_address &- 1
   end
 
   # Searches the companion dSYM bundle with the DWARF sections for the

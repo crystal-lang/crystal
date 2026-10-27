@@ -13,13 +13,10 @@ struct Crystal::DWARF::Reader
 
   getter pointer : UInt8*
   getter bytesize : Int32
+  property pos : Int32
 
   def initialize(@pointer, @bytesize)
     @pos = 0
-  end
-
-  def pos : Int32
-    @pos
   end
 
   def current : UInt8*
