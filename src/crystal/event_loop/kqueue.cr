@@ -70,8 +70,8 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
         # apparently some systems may report EOF on write with EVFILT_READ instead
         # of EVFILT_WRITE, so let's wake all waiters:
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
-        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@reader.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@writer.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         return
       end
 
@@ -79,16 +79,16 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       when LibC::EVFILT_READ
         if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
           # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-          pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+          pd.value.@reader.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         else
-          pd.value.@readers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+          pd.value.@reader.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         end
       when LibC::EVFILT_WRITE
         if (kevent.value.fflags & LibC::EV_ERROR) == LibC::EV_ERROR
           # OPTIMIZE: pass errno (kevent.data) through PollDescriptor
-          pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+          pd.value.@writer.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         else
-          pd.value.@writers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+          pd.value.@writer.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         end
       end
     end

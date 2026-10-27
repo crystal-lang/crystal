@@ -467,11 +467,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     return unless (index = io.__evloop_data).valid?
 
     Polling.arena.free(index) do |pd|
-      pd.value.@readers.ready_all do |event|
+      pd.value.@reader.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
-      pd.value.@writers.ready_all do |event|
+      pd.value.@writer.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
@@ -501,15 +501,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   private def wait_readable(io, timeout = nil, &) : Nil
     yield if wait(:io_read, io, timeout) do |pd, event|
-               # don't wait if the waiter has already been marked ready (see Waiters#add)
-               return unless pd.value.@readers.add(event)
+               # don't wait if the waiter has already been marked ready (see Waiter#add)
+               return unless pd.value.@reader.add(event)
              end
   end
 
   private def wait_writable(io, timeout = nil, &) : Nil
     yield if wait(:io_write, io, timeout) do |pd, event|
-               # don't wait if the waiter has already been marked ready (see Waiters#add)
-               return unless pd.value.@writers.add(event)
+               # don't wait if the waiter has already been marked ready (see Waiter#add)
+               return unless pd.value.@writer.add(event)
              end
   end
 
@@ -519,9 +519,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     # point to the union, not the event
     event = uninitialized Event
 
-    # add the event to the waiting list; in case we can't access or allocate the
-    # poll descriptor into the arena, we merely return to let the caller handle
-    # the situation (maybe the IO got closed?)
+    # publish the event to its waiter; in case we can't access or allocate the
+    # poll descriptor into the arena, we merely return to let the caller
+    # handle the situation (maybe the IO got closed?)
     if (index = io.__evloop_data).valid?
       event = Event.new(type, Fiber.current, index, timeout)
 
@@ -643,12 +643,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Polling.arena.get?(event.value.index) { |pd| pd.value.@readers.delete(event) }
+      Polling.arena.get?(event.value.index) { |pd| pd.value.@reader.delete(event) }
       event.value.timed_out!
     when .io_write?
       # reached write timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Polling.arena.get?(event.value.index) { |pd| pd.value.@writers.delete(event) }
+      Polling.arena.get?(event.value.index) { |pd| pd.value.@writer.delete(event) }
       event.value.timed_out!
     when .select_timeout?
       # The action belongs to this timer registration. The fiber may already

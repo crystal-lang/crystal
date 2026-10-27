@@ -1,4 +1,3 @@
-require "crystal/pointer_linked_list"
 require "crystal/pointer_pairing_heap"
 
 # Information about the event that a `Fiber` is waiting on.
@@ -6,8 +5,8 @@ require "crystal/pointer_pairing_heap"
 # The event can be waiting for `IO` with or without a timeout, or be a timed
 # event such as sleep or a select timeout (without IO).
 #
-# The events can be found in different queues, for example `Timers` and/or
-# `Waiters` depending on their type.
+# The events can be registered in `Timers` and/or `Waiter` depending on their
+# type.
 struct Crystal::EventLoop::Polling::Event
   enum Type
     IoRead
@@ -34,9 +33,6 @@ struct Crystal::EventLoop::Polling::Event
   getter? timed_out : Bool = false
 
   property timeout_select_action : Channel::TimeoutAction?
-
-  # The event can be added to `Waiters` lists.
-  include PointerLinkedList::Node
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node

@@ -36,7 +36,23 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   end
 end
 
-describe Crystal::EventLoop::Polling::Waiters do
+describe Crystal::EventLoop::Polling::PollDescriptor do
+  it "allows at most one reader and one writer" do
+    pd = Crystal::EventLoop::Polling::PollDescriptor.new
+    reader = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+    writer = Crystal::EventLoop::Polling::Event.new(:io_write, Fiber.current)
+
+    pd.empty?.should be_true
+    pd.@reader.add(pointerof(reader)).should be_true
+    pd.@writer.add(pointerof(writer)).should be_true
+    pd.empty?.should be_false
+
+    pd.@reader.delete(pointerof(reader))
+    pd.empty?.should be_false
+    pd.@writer.delete(pointerof(writer))
+    pd.empty?.should be_true
+  end
+
   describe "#take_ownership" do
     it "associates a poll descriptor to an evloop instance" do
       fd = Int32::MAX
@@ -93,7 +109,7 @@ describe Crystal::EventLoop::Polling::Waiters do
 
       evloop1 = Crystal::EventLoop::Polling::FakeLoop.new
       pd.take_ownership(evloop1, fd, index)
-      pd.@readers.add(pointerof(event))
+      pd.@reader.add(pointerof(event))
 
       evloop2 = Crystal::EventLoop::Polling::FakeLoop.new
       expect_raises(RuntimeError) { pd.take_ownership(evloop2, fd, index) }
