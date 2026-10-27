@@ -88,7 +88,7 @@ module Crystal
       # `T+.class` is always a subtype of `Class`
       return type1 if type2 == type2.program.class_type
 
-      restricted = common_descendent(type1.base_type, type2.instance_type)
+      restricted = common_descendent(type2.instance_type, type1.base_type)
       restricted.try(&.metaclass)
     end
 
