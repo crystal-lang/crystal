@@ -313,6 +313,31 @@ describe "File" do
         File.read(link_path).should eq("hello")
       end
     end
+
+    it "creates a symbolic link to a file" do
+      with_tempfile("symlink_dir") do |dir|
+        Dir.mkdir_p(dir)
+        File.touch(Path[dir, "file"])
+
+        File.symlink("file", Path[dir, "file_link"])
+
+        File.symlink?(Path[dir, "file_link"]).should be_true
+        File.info(Path[dir, "file_link"]).type.should eq File::Type::File
+        File.same?(Path[dir, "file"], Path[dir, "file_link"], follow_symlinks: true).should be_true
+      end
+    end
+
+    it "creates a symbolic link to a folder" do
+      with_tempfile("symlink_dir2") do |dir|
+        Dir.mkdir_p(Path[dir, "folder"])
+
+        File.symlink("folder", Path[dir, "folder_link"])
+
+        File.symlink?(Path[dir, "folder_link"]).should be_true
+        File.info(Path[dir, "folder_link"]).type.should eq File::Type::Directory
+        File.same?(Path[dir, "folder"], Path[dir, "folder_link"], follow_symlinks: true).should be_true
+      end
+    end
   end
 
   describe "symlink?" do
