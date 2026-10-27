@@ -23,12 +23,12 @@ env:
   CI_ATOMIC_OPS_VERSION: "7.10.0"
   CI_PCRE2_VERSION: "10.47"
   CI_ICONV_VERSION: "1.19"
-  CI_FFI_VERSION: "3.5.1"
-  CI_Z_VERSION: "1.3.1"
+  CI_FFI_VERSION: "3.8.0"
+  CI_Z_VERSION: "1.3.2.1"
   CI_YAML_VERSION: "0.2.5"
   CI_XML2_VERSION: "2.15.3"
-  CI_SSL_VERSION: "3.5.0"
-  CI_SSL_MAJOR: "3"
+  CI_SSL_VERSION: "4.0.2"
+  CI_SSL_MAJOR: "4"
   WIN_ARCH: ${{ inputs.arch == 'aarch64' && 'arm64' || 'x64' }}
 
 defaults:
@@ -114,7 +114,11 @@ jobs:
 
       - name: Set up NASM
         if: steps.cache-openssl.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}
@@ -154,7 +158,7 @@ jobs:
             dlls/iconv-2.dll
             dlls/gc.dll
             dlls/libffi-8.dll
-            dlls/zlib1.dll
+            dlls/libz.dll
             dlls/mpir.dll
             dlls/yaml.dll
             dlls/libxml2.dll
@@ -204,7 +208,11 @@ jobs:
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
       - name: Set up NASM
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true' && inputs.arch == 'x86_64'
-        uses: ilammy/setup-nasm@72793074d3c8cdda771dba85f6deafe00623038b # v1.5.2
+        working-directory: ${{ runner.temp }}
+        run: |
+          Invoke-WebRequest -Uri https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip -OutFile nasm.zip
+          Expand-Archive -Path nasm.zip -DestinationPath nasm
+          Add-Content $env:GITHUB_PATH "$pwd\nasm"
       - name: Build OpenSSL
         if: steps.cache-openssl-dlls.outputs.cache-hit != 'true'
         run: .\etc\win-ci\build-openssl.ps1 -BuildTree deps\openssl -Version ${{ env.CI_SSL_VERSION }} -Dynamic ${{ inputs.arch == 'aarch64' && '-UseClangCl' || '' }}

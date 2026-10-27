@@ -25,12 +25,15 @@ Run-InDirectory $BuildTree {
         "VC-WIN64A"
     }
 
-    if ($Dynamic) {
-        perl Configure "$platform" no-tests
-    } else {
-        perl Configure "$platform" /MT -static no-tests
+    $args = "no-docs no-makedepend no-tests"
+    if (-not $Dynamic) {
+        $mt = if ([Version]$Version -lt [Version]"4.0.0") { "/MT" } else { "enable-static-vcruntime" }
+        $args = "$args -static $mt"
     }
+
+    perl Configure "$platform" $args.split(' ')
     nmake
+
     if (-not $?) {
         Write-Host "Error: Failed to build OpenSSL" -ForegroundColor Red
         Exit 1

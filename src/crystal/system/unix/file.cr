@@ -83,21 +83,33 @@ module Crystal::System::File
     accessible?(path, LibC::F_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.readable?(path) : Bool
-    accessible?(path, LibC::R_OK)
+  def self.readable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::R_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.writable?(path) : Bool
-    accessible?(path, LibC::W_OK)
+  def self.writable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::W_OK, follow_symlinks: follow_symlinks)
   end
 
-  def self.executable?(path) : Bool
-    accessible?(path, LibC::X_OK)
+  def self.executable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, LibC::X_OK, follow_symlinks: follow_symlinks)
   end
 
   private def self.accessible?(path, mode, *, follow_symlinks = true)
-    flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
-    LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
+    path.check_no_null_byte
+
+    {% if flag?(:dragonfly) || flag?(:openbsd) || flag?(:solaris) %}
+      unless follow_symlinks
+        ret = LibC.lstat(path, out stat)
+        return false if ret == -1
+        return true if mode == LibC::F_OK
+        return true if (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
+      end
+      LibC.access(path, mode) == 0
+    {% else %}
+      flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
+      LibC.faccessat(LibC::AT_FDCWD, path, mode, flags) == 0
+    {% end %}
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)

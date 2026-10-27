@@ -304,6 +304,24 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "codegens `llvm.prefetch.*` from a non-main LLVM module (#17636)" do
+    p0 = {% if LibLLVM::IS_LT_150 %} "p0i8" {% else %} "p0" {% end %}
+
+    compile(<<-CRYSTAL)
+      lib Intrinsics
+        fun prefetch = "llvm.prefetch.#{p0}"(address : Void*, rw : Int32, locality : Int32, cache_type : Int32)
+      end
+
+      class Foo
+        def self.foo(p : Void*)
+          Intrinsics.prefetch(p, 0, 3, 1)
+        end
+      end
+
+      Foo.foo(Pointer(Void).new(0_u64))
+      CRYSTAL
+  end
+
   it "gets crystal class instance type id" do
     run(<<-CRYSTAL).to_b.should be_true
       class Foo
@@ -435,6 +453,54 @@ describe "Code gen: primitives" do
       end
 
       LibFoo.enum_value(1)
+      CRYSTAL
+  end
+
+  it "codegens 32-bit allocation primitives properly, with __crystal_* (#17530)" do
+    compile(<<-CRYSTAL, target: "i386-linux-gnu")
+      struct Pointer(T)
+        @[Primitive(:pointer_malloc)]
+        def self.malloc(size : UInt64)
+        end
+
+        @[Primitive(:pointer_realloc)]
+        def realloc(size : UInt64) : self
+        end
+      end
+
+      fun __crystal_malloc_atomic64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      fun __crystal_malloc64(size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      fun __crystal_realloc64(ptr : Void*, size : UInt64) : Void*
+        Pointer(Void).new(0_u64)
+      end
+
+      x = Pointer(Int32).malloc(3) # atomic
+      y = Pointer(Void*).malloc(4) # non-atomic
+      z = y.realloc(5)
+      CRYSTAL
+  end
+
+  it "codegens 32-bit allocation primitives properly, without __crystal_* (#17530)" do
+    compile(<<-CRYSTAL, target: "i386-linux-gnu")
+      struct Pointer(T)
+        @[Primitive(:pointer_malloc)]
+        def self.malloc(size : UInt64)
+        end
+
+        @[Primitive(:pointer_realloc)]
+        def realloc(size : UInt64) : self
+        end
+      end
+
+      x = Pointer(Int32).malloc(3) # atomic
+      y = Pointer(Void*).malloc(4) # non-atomic
+      z = y.realloc(5)
       CRYSTAL
   end
 end

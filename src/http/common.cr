@@ -268,7 +268,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String) : Nil
+  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String, *, expecting_body = false) : Nil
     if body
       serialize_headers_and_string_body(io, headers, body)
     elsif body_io
@@ -280,6 +280,11 @@ module HTTP
         if copied != content_length
           raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
         end
+      elsif body_io.is_a?(IO::Memory)
+        headers.serialize(io)
+        slice = body_io.to_slice + body_io.pos
+        io << "Content-Length: " << slice.bytesize << "\r\n\r\n"
+        io.write slice
       elsif Client::Response.supports_chunked?(version)
         headers["Transfer-Encoding"] = "chunked"
         headers.serialize(io)
@@ -291,6 +296,11 @@ module HTTP
       end
     else
       headers.serialize(io)
+      if expecting_body && !headers.has_key?("Content-Length") && !headers.has_key?("Transfer-Encoding")
+        # A user agent should send Content-Length for a method that defines a
+        # meaning for content, even when it's empty (RFC 9110, section 8.6)
+        io << "Content-Length: 0\r\n"
+      end
       io << "\r\n"
     end
   end

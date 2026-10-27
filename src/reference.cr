@@ -176,7 +176,8 @@ class Reference
     io << '>'
   end
 
-  private def exec_recursive(method, &)
+  # :nodoc:
+  def exec_recursive(method, &)
     # NOTE: can't use `Set` because of prelude require order
     hash = Fiber.current.exec_recursive_hash
     key = {object_id, method}
