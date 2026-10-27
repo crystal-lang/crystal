@@ -97,7 +97,7 @@ module Crystal
     end
 
     def name_size
-      self.responds_to?(:name) ? self.name.size : 0
+      self.responds_to?(:name) ? self.name.to_s.size : 0
     end
 
     def name_location
