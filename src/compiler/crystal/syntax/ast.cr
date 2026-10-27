@@ -96,12 +96,19 @@ module Crystal
     def doc=(doc)
     end
 
+    def name_size
+      0
+    end
+
     def name_location
       nil
     end
 
-    def name_size
-      0
+    def name_end_location
+      return unless loc = self.name_location
+      return unless (name_size = self.name_size).positive?
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     def visibility=(visibility : Visibility)
@@ -940,13 +947,6 @@ module Crystal
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
-    end
-
-    def name_end_location
-      loc = @name_location
-      return unless loc
-
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     # Returns `true` if this call has any arguments.
