@@ -96,12 +96,12 @@ module Crystal
     def doc=(doc)
     end
 
-    def name_location
-      nil
+    def name_size
+      self.responds_to?(:name) ? self.name.size : 0
     end
 
-    def name_size
-      0
+    def name_location
+      nil
     end
 
     def visibility=(visibility : Visibility)
@@ -794,10 +794,6 @@ module Crystal
     def initialize(@name : String)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       Var.new(@name)
     end
@@ -1226,10 +1222,6 @@ module Crystal
     def initialize(@name)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       InstanceVar.new(@name)
     end
@@ -1293,10 +1285,6 @@ module Crystal
     property name : String
 
     def initialize(@name)
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -1379,10 +1367,6 @@ module Crystal
     def accept_children(visitor)
       @default_value.try &.accept visitor
       @restriction.try &.accept visitor
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -1485,10 +1469,6 @@ module Crystal
       @body.accept visitor
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @block_arity, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
@@ -1550,10 +1530,6 @@ module Crystal
       @body.accept visitor
       @double_splat.try &.accept visitor
       @block_arg.try &.accept visitor
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -2678,10 +2654,6 @@ module Crystal
       clone = FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
       clone.name_location = name_location
       clone
-    end
-
-    def name_size
-      @name.size
     end
 
     def has_any_args?
