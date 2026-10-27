@@ -21,7 +21,7 @@ struct Crystal::EventLoop::Polling::Event
   # resume.
   getter fiber : Fiber
 
-  # The IO::FileDescriptor or Socket isnatnce when processing an IO event.
+  # The IO::FileDescriptor or Socket instance when processing an IO event.
   # Nil for timed events (sleep, select timeout).
   @io : IO?
 
