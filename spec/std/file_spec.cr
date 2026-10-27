@@ -272,6 +272,32 @@ describe "File" do
     it "gives false when a component of the path is a file" do
       File.file?(datapath("dir", "test_file.txt", "")).should be_false
     end
+
+    it "follows symlinks" do
+      with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+        File.file?(good_path).should be_true
+        File.file?(bad_path).should be_false
+      end
+    end
+
+    describe "follow_symlinks: false" do
+      it "gives true" do
+        File.file?(datapath("test_file.txt"), follow_symlinks: false).should be_true
+      end
+
+      it "gives false for a symlink" do
+        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+          File.file?(good_path, follow_symlinks: false).should be_false
+          File.file?(bad_path, follow_symlinks: false).should be_false
+        end
+      end
+    end
   end
 
   describe "directory?" do
@@ -289,6 +315,32 @@ describe "File" do
 
     it "gives false when a component of the path is a file" do
       File.directory?(datapath("dir", "test_file.txt", "")).should be_false
+    end
+
+    it "follows symlinks" do
+      with_tempfile("good_symlink", "bad_symlink") do |good_path, bad_path|
+        File.symlink(File.expand_path(datapath("dir")), good_path)
+        File.symlink(File.expand_path(datapath("non_existing")), bad_path)
+
+        File.directory?(good_path).should be_true
+        File.directory?(bad_path).should be_false
+      end
+    end
+
+    describe "follow_symlinks: false" do
+      it "gives true" do
+        File.directory?(datapath, follow_symlinks: false).should be_true
+      end
+
+      it "gives false for a symlink" do
+        with_tempfile("good_symlink", "bad_symlink") do |good_path, bad_path|
+          File.symlink(File.expand_path(datapath("dir")), good_path)
+          File.symlink(File.expand_path(datapath("non_existing")), bad_path)
+
+          File.directory?(good_path, follow_symlinks: false).should be_false
+          File.directory?(bad_path, follow_symlinks: false).should be_false
+        end
+      end
     end
   end
 

@@ -48,6 +48,22 @@ describe "Dir" do
     Dir.exists?(datapath("dir", "f1.txt", "/")).should be_false
   end
 
+  it "tests exists? on a symlink" do
+    with_tempfile("good_symlink", "bad_symlink") do |good_path, bad_path|
+      File.symlink(File.expand_path(datapath("dir")), good_path)
+      File.symlink(File.expand_path(datapath("foo")), bad_path)
+
+      Dir.exists?(good_path).should be_true
+      Dir.exists?(bad_path).should be_false
+      Dir.exists?(good_path, follow_symlinks: false).should be_false
+      Dir.exists?(bad_path, follow_symlinks: false).should be_false
+    end
+  end
+
+  it "tests exists? with follow_symlinks: false on existing directory" do
+    Dir.exists?(datapath, follow_symlinks: false).should be_true
+  end
+
   describe "empty?" do
     it "tests empty? on a full directory" do
       Dir.empty?(datapath).should be_false
