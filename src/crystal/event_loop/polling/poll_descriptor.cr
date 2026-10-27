@@ -1,11 +1,11 @@
-# Information related to the evloop for a fd, such as the read and write queues
+# Information related to the evloop for a fd, such as the read and write waiters
 # (waiting `Event`), as well as which evloop instance currently owns the fd.
 #
 # Thread-unsafe: parallel mutations must be protected with a lock.
 struct Crystal::EventLoop::Polling::PollDescriptor
   @event_loop : Polling?
-  @readers = Waiters.new
-  @writers = Waiters.new
+  @reader = Waiter.new
+  @writer = Waiter.new
 
   def owned_by?(event_loop) : Bool
     @event_loop == event_loop
@@ -30,8 +30,8 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     @event_loop = event_loop
 
     registered = event_loop.system_add(fd, index)
-    @readers.ready_all { } unless registered.read?
-    @writers.ready_all { } unless registered.write?
+    @reader.ready_all { } unless registered.read?
+    @writer.ready_all { } unless registered.write?
 
     current.try(&.system_del(fd, closing: false))
   end
@@ -48,9 +48,8 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     current.try(&.system_del(fd) { yield })
   end
 
-  # Returns true when there is at least one reader or writer. Returns false
-  # otherwise.
+  # Returns true when there are no waiters.
   def empty? : Bool
-    @readers.@list.empty? && @writers.@list.empty?
+    @reader.empty? && @writer.empty?
   end
 end

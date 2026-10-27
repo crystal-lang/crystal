@@ -59,19 +59,19 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
 
     Polling.arena.get?(index) do |pd|
       if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
-        pd.value.@writers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@reader.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@writer.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         return
       end
 
       if (events & LibC::EPOLLRDHUP) == LibC::EPOLLRDHUP
-        pd.value.@readers.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@reader.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       elsif (events & LibC::EPOLLIN) == LibC::EPOLLIN
-        pd.value.@readers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@reader.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       end
 
       if (events & LibC::EPOLLOUT) == LibC::EPOLLOUT
-        pd.value.@writers.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
+        pd.value.@writer.ready_one { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
       end
     end
   end
