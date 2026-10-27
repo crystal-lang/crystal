@@ -564,7 +564,9 @@ module HTTP
         client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::TimeoutError, {% if flag?(:win32) %} "WSASend timed out" {% else %} "Write timed out" {% end %}) do
           client.write_timeout = 1.millisecond
-          client.post("/", body: "a" * 5_000_000)
+          # Wrapping in `IO::Sized` avoids optimizations for `IO::Memory` that
+          # could bypass the write timeout
+          client.post("/", body: IO::Sized.new(IO::Memory.new("a" * 5_000_000), 5_000_000))
         end
       end
     end

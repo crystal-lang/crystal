@@ -19,10 +19,21 @@ class Crystal::CodeGenVisitor
 
   def target_def_fun(target_def, self_type) : LLVMTypedFunction
     mangled_name = target_def.mangled_name(@program, self_type)
-    self_type_mod = type_module(self_type).mod
 
-    func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
-    check_mod_fun self_type_mod, mangled_name, func
+    if target_def.is_a?(External)
+      # All lib funs and LLVM intrinsics have no body, so a declaration in the
+      # current module is sufficient. `#codegen_fun` performs declaration as no
+      # function body is emitted (not to be confused with `#declare_fun`).
+      #
+      # `self_type` is the lib type and merely serves to ensure that the
+      # function does not have an automatic `%self` parameter.
+      func = typed_fun?(@llvm_mod, mangled_name)
+      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+    else
+      self_type_mod = type_module(self_type).mod
+      func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+      check_mod_fun self_type_mod, mangled_name, func
+    end
   end
 
   def main_fun(name)
@@ -186,7 +197,7 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
-        codegen_return(target_def)
+        codegen_return target_def.body.type?, target_def
 
         br_from_alloca_to_entry
       end
@@ -234,34 +245,6 @@ class Crystal::CodeGenVisitor
 
       LLVMTypedFunction.new(context.fun_type, context.fun)
     end
-  end
-
-  def codegen_return(target_def : Def)
-    # Check if this def must use the C calling convention and the return
-    # value must be either casted or passed by sret
-    if target_def.c_calling_convention? && target_def.abi_info?
-      return_type = target_def.body.type
-      if return_type.proc?
-        @last = check_proc_is_not_closure(@last, return_type)
-      end
-
-      abi_info = abi_info(target_def)
-      abi_ret_type = abi_info.return_type
-      if cast = abi_ret_type.cast
-        casted_last = pointer_cast @last, cast.pointer
-        last = load cast, casted_last
-        ret last
-        return
-      end
-
-      if (attr = abi_ret_type.attr) && attr == LLVM::Attribute::StructRet
-        store load(llvm_type(return_type), @last), context.fun.params[0]
-        ret
-        return
-      end
-    end
-
-    codegen_return target_def.body.type?
   end
 
   def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
@@ -665,7 +648,7 @@ class Crystal::CodeGenVisitor
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
         llvm_mod = configure_module(llvm_context.new_module(type_name))
-        llvm_builder = new_builder(llvm_context)
+        llvm_builder = new_builder(llvm_mod)
 
         ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end

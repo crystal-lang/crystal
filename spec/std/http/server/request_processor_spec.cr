@@ -7,9 +7,32 @@ private def requestize(string)
   string.gsub('\n', "\r\n")
 end
 
-private class MemoryIOWithAddresses < IO::Memory
+private class IOWithAddresses < IO
   property local_address : Socket::Address?
   property remote_address : Socket::Address?
+
+  def initialize(@io : IO)
+  end
+
+  def read(bytes : Bytes) : Int32
+    @io.read(bytes)
+  end
+
+  def write(bytes : Bytes) : Nil
+    @io.write(bytes)
+  end
+
+  def close : Nil
+    @io.close
+  end
+
+  def closed? : Bool
+    @io.closed?
+  end
+
+  def flush : Nil
+    @io.flush
+  end
 end
 
 describe HTTP::Server::RequestProcessor do
@@ -235,6 +258,126 @@ describe HTTP::Server::RequestProcessor do
         HTTP
       ))
     end
+
+    it "continues when `request.body` is replaced as long as original is consumed" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.request.body.should_not(be_nil).gets_to_end
+        context.request.body = IO::Memory.new
+      end
+
+      input = IO::Memory.new(requestize(<<-HTTP
+        POST / HTTP/1.1
+        Content-Length: 16387
+
+        #{"0" * 16_384}1
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      ))
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "closes connection when `request.body` is replaced" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.request.body = IO::Memory.new
+      end
+
+      input = IO::Memory.new(requestize(<<-HTTP
+        POST / HTTP/1.1
+        Content-Length: 16387
+
+        #{"0" * 16_384}1
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      ))
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "continues when request has no body" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+      end
+
+      input = IO::Memory.new(<<-HTTP
+        POST / HTTP/1.1
+
+        POST / HTTP/1.1
+        Content-Length: 7
+
+        hello
+        HTTP
+      )
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-HTTP
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Length: 0
+
+
+        HTTP
+      ))
+    end
+
+    it "errors when request unexpectedly has a body" do
+      processor = HTTP::Server::RequestProcessor.new { }
+
+      input = IO::Memory.new(<<-HTTP
+        POST / HTTP/1.1
+
+        hello
+        HTTP
+      )
+      output = IO::Memory.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(<<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        HTTP/1.1 400 Bad Request\r
+        Content-Type: text/plain\r
+        Content-Length: 16\r
+        \r
+        400 Bad Request
+
+        HTTP
+      )
+    end
   end
 
   it "handles IO::Error while reading" do
@@ -362,11 +505,16 @@ describe HTTP::Server::RequestProcessor do
       context.response.print context.remote_address
     end
 
-    input = MemoryIOWithAddresses.new("GET / HTTP/1.1\r\n\r\n")
-    input.local_address = Socket::IPAddress.new("0.0.0.0", 12345)
-    input.remote_address = Socket::IPAddress.new("1.2.3.4", 5678)
     output = IO::Memory.new
-    processor.process(input, output)
+    io = IOWithAddresses.new(
+      IO::Stapled.new(
+        IO::Memory.new("GET / HTTP/1.1\r\n\r\n"),
+        output,
+      )
+    )
+    io.local_address = Socket::IPAddress.new("0.0.0.0", 12345)
+    io.remote_address = Socket::IPAddress.new("1.2.3.4", 5678)
+    processor.process(io)
     output.rewind
     output.gets_to_end.should eq(requestize(<<-HTTP
       HTTP/1.1 200 OK
@@ -377,5 +525,86 @@ describe HTTP::Server::RequestProcessor do
       1.2.3.4:5678
       HTTP
     ))
+  end
+
+  it "uses upgrade handler" do
+    upgrade_handler = Proc(IO, Nil).new do |io|
+      message = io.gets.try(&.upcase) || "(nil)"
+      io.puts message
+    end
+
+    processor = HTTP::Server::RequestProcessor.new do |context|
+      context.response.upgrade_handler = upgrade_handler
+    end
+
+    input = IO::Memory.new("GET / HTTP/1.1\r\n\r\nfoobar")
+    output = IO::Memory.new
+    processor.process(input, output)
+    output.to_s.should eq <<-HTTP
+      HTTP/1.1 200 OK\r
+      Connection: keep-alive\r
+      Content-Length: 0\r
+      \r
+      FOOBAR
+
+      HTTP
+  end
+
+  describe "upgrade" do
+    it "consumes request body before upgrade" do
+      upgrade_handler = Proc(IO, Nil).new do |io|
+        message = io.gets.try(&.upcase) || "(nil)"
+        io << message
+      end
+
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.upgrade_handler = upgrade_handler
+      end
+
+      String.build do |io|
+        stapled = IO::Stapled.new(IO::Memory.new(<<-HTTP), io)
+          GET / HTTP/1.1\r
+          Content-Length: 13\r
+          \r
+          message body
+          upgraded content
+          HTTP
+        processor.process(stapled, stapled)
+      end.should eq <<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        UPGRADED CONTENT
+        HTTP
+    end
+
+    it "consumes chunked request body before upgrade" do
+      upgrade_handler = Proc(IO, Nil).new do |io|
+        message = io.gets.try(&.upcase) || "(nil)"
+        io << message
+      end
+
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.upgrade_handler = upgrade_handler
+      end
+      String.build do |io|
+        stapled = IO::Stapled.new(IO::Memory.new(<<-HTTP), io)
+          GET / HTTP/1.1\r
+          Transfer-Encoding: chunked\r
+          \r
+          c\r\nmessage body\r
+          0\r\n\r
+          upgraded content
+          HTTP
+        processor.process(stapled, stapled)
+      end.should eq <<-HTTP
+        HTTP/1.1 200 OK\r
+        Connection: keep-alive\r
+        Content-Length: 0\r
+        \r
+        UPGRADED CONTENT
+        HTTP
+    end
   end
 end

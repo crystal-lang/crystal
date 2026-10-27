@@ -240,7 +240,7 @@ class Crystal::Doc::Generator
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
      "DESCRIPTION", "PATH", "VERSION", "LLVM_VERSION",
-     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE"}.each do |name|
+     "LIBRARY_PATH", "HOST_TRIPLE", "TARGET_TRIPLE", "ALL_FLAGS", "USER_FLAGS"}.each do |name|
       return true if type == crystal_type.types[name]?
     end
 
@@ -333,7 +333,7 @@ class Crystal::Doc::Generator
     options = ::Markd::Options.new
     document = ::Markd::Parser.parse(source, options)
     renderer = MarkdDocRenderer.new(context, options)
-    renderer.render(document).chomp
+    renderer.render(document, nil).chomp
   end
 
   def fetch_doc_lines(doc : String) : String

@@ -1733,7 +1733,7 @@ module Crystal
         next_char :MACRO_LITERAL
         @token.value = "%"
         @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
-        @token.raw = "%"
+        @token.raw = "\\%"
         return @token
       end
 
