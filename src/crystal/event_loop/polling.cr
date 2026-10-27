@@ -6,13 +6,19 @@ require "./timers"
 require "./lock"
 
 module Crystal::System::FileDescriptor
-  # user data (generation index for the arena)
-  property __evloop_data : EventLoop::Polling::Arena::Index = EventLoop::Polling::Arena::INVALID_INDEX
+  @__poll_descriptor : EventLoop::Polling::PollDescriptor = EventLoop::Polling::PollDescriptor.new
+
+  protected def __poll_descriptor(&) : Nil
+    @__poll_descriptor.lock { yield pointerof(@__poll_descriptor) }
+  end
 end
 
 module Crystal::System::Socket
-  # user data (generation index for the arena)
-  property __evloop_data : EventLoop::Polling::Arena::Index = EventLoop::Polling::Arena::INVALID_INDEX
+  @__poll_descriptor : EventLoop::Polling::PollDescriptor = EventLoop::Polling::PollDescriptor.new
+
+  protected def __poll_descriptor(&) : Nil
+    @__poll_descriptor.lock { yield pointerof(@__poll_descriptor) }
+  end
 end
 
 # Polling EventLoop.
@@ -63,46 +69,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   def self.default_socket_blocking?
     false
-  end
-
-  # The generational arena:
-  #
-  # 1. decorrelates the fd from the IO since the evloop only really cares about
-  #    the fd state and to resume pending fibers (it could monitor a fd without
-  #    an IO object);
-  #
-  # 2. permits to avoid pushing raw pointers to IO objects into kernel data
-  #    structures that are unknown to the GC, and to safely check whether the
-  #    allocation is still valid before trying to dereference the pointer. Since
-  #    `PollDescriptor` also doesn't have pointers to the actual IO object, it
-  #    won't prevent the GC from collecting lost IO objects (and spares us from
-  #    using weak references).
-  #
-  # 3. to a lesser extent, it also allows to keep the `PollDescriptor` allocated
-  #    together in the same region, and polluting the IO object itself with
-  #    specific evloop data (except for the generation index).
-  #
-  # The implementation takes advantage of the fd being unique per process and
-  # that the operating system will always reuse the lowest fd (POSIX compliance)
-  # and will only grow when the process needs that many file descriptors, so the
-  # allocated memory region won't grow larger than necessary. This assumption
-  # allows the arena to skip maintaining a list of free indexes. Some systems
-  # may deviate from the POSIX default, but all systems seem to follow it, as it
-  # allows optimizations to the OS (it can reuse already allocated resources),
-  # and either the man page explicitly says so (Linux), or they don't (BSD) and
-  # they must follow the POSIX definition.
-  #
-  # The block size is set to 64KB because it's a multiple of:
-  # - 4KB (usual page size)
-  # - 1024 (common soft limit for open files)
-  # - sizeof(Arena::Entry(PollDescriptor))
-  protected class_getter arena = Arena(PollDescriptor, 65536).new(max_fds)
-
-  private def self.max_fds : Int32
-    if LibC.getrlimit(LibC::RLIMIT_NOFILE, out rlimit) == -1
-      raise RuntimeError.from_errno("getrlimit(RLIMIT_NOFILE)")
-    end
-    rlimit.rlim_max.clamp(..Int32::MAX).to_i32!
   end
 
   @timers_lock = SpinLock.new
@@ -246,7 +212,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   protected def self.remove_impl(file_descriptor : System::FileDescriptor) : Nil
-    internal_remove(file_descriptor)
+    file_descriptor.__poll_descriptor do |pd|
+      pd.value.remove(file_descriptor) { } # ignore system error
+    end
   end
 
   # socket interface, see Crystal::EventLoop::Socket
@@ -434,7 +402,9 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   protected def self.remove_impl(socket : ::Socket) : Nil
-    internal_remove(socket)
+    socket.__poll_descriptor do |pd|
+      pd.value.remove(socket) { } # ignore system error
+    end
   end
 
   # internals: IO
@@ -464,9 +434,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   private def resume_all(io)
-    return unless (index = io.__evloop_data).valid?
-
-    Polling.arena.free(index) do |pd|
+    io.__poll_descriptor do |pd|
       pd.value.@reader.ready_all do |event|
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
@@ -475,15 +443,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
-      pd.value.remove(io.fd)
-    end
-  end
-
-  private def self.internal_remove(io)
-    return unless (index = io.__evloop_data).valid?
-
-    Polling.arena.free(index) do |pd|
-      pd.value.remove(io.fd) { } # ignore system error
+      pd.value.remove(io)
     end
   end
 
@@ -514,37 +474,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   private def wait(type : Polling::Event::Type, io, timeout, &)
-    # prepare event (on the stack); we can't initialize it properly until we get
-    # the arena index below; we also can't use a nilable since `pointerof` would
-    # point to the union, not the event
-    event = uninitialized Event
+    event = Event.new(type, Fiber.current, io, timeout)
 
-    # publish the event to its waiter; in case we can't access or allocate the
-    # poll descriptor into the arena, we merely return to let the caller
-    # handle the situation (maybe the IO got closed?)
-    if (index = io.__evloop_data).valid?
-      event = Event.new(type, Fiber.current, index, timeout)
+    io.__poll_descriptor do |pd|
+      # abort if closed before acquiring the lock (race)
+      return if io.closed?
 
-      return false unless Polling.arena.get?(index) do |pd|
-                            unless pd.value.owned_by?(self)
-                              pd.value.take_ownership(self, io.fd, index)
-                            end
-                            yield pd, pointerof(event)
-                          end
-    else
-      # OPTIMIZE: failing to allocate may be a simple conflict with 2 fibers
-      # starting to read or write on the same fd, we may want to detect any
-      # error situation instead of returning and retrying a syscall
-      return false unless Polling.arena.allocate_at?(io.fd) do |pd, index|
-                            # register the fd with the event loop (once), it should usually merely add
-                            # the fd to the current evloop but may "transfer" the ownership from
-                            # another event loop:
-                            io.__evloop_data = index
-                            pd.value.take_ownership(self, io.fd, index)
-
-                            event = Event.new(type, Fiber.current, index, timeout)
-                            yield pd, pointerof(event)
-                          end
+      # take ownership if needed, then register waiter
+      pd.value.take_ownership(self, io)
+      yield pd, pointerof(event)
     end
 
     if event.wake_at?
@@ -643,12 +581,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     when .io_read?
       # reached read timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Polling.arena.get?(event.value.index) { |pd| pd.value.@reader.delete(event) }
+      event.value.__poll_descriptor { |pd| pd.value.@reader.delete(event) }
       event.value.timed_out!
     when .io_write?
       # reached write timeout: cancel io event; by rule the timer always wins,
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      Polling.arena.get?(event.value.index) { |pd| pd.value.@writer.delete(event) }
+      event.value.__poll_descriptor { |pd| pd.value.@writer.delete(event) }
       event.value.timed_out!
     when .select_timeout?
       # The action belongs to this timer registration. The fiber may already
@@ -672,9 +610,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # The loop must always process ready events and timers before returning. When
   # *blocking* is `true` the loop must wait for events to become ready (possibly
   # indefinitely); when `false` the loop shall return immediately.
-  #
-  # The `PollDescriptor` of IO events can be retrieved using the *index*
-  # from the system event's user data.
   private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
   @[Flags]
@@ -683,19 +618,19 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     WRITE
   end
 
-  # Add *fd* to the polling system, setting *index* as user data.
-  protected abstract def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
+  # Add *io.fd* to the polling system, setting *io* as user data.
+  protected abstract def system_add(io) : RegisteredEvents
 
-  # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
+  # Remove *io.fd* from the polling system. Must raise a `RuntimeError` on error.
   #
   # If *closing* is true, then it precedes a call to `close(2)`. Some
   # implementations may take advantage of close doing the book keeping.
   #
-  # If *closing* is false then the fd must be deleted from the polling system.
-  protected abstract def system_del(fd : Int32, closing = true) : Nil
+  # If *closing* is false then *io.fd* must be deleted from the polling system.
+  protected abstract def system_del(io, closing = true) : Nil
 
   # Identical to `#system_del` but yields on error.
-  protected abstract def system_del(fd : Int32, closing = true, &) : Nil
+  protected abstract def system_del(io, closing = true, &) : Nil
 
   # Arm a timer to interrupt a run at *time*. Set to `nil` to disarm the timer.
   private abstract def system_set_timer(time : Time::Instant?) : Nil

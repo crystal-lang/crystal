@@ -52,12 +52,25 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
   end
 
   private def process_io(epoll_event : LibC::EpollEvent*, &) : Nil
-    index = Polling::Arena::Index.new(epoll_event.value.data.u64)
-    events = epoll_event.value.events
+    {% begin %}
+      # manual devirtualization of IO+ into concrete types
+      case io = Pointer(Void).new(epoll_event.value.data.u64).as(IO)
+      when IO::FileDescriptor
+        process_io_impl(io, epoll_event.value.events) { |fiber| yield fiber }
+      {% if @top_level.has_constant?(:Socket) %}
+      when ::Socket
+        process_io_impl(io, epoll_event.value.events) { |fiber| yield fiber }
+      {% end %}
+      else
+        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
+      end
+    {% end %}
+  end
 
-    Crystal.trace :evloop, "event", fd: index.index, index: index.to_i64, events: events
+  private def process_io_impl(io, events, &)
+    Crystal.trace :evloop, "event", fd: io.fd, io: io.as(Void*), type: io.class.name, events: events
 
-    Polling.arena.get?(index) do |pd|
+    io.__poll_descriptor do |pd|
       if (events & (LibC::EPOLLERR | LibC::EPOLLHUP)) != 0
         pd.value.@reader.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
         pd.value.@writer.ready_all { |event| unsafe_resume_io(event) { |fiber| yield fiber } }
@@ -81,21 +94,21 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @eventfd.write(1) unless @interrupted.swap(true, :relaxed)
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
-    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64
+  protected def system_add(io) : RegisteredEvents
+    Crystal.trace :evloop, "epoll_ctl", op: "add", fd: io.fd, io: io.as(Void*), type: io.class.name
     events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
-    @epoll.add(fd, events, u64: index.to_u64)
+    @epoll.add(io.fd, events, u64: io.as(Void*).address.to_u64!)
     RegisteredEvents::READ | RegisteredEvents::WRITE
   end
 
-  protected def system_del(fd : Int32, closing = true) : Nil
-    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
-    @epoll.delete(fd)
+  protected def system_del(io, closing = true) : Nil
+    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: io.fd, io: io.as(Void*), type: io.class.name
+    @epoll.delete(io.fd)
   end
 
-  protected def system_del(fd : Int32, closing = true, &) : Nil
-    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: fd
-    @epoll.delete(fd) { yield }
+  protected def system_del(io, closing = true, &) : Nil
+    Crystal.trace :evloop, "epoll_ctl", op: "del", fd: io.fd, io: io.as(Void*), type: io.class.name
+    @epoll.delete(io.fd) { yield }
   end
 
   private def system_set_timer(time : Time::Instant?) : Nil
