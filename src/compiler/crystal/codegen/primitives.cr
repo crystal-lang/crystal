@@ -998,7 +998,48 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
-    type_id(context.type.instance_type)
+    if value = call_args.first?
+      codegen_primitive_class_crystal_instance_type_id_with_type(context.type, value)
+    else
+      type_id(context.type.instance_type)
+    end
+  end
+
+  def codegen_primitive_class_crystal_instance_type_id_with_type(type, value)
+    type_id = type_id(value, type)
+    instance_type_fun_name = "~instance_type"
+    func = typed_fun?(@main_mod, instance_type_fun_name) || create_instance_type_fun(instance_type_fun_name)
+    func = check_main_fun instance_type_fun_name, func
+    call func, [type_id] of LLVM::Value
+  end
+
+  def create_instance_type_fun(name)
+    id_to_metaclass = @program.llvm_id.id_to_metaclass.to_a.sort_by! &.[1]
+
+    in_main do
+      define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
+        arg = func.params.first
+
+        current_block = insert_block
+
+        cases = {} of LLVM::Value => LLVM::BasicBlock
+        id_to_metaclass.each do |(type_id, metaclass_id)|
+          block = new_block "type_#{type_id}"
+          cases[int32(metaclass_id)] = block
+          position_at_end block
+          ret int32(type_id)
+        end
+
+        otherwise = new_block "otherwise"
+        position_at_end otherwise
+        unreachable
+
+        position_at_end current_block
+        @builder.switch arg, otherwise, cases
+      end
+    end
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
