@@ -58,7 +58,7 @@ class Crystal::CodeGenVisitor
     result = nil
     type.expand_union_types.each do |sub_type|
       sub_type_cond = match_any_type_id(sub_type, type_id)
-      result = result ? or(result, sub_type_cond) : sub_type_cond
+      result = or(result, sub_type_cond)
     end
     ret result.not_nil!
   end
@@ -77,7 +77,7 @@ class Crystal::CodeGenVisitor
     result = nil
     type.each_concrete_type do |sub_type|
       sub_type_cond = equal? type_id(sub_type), type_id
-      result = result ? or(result, sub_type_cond) : sub_type_cond
+      result = or(result, sub_type_cond)
     end
     ret result.not_nil!
   end
