@@ -210,7 +210,7 @@ class Crystal::Codegen::Target
       # CPU is defined (it will most certainly enable a better FPU) or
       # features contains a floating-point definition.
       if cpu.empty? && !features.includes?("fp") && armhf?
-        features += "+vfp2"
+        features += ",+vfp2"
       end
     when "avr"
       LLVM.init_avr
@@ -221,6 +221,13 @@ class Crystal::Codegen::Target
       end
     when "wasm32"
       LLVM.init_webassembly
+
+      {% unless LibLLVM::IS_LT_240 %}
+        disable_legacy_wasm_eh
+        features += ",+exception-handling" unless features.includes?("+exception-handling")
+        features += ",+multivalue" unless features.includes?("+multivalue")
+        features += ",+reference-types" unless features.includes?("+reference-types")
+      {% end %}
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
@@ -239,7 +246,9 @@ class Crystal::Codegen::Target
     end
 
     target = LLVM::Target.from_triple(self.to_s)
+    features = features.strip(',')
     machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, reloc: reloc, code_model: code_model).not_nil!
+
     # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.
@@ -263,5 +272,13 @@ class Crystal::Codegen::Target
     end
 
     environment == other.environment
+  end
+
+  @@disable_legacy_wasm_eh = Atomic(Bool).new(false)
+
+  private def disable_legacy_wasm_eh : Nil
+    return if @@disable_legacy_wasm_eh.swap(true, :relaxed)
+
+    LLVM.parse_command_line_options %w[crystal -wasm-use-legacy-eh=false]
   end
 end

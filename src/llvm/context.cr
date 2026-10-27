@@ -76,6 +76,10 @@ class LLVM::Context
     Type.new LibLLVM.ppc_fp128_type_in_context(self)
   end
 
+  def token : Type
+    Type.new LibLLVM.token_type_in_context(self)
+  end
+
   def pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
@@ -125,7 +129,8 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
+    metadata = LibLLVM.md_string_in_context2(self, value, value.bytesize)
+    LLVM::Value.new LibLLVM.metadata_as_value(self, metadata)
   end
 
   def md_node(values : Array(Value)) : Value

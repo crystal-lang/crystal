@@ -180,6 +180,11 @@ lib LibIntrinsics
     {% if flag?(:interpreted) %} @[Primitive(:interpreter_intrinsics_pause)] {% end %}
     fun arm_hint = "llvm.aarch64.hint"(hint : Int32)
   {% end %}
+
+  {% if flag?(:wasm32) %}
+    @[Raises]
+    fun wasm_throw = "llvm.wasm.throw"(tag : Int32, exception : Void*) : NoReturn
+  {% end %}
 end
 
 module Intrinsics

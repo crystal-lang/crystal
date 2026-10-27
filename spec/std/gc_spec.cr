@@ -33,7 +33,7 @@ describe "GC" do
     typeof(GC.stats).should eq(GC::Stats)
   end
 
-  it "raises if calling enable when not disabled" do
+  pending_wasm32 "raises if calling enable when not disabled" do
     expect_raises(Exception, "GC is not disabled") do
       GC.enable
     end

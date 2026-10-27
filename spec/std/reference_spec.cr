@@ -153,7 +153,7 @@ describe "Reference" do
       duplicate.x.should eq(original.x)
     end
 
-    it "calls #finalize on #dup'ed objects" do
+    pending_wasm32 "calls #finalize on #dup'ed objects" do
       obj = ReferenceSpec::TestClassWithFinalize.new
       assert_finalizes("dup") { obj.dup }
     end
