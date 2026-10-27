@@ -40,6 +40,7 @@ private def assert_at_end(reader)
   reader.current_char.should eq '\0'
   reader.current_char?.should be_nil
   reader.pos.should eq reader.string.bytesize
+  reader.current_char_width.should eq(0)
 
   reader.has_next?.should be_false
 
@@ -136,8 +137,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new("")
       reader.error.should be_nil
 
-      # FIXME: current_char_width on an empty string should always be 0. There is no current char.
-      reader.current_char_width.should eq 1
       assert_at_end(reader)
       assert_at_start(reader)
 
@@ -151,7 +150,6 @@ describe "Char::Reader" do
       reader = Char::Reader.new(at_end: "")
       reader.error.should be_nil
 
-      reader.current_char_width.should eq 0
       assert_at_end(reader)
       assert_at_start(reader)
 
@@ -188,6 +186,119 @@ describe "Char::Reader" do
       reader.has_next?.should be_false
 
       assert_at_end(reader)
+    end
+  end
+
+  context "with byte slice" do
+    it "iterates through empty slice" do
+      reader = Char::Reader.new(Bytes.empty)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(0)
+      reader.error.should be_nil
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through empty slice at end" do
+      reader = Char::Reader.new(at_end: Bytes.empty)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(0)
+      reader.error.should be_nil
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through string of size one" do
+      reader = Char::Reader.new("a".to_slice)
+      reader.pos.should eq(0)
+      reader.current_char.should eq('a')
+      reader.has_next?.should be_true
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through string slice" do
+      reader = Char::Reader.new("há日本語".to_slice)
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(104)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(225)
+
+      reader.pos.should eq(1)
+      reader.current_char.ord.should eq(225)
+
+      reader.next_char.ord.should eq(26085)
+      reader.next_char.ord.should eq(26412)
+      reader.next_char.ord.should eq(35486)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through sub string slice" do
+      reader = Char::Reader.new("abcdefg".to_slice[2, 3])
+      reader.pos.should eq(0)
+      reader.current_char.should eq('c')
+      reader.has_next?.should be_true
+
+      reader.next_char.should eq('d')
+      reader.pos.should eq(1)
+      reader.next_char.should eq('e')
+      reader.has_next?.should be_true
+      reader.next_char.should eq('\0')
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "iterates through sub string slice" do
+      reader = Char::Reader.new("há日本語".to_slice[1, 8])
+      reader.pos.should eq(0)
+      reader.current_char.ord.should eq(225)
+      reader.has_next?.should be_true
+
+      reader.next_char.ord.should eq(26085)
+      reader.pos.should eq(2)
+      reader.next_char.ord.should eq(26412)
+      # reader.has_next?.should be_false
+
+      reader.next_char.ord.should eq(0)
+      reader.has_next?.should be_false
+
+      expect_raises IndexError do
+        reader.next_char
+      end
+    end
+
+    it "#peek_next_char at end" do
+      reader = Char::Reader.new("abcdefg".to_slice[2, 3])
+      reader.next_char
+      reader.peek_next_char.should eq('e')
+      reader.next_char.should eq('e')
+      reader.has_next?.should be_true
+      reader.peek_next_char.should eq('\0')
+      reader.next_char.should eq('\0')
+
+      expect_raises IndexError do
+        reader.peek_next_char
+      end
     end
   end
 
@@ -250,6 +361,40 @@ describe "Char::Reader" do
       reader = assert_previous_char(reader, 'h')
 
       assert_at_start(reader)
+    end
+  end
+
+  describe ".new" do
+    it "rejects invalid positions" do
+      expect_raises IndexError do
+        Char::Reader.new("abc", -5)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", -1)
+      end
+      expect_raises IndexError do
+        Char::Reader.new("abc", 5)
+      end
+    end
+
+    it "accepts a position at the end" do
+      Char::Reader.new("abc", 3).pos.should eq(3)
+    end
+  end
+
+  describe "#pos" do
+    it "rejects invalid positions" do
+      reader = Char::Reader.new("abc")
+
+      expect_raises IndexError do
+        reader.pos = -5
+      end
+      expect_raises IndexError do
+        reader.pos = -1
+      end
+      expect_raises IndexError do
+        reader.pos = 5
+      end
     end
   end
 

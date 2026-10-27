@@ -159,6 +159,13 @@ module Crystal::System::Socket
     val
   end
 
+  def self.system_error(fd : Handle) : Errno?
+    optval = 0
+    optsize = LibC::SocklenT.new(sizeof(Int32))
+    ret = LibC.getsockopt(fd, LibC::SOL_SOCKET, LibC::SO_ERROR, pointerof(optval), pointerof(optsize))
+    ret == -1 ? Errno.value : Errno.new(optval)
+  end
+
   private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, pointerof(optval), pointerof(optsize))

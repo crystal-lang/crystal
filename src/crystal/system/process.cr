@@ -83,9 +83,26 @@ struct Crystal::System::Process
 end
 
 module Crystal::System
-  ORIGINAL_STDIN  = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
-  ORIGINAL_STDERR = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
+  ORIGINAL_STDIN =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDIN_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
+    end
+
+  ORIGINAL_STDOUT =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDOUT_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
+    end
+
+  ORIGINAL_STDERR =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDERR_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
+    end
 end
 
 {% if flag?(:wasi) %}

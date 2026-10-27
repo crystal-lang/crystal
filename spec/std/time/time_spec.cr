@@ -232,7 +232,7 @@ describe Time do
     end
 
     it "supports maximum valid time" do
-      nanoseconds = Int128.new("253402300799999999999")
+      nanoseconds = 253402300799999999999_i128
       time = Time.unix_ns(nanoseconds)
       time.should eq(Time.utc(9999, 12, 31, 23, 59, 59, nanosecond: 999999999))
       time.to_unix_ns.should eq(nanoseconds)
@@ -240,7 +240,7 @@ describe Time do
     end
 
     it "supports minimum valid time" do
-      nanoseconds = Int128.new("-62135596800000000000")
+      nanoseconds = -62135596800000000000_i128
       time = Time.unix_ns(nanoseconds)
       time.should eq(Time.utc(1, 1, 1, 0, 0, 0, nanosecond: 0))
       time.to_unix_ns.should eq(nanoseconds)

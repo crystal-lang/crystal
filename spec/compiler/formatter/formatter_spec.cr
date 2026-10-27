@@ -2723,6 +2723,22 @@ describe Crystal::Formatter do
     end
     CRYSTAL
 
+  # #17516
+  assert_format <<-CRYSTAL
+    {% begin %}
+      \\{% begin %}
+        \\%var
+      \\{% end %}
+    {% end %}
+    CRYSTAL
+  assert_format <<-CRYSTAL
+    {% begin %}
+      \\{% begin %}
+        %var
+      \\{% end %}
+    {% end %}
+    CRYSTAL
+
   it "gives proper line number in syntax error inside macro" do
     source = <<-CRYSTAL
       a = 1

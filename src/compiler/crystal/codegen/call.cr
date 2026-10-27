@@ -343,9 +343,9 @@ class Crystal::CodeGenVisitor
       obj_type_id = context.vars["%scope"].pointer
     else
       owner = node.scope
-      obj_type_id = llvm_self
+      obj_type_id = llvm_self if owner.passed_as_self?
     end
-    obj_type_id = type_id(obj_type_id, owner)
+    obj_type_id = type_id(obj_type_id, owner) if obj_type_id
 
     # Create self var if available
     if node_obj
@@ -381,12 +381,14 @@ class Crystal::CodeGenVisitor
       Phi.open(self, node, old_needs_value) do |phi|
         # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
-          if is_super
+          if obj_type_id && !is_super
+            result = match_type_id(owner, a_def.owner, obj_type_id)
+          else
+            # If owner is not passed then it cannot possibly affect dispatch
             # A super call always matches the obj type
             result = int1(1)
-          else
-            result = match_type_id(owner, a_def.owner, obj_type_id)
           end
+
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
             if node_arg.supports_autocast?(!@program.has_flag?("no_number_autocast"))
@@ -432,6 +434,11 @@ class Crystal::CodeGenVisitor
 
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
+
+    # Inlined calls and primitives don't go through `codegen_call_or_invoke`,
+    # so their instructions need the call's debug location set here,
+    # otherwise they are attributed to whatever line was last emitted
+    set_current_debug_location node if @debug.line_numbers?
 
     # Try to inline the call
     if try_inline_call(target_def, body, self_type, call_args)

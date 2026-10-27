@@ -4,7 +4,9 @@
 #
 # See https://crystal-lang.org/reference/man/required_libraries.html#other-stdlib-libraries
 @[Link("z")]
-{% if compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
+{% if compare_versions(Crystal::VERSION, "1.22.0-dev") >= 0 %}
+  @[Link(dll: "libz.dll")]
+{% elsif compare_versions(Crystal::VERSION, "1.11.0-dev") >= 0 %}
   @[Link(dll: "zlib1.dll")]
 {% end %}
 lib LibZ

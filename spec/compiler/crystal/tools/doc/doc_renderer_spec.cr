@@ -17,7 +17,7 @@ private def it_renders(context, input, output, file = __FILE__, line = __LINE__)
     document = Markd::Parser.parse(input, options)
     renderer = Doc::MarkdDocRenderer.new(c, options)
 
-    renderer.render(document).chomp.should eq(output), file: file, line: line
+    renderer.render(document, nil).chomp.should eq(output), file: file, line: line
   end
 end
 

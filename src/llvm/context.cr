@@ -12,6 +12,7 @@ class LLVM::Context
     Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
+  @[Deprecated("Use `LLVM::Module#new_builder` instead")]
   def new_builder : Builder
     # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
     builder = Builder.new(LibLLVM.create_builder_in_context(self))

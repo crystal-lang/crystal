@@ -32,7 +32,7 @@ defaults:
 jobs:
   build-deps:
     name: Build dependencies
-    uses: ./.github/workflows/win_build_libs.yml
+    uses: $/.github/workflows/win_build_libs.yml
     with:
       arch: ${{ inputs.arch }}
       runs-on: ${{ inputs.runs-on }}
@@ -42,7 +42,7 @@ jobs:
   build-stage1:
     name: Build stage-1 compiler
     needs: [build-deps]
-    uses: ./.github/workflows/win_arm64.yml
+    uses: $/.github/workflows/win_arm64.yml
     if: ${{ inputs.arch == 'aarch64' }}
     with:
       arch: ${{ inputs.arch }}
@@ -50,7 +50,7 @@ jobs:
   build-release:
     name: Build compiler
     needs: [build-stage1]
-    uses: ./.github/workflows/win_build_portable.yml
+    uses: $/.github/workflows/win_build_portable.yml
     if: ${{ !cancelled() }}
     with:
       release: true
@@ -71,7 +71,7 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
@@ -133,7 +133,7 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
@@ -209,7 +209,7 @@ jobs:
 
   build-installer:
     name: Build installer
-    if: ${{ !cancelled() && inputs.arch == 'x86_64' && github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/')) }}
+    if: ${{ !cancelled() && github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/')) }}
     runs-on: ${{ inputs.runs-on }}
     needs: [build-release]
     steps:
@@ -254,6 +254,13 @@ jobs:
 
       - name: Upload Crystal installer
         uses: actions/upload-artifact@v7
+        with:
+          name: crystal-${{ inputs.arch }}-windows-msvc-installer
+          path: etc/win-ci/Output/crystal-setup.exe
+
+      - name: Upload Crystal installer (compatibility)
+        uses: actions/upload-artifact@v7
+        if: ${{ inputs.arch == 'x86_64' }}
         with:
           name: crystal-installer
           path: etc/win-ci/Output/crystal-setup.exe

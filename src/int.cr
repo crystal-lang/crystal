@@ -1703,8 +1703,7 @@ struct Int128
   Number.expand_div [Float64], Float64
 
   def -
-    # TODO: use 0_i128 - self
-    Int128.new(0) - self
+    0_i128 - self
   end
 
   # Returns `self` converted to a signed value of the same size.
@@ -1775,7 +1774,7 @@ struct Int128
   # Int16::MIN.abs_unsigned # => 32768_u16
   # ```
   def abs_unsigned : UInt128
-    self < 0 ? UInt128.new(0) &- self : to_u128!
+    self < 0 ? 0_u128 &- self : to_u128!
   end
 
   # Returns the negative of `self` as a signed value of the same size.
@@ -2650,8 +2649,7 @@ struct UInt128
   Number.expand_div [Float64], Float64
 
   def &-
-    # TODO: use 0_u128 &- self
-    UInt128.new(0) &- self
+    0_u128 &- self
   end
 
   # Returns `self` converted to a signed value of the same size.
@@ -2741,7 +2739,7 @@ struct UInt128
   # Int16::MIN.neg_signed # raises OverflowError
   # ```
   def neg_signed : Int128
-    Int128.new(0) - self
+    0_i128 - self
   end
 
   def popcount

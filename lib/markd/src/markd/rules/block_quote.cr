@@ -6,7 +6,15 @@ module Markd::Rule
       if match?(parser)
         seek(parser)
         parser.close_unmatched_blocks
-        parser.add_child(Node::Type::BlockQuote, parser.next_nonspace)
+        if parser.gfm? && (match = parser.line.match(Rule::ADMONITION_START))
+          node = parser.add_child(Node::Type::Alert, parser.next_nonspace)
+          # This is an alert
+          node.data["alert"] = match[1]
+          node.data["title"] = (match[2]? && !match[2].strip.empty?) ? match[2].strip : match[1]
+          parser.advance_offset(parser.line.size, false)
+        else
+          parser.add_child(Node::Type::BlockQuote, parser.next_nonspace)
+        end
 
         MatchValue::Container
       else
