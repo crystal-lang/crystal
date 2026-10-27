@@ -25,7 +25,7 @@ lib LibC
   AT_REMOVEDIR        = 0x4
   AT_SYMLINK_FOLLOW   = 0x2
   AT_EACCESS          = 0x0
-  
+
   fun fcntl(x0 : Int, x1 : Int, ...) : Int
   fun open(x0 : Char*, x1 : Int, ...) : Int
 end
