@@ -1,4 +1,4 @@
-{% skip_file if flag?(:win32) %}
+{% skip_file if flag?(:win32) || flag?(:wasm) %}
 
 require "c/termios"
 
