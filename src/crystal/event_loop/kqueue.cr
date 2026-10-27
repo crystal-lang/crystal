@@ -55,18 +55,26 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def process_io(kevent : LibC::Kevent*, &) : Nil
-    index =
-      {% if flag?(:bits64) %}
-        Polling::Arena::Index.new(kevent.value.udata.address)
-      {% else %}
-        # assuming 32-bit target: rebuild the arena index
-        Polling::Arena::Index.new(kevent.value.ident.to_i32!, kevent.value.udata.address.to_u32!)
+    {% begin %}
+      # manual devirtualization of IO+ into concrete types
+      case io = kevent.value.udata.as(IO)
+      when IO::FileDescriptor
+        process_io_impl(io, kevent) { |fiber| yield fiber }
+      {% if @top_level.has_constant?(:Socket) %}
+      when ::Socket
+        process_io_impl(io, kevent) { |fiber| yield fiber }
       {% end %}
+      else
+        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
+      end
+    {% end %}
+  end
 
-    Crystal.trace :evloop, "event", fd: kevent.value.ident, index: index.to_i64,
+  private def process_io_impl(io, kevent, &)
+    Crystal.trace :evloop, "event", fd: io.fd, io: io.as(Void*), type: io.class.name,
       filter: kevent.value.filter, flags: kevent.value.flags, fflags: kevent.value.fflags
 
-    Polling.arena.get?(index) do |pd|
+    io.__poll_descriptor do |pd|
       if (kevent.value.fflags & LibC::EV_EOF) == LibC::EV_EOF
         # apparently some systems may report EOF on write with EVFILT_READ instead
         # of EVFILT_WRITE, so let's wake all waiters:
@@ -101,8 +109,8 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   @[NoInline]
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
-    Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
+  protected def system_add(io) : RegisteredEvents
+    Crystal.trace :evloop, "kevent", op: "add", fd: io.fd, io: io.as(Void*), type: io.class.name
 
     # register both read and write events
     changes = uninitialized LibC::Kevent[2]
@@ -110,14 +118,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
 
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
       kevent = changes.to_unsafe + i
-      udata =
-        {% if flag?(:bits64) %}
-          Pointer(Void).new(index.to_u64)
-        {% else %}
-          # assuming 32-bit target: pass the generation as udata (ident is the fd/index)
-          Pointer(Void).new(index.generation)
-        {% end %}
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR | LibC::EV_RECEIPT, udata: udata)
+      System::Kqueue.set(kevent, io.fd, filter, LibC::EV_ADD | LibC::EV_CLEAR | LibC::EV_RECEIPT, udata: io.as(Void*))
     end
 
     @kqueue.kevent(changes.to_slice, receipts.to_slice) do
@@ -131,16 +132,16 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     registered
   end
 
-  protected def system_del(fd : Int32, closing = true) : Nil
-    system_del(fd, closing) do
+  protected def system_del(io, closing = true) : Nil
+    system_del(io, closing) do
       raise RuntimeError.from_errno("kevent")
     end
   end
 
-  protected def system_del(fd : Int32, closing = true, &) : Nil
+  protected def system_del(io, closing = true, &) : Nil
     return if closing # nothing to do: close(2) will do the cleanup
 
-    Crystal.trace :evloop, "kevent", op: "del", fd: fd
+    Crystal.trace :evloop, "kevent", op: "del", fd: io.fd, io: io.as(Void*), type: io.class.name
 
     # unregister both read and write events
     changes = uninitialized LibC::Kevent[2]
@@ -148,7 +149,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
 
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
       kevent = changes.to_unsafe + i
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE | LibC::EV_RECEIPT)
+      System::Kqueue.set(kevent, io.fd, filter, LibC::EV_DELETE | LibC::EV_RECEIPT)
     end
 
     @kqueue.kevent(changes.to_slice, receipts.to_slice) do
