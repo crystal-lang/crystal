@@ -8,6 +8,7 @@ lib LibC
   SOCK_STREAM    =  1
   SOL_SOCKET     =  1
   SO_BROADCAST   =  6
+  SO_ERROR       =  4
   SO_KEEPALIVE   =  9
   SO_LINGER      = 13
   SO_RCVBUF      =  8

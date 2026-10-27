@@ -68,6 +68,9 @@ module Crystal
 
     # The current method we are processing
     @current_def : Def?
+    @visiting = [] of Def
+    @pending_callers = ({} of Def => Set(Def)).compare_by_identity
+    @pending_callees = ({} of Def => Def).compare_by_identity
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
@@ -592,6 +595,7 @@ module Crystal
         end
 
         current_def = @current_def
+        @visiting << current_def if current_def
 
         target_defs.each do |target_def|
           if @transformed.add?(target_def)
@@ -602,12 +606,38 @@ module Crystal
               @def_nest_count -= 1
               @current_def = current_def
             end
+
+            # propagate raises state of unresolved cycle to dependents
+            callers = @pending_callers.delete(target_def)
+            if target_def.raises?
+              callers.try &.each do |caller_def|
+                caller_def.raises = true
+                @pending_callees.delete(caller_def)
+              end
+            end
+          elsif current_def && !current_def.raises? && !target_def.raises?
+            if @visiting.any?(&.same?(target_def))
+              # cycle detected: can't decide if target_def raises, yet
+              callers = @pending_callers.put_if_absent(target_def) { Set(Def).new.compare_by_identity }
+              @visiting.each do |caller_def|
+                callers << caller_def
+                @pending_callees[caller_def] = target_def
+              end
+            elsif existing_target_def = @pending_callees[target_def]?
+              # no cycles here, but target_def is already part of a pending
+              # cycle: append this def to that same cycle
+              callers = @pending_callers.put_if_absent(existing_target_def) { Set(Def).new.compare_by_identity }
+              callers << current_def
+              @pending_callees[current_def] = existing_target_def
+            end
           end
 
           # If the current call targets a method that raises, the method
           # where the call happens also raises.
           current_def.raises = true if current_def && target_def.raises?
         end
+
+        @visiting.pop if current_def
 
         if node.target_defs.not_nil!.empty?
           exps = [] of ASTNode
@@ -1015,8 +1045,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
+        case instance_type = exp_type.devirtualize
+        when .struct?, .module?, .metaclass?, .void?, .no_return?, UnionType
           node.exp.raise "instance_sizeof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end
@@ -1032,8 +1062,8 @@ module Crystal
       exp_type = node.exp.type?
 
       if exp_type
-        instance_type = exp_type.devirtualize
-        if instance_type.struct? || instance_type.module? || instance_type.metaclass? || instance_type.is_a?(UnionType)
+        case instance_type = exp_type.devirtualize
+        when .struct?, .module?, .metaclass?, .void?, .no_return?, UnionType
           node.exp.raise "instance_alignof can only be used with a class, but #{instance_type} is a #{instance_type.type_desc}"
         end
       end

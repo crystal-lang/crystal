@@ -657,6 +657,43 @@ module Crystal
     it_parses "foo(\n1)", "foo".call(1.int32)
     it_parses "::foo", Call.new("foo", [] of ASTNode, nil, nil, nil, true)
 
+    ["", "()"].each do |suffix|
+      it_parses "foo = 1; ::foo#{suffix}", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", global: true),
+      ]
+    end
+
+    it_parses "foo = 1; ::foo /bar/", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar"), global: true),
+    ]
+    it_parses "foo = 1; ::foo /bar/i", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar", Regex::CompileOptions::IGNORE_CASE), global: true),
+    ]
+
+    [" / ", "/", "/ "].each do |separator|
+      it_parses "foo = 1; ::foo#{separator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new(Call.new("foo", global: true), "/", "bar".call),
+      ]
+    end
+
+    ["+", "-"].each do |operator|
+      [" #{operator} ", operator, "#{operator} "].each do |separator|
+        it_parses "foo = 1; ::foo#{separator}bar", [
+          Assign.new("foo".var, 1.int32),
+          Call.new(Call.new("foo", global: true), operator, "bar".call),
+        ]
+      end
+
+      it_parses "foo = 1; ::foo #{operator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", [Call.new("bar".call, operator)] of ASTNode, global: true),
+      ]
+    end
+
     it_parses "foo + 1", Call.new("foo".call, "+", 1.int32)
     it_parses "foo +1", Call.new("foo", 1.int32)
     it_parses "foo +1.0", Call.new("foo", 1.float64)
@@ -1862,8 +1899,12 @@ module Crystal
     it_parses "1.tap do |x|; 1; rescue; x; end", Call.new(1.int32, "tap", block: Block.new(["x".var], body: ExceptionHandler.new(1.int32, [Rescue.new("x".var)])))
 
     it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+    it_parses "1 rescue 2 ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
+    it_parses "begin; 1; rescue; 2; end ensure 3", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32)
     it_parses "x = 1 rescue 2", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
     it_parses "x = 1 ensure 2", Assign.new("x".var, ExceptionHandler.new(1.int32, ensure: 2.int32))
+    it_parses "x = 1 rescue 2 ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
+    it_parses "x = begin; 1; rescue; 2; end ensure 3", Assign.new("x".var, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], ensure: 3.int32))
     it_parses "a = 1; a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new("a".var, [Rescue.new("a".var)])]
     it_parses "a = 1; yield a rescue a", [Assign.new("a".var, 1.int32), ExceptionHandler.new(Yield.new(["a".var] of ASTNode), [Rescue.new("a".var)])]
 
@@ -3878,11 +3919,25 @@ module Crystal
       ensure_location.column_number.should eq(5)
     end
 
+    it "sets correct location of trailing ensure in an assignment" do
+      source = "foo = do_foo ensure bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo ensure bar")
+    end
+
     it "sets correct location of trailing rescue" do
       source = "foo rescue bar"
       parser = Parser.new(source)
       node = parser.parse.as(ExceptionHandler).rescues.should_not(be_nil)[0]
       node_source(source, node).should eq("rescue bar")
+    end
+
+    it "sets correct location of trailing rescue in an assignment" do
+      source = "foo = do_foo rescue bar"
+      parser = Parser.new(source)
+      node = parser.parse.as(Assign).value.should be_a(ExceptionHandler)
+      node_source(source, node).should eq("do_foo rescue bar")
     end
 
     it "sets correct location of call name" do
@@ -4114,6 +4169,12 @@ module Crystal
       path = inputs.first.should be_a(Path)
       node_source(source, path).should eq "A"
       node_source(source, proc_notation).should eq "(A) -> R"
+    end
+
+    it "ensure with `suffix` doesn't change the `suffix` property of the preceding exception handler" do
+      parser = Parser.new("begin; 1; rescue; 2; end ensure 3")
+      node = parser.parse.as(ExceptionHandler)
+      node.suffix.should be_false
     end
 
     it "sets args_in_brackets to false for `a.b`" do

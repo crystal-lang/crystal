@@ -132,33 +132,6 @@ class Process
     Crystal::System::Process.times
   end
 
-  # :nodoc:
-  #
-  # Runs the given block inside a new process and
-  # returns a `Process` representing the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  @[Deprecated("Fork is no longer supported.")]
-  def self.fork(&) : Process
-    new Crystal::System::Process.new(Crystal::System::Process.fork { yield })
-  end
-
-  # :nodoc:
-  #
-  # Duplicates the current process.
-  # Returns a `Process` representing the new child process in the current process
-  # and `nil` inside the new child process.
-  #
-  # Available only on Unix-like operating systems.
-  @[Deprecated("Fork is no longer supported.")]
-  def self.fork : Process?
-    {% raise("Process fork is unsupported with multithread mode") unless flag?(:without_mt) %}
-
-    if pid = Crystal::System::Process.fork
-      new Crystal::System::Process.new(pid)
-    end
-  end
-
   # How to redirect the standard input, output and error IO of a process.
   enum Redirect
     # Pipe the IO so the parent process can read (or write) to the process IO

@@ -577,28 +577,6 @@ def abort(message = nil, status = 1) : NoReturn
   exit status
 end
 
-{% if flag?(:without_mt) && flag?(:unix) %}
-  class Process
-    # :nodoc:
-    #
-    # Hooks are defined here due to load order problems.
-    def self.after_fork_child_callbacks
-      @@after_fork_child_callbacks ||= [
-        # reinit event loop first:
-        -> { Crystal::EventLoop.current.after_fork },
-
-        # reinit signal handling:
-        ->Crystal::System::Signal.after_fork,
-        ->Crystal::System::SignalChildHandler.after_fork,
-
-        # additional reinitialization
-        ->Random::DEFAULT.new_seed,
-        -> { Random.thread_default.new_seed },
-      ] of -> Nil
-    end
-  end
-{% end %}
-
 {% if flag?(:win32) && (!flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context)) %}
   Crystal::EventLoop::IOCP.start_forwarder_thread
 {% end %}

@@ -1,0 +1,67 @@
+## Alert
+
+Alerts are a Markdown extension based on the blockquote syntax that
+you can use to emphasize critical information. On GitHub, they are
+displayed with distinctive colors and icons to indicate the significance
+of the content.
+
+Use alerts only when they are crucial for user success and limit them
+to one or two per article to prevent overloading the reader. Additionally,
+you should avoid placing alerts consecutively. Alerts cannot be nested
+within other elements.
+
+To add an alert, use a special blockquote line specifying the alert type
+and an optional title, followed by the alert information in a standard
+blockquote.
+
+There are five types of alert: 
+
+* NOTE
+* TIP
+* IMPORTANT
+* WARNING
+* CAUTION
+
+```````````````````````````````` example alert
+> [!NOTE]
+> Useful information that users should know, even when skimming content.
+.
+<div class="alert alert-note"><p class="alert-title">NOTE</p>
+<p>Useful information that users should know, even when skimming content.</p>
+</div>
+````````````````````````````````
+
+An optional title can be added after the closing bracket.
+
+```````````````````````````````` example alert
+> [!NOTE] What is a note?
+> Useful information that users should know, even when skimming content.
+.
+<div class="alert alert-note"><p class="alert-title">What is a note?</p>
+<p>Useful information that users should know, even when skimming content.</p>
+</div>
+````````````````````````````````
+
+Empty spaces after the brackets are ignored.
+
+```````````````````````````````` example alert
+> [!NOTE]  
+> Useful information that users should know, even when skimming content.
+.
+<div class="alert alert-note"><p class="alert-title">NOTE</p>
+<p>Useful information that users should know, even when skimming content.</p>
+</div>
+````````````````````````````````
+
+Alert-like block quotes which don't use one of the five listed
+alert types are just block quotes.
+
+```````````````````````````````` example alert
+> [!FOO]  
+> Not a real alert.
+.
+<blockquote>
+<p>[!FOO]<br />
+Not a real alert.</p>
+</blockquote>
+````````````````````````````````

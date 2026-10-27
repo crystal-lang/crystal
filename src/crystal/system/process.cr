@@ -69,10 +69,6 @@ struct Crystal::System::Process
   # Measures CPU times.
   # def self.times : ::Process::Tms
 
-  # Duplicates the current process.
-  # def self.fork : ProcessInformation
-  # def self.fork(&)
-
   # def prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : Args
   # def prepare_args(args : Enumerable(String)) : Args
 
@@ -87,9 +83,26 @@ struct Crystal::System::Process
 end
 
 module Crystal::System
-  ORIGINAL_STDIN  = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
-  ORIGINAL_STDOUT = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
-  ORIGINAL_STDERR = IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
+  ORIGINAL_STDIN =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDIN_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDIN_HANDLE, blocking: true)
+    end
+
+  ORIGINAL_STDOUT =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDOUT_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDOUT_HANDLE, blocking: true)
+    end
+
+  ORIGINAL_STDERR =
+    if Crystal.stdio_closed?(Crystal::System::FileDescriptor::STDERR_HANDLE)
+      IO::FileDescriptor.new(closed: true)
+    else
+      IO::FileDescriptor.new(handle: Crystal::System::FileDescriptor::STDERR_HANDLE, blocking: true)
+    end
 end
 
 {% if flag?(:wasi) %}

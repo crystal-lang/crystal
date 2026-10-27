@@ -130,24 +130,22 @@ class HTTP::Request
     @method == "HEAD"
   end
 
-  def content_length=(length : Int) : Int
-    headers["Content-Length"] = length.to_s
+  def content_length=(length : Int64) : Int64
+    headers["Content-Length"] = HTTP.validate_content_length(length).to_s
     length
   end
 
-  def content_length
-    HTTP.content_length(headers)
+  def content_length : Int64?
+    HTTP.content_length(headers).try(&.to_i64)
   end
 
   def body=(body : String) : String
     @body = IO::Memory.new(body)
-    self.content_length = body.bytesize
     body
   end
 
   def body=(body : Bytes) : Bytes
     @body = IO::Memory.new(body)
-    self.content_length = body.size
     body
   end
 
@@ -155,14 +153,13 @@ class HTTP::Request
   end
 
   def body=(@body : Nil) : Nil
-    @headers["Content-Length"] = "0" if @method.in?("POST", "PUT")
   end
 
   def to_io(io : IO) : Nil
     io << @method << ' ' << resource << ' ' << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version)
+    HTTP.serialize_headers_and_body(io, headers, nil, @body, @version, expecting_body: @method.in?("POST", "PUT", "PATCH"))
   end
 
   # :nodoc:
@@ -174,7 +171,7 @@ class HTTP::Request
     line = parse_request_line(io, max_request_line_size)
     return line unless line.is_a?(RequestLine)
 
-    status = HTTP.parse_headers_and_body(io, max_headers_size: max_headers_size) do |headers, body|
+    status = HTTP.parse_headers_and_body(io, decompress: false, max_headers_size: max_headers_size) do |headers, body|
       # No need to dup headers since nobody else holds them
       request = new line.method, line.resource, headers, body, line.http_version, internal: nil
 

@@ -38,6 +38,10 @@ module ProcessUtils
       opts.on("", "--stderr", "Write to stderr instead of stdout") do
         output = STDERR
       end
+      opts.on("", "--no-exit-on-epipe", "Set exit_on_broken_pipe = false on stdio") do
+        STDOUT.exit_on_broken_pipe = false
+        STDERR.exit_on_broken_pipe = false
+      end
     end
 
     case command = args.shift?
@@ -59,6 +63,12 @@ module ProcessUtils
       output.puts Dir.current
     when "sleep"
       sleep
+    when "stdio"
+      File.open(args.shift, "w") do |file|
+        file << "stdin=" << (STDIN.closed? ? "closed" : "open") << ' '
+        file << "stdout=" << (STDOUT.closed? ? "closed" : "open") << ' '
+        file << "stderr=" << (STDERR.closed? ? "closed" : "open")
+      end
     else
       ::abort "Unknown process util command: #{command}"
     end

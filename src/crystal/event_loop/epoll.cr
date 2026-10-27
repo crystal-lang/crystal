@@ -19,31 +19,6 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
-  {% if flag?(:without_mt) %}
-    def after_fork : Nil
-      super
-
-      # close inherited fds
-      @epoll.close
-      @eventfd.close
-      @timerfd.close
-
-      # create new fds
-      @epoll = System::Epoll.new
-
-      @interrupted.set(false, :relaxed)
-      @eventfd = System::EventFD.new
-      @epoll.add(@eventfd.fd, LibC::EPOLLIN, u64: @eventfd.fd.to_u64!)
-
-      @timerfd = System::TimerFD.new
-      @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
-      system_set_timer(@timers.next_ready?)
-
-      # re-add all registered fds
-      Polling.arena.each_index { |fd, index| system_add(fd, index) }
-    end
-  {% end %}
-
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     Crystal.trace :evloop, "run", blocking: blocking
 
@@ -106,10 +81,11 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @eventfd.write(1) unless @interrupted.swap(true, :relaxed)
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
     Crystal.trace :evloop, "epoll_ctl", op: "add", fd: fd, index: index.to_i64
     events = LibC::EPOLLIN | LibC::EPOLLOUT | LibC::EPOLLRDHUP | LibC::EPOLLET
     @epoll.add(fd, events, u64: index.to_u64)
+    RegisteredEvents::READ | RegisteredEvents::WRITE
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil

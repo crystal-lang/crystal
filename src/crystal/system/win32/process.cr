@@ -231,14 +231,6 @@ struct Crystal::System::Process
       0)
   end
 
-  def self.fork
-    raise NotImplementedError.new("Process.fork")
-  end
-
-  def self.fork(&)
-    raise NotImplementedError.new("Process.fork")
-  end
-
   private def self.handle_from_io(io : IO::FileDescriptor, parent_io)
     source_handle =
       if io.is_a?(File) && !io.system_blocking? && !io.closed?

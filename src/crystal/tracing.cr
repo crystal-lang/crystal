@@ -6,6 +6,7 @@ module Crystal
     @[Flags]
     enum Section
       GC
+      Thread
       Sched
       Evloop
 
@@ -48,7 +49,7 @@ module Crystal
 
         def initialize
           @buf = uninitialized UInt8[N]
-          @int_buf = uninitialized UInt8[20] # max 64-bit integers
+          @int_buf = uninitialized UInt8[40] # max 128-bit integers
           @size = 0
         end
 
@@ -103,6 +104,14 @@ module Crystal
         def write(value : Pointer) : Nil
           write "0x"
           write System.to_int_slice(@int_buf.to_slice, value.address, 16, true, 2)
+        end
+
+        def write(value : Int128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
+        end
+
+        def write(value : UInt128) : Nil
+          write value.zero? ? "0" : System.to_int_slice_impl(@int_buf.to_slice, value, 10)
         end
 
         def write(value : Int::Signed) : Nil
@@ -166,10 +175,13 @@ module Crystal
           else
             @@handle = LibC.GetStdHandle(LibC::STD_ERROR_HANDLE).address
           end
+
+          # don't propagate to sub-processes
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE", nil)
+          LibC.SetEnvironmentVariableW(System.wstr_literal "CRYSTAL_TRACE_FILE", nil)
         {% else %}
-          if ptr = LibC.getenv("CRYSTAL_TRACE")
-            len = LibC.strlen(ptr)
-            parse_sections(Slice.new(ptr, len)) if len > 0
+          if (ptr = LibC.getenv("CRYSTAL_TRACE")) && (len = LibC.strlen(ptr)) > 0
+            parse_sections(Slice.new(ptr, len))
           end
 
           if (ptr = LibC.getenv("CRYSTAL_TRACE_FILE")) && (LibC.strlen(ptr) > 0)
@@ -177,6 +189,10 @@ module Crystal
           else
             @@handle = 2
           end
+
+          # don't propagate to sub-processes
+          LibC.unsetenv("CRYSTAL_TRACE")
+          LibC.unsetenv("CRYSTAL_TRACE_FILE")
         {% end %}
       end
 

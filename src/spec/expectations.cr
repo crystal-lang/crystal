@@ -343,7 +343,9 @@ module Spec
       Spec::CloseExpectation.new(expected, delta)
     end
 
-    # Returns a factory to create a comparison `Expectation` that:
+    # Returns a factory to create a comparison `Expectation`.
+    #
+    # The created expectation:
     #
     # * passes if actual is lesser than *value*: `be < value`
     # * passes if actual is lesser than or equal *value*: `be <= value`

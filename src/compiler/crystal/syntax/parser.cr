@@ -315,6 +315,7 @@ module Crystal
             rescue_body = parse_op_assign
             rescues = [Rescue.new(rescue_body).at(rescue_location).at_end(rescue_body)] of Rescue
             if atomic.is_a?(Assign)
+              location = atomic.value.location
               atomic.value = ex = ExceptionHandler.new(atomic.value, rescues)
             else
               atomic = ex = ExceptionHandler.new(atomic, rescues)
@@ -326,13 +327,23 @@ module Crystal
             next_token_skip_space
             ensure_body = parse_op_assign
             if atomic.is_a?(Assign)
-              atomic.value = ex = ExceptionHandler.new(atomic.value, ensure: ensure_body)
+              location = atomic.value.location
+              if (value = atomic.value).is_a?(ExceptionHandler)
+                ex = value.tap(&.ensure = ensure_body)
+              else
+                ex = atomic.value = ExceptionHandler.new(value, ensure: ensure_body)
+                ex.suffix = true
+              end
             else
-              atomic = ex = ExceptionHandler.new(atomic, ensure: ensure_body)
+              if atomic.is_a?(ExceptionHandler)
+                ex = atomic.tap(&.ensure = ensure_body)
+              else
+                ex = atomic = ExceptionHandler.new(atomic, ensure: ensure_body)
+                ex.suffix = true
+              end
             end
             ex.at(location).at_end(ensure_body)
             ex.ensure_location = ensure_location
-            ex.suffix = true
           else
             break
           end
@@ -4432,7 +4443,7 @@ module Crystal
         name = @token.type.to_s
       end
 
-      is_var = var?(name)
+      is_var = !global && var?(name)
 
       # If the name is a var and '+' or '-' follow, never treat the name as a call
       if is_var && next_comes_plus_or_minus?

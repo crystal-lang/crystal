@@ -156,13 +156,13 @@ class LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     @[Deprecated("Pass the type of `value` as well (equal to `value.type`) in order to support LLVM 15+")]
-    def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+    def {{method_name.id}}(value : LLVM::Value, indices : Array(LLVM::Value), name = "")
       # check_value(value)
 
       Value.new LibLLVM.build_{{method_name.id}}2(self, value.type, value, indices.to_unsafe.as(LibLLVM::ValueRef*), indices.size, name)
     end
 
-    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::ValueRef), name = "")
+    def {{method_name.id}}(type : LLVM::Type, value : LLVM::Value, indices : Array(LLVM::Value), name = "")
       # check_type({{method_name}}, type)
       # check_value(value)
 

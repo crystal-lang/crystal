@@ -96,7 +96,7 @@ class Crystal::System::PE
   # Mapping from zero-based section index to list of symbols sorted by offsets
   # within that section.
   def read_coff_symbols : Hash(Int32, Array(COFFSymbol))
-    symbols = Hash(Int32, Array(COFFSymbol)).new { [] of COFFSymbol }
+    symbols_by_section = Hash(Int32, Array(COFFSymbol)).new
 
     image_symbols = self.image_symbols
     sym = image_symbols.to_unsafe
@@ -111,7 +111,8 @@ class Crystal::System::PE
       if filter_coff_symbol?(sym)
         # from 1-based (coff) to 0-based (crystal) indices
         index = sym.value.sectionNumber.to_i &- 1
-        symbols[index] << COFFSymbol.new(sym.value.value, coff_symbol_name(sym))
+        symbols = symbols_by_section.put_if_absent(index) { [] of COFFSymbol }
+        symbols << COFFSymbol.new(sym.value.value, coff_symbol_name(sym))
       end
 
       sym += 1
@@ -119,13 +120,13 @@ class Crystal::System::PE
 
     # add sentinels to ensure binary search on the offsets works
     sh = (nt_header + 1).as(LibC::IMAGE_SECTION_HEADER*)
-    symbols.each do |_, symbols|
+    symbols_by_section.each do |_, symbols|
       symbols.sort_by!(&.offset)
       symbols << COFFSymbol.new(sh.value.virtualSize, "??")
       sh += 1
     end
 
-    symbols
+    symbols_by_section
   end
 
   private def filter_coff_symbol?(sym)

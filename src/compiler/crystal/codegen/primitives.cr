@@ -887,7 +887,7 @@ class Crystal::CodeGenVisitor
     type = context.type.remove_typedef.as(PointerInstanceType)
 
     casted_ptr = cast_to_void_pointer(call_args[0])
-    size = builder.mul call_args[1], llvm_size(type.element_type)
+    size = builder.mul call_args[1], int64(@llvm_typer.size_of(@llvm_typer.llvm_type(type.element_type)))
     reallocated_ptr = realloc casted_ptr, size
     cast_to_pointer reallocated_ptr, type.element_type
   end

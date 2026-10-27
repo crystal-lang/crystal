@@ -45,6 +45,13 @@ describe Sync::RWLock do
     done.should be_true
   end
 
+  it "can't try lock write while locked for write" do
+    lock = Sync::RWLock.new
+    lock.lock_write
+    lock.try_lock_write?.should be_false
+    lock.unlock_write
+  end
+
   it "synchronizes locks" do
     lock = Sync::RWLock.new
     wg = WaitGroup.new
@@ -133,6 +140,13 @@ describe Sync::RWLock do
       expect_raises(Sync::Error::Deadlock) { lock.lock_write }
     end
 
+    it "raises on re-lock write within try_write_lock?" do
+      lock = Sync::RWLock.new
+      lock.try_lock_write?.should be_true
+      expect_raises(Sync::Error::Deadlock) { lock.lock_write }
+      lock.unlock_write
+    end
+
     it "raises on unlock_write when not locked" do
       lock = Sync::RWLock.new(:checked)
       expect_raises(Sync::Error) { lock.unlock_write }
@@ -144,6 +158,36 @@ describe Sync::RWLock do
       Sync.async do
         expect_raises(Sync::Error) { lock.unlock_write }
       end
+    end
+  end
+
+  describe "reentrant" do
+    it "re-locks write" do
+      lock = Sync::RWLock.new(:reentrant)
+      lock.lock_write
+      lock.lock_write # nothing raised
+    end
+
+    it "re-locks write within try_lock_write?" do
+      lock = Sync::RWLock.new(:reentrant)
+      lock.try_lock_write?.should be_true
+      lock.lock_write # nothing raised
+    end
+
+    it "re-try-locks write within lock write" do
+      lock = Sync::RWLock.new(:reentrant)
+      lock.lock_write
+      lock.try_lock_write?.should be_true
+    end
+
+    it "unlocks write as many times as it locked" do
+      lock = Sync::RWLock.new(:reentrant)
+      lock.try_lock_write?
+      lock.lock_write
+      lock.try_lock_write?
+      lock.lock_write
+      4.times { lock.unlock_write }
+      expect_raises(Sync::Error, "Can't unlock Sync::RWLock that isn't locked") { lock.unlock_write }
     end
   end
 end

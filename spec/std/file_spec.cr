@@ -226,6 +226,34 @@ describe "File" do
     it "gives true for null file (#15019)" do
       File.exists?(File::NULL).should be_true
     end
+
+    describe "follow_symlinks: false" do
+      it "gives true" do
+        File.exists?(datapath("test_file.txt"), follow_symlinks: false).should be_true
+      end
+
+      it "gives false" do
+        File.exists?(datapath("non_existing_file.txt"), follow_symlinks: false).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.exists?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
+      end
+
+      it "checks existence of symlink" do
+        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
+          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+
+          File.exists?(good_path, follow_symlinks: false).should be_true
+          File.exists?(bad_path, follow_symlinks: false).should be_true
+        end
+      end
+
+      it "gives true for null file (#15019)" do
+        File.exists?(File::NULL, follow_symlinks: false).should be_true
+      end
+    end
   end
 
   describe "file?" do
@@ -710,6 +738,28 @@ describe "File" do
           File::Info.executable?(bad_path).should be_false
         end
       end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          pending! if {{ flag?(:win32) }}
+          with_tempfile("good_symlink_x.txt") do |good_path|
+            crystal = Process.executable_path || pending! "Unable to locate compiler executable"
+            File.symlink(File.expand_path(crystal), good_path)
+            File::Info.executable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives true for a symlink to a non-existent file" do
+          pending! if {{ flag?(:win32) }}
+          with_tempfile("missing_symlink_x.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.executable?(missing_path, follow_symlinks: false).should be_true
+
+            # File.chmod(missing_path, 0o444)#, follow_symlinks: false)
+            # File::Info.executable?(missing_path, follow_symlinks: false).should be_false
+          end
+        end
+      end
     end
 
     describe ".readable?" do
@@ -767,6 +817,22 @@ describe "File" do
           File::Info.readable?(missing_path).should be_false
         end
       end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          with_tempfile("good_symlink_r.txt") do |good_path|
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File::Info.readable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives false for a symlink to a non-existent file" do
+          with_tempfile("missing_symlink_r.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.readable?(missing_path, follow_symlinks: false).should be_true
+          end
+        end
+      end
     end
 
     describe ".writable?" do
@@ -810,6 +876,22 @@ describe "File" do
         with_tempfile("missing_symlink_w.txt") do |missing_path|
           File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
           File::Info.writable?(missing_path).should be_false
+        end
+      end
+
+      context "follow_symlinks: false" do
+        it "gives true for a symlink" do
+          with_tempfile("good_symlink_w.txt") do |good_path|
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File::Info.writable?(good_path, follow_symlinks: false).should be_true
+          end
+        end
+
+        it "gives false for a symlink to a non-existent file" do
+          with_tempfile("missing_symlink_w.txt") do |missing_path|
+            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File::Info.writable?(missing_path, follow_symlinks: false).should be_true
+          end
         end
       end
     end
