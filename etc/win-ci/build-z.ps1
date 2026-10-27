@@ -11,22 +11,41 @@ Setup-Git -Path $BuildTree -Url https://github.com/madler/zlib.git -Ref v$Versio
 
 Run-InDirectory $BuildTree {
     $args = "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
-    if ($Dynamic) {
-        $args = "-DBUILD_SHARED_LIBS=ON $args"
+    if ([Version]$Version -lt [Version]"1.3.2") {
+        if ($Dynamic) {
+            $args = "-DBUILD_SHARED_LIBS=ON $args"
+        } else {
+            $args = "-DBUILD_SHARED_LIBS=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded $args"
+        }
     } else {
-        $args = "-DBUILD_SHARED_LIBS=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded $args"
+        if ($Dynamic) {
+            $args = "-DZLIB_BUILD_SHARED=ON -DZLIB_BUILD_STATIC=OFF $args"
+        } else {
+            $args = "-DZLIB_BUILD_SHARED=OFF -DZLIB_BUILD_STATIC=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded $args"
+        }
     }
+
     & $cmake . $args.split(' ')
     & $cmake --build . --target $(if ($Dynamic) { 'zlib' } else { 'zlibstatic' }) --config Release
+
     if (-not $?) {
         Write-Host "Error: Failed to build zlib" -ForegroundColor Red
         Exit 1
     }
 }
 
-if ($Dynamic) {
-    mv -Force $BuildTree\Release\zlib.lib libs\z-dynamic.lib
-    mv -Force $BuildTree\Release\zlib1.dll dlls\
+if ([Version]$Version -lt [Version]"1.3.2") {
+    if ($Dynamic) {
+        mv -Force $BuildTree\Release\zlib.lib libs\z-dynamic.lib
+        mv -Force $BuildTree\Release\zlib1.dll dlls\
+    } else {
+        mv -Force $BuildTree\Release\zlibstatic.lib libs\z.lib
+    }
 } else {
-    mv -Force $BuildTree\Release\zlibstatic.lib libs\z.lib
+    if ($Dynamic) {
+        mv -Force $BuildTree\Release\libz.lib libs\z-dynamic.lib
+        mv -Force $BuildTree\Release\libz.dll dlls\
+    } else {
+        mv -Force $BuildTree\Release\libzs.lib libs\z.lib
+    }
 }

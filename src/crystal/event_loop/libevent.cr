@@ -69,16 +69,16 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
   # Creates a timeout event (timeout action of select expression).
   def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
-    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      f = data.as(Fiber)
-      if select_action = f.timeout_select_action
-        f.timeout_select_action = nil
+    data = Crystal::EventLoop::LibEvent::TimeoutData.new(fiber)
+    event_base.new_event(-1, LibEvent2::EventFlags::None, data) do |s, flags, data|
+      timeout_data = data.as(Crystal::EventLoop::LibEvent::TimeoutData)
+      if select_action = timeout_data.timeout_select_action
         if select_action.time_expired?
           {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
             event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
-            event_loop.callback_enqueue(f)
+            event_loop.callback_enqueue(timeout_data.fiber)
           {% else %}
-            f.enqueue
+            timeout_data.fiber.enqueue
           {% end %}
         end
       end
@@ -254,19 +254,21 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : ::Time::Span?) : IO::Error?
+    ret = LibC.connect(socket.fd, address, address.size)
+    return unless ret == -1
+
+    errno = Errno.value
+
     loop do
-      if LibC.connect(socket.fd, address, address.size) == 0
-        return
-      end
-      case Errno.value
-      when Errno::EISCONN
-        return
+      case errno
       when Errno::EINPROGRESS, Errno::EALREADY
         socket.evented_wait_writable(timeout: timeout) do
           return IO::TimeoutError.new("connect timed out")
         end
+        errno = Crystal::System::Socket.system_error(socket.fd)
+        return if errno.none?
       else
-        return ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_os_error("connect", errno)
       end
     end
   end

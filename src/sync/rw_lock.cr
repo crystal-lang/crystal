@@ -89,7 +89,18 @@ module Sync
     # Tries to acquire the exclusive (write) lock without blocking. Returns true
     # when acquired, otherwise returns false immediately.
     def try_lock_write? : Bool
-      @mu.try_lock?
+      if @mu.try_lock?
+        unless @type.unchecked?
+          @locked_by = Fiber.current
+          @counter = 1 if @type.reentrant?
+        end
+        true
+      elsif @type.reentrant? && owns_lock?
+        @counter += 1
+        true
+      else
+        false
+      end
     end
 
     # Acquires the exclusive (write) lock. Blocks the calling fiber while the

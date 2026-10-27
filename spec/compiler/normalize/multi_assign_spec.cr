@@ -55,6 +55,43 @@ describe "Normalize: multi assign" do
         b.bar = __temp_1[1]
         CRYSTAL
     end
+
+    it "normalizes 1 to n, with splat on left-hand side" do
+      # this must raise even without the flag, to prevent indices before and
+      # after the splat from overlapping
+      assert_expand "c = 1; d = 2; a, b, *c.foo, d[0], e, f = 3", <<-CRYSTAL
+        __temp_1 = 3
+        if __temp_1.size < 5
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c.foo = __temp_1[2..-4]
+        d[0] = __temp_1[-3]
+        e = __temp_1[-2]
+        f = __temp_1[-1]
+        CRYSTAL
+    end
+
+    it "normalizes 1 to n, with splat on left-hand side, splat before other targets" do
+      assert_expand "*a, b, c, d = 3", <<-CRYSTAL
+        __temp_1 = 3
+        a = __temp_1[0..-4]
+        b = __temp_1[-3]
+        c = __temp_1[-2]
+        d = __temp_1[-1]
+        CRYSTAL
+    end
+
+    it "normalizes 1 to n, with splat on left-hand side, splat after other targets" do
+      assert_expand "a, b, c, *d = 3", <<-CRYSTAL
+        __temp_1 = 3
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c = __temp_1[2]
+        d = __temp_1[3..-1]
+        CRYSTAL
+    end
   end
 
   context "strict_multi_assign" do
@@ -89,6 +126,47 @@ describe "Normalize: multi assign" do
         end
         a.foo = __temp_1[0]
         b.bar = __temp_1[1]
+        CRYSTAL
+    end
+
+    it "normalizes 1 to n, with splat on left-hand side" do
+      assert_expand "c = 1; d = 2; a, b, *c.foo, d[0], e, f = 3", <<-CRYSTAL, flags: "strict_multi_assign"
+        __temp_1 = 3
+        if __temp_1.size < 5
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c.foo = __temp_1[2..-4]
+        d[0] = __temp_1[-3]
+        e = __temp_1[-2]
+        f = __temp_1[-1]
+        CRYSTAL
+    end
+
+    it "normalizes 1 to n, with splat on left-hand side, splat before other targets (#17671)" do
+      assert_expand "*a, b, c, d = 3", <<-CRYSTAL, flags: "strict_multi_assign"
+        __temp_1 = 3
+        if __temp_1.size < 3
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a = __temp_1[0..-4]
+        b = __temp_1[-3]
+        c = __temp_1[-2]
+        d = __temp_1[-1]
+        CRYSTAL
+    end
+
+    it "normalizes 1 to n, with splat on left-hand side, splat after other targets (#17671)" do
+      assert_expand "a, b, c, *d = 3", <<-CRYSTAL, flags: "strict_multi_assign"
+        __temp_1 = 3
+        if __temp_1.size < 3
+          ::raise(::IndexError.new("Multiple assignment count mismatch"))
+        end
+        a = __temp_1[0]
+        b = __temp_1[1]
+        c = __temp_1[2]
+        d = __temp_1[3..-1]
         CRYSTAL
     end
   end
@@ -151,41 +229,6 @@ describe "Normalize: multi assign" do
       a = __temp_1
       b = __temp_2
       c = __temp_3
-      CRYSTAL
-  end
-
-  it "normalizes 1 to n, with splat on left-hand side" do
-    assert_expand "c = 1; d = 2; a, b, *c.foo, d[0], e, f = 3", <<-CRYSTAL
-      __temp_1 = 3
-      if __temp_1.size < 5
-        ::raise(::IndexError.new("Multiple assignment count mismatch"))
-      end
-      a = __temp_1[0]
-      b = __temp_1[1]
-      c.foo = __temp_1[2..-4]
-      d[0] = __temp_1[-3]
-      e = __temp_1[-2]
-      f = __temp_1[-1]
-      CRYSTAL
-  end
-
-  it "normalizes 1 to n, with splat on left-hand side, splat before other targets" do
-    assert_expand "*a, b, c, d = 3", <<-CRYSTAL
-      __temp_1 = 3
-      a = __temp_1[0..-4]
-      b = __temp_1[-3]
-      c = __temp_1[-2]
-      d = __temp_1[-1]
-      CRYSTAL
-  end
-
-  it "normalizes 1 to n, with splat on left-hand side, splat after other targets" do
-    assert_expand "a, b, c, *d = 3", <<-CRYSTAL
-      __temp_1 = 3
-      a = __temp_1[0]
-      b = __temp_1[1]
-      c = __temp_1[2]
-      d = __temp_1[3..-1]
       CRYSTAL
   end
 

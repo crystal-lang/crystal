@@ -131,7 +131,7 @@ class Program
   def initialize(@instructions : Array(Instruction))
     @ctx = LLVM::Context.new
     @mod = @ctx.new_module("brainfuck")
-    @builder = @ctx.new_builder
+    @builder = @mod.new_builder
 
     @cell_type = @ctx.int(CELL_SIZE_IN_BYTES * 8)
   end

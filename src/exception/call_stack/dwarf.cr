@@ -5,14 +5,15 @@ struct Exception::CallStack
 
   protected def self.preload_dwarf_sections(program) : Nil
     program.section?(DEBUG_ABBREV) { |bytes, _| @@dwarf.debug_abbrev = bytes }
+    program.section?(DEBUG_ADDR) { |bytes, _| @@dwarf.debug_addr = bytes }
     program.section?(DEBUG_INFO) { |bytes, _| @@dwarf.debug_info = bytes }
     program.section?(DEBUG_LINE) { |bytes, _| @@dwarf.debug_line = bytes }
     program.section?(DEBUG_LINE_STR) { |bytes, _| @@dwarf.debug_line_str = bytes }
     program.section?(DEBUG_STR) { |bytes, _| @@dwarf.debug_str = bytes }
+    program.section?(DEBUG_STR_OFFSETS) { |bytes, _| @@dwarf.debug_str_offsets = bytes }
     @@dwarf.build_caches
   end
 
-  # OPTIMIZE: return bytes instead of allocating a string
   protected def self.decode_line_number(pc)
     if result = @@dwarf.lookup_line_number(pc)
       directory, file, line, column = result
@@ -35,10 +36,20 @@ struct Exception::CallStack
     {"??", 0, 0}
   end
 
-  # OPTIMIZE: return bytes instead of allocating a string
-  protected def self.decode_function_name(pc)
+  protected def self.lookup_line_number?(pc) : {Bytes, Bytes, Int32, Int32}?
+    if result = @@dwarf.lookup_line_number(pc)
+      directory, file, line, column = result
+      return {directory, file, line.to_i32, column.to_i32}
+    end
+  end
+
+  protected def self.decode_function_name(pc) : String?
     if bytes = @@dwarf.lookup_function_name(pc)
       String.new(bytes)
     end
+  end
+
+  protected def self.lookup_function_name?(pc) : Bytes?
+    @@dwarf.lookup_function_name(pc)
   end
 end

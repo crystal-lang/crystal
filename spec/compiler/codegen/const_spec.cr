@@ -433,7 +433,12 @@ describe "Codegen: const" do
       end
 
       CONST = (((1 + 2) * 3 &+ 1 &* 3 &- 2) // 2) + 42000
-      CONST
+
+      def foo
+        CONST
+      end
+
+      foo
       CRYSTAL
     mod.to_s.should_not contain("CONST")
     mod.to_s.should contain("42005")

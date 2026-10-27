@@ -540,7 +540,7 @@ describe HTTP::Server do
       write = IO::Memory.new
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
 
@@ -550,7 +550,7 @@ describe HTTP::Server do
       server.max_request_line_size = 20
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::URI_TOO_LONG
     end
@@ -572,7 +572,7 @@ describe HTTP::Server do
       write = IO::Memory.new
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
 
@@ -582,7 +582,7 @@ describe HTTP::Server do
       server.max_request_line_size = 20
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::URI_TOO_LONG
     end
@@ -604,7 +604,7 @@ describe HTTP::Server do
       write = IO::Memory.new
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::OK
 
@@ -614,7 +614,7 @@ describe HTTP::Server do
       server.max_headers_size = 10
 
       io = IO::Stapled.new(read, write)
-      server.@processor.process(io, io)
+      server.@processor.process(io)
       write.rewind
       HTTP::Client::Response.from_io(write).status.should eq HTTP::Status::REQUEST_HEADER_FIELDS_TOO_LARGE
     end

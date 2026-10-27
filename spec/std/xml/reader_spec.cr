@@ -579,4 +579,10 @@ module XML
       end
     end
   end
+
+  it "parses entity declarations without a namespace" do
+    input = %(<?xml version="1.0"?><!DOCTYPE d [<!ENTITY e "expanded">]><d>&e;</d>)
+    doc = XML.parse(input)
+    doc.children.first.children.first.namespace.should be_nil, "Expected namespace of entity declaration to be nil"
+  end
 end
