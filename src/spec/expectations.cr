@@ -69,7 +69,7 @@ module Spec
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
+      "Expected: actual_value != #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
     end
 
     private def identify(value)
