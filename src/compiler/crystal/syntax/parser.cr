@@ -5322,11 +5322,12 @@ module Crystal
           if @token.type.op_minus_gt? # `(A, B, C -> D)` case
             type = parse_proc_type_output(input_types, input_types.first.location)
             check :OP_RPAREN
+            end_location = @token.location
             next_token_skip_space
             unless @token.type.op_minus_gt?
               # Usually the parenthesis is encoded in a Union instance.
               # But not when nesting proc notations like `(->) ->`.
-              type = Union.parens(type).at(type)
+              type = Union.parens(type).at(location).at_end(end_location)
             end
           else # `(A, B, C) -> D` case
             check :OP_RPAREN

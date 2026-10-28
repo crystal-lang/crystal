@@ -2746,6 +2746,9 @@ module Crystal
       assert_end_location "[] of Int32"
       assert_end_location "{a: 1}"
       assert_end_location "{} of Int32 => String"
+      assert_end_location "[] of Int32 | (String -> Bool)"
+      assert_end_location "{} of Int32 => (String -> Bool)"
+      assert_end_location "x : Int32 -> ( String -> Bool )"
       assert_end_location "1..3"
       assert_end_location "/foo/"
       assert_end_location "{1, 2}"
@@ -4072,6 +4075,23 @@ module Crystal
       inner_union = union.types.first.should be_a Union
       node_source(source, inner_union)
         .should eq("(String | Nil)")
+    end
+
+    it "sets correct location of a parenthesized proc notation" do
+      source = "foo : Foo | (A, B -> C)"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      union = node.declared_type.should be_a Union
+      node_source(source, union)
+        .should eq("Foo | (A, B -> C)")
+
+      inner_union = union.types.last.should be_a Union
+      node_source(source, inner_union)
+        .should eq("(A, B -> C)")
+
+      proc_notation = inner_union.types.first.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("A, B -> C")
     end
 
     it "doesn't override yield with macro yield" do
