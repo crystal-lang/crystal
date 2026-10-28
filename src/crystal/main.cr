@@ -100,6 +100,7 @@ module Crystal
     # so we explicitly initialize their class vars, then init crystal/once
     Thread.init
     Fiber.init
+    Thread.current # define main thread & main fiber
     Crystal::Once.init
   end
 
@@ -187,8 +188,8 @@ end
   end
 
   {% if flag?(:interpreted) %}
-    # the interpreter doesn't call Crystal.main(&)
-    Crystal.init_runtime
+    # the interpreter doesn't call Crystal.main(&),
+    # the prelude calls Crystal.init_runtime already
   {% elsif flag?(:win32) %}
     require "./system/win32/wmain"
   {% elsif flag?(:wasi) %}

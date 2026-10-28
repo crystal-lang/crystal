@@ -202,7 +202,7 @@ end
 struct Crystal::EventLoop::Wasi::Event
   include Crystal::EventLoop::Event
 
-  def add(timeout : Time::Span) : Nil
+  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
   end
 
   def add(timeout : Nil) : Nil

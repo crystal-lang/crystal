@@ -19,10 +19,21 @@ class Crystal::CodeGenVisitor
 
   def target_def_fun(target_def, self_type) : LLVMTypedFunction
     mangled_name = target_def.mangled_name(@program, self_type)
-    self_type_mod = type_module(self_type).mod
 
-    func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
-    check_mod_fun self_type_mod, mangled_name, func
+    if target_def.is_a?(External)
+      # All lib funs and LLVM intrinsics have no body, so a declaration in the
+      # current module is sufficient. `#codegen_fun` performs declaration as no
+      # function body is emitted (not to be confused with `#declare_fun`).
+      #
+      # `self_type` is the lib type and merely serves to ensure that the
+      # function does not have an automatic `%self` parameter.
+      func = typed_fun?(@llvm_mod, mangled_name)
+      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+    else
+      self_type_mod = type_module(self_type).mod
+      func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+      check_mod_fun self_type_mod, mangled_name, func
+    end
   end
 
   def main_fun(name)
@@ -637,7 +648,7 @@ class Crystal::CodeGenVisitor
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
         llvm_mod = configure_module(llvm_context.new_module(type_name))
-        llvm_builder = new_builder(llvm_context)
+        llvm_builder = new_builder(llvm_mod)
 
         ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end
