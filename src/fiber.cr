@@ -59,9 +59,6 @@ class Fiber
   @context : Context
   @stack : Stack
   @resume_event : Crystal::EventLoop::Event?
-  @timeout_event : Crystal::EventLoop::Event?
-  # :nodoc:
-  property timeout_select_action : Channel::TimeoutAction?
 
   # The name of the fiber, used as internal reference.
   property name : String?
@@ -178,8 +175,6 @@ class Fiber
 
     # Delete the resume event if it was used by `yield` or `sleep`
     @resume_event.try &.free
-    @timeout_event.try &.free
-    @timeout_select_action = nil
 
     # Additional cleanup (avoid stale references)
     @exec_recursive_hash = nil
@@ -274,37 +269,6 @@ class Fiber
   # :nodoc:
   def resume_event : Crystal::EventLoop::Event
     @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
-  end
-
-  # :nodoc:
-  def timeout_event : Crystal::EventLoop::Event
-    @timeout_event ||= Crystal::EventLoop.current.create_timeout_event(self)
-  end
-
-  # :nodoc:
-  def timeout(timeout : Time::Span, select_action : Channel::TimeoutAction) : Nil
-    @timeout_select_action = select_action
-    timeout_event.add(timeout)
-  end
-
-  # :nodoc:
-  def cancel_timeout : Nil
-    return unless @timeout_select_action
-    @timeout_select_action = nil
-    @timeout_event.try &.delete
-  end
-
-  # :nodoc:
-  #
-  # The current fiber will resume after a period of time.
-  # The timeout can be cancelled with `cancel_timeout`
-  def self.timeout(timeout : Time::Span, select_action : Channel::TimeoutAction) : Nil
-    Fiber.current.timeout(timeout, select_action)
-  end
-
-  # :nodoc:
-  def self.cancel_timeout : Nil
-    Fiber.current.cancel_timeout
   end
 
   # Yields to the scheduler and allows it to swap execution to other
