@@ -5133,6 +5133,9 @@ module Crystal
     # Generally it is entry point of type parsing and
     # it is used on the context expected type (e.g. type restrictions, rhs of `alias` and more)
     def parse_bare_proc_type
+      # The location of the first input type can't be used, since it
+      # doesn't include parentheses of a nested proc notation like `(->) ->`
+      location = @token.location
       type = parse_type_splat { parse_union_type }
 
       # To determine to consume comma, looking-ahead is needed.
@@ -5154,7 +5157,7 @@ module Crystal
         end
       end
 
-      parse_proc_type_output(input_types, input_types.first.location)
+      parse_proc_type_output(input_types, location)
     end
 
     def parse_union_type
@@ -5347,6 +5350,7 @@ module Crystal
       if named_tuple_start? || string_literal_start?
         named_args = parse_named_type_args(:OP_RPAREN)
       elsif !@token.type.op_rparen?
+        location = @token.location
         args << parse_type_splat { parse_type_arg }
         while @token.type.op_comma?
           next_token_skip_space_or_newline
@@ -5360,7 +5364,7 @@ module Crystal
         end
 
         if @token.type.op_minus_gt? && !has_int
-          args = [parse_proc_type_output(args, args.first.location)] of ASTNode
+          args = [parse_proc_type_output(args, location)] of ASTNode
         end
       end
 
