@@ -332,25 +332,29 @@ describe "Code gen: primitives" do
   end
 
   describe "va_arg" do
-    # On Windows and AArch64 llvm's va_arg instruction works incorrectly.
-    {% unless flag?(:win32) || flag?(:aarch64) %}
-      it "uses llvm's va_arg instruction" do
-        mod = codegen(<<-CRYSTAL)
-          struct VaList
-            @[Primitive(:va_arg)]
-            def next(type)
+    # On AArch64 llvm's va_arg instruction works incorrectly.
+    {% unless flag?(:aarch64) %}
+      # On Windows the va_arg instruction is broken, so Crystal directly
+      # manipulates the `VaList` argument, similar to Clang
+      {% unless flag?(:win32) %}
+        it "uses llvm's va_arg instruction" do
+          mod = codegen(<<-CRYSTAL)
+            struct VaList
+              @[Primitive(:va_arg)]
+              def next(type)
+              end
             end
-          end
 
-          list = VaList.new
-          list.next(Int32)
-          CRYSTAL
-        type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
-        str = mod.to_s
-        str.should contain("va_arg #{type} %list")
-      end
+            list = VaList.new
+            list.next(Int32)
+            CRYSTAL
+          type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
+          str = mod.to_s
+          str.should contain("va_arg #{type} %list")
+        end
+      {% end %}
 
-      it "works with C code" do
+      it "works with small element type" do
         test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
           extern int foo_f(int,...);
           int foo() {
@@ -374,6 +378,53 @@ describe "Code gen: primitives" do
           LibFoo.foo
           CRYSTAL
       end
+
+      {% if flag?(:win32) %}
+        # On non-Windows platforms we use the va_arg instruction, and that
+        # doesn't support aggregate types
+        it "works with large element type" do
+          test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(15182124))
+            #include <stdint.h>
+
+            typedef struct {
+              int64_t x, y, z, w;
+            } point_t;
+
+            extern int64_t foo_f(int, ...);
+
+            int64_t foo() {
+              point_t a = {.x = 1, .y = 2, .z = 3, .w = 4};
+              point_t b = {.x = 5, .y = 6, .z = 7, .w = 8};
+              point_t c = {.x = 9, .y = 10, .z = 11, .w = 12};
+              return foo_f(3, a, b, c);
+            }
+            C
+            lib LibFoo
+              struct PointT
+                x : Int64
+                y : Int64
+                z : Int64
+                w : Int64
+              end
+
+              fun foo : Int64
+            end
+
+            fun foo_f(count : Int32, ...) : Int64
+              sum = 0_i64
+              VaList.open do |list|
+                count.times do |i|
+                  point = list.next(LibFoo::PointT)
+                  sum += point.x * 1000000 + point.y * 10000 + point.z * 100 + point.w
+                end
+              end
+              sum
+            end
+
+            LibFoo.foo
+            CRYSTAL
+        end
+      {% end %}
     {% end %}
   end
 
