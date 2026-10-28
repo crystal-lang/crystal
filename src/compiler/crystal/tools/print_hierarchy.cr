@@ -50,7 +50,7 @@ module Crystal
     end
 
     def compute_target(type : NonGenericClassType, exp, must_include)
-      if must_include || (type.full_name =~ exp)
+      if must_include || type.full_name.matches?(exp)
         @targets << type
         must_include = true
       end
@@ -66,7 +66,7 @@ module Crystal
     end
 
     def compute_target(type : GenericClassType, exp, must_include)
-      if must_include || (type.full_name =~ exp)
+      if must_include || type.full_name.matches?(exp)
         @targets << type
         must_include = true
       end
