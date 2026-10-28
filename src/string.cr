@@ -1825,9 +1825,10 @@ class String
       while inbytesleft > 0
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
+        before_inbytesleft = inbytesleft
         err = iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
         if err == Crystal::Iconv::ERROR
-          iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
+          iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft), inbytesleft < before_inbytesleft)
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end

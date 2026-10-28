@@ -64,8 +64,15 @@ struct Crystal::Iconv
     {{ USE_LIBICONV ? LibIconv : LibC }}.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
   end
 
-  def handle_invalid(inbuf, inbytesleft)
+  # *progressed* must be `true` when the failed call to `#convert` already
+  # consumed some input bytes (e.g. because the `//IGNORE` modifier made the
+  # underlying iconv implementation skip the invalid sequence on its own,
+  # like GNU libiconv does). In that case we must *not* additionally skip a
+  # byte here, since iconv already advanced past the invalid sequence.
+  def handle_invalid(inbuf, inbytesleft, progressed = false)
     if @skip_invalid
+      return if progressed
+
       # iconv will leave inbuf right at the beginning of the invalid sequence,
       # so we just skip that byte and later we'll try with the next one
       if inbytesleft.value > 0

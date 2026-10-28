@@ -39,9 +39,10 @@ class IO
       while inbytesleft > 0
         outbuf_ptr = outbuf.to_unsafe
         outbytesleft = LibC::SizeT.new(outbuf.size)
+        before_inbytesleft = inbytesleft
         err = @iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
         if err == Crystal::Iconv::ERROR && Errno.value != Errno::E2BIG
-          @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
+          @iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft), inbytesleft < before_inbytesleft)
         end
         io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
       end
@@ -92,6 +93,7 @@ class IO
         # Convert bytes using iconv
         out_buffer = @out_buffer.to_unsafe
         out_buffer_left = LibC::SizeT.new(OUT_BUFFER_SIZE)
+        before_in_buffer_left = @in_buffer_left
         result = @iconv.convert(pointerof(@in_buffer), pointerof(@in_buffer_left), pointerof(out_buffer), pointerof(out_buffer_left))
         @out_slice = @out_buffer[0, OUT_BUFFER_SIZE - out_buffer_left]
 
@@ -99,8 +101,9 @@ class IO
         if result == Crystal::Iconv::ERROR
           case Errno.value
           when Errno::EILSEQ
-            # For an illegal sequence we just skip one byte and we'll continue next
-            @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left))
+            # For an illegal sequence we just skip one byte and we'll continue next,
+            # unless iconv's `//IGNORE` already advanced past it on its own
+            @iconv.handle_invalid(pointerof(@in_buffer), pointerof(@in_buffer_left), @in_buffer_left < before_in_buffer_left)
           when Errno::EINVAL
             # EINVAL means "An incomplete multibyte sequence has been encountered in the input."
             old_in_buffer_left = @in_buffer_left
