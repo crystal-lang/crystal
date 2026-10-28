@@ -20,6 +20,20 @@ describe Crystal::Codegen::Target do
     Target.new("x86_64-suse-linux").to_s.should eq("x86_64-suse-linux-gnu")
   end
 
+  it "normalizes WASI triples" do
+    target = Target.new("wasm32-wasi")
+    target.environment.should eq("wasip1")
+    target.os_name.should eq("wasi")
+
+    target = Target.new("wasm32-wasip1")
+    target.environment.should eq("wasip1")
+    target.os_name.should eq("wasi")
+
+    target = Target.new("wasm32-wasip2")
+    target.environment.should eq("wasip2")
+    target.os_name.should eq("wasi")
+  end
+
   it "parses freebsd version" do
     Target.new("x86_64-unknown-linux-gnu").freebsd_version.should be_nil
     Target.new("x86_64-unknown-freebsd8.0").freebsd_version.should eq(8)

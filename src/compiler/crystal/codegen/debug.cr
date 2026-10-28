@@ -40,7 +40,7 @@ module Crystal
     def push_debug_info_metadata(mod)
       di_builder(mod).end
 
-      if @program.has_flag?("msvc")
+      if @program.codegen_target.msvc?
         # Windows uses CodeView instead of DWARF
         mod.add_flag(LibLLVM::ModuleFlagBehavior::Warning, "CodeView", 1)
       end

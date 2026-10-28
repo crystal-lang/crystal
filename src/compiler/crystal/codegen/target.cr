@@ -29,6 +29,8 @@ class Crystal::Codegen::Target
       @architecture = "aarch64"
     when .starts_with?("arm")
       @architecture = "arm"
+    when .starts_with?("wasm")
+      @environment = "wasip1" if @environment == "wasi"
     else
       # no need to tweak the architecture
     end
@@ -91,6 +93,8 @@ class Crystal::Codegen::Target
       "solaris"
     when .android?
       "android"
+    when .wasi?
+      "wasi"
     else
       environment
     end
@@ -106,9 +110,9 @@ class Crystal::Codegen::Target
 
   def object_extension
     case
-    when windows?                  then ".obj"
-    when @architecture == "wasm32" then ".wasm"
-    else                                ".o"
+    when windows? then ".obj"
+    when wasm?    then ".wasm"
+    else               ".o"
     end
   end
 
@@ -180,16 +184,40 @@ class Crystal::Codegen::Target
     windows? && environment_parts.includes?("msvc")
   end
 
+  def mingw?
+    windows? && gnu?
+  end
+
   def win32?
-    windows? && (msvc? || gnu?)
+    msvc? || mingw?
   end
 
   def armhf?
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
   end
 
+  def x86_64?
+    @architecture == "x86_64"
+  end
+
+  def x86?
+    @architecture.in?("x86_64", "i386")
+  end
+
+  def aarch64?
+    @architecture == "aarch64"
+  end
+
+  def wasm?
+    @architecture == "wasm32"
+  end
+
   def avr?
     @architecture == "avr"
+  end
+
+  def wasm?
+    @architecture.starts_with?("wasm")
   end
 
   def embedded?
