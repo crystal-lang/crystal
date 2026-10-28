@@ -4094,6 +4094,29 @@ module Crystal
         .should eq("A, B -> C")
     end
 
+    it "sets correct location of a proc notation with nested proc notation input" do
+      source = "foo : (A, B -> C) -> D"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      proc_notation = node.declared_type.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("(A, B -> C) -> D")
+
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      input = inputs.first.should be_a ProcNotation
+      node_source(source, input)
+        .should eq("A, B -> C")
+    end
+
+    it "sets correct location of a proc notation with nested proc notation input in generic" do
+      source = "Foo((A -> B) -> C)"
+      node = Parser.new(source).parse.as(Generic)
+
+      proc_notation = node.type_vars.first.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("(A -> B) -> C")
+    end
+
     it "doesn't override yield with macro yield" do
       parser = Parser.new("def foo; yield 1; {% begin %} yield 1 {% end %}; end")
       a_def = parser.parse.as(Def)
