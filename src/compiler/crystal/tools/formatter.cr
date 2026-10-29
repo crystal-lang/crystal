@@ -2495,9 +2495,11 @@ module Crystal
             has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
-                write ","
+                # The heredoc's body has already been written
+                heredoc_written = @last_is_heredoc && @token.type.newline?
+                write "," unless heredoc_written
                 found_comment = next_token_skip_space
-                write_line unless found_comment
+                write_line unless found_comment || @wrote_newline
                 write_indent
                 skip_space_or_newline
               else
@@ -2906,11 +2908,17 @@ module Crystal
     def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
       if has_parentheses
         if @token.type.op_comma?
+          # A pending heredoc's body gets written once the next newline
+          # is reached, so the comma needs to be written before that
+          wrote_comma = has_newlines && !@lexer.heredocs.empty?
+          write "," if wrote_comma
           next_token
-          found_comment |= skip_space(column + 2, write_comma: true)
+          found_comment |= skip_space(column + 2, write_comma: !wrote_comma)
           if @token.type.newline? && has_newlines
-            write ","
-            write_line
+            unless wrote_comma
+              write ","
+              write_line
+            end
             skip_space_or_newline(column + 2)
             write_indent(column)
             skip_space_or_newline(column)
