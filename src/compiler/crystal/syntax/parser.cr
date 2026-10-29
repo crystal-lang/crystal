@@ -6454,14 +6454,14 @@ module Crystal
             unexpected_token
           end
         when .class_var?
-          class_var = ClassVar.new(@token.value.to_s).at(location)
+          class_var = ClassVar.new(@token.value.to_s).at(location).at_end(token_end_location)
 
           next_token_skip_space
           check :OP_EQ
           next_token_skip_space_or_newline
           value = parse_op_assign
 
-          members << Assign.new(class_var, value).at(class_var)
+          members << Assign.new(class_var, value).at(class_var).at_end(value)
         when .op_lcurly_lcurly?
           members << parse_percent_macro_expression
         when .op_lcurly_percent?

@@ -4145,6 +4145,13 @@ module Crystal
       node_source(source, node).should eq("fun foo(x : Int32)")
     end
 
+    it "sets correct location of class variable in enum" do
+      source = "enum X\n  A\n  @@foo = nil.as(Int32?)\nend"
+      node = Parser.parse(source).as(EnumDef).members[1].as(Assign)
+      node_source(source, node).should eq("@@foo = nil.as(Int32?)")
+      node_source(source, node.target).should eq("@@foo")
+    end
+
     it "sets correct location for fun def with return type" do
       source = "lib LibFoo; fun foo(x : Int32) : Void; end"
       node = Parser.new(source).parse.as(LibDef).body
