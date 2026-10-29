@@ -4238,6 +4238,15 @@ module Crystal
       node_source(source, node).should eq("foo: Bar")
     end
 
+    it "sets correct location of tuple in `when` of case" do
+      source = "case {a, b}\nwhen {1, _}, {_, 2} then 3\nend"
+      node = Parser.parse(source).as(Case)
+      a_when = node.whens.first
+      node_source(source, a_when).should eq("when {1, _}, {_, 2}")
+      node_source(source, a_when.conds[0]).should eq("{1, _}")
+      node_source(source, a_when.conds[1]).should eq("{_, 2}")
+    end
+
     it "sets correct location of instance variable in proc pointer" do
       source = "->@foo.x"
       node = Parser.parse(source).as(ProcPointer).obj.should_not(be_nil)
