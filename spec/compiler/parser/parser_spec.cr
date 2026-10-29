@@ -4354,6 +4354,27 @@ module Crystal
       node_source(source, node).should eq("protected macro foo; end")
     end
 
+    it "sets correct location of `elsif` in macro if" do
+      source = "{% if a %}1{% elsif b %}2{% elsif c %}3{% else %}{% if d %}4{% end %}{% end %}"
+      node = Parser.parse(source).as(MacroIf)
+      node_source(source, node).should eq(source)
+
+      elsif_node = node.else.as(MacroIf)
+      node_source(source, elsif_node).should eq("elsif b %}2{% elsif c %}3{% else %}{% if d %}4{% end %}{% end %}")
+
+      elsif_node = elsif_node.else.as(MacroIf)
+      node_source(source, elsif_node).should eq("elsif c %}3{% else %}{% if d %}4{% end %}{% end %}")
+
+      node = elsif_node.else.as(MacroIf)
+      node_source(source, node).should eq("{% if d %}4{% end %}")
+    end
+
+    it "sets correct location of `elsif` in macro if inside macro body" do
+      source = "macro foo\n  {% if a %}1{% elsif b %}2{% end %}\nend"
+      node = Parser.parse(source).as(Macro).body.as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.else).should eq("elsif b %}2{% end %}")
+    end
+
     it "sets correct location of global path in class def" do
       source = "class ::Foo; end"
       node = Parser.parse(source).as(ClassDef).name

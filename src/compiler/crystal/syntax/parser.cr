@@ -3660,7 +3660,20 @@ module Crystal
       end
 
       a_then, a_else = a_else, a_then if is_unless
-      MacroIf.new(cond, a_then, a_else, is_unless: is_unless).at_end(token_end_location)
+      node = MacroIf.new(cond, a_then, a_else, is_unless: is_unless)
+
+      # A nested `elsif` branch doesn't parse the closing `{% end %}`,
+      # so its end location is set by the outermost branch
+      return node unless check_end
+
+      end_location = token_end_location
+      elsif_node = node.else
+      while elsif_node.is_a?(MacroIf) && !elsif_node.end_location
+        elsif_node.end_location = end_location
+        elsif_node = elsif_node.else
+      end
+
+      node.at_end(end_location)
     end
 
     def parse_expression_inside_macro
