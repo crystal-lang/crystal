@@ -576,6 +576,9 @@ describe Crystal::Formatter do
   assert_format "yield 1 , \n2", "yield 1,\n  2"
   assert_format "yield(1 , \n2)", "yield(1,\n  2)"
   assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2)"
+  assert_format "def foo(&)\n  yield # bar\nrescue\nend"
+  assert_format "foo do\n  yield # bar\nensure\nend"
+  assert_format "def foo(&)\n  with 1 yield # bar\nrescue\nend"
 
   assert_format "with foo yield bar"
 
