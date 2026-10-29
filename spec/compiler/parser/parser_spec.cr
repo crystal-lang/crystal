@@ -4204,6 +4204,16 @@ module Crystal
       node_source(source, node).should eq("fun foo(\n    x : Int32\n  )")
     end
 
+    it "sets correct location of macro literal with heredoc" do
+      source = "x\n{% if a %}\n  foo <<-X\n    bar\n    X\n  baz\n{% end %}"
+      node = Parser.parse(source).as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.then).should eq("\n  foo <<-X\n    bar\n    X\n  baz\n")
+
+      source = "macro foo\n  {% if a %}\n    bar <<-'X'\n      baz\n      X\n  {% end %}\nend"
+      node = Parser.parse(source).as(Macro).body.as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.then).should eq("\n    bar <<-'X'\n      baz\n      X\n  ")
+    end
+
     it "sets correct location for fun def with body" do
       source = "fun foo(x : Int32) : Void\nend"
       node = Parser.new(source).parse.as(FunDef)
