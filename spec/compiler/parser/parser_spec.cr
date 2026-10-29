@@ -4414,6 +4414,20 @@ module Crystal
       node_source(source, node).should eq("@[Foo]")
     end
 
+    it "sets correct location of call target in operator assignment" do
+      source = "foo.bar += 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("foo.bar")
+
+      source = "@foo.bar ||= 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("@foo.bar")
+
+      source = "foo(1).bar &&= 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("foo(1).bar")
+    end
+
     it "sets correct location of private method in enum" do
       source = "enum X; private def foo; end; end"
       node = Parser.parse(source).as(EnumDef).members.first
