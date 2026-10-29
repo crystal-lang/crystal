@@ -4226,6 +4226,18 @@ module Crystal
       node_source(source, node).should eq("{Foo, Bar}")
     end
 
+    it "sets correct location of double pointer type" do
+      source = "x : Foo**"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node).should eq("Foo**")
+
+      node = node.type_vars.first.as(Generic)
+      node_source(source, node).should eq("Foo*")
+
+      node = node.type_vars.first
+      node_source(source, node).should eq("Foo")
+    end
+
     it "sets correct location of named tuple type" do
       source = "x : {foo: Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type

@@ -5494,8 +5494,11 @@ module Crystal
           next_token_skip_space
           type = make_pointer_type(type).at_end(end_location)
         when .op_star_star?
+          # The inner pointer type ends at the first `*`
+          inner_end_location = @token.location
           next_token_skip_space
-          type = make_pointer_type(make_pointer_type(type)).at_end(end_location)
+          type = make_pointer_type(type).at_end(inner_end_location)
+          type = make_pointer_type(type).at_end(end_location)
         when .op_lsquare?
           next_token_skip_space_or_newline
           size = parse_type_arg
