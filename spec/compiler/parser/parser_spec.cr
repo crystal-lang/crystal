@@ -4372,6 +4372,20 @@ module Crystal
       node_source(source, node).should eq("@[Foo]")
     end
 
+    it "sets correct location of regex match data reference" do
+      source = "$12"
+      node = Parser.parse(source).as(Call)
+      node_source(source, node).should eq("$12")
+      node_source(source, node.obj.should_not be_nil).should eq("$")
+      node_source(source, node.args[0]).should eq("12")
+
+      source = "$1?"
+      node = Parser.parse(source).as(Call)
+      node_source(source, node).should eq("$1?")
+      node_source(source, node.obj.should_not be_nil).should eq("$")
+      node_source(source, node.args[0]).should eq("1")
+    end
+
     it "sets correct location of annotation in lib" do
       source = "lib X; @[Foo]; end"
       node = Parser.parse(source).as(LibDef).body
