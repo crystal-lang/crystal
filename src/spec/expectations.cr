@@ -69,7 +69,7 @@ module Spec
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
+      "Expected: actual_value != #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
     end
 
     private def identify(value)
@@ -415,7 +415,7 @@ module Spec
         exception_as_string = ex.to_s
         case message
         when Regex
-          unless exception_as_string =~ message
+          unless exception_as_string.matches?(message)
             expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
             fail expectation_failed_message, file, line
           end

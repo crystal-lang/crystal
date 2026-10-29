@@ -319,7 +319,7 @@ module Crystal
       @argv = @main.params[1]
       @argv.name = "argv"
 
-      @builder = new_builder(@main_llvm_context)
+      @builder = new_builder(@main_mod)
       @main_builder = @builder
 
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
@@ -411,8 +411,8 @@ module Crystal
       llvm_mod
     end
 
-    def new_builder(llvm_context)
-      wrap_builder(llvm_context.new_builder)
+    def new_builder(llvm_mod)
+      wrap_builder(llvm_mod.new_builder)
     end
 
     # Here we only initialize simple constants, those
@@ -428,7 +428,7 @@ module Crystal
     end
 
     def wrap_builder(builder)
-      CrystalLLVMBuilder.new builder, llvm_typer, c_printf_fun
+      CrystalLLVMBuilder.new builder, llvm_typer
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
@@ -568,7 +568,7 @@ module Crystal
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
-        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
+        mod.dump if dump_all_llvm || dump_llvm_regex.try &.matches?(name)
 
         # Always run verifications so we can catch bugs earlier and more often.
         # We can probably remove this, or only enable this when compiling in

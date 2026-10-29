@@ -56,24 +56,9 @@ jobs:
 
       - name: Install Crystal
         uses: crystal-lang/install-crystal@v1
-        if: ${{ inputs.arch == 'x86_64' }}
         id: install-crystal
         with:
-          crystal: "1.21.1"
-
-      - name: Install Crystal (ARM64 stage-1 compiler)
-        uses: actions/download-artifact@v8
-        if: ${{ inputs.arch == 'aarch64' }}
-        id: install-aarch64-stage1-compiler
-        with:
-          name: crystal-aarch64-stage1
-          path: crystal-aarch64-stage1
-
-      - name: Add Crystal to PATH
-        if: ${{ inputs.arch == 'aarch64' }}
-        run: Add-Content $env:GITHUB_PATH "$env:INPUTS_CRYSTAL"
-        env:
-          INPUTS_CRYSTAL: ${{ steps.install-aarch64-stage1-compiler.outputs.download-path }}
+          crystal: "1.22.0"
 
       - name: Restore libraries
         uses: actions/cache/restore@v6
@@ -159,14 +144,11 @@ jobs:
 
       - name: Build Crystal
         run: |
-          cp dlls/libffi-8.dll "$env:CRYSTAL_DIR/"
-          cp dlls/libz.dll "$env:CRYSTAL_DIR/"
-          cp "dlls/libcrypto-$env:CI_SSL_MAJOR-$env:WIN_ARCH.dll" "$env:CRYSTAL_DIR/"
-          cp "dlls/libssl-$env:CI_SSL_MAJOR-$env:WIN_ARCH.dll" "$env:CRYSTAL_DIR/"
+          # any DLL that has been renamed in a release should be copied from
+          # `dlls/` to `steps.install-crystal.outputs.path` here
+
           bin/crystal.bat env
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
-        env:
-          CRYSTAL_DIR: ${{ inputs.arch == 'aarch64' && steps.install-aarch64-stage1-compiler.outputs.download-path || steps.install-crystal.outputs.path }}
 
       - name: Download shards release
         uses: actions/checkout@v7

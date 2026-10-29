@@ -1361,7 +1361,34 @@ class Crystal::CodeGenVisitor
 
   def codegen_va_arg(call, node, target_def, call_args)
     ptr = call_args.first
-    builder.va_arg(ptr, llvm_type(node.type))
+    type = llvm_type(node.type)
+
+    if @program.has_flag?("win32") && @program.has_flag?("x86_64")
+      # Based on Clang's implementation that circumvents LLVM's `va_arg` instruction:
+      # https://github.com/llvm/llvm-project/blob/49bc45ccc8063a79016beefe72a7127fe63bef9c/clang/lib/CodeGen/Targets/X86.cpp#L3789
+
+      # Reinterpret `VaList*` as a `UInt8**` for convenience (it should point to
+      # `VaList#@to_unsafe`)
+      casted_ptr = pointer_cast ptr, @llvm_context.int8.pointer.pointer
+      cur_ptr = load @llvm_context.int8.pointer, casted_ptr
+
+      if @llvm_typer.size_of(type).in?(1, 2, 4, 8)
+        # `value = @to_unsafe.as(T*).value`
+        value = load type, pointer_cast(cur_ptr, type.pointer)
+      else
+        # `value = @to_unsafe.as(T**).value.value`
+        # (the caller has made a copy, and this will be passed by reference)
+        value = load type.pointer, pointer_cast(cur_ptr, type.pointer.pointer)
+      end
+
+      # `@to_unsafe += sizeof(Void*)`
+      next_ptr = gep @llvm_context.int8, cur_ptr, int32(@llvm_typer.pointer_size)
+      store next_ptr, casted_ptr
+
+      value
+    else
+      builder.va_arg(ptr, type)
+    end
   end
 
   def check_atomic_call(call, target_def)

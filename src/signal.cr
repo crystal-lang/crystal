@@ -34,8 +34,8 @@ require "crystal/system/signal"
 # * `BREAK` only exists on Windows.
 # * All other signals exist on all POSIX platforms.
 #
-# The methods `#trap`, `#reset`, and `#ignore` may not be implemented at all on
-# non-POSIX systems.
+# The methods `#trap`, `#trap_handler?`, `#reset`, and `#ignore` may not be
+# implemented at all on non-POSIX systems.
 #
 # The standard library provides several platform-agnostic APIs to achieve tasks
 # that are typically solved with signals on POSIX systems:
@@ -108,7 +108,7 @@ enum Signal : Int32
   # NOTE: `Process.on_terminate` is preferred over `Signal::INT.trap` as a
   # portable alternative which also works on Windows.
   def trap(&handler : Signal ->) : Nil
-    {% if @type.has_constant?("CHLD") %}
+    {% if @type.has_constant?("CHLD") && !flag?(:wasi) %}
       if self == CHLD
         Crystal::System::Signal.child_handler = handler
         return
@@ -129,7 +129,7 @@ enum Signal : Int32
   # end
   # ```
   def trap_handler?
-    {% if @type.has_constant?("CHLD") %}
+    {% if @type.has_constant?("CHLD") && !flag?(:wasi) %}
       return Crystal::System::Signal.child_handler if self == CHLD
     {% end %}
     Crystal::System::Signal.trap_handler?(self)

@@ -37,6 +37,7 @@ lib LibLLVM
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : Char*, c : ContextRef) : ModuleRef
   fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : SizeT*) : Char*
   fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : Char*, len : SizeT)
+  fun set_module_inline_asm2 = LLVMSetModuleInlineAsm2(mod : ModuleRef, asm : Char*, len : SizeT)
   fun set_target = LLVMSetTarget(m : ModuleRef, triple : Char*)
   fun add_module_flag = LLVMAddModuleFlag(m : ModuleRef, behavior : ModuleFlagBehavior, key : Char*, key_len : SizeT, val : MetadataRef)
   fun dump_module = LLVMDumpModule(m : ModuleRef)
@@ -148,6 +149,8 @@ lib LibLLVM
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : LLVM::Linkage)
   fun set_dll_storage_class = LLVMSetDLLStorageClass(global : ValueRef, class : LLVM::DLLStorageClass)
 
+  fun global_get_value_type = LLVMGlobalGetValueType(global : ValueRef) : TypeRef
+
   fun set_alignment = LLVMSetAlignment(v : ValueRef, bytes : UInt)
 
   fun add_global = LLVMAddGlobal(m : ModuleRef, ty : TypeRef, name : Char*) : ValueRef
@@ -177,7 +180,7 @@ lib LibLLVM
   fun get_param = LLVMGetParam(fn : ValueRef, index : UInt) : ValueRef
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 
-  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : ValueRef
+  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : MetadataRef
   fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : ValueRef*, count : SizeT) : ValueRef
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
@@ -211,6 +214,9 @@ lib LibLLVM
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : UInt)
 
   fun create_builder_in_context = LLVMCreateBuilderInContext(c : ContextRef) : BuilderRef
+  {% unless LibLLVM::IS_LT_240 %}
+    fun create_builder_for_module = LLVMCreateBuilderForModule(m : ModuleRef) : BuilderRef
+  {% end %}
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun dispose_builder = LLVMDisposeBuilder(builder : BuilderRef)
