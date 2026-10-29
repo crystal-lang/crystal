@@ -3676,8 +3676,9 @@ module Crystal
       align_number = node.whens.all? { |a_when| a_when.conds.size === 1 && a_when.conds.first.is_a?(NumberLiteral) }
 
       node.whens.each_with_index do |a_when, i|
-        format_when(node, a_when, last?(i, node.whens), align_number)
-        skip_space_or_newline(@indent + 2)
+        single_line = format_when(node, a_when, last?(i, node.whens), align_number)
+        # Comments following a single-line `when` don't belong to its body
+        skip_space_or_newline(single_line ? @indent : @indent + 2)
       end
 
       skip_space_or_newline
@@ -3712,6 +3713,7 @@ module Crystal
       false
     end
 
+    # Returns `true` if the `when` was formatted on a single line.
     def format_when(case_node, node, is_last, align_number)
       skip_space_or_newline
 
@@ -3773,6 +3775,7 @@ module Crystal
           end
           found_comment = skip_space
           write_line unless found_comment || wrote_newline
+          return true
         end
       else
         format_nested(node.body, @indent)

@@ -1303,6 +1303,13 @@ describe Crystal::Formatter do
   assert_format "if 1\ncase 1\nwhen 2\n3\nend\nend", "if 1\n  case 1\n  when 2\n    3\n  end\nend"
   assert_format "case  1 \n when  .foo? \n 3 \n end", "case 1\nwhen .foo?\n  3\nend"
   assert_format "case 1\nwhen 1 then\n2\nwhen 3\n4\nend", "case 1\nwhen 1\n  2\nwhen 3\n  4\nend"
+
+  # #15657
+  assert_format "case 1\nwhen 1 then 2\n# foo\nwhen 3 then 4\nend"
+  assert_format "case 1\nwhen 1 then 2\n  # foo\nwhen 3 then 4\nend", "case 1\nwhen 1 then 2\n# foo\nwhen 3 then 4\nend"
+  assert_format "case 1\nwhen 1; 2\n# foo\nwhen 3; 4\nend"
+  assert_format "case 1\nwhen 1 then 2\n# foo\nelse 3\nend"
+  assert_format "case 1\nwhen 1\n  2\n# foo\nwhen 3\n  4\nend", "case 1\nwhen 1\n  2\n  # foo\nwhen 3\n  4\nend"
   assert_format "case  1 \n when 2 \n 3 \n else 4 \n end", "case 1\nwhen 2\n  3\nelse 4\nend"
   assert_format "case 1\nwhen 1, # 1\n     2, # 2\n     3  # 3\n  1\nend"
   assert_format "a = case 1\n    when 1, # 1\n         2, # 2\n         3  # 3\n      1\n    end"
