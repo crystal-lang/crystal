@@ -4093,6 +4093,17 @@ module Crystal
       node_source(source, node).should eq("{foo: Bar}")
     end
 
+    it "sets correct location of number in type arguments" do
+      source = "x : Foo(1_u8, Int32)"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node.type_vars[0]).should eq("1_u8")
+
+      source = "x : Int32[16]"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node).should eq("Int32[16]")
+      node_source(source, node.type_vars[1]).should eq("16")
+    end
+
     it "sets correct location of argument in named tuple type" do
       source = "x : {foo: Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.should_not(be_nil).first
