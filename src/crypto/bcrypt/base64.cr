@@ -79,6 +79,7 @@ module Crypto::Bcrypt::Base64
       break if (olen += 1) >= maxolen || off >= slen
 
       c4 = char64(string[off])
+      break if c4 == -1
       str[i += 1] = (((c3 & 0x03) << 6) | c4).to_u8!
       off += 1
       olen += 1

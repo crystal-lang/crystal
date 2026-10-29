@@ -39,19 +39,10 @@ jobs:
       llvm_version: ${{ inputs.llvm_version }}
       llvm_targets: ${{ inputs.llvm_targets }}
 
-  build-stage1:
-    name: Build stage-1 compiler
-    needs: [build-deps]
-    uses: $/.github/workflows/win_arm64.yml
-    if: ${{ inputs.arch == 'aarch64' }}
-    with:
-      arch: ${{ inputs.arch }}
-
   build-release:
     name: Build compiler
-    needs: [build-stage1]
     uses: $/.github/workflows/win_build_portable.yml
-    if: ${{ !cancelled() }}
+    needs: [build-deps]
     with:
       release: true
       arch: ${{ inputs.arch }}
@@ -64,7 +55,6 @@ jobs:
     name: Run tests
     runs-on: ${{ inputs.runs-on }}
     needs: [build-release]
-    if: ${{ !cancelled() }}
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -120,7 +110,6 @@ jobs:
     name: Run tests (MT)
     runs-on: ${{ inputs.runs-on }}
     needs: [build-release]
-    if: ${{ !cancelled() }}
     strategy:
       fail-fast: false
       matrix:
@@ -169,7 +158,6 @@ jobs:
     name: Run tests with interpreter
     runs-on: ${{ inputs.runs-on }}
     needs: [build-release]
-    if: ${{ !cancelled() }}
     steps:
       - name: Disable CRLF line ending substitution
         run: |
@@ -209,7 +197,7 @@ jobs:
 
   build-installer:
     name: Build installer
-    if: ${{ !cancelled() && github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/')) }}
+    if: ${{ github.repository_owner == 'crystal-lang' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/ci/')) }}
     runs-on: ${{ inputs.runs-on }}
     needs: [build-release]
     steps:

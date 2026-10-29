@@ -1,5 +1,3 @@
-{% skip_file if flag?(:wasm32) %}
-
 require "./spec_helper"
 require "signal"
 
@@ -31,7 +29,7 @@ describe "Signal" do
     pending "CHLD.reset removes previously set trap"
   {% end %}
 
-  {% unless flag?(:win32) || flag?(:dragonfly) %}
+  {% unless flag?(:win32) || flag?(:dragonfly) || flag?(:wasi) %}
     # can't use SIGUSR1/SIGUSR2 on FreeBSD because Boehm uses them to suspend/resume threads
     signal1 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 1) {% else %} Signal::USR1 {% end %}
     signal2 = {% if flag?(:freebsd) %} Signal.new(LibC::SIGRTMAX - 2) {% else %} Signal::USR2 {% end %}

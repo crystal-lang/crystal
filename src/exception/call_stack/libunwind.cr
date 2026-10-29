@@ -227,7 +227,7 @@ struct Exception::CallStack
         return unless found_address
 
         func_name_ordinals = (hmodule + exports.addressOfNameOrdinals).as(LibC::WORD*).to_slice(exports.numberOfNames)
-        if ordinal_index = func_name_ordinals.index(&.== found_index)
+        if ordinal_index = func_name_ordinals.index(found_index)
           symbol = (hmodule + (hmodule + exports.addressOfNames).as(LibC::DWORD*)[ordinal_index]).as(UInt8*)
           {symbol, found_address}
         end

@@ -133,7 +133,7 @@ class Crystal::CodeGenVisitor
         # "inside" this catchpad. More information on this is available in the link above.
         @catch_pad = builder.catch_pad catch_switch, [void_ptr_type_descriptor, int32(0), caught_exception_ptr]
 
-        # builder.printf("catchpad entered #{node.location}\n", catch_pad: @catch_pad)
+        # printf("catchpad entered #{node.location}\n")
 
         caught_exception = load exception_llvm_type, caught_exception_ptr
         exception_type_id = type_id(caught_exception, exception_type)
@@ -179,7 +179,7 @@ class Crystal::CodeGenVisitor
             a_rescue_types.each do |type|
               rescue_type = type.type.instance_type.virtual_type
               rescue_type_cond = match_any_type_id(rescue_type, exception_type_id)
-              cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
+              cond = or(cond, rescue_type_cond)
             end
             cond cond.not_nil!, this_rescue_block, next_rescue_block
           else

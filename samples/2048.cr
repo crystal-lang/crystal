@@ -362,7 +362,7 @@ class Game
   end
 
   def won?
-    @grid.any? &.any?(&.==(2048))
+    @grid.any? &.includes?(2048)
   end
 
   def lost?

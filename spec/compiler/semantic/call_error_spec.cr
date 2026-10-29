@@ -117,6 +117,65 @@ describe "Call errors" do
       CRYSTAL
   end
 
+  it "says type mismatch for union restriction of types with a common parent" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be A | B, not C"
+      class Base; end
+      class A < Base; end
+      class B < Base; end
+      class C < Base; end
+
+      def foo(x : A | B)
+      end
+
+      foo(C.new)
+      CRYSTAL
+  end
+
+  it "says type mismatch for union restriction of types with a common parent and the parent type" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be A | B, not Base"
+      class Base; end
+      class A < Base; end
+      class B < Base; end
+
+      def foo(x : A | B)
+      end
+
+      foo(Base.new.as(Base))
+      CRYSTAL
+  end
+
+  it "says type mismatch for union restriction of metaclasses with a common parent" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be A.class | B.class, not C.class"
+      class Base; end
+      class A < Base; end
+      class B < Base; end
+      class C < Base; end
+
+      def foo(x : A.class | B.class)
+      end
+
+      foo(C)
+      CRYSTAL
+  end
+
+  it "says type mismatch for union restriction of the same type" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int32, not String"
+      def foo(x : Int32 | Int32)
+      end
+
+      foo("a")
+      CRYSTAL
+  end
+
+  it "says type mismatch for union restriction of unrelated types" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be (Int32 | String), not Char"
+      def foo(x : Int32 | String)
+      end
+
+      foo('a')
+      CRYSTAL
+  end
+
   it "says type mismatch for positional argument with three options" do
     assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Bool, Int32 or String, not Char"
       def foo(x : Int32)

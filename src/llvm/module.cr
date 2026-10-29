@@ -33,6 +33,10 @@ class LLVM::Module
     LibLLVM.set_module_data_layout(self, data)
   end
 
+  def inline_asm=(assembly : String)
+    LibLLVM.set_module_inline_asm2(self, assembly, assembly.bytesize)
+  end
+
   def dump
     LibLLVM.dump_module(self)
   end
@@ -62,6 +66,16 @@ class LLVM::Module
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
     add_flag(module_flag, key, @context.int32.const_int(val))
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : String)
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+    )
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
