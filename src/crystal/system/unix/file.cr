@@ -25,6 +25,14 @@ module Crystal::System::File
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
+    {% if flag?(:wasi) %}
+      # WASI libc treats an empty stat path as the current directory.
+      if path.empty?
+        Errno.value = Errno::ENOENT
+        return
+      end
+    {% end %}
+
     stat = uninitialized LibC::Stat
     if follow_symlinks
       ret = stat(path.check_no_null_byte, pointerof(stat))
