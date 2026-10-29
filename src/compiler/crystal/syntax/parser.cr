@@ -6220,7 +6220,7 @@ module Crystal
                else
                  raise "expecting an instance variable or a integer offset, not '#{@token}'", @token
                end
-      offset.at(@token.location)
+      offset.at(@token.location).at_end(token_end_location)
 
       next_token_skip_space_or_newline
 
