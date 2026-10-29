@@ -2401,11 +2401,14 @@ module Crystal
     end
 
     def visit(node : ReadInstanceVar)
-      accept node.obj
+      # Consider the case of `&.@foo.bar`
+      unless node.obj.is_a?(Nop)
+        accept node.obj
 
-      skip_space_or_newline
-      write_token :OP_PERIOD
-      skip_space_or_newline
+        skip_space_or_newline
+        write_token :OP_PERIOD
+        skip_space_or_newline
+      end
       write node.name
       next_token
 
@@ -3146,6 +3149,12 @@ module Crystal
           node.exp = Nop.new
         else
           clear_object(node.exp)
+        end
+      when ReadInstanceVar
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
         end
       end
     end
