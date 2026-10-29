@@ -3074,13 +3074,15 @@ module Crystal
         location = @token.location
         next_token
         call = parse_var_or_call(force_call: true).at(location)
+        # The implicit object is located at the `.`
+        obj = ImplicitObj.new.at(location).at_end(location)
         case call
-        when Call        then call.obj = ImplicitObj.new
-        when RespondsTo  then call.obj = ImplicitObj.new
-        when IsA         then call.obj = ImplicitObj.new
-        when Cast        then call.obj = ImplicitObj.new
-        when NilableCast then call.obj = ImplicitObj.new
-        when Not         then call.exp = ImplicitObj.new
+        when Call        then call.obj = obj
+        when RespondsTo  then call.obj = obj
+        when IsA         then call.obj = obj
+        when Cast        then call.obj = obj
+        when NilableCast then call.obj = obj
+        when Not         then call.exp = obj
         else
           raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
         end

@@ -4294,6 +4294,22 @@ module Crystal
       node_source(source, node).should eq("@[Foo]")
     end
 
+    it "sets correct location of implicit object in `when` of case" do
+      source = "case foo\nwhen .bar?, .is_a?(Baz), .!\nend"
+      conds = Parser.parse(source).as(Case).whens.first.conds
+
+      call = conds[0].as(Call)
+      node_source(source, call).should eq(".bar?")
+      node_source(source, call.obj.should_not be_nil).should eq(".")
+
+      is_a = conds[1].as(IsA)
+      node_source(source, is_a).should eq(".is_a?(Baz)")
+      node_source(source, is_a.obj).should eq(".")
+
+      node = conds[2].as(Not)
+      node_source(source, node.exp).should eq(".")
+    end
+
     it "sets correct location of annotation in enum" do
       source = "enum X; @[Foo]; end"
       node = Parser.parse(source).as(EnumDef).members.first
