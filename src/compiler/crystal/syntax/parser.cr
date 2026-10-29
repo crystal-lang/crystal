@@ -5962,7 +5962,7 @@ module Crystal
 
         skip_statement_end
         ExternalVar.new(name, type, real_name)
-          .at(location).tap(&.doc=(doc))
+          .at(location).at_end(type).tap(&.doc=(doc))
       when .op_lcurly_lcurly?
         parse_percent_macro_expression
       when .op_lcurly_percent?
@@ -5988,6 +5988,7 @@ module Crystal
                  check IdentOrConst
                  @token.value.to_s
                end
+        end_location = token_end_location
 
         next_token_skip_space_or_newline
 
@@ -5996,9 +5997,12 @@ module Crystal
           case @token.type
           when .ident?, .const?
             real_name = @token.value.to_s
+            end_location = token_end_location
             next_token_skip_space_or_newline
           when .delimiter_start?
-            real_name = parse_string_without_interpolation("fun name")
+            real_name_literal = parse_string_literal_without_interpolation("fun name")
+            real_name = real_name_literal.value
+            end_location = real_name_literal.end_location
             skip_space
           else
             unexpected_token
@@ -6061,8 +6065,8 @@ module Crystal
 
         if @token.type.op_colon?
           next_token_skip_space_or_newline
-          end_location = token_end_location
           return_type = parse_bare_proc_type
+          end_location = return_type.end_location
         end
 
         skip_statement_end
@@ -6211,7 +6215,7 @@ module Crystal
       type = parse_bare_proc_type
       skip_space
 
-      typedef = TypeDef.new name, type
+      typedef = TypeDef.new(name, type).at_end(type)
       typedef.name_location = name_location
       typedef.doc = doc
 

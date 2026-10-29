@@ -4082,6 +4082,32 @@ module Crystal
       node_source(source, node).should eq("fun foo(x : Int32) : Void")
     end
 
+    it "sets correct location for fun def with generic return type" do
+      source = "lib Foo\n  fun foo : Pointer(Int32)\n  fun bar = \"bar\" : Int32*\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0]).should eq("fun foo : Pointer(Int32)")
+      node_source(source, body.expressions[1]).should eq("fun bar = \"bar\" : Int32*")
+    end
+
+    it "sets correct location for fun def without parameters and return type" do
+      source = "lib Foo\n  fun foo\n  fun bar = baz\n  fun qux = \"qux\"\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0]).should eq("fun foo")
+      node_source(source, body.expressions[1]).should eq("fun bar = baz")
+      node_source(source, body.expressions[2]).should eq("fun qux = \"qux\"")
+    end
+
+    it "sets correct location of type def and external variable in lib" do
+      source = "lib Foo\n  type Bar = Int32 -> Void\n  $baz = Qux : Int32*\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0].as(TypeDef)).should eq("type Bar = Int32 -> Void")
+      node_source(source, body.expressions[1].as(ExternalVar)).should eq("$baz = Qux : Int32*")
+      node_source(source, body).should eq("type Bar = Int32 -> Void\n  $baz = Qux : Int32*")
+    end
+
     it "sets correct location for fun def on multiple lines" do
       source = "lib LibFoo\nfun foo(\n    x : Int32\n  )\nend"
       node = Parser.new(source).parse.as(LibDef).body
