@@ -4467,6 +4467,13 @@ module Crystal
       node_source(source, node).should eq("::Foo")
     end
 
+    it "sets correct location of `when` in select" do
+      source = "select\nwhen foo = bar.receive\n  1\nwhen baz.receive then 2\nend"
+      node = Parser.parse(source).as(Select)
+      node_source(source, node.whens[0]).should eq("when foo = bar.receive")
+      node_source(source, node.whens[1]).should eq("when baz.receive")
+    end
+
     it "sets correct location of global path in annotation" do
       source = "@[::Foo]"
       node = Parser.parse(source).as(Annotation).path
