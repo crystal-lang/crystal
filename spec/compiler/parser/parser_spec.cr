@@ -4135,6 +4135,46 @@ module Crystal
       node_source(source, node).should eq("private def foo; end")
     end
 
+    it "sets correct location of self type" do
+      source = "x : self"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : self")
+      node_source(source, node.declared_type).should eq("self")
+
+      source = "def foo : self.class; end"
+      node = Parser.parse(source).as(Def).return_type.as(Metaclass)
+      node_source(source, node).should eq("self.class")
+      node_source(source, node.name).should eq("self")
+    end
+
+    it "sets correct location of self superclass" do
+      source = "class Foo < self; end"
+      node = Parser.parse(source).as(ClassDef).superclass.should_not be_nil
+      node_source(source, node).should eq("self")
+    end
+
+    it "sets correct location of nilable self type" do
+      source = "x : self?"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : self?")
+
+      union = node.declared_type.as(Union)
+      node_source(source, union).should eq("self?")
+      node_source(source, union.types[0]).should eq("self")
+    end
+
+    it "sets correct location of underscore type" do
+      source = "x : _"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : _")
+      node_source(source, node.declared_type).should eq("_")
+
+      source = "def foo(x : _ | Int32); end"
+      node = Parser.parse(source).as(Def).args[0].restriction.as(Union)
+      node_source(source, node).should eq("_ | Int32")
+      node_source(source, node.types[0]).should eq("_")
+    end
+
     it "sets correct location of protected macro in enum" do
       source = "enum X; protected macro foo; end; end"
       node = Parser.parse(source).as(EnumDef).members.first

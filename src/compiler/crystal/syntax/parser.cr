@@ -1760,7 +1760,7 @@ module Crystal
       if @token.type.op_lt?
         next_token_skip_space_or_newline
         if @token.keyword?(:self)
-          superclass = Self.new.at(@token.location)
+          superclass = Self.new.at(@token.location).at_end(token_end_location)
           next_token
         else
           superclass = parse_generic
@@ -5182,19 +5182,23 @@ module Crystal
       when .ident?
         case @token.value
         when Keyword::SELF
+          end_location = token_end_location
           next_token_skip_space
-          Self.new.at(location)
+          Self.new.at(location).at_end(end_location)
         when "self?"
+          end_location = token_end_location
+          self_end_location = Location.new(location.filename, location.line_number, location.column_number + 3)
           next_token_skip_space
-          make_nilable_type Self.new.at(location)
+          make_nilable_type(Self.new.at(location).at_end(self_end_location)).at_end(end_location)
         when Keyword::TYPEOF
           parse_typeof
         else
           unexpected_token
         end
       when .underscore?
+        end_location = token_end_location
         next_token_skip_space
-        Underscore.new.at(location)
+        Underscore.new.at(location).at_end(end_location)
       when .const?, .op_colon_colon?
         type = parse_generic
         skip_space
