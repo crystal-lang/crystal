@@ -824,7 +824,7 @@ module Crystal
             atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args
             atomic.has_parentheses = has_parentheses
             atomic.name_location = name_location
-            atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
+            atomic.end_location = call_end_location(block, call_args, end_location)
             atomic.at(location)
             atomic
           end
@@ -1642,7 +1642,7 @@ module Crystal
 
         call = parse_call_block_arg_after_dot(obj)
 
-        block = Block.new([Var.new(block_arg_name)], call).at(location)
+        block = Block.new([Var.new(block_arg_name)], call).at(location).at_end(call)
         end_location = call.end_location
       else
         block_arg = parse_op_assign
@@ -4640,8 +4640,17 @@ module Crystal
         end
       node.doc = doc
       node.location = location
-      node.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
+      node.end_location = call_end_location(block, call_args, end_location)
       node
+    end
+
+    private def call_end_location(block, call_args, end_location)
+      # A short block (i.e. `&.foo`) is part of the call arguments,
+      # which might be followed by a closing parenthesis
+      if block && !block.same?(call_args.try(&.block))
+        block_end_location = block.end_location
+      end
+      block_end_location || call_args.try(&.end_location) || end_location
     end
 
     def next_comes_plus_or_minus?
