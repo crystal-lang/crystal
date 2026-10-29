@@ -3664,10 +3664,16 @@ module Crystal
     def visit(node : Case)
       slash_is_regex!
       write_keyword :case
-      skip_space
+      found_comment = skip_space
 
       if cond = node.cond
-        write " "
+        # The condition might start on the next line, possibly after comments
+        found_comment |= skip_space_or_newline(@indent + 2, last: true)
+        if found_comment
+          write_indent(@indent + 2)
+        else
+          write " "
+        end
         accept cond
       end
 

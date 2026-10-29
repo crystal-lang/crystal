@@ -1314,6 +1314,13 @@ describe Crystal::Formatter do
   assert_format "case\nend"
   assert_format "case\nelse\n  1\nend"
 
+  # #8633
+  assert_format "case\n1\nend", "case 1\nend"
+  assert_format "case\n\n  1\nwhen 2\n  3\nend", "case 1\nwhen 2\n  3\nend"
+  assert_format "case\n{% for x in 0..0 %}\n{% end %}\nend", "case {% for x in 0..0 %}\n{% end %}\nend"
+  assert_format "case # foo\n  1\nwhen 2\nend"
+  assert_format "case\n# foo\n1\nwhen 2\nend", "case\n  # foo\n  1\nwhen 2\nend"
+
   assert_format "case  1 \n in Int32 \n 3 \n end", "case 1\nin Int32\n  3\nend"
 
   assert_format <<-CRYSTAL
