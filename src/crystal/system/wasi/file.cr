@@ -16,8 +16,4 @@ module Crystal::System::File
   private def system_chown(uid : Int, gid : Int)
     raise NotImplementedError.new "Crystal::System::File#system_chown"
   end
-
-  def self.realpath(path)
-    raise NotImplementedError.new "Crystal::System::File.realpath"
-  end
 end
