@@ -3547,7 +3547,7 @@ module Crystal
         next_token_skip_space
         check :OP_PERCENT_RCURLY
 
-        return MacroFor.new(vars, exp, body).at_end(token_end_location)
+        return MacroFor.new(vars, exp, body).at(location).at_end(token_end_location)
       when Keyword::IF
         return parse_macro_if(start_location, macro_state).at(location)
       when Keyword::UNLESS
@@ -3583,7 +3583,7 @@ module Crystal
         next_token_skip_space
         check :OP_PERCENT_RCURLY
 
-        return MacroVerbatim.new(body).at_end(token_end_location)
+        return MacroVerbatim.new(body).at(location).at_end(token_end_location)
       else
         # will be parsed as a normal expression
       end

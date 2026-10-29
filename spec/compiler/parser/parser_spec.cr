@@ -4021,6 +4021,23 @@ module Crystal
       node_source(source, node.vars[1]).should eq("bar")
     end
 
+    it "sets correct location of macro control nodes inside macro body" do
+      source = <<-CRYSTAL
+        macro foo
+          {% for x in y %}{{ x }}{% end %}
+          {% verbatim do %}{{ z }}{% end %}
+          {% begin %}a{% end %}
+          {% if a %}b{% end %}
+        end
+        CRYSTAL
+
+      expressions = Parser.parse(source).as(Macro).body.as(Expressions).expressions
+      node_source(source, expressions[1].as(MacroFor)).should eq("{% for x in y %}{{ x }}{% end %}")
+      node_source(source, expressions[3].as(MacroVerbatim)).should eq("{% verbatim do %}{{ z }}{% end %}")
+      node_source(source, expressions[5].as(MacroIf)).should eq("{% begin %}a{% end %}")
+      node_source(source, expressions[7].as(MacroIf)).should eq("{% if a %}b{% end %}")
+    end
+
     it "sets correct location of receiver var in method def" do
       source = "def foo.bar; end"
       node = Parser.new(source).parse.as(Def).receiver.should_not be_nil
