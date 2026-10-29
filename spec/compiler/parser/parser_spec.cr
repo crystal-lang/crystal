@@ -4064,6 +4064,113 @@ module Crystal
       node_source(source, node).should eq("fun foo(x : Int32) : Void\nend")
     end
 
+    it "sets correct location of parameters in def" do
+      source = "def foo(a, b : Int32, e f, @g, @@h, c = 1, d : Int32 = 2, j = __LINE__, *i, **k : Int32, &l : Int32 ->); end"
+      a_def = Parser.parse(source).as(Def)
+      args = a_def.args
+      node_source(source, args[0]).should eq("a")
+      node_source(source, args[1]).should eq("b : Int32")
+      node_source(source, args[2]).should eq("e f")
+      node_source(source, args[3]).should eq("@g")
+      node_source(source, args[4]).should eq("@@h")
+      node_source(source, args[5]).should eq("c = 1")
+      node_source(source, args[6]).should eq("d : Int32 = 2")
+      node_source(source, args[7]).should eq("j = __LINE__")
+      node_source(source, args[8]).should eq("i")
+      node_source(source, a_def.double_splat.should_not be_nil).should eq("k : Int32")
+      node_source(source, a_def.block_arg.should_not be_nil).should eq("l : Int32 ->")
+    end
+
+    it "sets correct location of anonymous parameters in def" do
+      source = "def foo(*, a, &); end"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("*")
+      node_source(source, a_def.args[1]).should eq("a")
+      node_source(source, a_def.block_arg.should_not be_nil).should eq("&")
+
+      source = "def foo(& : Int32 ->); end"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.block_arg.should_not be_nil).should eq("& : Int32 ->")
+    end
+
+    it "sets correct location of splat restriction of parameter in def" do
+      source = "def foo(*a : *T, **b : **U); end"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("a : *T")
+      node_source(source, a_def.args[0].restriction.should_not be_nil).should eq("*T")
+      node_source(source, a_def.double_splat.should_not be_nil).should eq("b : **U")
+    end
+
+    it "sets correct location of instance and class variable parameter assignments in def" do
+      source = "def foo(@a); end"
+      body = Parser.parse(source).as(Def).body.as(Assign)
+      node_source(source, body).should eq("end")
+
+      source = "def foo(@a, @@b); end"
+      body = Parser.parse(source).as(Def).body.as(Expressions)
+      node_source(source, body).should eq("end")
+
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
+
+      assign = body.expressions[1].as(Assign)
+      node_source(source, assign).should eq("@@b")
+      node_source(source, assign.target).should eq("@@b")
+      node_source(source, assign.value).should eq("@@b")
+    end
+
+    it "sets correct location of instance and class variable parameter assignments with external name in def" do
+      source = "def foo(x @a, y @@b)\n  1\nend"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("x @a")
+      node_source(source, a_def.args[1]).should eq("y @@b")
+
+      body = a_def.body.as(Expressions)
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
+
+      assign = body.expressions[1].as(Assign)
+      node_source(source, assign).should eq("@@b")
+      node_source(source, assign.target).should eq("@@b")
+      node_source(source, assign.value).should eq("@@b")
+    end
+
+    it "sets correct location of parameter with heredoc default value in def" do
+      source = "def foo(x = <<-FOO, y = 1)\n  bar\n  FOO\nend"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("x = <<-FOO")
+      node_source(source, a_def.args[1]).should eq("y = 1")
+    end
+
+    it "sets correct location of parameters in macro" do
+      source = "macro foo(a, b = 1, *c, &d); end"
+      a_macro = Parser.parse(source).as(Macro)
+      node_source(source, a_macro.args[0]).should eq("a")
+      node_source(source, a_macro.args[1]).should eq("b = 1")
+      node_source(source, a_macro.args[2]).should eq("c")
+      node_source(source, a_macro.block_arg.should_not be_nil).should eq("d")
+    end
+
+    it "sets correct location of parameters in fun def" do
+      source = "lib Foo\n  fun foo(a : Int32, b : Int32 -> Int32)\nend"
+      fun_def = Parser.parse(source).as(LibDef).body.as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("a : Int32")
+      node_source(source, fun_def.args[1]).should eq("b : Int32 -> Int32")
+
+      source = "lib Foo\n  fun foo(Int32, Int32*)\nend"
+      fun_def = Parser.parse(source).as(LibDef).body.as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("Int32")
+      node_source(source, fun_def.args[1]).should eq("Int32*")
+
+      source = "fun foo(a : Int32)\nend"
+      fun_def = Parser.parse(source).as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("a : Int32")
+    end
+
     it "sets correct location of parameter in proc literal" do
       source = "->(foo : Bar, baz) { }"
       args = Parser.parse(source).as(ProcLiteral).def.args

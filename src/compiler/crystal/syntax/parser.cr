@@ -3884,7 +3884,9 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns).at(@token.location)
+          # The body (possibly holding the assignments of instance
+          # and class variable parameters) is located at the `end`
+          body = Expressions.from(extra_assigns).at(@token.location).at_end(end_location)
           next_token_skip_space
         else
           body = parse_expressions
@@ -3975,6 +3977,8 @@ module Crystal
       end
 
       if @token.type.op_amp?
+        amp_location = @token.location
+        amp_end_location = token_end_location
         next_token
         space_after_amp = @token.type.space?
         skip_space_or_newline
@@ -3983,7 +3987,7 @@ module Crystal
           warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
         end
 
-        block_param = parse_def_block_param(extra_assigns, annotations)
+        block_param = parse_def_block_param(extra_assigns, annotations, amp_location, amp_end_location)
         skip_space_or_newline
         # When block_param.name is empty, this is an anonymous parameter.
         # An anonymous parameter should not conflict other parameters names.
@@ -4006,6 +4010,7 @@ module Crystal
       splat = false
       double_splat = false
       param_location = @token.location
+      param_end_location = token_end_location
       allow_external_name = true
 
       case @token.type
@@ -4032,7 +4037,7 @@ module Crystal
         allow_restrictions = false
       else
         param_location = @token.location
-        param_name, external_name, found_space, _uses_param = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
+        param_name, external_name, found_space, _uses_param, param_end_location = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
 
         params.each do |param|
           if param.name == param_name
@@ -4071,8 +4076,7 @@ module Crystal
         restriction = parse_bare_proc_type
 
         if splat_restriction
-          restriction = splat ? Splat.new(restriction) : DoubleSplat.new(restriction)
-          restriction.at(location)
+          restriction = (splat ? Splat.new(restriction) : DoubleSplat.new(restriction)).at(location).at_end(restriction)
         end
         found_colon = true
       end
@@ -4086,9 +4090,12 @@ module Crystal
 
         case @token.type
         when .magic?
-          default_value = MagicConstant.new(@token.type).at(@token.location)
+          default_value = MagicConstant.new(@token.type).at(@token.location).at_end(token_end_location)
           next_token
         else
+          # A heredoc gets its end location only once its body is consumed,
+          # so in that case the parameter ends at the heredoc start (`<<-FOO`)
+          default_value_start_end_location = token_end_location
           @no_type_declaration += 1
           default_value = parse_op_assign
           @no_type_declaration -= 1
@@ -4113,20 +4120,28 @@ module Crystal
 
       raise "BUG: param_name is nil" unless param_name
 
-      param = Arg.new(param_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(param_location)
+      if default_value
+        param_end_location = default_value.end_location || default_value_start_end_location
+      elsif restriction
+        param_end_location = restriction.end_location
+      end
+      param = Arg.new(param_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(param_location).at_end(param_end_location)
       params << param
       push_var param
 
       ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
-    def parse_def_block_param(extra_assigns, annotations : Array(Annotation)?)
+    def parse_def_block_param(extra_assigns, annotations : Array(Annotation)?, amp_location : Location? = nil, amp_end_location : Location? = nil)
       name_location = @token.location
 
       if @token.type.op_rparen? || @token.type.newline? || @token.type.op_colon?
+        # An anonymous block parameter is located at its `&`
         param_name = ""
+        name_location = amp_location || name_location
+        name_end_location = amp_end_location
       else
-        param_name, _external_name, found_space, uses_param = parse_param_name(name_location, extra_assigns, allow_external_name: false)
+        param_name, _external_name, found_space, uses_param, name_end_location = parse_param_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_param
       end
 
@@ -4141,7 +4156,9 @@ module Crystal
         type_spec = parse_bare_proc_type
       end
 
-      block_param = Arg.new(param_name, restriction: type_spec, parsed_annotations: annotations).at(name_location)
+      block_param = Arg.new(param_name, restriction: type_spec, parsed_annotations: annotations)
+        .at(name_location)
+        .at_end(type_spec.try(&.end_location) || name_end_location)
 
       push_var block_param
 
@@ -4164,6 +4181,7 @@ module Crystal
             invalid_internal_name = @token.dup
           end
           external_name = @token.value.to_s
+          external_name_end_location = token_end_location
           next_token
         else
           external_name = parse_string_without_interpolation("external name")
@@ -4192,6 +4210,7 @@ module Crystal
 
         check_valid_param_name
 
+        name_end_location = token_end_location
         uses_param = false
         do_next_token = true
       when .instance_var?
@@ -4219,9 +4238,12 @@ module Crystal
           param_name = temp_arg_name
         end
 
-        ivar = InstanceVar.new(@token.value.to_s).at(location)
-        var = Var.new(param_name).at(location)
-        assign = Assign.new(ivar, var).at(location)
+        # These are located at the instance variable, not at the external name
+        var_location = @token.location
+        name_end_location = token_end_location
+        ivar = InstanceVar.new(@token.value.to_s).at(var_location).at_end(name_end_location)
+        var = Var.new(param_name).at(var_location).at_end(name_end_location)
+        assign = Assign.new(ivar, var).at(var_location).at_end(name_end_location)
         if extra_assigns
           extra_assigns.push assign
         else
@@ -4241,9 +4263,12 @@ module Crystal
           param_name = temp_arg_name
         end
 
-        cvar = ClassVar.new(@token.value.to_s).at(location)
-        var = Var.new(param_name).at(location)
-        assign = Assign.new(cvar, var).at(location)
+        # These are located at the class variable, not at the external name
+        var_location = @token.location
+        name_end_location = token_end_location
+        cvar = ClassVar.new(@token.value.to_s).at(var_location).at_end(name_end_location)
+        var = Var.new(param_name).at(var_location).at_end(name_end_location)
+        assign = Assign.new(cvar, var).at(var_location).at_end(name_end_location)
         if extra_assigns
           extra_assigns.push assign
         else
@@ -4260,6 +4285,7 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           param_name = external_name
+          name_end_location = external_name_end_location
           if external_name_token.nil?
             raise "missing external name token"
           end
@@ -4276,7 +4302,7 @@ module Crystal
 
       skip_space
 
-      {param_name, external_name, found_space, uses_param}
+      {param_name, external_name, found_space, uses_param, name_end_location}
     end
 
     def invalid_internal_name?(keyword)
@@ -6002,7 +6028,7 @@ module Crystal
                 end
               end
 
-              params << Arg.new(param_name, nil, param_type).at(param_location)
+              params << Arg.new(param_name, nil, param_type).at(param_location).at_end(param_type)
 
               push_var_name param_name if require_body
             else
