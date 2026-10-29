@@ -20,6 +20,11 @@ module Crystal
     getter? wants_doc : Bool
     @block_arg_name : String?
 
+    # End location of the target of the last parsed setter or index
+    # assignment (i.e. `foo.bar` in `foo.bar = 1` or `foo[0]` in `foo[0] = 1`),
+    # which is needed to unwrap the target of a multiple assignment.
+    @call_assign_target_end_location : Location?
+
     def self.parse(str, string_pool : StringPool? = nil, var_scopes = [Set(String).new]) : ASTNode
       new(str, string_pool, var_scopes).parse
     end
@@ -168,6 +173,10 @@ module Crystal
       i = 0
       assign_index = -1
 
+      # Must be read right after parsing the assignment, since parsing
+      # the remaining values could overwrite it
+      assign_target_end_location = @call_assign_target_end_location
+
       while @token.type.op_comma?
         if assign_index == -1 && multi_assign_middle?(last)
           assign_index = i
@@ -190,6 +199,7 @@ module Crystal
         if assign_index == -1 && !multi_assign_target?(last) && !multi_assign_middle?(last)
           unexpected_token
         end
+        assign_target_end_location = @call_assign_target_end_location if assign_index == -1
 
         exps << last
         skip_space
@@ -214,6 +224,7 @@ module Crystal
         values << assign.value
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
+        assign.end_location = assign_target_end_location
         targets << assign
         values << assign.args.pop
       else
@@ -394,6 +405,7 @@ module Crystal
           break unless can_be_assigned?(atomic)
 
           if atomic.is_a?(Call) && atomic.name == "[]"
+            target_end_location = atomic.end_location
             next_token_skip_space_or_newline
 
             atomic.name = "[]="
@@ -401,6 +413,7 @@ module Crystal
             arg = parse_op_assign_no_control
             atomic.args << arg
             atomic.end_location = arg.end_location
+            @call_assign_target_end_location = target_end_location
           else
             if atomic.is_a?(Path) && (inside_def? || inside_fun? || @is_constant_assignment)
               raise "dynamic constant assignment. Constants can only be declared at the top level or inside other types."
@@ -747,6 +760,7 @@ module Crystal
             when .op_eq?
               atomic = Call.new(atomic, name)
               unexpected_token unless can_be_assigned?(atomic)
+              target_end_location = end_location
 
               # Rewrite 'f.x = arg' as f.x=(arg)
               next_token
@@ -777,6 +791,7 @@ module Crystal
               atomic.name = "#{name}="
               atomic.args = [arg] of ASTNode
               atomic.name_location = name_location
+              @call_assign_target_end_location = target_end_location
               next
             when .assignment_operator?
               call = Call.new(atomic, name)
@@ -811,6 +826,9 @@ module Crystal
             atomic.name_location = name_location
             atomic.end_location = block.try(&.end_location) || call_args.try(&.end_location) || end_location
             atomic.at(location)
+            # An explicit `[]=` call has no separate target to end before the
+            # value, so as a multiple assignment target it spans the whole call
+            @call_assign_target_end_location = atomic.end_location if name == "[]="
             atomic
           end
         when .op_lsquare_rsquare?
