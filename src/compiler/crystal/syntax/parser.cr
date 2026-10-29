@@ -3136,13 +3136,14 @@ module Crystal
       while true
         case @token.value
         when Keyword::WHEN
+          location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
 
-          location = @token.location
+          condition_location = @token.location
           condition = parse_op_assign_no_control
           unless valid_select_when?(condition)
-            raise "invalid select when expression: must be an assignment or call", location
+            raise "invalid select when expression: must be an assignment or call", condition_location
           end
 
           skip_space
