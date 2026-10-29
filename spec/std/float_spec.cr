@@ -92,6 +92,7 @@ describe "Float" do
         (13.0.modulo 4.to_big_f).should eq(1.to_big_f)
         (-13.0.modulo 4.to_big_f).should eq(3.to_big_f)
         (13.0.modulo -4.to_big_f).should eq(-3.to_big_f)
+        (-13.0.modulo -4.to_big_f).should eq(-1.to_big_f)
       end
 
       it "does not round a BigFloat dividend to Float64" do
@@ -174,6 +175,7 @@ describe "Float" do
         13.0.remainder(4.to_big_f).should eq(1.to_big_f)
         (-13.0).remainder(4.to_big_f).should eq(-1.to_big_f)
         13.0.remainder(-4.to_big_f).should eq(1.to_big_f)
+        (-13.0).remainder(-4.to_big_f).should eq(-1.to_big_f)
       end
 
       it "does not round a BigFloat dividend to Float64" do

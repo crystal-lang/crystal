@@ -116,6 +116,13 @@ struct Float
       return self == 0 || (self > 0) == (infinity > 0) ? self : self.class.new(other)
     end
 
+    # NOTE: exact only while `self // other` is, and for a divisor carrying more
+    # precision than `Float64` it is not: `1e17 // 3.to_big_f` returns a `Float64`,
+    # so the quotient is 33333333333333332 where the exact value is
+    # 33333333333333333, and `1e17.modulo 3.to_big_f` is then 4 rather than 1. The
+    # result's type and sign are right, only its value is not. Raised in review on
+    # #17341 and left for a follow-up, which needs `//` to produce the quotient at
+    # the divisor's precision rather than at `Float64`'s.
     self - other * (self // other)
   end
 
