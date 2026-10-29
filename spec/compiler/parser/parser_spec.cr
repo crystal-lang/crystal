@@ -4214,6 +4214,31 @@ module Crystal
       node_source(source, node.then).should eq("\n    bar <<-'X'\n      baz\n      X\n  ")
     end
 
+    it "sets correct location of call with heredoc argument followed by more code" do
+      source = "raise <<-FOO unless bar\n  baz\n  FOO"
+      node = Parser.parse(source).as(Unless).then
+      node_source(source, node).should eq("raise <<-FOO")
+
+      source = "foo 1, bar: <<-FOO if baz\n  qux\n  FOO"
+      node = Parser.parse(source).as(If).then
+      node_source(source, node).should eq("foo 1, bar: <<-FOO")
+
+      source = "foo.bar = <<-FOO if baz\n  qux\n  FOO"
+      node = Parser.parse(source).as(If).then
+      node_source(source, node).should eq("foo.bar = <<-FOO")
+
+      source = "foo <<-FOO; bar\n  baz\n  FOO"
+      node = Parser.parse(source).as(Expressions).expressions[0]
+      node_source(source, node).should eq("foo <<-FOO")
+    end
+
+    it "sets correct location of call with heredoc argument" do
+      source = "foo <<-FOO\n  bar\n  FOO"
+      node = Parser.parse(source).as(Call)
+      node_source(source, node).should eq(source)
+      node_source(source, node.args[0]).should eq("<<-FOO\n  bar\n  FOO")
+    end
+
     it "sets correct location for fun def with body" do
       source = "fun foo(x : Int32) : Void\nend"
       node = Parser.new(source).parse.as(FunDef)

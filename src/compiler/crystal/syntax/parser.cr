@@ -2159,7 +2159,10 @@ module Crystal
         if @inside_interpolation
           raise "heredoc cannot be used inside interpolation", location
         end
-        node = StringInterpolation.new([] of ASTNode).at(location)
+        # The heredoc's body is consumed later, so until then it ends at
+        # its start (i.e. `<<-FOO`), which is what any node created in
+        # the meantime (i.e. `foo <<-FOO if bar`) ends with
+        node = StringInterpolation.new([] of ASTNode).at(location).at_end(token_end_location)
         @heredocs << {delimiter_state, node}
         next_token
         return node
@@ -4133,9 +4136,6 @@ module Crystal
           default_value = MagicConstant.new(@token.type).at(@token.location).at_end(token_end_location)
           next_token
         else
-          # A heredoc gets its end location only once its body is consumed,
-          # so in that case the parameter ends at the heredoc start (`<<-FOO`)
-          default_value_start_end_location = token_end_location
           @no_type_declaration += 1
           default_value = parse_op_assign
           @no_type_declaration -= 1
@@ -4160,11 +4160,7 @@ module Crystal
 
       raise "BUG: param_name is nil" unless param_name
 
-      if default_value
-        param_end_location = default_value.end_location || default_value_start_end_location
-      elsif restriction
-        param_end_location = restriction.end_location
-      end
+      param_end_location = default_value.try(&.end_location) || restriction.try(&.end_location) || param_end_location
       param = Arg.new(param_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(param_location).at_end(param_end_location)
       params << param
       push_var param
