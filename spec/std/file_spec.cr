@@ -201,38 +201,22 @@ describe "File" do
   end
 
   describe "exists?" do
-    it "gives true" do
-      File.exists?(datapath("test_file.txt")).should be_true
-    end
-
-    it "gives false" do
-      File.exists?(datapath("non_existing_file.txt")).should be_false
-    end
-
-    it "gives false when a component of the path is a file" do
-      File.exists?(datapath("dir", "test_file.txt", "")).should be_false
-    end
-
-    it "follows symlinks" do
-      with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
-
-        File.exists?(good_path).should be_true
-        File.exists?(bad_path).should be_false
+    it "follows symlinks by default" do
+      with_symlink(datapath("non_existing_file.txt")) do |symlink_to_non_existing|
+        File.exists?(symlink_to_non_existing).should be_false
       end
     end
 
-    it "gives true for null file (#15019)" do
-      File.exists?(File::NULL).should be_true
-    end
-
-    describe "follow_symlinks: false" do
-      it "gives true" do
+    context "follow_symlinks: false" do
+      it "gives true for an existing file" do
         File.exists?(datapath("test_file.txt"), follow_symlinks: false).should be_true
       end
 
-      it "gives false" do
+      it "gives true for an existing directory" do
+        File.exists?(datapath("dir"), follow_symlinks: false).should be_true
+      end
+
+      it "gives false for a non-existent file" do
         File.exists?(datapath("non_existing_file.txt"), follow_symlinks: false).should be_false
       end
 
@@ -240,18 +224,66 @@ describe "File" do
         File.exists?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
       end
 
-      it "checks existence of symlink" do
-        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+      it "gives true for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.exists?(symlink_to_existing_file, follow_symlinks: false).should be_true
+        end
+      end
 
-          File.exists?(good_path, follow_symlinks: false).should be_true
-          File.exists?(bad_path, follow_symlinks: false).should be_true
+      it "gives true for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.exists?(symlink_to_existing_dir, follow_symlinks: false).should be_true
+        end
+      end
+
+      it "gives true for a symlink to a non-existent file" do
+        with_symlink(datapath("non_existing_file.txt")) do |symlink_to_non_existing|
+          File.exists?(symlink_to_non_existing, follow_symlinks: false).should be_true
         end
       end
 
       it "gives true for null file (#15019)" do
         File.exists?(File::NULL, follow_symlinks: false).should be_true
+      end
+    end
+
+    context "follow_symlinks: true" do
+      it "gives true for an existing file" do
+        File.exists?(datapath("test_file.txt"), follow_symlinks: true).should be_true
+      end
+
+      it "gives true for an existing directory" do
+        File.exists?(datapath("dir"), follow_symlinks: true).should be_true
+      end
+
+      it "gives false for a non-existent file" do
+        File.exists?(datapath("non_existing_file.txt"), follow_symlinks: true).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.exists?(datapath("dir", "test_file.txt", ""), follow_symlinks: true).should be_false
+      end
+
+      it "gives true for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.exists?(symlink_to_existing_file, follow_symlinks: true).should be_true
+        end
+      end
+
+      it "gives true for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.exists?(symlink_to_existing_dir, follow_symlinks: true).should be_true
+        end
+      end
+
+      it "gives false for a symlink to a non-existent file" do
+        with_symlink(datapath("non_existing_file.txt")) do |symlink_to_non_existing|
+          File.exists?(symlink_to_non_existing, follow_symlinks: true).should be_false
+        end
+      end
+
+      it "gives true for null file (#15019)" do
+        File.exists?(File::NULL, follow_symlinks: true).should be_true
       end
     end
   end
@@ -273,28 +305,80 @@ describe "File" do
       File.file?(datapath("dir", "test_file.txt", "")).should be_false
     end
 
-    it "follows symlinks" do
-      with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
-
-        File.file?(good_path).should be_true
-        File.file?(bad_path).should be_false
+    it "follows symlinks by default" do
+      with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+        File.file?(symlink_to_existing_file).should be_true
       end
     end
 
-    describe "follow_symlinks: false" do
-      it "gives true" do
+    context "follow_symlinks: false" do
+      it "gives true for an existing file" do
         File.file?(datapath("test_file.txt"), follow_symlinks: false).should be_true
       end
 
-      it "gives false for a symlink" do
-        with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+      it "gives false for an existing directory" do
+        File.file?(datapath("dir"), follow_symlinks: false).should be_false
+      end
 
-          File.file?(good_path, follow_symlinks: false).should be_false
-          File.file?(bad_path, follow_symlinks: false).should be_false
+      it "gives false for a non-existent file" do
+        File.file?(datapath("non_existing_file.txt"), follow_symlinks: false).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.file?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
+      end
+
+      it "gives false for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.file?(symlink_to_existing_file, follow_symlinks: false).should be_false
+        end
+      end
+
+      it "gives false for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.file?(symlink_to_existing_dir, follow_symlinks: false).should be_false
+        end
+      end
+
+      it "gives false for a symlink to a non-existent file" do
+        with_symlink(datapath("non_existing_file.txt")) do |symlink_to_non_existing|
+          File.file?(symlink_to_non_existing, follow_symlinks: false).should be_false
+        end
+      end
+    end
+
+    context "follow_symlinks: true" do
+      it "gives true for an existing file" do
+        File.file?(datapath("test_file.txt"), follow_symlinks: true).should be_true
+      end
+
+      it "gives false for an existing directory" do
+        File.file?(datapath("dir"), follow_symlinks: true).should be_false
+      end
+
+      it "gives false for a non-existent file" do
+        File.file?(datapath("non_existing_file.txt"), follow_symlinks: true).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.file?(datapath("dir", "test_file.txt", ""), follow_symlinks: true).should be_false
+      end
+
+      it "gives true for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.file?(symlink_to_existing_file, follow_symlinks: true).should be_true
+        end
+      end
+
+      it "gives false for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.file?(symlink_to_existing_dir, follow_symlinks: true).should be_false
+        end
+      end
+
+      it "gives false for a symlink to a non-existent file" do
+        with_symlink(datapath("non_existing_file.txt")) do |symlink_to_non_existing|
+          File.file?(symlink_to_non_existing, follow_symlinks: true).should be_false
         end
       end
     end
@@ -317,28 +401,80 @@ describe "File" do
       File.directory?(datapath("dir", "test_file.txt", "")).should be_false
     end
 
-    it "follows symlinks" do
-      with_tempfile("good_symlink", "bad_symlink") do |good_path, bad_path|
-        File.symlink(File.expand_path(datapath("dir")), good_path)
-        File.symlink(File.expand_path(datapath("non_existing")), bad_path)
-
-        File.directory?(good_path).should be_true
-        File.directory?(bad_path).should be_false
+    it "follows symlinks by default" do
+      with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+        File.directory?(symlink_to_existing_dir).should be_true
       end
     end
 
-    describe "follow_symlinks: false" do
-      it "gives true" do
-        File.directory?(datapath, follow_symlinks: false).should be_true
+    context "follow_symlinks: false" do
+      it "gives true for an existing directory" do
+        File.directory?(datapath("dir"), follow_symlinks: false).should be_true
       end
 
-      it "gives false for a symlink" do
-        with_tempfile("good_symlink", "bad_symlink") do |good_path, bad_path|
-          File.symlink(File.expand_path(datapath("dir")), good_path)
-          File.symlink(File.expand_path(datapath("non_existing")), bad_path)
+      it "gives false for an existing file" do
+        File.directory?(datapath("test_file.txt"), follow_symlinks: false).should be_false
+      end
 
-          File.directory?(good_path, follow_symlinks: false).should be_false
-          File.directory?(bad_path, follow_symlinks: false).should be_false
+      it "gives false for a non-existent directory" do
+        File.directory?(datapath("non_existing"), follow_symlinks: false).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.directory?(datapath("dir", "test_file.txt", ""), follow_symlinks: false).should be_false
+      end
+
+      it "gives false for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.directory?(symlink_to_existing_dir, follow_symlinks: false).should be_false
+        end
+      end
+
+      it "gives false for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.directory?(symlink_to_existing_file, follow_symlinks: false).should be_false
+        end
+      end
+
+      it "gives false for a symlink to a non-existent directory" do
+        with_symlink(datapath("non_existing")) do |symlink_to_non_existing|
+          File.directory?(symlink_to_non_existing, follow_symlinks: false).should be_false
+        end
+      end
+    end
+
+    context "follow_symlinks: true" do
+      it "gives true for an existing directory" do
+        File.directory?(datapath("dir"), follow_symlinks: true).should be_true
+      end
+
+      it "gives false for an existing file" do
+        File.directory?(datapath("test_file.txt"), follow_symlinks: true).should be_false
+      end
+
+      it "gives false for a non-existent directory" do
+        File.directory?(datapath("non_existing"), follow_symlinks: true).should be_false
+      end
+
+      it "gives false when a component of the path is a file" do
+        File.directory?(datapath("dir", "test_file.txt", ""), follow_symlinks: true).should be_false
+      end
+
+      it "gives true for a symlink to an existing directory" do
+        with_symlink(datapath("dir")) do |symlink_to_existing_dir|
+          File.directory?(symlink_to_existing_dir, follow_symlinks: true).should be_true
+        end
+      end
+
+      it "gives false for a symlink to an existing file" do
+        with_symlink(datapath("test_file.txt")) do |symlink_to_existing_file|
+          File.directory?(symlink_to_existing_file, follow_symlinks: true).should be_false
+        end
+      end
+
+      it "gives false for a symlink to a non-existent directory" do
+        with_symlink(datapath("non_existing")) do |symlink_to_non_existing|
+          File.directory?(symlink_to_non_existing, follow_symlinks: true).should be_false
         end
       end
     end
