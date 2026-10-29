@@ -4263,6 +4263,26 @@ module Crystal
       node_source(source, node).should eq("*bar")
     end
 
+    it "sets correct location of call targets in multiple assignment" do
+      source = "foo.bar, baz.qux = 1, 2"
+      node = Parser.parse(source).as(MultiAssign)
+      node_source(source, node.targets[0]).should eq("foo.bar")
+      node_source(source, node.targets[1]).should eq("baz.qux")
+
+      source = "foo[0], bar[1, 2] = 1, 2"
+      node = Parser.parse(source).as(MultiAssign)
+      node_source(source, node.targets[0]).should eq("foo[0]")
+      node_source(source, node.targets[1]).should eq("bar[1, 2]")
+
+      source = "foo, bar.baz = 1, qux[0] = 2"
+      node = Parser.parse(source).as(MultiAssign)
+      node_source(source, node.targets[1]).should eq("bar.baz")
+
+      source = "foo, bar[0] = 1, baz.qux = 2"
+      node = Parser.parse(source).as(MultiAssign)
+      node_source(source, node.targets[1]).should eq("bar[0]")
+    end
+
     it "sets correct location of tuple type" do
       source = "x : {Foo, Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type
