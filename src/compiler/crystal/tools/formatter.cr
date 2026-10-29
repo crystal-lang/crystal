@@ -173,10 +173,16 @@ module Crystal
         # If it's (...) with a single expression, we treat it
         # like a single expression, indenting it if needed
         write "("
-        next_token_skip_space
-        if @token.type.newline?
-          next_token_skip_space_or_newline
-          write_line
+        next_token
+        # A comment right after `(` is written together with the newline
+        # that follows it
+        if skip_space(@indent + 2) || @token.type.newline?
+          if @token.type.newline?
+            write_line
+            next_token
+          end
+          # Comments after `(` go on their own lines
+          skip_space_or_newline(@indent + 2)
           write_indent(@indent + 2, node.expressions.first)
           skip_space_write_line
           skip_space_or_newline
@@ -3330,8 +3336,10 @@ module Crystal
 
     def accept_assign_value_after_equals(value, check_align = false)
       if @token.type.newline?
-        next_token_skip_space_or_newline
         write_line
+        next_token
+        # Comments between `=` and the value go on their own lines
+        skip_space_or_newline(@indent + 2)
         write_indent(@indent + 2, value)
       else
         write " "
@@ -3922,8 +3930,10 @@ module Crystal
       write_token " ", :OP_EQ
       skip_space
       if @token.type.newline?
-        next_token_skip_space_or_newline
         write_line
+        next_token
+        # Comments between `=` and the values go on their own lines
+        skip_space_or_newline(@indent + 2)
         if node.values.size == 1
           write_indent(@indent + 2, node.values.first)
           return false
