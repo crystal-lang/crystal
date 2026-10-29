@@ -4218,6 +4218,17 @@ module Crystal
       node_source(source, node).should eq("@@foo")
     end
 
+    it "sets correct location of asm operands" do
+      source = %(asm("nop" : "=r"(foo), "=r"( bar ) : "r"(1)))
+      node = Parser.parse(source).as(Asm)
+      outputs = node.outputs.should_not be_nil
+      node_source(source, outputs[0]).should eq(%("=r"(foo)))
+      node_source(source, outputs[1]).should eq(%("=r"( bar )))
+
+      inputs = node.inputs.should_not be_nil
+      node_source(source, inputs[0]).should eq(%("r"(1)))
+    end
+
     it "sets correct location of annotation on method parameter" do
       source = "def x(@[Foo] y) end"
       node = Parser.parse(source).as(Def).args.first.parsed_annotations.should_not(be_nil).first
