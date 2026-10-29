@@ -4693,7 +4693,7 @@ module Crystal
 
           if unpack_expressions
             unpacks ||= {} of Int32 => Expressions
-            unpacks[param_index] = Expressions.new(unpack_expressions)
+            unpacks[param_index] = Expressions.new(unpack_expressions).at(var)
           end
 
           next_token_skip_space_or_newline
@@ -4759,15 +4759,15 @@ module Crystal
 
           unpack_expression =
             if sub_unpack_expressions
-              Expressions.new(sub_unpack_expressions).at(sub_location)
+              Expressions.new(sub_unpack_expressions).at(sub_var)
             elsif sub_var.name == "_"
-              Underscore.new.at(sub_location)
+              Underscore.new.at(sub_var)
             else
               sub_var
             end
 
           if new_found_splat_in_nested_expression && !found_splat_in_nested_expression
-            unpack_expression = Splat.new(unpack_expression).at(sub_location)
+            unpack_expression = Splat.new(unpack_expression).at(sub_location).at_end(sub_var)
           end
           found_splat_in_nested_expression = new_found_splat_in_nested_expression
 
@@ -4790,7 +4790,7 @@ module Crystal
         raise "expecting block parameter name, not #{@token.type}", @token
       end
 
-      var = Var.new(param_name).at(location)
+      var = Var.new(param_name).at(location).at_end(token_end_location)
       {var, found_splat, unpack_expressions}
     end
 
