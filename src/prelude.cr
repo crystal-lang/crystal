@@ -85,9 +85,7 @@ require "reference"
 require "reference_storage"
 require "regex"
 require "set"
-{% unless flag?(:wasm32) %}
-  require "signal"
-{% end %}
+require "signal"
 require "slice"
 require "static_array"
 require "struct"
