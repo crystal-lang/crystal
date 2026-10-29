@@ -354,7 +354,7 @@ module Crystal
       when Arg
         exp.name.size
       when VisibilityModifier
-        assign_length exp.exp
+        visibility_modifier_length(exp) + assign_length(exp.exp)
       when Path
         exp.names.first.size
       else
@@ -3385,9 +3385,25 @@ module Crystal
       when .public?
         # no keyword needed
       end
+
+      # The keyword was already written, so only the rest is left to align
+      if assign_length = @assign_length
+        @assign_length = assign_length - visibility_modifier_length(node)
+      end
+
       accept node.exp
 
       false
+    end
+
+    # Returns the size of the keyword written for *node* including the
+    # trailing space, if any.
+    private def visibility_modifier_length(node : VisibilityModifier)
+      case node.modifier
+      in .private?   then "private ".size
+      in .protected? then "protected ".size
+      in .public?    then 0
+      end
     end
 
     def visit(node : MagicConstant)
