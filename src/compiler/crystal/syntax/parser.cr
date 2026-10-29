@@ -1091,7 +1091,13 @@ module Crystal
         location = @token.location
         index = value.to_i?
         raise "Index $#{value} doesn't fit in an Int32" unless index
-        node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(index))
+
+        # `$~` is located at the `$`, followed by the index
+        global = Global.new("$~").at(location).at_end(location)
+        index_location = Location.new(location.filename, location.line_number, location.column_number + 1)
+        index_end_location = Location.new(location.filename, location.line_number, location.column_number + value.size)
+        index = NumberLiteral.new(index).at(index_location).at_end(index_end_location)
+        node_and_next_token Call.new(global, method, index)
       when .magic_line?
         node_and_next_token MagicConstant.expand_line_node(@token.location)
       when .magic_end_line?
