@@ -3975,6 +3975,16 @@ module Crystal
       node_source(source, node).should eq("begin")
     end
 
+    it "sets correct location of offset in offsetof" do
+      source = "offsetof(Foo, @bar)"
+      node = Parser.parse(source).as(OffsetOf)
+      node_source(source, node.offset).should eq("@bar")
+
+      source = "offsetof(Foo, 12)"
+      node = Parser.parse(source).as(OffsetOf)
+      node_source(source, node.offset).should eq("12")
+    end
+
     it "sets correct location of var in proc pointer" do
       source = "foo : Foo; ->foo.bar"
       expressions = Parser.new(source).parse.as(Expressions).expressions
