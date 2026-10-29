@@ -1568,7 +1568,9 @@ module Crystal
         body = nil
       else
         body = parse_expressions
-        end_location = body.end_location
+        # An empty body (i.e. followed by `else`, `ensure` or another `rescue`)
+        # has no end location, so the rescue clause ends at its header
+        end_location = body.end_location || end_location
         skip_statement_end
       end
 

@@ -4057,6 +4057,18 @@ module Crystal
       node_source(source, node).should eq("foo")
     end
 
+    it "sets correct location of rescue with empty body" do
+      source = "begin\n  1\nrescue Foo\nrescue e : Bar | Baz\nrescue e\nelse\n  2\nend"
+      rescues = Parser.parse(source).as(ExceptionHandler).rescues.should_not be_nil
+      node_source(source, rescues[0]).should eq("rescue Foo")
+      node_source(source, rescues[1]).should eq("rescue e : Bar | Baz")
+      node_source(source, rescues[2]).should eq("rescue e")
+
+      source = "def foo\n  1\nrescue\nensure\n  2\nend"
+      rescues = Parser.parse(source).as(Def).body.as(ExceptionHandler).rescues.should_not be_nil
+      node_source(source, rescues[0]).should eq("rescue")
+    end
+
     it "sets correct location of vars in C struct" do
       source = "lib Foo; struct Bar; fizz, buzz : Int32; end; end"
       expressions = Parser.new(source).parse.as(LibDef).body.as(CStructOrUnionDef).body.as(Expressions).expressions
