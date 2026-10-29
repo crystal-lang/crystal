@@ -5717,13 +5717,15 @@ module Crystal
     end
 
     def parse_asm_operand
+      location = @token.location
       text = parse_string_without_interpolation("constraint")
       check :OP_LPAREN
       next_token_skip_space_or_newline
       exp = parse_expression
       check :OP_RPAREN
+      end_location = token_end_location
       next_token_skip_space_or_newline
-      AsmOperand.new(text, exp)
+      AsmOperand.new(text, exp).at(location).at_end(end_location)
     end
 
     def parse_asm_clobbers
