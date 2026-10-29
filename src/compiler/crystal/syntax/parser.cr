@@ -5486,7 +5486,7 @@ module Crystal
 
     def parse_type_arg
       if @token.type.number?
-        num = NumberLiteral.new(@token.value.to_s, @token.number_kind).at(@token.location)
+        num = NumberLiteral.new(@token.value.to_s, @token.number_kind).at(@token.location).at_end(token_end_location)
         next_token_skip_space
         return num
       end
