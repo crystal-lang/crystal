@@ -2484,13 +2484,16 @@ module Crystal
           # It's an operator
           if @token.type.op_lsquare?
             write "["
-            next_token_skip_space
+            next_token
 
             args = node.args
 
             if node.name == "[]="
               last_arg = args.pop
             end
+
+            # A comment before the first argument is handled by `format_args`
+            skip_space if args.empty? || @token.passed_backslash_newline
 
             has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
@@ -2809,7 +2812,12 @@ module Crystal
       has_newlines = false
       found_comment = false
 
-      if @token.type.newline?
+      # A comment before the first argument also writes the newline after it.
+      # A backslash-newline is left to `skip_space_or_newline` below.
+      if !@token.passed_backslash_newline && skip_space(needed_indent)
+        next_needs_indent = true
+        has_newlines = true
+      elsif @token.type.newline?
         if do_consume_newlines
           indent(needed_indent) { consume_newlines }
           skip_space_or_newline
@@ -2865,12 +2873,14 @@ module Crystal
     end
 
     def format_named_args(args, named_args, needed_indent)
-      skip_space(needed_indent)
-
       named_args_column = needed_indent
 
+      # Without positional arguments, a comment before the first named
+      # argument is handled by `format_args`
       if args.empty?
+        skip_space(needed_indent) if @token.passed_backslash_newline
       else
+        skip_space(needed_indent)
         write_token :OP_COMMA
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type.newline?
