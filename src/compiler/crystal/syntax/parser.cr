@@ -786,7 +786,7 @@ module Crystal
               method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
               next_token_skip_space_or_newline
               value = parse_op_assign
-              call.at(location)
+              call.at(location).at_end(end_location)
               call.name_location = name_location
               atomic = OpAssign.new(call, method, value).at(location)
               atomic.name_location = op_name_location
