@@ -4177,6 +4177,20 @@ module Crystal
       node.suffix.should be_false
     end
 
+    it "sets correct location of short block" do
+      source = "foo &.bar.baz"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.bar.baz")
+
+      source = "foo(&.[0] = 1)"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.[0] = 1")
+
+      source = "foo(&.as(Int32))"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.as(Int32)")
+    end
+
     it "sets args_in_brackets to false for `a.b`" do
       parser = Parser.new("a.b")
       node = parser.parse.as(Call)
