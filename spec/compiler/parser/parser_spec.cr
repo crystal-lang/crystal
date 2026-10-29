@@ -3982,6 +3982,38 @@ module Crystal
       node_source(source, node).should eq("foo")
     end
 
+    it "sets correct location of block parameters" do
+      source = "foo { |a, *b, _| }"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node.args[0]).should eq("a")
+      node_source(source, node.args[1]).should eq("b")
+      node_source(source, node.args[2]).should eq("_")
+    end
+
+    it "sets correct location of unpacked block parameters" do
+      source = "foo do |a, (b, *(c, _), (d, *_))| end"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node.args[0]).should eq("a")
+      node_source(source, node.args[1]).should eq("(b, *(c, _), (d, *_))")
+
+      unpack = node.unpacks.should_not(be_nil)[1]
+      node_source(source, unpack).should eq("(b, *(c, _), (d, *_))")
+      node_source(source, unpack.expressions[0]).should eq("b")
+
+      splat = unpack.expressions[1].as(Splat)
+      node_source(source, splat).should eq("*(c, _)")
+
+      nested = splat.exp.as(Expressions)
+      node_source(source, nested).should eq("(c, _)")
+      node_source(source, nested.expressions[0]).should eq("c")
+      node_source(source, nested.expressions[1]).should eq("_")
+
+      nested = unpack.expressions[2].as(Expressions)
+      node_source(source, nested).should eq("(d, *_)")
+      node_source(source, nested.expressions[1]).should eq("*_")
+      node_source(source, nested.expressions[1].as(Splat).exp).should eq("_")
+    end
+
     it "sets correct location of var in macro for loop" do
       source = "{% for foo, bar in baz %} {% end %}"
       node = Parser.new(source).parse.as(MacroFor)
