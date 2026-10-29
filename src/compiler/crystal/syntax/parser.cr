@@ -2940,6 +2940,7 @@ module Crystal
                 add_when_exp(when_exps, tuple)
 
                 check :OP_RCURLY
+                tuple.end_location = token_end_location
                 next_token_skip_space
               else
                 exp = parse_when_expression(cond, single: true, exhaustive: exhaustive)
