@@ -558,4 +558,28 @@ describe "Code gen: generic class type" do
       Bar.new.t_incr
       CRYSTAL
   end
+
+  it "codegens an included generic module whose type argument gains a subclass later" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      module Mod(T)
+        def value
+          1
+        end
+      end
+
+      class Thing; end
+
+      class Sub
+        include Mod(Thing)
+      end
+
+      class Later < Thing; end
+
+      list = [] of Mod(Thing)
+      list << Sub.new
+      list[0].value
+      CRYSTAL
+  end
 end
