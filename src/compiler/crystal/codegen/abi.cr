@@ -31,7 +31,7 @@ abstract class Crystal::ABI
     end
   end
 
-  abstract def abi_info(args_types : Array(Type), return_type : Type) : FunctionType
+  abstract def abi_info(args_types : Array(Type), return_type : Type, llvm_typer : LLVMTyper) : FunctionType
   abstract def size(type : LLVM::Type)
   abstract def align(type : LLVM::Type)
 

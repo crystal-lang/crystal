@@ -417,7 +417,7 @@ class Crystal::CodeGenVisitor
 
     args_types = external.args.map(&.type)
     return_type = external.type
-    @abi.abi_info(args_types, return_type)
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def abi_info(external : Def, node : Call)
@@ -425,7 +425,7 @@ class Crystal::CodeGenVisitor
       (external.args[i]? || arg).type
     end
     return_type = external.type
-    @abi.abi_info(args_types, return_type)
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil

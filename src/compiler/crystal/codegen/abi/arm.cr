@@ -2,11 +2,11 @@ require "../abi"
 
 # Based on https://github.com/rust-lang/rust/blob/dfe8bd10fe6763e0a1d5d55fa2574ecba27d3e2e/src/librustc_trans/cabi_arm.rs
 class Crystal::ABI::ARM < Crystal::ABI
-  def abi_info(args_types : Array(Type), return_type : Type) : FunctionType
-    atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
-    rty = @llvm_typer.llvm_c_return_type(return_type)
+  def abi_info(args_types : Array(Type), return_type : Type, llvm_typer : LLVMTyper) : FunctionType
+    atys = args_types.map { |aty| llvm_typer.llvm_c_type(aty) }
+    rty = llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
-    context = @llvm_typer.llvm_context
+    context = llvm_typer.llvm_context
 
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = compute_arg_types(atys, context)
