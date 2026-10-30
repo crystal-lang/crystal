@@ -1034,6 +1034,15 @@ module Crystal
       false
     end
 
+    def visit(node : Prepend)
+      node.hook_expansions.try &.each do |hook|
+        accept hook
+      end
+
+      @last = llvm_nil
+      false
+    end
+
     def visit(node : If)
       if node.truthy?
         accept node.cond
