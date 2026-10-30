@@ -8,8 +8,8 @@ module Crystal
     private def define_macro_types
       @macro_types["ASTNode"] = @ast_node = ast_node = NonGenericMacroType.new self, "ASTNode", nil
 
-      @macro_types["Nop"] = NonGenericMacroType.new self, "Nop", ast_node
-      @macro_types["NilLiteral"] = NonGenericMacroType.new self, "NilLiteral", ast_node
+      @macro_types["Nop"] = @macro_nop = NonGenericMacroType.new self, "Nop", ast_node
+      @macro_types["NilLiteral"] = @macro_nil_literal = NonGenericMacroType.new self, "NilLiteral", ast_node
       @macro_types["BoolLiteral"] = NonGenericMacroType.new self, "BoolLiteral", ast_node
       @macro_types["NumberLiteral"] = NonGenericMacroType.new self, "NumberLiteral", ast_node
       @macro_types["CharLiteral"] = NonGenericMacroType.new self, "CharLiteral", ast_node
@@ -152,9 +152,9 @@ module Crystal
       @ast_node.not_nil!
     end
 
-    def macro_no_return
-      @macro_no_return.not_nil!
-    end
+    getter! macro_nil_literal : MacroType
+    getter! macro_nop : MacroType
+    getter! macro_no_return : MacroType
   end
 
   # An AST node type in the macro language, used in places such as
