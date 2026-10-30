@@ -1664,7 +1664,9 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
       patch_jump(cond_jump_location)
 
-      if @wants_value
+      # A statically false check leaves no filtered type, and the cast always
+      # raises, so this is only reached when the value did pass the check.
+      if @wants_value && filtered_type
         downcast node.obj, obj_type, filtered_type
       else
         pop aligned_sizeof_type(obj_type), node: nil
@@ -1749,9 +1751,17 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
-  private def is_a(node : ASTNode, type : Type, target_type : Type)
+  private def is_a(node : ASTNode, type : Type, target_type : Type) : Type?
     type = type.remove_indirection
-    filtered_type = type.filter_by(target_type).not_nil!
+    filtered_type = type.filter_by(target_type)
+
+    # No type in `type` can ever be a `target_type`, so the check is statically
+    # false. There is nothing to filter, so discard the value and answer false.
+    unless filtered_type
+      pop aligned_sizeof_type(type), node: nil
+      put_false node: node
+      return nil
+    end
 
     filter_type(node, type, filtered_type)
 
