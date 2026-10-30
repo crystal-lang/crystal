@@ -6,9 +6,10 @@ class Crystal::ABI::ARM < Crystal::ABI
     atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
     rty = @llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
+    context = @llvm_typer.llvm_context
 
-    ret_ty = compute_return_type(rty, ret_def)
-    arg_tys = compute_arg_types(atys)
+    ret_ty = compute_return_type(rty, ret_def, context)
+    arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)
   end
 
@@ -29,41 +30,41 @@ class Crystal::ABI::ARM < Crystal::ABI
     end
   end
 
-  private def compute_return_type(rty, ret_def)
+  private def compute_return_type(rty, ret_def, context)
     if !ret_def
-      ArgType.direct(llvm_context.void)
+      ArgType.direct(context.void)
     elsif register?(rty)
-      non_struct(rty)
+      non_struct(rty, context)
     else
       case size(rty)
       when 1
-        ArgType.direct(rty, llvm_context.int8)
+        ArgType.direct(rty, context.int8)
       when 2
-        ArgType.direct(rty, llvm_context.int16)
+        ArgType.direct(rty, context.int16)
       when 3, 4
-        ArgType.direct(rty, llvm_context.int32)
+        ArgType.direct(rty, context.int32)
       else
         ArgType.indirect(rty, LLVM::Attribute::StructRet)
       end
     end
   end
 
-  private def compute_arg_types(atys)
+  private def compute_arg_types(atys, context)
     atys.map do |aty|
       if register?(aty)
-        non_struct(aty)
+        non_struct(aty, context)
       else
         if align(aty) <= 4
-          ArgType.direct(aty, llvm_context.int32.array(((size(aty) + 3) // 4).to_u64))
+          ArgType.direct(aty, context.int32.array(((size(aty) + 3) // 4).to_u64))
         else
-          ArgType.direct(aty, llvm_context.int64.array(((size(aty) + 7) // 8).to_u64))
+          ArgType.direct(aty, context.int64.array(((size(aty) + 7) // 8).to_u64))
         end
       end
     end
   end
 
-  private def non_struct(type)
-    attr = type == llvm_context.int1 ? LLVM::Attribute::ZExt : nil
+  private def non_struct(type, context)
+    attr = type == context.int1 ? LLVM::Attribute::ZExt : nil
     ArgType.direct(type, attr: attr)
   end
 end

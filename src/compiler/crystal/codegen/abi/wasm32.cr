@@ -5,9 +5,10 @@ class Crystal::ABI::Wasm32 < Crystal::ABI
     atys = args_types.map { |aty| @llvm_typer.llvm_c_type(aty) }
     rty = @llvm_typer.llvm_c_return_type(return_type)
     ret_def = !rty.void?
+    context = @llvm_typer.llvm_context
 
-    ret_ty = compute_return_type(rty, ret_def)
-    arg_tys = compute_arg_types(atys)
+    ret_ty = compute_return_type(rty, ret_def, context)
+    arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)
   end
 
@@ -28,7 +29,7 @@ class Crystal::ABI::Wasm32 < Crystal::ABI
     end
   end
 
-  private def compute_return_type(rty, ret_def)
+  private def compute_return_type(rty, ret_def, context)
     if aggregate?(rty)
       ArgType.indirect(rty, LLVM::Attribute::ByVal)
     else
@@ -36,7 +37,7 @@ class Crystal::ABI::Wasm32 < Crystal::ABI
     end
   end
 
-  private def compute_arg_types(atys)
+  private def compute_arg_types(atys, context)
     atys.map do |t|
       if aggregate?(t)
         ArgType.indirect(t, LLVM::Attribute::ByVal)

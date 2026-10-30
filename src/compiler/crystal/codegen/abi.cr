@@ -35,10 +35,6 @@ abstract class Crystal::ABI
   abstract def size(type : LLVM::Type)
   abstract def align(type : LLVM::Type)
 
-  def llvm_context
-    @llvm_typer.llvm_context
-  end
-
   def size(type : LLVM::Type, pointer_size) : Int32
     case type.kind
     when LLVM::Type::Kind::Integer
