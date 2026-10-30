@@ -940,4 +940,29 @@ describe "Codegen: is_a?" do
       Base.as(Base | Base.class).is_a?(Base | Impl)
       CRYSTAL
   end
+
+  it "calls method on is_a?(generic type) with an instance over an unbound type parameter (#17182)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo
+      end
+
+      class Gen(T) < Foo
+        def initialize(@x : T)
+        end
+
+        def one
+          x = 1
+          x
+        end
+      end
+
+      struct Holder(U)
+        def initialize(@gen : Gen(U))
+        end
+      end
+
+      foo = Gen(Int32).new(3).as(Foo)
+      foo.is_a?(Gen) ? foo.one : 0
+      CRYSTAL
+  end
 end
