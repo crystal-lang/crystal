@@ -312,6 +312,35 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
 
+    it "closures self in a module method called with super" do
+      interpret(<<-CRYSTAL).should eq(3)
+        module Foo
+          def initialize
+            @proc = ->{ @x }
+            @y = @x + 1
+          end
+        end
+
+        class Bar
+          include Foo
+
+          @x = 1
+          @y = 0
+          @proc : Proc(Int32)
+
+          def initialize
+            super
+          end
+
+          def value
+            @y + @proc.call
+          end
+        end
+
+        Bar.new.value
+        CRYSTAL
+    end
+
     it "closures self and modifies instance var" do
       interpret(<<-CRYSTAL).should eq(3)
         class Foo
