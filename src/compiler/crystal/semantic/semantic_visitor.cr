@@ -96,6 +96,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       parsed_nodes.accept self
     rescue ex : CodeError
       node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex : SkipMacroCodeCoverageException
+      # Left for the macro code coverage tool to handle, see `SkipMacroCodeCoverageException`.
+      raise ex
     rescue ex
       raise Error.new "while requiring \"#{node.string}\"", ex
     end
