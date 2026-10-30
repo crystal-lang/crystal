@@ -39,7 +39,7 @@ class Crystal::RecursiveStructChecker
       check_recursive_instance_var_container(target, type, checked, path)
     end
 
-    if type.is_a?(AliasType) && !type.simple?
+    if type.is_a?(AliasType) && !type.simple? && !type.type_vars
       target = type
       checked = Set(Type).new
       path = [] of Var | Type
