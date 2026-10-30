@@ -1482,7 +1482,7 @@ describe "Enumerable" do
         words.each { |word| word.chars.tally_by(hash, &.downcase) }
 
         hash.should eq(
-          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1},
         )
       end
     end
@@ -1500,7 +1500,7 @@ describe "Enumerable" do
         words.each(&.chars.tally(hash))
 
         hash.should eq(
-          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1},
         )
       end
 
@@ -1510,7 +1510,7 @@ describe "Enumerable" do
         words.each(&.chars.tally(hash))
 
         hash.should eq(
-          {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1}
+          {'a' => 2, 'b' => 2, 'c' => 2, 'd' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'l' => 1, 'u' => 1},
         )
       end
 
@@ -1520,7 +1520,7 @@ describe "Enumerable" do
         words.each(&.chars.tally(hash))
 
         hash.should eq(
-          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1},
         )
       end
 
@@ -1530,7 +1530,7 @@ describe "Enumerable" do
         words.each(&.chars.tally(hash))
 
         hash.should eq(
-          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1}
+          {'c' => 1, 'r' => 2, 'y' => 2, 's' => 1, 't' => 1, 'a' => 1, 'l' => 1, 'u' => 1, 'b' => 1},
         )
       end
 

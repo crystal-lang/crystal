@@ -15,7 +15,7 @@ module HTTP
 
       it "chops value at the first invalid byte" do
         HTTP::Cookies.from_client_headers(
-          HTTP::Headers{"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle"}
+          HTTP::Headers{"Cookie" => "ginger=snap; cookie=hm🍪delicious; snicker=doodle"},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("ginger", "snap"),
           HTTP::Cookie.new("cookie", "hm"),
@@ -26,12 +26,12 @@ module HTTP
       # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
       it "takes last one on duplicate keys" do
         HTTP::Cookies.from_client_headers(
-          HTTP::Headers{"Cookie" => "foo=bar; foo=baz"}
+          HTTP::Headers{"Cookie" => "foo=bar; foo=baz"},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("foo", "baz"),
         }
         HTTP::Cookies.from_client_headers(
-          HTTP::Headers{"Cookie" => "foo=baz; foo=bar"}
+          HTTP::Headers{"Cookie" => "foo=baz; foo=bar"},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("foo", "bar"),
         }
@@ -50,7 +50,7 @@ module HTTP
 
       it "drops cookies with invalid byte in value" do
         HTTP::Cookies.from_server_headers(
-          HTTP::Headers{"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"]}
+          HTTP::Headers{"Set-Cookie" => ["ginger=snap", "cookie=hm🍪delicious", "snicker=doodle"]},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("ginger", "snap"),
           HTTP::Cookie.new("snicker", "doodle"),
@@ -60,12 +60,12 @@ module HTTP
       # FIXME: Should handle both: https://github.com/crystal-lang/crystal/issues/16069
       it "takes last one on duplicate keys" do
         HTTP::Cookies.from_server_headers(
-          HTTP::Headers{"Set-Cookie" => ["foo=bar", "foo=baz; path=/baz"]}
+          HTTP::Headers{"Set-Cookie" => ["foo=bar", "foo=baz; path=/baz"]},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("foo", "baz", path: "/baz"),
         }
         HTTP::Cookies.from_server_headers(
-          HTTP::Headers{"Set-Cookie" => ["foo=baz; path=/baz", "foo=bar"]}
+          HTTP::Headers{"Set-Cookie" => ["foo=baz; path=/baz", "foo=bar"]},
         ).should eq HTTP::Cookies{
           HTTP::Cookie.new("foo", "bar"),
         }

@@ -593,7 +593,7 @@ describe "Regex" do
         "missing closing parenthesis at 8"
       else
         "missing ) at 8"
-      end
+      end,
     )
   end
 

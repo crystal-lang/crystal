@@ -74,7 +74,7 @@ class LLVM::Module
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+      LibLLVM.md_string_in_context2(@context, val, val.bytesize),
     )
   end
 
@@ -84,7 +84,7 @@ class LLVM::Module
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.value_as_metadata(val.to_unsafe)
+      LibLLVM.value_as_metadata(val.to_unsafe),
     )
   end
 
