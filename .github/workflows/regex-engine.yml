@@ -36,7 +36,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Remove PCRE2
-        run: apk del pcre2-dev
+        run: apk del pcre2-dev pcre2-static
+      - name: Add PCRE
+        run: apk add pcre-dev
       - name: Assert not defaulting to PCRE
         run: bin/crystal eval 'abort unless Regex::Engine == Regex::PCRE2'
       - name: Show PCRE config
