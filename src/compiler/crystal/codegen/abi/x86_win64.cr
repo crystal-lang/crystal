@@ -6,7 +6,7 @@ class Crystal::ABI::X86_Win64 < Crystal::ABI::X86
     atys.map do |t|
       case t.kind
       when LLVM::Type::Kind::Struct
-        size = size(t)
+        size = target_data.abi_size(t)
         case size
         when 1 then ArgType.direct(t, context.int8)
         when 2 then ArgType.direct(t, context.int16)

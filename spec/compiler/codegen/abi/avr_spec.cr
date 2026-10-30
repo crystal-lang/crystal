@@ -4,12 +4,18 @@ require "../../../spec_helper"
   LLVM.init_avr
 {% end %}
 
+private def abi
+  triple = "avr-unknown-unknown-atmega328p"
+  target = LLVM::Target.from_triple(triple)
+  machine = target.create_target_machine(triple)
+  machine.enable_global_isel = false
+  Crystal::ABI::AVR.new(machine)
+end
+
 private def test(msg, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg do
+    abi = abi()
     program = Crystal::Program.new
-    program.codegen_target = Crystal::Codegen::Target.new("avr-unknown-unknown-atmega328p")
-    program.target_machine = program.codegen_target.to_target_machine(cpu: "atmega328p")
-    abi = Crystal::ABI::AVR.new(program.llvm_typer)
     ctx = program.llvm_typer.llvm_context
     block.call(abi, ctx, program)
   end

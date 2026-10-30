@@ -285,12 +285,12 @@ module Crystal
                    @frame_pointers : FramePointers = :auto,
                    @llvm_context : LLVM::Context = LLVM::Context.new,
                    main_returns_value : Bool = false)
+      @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
-      @abi = ABI.from(@llvm_typer)
       @main_llvm_typer = @llvm_typer
 
       @main_ret_type = @program.nil_type
