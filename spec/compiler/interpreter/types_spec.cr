@@ -98,7 +98,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "interprets crystal_type_id for nil" do
-      interpret("nil.crystal_type_id").should eq(0)
+      interpret("nil.crystal_type_id", prelude: "prelude").should eq("0")
     end
 
     it "interprets crystal_type_id for non-nil" do
