@@ -2495,9 +2495,11 @@ module Crystal
             has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
-                write ","
+                # The heredoc's body has already been written
+                heredoc_written = @last_is_heredoc && @token.type.newline?
+                write "," unless heredoc_written
                 found_comment = next_token_skip_space
-                write_line unless found_comment
+                write_line unless found_comment || @wrote_newline
                 write_indent
                 skip_space_or_newline
               else
@@ -2734,19 +2736,22 @@ module Crystal
         skip_space
         if has_parentheses
           if @token.type.op_comma?
+            wrote_comma = write_comma_before_pending_heredocs
             next_token
-            wrote_newline = skip_space(block_indent, write_comma: true)
+            wrote_newline = skip_space(block_indent, write_comma: !wrote_comma)
             if wrote_newline || @token.type.newline?
               unless wrote_newline
                 next_token_skip_space_or_newline
-                write ","
-                write_line
+                unless wrote_comma
+                  write ","
+                  write_line
+                end
               end
               needs_space = false
               block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
               write_indent(block_indent)
             else
-              write "," if !@token.type.op_rparen? # foo(1, &.foo) case
+              write "," if !@token.type.op_rparen? && !wrote_comma # foo(1, &.foo) case
             end
           end
           if @token.type.op_rparen?
@@ -2889,7 +2894,8 @@ module Crystal
         write ","
         next_token_skip_space
         if @token.type.newline?
-          write_line
+          # A pending heredoc's body might have been written already
+          write_line unless @wrote_newline
           write_indent(needed_indent)
           has_newlines = true
         else
@@ -2903,14 +2909,28 @@ module Crystal
       has_newlines
     end
 
+    # The body of a pending heredoc gets written once the next newline
+    # is reached, so a comma that follows it needs to be written right away.
+    #
+    # Returns `true` if the comma was written.
+    private def write_comma_before_pending_heredocs : Bool
+      return false if @lexer.heredocs.empty?
+
+      write ","
+      true
+    end
+
     def finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
       if has_parentheses
         if @token.type.op_comma?
+          wrote_comma = has_newlines && write_comma_before_pending_heredocs
           next_token
-          found_comment |= skip_space(column + 2, write_comma: true)
+          found_comment |= skip_space(column + 2, write_comma: !wrote_comma)
           if @token.type.newline? && has_newlines
-            write ","
-            write_line
+            unless wrote_comma
+              write ","
+              write_line
+            end
             skip_space_or_newline(column + 2)
             write_indent(column)
             skip_space_or_newline(column)

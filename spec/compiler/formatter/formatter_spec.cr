@@ -2524,6 +2524,25 @@ describe Crystal::Formatter do
     assert_format "x.foo =(a..b)", "x.foo = (a..b)"
   end
 
+  # heredoc as the last call argument
+  assert_format "foo(\n  1,\n  bar: <<-HEREDOC\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  bar: <<-HEREDOC\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  <<-HEREDOC\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  <<-HEREDOC,\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  <<-HEREDOC, # fox\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  1,\n  <<-HEREDOC,\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  bar: <<-HEREDOC,\n  foo\n  HEREDOC\n)"
+  assert_format "foo(\n  <<-HEREDOC, <<-HEREDOC2,\n  foo\n  HEREDOC\n  bar\n  HEREDOC2\n)"
+  assert_format "foo(\n  <<-HEREDOC,\n  foo\n  HEREDOC\n  &block\n)"
+  assert_format "foo(\n  <<-HEREDOC,\n  foo\n  HEREDOC\n  &.bar\n)"
+  assert_format "foo(\n  <<-HEREDOC, # fox\n  foo\n  HEREDOC\n  &.bar\n)"
+  assert_format "foo(<<-HEREDOC,\n  foo\n  HEREDOC\n  &.bar\n)"
+  assert_format "foo(\n  <<-HEREDOC,\n  foo\n  HEREDOC\n) do\nend"
+  assert_format "foo(\n  <<-HEREDOC,\n  foo\n  HEREDOC\n) { }"
+  assert_format "foo[\n  <<-HEREDOC\n  foo\n  HEREDOC\n]"
+  assert_format "foo[\n  <<-HEREDOC,\n  foo\n  HEREDOC\n]"
+  assert_format "foo[\n  <<-HEREDOC, # fox\n  foo\n  HEREDOC\n]"
+
   assert_format <<-CRYSTAL,
     def foo
       {% if flag?(:foo) %}
