@@ -901,6 +901,91 @@ describe "Codegen: is_a?" do
       CRYSTAL
   end
 
+  it "does is_a? with union type as alias, don't resolve to virtual type (#9665)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      alias BorC = B | C
+
+      x = D.new || C.new
+      x.is_a?(BorC)
+      CRYSTAL
+  end
+
+  it "does is_a? with union type as alias of Union(X, Y), don't resolve to virtual type (#9665)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      alias BorC = Union(B, C)
+
+      x = D.new || C.new
+      x.is_a?(BorC)
+      CRYSTAL
+  end
+
+  it "does is_a? with union type as alias of an alias, don't resolve to virtual type (#9665)" do
+    run(<<-CRYSTAL).to_b.should be_false
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class D < A
+      end
+
+      alias BorC = B | C
+      alias BorC2 = BorC
+
+      x = D.new || C.new
+      x.is_a?(BorC2)
+      CRYSTAL
+  end
+
+  it "does is_a? true for a union alias member's subclass (#9665)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class A
+      end
+
+      class B < A
+      end
+
+      class C < A
+      end
+
+      class SubB < B
+      end
+
+      alias BorC = B | C
+
+      x = SubB.new.as(A)
+      x.is_a?(BorC)
+      CRYSTAL
+  end
+
   it "restricts union metaclass to metaclass (#12295)" do
     run(<<-CRYSTAL).to_i.should eq(2)
       x = true ? Union(String | Int32) : String
