@@ -32,7 +32,7 @@ module Crystal
     end
 
     def evaluate(node, debug = Debug::Default)
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -96,7 +96,7 @@ module Crystal
           LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
@@ -283,7 +283,8 @@ module Crystal
                    @single_module : Bool = false,
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
-                   @llvm_context : LLVM::Context = LLVM::Context.new)
+                   @llvm_context : LLVM::Context = LLVM::Context.new,
+                   main_returns_value : Bool = false)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
       @main_mod = @llvm_mod
@@ -291,7 +292,11 @@ module Crystal
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @abi = ABI.from(@llvm_typer)
       @main_llvm_typer = @llvm_typer
-      @main_ret_type = node.type? || @program.nil_type
+
+      @main_ret_type = @program.nil_type
+      if main_returns_value && (node_type = node.type?)
+        @main_ret_type = node_type
+      end
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       main_type = LLVM::Type.function([llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, main_type)
@@ -314,7 +319,7 @@ module Crystal
       @argv = @main.params[1]
       @argv.name = "argv"
 
-      @builder = new_builder(@main_llvm_context)
+      @builder = new_builder(@main_mod)
       @main_builder = @builder
 
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
@@ -406,8 +411,8 @@ module Crystal
       llvm_mod
     end
 
-    def new_builder(llvm_context)
-      wrap_builder(llvm_context.new_builder)
+    def new_builder(llvm_mod)
+      wrap_builder(llvm_mod.new_builder)
     end
 
     # Here we only initialize simple constants, those
@@ -423,7 +428,7 @@ module Crystal
     end
 
     def wrap_builder(builder)
-      CrystalLLVMBuilder.new builder, llvm_typer, c_printf_fun
+      CrystalLLVMBuilder.new builder, llvm_typer
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
@@ -563,7 +568,7 @@ module Crystal
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
-        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
+        mod.dump if dump_all_llvm || dump_llvm_regex.try &.matches?(name)
 
         # Always run verifications so we can catch bugs earlier and more often.
         # We can probably remove this, or only enable this when compiling in

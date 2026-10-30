@@ -5,8 +5,8 @@ abstract class Crystal::ABI
 
   def initialize(@llvm_typer : LLVMTyper)
     triple = @llvm_typer.target_machine.triple
-    @osx = !!(triple =~ /apple/)
-    @windows = !!(triple =~ /windows/)
+    @osx = triple.includes?("apple")
+    @windows = triple.includes?("windows")
   end
 
   def self.from(llvm_typer : LLVMTyper) : self

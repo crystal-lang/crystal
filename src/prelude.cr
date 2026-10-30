@@ -10,6 +10,11 @@
   end
 %}
 
+{% if flag?(:interpreted) %}
+  # The interpreter doesn't call `main`
+  Crystal.init_runtime
+{% end %}
+
 # Entries to this file should only be ordered if macros are involved -
 # macros need to be defined before they are used.
 # A first compiler pass gathers all classes and methods, removing the
@@ -80,9 +85,7 @@ require "reference"
 require "reference_storage"
 require "regex"
 require "set"
-{% unless flag?(:wasm32) %}
-  require "signal"
-{% end %}
+require "signal"
 require "slice"
 require "static_array"
 require "struct"

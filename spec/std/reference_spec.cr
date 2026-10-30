@@ -193,4 +193,9 @@ describe "Reference" do
     ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
     expect_empty_recursive_hashes
   end
+
+  it "pretty_print breaks instance variables that don't fit" do
+    ReferenceSpec::TestClass.new(42, "foo" * 30).pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+\n @x=42,\n @y=\n  "#{"foo" * 30}">\Z/)
+    expect_empty_recursive_hashes
+  end
 end

@@ -512,7 +512,7 @@ class URI
   private def relativize_path(base : String, dst : String) : String
     return "" if base == dst
 
-    if base =~ %r{(?:\A|/)\.\.?(?:/|\z)} && dst.starts_with?('/')
+    if base.matches?(%r{(?:\A|/)\.\.?(?:/|\z)}) && dst.starts_with?('/')
       # dst has abnormal absolute path,
       # like "/./", "/../", "/x/../", ...
       return dst

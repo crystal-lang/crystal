@@ -273,7 +273,7 @@ struct Path
   # # Path["foo/bar"]
   # ```
   def each_parent(&block : Path ->)
-    return if empty?
+    return if @name.empty? || @name == "."
 
     first_char = @name.char_at(0)
     unless separators.includes?(first_char) || (first_char == '.' && separators.includes?(@name.byte_at?(1).try &.unsafe_chr)) || (windows? && (windows_drive? || unc_share?))
@@ -417,7 +417,7 @@ struct Path
   #
   # See also Rob Pike: *[Lexical File Names in Plan 9 or Getting Dot-Dot Right](https://9p.io/sys/doc/lexnames.html)*
   def normalize(*, remove_final_separator : Bool = true) : Path
-    return new_instance "." if empty?
+    return new_instance "." if @name.empty?
 
     drive, root = drive_and_root
     reader = Char::Reader.new(@name)
@@ -957,10 +957,6 @@ struct Path
     else
       raise Error.new("Can't resolve sibling for a path without parent directory")
     end
-  end
-
-  private def empty?
-    @name.empty? || @name == "."
   end
 
   # Returns a relative path that is lexically equivalent to `self` when joined

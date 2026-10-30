@@ -4955,6 +4955,7 @@ class String
         offset += search.bytesize
 
         # no overlapping matches; advance past the matched string
+        return unless pointer + search.bytesize <= end_pointer
         search.bytesize.times do
           hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
           pointer += 1

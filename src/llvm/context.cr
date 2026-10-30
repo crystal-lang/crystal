@@ -12,6 +12,7 @@ class LLVM::Context
     Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
+  @[Deprecated("Use `LLVM::Module#new_builder` instead")]
   def new_builder : Builder
     # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
     builder = Builder.new(LibLLVM.create_builder_in_context(self))
@@ -124,7 +125,8 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
+    metadata = LibLLVM.md_string_in_context2(self, value, value.bytesize)
+    LLVM::Value.new LibLLVM.metadata_as_value(self, metadata)
   end
 
   def md_node(values : Array(Value)) : Value
