@@ -335,7 +335,7 @@ module Crystal
       key = MacroVarKey.new(node.name, exps)
 
       macro_vars = @macro_vars ||= {} of MacroVarKey => String
-      macro_var = macro_vars[key] ||= @program.new_temp_var_name
+      macro_var = macro_vars[key] ||= @program.new_temp_var_name(node)
       @str << macro_var
       false
     end

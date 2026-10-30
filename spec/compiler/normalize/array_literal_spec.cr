@@ -98,24 +98,23 @@ describe "Normalize: array literal" do
       CRYSTAL
   end
 
-  # TODO: add md5 to the rest of the variables
   it "normalizes with filename" do
     assert_expand_named "Foo{x, *y}", <<-CRYSTAL, filename: "foo.cr"
-      __temp_1 = x
-      __temp_2 = y
-      __temp_3 = Foo.new
-      __temp_3 << __temp_1
-      __temp_2.each do |__temp_cd6ae5dd_1| __temp_3 << __temp_cd6ae5dd_1 end
-      __temp_3
+      __temp_cd6ae5dd_1 = x
+      __temp_cd6ae5dd_2 = y
+      __temp_cd6ae5dd_3 = Foo.new
+      __temp_cd6ae5dd_3 << __temp_cd6ae5dd_1
+      __temp_cd6ae5dd_2.each do |__temp_cd6ae5dd_4| __temp_cd6ae5dd_3 << __temp_cd6ae5dd_4 end
+      __temp_cd6ae5dd_3
       CRYSTAL
 
     assert_expand_named "Foo{x, *y}", <<-CRYSTAL, filename: "bar.cr"
-      __temp_1 = x
-      __temp_2 = y
-      __temp_3 = Foo.new
-      __temp_3 << __temp_1
-      __temp_2.each do |__temp_fbcf3d84_1| __temp_3 << __temp_fbcf3d84_1 end
-      __temp_3
+      __temp_fbcf3d84_1 = x
+      __temp_fbcf3d84_2 = y
+      __temp_fbcf3d84_3 = Foo.new
+      __temp_fbcf3d84_3 << __temp_fbcf3d84_1
+      __temp_fbcf3d84_2.each do |__temp_fbcf3d84_4| __temp_fbcf3d84_3 << __temp_fbcf3d84_4 end
+      __temp_fbcf3d84_3
       CRYSTAL
   end
 end
