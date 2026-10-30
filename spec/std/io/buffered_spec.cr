@@ -434,6 +434,11 @@ describe "IO::Buffered" do
     io = BufferedWrapper.new(str)
     io.skip(3)
     io.read_char.should eq('4')
+
+    expect_raises(ArgumentError, "Negative bytes_count") do
+      io.skip(-1)
+    end
+    io.read_char.should eq('5')
   end
 
   it "skips big" do
