@@ -78,6 +78,7 @@ class Crystal::CodeGenVisitor
     def close
       if @exit_block
         position_at_end exit_block
+        @codegen.set_artificial_debug_location if @codegen.debug.line_numbers?
       end
 
       if @count == 0
