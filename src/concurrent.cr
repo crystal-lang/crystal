@@ -2,6 +2,10 @@ require "fiber"
 require "channel"
 require "crystal/tracing"
 
+{% if flag?(:wasi) && !flag?(:without_mt) %}
+  {% raise "WASM targets require the 'without_mt' compilation flag" %}
+{% end %}
+
 {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
   require "fiber/execution_context"
 {% else %}
