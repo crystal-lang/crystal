@@ -624,4 +624,24 @@ describe "expand" do
 
     assert_expand_simple code, original: "foo(hello)", expanded: expanded + '\n'
   end
+
+  it "does not emit a doc comment inside an expression" do
+    code = <<-CRYSTAL
+      class Holder
+      end
+
+      macro prop(name)
+        @{{name.id}} : Holder = Holder.new
+      end
+
+      class Foo
+        # The identity property.
+        ‸prop bar
+      end
+      CRYSTAL
+
+    assert_expand_simple code,
+      original: "# The identity property.\nprop(bar)",
+      expanded: "@bar : Holder = Holder.new"
+  end
 end
