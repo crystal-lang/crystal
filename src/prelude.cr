@@ -1,5 +1,5 @@
 {%
-  min_compiler_version = "1.13.0"
+  min_compiler_version = "1.15.0"
   if compare_versions(Crystal::VERSION, min_compiler_version) < 0
     @top_level.warning <<-TXT
       This compiler release at version #{Crystal::VERSION.id} is no longer supported.
