@@ -33,7 +33,7 @@ abstract class Crystal::ABI
     end
   end
 
-  abstract def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : Context)
+  abstract def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : LLVM::Context)
   abstract def size(type : LLVM::Type)
   abstract def align(type : LLVM::Type)
 
