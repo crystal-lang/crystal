@@ -1459,6 +1459,22 @@ class Crystal::Repl::Compiler < Crystal::Visitor
     false
   end
 
+  def visit(node : OffsetOf)
+    return false unless @wants_value
+
+    type = node.offsetof_type.type
+    offset =
+      if type.struct? || type.is_a?(TupleInstanceType)
+        @context.offset_of(type, node.element_index)
+      else
+        @context.instance_offset_of(type, node.element_index)
+      end
+
+    put_i32 offset, node: node
+
+    false
+  end
+
   def visit(node : TypeNode)
     return false unless @wants_value
 
