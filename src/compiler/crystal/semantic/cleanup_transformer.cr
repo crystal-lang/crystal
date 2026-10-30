@@ -66,6 +66,9 @@ module Crystal
   class CleanupTransformer < Transformer
     @transformed : Set(Def)
 
+    # The callers for each method, used to propagate `raises`
+    @callers : Hash(Def, Array(Def))
+
     # The current method we are processing
     @current_def : Def?
     @visiting = [] of Def
@@ -74,10 +77,26 @@ module Crystal
 
     def initialize(@program : Program)
       @transformed = Set(Def).new.compare_by_identity
+      @callers = Hash(Def, Array(Def)).new.compare_by_identity
       @exhaustiveness_checker = ExhaustivenessChecker.new(@program)
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+    end
+
+    # Recursively mark all methods that call `a_def` as raising when `a_def`
+    # is found to raise.
+    private def propagate_raises(a_def : Def) : Nil
+      return if a_def.raises?
+
+      worklist = [a_def]
+      while current = worklist.pop?
+        next if current.raises?
+        current.raises = true
+        @callers[current]?.try &.each do |caller|
+          worklist << caller unless caller.raises?
+        end
+      end
     end
 
     def inside_def!
@@ -598,6 +617,8 @@ module Crystal
         @visiting << current_def if current_def
 
         target_defs.each do |target_def|
+          (@callers[target_def] ||= [] of Def) << current_def if current_def
+
           if @transformed.add?(target_def)
             node.bubbling_exception do
               @current_def = target_def
@@ -633,8 +654,8 @@ module Crystal
           end
 
           # If the current call targets a method that raises, the method
-          # where the call happens also raises.
-          current_def.raises = true if current_def && target_def.raises?
+          # where the call happens also raises, recursively up the chain.
+          propagate_raises(current_def) if current_def && target_def.raises?
         end
 
         @visiting.pop if current_def
