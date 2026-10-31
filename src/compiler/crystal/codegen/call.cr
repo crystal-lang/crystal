@@ -178,7 +178,7 @@ class Crystal::CodeGenVisitor
           call_arg = context.vars[exp.name].pointer
         when InstanceVar
           # Just get a pointer to the instance variable
-          call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
+          call_arg = instance_var_ptr(context.type, exp.name, llvm_self_ptr)
         when Underscore
           # Allocate stack memory, but discard the value
           call_arg = alloca(llvm_type(arg.type))
