@@ -71,10 +71,8 @@ class Fiber
   # :nodoc:
   property previous : Fiber?
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     property! execution_context : ExecutionContext
-  {% elsif flag?(:preview_mt) %}
-    @current_thread = Atomic(Thread?).new(nil)
   {% end %}
 
   # :nodoc:
@@ -103,21 +101,21 @@ class Fiber
   # When the fiber is executed, it runs *proc* in its context.
   #
   # *name* is an optional and used only as an internal reference.
-  def self.new(name : String? = nil, {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}execution_context : ExecutionContext = ExecutionContext.current,{% end %} &proc : ->) : self
+  def self.new(name : String? = nil, {% unless flag?(:without_mt) %}execution_context : ExecutionContext = ExecutionContext.current,{% end %} &proc : ->) : self
     stack =
       {% if flag?(:interpreted) %}
         # the interpreter is managing the stacks
         Stack.new(Pointer(Void).null, Pointer(Void).null)
-      {% elsif !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% elsif !flag?(:without_mt) %}
         execution_context.stack_pool.checkout
       {% else %}
         Crystal::Scheduler.stack_pool.checkout
       {% end %}
-    new(name, stack, {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}execution_context,{% end %} &proc)
+    new(name, stack, {% unless flag?(:without_mt) %}execution_context,{% end %} &proc)
   end
 
   # :nodoc:
-  def initialize(@name : String?, @stack : Stack, {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}@execution_context : ExecutionContext = ExecutionContext.current,{% end %} &@proc : ->)
+  def initialize(@name : String?, @stack : Stack, {% unless flag?(:without_mt) %}@execution_context : ExecutionContext = ExecutionContext.current,{% end %} &@proc : ->)
     @context = Context.new
 
     fiber_main = ->(f : Fiber) { f.run }
@@ -146,10 +144,6 @@ class Fiber
     @stack = Stack.new(stack, stack_bottom)
 
     @name = "main"
-
-    {% if flag?(:preview_mt) && !flag?(:execution_context) %}
-      @current_thread.set(thread)
-    {% end %}
 
     Fiber.fibers.push(self)
 
@@ -184,7 +178,7 @@ class Fiber
 
     # the interpreter is managing the stacks
     {% unless flag?(:interpreted) %}
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         # do not prematurely release the stack before we switch to another fiber
         if stack = Thread.current.dying_fiber(self)
           # we can however release the stack of a previously dying fiber (we
@@ -246,7 +240,7 @@ class Fiber
   # puts "never reached"
   # ```
   def resume : Nil
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       ExecutionContext.resume(self)
     {% else %}
       Crystal::Scheduler.resume(self)
@@ -259,7 +253,7 @@ class Fiber
   # the next time it has the opportunity to reschedule to another fiber. There
   # are no guarantees when that will happen.
   def enqueue : Nil
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       execution_context.enqueue(self)
     {% else %}
       Crystal::Scheduler.enqueue(self)
@@ -319,7 +313,7 @@ class Fiber
   # useful if the fiber needs to wait  for something to happen (for example an IO
   # event, a message is ready in a channel, etc.) which triggers a re-enqueue.
   def self.suspend : Nil
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       ExecutionContext.reschedule
     {% else %}
       Crystal::Scheduler.reschedule
@@ -328,7 +322,7 @@ class Fiber
 
   # :nodoc:
   def self.syscall(&)
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       ExecutionContext::Scheduler.current.syscall { yield }
     {% else %}
       yield
@@ -353,18 +347,6 @@ class Fiber
     # Push the used section of the stack
     GC.push_stack @context.stack_top, @stack.bottom
   end
-
-  {% if flag?(:preview_mt) && !flag?(:execution_context) %}
-    # :nodoc:
-    def set_current_thread(thread = Thread.current) : Thread
-      @current_thread.set(thread)
-    end
-
-    # :nodoc:
-    def get_current_thread : Thread?
-      @current_thread.lazy_get
-    end
-  {% end %}
 
   # :nodoc:
   #

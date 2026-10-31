@@ -114,7 +114,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     true
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
