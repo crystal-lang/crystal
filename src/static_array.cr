@@ -78,7 +78,9 @@ struct StaticArray(T, N)
   # StaticArray(Int32, 3).new(42) # => StaticArray[42, 42, 42]
   # ```
   def self.new(value : T)
-    new { value }
+    array = uninitialized self
+    array.to_unsafe.fill(N, value)
+    array
   end
 
   # Disallow creating an uninitialized StaticArray with new.
