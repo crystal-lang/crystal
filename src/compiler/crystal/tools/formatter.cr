@@ -3316,6 +3316,10 @@ module Crystal
 
     def visit(node : OpAssign)
       accept node.target
+      # The target is followed by an operator like `/=` or `//=`, never by a
+      # regex. A previous `slash_is_regex!` might still be in effect if the
+      # target was already lexed by then (e.g. after a comment).
+      slash_is_not_regex!
       skip_space_or_newline
 
       slash_is_regex!

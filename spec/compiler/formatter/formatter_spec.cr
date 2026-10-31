@@ -1281,6 +1281,10 @@ describe Crystal::Formatter do
 
   assert_format "x = 1\nx    +=   1", "x = 1\nx += 1"
   assert_format "x[ y ] += 1", "x[y] += 1"
+  assert_format "x = 1\nx /= 2\nx //= 2"
+  assert_format "def foo(x) # bar\n  x /= 2\nend"
+  assert_format "def foo(x) # bar\n  x //= 2\nend"
+  assert_format "x = 1\nwhile x # bar\n  x //= 2\nend"
   assert_format "@x   ||=   1", "@x ||= 1"
   assert_format "@x   &&=   1", "@x &&= 1"
   assert_format "@x[ 1 ]   ||=   2", "@x[1] ||= 2"
