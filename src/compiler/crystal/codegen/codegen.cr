@@ -303,7 +303,7 @@ module Crystal
       @main.linkage = LLVM::Linkage::Internal if @single_module
       @fun_types = { {@llvm_mod, MAIN_NAME} => main_type }
 
-      if @program.has_flag?("msvc")
+      if @program.codegen_target.msvc?
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
       else
@@ -391,14 +391,14 @@ module Crystal
       llvm_mod.data_layout = @program.target_machine.data_layout
 
       # enable branch authentication instructions (BTI)
-      if @program.has_flag?("aarch64")
+      if @program.codegen_target.aarch64?
         if @program.has_flag?("branch-protection=bti")
           llvm_mod.add_flag(:override, "branch-target-enforcement", 1)
         end
       end
 
       # enable control flow enforcement protection (CET): IBT and/or SHSTK
-      if @program.has_flag?("x86_64") || @program.has_flag?("i386")
+      if @program.codegen_target.x86?
         if @program.has_flag?("cf-protection=branch") || @program.has_flag?("cf-protection=full")
           llvm_mod.add_flag(:override, "cf-protection-branch", 1)
         end
@@ -1742,7 +1742,7 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
-        if @program.has_flag?("win32") && !@program.has_flag?("static")
+        if @program.codegen_target.win32? && !@program.has_flag?("static")
           var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
         end
         var.thread_local = thread_local
@@ -2659,7 +2659,7 @@ module Crystal
   end
 
   def self.safe_mangling(program, name)
-    if program.has_flag?("msvc")
+    if program.codegen_target.msvc?
       String.build do |str|
         name.each_char do |char|
           if char.ascii_alphanumeric? || char == '_'
