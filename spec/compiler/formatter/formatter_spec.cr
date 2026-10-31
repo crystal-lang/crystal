@@ -1655,7 +1655,15 @@ describe Crystal::Formatter do
   assert_format %("foo" \\\n "bar" \\\n "baz"), %("foo" \\\n"bar" \\\n"baz")
   assert_format %("foo \#{bar}" \\\n "baz"), %("foo \#{bar}" \\\n"baz")
   assert_format %("a" \\\n\n1)
-  assert_format %("a" \\\n+ "b"), %("a" \\\n   + "b")
+  assert_format %("a" \\\n+ "b"), %("a" \\\n  + "b")
+
+  # #10927, #13945
+  assert_format %(x = "1" \\\n  + "2" \\\n  + "3")
+  assert_format %(foo << "a" \\\n  << "b" \\\n  << "c")
+  assert_format %(x = "%d" \\\n  % 2)
+  assert_format %(x = "a" \\\n  / 2)
+  assert_format %(x = "a" \\\n  // 2)
+  assert_format %(x = "a" \\\n    "b" \\\n    "c")
   assert_format %(begin\n  "a" \\\n\n  1\nend), %(begin\n  "a" \\\n\n  1\nend)
 
   assert_format %(asm("nop"))

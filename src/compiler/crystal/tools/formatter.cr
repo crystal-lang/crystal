@@ -483,7 +483,7 @@ module Crystal
       write @token.raw
       format_regex_modifiers if is_regex
 
-      if space_slash_newline?
+      if string_continuation?
         @string_continuation += 1
         @indent = column
 
@@ -718,24 +718,20 @@ module Crystal
       end
     end
 
-    def space_slash_newline?
-      pos, line, col = @lexer.current_pos, @lexer.line_number, @lexer.column_number
-      while true
-        char = @lexer.current_char
-        case char
-        when ' ', '\t'
-          @lexer.next_char
-        when '\\'
-          @lexer.current_pos = pos
-          return true
+    # Returns `true` if the string literal that just ended is continued by
+    # another one after a backslash-newline, as in `"foo" \↵ "bar"`.
+    # A backslash-newline followed by anything else (like `"foo" \↵ + "bar"`)
+    # is a regular line continuation.
+    def string_continuation?
+      @lexer.peek_ahead do
+        token = @lexer.next_token
+        if token.type.space? && token.passed_backslash_newline
+          token = @lexer.next_token
+          token.type.delimiter_start? && token.delimiter_state.kind.string?
         else
-          break
+          false
         end
       end
-      @lexer.current_pos = pos
-      @lexer.line_number = line
-      @lexer.column_number = col
-      false
     end
 
     def visit(node : ArrayLiteral)
