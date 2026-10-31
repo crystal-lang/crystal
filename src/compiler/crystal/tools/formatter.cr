@@ -3421,9 +3421,10 @@ module Crystal
         check_end
         write "; end"
       else
-        skip_space_or_newline
+        skip_space_or_newline(@indent + 2, last: true)
         check_end
-        write_line
+        # A trailing comment already wrote the newline
+        write_line unless @wrote_newline
         write_indent
         write "end"
       end
