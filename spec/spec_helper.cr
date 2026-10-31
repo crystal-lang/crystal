@@ -34,6 +34,21 @@ class Crystal::Program
   def generic_module(name, *type_vars)
     types[name].as(GenericModuleType).instantiate(type_vars.to_a.map &.as(TypeVar))
   end
+
+  def extern_struct_of(types, *, packed : Bool = false, name : String? = nil)
+    name ||= new_temp_var_name("ExternStruct__temp_")
+
+    struct_type = NonGenericClassType.new(self, self, name, @program.struct)
+    struct_type.struct = true
+    struct_type.extern = true
+    struct_type.packed = packed
+
+    types.each_with_index do |type, i|
+      struct_type.declare_instance_var("@ivar#{i}", type)
+    end
+
+    struct_type
+  end
 end
 
 record SemanticResult,
