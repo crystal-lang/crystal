@@ -2312,6 +2312,17 @@ describe Crystal::Formatter do
   assert_format "def a\n  {\n    1, # x\n    # y\n  }\nend"
   assert_format "def a\n  [\n    1, # x\n    # y\n  ]\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n  )\nend"
+
+  # comment before the first argument
+  assert_format "foo( # bar\n  1,\n  2,\n)"
+  assert_format "foo( # bar\n  1\n)"
+  assert_format "foo( # bar\n  # baz\n  1,\n)"
+  assert_format "foo( # bar\n  a: 1,\n)"
+  assert_format "foo( # bar\n  1,\n  a: 2,\n)"
+  assert_format "foo[ # bar\n  1,\n  2,\n]"
+  assert_format "Foo[ # bar\n  1,\n\n  2, # baz\n]"
+  assert_format "foo(\\\n1)", "foo(1)"
+  assert_format "foo[\\\n1]", "foo[ \\\n  1]"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    2\n  )\nend"
   assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
