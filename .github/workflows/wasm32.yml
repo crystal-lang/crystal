@@ -23,7 +23,7 @@ jobs:
       - name: "Install Crystal"
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: 1.22
+          crystal: 1.22.2
 
       - name: "Install WASI SDK"
         uses: bytecodealliance/setup-wasi-sdk-action@77d09f3df1e8da344d8403cf8631af8977938b4c # v1.0.0

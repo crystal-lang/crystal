@@ -1,6 +1,6 @@
 #!/bin/sh
 
-: "${CRYSTAL_BOOTSTRAP_VERSION:=1.21.0}"
+: "${CRYSTAL_BOOTSTRAP_VERSION:=1.22.2}"
 
 fail() {
   echo "${*}" >&2
