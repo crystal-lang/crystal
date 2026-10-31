@@ -1,4 +1,3 @@
-require "crystal/pointer_linked_list"
 require "crystal/pointer_pairing_heap"
 
 # Information about the event that a `Fiber` is waiting on.
@@ -6,8 +5,8 @@ require "crystal/pointer_pairing_heap"
 # The event can be waiting for `IO` with or without a timeout, or be a timed
 # event such as sleep or a select timeout (without IO).
 #
-# The events can be found in different queues, for example `Timers` and/or
-# `Waiters` depending on their type.
+# The events can be registered in `Timers` and/or `Waiter` depending on their
+# type.
 struct Crystal::EventLoop::Polling::Event
   enum Type
     IoRead
@@ -22,9 +21,9 @@ struct Crystal::EventLoop::Polling::Event
   # resume.
   getter fiber : Fiber
 
-  # Arena index to access the associated `PollDescriptor` when processing an IO
-  # event. Nil for timed events (sleep, select timeout).
-  getter! index : Arena::Index?
+  # The IO::FileDescriptor or Socket instance when processing an IO event.
+  # Nil for timed events (sleep, select timeout).
+  @io : IO?
 
   # The absolute time, against the monotonic clock, at which a timed event shall
   # trigger. Nil for IO events without a timeout.
@@ -35,17 +34,30 @@ struct Crystal::EventLoop::Polling::Event
 
   property timeout_select_action : Channel::TimeoutAction?
 
-  # The event can be added to `Waiters` lists.
-  include PointerLinkedList::Node
-
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
 
-  def initialize(@type : Type, @fiber, @index = nil, timeout : Time::Span? = nil)
+  def initialize(@type : Type, @fiber, @io = nil, timeout : Time::Span? = nil)
     if timeout
       now = Crystal::System::Time.instant
       @wake_at = now + timeout
     end
+  end
+
+  def __poll_descriptor(&) : Nil
+    {% begin %}
+      # manual devirtualization of IO+ into concrete types
+      case io = @io
+      when IO::FileDescriptor
+        io.__poll_descriptor { |pd| yield pd }
+      {% if @top_level.has_constant?(:Socket) %}
+      when ::Socket
+        io.__poll_descriptor { |pd| yield pd }
+      {% end %}
+      else
+        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
+      end
+    {% end %}
   end
 
   # Mark the IO event as timed out.
