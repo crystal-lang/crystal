@@ -462,10 +462,10 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
   end
 
-  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)
+  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr, seen = Set(String).new)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
+      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr, seen)
     else
       def_vars = target_def.vars
       closure_vars.each_with_index do |var, i|
@@ -475,6 +475,12 @@ class Crystal::CodeGenVisitor
         # consider the local var as closured.
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
+
+        # A closured var in this context might have the same name as
+        # a closured var in a parent context, for example a block var
+        # that shadows an outer var. The innermost one wins, so skip
+        # a name that was already bound.
+        next unless seen.add?(var.name)
 
         if context.fun.naked?
           debug_variable_created = false
@@ -491,7 +497,7 @@ class Crystal::CodeGenVisitor
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
         parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
-        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
+        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure, seen)
       elsif closure_self = context.closure_self
         self_index = closure_vars.size + (context.closure_parent_context ? 1 : 0)
         if context.fun.naked?
