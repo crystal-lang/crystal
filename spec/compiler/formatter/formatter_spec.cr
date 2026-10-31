@@ -2312,6 +2312,11 @@ describe Crystal::Formatter do
   assert_format "def a\n  {\n    1, # x\n    # y\n  }\nend"
   assert_format "def a\n  [\n    1, # x\n    # y\n  ]\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n  )\nend"
+
+  # trailing comma after named arguments following multiline positional ones
+  assert_format "foo(\n  1, a: 2,\n)"
+  assert_format "foo(\n  1, # bar\n  a: 2,\n)"
+  assert_format "def foo\n  bar(\n    1, # baz\n    a: 2, # qux\n  )\nend", "def foo\n  bar(\n    1,    # baz\n    a: 2, # qux\n  )\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    2\n  )\nend"
   assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
