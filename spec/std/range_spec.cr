@@ -27,6 +27,23 @@ struct RangeSpecIntWrapper
   end
 end
 
+struct RangeSpecPredWrapper
+  include Comparable(self)
+
+  getter value : Int32
+
+  def initialize(@value)
+  end
+
+  def pred
+    RangeSpecPredWrapper.new(@value - 1)
+  end
+
+  def <=>(other)
+    value <=> other.value
+  end
+end
+
 private def range_endless_each
   (2..).each do |x|
     return x
@@ -77,6 +94,182 @@ describe "Range" do
 
     (1...5).includes?(1).should be_true
     (1...5).includes?(5).should be_false
+  end
+
+  it "#overlaps?" do
+    (1..5).overlaps?(4..8).should be_true
+    (4..8).overlaps?(1..5).should be_true
+
+    (1..5).overlaps?(5..10).should be_true
+    (1...5).overlaps?(5..10).should be_false
+    (1..5).overlaps?(6..10).should be_false
+    (-5...1).overlaps?(1..5).should be_false
+    (-5..1).overlaps?(1..5).should be_true
+
+    (1...1).overlaps?(1..1).should be_false
+    (2..1).overlaps?(1..2).should be_false
+    (2...1).overlaps?(1..2).should be_false
+    (1..2).overlaps?(2...2).should be_false
+
+    (..5).overlaps?(5..).should be_true
+    (...5).overlaps?(5..).should be_false
+    (..5).overlaps?(6..).should be_false
+    (..5).overlaps?(4..).should be_true
+    (...5).overlaps?(4..).should be_true
+    (..5).overlaps?(..4).should be_true
+    (...5).overlaps?(..4).should be_true
+    (..5).overlaps?(..6).should be_true
+    (...5).overlaps?(..6).should be_true
+    (5..).overlaps?(4..).should be_true
+    (5..).overlaps?(6..).should be_true
+    (..).overlaps?(1..2).should be_true
+    (..).overlaps?(2...2).should be_false
+
+    (1.0..5.5).overlaps?(3.2..7.8).should be_true
+    (1.0..2.5).overlaps?(3.0..4.0).should be_false
+
+    ('a'..'e').overlaps?('c'..'g').should be_true
+    ('a'..'c').overlaps?('d'..'f').should be_false
+
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).overlaps?(t2..t4).should be_true
+    (t1..t2).overlaps?(t3..t4).should be_false
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).overlaps?(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7)).should be_true
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).overlaps?(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7)).should be_false
+  end
+
+  it "#union" do
+    (1..5).union(3..7).should eq(1..7)
+    (3..7).union(1..5).should eq(1..7)
+
+    (1..10).union(1...15).should eq(1...15)
+    (1...10).union(1..15).should eq(1..15)
+    (1...10).union(1..10).should eq(1..10)
+
+    (1...10).union(10..20).should eq(1..20)
+    (1..5).union(5..10).should eq(1..10)
+    (1..5).union(6..10).should eq(1..10)
+    (6..10).union(1..5).should eq(1..10)
+    (1...6).union(6..10).should eq(1..10)
+
+    (1..5).union(10..20).should be_nil
+    (1...1).union(1..2).should eq(1..2)
+    (1..2).union(2...2).should eq(1..2)
+
+    (..5).union(5..).should eq(..)
+    (...5).union(5..).should eq(..)
+    (..5).union(6..).should eq(..)
+    (...5).union(6..).should be_nil
+    (..5).union(7..).should be_nil
+    (..5).union(..6).should eq(..6)
+    (..5).union(4..).should eq(..)
+    (...5).union(4..).should eq(..)
+    (..).union(2..3).should eq(..)
+    (...).union(2..3).should eq(...)
+    (..).union(2...3).should eq(..)
+    (..3.0).union(4.0..).should be_nil
+    (..3).union(4.0..).should eq(..)
+
+    ('a'..'c').union('d'..'f').should eq('a'..'f')
+    ('a'..'e').union('c'..'g').should eq('a'..'g')
+    ('a'..'c').union('e'..'f').should be_nil
+    ('a'...'e').union('c'...'g').should eq('a'...'g')
+    (1.0..2.5).union(3.0..4.0).should be_nil
+    (1.0..5.5).union(3.2..7.8).should eq(1.0..7.8)
+    (1.0...5.5).union(3.2...7.8).should eq(1.0...7.8)
+    (1.0...5.5).union(5.5...7.8).should eq(1.0...7.8)
+    (1..5).union(3.0..7.0).should eq(1..7.0)
+    (1..5).union(1.0...7).should eq(1...7)
+    (1.0..5).union(1...7).should eq(1.0...7)
+
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t2).union(t2..t3).should eq(t1..t3)
+    (t1..t2).union(t3..).should be_nil
+    (t1..t2).union(t3..t4).should be_nil
+    (t1...t2).union(t2...t3).should eq(t1...t3)
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).union(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7)).should eq(RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(7))
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).union(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7)).should eq(RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(7))
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).union(RangeSpecIntWrapper.new(7)..RangeSpecIntWrapper.new(8)).should be_nil
+
+    (RangeSpecPredWrapper.new(1)..RangeSpecPredWrapper.new(5)).union(RangeSpecPredWrapper.new(6)..RangeSpecPredWrapper.new(7)).should eq(RangeSpecPredWrapper.new(1)..RangeSpecPredWrapper.new(7))
+    (RangeSpecPredWrapper.new(1)..RangeSpecPredWrapper.new(5)).union(RangeSpecPredWrapper.new(7)..RangeSpecPredWrapper.new(8)).should be_nil
+  end
+
+  it "#intersection" do
+    (1..5).intersection(3..7).should eq(3..5)
+    (3..7).intersection(1..5).should eq(3..5)
+
+    (1..10).intersection(1...15).should eq(1..10)
+    (1...10).intersection(1..15).should eq(1...10)
+    (1...10).intersection(1..10).should eq(1...10)
+
+    (1...10).intersection(7..12).should eq(7...10)
+    (2..10).intersection(0..8).should eq(2..8)
+    (1..5).intersection(5..10).should eq(5..5)
+
+    (1..5).intersection(10..20).should be_nil
+    (1...10).intersection(10..11).should be_nil
+    (1...1).intersection(1..2).should be_nil
+
+    (..5).intersection(5..).should eq(5..5)
+    (...5).intersection(5..).should be_nil
+    (..5).intersection(3..).should eq(3..5)
+    (..5).intersection(..3).should eq(..3)
+    (..5).intersection(-5..).should eq(-5..5)
+    (...5).intersection(-5..).should eq(-5...5)
+    (..5).intersection(-5...).should eq(-5..5)
+    (..5).intersection(2..7).should eq(2..5)
+    (..5).intersection(2...7).should eq(2..5)
+    (...5).intersection(2...7).should eq(2...5)
+    (..5).intersection(2..4).should eq(2..4)
+    (...5).intersection(2..4).should eq(2..4)
+    (..5).intersection(2...4).should eq(2...4)
+    (..).intersection(2..3).should eq(2..3)
+    (..).intersection(2...3).should eq(2...3)
+
+    (1.0..5.5).intersection(3.2..7.8).should eq(3.2..5.5)
+    (1.0...3.0).intersection(3.0..4.0).should be_nil
+    (1.0..2.5).intersection(3.0..4.0).should be_nil
+
+    ('a'..'e').intersection('c'..'g').should eq('c'..'e')
+    ('a'...'e').intersection('c'...'g').should eq('c'...'e')
+    ('a'..'c').intersection('d'..'f').should be_nil
+
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).intersection(t2..t4).should eq(t2..t3)
+    (t1...t3).intersection(t2...t4).should eq(t2...t3)
+    (t1..t2).intersection(t3..t4).should be_nil
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).intersection(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7)).should eq(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(5))
+    (RangeSpecIntWrapper.new(1)...RangeSpecIntWrapper.new(5)).intersection(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7)).should eq(RangeSpecIntWrapper.new(3)...RangeSpecIntWrapper.new(5))
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5)).intersection(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7)).should be_nil
+  end
+
+  it "types union and intersection" do
+    typeof((1..5).union(3..7)).should eq(Range(Int32, Int32)?)
+    typeof((1..5).union(10..20)).should eq(Range(Int32, Int32)?)
+    typeof((1..5).intersection(3..7)).should eq(Range(Int32, Int32)?)
+    typeof((1..5).intersection(10..20)).should eq(Range(Int32, Int32)?)
+
+    typeof((1..5).union(3_i64..7_i64)).should eq(Range(Int32 | Int64, Int32 | Int64)?)
+    typeof((1..5).intersection(3_i64..7_i64)).should eq(Range(Int32 | Int64, Int32 | Int64)?)
+    typeof((1..5).union(3.0..7.0)).should eq(Range(Int32 | Float64, Int32 | Float64)?)
+    typeof((1..5).union(1.0...7)).should eq(Range(Int32 | Float64, Int32)?)
+    typeof((1.0..5).union(1...7)).should eq(Range(Int32 | Float64, Int32)?)
+
+    typeof((..5).union(3..)).should eq(Range(Int32 | Nil, Int32 | Nil)?)
+    typeof((..5).intersection(3..)).should eq(Range(Int32 | Nil, Int32 | Nil)?)
   end
 
   it "does to_s" do
