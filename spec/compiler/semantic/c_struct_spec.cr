@@ -386,4 +386,26 @@ describe "Semantic: struct" do
       foo.x = Foo.new
       CRYSTAL
   end
+
+  it "normalizes `new` with named arguments with filename" do
+    result = semantic <<-CRYSTAL
+      lib LibFoo
+        struct Bar
+          x : Int32
+        end
+      end
+
+      #<loc:"foo.cr",1,1>LibFoo::Bar.new(x: 1)
+      #<loc:"bar.cr",1,1>LibFoo::Bar.new(x: 2)
+      CRYSTAL
+
+    result.node.to_s.should end_with <<-CRYSTAL
+      __temp_cd6ae5dd_1 = LibFoo::Bar.new
+      __temp_cd6ae5dd_1.x = 1
+      __temp_cd6ae5dd_1
+      __temp_fbcf3d84_1 = LibFoo::Bar.new
+      __temp_fbcf3d84_1.x = 2
+      __temp_fbcf3d84_1\n
+      CRYSTAL
+  end
 end

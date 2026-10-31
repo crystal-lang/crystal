@@ -20,4 +20,9 @@ describe "Normalize: chained comparisons" do
   it "normalizes two comparisons with calls" do
     assert_normalize "1 <= a <= b <= 4", "(1 <= (__temp_2 = a) && __temp_2 <= (__temp_1 = b)) && __temp_1 <= 4"
   end
+
+  it "normalizes with filename" do
+    assert_normalize "1 <= b <= 3", "1 <= (__temp_cd6ae5dd_1 = b) && __temp_cd6ae5dd_1 <= 3", filename: "foo.cr"
+    assert_normalize "1 <= b <= 3", "1 <= (__temp_fbcf3d84_1 = b) && __temp_fbcf3d84_1 <= 3", filename: "bar.cr"
+  end
 end

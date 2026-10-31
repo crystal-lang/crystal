@@ -1646,7 +1646,7 @@ module Crystal
         unreachable
       else
         # fallback for stdlib before 1.16.2 when using a 1.16.2 or later compiler
-        temp_var_name = @program.new_temp_var_name
+        temp_var_name = @program.new_temp_var_name(node)
         context.vars[temp_var_name] = LLVMVar.new(value, obj_type, already_loaded: true)
         accept type_cast_exception_call(obj_type, to_type, node, temp_var_name)
         context.vars.delete temp_var_name
