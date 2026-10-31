@@ -150,9 +150,7 @@ class URI
           @ptr += 1
         elsif end_of_host?
           unless start == @ptr
-            @uri.port = (start...@ptr).reduce(0) do |memo, i|
-              (memo * 10) + (@input[i] - '0'.ord)
-            end
+            @uri.port = from_input(start).to_i? || raise URI::Error.new("Invalid URI: bad port at character #{start}")
           end
           return parse_path
         else
