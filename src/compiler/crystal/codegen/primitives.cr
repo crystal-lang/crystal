@@ -990,7 +990,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
-    if context.type.is_a?(MetaclassType)
+    if (type = context.type).is_a?(MetaclassType)
       type_id(type)
     else
       type_id(call_args[0], type)
@@ -1012,7 +1012,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_class(node, target_def, call_args)
     value = call_args.first?
     if value
-      codegen_primitive_class_with_type(type, value)
+      codegen_primitive_class_with_type(context.type, value)
     else
       type_id(node.type)
     end
