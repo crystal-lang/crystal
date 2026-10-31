@@ -3,16 +3,15 @@ require "./stdint"
 
 lib LibC
   F_OK                =  0
-  R_OK                =  1
+  R_OK                =  4
   W_OK                =  2
-  X_OK                =  4
+  X_OK                =  1
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
 
   fun access(x0 : Char*, x1 : Int) : Int
   fun faccessat(Int, Char*, Int, Int) : Int
   fun chdir(x0 : Char*) : Int
-  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
   fun _exit(x0 : Int) : NoReturn
   fun fdatasync(x0 : Int) : Int
