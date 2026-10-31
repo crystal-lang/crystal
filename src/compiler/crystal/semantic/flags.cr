@@ -91,10 +91,9 @@ class Crystal::Program
     if target.openbsd?
       flags.add "openbsd"
 
-      case target.architecture
-      when "aarch64"
+      if target.aarch64?
         flags.add "branch-protection=bti" unless flags.any?(&.starts_with?("branch-protection="))
-      when "x86_64", "i386"
+      elsif target.x86?
         flags.add "cf-protection=branch" unless flags.any?(&.starts_with?("cf-protection="))
       end
     end

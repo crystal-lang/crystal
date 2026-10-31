@@ -113,12 +113,12 @@ class Crystal::CodeGenVisitor
         {% if LibLLVM::IS_LT_150 %}
           context.fun.add_attribute LLVM::Attribute::UWTable
         {% else %}
-          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.has_flag?("aarch64") ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
+          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.codegen_target.aarch64? ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
         {% end %}
 
         if @frame_pointers.always?
           context.fun.add_attribute "frame-pointer", value: "all"
-        elsif @program.has_flag?("darwin") || @program.has_flag?("solaris")
+        elsif @program.codegen_target.macos? || @program.codegen_target.solaris?
           # Disable frame pointer elimination, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "frame-pointer", "all"
         elsif @frame_pointers.non_leaf?
@@ -232,7 +232,7 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      if @program.has_flag?("wasm32")
+      if @program.codegen_target.wasm?
         if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
           context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
           context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
@@ -385,7 +385,7 @@ class Crystal::CodeGenVisitor
     if @single_module && mangled_name.starts_with?("__crystal_")
       # FIXME: macos ld fails to link when the personality fun is internal; it
       # might work with lld so we might want to check the linker?
-      unless @program.has_flag?("darwin") && mangled_name.starts_with?("__crystal_personality")
+      unless @program.codegen_target.macos? && mangled_name.starts_with?("__crystal_personality")
         context.fun.linkage = LLVM::Linkage::Internal
       end
     end
