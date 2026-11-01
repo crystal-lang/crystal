@@ -592,19 +592,22 @@ struct Tuple
     io << '{'
     io << ' ' if needs_padding
 
-    join io, ", ", &.inspect(io)
+    join io, ", " do |el|
+      if el.is_a?(Reference) && el.as(Void*).null?
+        io << "<invalid nullptr>"
+      else
+        el.inspect io
+      end
+    end
 
     io << ' ' if needs_padding
     io << '}'
   end
 
   private def curly_like?(object)
-    case object
-    when Hash, Tuple, NamedTuple
-      true
-    else
-      false
-    end
+    object.is_a?(Tuple) ||
+    object.is_a?(NamedTuple) ||
+    (object.is_a?(Reference) && !object.as(Void*).null? && object.is_a?(Hash))
   end
 
   def pretty_print(pp) : Nil

@@ -468,7 +468,11 @@ struct NamedTuple
       {% end %}
       Symbol.quote_for_named_argument io, {{key.stringify}}
       io << ": "
-      self[{{key.symbolize}}].inspect(io)
+      if self[{{key.symbolize}}].is_a?(Reference) && (%tmp{key} = self[{{key.symbolize}}]).is_a?(Reference) && %tmp{key}.as(Void*).null?
+        io << "<invalid nullptr>"
+      else
+        self[{{key.symbolize}}].inspect io
+      end
     {% end %}
     io << '}'
   end
@@ -484,7 +488,12 @@ struct NamedTuple
           pp.text ": "
           pp.nest do
             pp.breakable ""
-            self[{{key.symbolize}}].pretty_print(pp)
+
+            if self[{{key.symbolize}}].is_a?(Reference) && (%tmp{key} = self[{{key.symbolize}}]).is_a?(Reference) && %tmp{key}.as(Void*).null?
+              pp.text "<invalid nullptr>"
+            else
+              self[{{key.symbolize}}].pretty_print(pp)
+            end
           end
         end
       {% end %}

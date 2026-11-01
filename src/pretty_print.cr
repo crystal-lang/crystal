@@ -181,7 +181,11 @@ class PrettyPrint
   # and separated by commas.
   def list(left, elements, right) : Nil
     list(left, elements, right) do |elem|
-      elem.pretty_print(self)
+      if elem.is_a?(Reference) && elem.as(Void*).null?
+        self.text "<invalid nullptr>"
+      else
+        elem.pretty_print(self)
+      end
     end
   end
 
@@ -293,7 +297,11 @@ class PrettyPrint
   # the given *indent*ation.
   def self.format(obj, io : IO, width : Int32, newline = "\n", indent = 0)
     format(io, width, newline, indent) do |printer|
-      obj.pretty_print(printer)
+      if obj.is_a?(Reference) && obj.as(Void*).null?
+        printer.text "<invalid nullptr>"
+      else
+        obj.pretty_print(printer)
+      end
     end
   end
 
