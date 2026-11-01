@@ -331,6 +331,23 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "gets `#crystal_instance_type_id` on a virtual metaclass" do
+    run(<<-CRYSTAL, Bool).should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      foo_v = Foo.as(Foo.class).crystal_instance_type_id
+      bar_v = Bar.as(Foo.class).crystal_instance_type_id
+      foo = Foo.crystal_instance_type_id
+      bar = Bar.crystal_instance_type_id
+
+      foo_v == foo && bar_v == bar && foo_v != bar_v
+      CRYSTAL
+  end
+
   describe "va_arg" do
     # On AArch64 llvm's va_arg instruction works incorrectly.
     {% unless flag?(:aarch64) %}
