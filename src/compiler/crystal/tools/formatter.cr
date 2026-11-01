@@ -3652,8 +3652,9 @@ module Crystal
 
       if @token.type.op_lparen?
         format_parenthesized_args(node.exps)
-      else
-        write " " unless node.exps.empty?
+      elsif !node.exps.empty?
+        # Without arguments, a trailing comment is left to the caller
+        write " "
         skip_space
         format_args node.exps, false
       end
