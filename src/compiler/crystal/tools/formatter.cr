@@ -2458,8 +2458,16 @@ module Crystal
         # The relevant distinction is that the call has a receiver and the
         # current token is not that object but a unary operator.
         if @token.type.unary_operator? && node.name == @token.type.to_s && !node.has_any_args?
-          write @token.type
+          operator = @token.type
+          write operator
           next_token_skip_space_or_newline
+
+          # Keep `+ +1` and `- -1` apart: `++` and `--` don't parse
+          if operator.op_plus? || operator.op_minus?
+            next_raw = @token.type.number? ? @token.raw : @token.type.to_s
+            write " " if next_raw.starts_with?(operator.to_s)
+          end
+
           accept obj
           return false
         end
@@ -3284,6 +3292,8 @@ module Crystal
       if @token.type.op_bang?
         write_token :OP_BANG
         skip_space_or_newline
+        # Keep `! ~x` apart: `!~` is a different operator
+        write " " if @token.type.op_tilde?
         accept node.exp
       else
         # Can be `exp.!`
