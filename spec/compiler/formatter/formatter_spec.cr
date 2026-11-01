@@ -1744,6 +1744,9 @@ describe Crystal::Formatter do
   assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"
   assert_format "FOO = 2 + 3\nA = 1 - 10", "FOO = 2 + 3\nA   = 1 - 10"
   assert_format "private FOO = 2\nprivate A = 1", "private FOO = 2\nprivate A   = 1"
+  assert_format "private A = 2\nFOOBAR = 3", "private A = 2\nFOOBAR    = 3" # #11819
+  assert_format "A = 1\nprivate BB = 2\nCCC = 3", "A          = 1\nprivate BB = 2\nCCC        = 3"
+  assert_format "private A = 1\nprotected B = 2\nFOOBARBAZQUX = 3", "private A    = 1\nprotected B  = 2\nFOOBARBAZQUX = 3"
   assert_format "enum Baz\nA = 1\nFOO = 2\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO = 2\n\n  EX = 3\nend"
   assert_format "enum Baz\nA = 1\nFOO\n\nEX = 3\nend", "enum Baz\n  A   = 1\n  FOO\n\n  EX = 3\nend"
 
