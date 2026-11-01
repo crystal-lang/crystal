@@ -606,8 +606,8 @@ struct Tuple
 
   private def curly_like?(object)
     object.is_a?(Tuple) ||
-    object.is_a?(NamedTuple) ||
-    (object.is_a?(Reference) && !object.as(Void*).null? && object.is_a?(Hash))
+      object.is_a?(NamedTuple) ||
+      (object.is_a?(Reference) && !object.as(Void*).null? && object.is_a?(Hash))
   end
 
   def pretty_print(pp) : Nil
