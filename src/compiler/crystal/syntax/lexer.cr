@@ -1838,9 +1838,17 @@ module Crystal
             delimiter_state = heredocs.shift
           end
 
-          if delimiter_state && delimiter_state.kind.heredoc? && check_heredoc_end(delimiter_state)
-            char = current_char
-            delimiter_state = heredocs.try &.shift?
+          if delimiter_state && delimiter_state.kind.heredoc?
+            # `check_heredoc_end` resets the token's column number (as needed
+            # by string tokens), which would move the start of this macro literal
+            token_column_number = @token.column_number
+            reached_heredoc_end = check_heredoc_end(delimiter_state)
+            @token.column_number = token_column_number
+
+            if reached_heredoc_end
+              char = current_char
+              delimiter_state = heredocs.try &.shift?
+            end
           end
 
           next
