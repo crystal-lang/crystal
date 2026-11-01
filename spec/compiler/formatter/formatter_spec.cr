@@ -2058,6 +2058,12 @@ describe Crystal::Formatter do
   assert_format "foo &.@bar"
   assert_format "foo(&.@bar)"
 
+  # #15112
+  assert_format "foo(&.@bar.baz)"
+  assert_format "foo(&.bar.@baz)"
+  assert_format "foo(&.bar.@baz.qux(1))\nfoo"
+  assert_format "foo &.a.@b.@c.d"
+
   assert_format "foo[&.bar]"
   assert_format "foo[1, &.bar]"
   assert_format "foo[x: 1, &.bar]"
