@@ -3341,7 +3341,7 @@ module Crystal
 
     def accept_assign_value(value, check_align = false)
       before_column = @column
-      if @token.keyword?(:if) || @token.keyword?(:case) || value.is_a?(MacroIf)
+      if @token.keyword?(:if) || @token.keyword?(:unless) || @token.keyword?(:case) || value.is_a?(MacroIf)
         indent(@column, value)
       else
         inside_call_or_assign do
