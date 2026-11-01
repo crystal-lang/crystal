@@ -515,7 +515,7 @@ module Crystal
           next_string_token
         when .interpolation_start?
           # This is the case of #{__DIR__}
-          write "\#{"
+          write @token.raw
           next_token_skip_space_or_newline
           indent(@column, node)
           skip_space_or_newline
@@ -617,7 +617,7 @@ module Crystal
         if exp.is_a?(StringLiteral)
           # It might be #{__DIR__}, for example
           if @token.type.interpolation_start?
-            write "\#{"
+            write @token.raw
             delimiter_state = @token.delimiter_state
             next_token_skip_space_or_newline
             indent(@column, exp)
@@ -645,7 +645,8 @@ module Crystal
 
     private def visit_interpolation(exp)
       check :INTERPOLATION_START
-      write "\#{"
+      # The raw token includes a preceding line continuation, if any
+      write @token.raw
       delimiter_state = @token.delimiter_state
 
       wrote_comment = next_token_skip_space
