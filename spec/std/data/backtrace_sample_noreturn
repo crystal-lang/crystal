@@ -1,0 +1,10 @@
+def show(x)
+  raise "boom #{x}"
+end
+
+def run
+  show(1) rescue nil
+  show("long string")
+end
+
+run

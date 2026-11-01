@@ -304,6 +304,24 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "codegens `llvm.prefetch.*` from a non-main LLVM module (#17636)" do
+    p0 = {% if LibLLVM::IS_LT_150 %} "p0i8" {% else %} "p0" {% end %}
+
+    compile(<<-CRYSTAL)
+      lib Intrinsics
+        fun prefetch = "llvm.prefetch.#{p0}"(address : Void*, rw : Int32, locality : Int32, cache_type : Int32)
+      end
+
+      class Foo
+        def self.foo(p : Void*)
+          Intrinsics.prefetch(p, 0, 3, 1)
+        end
+      end
+
+      Foo.foo(Pointer(Void).new(0_u64))
+      CRYSTAL
+  end
+
   it "gets crystal class instance type id" do
     run(<<-CRYSTAL).to_b.should be_true
       class Foo
@@ -313,26 +331,96 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "gets `#crystal_instance_type_id` on a virtual metaclass" do
+    run(<<-CRYSTAL, Bool).should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      foo_v = Foo.as(Foo.class).crystal_instance_type_id
+      bar_v = Bar.as(Foo.class).crystal_instance_type_id
+      foo = Foo.crystal_instance_type_id
+      bar = Bar.crystal_instance_type_id
+
+      foo_v == foo && bar_v == bar && foo_v != bar_v
+      CRYSTAL
+  end
+
   describe "va_arg" do
-    # On Windows and AArch64 llvm's va_arg instruction works incorrectly.
-    {% unless flag?(:win32) || flag?(:aarch64) %}
-      it "uses llvm's va_arg instruction" do
-        mod = codegen(<<-CRYSTAL)
+    # On AArch64 llvm's va_arg instruction works incorrectly.
+    {% unless flag?(:aarch64) %}
+      # On Windows the va_arg instruction is broken, so Crystal directly
+      # manipulates the `VaList` argument, similar to Clang
+      {% unless flag?(:win32) %}
+        it "uses llvm's va_arg instruction" do
+          mod = codegen(<<-CRYSTAL)
+            struct VaList
+              @[Primitive(:va_arg)]
+              def next(type)
+              end
+            end
+
+            list = VaList.new
+            list.next(Int32)
+            CRYSTAL
+          type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
+          str = mod.to_s
+          str.should contain("va_arg #{type} %list")
+        end
+      {% end %}
+
+      it "works with Crystal code" do
+        run(<<-CRYSTAL, Int32).should eq(6)
+          require "lib_c"
+          require "c/stdarg"
+
+          lib LibIntrinsics
+            \{% if #{LibLLVM::IS_LT_190} %}
+              fun va_start = "llvm.va_start"(ap : Void*)
+              fun va_end = "llvm.va_end"(ap : Void*)
+            \{% else %}
+              fun va_start = "llvm.va_start.p0"(ap : Void*)
+              fun va_end = "llvm.va_end.p0"(ap : Void*)
+            \{% end %}
+          end
+
           struct VaList
+            def initialize(@to_unsafe : LibC::VaList)
+            end
+
+            def self.open(&)
+              ap = uninitialized LibC::VaList
+              LibIntrinsics.va_start pointerof(ap)
+              yield new(ap)
+              LibIntrinsics.va_end pointerof(ap)
+            end
+
             @[Primitive(:va_arg)]
             def next(type)
             end
           end
 
-          list = VaList.new
-          list.next(Int32)
+          fun foo_f(count : Int32, ...) : LibC::Int
+            sum = 0
+            VaList.open do |list|
+              while count > 0
+                sum &+= list.next(Int32)
+                count &-= 1
+              end
+            end
+            sum
+          end
+
+          x = 1
+          y = 2_i8
+          z = 3_u16
+          foo_f(3, x, y, z)
           CRYSTAL
-        type = {% if LibLLVM::IS_LT_150 %} "%VaList*" {% else %} "ptr" {% end %}
-        str = mod.to_s
-        str.should contain("va_arg #{type} %list")
       end
 
-      it "works with C code" do
+      it "works with small element type" do
         test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
           extern int foo_f(int,...);
           int foo() {
@@ -356,6 +444,53 @@ describe "Code gen: primitives" do
           LibFoo.foo
           CRYSTAL
       end
+
+      {% if flag?(:win32) %}
+        # On non-Windows platforms we use the va_arg instruction, and that
+        # doesn't support aggregate types
+        it "works with large element type" do
+          test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(15182124))
+            #include <stdint.h>
+
+            typedef struct {
+              int64_t x, y, z, w;
+            } point_t;
+
+            extern int64_t foo_f(int, ...);
+
+            int64_t foo() {
+              point_t a = {.x = 1, .y = 2, .z = 3, .w = 4};
+              point_t b = {.x = 5, .y = 6, .z = 7, .w = 8};
+              point_t c = {.x = 9, .y = 10, .z = 11, .w = 12};
+              return foo_f(3, a, b, c);
+            }
+            C
+            lib LibFoo
+              struct PointT
+                x : Int64
+                y : Int64
+                z : Int64
+                w : Int64
+              end
+
+              fun foo : Int64
+            end
+
+            fun foo_f(count : Int32, ...) : Int64
+              sum = 0_i64
+              VaList.open do |list|
+                count.times do |i|
+                  point = list.next(LibFoo::PointT)
+                  sum += point.x * 1000000 + point.y * 10000 + point.z * 100 + point.w
+                end
+              end
+              sum
+            end
+
+            LibFoo.foo
+            CRYSTAL
+        end
+      {% end %}
     {% end %}
   end
 

@@ -122,17 +122,7 @@ struct Struct
           {% if i > 0 %}
             pp.comma
           {% end %}
-          pp.group do
-            pp.text "@{{ivar.id}}="
-            pp.nest do
-              pp.breakable ""
-              if @{{ivar.id}}.is_a?(Reference) && (%tmp{ivar.id} = @{{ivar.id}}).is_a?(Reference) && %tmp{ivar.id}.as(Void*).null?
-                pp.text "<invalid nullptr>"
-              else
-                @{{ivar.id}}.pretty_print(pp)
-              end
-            end
-          end
+          pp.instance_var "@{{ivar.id}}=", @{{ivar.id}}
         {% end %}
       end
     {% end %}

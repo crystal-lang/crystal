@@ -340,7 +340,8 @@ module Crystal::System::File
   def self.symlink(old_path : String, new_path : String) : Nil
     win_old_path = System.to_wstr(old_path.gsub('/', '\\'))
     win_new_path = System.to_wstr(new_path)
-    info = info?(old_path, true)
+    target_path = ::Path[old_path].expand(::Path[new_path].parent, expand_base: false).to_s
+    info = info?(target_path, true)
     flags = info.try(&.type.directory?) ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0
 
     # Symlink on Windows required the SeCreateSymbolicLink privilege. But in the Windows 10

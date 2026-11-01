@@ -3,6 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "lib/**"
+  ],
   "separateMajorMinor": false,
   "packageRules": [
     {

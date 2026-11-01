@@ -8,6 +8,7 @@ class Crystal::Codegen::Target
   getter architecture : String
   getter vendor : String
   getter environment : String
+  getter environment_parts : Array(String)
 
   def initialize(target_triple : String)
     # Let LLVM convert the user-inputted target triple into at least a target
@@ -18,6 +19,7 @@ class Crystal::Codegen::Target
       raise Target::Error.new("Invalid target triple: #{target_triple}")
     end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
+    @environment_parts = @environment.split('-')
 
     # Perform additional normalization and parsing
     case @architecture
@@ -39,14 +41,11 @@ class Crystal::Codegen::Target
         # Build string instead of setting it as "linux-gnu"
         # since "linux6E" & "linuxspe" are available.
         @environment = "#{@environment}-gnu"
+        @environment_parts << "gnu"
       else
         # no need to tweak the environment
       end
     end
-  end
-
-  def environment_parts
-    @environment.split('-')
   end
 
   def pointer_bit_width
@@ -106,9 +105,9 @@ class Crystal::Codegen::Target
 
   def object_extension
     case
-    when windows?                  then ".obj"
-    when @architecture == "wasm32" then ".wasm"
-    else                                ".o"
+    when windows? then ".obj"
+    when wasm?    then ".wasm"
+    else               ".o"
     end
   end
 
@@ -180,12 +179,32 @@ class Crystal::Codegen::Target
     windows? && environment_parts.includes?("msvc")
   end
 
+  def mingw?
+    windows? && gnu?
+  end
+
   def win32?
-    windows? && (msvc? || gnu?)
+    msvc? || mingw?
   end
 
   def armhf?
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
+  end
+
+  def x86_64?
+    @architecture == "x86_64"
+  end
+
+  def x86?
+    @architecture.in?("x86_64", "i386")
+  end
+
+  def aarch64?
+    @architecture == "aarch64"
+  end
+
+  def wasm?
+    @architecture == "wasm32"
   end
 
   def avr?

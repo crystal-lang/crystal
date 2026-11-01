@@ -18,15 +18,13 @@ struct VaList
     end
   end
 
-  {% if flag?(:aarch64) || flag?(:win32) %}
-    {% platform = flag?(:aarch64) ? "AArch64" : "Windows" %}
-    {% clang_impl = flag?(:aarch64) ? "https://github.com/llvm/llvm-project/blob/a574edbba2b24fcfb733aa2d82308131f5b7d2d6/clang/lib/CodeGen/TargetInfo.cpp#L5677-L5921" : "https://github.com/llvm/llvm-project/blob/a574edbba2b24fcfb733aa2d82308131f5b7d2d6/clang/lib/CodeGen/TargetInfo.cpp#L5958-L5964" %}
+  {% if flag?(:aarch64) %}
     # Do not call this, instead use C wrappers calling the va_arg macro for the types you need.
     #
-    # Clang implements va_arg on {{platform.id}} like this: {{clang_impl.id}}
-    # If somebody wants to fix the LLVM IR va_arg instruction on {{platform}} upstream, or port the above here, that would be welcome.
+    # Clang implements va_arg on AArch64 like this: https://github.com/llvm/llvm-project/blob/1204f6b4e9d6bef8ec319d121942dca5cbf94a26/clang/lib/CodeGen/Targets/AArch64.cpp#L92
+    # If somebody wants to fix the LLVM IR va_arg instruction on AArch64 upstream, or port the above to the Crystal compiler, that would be welcome.
     def next(type)
-      \{% raise "Cannot get variadic argument on {{platform.id}}. As a workaround implement wrappers in C calling the va_arg macro for the types you need and bind to those." %}
+      \{% raise "Cannot get variadic argument on AArch64. As a workaround implement wrappers in C calling the va_arg macro for the types you need and bind to those." %}
     end
   {% else %}
     @[Primitive(:va_arg)]
