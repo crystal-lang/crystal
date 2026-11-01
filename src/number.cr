@@ -3,6 +3,20 @@ struct Number
   include Comparable(Number)
   include Steppable
 
+  # Union of all built-in primitive integer and floating-point types (`Int::Primitive | Float::Primitive`).
+  #
+  # Useful for method parameter restrictions that accept any built-in primitive number
+  # while excluding custom or arbitrary-precision types like `BigInt` and `BigFloat`.
+  #
+  # ```
+  # def primitive_byte_size(x : Number::Primitive)
+  #   sizeof(typeof(x))
+  # end
+  #
+  # primitive_byte_size(42_i32)   # => 4
+  # primitive_byte_size(3.14_f64) # => 8
+  # primitive_byte_size(255_u8)   # => 1
+  # ```
   alias Primitive = Int::Primitive | Float::Primitive
 
   # Returns the value zero in the respective type.
