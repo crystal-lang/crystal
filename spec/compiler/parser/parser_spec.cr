@@ -367,6 +367,18 @@ module Crystal
     assert_syntax_error "a, *b = *1", %(unexpected token: "*")
     assert_syntax_error "a, *b = *1, 2", %(unexpected token: "*")
     assert_syntax_error "a, *b = 1, *2", %(unexpected token: "*")
+    assert_syntax_error "a.b = *c, 2", %(unexpected token: "*"), 1, 7
+    assert_syntax_error "*a.b = *c", %(unexpected token: "*"), 1, 8
+    assert_syntax_error "a, b.c = *d", %(unexpected token: "*"), 1, 10
+    assert_syntax_error "a, b.c = *d, 2", %(unexpected token: "*"), 1, 10
+    assert_syntax_error "a, b.c=(*d)", %(unexpected token: "*"), 1, 9
+    assert_syntax_error "a, b.c=(*d), 2", %(unexpected token: "*"), 1, 9
+    assert_syntax_error "a, b.[]=(*c), 2", %(unexpected token: "*"), 1, 10
+    assert_syntax_error "a, b.[]=(0, *c), 2", %(unexpected token: "*"), 1, 13
+    it_parses "a.b = *c", Call.new("a".call, "b=", "c".call.splat)
+    it_parses "a.[]=(*b)", Call.new("a".call, "[]=", "b".call.splat)
+    it_parses "a, b[*c] = 1, 2", MultiAssign.new(["a".var, Call.new("b".call, "[]", "c".call.splat)] of ASTNode, [1.int32, 2.int32] of ASTNode)
+    it_parses "a, b.[]=(*c, 1), 2", MultiAssign.new(["a".var, Call.new("b".call, "[]", "c".call.splat)] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
     # #11442, #12911
     assert_syntax_error "a, b.<="
