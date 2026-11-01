@@ -3019,7 +3019,9 @@ module Crystal
         next_token_skip_space
         body = format_block_args node.args, node
         next_token_skip_space_or_newline if @token.type.op_semicolon?
-        if @token.type.newline?
+        # A comment after `{` (or the block parameters) was already
+        # written, together with the newline that follows it
+        if @token.type.newline? || @wrote_newline
           format_nested body
           skip_space_or_newline
           write_indent
@@ -4188,11 +4190,11 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop)
       end
-      skip_space
+      found_comment = skip_space
+      write " " if !is_do && !found_comment && a_def.body.is_a?(Nop)
 
-      if @token.type.newline?
+      if found_comment || @token.type.newline?
         format_nested a_def.body
       else
         skip_space_or_newline
