@@ -415,7 +415,7 @@ describe Channel do
         end
       end
 
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% unless flag?(:without_mt) %}
         it "thread safety" do
           ctx = Fiber::ExecutionContext::Parallel.new("workers", 4)
 
