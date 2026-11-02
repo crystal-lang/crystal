@@ -331,6 +331,23 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "gets `#crystal_instance_type_id` on a virtual metaclass" do
+    run(<<-CRYSTAL, Bool).should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      foo_v = Foo.as(Foo.class).crystal_instance_type_id
+      bar_v = Bar.as(Foo.class).crystal_instance_type_id
+      foo = Foo.crystal_instance_type_id
+      bar = Bar.crystal_instance_type_id
+
+      foo_v == foo && bar_v == bar && foo_v != bar_v
+      CRYSTAL
+  end
+
   describe "va_arg" do
     # On AArch64 llvm's va_arg instruction works incorrectly.
     {% unless flag?(:aarch64) %}
@@ -353,6 +370,55 @@ describe "Code gen: primitives" do
           str.should contain("va_arg #{type} %list")
         end
       {% end %}
+
+      it "works with Crystal code" do
+        run(<<-CRYSTAL, Int32).should eq(6)
+          require "lib_c"
+          require "c/stdarg"
+
+          lib LibIntrinsics
+            \{% if #{LibLLVM::IS_LT_190} %}
+              fun va_start = "llvm.va_start"(ap : Void*)
+              fun va_end = "llvm.va_end"(ap : Void*)
+            \{% else %}
+              fun va_start = "llvm.va_start.p0"(ap : Void*)
+              fun va_end = "llvm.va_end.p0"(ap : Void*)
+            \{% end %}
+          end
+
+          struct VaList
+            def initialize(@to_unsafe : LibC::VaList)
+            end
+
+            def self.open(&)
+              ap = uninitialized LibC::VaList
+              LibIntrinsics.va_start pointerof(ap)
+              yield new(ap)
+              LibIntrinsics.va_end pointerof(ap)
+            end
+
+            @[Primitive(:va_arg)]
+            def next(type)
+            end
+          end
+
+          fun foo_f(count : Int32, ...) : LibC::Int
+            sum = 0
+            VaList.open do |list|
+              while count > 0
+                sum &+= list.next(Int32)
+                count &-= 1
+              end
+            end
+            sum
+          end
+
+          x = 1
+          y = 2_i8
+          z = 3_u16
+          foo_f(3, x, y, z)
+          CRYSTAL
+      end
 
       it "works with small element type" do
         test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))

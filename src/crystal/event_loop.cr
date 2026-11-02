@@ -43,7 +43,7 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current : self
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext.current.event_loop
     {% else %}
       Crystal::Scheduler.event_loop
@@ -52,7 +52,7 @@ abstract class Crystal::EventLoop
 
   @[AlwaysInline]
   def self.current? : self | Nil
-    {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+    {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext.current?.try(&.event_loop)
     {% else %}
       Crystal::Scheduler.event_loop?
@@ -70,7 +70,7 @@ abstract class Crystal::EventLoop
   # events.
   abstract def run(blocking : Bool) : Bool
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # Same as `#run` but collects runnable fibers into *queue* instead of
     # enqueueing in parallel, so the caller is responsible and in control for
     # when and how the fibers will be enqueued.
