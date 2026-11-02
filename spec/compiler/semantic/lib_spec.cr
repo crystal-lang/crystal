@@ -25,7 +25,7 @@ describe "Semantic: lib" do
   end
 
   it "raises wrong number of arguments for variadic fun" do
-    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC#foo' (given 1, expected 2+)"
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC.foo' (given 1, expected 2+)"
       lib LibC
         fun foo(x : Int32, y : Int32, ...)
       end
