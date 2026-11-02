@@ -5786,6 +5786,7 @@ module Crystal
       next_token
 
       call_args = preserve_stop_on_do { parse_call_args control: true }
+      check_no_named_args call_args, "yield"
 
       if call_args
         args = call_args.args
@@ -5801,22 +5802,23 @@ module Crystal
     end
 
     def parse_break
-      parse_control_expression Break
+      parse_control_expression Break, "break"
     end
 
     def parse_return
-      parse_control_expression Return
+      parse_control_expression Return, "return"
     end
 
     def parse_next
-      parse_control_expression Next
+      parse_control_expression Next, "next"
     end
 
-    def parse_control_expression(klass)
+    def parse_control_expression(klass, keyword)
       end_location = token_end_location
       next_token
 
       call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true }
+      check_no_named_args call_args, keyword
       args = call_args.args if call_args
 
       if args && !args.empty?
@@ -5831,6 +5833,12 @@ module Crystal
       end
 
       node
+    end
+
+    private def check_no_named_args(call_args, keyword)
+      if named_arg = call_args.try(&.named_args).try(&.first?)
+        raise "named arguments are not allowed in `#{keyword}`", named_arg.location.not_nil!
+      end
     end
 
     def parse_lib
