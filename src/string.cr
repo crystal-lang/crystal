@@ -3859,7 +3859,7 @@ class String
   # "hello world".byte_index(/o/, offset: -1) # => nil
   # "hello world".byte_index(/y/)             # => nil
   # ```
-  def byte_index(pattern : Regex, offset = 0, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
+  def byte_index(pattern : Regex, offset = 0, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : Int32?
     offset += bytesize if offset < 0
     return if offset < 0
 
