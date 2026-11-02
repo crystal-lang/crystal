@@ -154,6 +154,24 @@ class Crystal::EventLoop::Polling::Arena(T, BLOCK_BYTESIZE)
     end
   end
 
+  # Yields the object allocated at the actual *index* then releases it, whatever
+  # its generation.
+  #
+  # Does nothing if the object isn't allocated or *index* is out of bounds.
+  def free_at(index : Int32, &) : Nil
+    return unless entry = at?(index)
+
+    entry.value.@lock.sync do
+      return unless entry.value.allocated?
+
+      begin
+        yield entry.value.pointer
+      ensure
+        entry.value.free
+      end
+    end
+  end
+
   private def at(index : Index, &) : Nil
     entry = at(index.index, grow: false)
     entry.value.@lock.lock
