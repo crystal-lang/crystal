@@ -310,7 +310,7 @@ module Crystal
       if @program.codegen_target.msvc?
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
-      elsif @program.has_flag?("wasm32")
+      elsif @program.codegen_target.wasm?
         # The WASMEHPrepare pass needs the personality function to be declared
         # and associated to every function with a catchpad, but it won't be
         # linked or called at runtime.
@@ -401,7 +401,7 @@ module Crystal
       llvm_mod.data_layout = @program.target_machine.data_layout
 
       {% unless LibLLVM::IS_LT_240 %}
-        if @program.has_flag?("wasm32")
+        if @program.codegen_target.wasm?
           # enable WASM exception handling (EH)
           llvm_mod.add_flag(:error, "exception-model", "wasm")
 

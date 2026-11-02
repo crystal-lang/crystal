@@ -171,7 +171,7 @@ end
   # :nodoc:
   @[Raises]
   fun __crystal_raise(ex : Void*) : NoReturn
-    {% if compare_versions(Crystal::LLVM_VERSION, "1.24.0") < 0 %}
+    {% if compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
       Crystal::System.print_error "EXITING: __crystal_raise called"
       LibC.exit(1)
     {% else %}
@@ -243,7 +243,7 @@ end
   end
 {% end %}
 
-{% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "1.24.0") < 0 %}
+{% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
   def raise(exception : Exception) : NoReturn
     Crystal::System.print_error "EXITING: Attempting to raise:\n%s\n", exception.inspect_with_backtrace
     LibIntrinsics.debugtrap
