@@ -345,6 +345,7 @@ describe "Code gen: primitives" do
       bar = Bar.crystal_instance_type_id
 
       foo_v == foo && bar_v == bar && foo_v != bar_v
+      CRYSTAL
   end
 
   it "gets crystal class instance type id of modules whose including types are a union" do
