@@ -487,6 +487,14 @@ module Crystal
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo=()\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
+    it_parses "def self. foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
+
+    assert_syntax_error "def self.\nfoo\nend", "expecting any of these tokens"
+    assert_syntax_error "def Foo.\nbar\nend", "expecting any of these tokens"
+    assert_syntax_error "def foo.\nbar\nend", "expecting any of these tokens"
+    assert_syntax_error "def self. # comment\nfoo\nend", "expecting any of these tokens"
+    assert_syntax_error "abstract def self.\nfoo", "expecting any of these tokens"
+
     it_parses "def Foo.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "Foo".path)
     it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: ["Foo", "Bar"].path)
 

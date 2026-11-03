@@ -3742,7 +3742,11 @@ module Crystal
           end
         end
 
-        consume_def_or_macro_name
+        # Unlike after `def`, a newline isn't allowed between the period and the name
+        wants_def_or_macro_name do
+          next_token_skip_space
+          check DefOrMacroCheck1
+        end
 
         if @token.type.ident?
           check_valid_def_name
