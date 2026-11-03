@@ -102,7 +102,7 @@ end
 
 describe IO do
   describe "partial read" do
-    it "doesn't block on first read.  blocks on 2nd read" do
+    pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
         slice = Bytes.new 1024
@@ -430,7 +430,7 @@ describe IO do
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
     {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
-      it "raises if trying to read to an IO not opened for reading" do
+      pending_wasm32 "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
             w.gets
@@ -590,7 +590,7 @@ describe IO do
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
     {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
-      it "raises if trying to write to an IO not opened for writing" do
+      pending_wasm32 "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
           r.sync = true
@@ -998,7 +998,7 @@ describe IO do
   {% end %}
 
   describe "#close" do
-    it "aborts 'read' in a different fiber" do
+    pending_wasm32 "aborts 'read' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
@@ -1019,7 +1019,7 @@ describe IO do
       end
     end
 
-    it "aborts 'write' in a different fiber" do
+    pending_wasm32 "aborts 'write' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
