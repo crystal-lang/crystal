@@ -244,7 +244,7 @@ module Crystal
       when Underscore, Var, InstanceVar, ClassVar, Global
         true
       when Call
-        !exp.has_parentheses? && !exp.block && (!exp.has_any_args? || exp.name == "[]")
+        !exp.has_parentheses? && !exp.block && (exp.name == "[]" || (Lexer.ident?(exp.name) && !exp.has_any_args?))
       else
         false
       end
@@ -255,7 +255,7 @@ module Crystal
       when Assign
         true
       when Call
-        Lexer.setter?(exp.name) || exp.name == "[]="
+        Lexer.setter?(exp.name) || (exp.name == "[]=" && exp.args.present?)
       else
         false
       end
