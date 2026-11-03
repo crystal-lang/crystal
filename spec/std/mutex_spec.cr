@@ -31,7 +31,7 @@ describe Mutex do
     it "raises if locked recursively" do
       mutex = Mutex.new
       mutex.lock
-      expect_raises(Sync::Error::Deadlock, "Can't lock mutex recursively") do
+      expect_raises(Sync::Error::Deadlock, "Can't lock Sync::Mutex recursively") do
         mutex.lock
       end
     end
