@@ -75,10 +75,10 @@ class LLVM::Module
       key,
       key.bytesize,
       {% if LibLLVM::IS_LT_90 %}
-        LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(@context, val, val.bytesize)),
+        LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(@context, val, val.bytesize))
       {% else %}
-        LibLLVM.md_string_in_context2(@context, val, val.bytesize),
-      {% end %}
+        LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+      {% end %},
     )
   end
 
