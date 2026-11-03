@@ -2176,6 +2176,8 @@ describe Crystal::Formatter do
 
   assert_format "foo &.nil?"
   assert_format "foo &.bar.nil?"
+  assert_format "{1, # foo\n# bar\n}", "{1 # foo\n# bar\n}"
+  assert_format "{1 # foo\n# bar\n}"
   assert_format "foo &.nil?()", "foo &.nil?"
   assert_format "foo &.bar.nil?()", "foo &.bar.nil?"
 
