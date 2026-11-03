@@ -868,23 +868,19 @@ module Crystal
         else
           indent(offset, element)
         end
-        has_heredoc_in_line = !@lexer.heredocs.empty?
 
         last = last?(i, elements)
 
-        found_comment = skip_space(offset, write_comma: (last || has_heredoc_in_line) && has_newlines)
+        found_comment = skip_space(offset, write_comma: last && has_newlines)
 
         if @token.type.op_comma?
-          if !found_comment && (!last || has_heredoc_in_line)
-            write ","
-            wrote_comma = true
-          end
+          write "," if !found_comment && !last
 
           slash_is_regex!
           next_token
-          found_comment = skip_space(offset, write_comma: last && has_newlines)
+          found_comment = skip_space(offset, write_comma: last && (has_newlines || !@lexer.heredocs.empty?))
           if @token.type.newline?
-            if last && !found_comment && !wrote_comma
+            if last && !found_comment
               write ","
               found_comment = true
             end
@@ -2497,9 +2493,10 @@ module Crystal
             has_newlines, _, _ = format_args args, true, node.named_args
             if @token.type.op_comma? || @token.type.newline?
               if has_newlines
-                write ","
-                found_comment = next_token_skip_space
-                write_line unless found_comment
+                # Don't add a comma after a heredoc that didn't have one
+                write "," unless heredocs_pending_at_newline?
+                next_token
+                skip_space_write_line
                 write_indent
                 skip_space_or_newline
               else
@@ -2890,9 +2887,13 @@ module Crystal
       skip_space_or_newline
       if @token.type.op_comma?
         write ","
-        next_token_skip_space
-        if @token.type.newline?
-          write_line
+        next_token
+        found_comment = skip_space(needed_indent)
+        if found_comment || @token.type.newline?
+          unless found_comment
+            write_line
+            skip_space_or_newline(needed_indent)
+          end
           write_indent(needed_indent)
           has_newlines = true
         else
@@ -2984,25 +2985,25 @@ module Crystal
       old_inside_call_or_assign = @inside_call_or_assign
       @inside_call_or_assign = 0
 
-      comma_before_comment = false
+      comma_before_newline = false
 
       if @token.type.op_comma?
         next_token
         next_token if @token.type.space?
-        if @token.type.comment?
+        if @token.type.comment? || heredocs_pending_at_newline?
           write ","
           needs_comma = false
-          comma_before_comment = true
+          comma_before_newline = true
           @indent += 2
         else
           needs_comma = true
         end
         skip_space_or_newline
-        @indent -= 2 if comma_before_comment
+        @indent -= 2 if comma_before_newline
       end
 
       if @token.keyword?(:do)
-        if comma_before_comment
+        if comma_before_newline
           @indent += 2
           write_indent
         else
@@ -3038,7 +3039,11 @@ module Crystal
       else
         # It's foo &.bar
         write "," if needs_comma
-        write " " if needs_space
+        if comma_before_newline
+          write_indent(@indent + 2)
+        elsif needs_space
+          write " "
+        end
         write_token :OP_AMP
         skip_space_or_newline
         write "."
@@ -4467,14 +4472,15 @@ module Crystal
     end
 
     def next_token
+      write_line if heredocs_pending_at_newline?
       @token = @lexer.next_token
-      if @token.type.newline?
-        if !@lexer.heredocs.empty? && !@consuming_heredocs
-          write_line
-          consume_heredocs
-        end
-      end
-      @token
+    end
+
+    # Heredoc bodies are written along with the newline that precedes them
+    # (see `write_line`) rather than when that newline is read, so that a comma
+    # can still be written after the heredoc's start.
+    private def heredocs_pending_at_newline?
+      @token.type.newline? && !@lexer.heredocs.empty? && !@consuming_heredocs
     end
 
     def next_string_token
@@ -4820,6 +4826,7 @@ module Crystal
         @passed_backslash_newline = false
         @indent -= 2
       end
+      consume_heredocs if heredocs_pending_at_newline?
     end
 
     def increment_line
