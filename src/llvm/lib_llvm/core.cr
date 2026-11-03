@@ -1,6 +1,8 @@
 require "./types"
 
 lib LibLLVM
+  fun count_basic_blocks = LLVMCountBasicBlocks(function : ValueRef) : UInt32
+
   # NOTE: the following C enums usually have different values from their C++
   # counterparts (e.g. `LLVMModuleFlagBehavior` v.s. `LLVM::Module::ModFlagBehavior`)
 
