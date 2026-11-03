@@ -3042,6 +3042,8 @@ describe "String" do
       {% end %}
 
       it "decodes with skip" do
+        pending! if {{ flag?(:darwin) }} # #17701
+
         bytes = Bytes[186, 195, 255, 202, 199]
         String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end
