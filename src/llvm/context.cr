@@ -129,12 +129,21 @@ class LLVM::Context
   end
 
   def md_string(value : String) : Value
-    metadata = LibLLVM.md_string_in_context2(self, value, value.bytesize)
-    LLVM::Value.new LibLLVM.metadata_as_value(self, metadata)
+    {% if LibLLVM::IS_LT_90 %}
+      LLVM::Value.new LibLLVM.md_string_in_context(self, value, value.bytesize)
+    {% else %}
+      metadata = LibLLVM.md_string_in_context2(self, value, value.bytesize)
+      LLVM::Value.new LibLLVM.metadata_as_value(self, metadata)
+    {% end %}
   end
 
   def md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node_in_context2(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+    {% if LibLLVM::IS_LT_90 %}
+      Value.new LibLLVM.md_node_in_context(self, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+    {% else %}
+      metadata = LibLLVM.md_node_in_context2(self, values.map { |value| LibLLVM.value_as_metadata(value) }, values.size)
+      Value.new LibLLVM.metadata_as_value(self, metadata)
+    {% end %}
   end
 
   def parse_ir(buf : MemoryBuffer)
