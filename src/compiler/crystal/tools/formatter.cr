@@ -4462,7 +4462,7 @@ module Crystal
       @token = @lexer.next_token
       if @token.type.newline?
         if !@lexer.heredocs.empty? && !@consuming_heredocs
-          write_line
+          write_line unless @wrote_newline
           consume_heredocs
         end
       end
