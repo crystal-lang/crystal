@@ -1,8 +1,10 @@
 require "../spec_helper"
 require "../../support/number"
 require "yaml"
-require "big"
-require "big/yaml"
+{% unless flag?(:wasm32) %}
+  require "big"
+  require "big/yaml"
+{% end %}
 
 enum YAMLSpecEnum
   Zero
@@ -60,7 +62,7 @@ describe "YAML serialization" do
         {{ int }}.from_yaml({{ int }}::MAX.to_s).should(be_a({{ int }})).should eq({{ int }}::MAX)
       end
 
-      it "raises if {{ int }}.from_yaml overflows" do
+      pending_wasm32 "raises if {{ int }}.from_yaml overflows" do
         expect_raises(YAML::ParseException, "Can't read {{ int }}") do
           {{ int }}.from_yaml(({{ int }}::MIN.to_big_i - 1).to_s)
         end
@@ -233,19 +235,19 @@ describe "YAML serialization" do
       typeof(tuple).should eq(NamedTuple(a: FooPrivate))
     end
 
-    it "does for BigInt" do
+    pending_wasm32 "does for BigInt" do
       big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
       big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
     end
 
-    it "does for BigFloat" do
+    pending_wasm32 "does for BigFloat" do
       big = BigFloat.from_yaml("1234.567891011121314")
       big.should be_a(BigFloat)
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    it "does for BigDecimal" do
+    pending_wasm32 "does for BigDecimal" do
       big = BigDecimal.from_yaml("1234.567891011121314")
       big.should be_a(BigDecimal)
       big.should eq(BigDecimal.new("1234.567891011121314"))
@@ -575,17 +577,17 @@ describe "YAML serialization" do
       {x: 1, y: "hello"}.to_yaml.should eq({:x => 1, :y => "hello"}.to_yaml)
     end
 
-    it "does for BigInt" do
+    pending_wasm32 "does for BigInt" do
       big = BigInt.new("123456789123456789123456789123456789123456789")
       BigInt.from_yaml(big.to_yaml).should eq(big)
     end
 
-    it "does for BigFloat" do
+    pending_wasm32 "does for BigFloat" do
       big = BigFloat.new("1234.567891011121314")
       BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
 
-    it "does for BigDecimal" do
+    pending_wasm32 "does for BigDecimal" do
       big = BigDecimal.new("1234.567891011121314")
       BigDecimal.from_yaml(big.to_yaml).should eq(big)
     end
