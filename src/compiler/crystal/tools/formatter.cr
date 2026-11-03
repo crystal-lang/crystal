@@ -2493,7 +2493,8 @@ module Crystal
             end
 
             has_newlines, _, _ = format_args args, true, node.named_args
-            if @token.type.op_comma? || @token.type.newline?
+            found_comment = skip_space
+            if !found_comment && (@token.type.op_comma? || @token.type.newline?)
               if has_newlines
                 write ","
                 found_comment = next_token_skip_space
@@ -2504,7 +2505,7 @@ module Crystal
                 next_token_skip_space_or_newline
               end
             else
-              found_comment = skip_space_or_newline
+              found_comment |= skip_space_or_newline
               write_indent if found_comment
             end
 
