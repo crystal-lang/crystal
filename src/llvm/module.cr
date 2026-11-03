@@ -12,8 +12,7 @@ class LLVM::Module
     new(module_ref, context)
   end
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-    @owned = false
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context, *, @dispose_on_finalize : Bool = true)
   end
 
   def name : String
@@ -143,11 +142,22 @@ class LLVM::Module
     @unwrap
   end
 
+  def dispose : Nil
+    if @unwrap
+      LibLLVM.dispose_module(self)
+      @unwrap = LibLLVM::ModuleRef.null
+    end
+  end
+
+  def finalize
+    dispose if @dispose_on_finalize
+  end
+
   def take_ownership(&)
-    if @owned
-      yield
+    if @dispose_on_finalize
+      @dispose_on_finalize = false
     else
-      @owned = true
+      yield
     end
   end
 end
