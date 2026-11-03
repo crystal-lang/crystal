@@ -1845,6 +1845,24 @@ describe "Semantic: macro" do
     method.location.should_not(be_nil).expanded_location.should_not(be_nil).line_number.should eq(9)
   end
 
+  it "keeps end location of block with trailing blank lines passed to nested macro (#10562)" do
+    assert_no_errors <<-CRYSTAL
+      macro wrap(&block)             #  1
+        {{ block.body }}             #  2
+      end                            #  3
+                                     #  4
+      macro check(&block)            #  5
+        {% raise "got \#{block.end_line_number}" unless block.end_line_number == 12 %}
+      end                            #  7
+                                     #  8
+      wrap do                        #  9
+        check do                     # 10
+                                     # 11
+        end                          # 12
+      end                            # 13
+      CRYSTAL
+  end
+
   it "assigns to underscore" do
     assert_no_errors <<-CRYSTAL
       {% _ = 1 %}
