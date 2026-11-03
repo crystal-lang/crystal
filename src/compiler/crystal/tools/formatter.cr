@@ -2799,7 +2799,8 @@ module Crystal
       end
 
       if block_arg
-        has_newlines = format_block_arg(block_arg, needed_indent) || has_newlines
+        block_arg_has_newlines = format_block_arg(block_arg, needed_indent)
+        has_newlines ||= block_arg_has_newlines
       end
 
       @inside_call_or_assign -= 1
