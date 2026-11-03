@@ -75,6 +75,10 @@ module Crystal
       # then this flag is set to `true` when parsing `foo`'s arguments.
       @stop_on_do = false
       @assigned_vars = [] of String
+
+      # Set when the next atomic is the implicit call of a `when` expression,
+      # like the `.foo` in `when .foo.bar > 1`.
+      @next_atomic_is_implicit_call = false
     end
 
     def wants_doc=(@wants_doc : Bool)
@@ -670,7 +674,7 @@ module Crystal
 
     def parse_atomic_with_method
       location = @token.location
-      atomic = parse_atomic
+      atomic = @next_atomic_is_implicit_call ? parse_implicit_call : parse_atomic
       parse_atomic_method_suffix atomic, location
     end
 
@@ -2943,6 +2947,14 @@ module Crystal
                 next_token_skip_space
               else
                 exp = parse_when_expression(cond, single: true, exhaustive: exhaustive)
+
+                # Other expressions are not checked here, for backwards
+                # compatibility, but they can't be chained
+                implicit_obj_parent = exp.implicit_obj_parent
+                if exhaustive && implicit_obj_parent && !implicit_obj_parent.same?(exp)
+                  check_valid_exhaustive_expression(exp)
+                end
+
                 when_conds << exp
                 add_when_exp(when_exps, exp)
                 skip_space
@@ -3071,19 +3083,18 @@ module Crystal
     def parse_when_expression(cond, single, exhaustive)
       if cond && @token.type.op_period?
         location = @token.location
-        next_token
-        call = parse_var_or_call(force_call: true).at(location)
-        case call
-        when Call        then call.obj = ImplicitObj.new
-        when RespondsTo  then call.obj = ImplicitObj.new
-        when IsA         then call.obj = ImplicitObj.new
-        when Cast        then call.obj = ImplicitObj.new
-        when NilableCast then call.obj = ImplicitObj.new
-        when Not         then call.exp = ImplicitObj.new
-        else
-          raise "BUG: expected Call, RespondsTo, IsA, Cast or NilableCast"
+
+        # The implicit call is the first atomic of the expression, so that it
+        # can be followed by more calls and by binary operators. This starts
+        # below ranges, ternaries and assignments because those don't make
+        # sense as a condition on the implicit object.
+        @next_atomic_is_implicit_call = true
+        exp = parse_or
+
+        unless exp.implicit_obj_parent
+          raise "expected a call on the implicit object of the case expression", location
         end
-        call
+        exp
       elsif single && @token.type.underscore?
         if exhaustive
           raise "'when _' is not supported"
@@ -3093,6 +3104,24 @@ module Crystal
       else
         parse_op_assign_no_control
       end
+    end
+
+    # Parses the `.foo` of `when .foo`, without any suffix.
+    def parse_implicit_call
+      @next_atomic_is_implicit_call = false
+
+      location = @token.location
+      next_token
+      call = parse_var_or_call(force_call: true).at(location)
+      case call
+      when Call, RespondsTo, IsA, Cast, NilableCast
+        call.obj = ImplicitObj.new
+      when Not
+        call.exp = ImplicitObj.new
+      else
+        # Something like `.foo : Int32`, rejected by `parse_when_expression`
+      end
+      call
     end
 
     def parse_select
@@ -4446,7 +4475,7 @@ module Crystal
       is_var = !global && var?(name)
 
       # If the name is a var and '+' or '-' follow, never treat the name as a call
-      if is_var && next_comes_plus_or_minus?
+      if is_var && !force_call && next_comes_plus_or_minus?
         var = Var.new(name)
         var.doc = doc
         var.location = name_location

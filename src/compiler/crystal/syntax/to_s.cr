@@ -496,6 +496,11 @@ module Crystal
       need_parens = need_parens(node_obj)
       is_multiline = false
 
+      # A receiver starting with an implicit object can't be parenthesized, so
+      # operators are written as method calls to preserve evaluation order:
+      # `.foo.+(1).*(2)` is not the same as `.foo + 1 * 2`.
+      implicit_chain = node_obj.try(&.implicit_obj_parent)
+
       @str << "::" if node.global?
       if node_obj.is_a?(ImplicitObj)
         @str << '.'
@@ -519,7 +524,7 @@ module Crystal
         else
           @str << "]?"
         end
-      elsif node_obj && node.name == "[]=" && !node.args.empty? && !block
+      elsif node_obj && !implicit_chain && node.name == "[]=" && !node.args.empty? && !block
         in_parenthesis(need_parens, node_obj)
 
         @str << "["
@@ -533,10 +538,10 @@ module Crystal
 
         @str << "] = "
         node.args.last.accept self
-      elsif node_obj && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block && !short_block_call
+      elsif node_obj && !implicit_chain && node.name.in?(UNARY_OPERATORS) && node.args.empty? && !node.named_args && !node.block_arg && !block && !short_block_call
         @str << node.name
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block && !short_block_call
+      elsif node_obj && !implicit_chain && !Lexer.ident?(node.name) && node.name != "~" && node.args.size == 1 && !node.named_args && !node.block_arg && !block && !short_block_call
         in_parenthesis(need_parens, node_obj)
 
         arg = node.args[0]
@@ -611,6 +616,9 @@ module Crystal
     end
 
     private def need_parens(obj)
+      # An expression starting with an implicit object can't be parenthesized
+      return false if obj.try(&.implicit_obj_parent)
+
       case obj
       when Call
         case obj.args.size
@@ -1354,6 +1362,13 @@ module Crystal
     end
 
     def visit(node : Not)
+      # `!.foo` is not valid syntax, so this has to be written as `.foo.!`
+      if node.exp.implicit_obj_parent
+        node.exp.accept self
+        @str << ".!"
+        return false
+      end
+
       @str << '.' if node.exp.is_a?(ImplicitObj)
       @str << '!'
       need_parens = need_parens(node.exp)
