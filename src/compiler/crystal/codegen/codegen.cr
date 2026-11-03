@@ -1512,6 +1512,7 @@ module Crystal
 
     def visit(node : Cast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1578,6 +1579,7 @@ module Crystal
 
     def visit(node : NilableCast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1715,6 +1717,7 @@ module Crystal
       accept node.obj
 
       if @needs_value
+        set_current_debug_location node if @debug.line_numbers?
         obj_type = node.obj.type
 
         type_id = type_id @last, obj_type
