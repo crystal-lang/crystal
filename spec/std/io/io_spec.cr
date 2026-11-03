@@ -750,13 +750,16 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          message =
-            {% if !flag?(:use_libiconv) && (flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) || flag?(:darwin)) %}
-              "Incomplete multibyte sequence"
-            {% else %}
-              "Invalid multibyte sequence"
-            {% end %}
-          expect_raises(ArgumentError, message) { io.read_char }
+          exception = expect_raises(ArgumentError) { io.read_char }
+
+          {% if flag?(:darwin) %}
+            # #17701
+            ["Incomplete multibyte sequence", "Invalid multibyte sequence"].should contain(exception.message)
+          {% elsif !flag?(:use_libiconv) && (flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) || flag?(:darwin)) %}
+            exception.message.should eq("Incomplete multibyte sequence")
+          {% else %}
+            exception.message.should eq("Invalid multibyte sequence")
+          {% end %}
         end
 
         it "skips invalid byte sequences" do
