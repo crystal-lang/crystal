@@ -72,7 +72,9 @@ describe File do
     it "creates and writes" do
       tempfile = File.tempfile
       tempfile.print "Hello!"
-      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% unless flag?(:wasm32) %}
+        tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% end %}
       tempfile.close
 
       File.exists?(tempfile.path).should be_true
@@ -84,7 +86,9 @@ describe File do
     it "accepts single suffix argument" do
       tempfile = File.tempfile ".bar"
       tempfile.print "Hello!"
-      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% unless flag?(:wasm32) %}
+        tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% end %}
       tempfile.close
 
       File.extname(tempfile.path).should eq(".bar")
@@ -98,7 +102,9 @@ describe File do
     it "accepts prefix and suffix arguments" do
       tempfile = File.tempfile "foo", ".bar"
       tempfile.print "Hello!"
-      tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% unless flag?(:wasm32) %}
+        tempfile.info.permissions.should eq normalize_permissions(0o600, directory: false)
+      {% end %}
       tempfile.close
 
       File.extname(tempfile.path).should eq(".bar")

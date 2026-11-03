@@ -9,6 +9,16 @@ def datapath(*components)
   File.join("spec", "std", "data", *components)
 end
 
+def symlink_target(target, link)
+  {% if flag?(:wasm32) %}
+    # WASI rejects absolute symlinks that cross preopened directory boundaries.
+    base = Dir.current
+    Path[target].expand(base).relative_to(Path[link].expand(base).parent).to_s
+  {% else %}
+    target
+  {% end %}
+end
+
 private class Witness
   @checked = false
 

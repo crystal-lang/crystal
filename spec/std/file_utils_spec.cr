@@ -6,12 +6,14 @@ private def test_with_string_and_path(*paths, &)
   yield *paths.map { |path| Path[path] }
 end
 
+private NOT_CURRENT_DIR = {% if flag?(:wasm32) %} datapath("dir") {% else %} ".." {% end %}
+
 describe "FileUtils" do
   describe ".cd" do
     it "should work" do
       cwd = Dir.current
       test_with_string_and_path(cwd) do |arg|
-        FileUtils.cd("..")
+        FileUtils.cd(NOT_CURRENT_DIR)
         Dir.current.should_not eq(cwd)
         FileUtils.cd(arg)
         Dir.current.should eq(cwd)
@@ -28,7 +30,7 @@ describe "FileUtils" do
 
     it "accepts a block" do
       cwd = Dir.current
-      test_with_string_and_path("..") do |arg|
+      test_with_string_and_path(NOT_CURRENT_DIR) do |arg|
         FileUtils.cd(arg) do
           Dir.current.should_not eq(cwd)
         end
@@ -100,21 +102,23 @@ describe "FileUtils" do
       end
     end
 
-    it "copies permissions" do
-      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        File.write(src_path, "foo")
-        File.chmod(src_path, 0o444)
+    {% unless flag?(:wasm32) %}
+      it "copies permissions" do
+        with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+          File.write(src_path, "foo")
+          File.chmod(src_path, 0o444)
 
-        test_with_string_and_path(src_path, out_path) do |*args|
-          FileUtils.cp(*args)
+          test_with_string_and_path(src_path, out_path) do |*args|
+            FileUtils.cp(*args)
 
-          File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
-          FileUtils.cmp(src_path, out_path).should be_true
+            File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
+            FileUtils.cmp(src_path, out_path).should be_true
 
-          FileUtils.rm_rf(out_path)
+            FileUtils.rm_rf(out_path)
+          end
         end
       end
-    end
+    {% end %}
 
     it "raises an error if the directory doesn't exist" do
       expect_raises(ArgumentError, "No such directory : not_existing_dir") do
@@ -402,7 +406,7 @@ describe "FileUtils" do
         test_with_string_and_path(removed_path) do |arg|
           Dir.mkdir(removed_path)
           Dir.mkdir(linked_path)
-          File.symlink(linked_path, link_path)
+          File.symlink(symlink_target(linked_path, link_path), link_path)
           File.write(file_path, "")
 
           Dir.exists?(removed_path).should be_true
@@ -424,7 +428,7 @@ describe "FileUtils" do
         test_with_string_and_path(path) do |arg|
           Dir.mkdir(path)
           link_path = File.join(path, "loop")
-          File.symlink(link_path, link_path)
+          File.symlink(symlink_target(link_path, link_path), link_path)
 
           FileUtils.rm_r(arg)
           Dir.exists?(path).should be_false
@@ -776,7 +780,7 @@ describe "FileUtils" do
       with_tempfile("ln_s_src", "ln_s_dst") do |path1, path2|
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           FileUtils.touch(path1)
-          FileUtils.ln_s(arg1, arg2)
+          FileUtils.ln_s(symlink_target(arg1, arg2), arg2)
           File.exists?(path2).should be_true
           File.symlink?(path2).should be_true
           FileUtils.rm_rf([path1, path2])
@@ -791,7 +795,7 @@ describe "FileUtils" do
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           FileUtils.touch(path1)
           FileUtils.mkdir(path2)
-          FileUtils.ln_s(arg1, arg2)
+          FileUtils.ln_s(symlink_target(arg1, path3), arg2)
           File.exists?(path3).should be_true
           File.symlink?(path3).should be_true
           FileUtils.rm_rf([path1, path2])
@@ -806,7 +810,11 @@ describe "FileUtils" do
           paths = [arg1, arg2, arg3]
           paths.each { |path| FileUtils.touch(path) }
           FileUtils.mkdir(dir_path)
-          FileUtils.ln_s(paths, dir_arg)
+          {% if flag?(:wasm32) %}
+            FileUtils.ln_s(paths.map { |path| symlink_target(path, File.join(dir_path, File.basename(path))) }, dir_arg)
+          {% else %}
+            FileUtils.ln_s(paths, dir_arg)
+          {% end %}
 
           paths.each do |path|
             link_path = File.join(dir_path, File.basename(path))
@@ -868,11 +876,11 @@ describe "FileUtils" do
       with_tempfile("ln_sf_src", "ln_sf_dst_dangling") do |path1, path2|
         test_with_string_and_path(path1, path2) do |arg1, arg2|
           FileUtils.touch([path1])
-          File.symlink(File.join(File.dirname(path2), "missing"), path2)
+          File.symlink(symlink_target(File.join(File.dirname(path2), "missing"), path2), path2)
           File.symlink?(path2).should be_true
           File.exists?(path2).should be_false
 
-          FileUtils.ln_sf(arg1, arg2)
+          FileUtils.ln_sf(symlink_target(arg1, arg2), arg2)
           File.symlink?(path2).should be_true
           File.realpath(path2).should eq File.realpath(path1)
           FileUtils.rm_rf([path1, path2])
@@ -882,7 +890,8 @@ describe "FileUtils" do
 
     {% if flag?(:unix) %}
       # can't spawn subprocesses in interpreted code (#12241)
-      pending_interpreted "overwrites a destination named pipe" do
+      pending_wasm32 "overwrites a destination named pipe" do
+        pending_interpreted!
         with_tempfile("ln_sf_src", "ln_sf_dst_pipe_exists") do |path1, path2|
           test_with_string_and_path(path1, path2) do |arg1, arg2|
             FileUtils.touch([path1])
