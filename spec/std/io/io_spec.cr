@@ -763,7 +763,7 @@ describe IO do
         end
 
         it "skips invalid byte sequences" do
-          pending! if {{ flag?(:darwin) }} # #17701
+          pending! if {{ flag?(:darwin) && !flag?(:use_libiconv) }} # #17701
 
           string = String.build do |str|
             str.write "好".encode("EUC-JP")

@@ -2967,7 +2967,7 @@ describe "String" do
         bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
 
-      {% if flag?(:darwin) %}
+      {% if !flag?(:use_libiconv) && flag?(:darwin) %}
         # #17701
         pending "flushes the shift state (#11992)"
       {% else %}
@@ -3042,7 +3042,7 @@ describe "String" do
       {% end %}
 
       it "decodes with skip" do
-        pending! if {{ flag?(:darwin) }} # #17701
+        pending! if {{ flag?(:darwin) && !flag?(:use_libiconv) }} # #17701
 
         bytes = Bytes[186, 195, 255, 202, 199]
         String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
