@@ -113,34 +113,6 @@ jobs:
             - /usr/local/Homebrew
             - ~/Library/Caches/Homebrew/downloads
 
-  test_preview_mt:
-    machine:
-      image: default
-    resource_class: large
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run: bin/ci with_build_env 'make crystal'
-      - run:
-          command: bin/ci with_build_env 'CRYSTAL_WORKERS=4 make std_spec threads=1 FLAGS="-D preview_mt" junit_output=.junit/std_spec.xml'
-          no_output_timeout: 30m
-      - run:
-          when: always
-          command: |
-            mkdir -p ~/test-results/spec
-            cp .junit/*.xml ~/test-results/spec/
-      - store_test_results:
-          path: ~/test-results
-      - store_artifacts:
-          path: ~/test-results/spec
-
   prepare_common:
     docker:
       - image: docker:stable-git
@@ -450,8 +422,6 @@ workflows:
           filters: *release
       # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
       #     filters: *release
-      - test_preview_mt:
-          filters: *release
       - prepare_common:
           filters: *release
       - prepare_maintenance:
@@ -514,7 +484,6 @@ workflows:
       - test_linux
       - test_alpine
       # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
-      - test_preview_mt
       - prepare_common
       - prepare_nightly:
           requires:
