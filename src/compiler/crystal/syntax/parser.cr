@@ -6545,7 +6545,7 @@ module Crystal
     end
 
     def check(token_types : Array(Token::Kind))
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token}')", @token unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token}')", @token unless token_types.includes?(@token.type)
     end
 
     def check(token_type : Token::Kind)

@@ -24,13 +24,8 @@ struct Exception::CallStack
     end
   end
 
-  # DWARF uses fixed addresses but Darwin loads executables at a random
-  # address, so we must remove the load offset from the IP to match the
-  # addresses in DWARF sections.
-  #
-  # See https://en.wikipedia.org/wiki/Address_space_layout_randomization
   protected def self.decode_address(ip)
-    ip.address &- @@base_address
+    ip.address &- @@base_address &- 1
   end
 
   # Searches the companion dSYM bundle with the DWARF sections for the

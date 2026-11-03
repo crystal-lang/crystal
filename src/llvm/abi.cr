@@ -11,8 +11,8 @@ abstract class LLVM::ABI
   def initialize(target_machine : TargetMachine)
     @target_data = target_machine.data_layout
     triple = target_machine.triple
-    @osx = !!(triple =~ /apple/)
-    @windows = !!(triple =~ /windows/)
+    @osx = triple.includes?("apple")
+    @windows = triple.includes?("windows")
   end
 
   abstract def abi_info(atys : Array(Type), rty : Type, ret_def : Bool, context : Context)

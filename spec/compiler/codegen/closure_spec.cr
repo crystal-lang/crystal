@@ -590,6 +590,46 @@ describe "Code gen: closure" do
       CRYSTAL
   end
 
+  it "closures virtual self if class var is accessed via instance method (#11975)" do
+    run(<<-CRYSTAL, Int32).should eq(102)
+      class Foo
+        @@x = 1
+
+        def x
+          ->{ @@x }
+        end
+      end
+
+      class Bar < Foo
+        @@x = 2
+      end
+
+      foo = Foo.new.as(Foo)
+      bar = Bar.new.as(Foo)
+      foo.x.call &* 100 &+ bar.x.call
+      CRYSTAL
+  end
+
+  it "closures virtual self if class var is accessed via class method (#11975)" do
+    run(<<-CRYSTAL, Int32).should eq(102)
+      class Foo
+        @@x = 1
+
+        def self.x
+          ->{ @@x }
+        end
+      end
+
+      class Bar < Foo
+        @@x = 2
+      end
+
+      foo = Foo.as(Foo.class)
+      bar = Bar.as(Foo.class)
+      foo.x.call &* 100 &+ bar.x.call
+      CRYSTAL
+  end
+
   it "doesn't form a closure if invoking class method" do
     run(<<-CRYSTAL).to_b.should be_false
       require "prelude"

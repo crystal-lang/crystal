@@ -990,7 +990,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
-    if context.type.is_a?(MetaclassType)
+    if (type = context.type).is_a?(MetaclassType)
       type_id(type)
     else
       type_id(call_args[0], type)
@@ -998,7 +998,48 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
-    type_id(context.type.instance_type)
+    if value = call_args.first?
+      codegen_primitive_class_crystal_instance_type_id_with_type(context.type, value)
+    else
+      type_id(context.type.instance_type)
+    end
+  end
+
+  def codegen_primitive_class_crystal_instance_type_id_with_type(type, value)
+    type_id = type_id(value, type)
+    instance_type_fun_name = "~instance_type"
+    func = typed_fun?(@main_mod, instance_type_fun_name) || create_instance_type_fun(instance_type_fun_name)
+    func = check_main_fun instance_type_fun_name, func
+    call func, [type_id] of LLVM::Value
+  end
+
+  def create_instance_type_fun(name)
+    id_to_metaclass = @program.llvm_id.id_to_metaclass.to_a.sort_by! &.[1]
+
+    in_main do
+      define_main_function(name, ([llvm_context.int32]), llvm_context.int32) do |func|
+        set_internal_fun_debug_location(func, name)
+
+        arg = func.params.first
+
+        current_block = insert_block
+
+        cases = {} of LLVM::Value => LLVM::BasicBlock
+        id_to_metaclass.each do |(type_id, metaclass_id)|
+          block = new_block "type_#{type_id}"
+          cases[int32(metaclass_id)] = block
+          position_at_end block
+          ret int32(type_id)
+        end
+
+        otherwise = new_block "otherwise"
+        position_at_end otherwise
+        unreachable
+
+        position_at_end current_block
+        @builder.switch arg, otherwise, cases
+      end
+    end
   end
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
@@ -1012,7 +1053,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_class(node, target_def, call_args)
     value = call_args.first?
     if value
-      codegen_primitive_class_with_type(type, value)
+      codegen_primitive_class_with_type(context.type, value)
     else
       type_id(node.type)
     end
@@ -1320,7 +1361,34 @@ class Crystal::CodeGenVisitor
 
   def codegen_va_arg(call, node, target_def, call_args)
     ptr = call_args.first
-    builder.va_arg(ptr, llvm_type(node.type))
+    type = llvm_type(node.type)
+
+    if @program.has_flag?("win32") && @program.has_flag?("x86_64")
+      # Based on Clang's implementation that circumvents LLVM's `va_arg` instruction:
+      # https://github.com/llvm/llvm-project/blob/49bc45ccc8063a79016beefe72a7127fe63bef9c/clang/lib/CodeGen/Targets/X86.cpp#L3789
+
+      # Reinterpret `VaList*` as a `UInt8**` for convenience (it should point to
+      # `VaList#@to_unsafe`)
+      casted_ptr = pointer_cast ptr, @llvm_context.int8.pointer.pointer
+      cur_ptr = load @llvm_context.int8.pointer, casted_ptr
+
+      if @llvm_typer.size_of(type).in?(1, 2, 4, 8)
+        # `value = @to_unsafe.as(T*).value`
+        value = load type, pointer_cast(cur_ptr, type.pointer)
+      else
+        # `value = @to_unsafe.as(T**).value.value`
+        # (the caller has made a copy, and this will be passed by reference)
+        value = load type.pointer, pointer_cast(cur_ptr, type.pointer.pointer)
+      end
+
+      # `@to_unsafe += sizeof(Void*)`
+      next_ptr = gep @llvm_context.int8, cur_ptr, int32(@llvm_typer.pointer_size)
+      store next_ptr, casted_ptr
+
+      value
+    else
+      builder.va_arg(ptr, type)
+    end
   end
 
   def check_atomic_call(call, target_def)

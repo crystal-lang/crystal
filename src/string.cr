@@ -944,10 +944,20 @@ class String
     self[str]?.not_nil!
   end
 
+  # Returns the entire match of the `Regex` in this string.
+  #
+  # ```
+  # "cryyystal"[/y+/] # => "yyy"
+  # ```
   def [](regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     self[regex, options: options]?.not_nil!
   end
 
+  # Returns the nth *group* of the matched `Regex` in this string.
+  #
+  # ```
+  # "crystal"[/y(st)/, 1] # => "st"
+  # ```
   def [](regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     self[regex, group, options: options]?.not_nil!
   end
@@ -4955,6 +4965,7 @@ class String
         offset += search.bytesize
 
         # no overlapping matches; advance past the matched string
+        return unless pointer + search.bytesize <= end_pointer
         search.bytesize.times do
           hash = hash &* PRIME_RK &+ pointer.value &- pow &* head_pointer.value
           pointer += 1

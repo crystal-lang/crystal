@@ -114,7 +114,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     true
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
@@ -651,12 +651,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       Polling.arena.get?(event.value.index) { |pd| pd.value.@writers.delete(event) }
       event.value.timed_out!
     when .select_timeout?
-      # always dequeue the event but only enqueue the fiber if we win the
-      # atomic CAS
-      return unless select_action = fiber.timeout_select_action
-      fiber.timeout_select_action = nil
+      # The action belongs to this timer registration. The fiber may already
+      # have started another select while this timer was being processed.
+      return unless select_action = event.value.timeout_select_action
       return unless select_action.time_expired?
-      fiber.@timeout_event.as(FiberEvent).clear
+      event.value.wake_at = nil
     when .sleep?
       event.value.timed_out!
     else
