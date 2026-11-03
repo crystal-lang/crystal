@@ -6,8 +6,14 @@ module Crystal::System::FileDescriptor
     if Crystal.stdio_closed?(fd)
       IO::FileDescriptor.new(closed: true)
     else
-      # TODO: WASI doesn't offer a way to detect if a 'fd' is a TTY.
-      IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true))
+      IO::FileDescriptor.new(fd).tap do |io|
+        if io.tty?
+          # Make prompts visible even when they don't end with a newline.
+          io.sync = true
+        else
+          io.flush_on_newline = true
+        end
+      end
     end
   end
 

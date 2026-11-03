@@ -107,4 +107,5 @@ jobs:
 
       - name: "Run wasm32_std_spec.wasm"
         run: |
-          wasmtime run --dir . wasm32_std_spec.wasm
+          mkdir -p tmp
+          wasmtime run --dir . --env TMPDIR=./tmp wasm32_std_spec.wasm
