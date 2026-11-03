@@ -30,6 +30,11 @@ module Crystal
           return type_merge(first.type?, second.type?)
         end
       else
+        first_type = nodes.first.type?
+        # These types still need normalization even when every input is equal.
+        unless first_type.is_a?(UnionType | AliasType | VoidType)
+          return first_type if nodes.all? { |node| node.type? == first_type }
+        end
         combined_union_of compact_types(nodes, &.type?)
       end
     end

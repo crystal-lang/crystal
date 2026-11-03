@@ -11,6 +11,54 @@ private def assert_commutes(str, *, file = __FILE__, line = __LINE__, &)
 end
 
 describe "Semantic: union" do
+  context "merging repeated node types" do
+    it "normalizes repeated unions to their common virtual ancestor" do
+      program = semantic(<<-CRYSTAL).program
+        class MergeBase
+        end
+
+        class MergeLeft < MergeBase
+        end
+
+        class MergeRight < MergeBase
+        end
+        CRYSTAL
+      type = program.union_of(program.types["MergeLeft"], program.types["MergeRight"])
+      nodes = Array(ASTNode).new(3) { Var.new("x").tap(&.set_type(type)) }
+
+      program.type_merge(nodes).should eq(program.types["MergeBase"].virtual_type!)
+    end
+
+    it "normalizes repeated aliases" do
+      program = semantic("alias MergeAlias = Int32").program
+      type = program.types["MergeAlias"].as(Type)
+      nodes = Array(ASTNode).new(3) { Var.new("x").tap(&.set_type(type)) }
+
+      program.type_merge(nodes).should eq(program.int32)
+    end
+
+    it "normalizes repeated Void types to Nil" do
+      program = Program.new
+      nodes = Array(ASTNode).new(3) { Var.new("x").tap(&.set_type(program.void)) }
+
+      program.type_merge(nodes).should eq(program.nil_type)
+    end
+
+    it "merges repeated concrete types" do
+      program = Program.new
+      nodes = Array(ASTNode).new(3) { Var.new("x").tap(&.set_type(program.int32)) }
+
+      program.type_merge(nodes).should eq(program.int32)
+    end
+
+    it "merges nodes without an inferred type" do
+      program = Program.new
+      nodes = Array(ASTNode).new(3) { Var.new("x") }
+
+      program.type_merge(nodes).should be_nil
+    end
+  end
+
   context "commutativity" do
     it "module v.s. including module" do
       assert_commutes(<<-CRYSTAL) { [types["A"], types["B"], types["A"]] }
