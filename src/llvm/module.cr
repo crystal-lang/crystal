@@ -145,7 +145,7 @@ class LLVM::Module
   def dispose : Nil
     if @unwrap
       LibLLVM.dispose_module(self)
-      @unwrap = LibLLVM::ModuleRef.null
+      @unwrap = Pointer(Void).null.as(LibLLVM::ModuleRef)
     end
   end
 
