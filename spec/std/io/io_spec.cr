@@ -4,7 +4,9 @@ require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
@@ -924,7 +926,7 @@ describe IO do
           slice.should eq("foo".encode("UCS-2LE"))
         end
 
-        it "prints big int" do
+        pending_wasm32 "prints big int" do
           io = SimpleIOMemory.new
           io.set_encoding("UCS-2LE")
           io.print 123_456.to_big_i
