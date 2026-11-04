@@ -4256,6 +4256,8 @@ module Crystal
     it "sets correct location of instance and class variable parameter assignments in def" do
       source = "def foo(@a); end"
       body = Parser.parse(source).as(Def).body.as(Assign)
+      # TODO: A single assignment is the body itself, so it's located at the
+      # `end` like the body of a def without one. This might need refinement.
       node_source(source, body).should eq("end")
 
       source = "def foo(@a, @@b); end"
