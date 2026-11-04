@@ -747,4 +747,23 @@ describe "Code gen: virtual type" do
       Moo.new(klass).foo.x
       CRYSTAL
   end
+
+  it "dispatches to the method of a generic superclass instance for a subclass of it" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      abstract class Foo
+        abstract def foo : Int32
+      end
+
+      class Bar(T) < Foo
+        def foo : Int32
+          1
+        end
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.as(Foo).foo
+      CRYSTAL
+  end
 end
