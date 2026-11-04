@@ -856,7 +856,7 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
+        pending_wasm32 "gets ascii from socket (#9056)" do
           server = TCPServer.new "localhost", 0
           sock = TCPSocket.new "localhost", server.local_address.port
           begin

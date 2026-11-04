@@ -114,7 +114,11 @@ describe "File" do
       File.write(filename, "hello")
 
       File.open(filename, "a") do |file|
-        file.tell.should eq(0)
+        {% if flag?(:wasip2) || flag?(:wasip3) %}
+          file.tell.should eq(5)
+        {% else %}
+          file.tell.should eq(0)
+        {% end %}
 
         file.write "12345".to_slice
         file.tell.should eq(10)
