@@ -173,10 +173,16 @@ module Crystal
         # If it's (...) with a single expression, we treat it
         # like a single expression, indenting it if needed
         write "("
-        next_token_skip_space
-        if @token.type.newline?
-          next_token_skip_space_or_newline
-          write_line
+        next_token
+        # A comment right after `(` is written together with the newline
+        # that follows it
+        if skip_space(@indent + 2) || @token.type.newline?
+          if @token.type.newline?
+            write_line
+            next_token
+          end
+          # Comments after `(` go on their own lines
+          skip_space_or_newline(@indent + 2)
           write_indent(@indent + 2, node.expressions.first)
           skip_space_write_line
           skip_space_or_newline
@@ -1180,18 +1186,14 @@ module Crystal
       if named_args = node.named_args
         write_token :OP_LPAREN
         skip_space
-        has_newlines, _, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
+        has_newlines, found_comment, _ = format_named_args([] of ASTNode, named_args, @indent + 2)
         # `format_named_args` doesn't skip trailing comma
         if @token.type.op_comma?
-          next_token_skip_space_or_newline
-          if has_newlines
-            write ","
-            write_line
-            write_indent
-          end
+          finish_args(true, has_newlines, false, found_comment, @indent)
+        else
+          skip_space_or_newline
+          write_token :OP_RPAREN
         end
-        skip_space_or_newline
-        write_token :OP_RPAREN
       else
         format_literal_elements(node.type_vars, :OP_LPAREN, :OP_RPAREN)
       end
@@ -2735,12 +2737,13 @@ module Crystal
         if has_parentheses
           if @token.type.op_comma?
             next_token
-            wrote_newline = skip_space(block_indent, write_comma: true)
+            wrote_newline = skip_space(block_indent + 2, write_comma: true)
             if wrote_newline || @token.type.newline?
               unless wrote_newline
-                next_token_skip_space_or_newline
                 write ","
                 write_line
+                next_token
+                skip_space_or_newline(block_indent + 2)
               end
               needs_space = false
               block_indent += 2 if !@token.type.op_rparen? # foo(1, ↵  &.foo) case
@@ -3330,8 +3333,10 @@ module Crystal
 
     def accept_assign_value_after_equals(value, check_align = false)
       if @token.type.newline?
-        next_token_skip_space_or_newline
         write_line
+        next_token
+        # Comments between `=` and the value go on their own lines
+        skip_space_or_newline(@indent + 2)
         write_indent(@indent + 2, value)
       else
         write " "
@@ -3341,7 +3346,7 @@ module Crystal
 
     def accept_assign_value(value, check_align = false)
       before_column = @column
-      if @token.keyword?(:if) || @token.keyword?(:case) || value.is_a?(MacroIf)
+      if @token.keyword?(:if) || @token.keyword?(:unless) || @token.keyword?(:case) || value.is_a?(MacroIf)
         indent(@column, value)
       else
         inside_call_or_assign do
@@ -3652,8 +3657,9 @@ module Crystal
 
       if @token.type.op_lparen?
         format_parenthesized_args(node.exps)
-      else
-        write " " unless node.exps.empty?
+      elsif !node.exps.empty?
+        # Without arguments, a trailing comment is left to the caller
+        write " "
         skip_space
         format_args node.exps, false
       end
@@ -3922,8 +3928,10 @@ module Crystal
       write_token " ", :OP_EQ
       skip_space
       if @token.type.newline?
-        next_token_skip_space_or_newline
         write_line
+        next_token
+        # Comments between `=` and the values go on their own lines
+        skip_space_or_newline(@indent + 2)
         if node.values.size == 1
           write_indent(@indent + 2, node.values.first)
           return false

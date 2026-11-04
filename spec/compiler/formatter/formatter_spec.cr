@@ -576,6 +576,9 @@ describe Crystal::Formatter do
   assert_format "yield 1 , \n2", "yield 1,\n  2"
   assert_format "yield(1 , \n2)", "yield(1,\n  2)"
   assert_format "yield(\n1 , \n2)", "yield(\n  1,\n  2)"
+  assert_format "def foo(&)\n  yield # bar\nrescue\nend"
+  assert_format "foo do\n  yield # bar\nensure\nend"
+  assert_format "def foo(&)\n  with 1 yield # bar\nrescue\nend"
 
   assert_format "with foo yield bar"
 
@@ -1125,6 +1128,9 @@ describe Crystal::Formatter do
   assert_format "a = if 1\n2\n3\nend", "a = if 1\n      2\n      3\n    end"
   assert_format "a = if 1\n2\nelse\n3\nend", "a = if 1\n      2\n    else\n      3\n    end"
   assert_format "a = if 1\n2\nelsif 3\n4\nend", "a = if 1\n      2\n    elsif 3\n      4\n    end"
+  assert_format "a = unless 1\n2\n3\nend", "a = unless 1\n      2\n      3\n    end" # #15487
+  assert_format "a = unless 1\n2\nelse\n3\nend", "a = unless 1\n      2\n    else\n      3\n    end"
+  assert_format "a = 1\na ||= unless 1\n2\nend", "a = 1\na ||= unless 1\n        2\n      end"
   assert_format "a = [\n1,\n2]", "a = [\n  1,\n  2,\n]"
   assert_format "a = while 1\n2\nend", "a = while 1\n  2\nend"
   assert_format "a = case 1\nwhen 2\n3\nend", "a = case 1\n    when 2\n      3\n    end"
@@ -1132,6 +1138,16 @@ describe Crystal::Formatter do
   assert_format "a = \nif 1\n2\nend", "a =\n  if 1\n    2\n  end"
   assert_format "a, b = \nif 1\n2\nend", "a, b =\n  if 1\n    2\n  end"
   assert_format "a = b = 1\na, b =\n  b, a"
+  assert_format "a =\n  # foo\n  1"
+  assert_format "a =\n  # foo\n  # bar\n  1"
+  assert_format "a =\n  # foo\n  if 1\n    2\n  end"
+  assert_format "foo.bar =\n  # baz\n  1"
+  assert_format "A =\n  # foo\n  1"
+  assert_format "a, b =\n  # foo\n  1, 2"
+  assert_format "a, b =\n  # foo\n  case 1\n  when 2\n    {3, 4}\n  end"
+  assert_format "a = (\n  # foo\n  1 || 2\n)"
+  assert_format "a = ( # foo\n  1\n)"
+  assert_format "( # foo\n  # bar\n  1\n)"
   assert_format "a = # foo\n  bar(1)"
   assert_format "a = \\\n  # foo\n  bar(1)"
   assert_format "a = \\\n  # foo\n  nil"
@@ -2315,6 +2331,17 @@ describe Crystal::Formatter do
   assert_format "def a\n  b(\n    1, # x\n    # y\n    2\n  )\nend"
   assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
+
+  # #14609
+  assert_format "foo(\n  a: 1,\n  # b: 2\n) do\nend"
+  assert_format "foo(\n  1,\n  # 2\n  # 3\n) { }"
+  assert_format "foo(\n  1,\n  # 2\n  &.bar\n)"
+  assert_format "foo(\n  1, # 2\n  # 3\n) do\nend"
+
+  # #10912
+  assert_format "NamedTuple(\n  a: Int32,\n  b: Int32, # c\n)"
+  assert_format "NamedTuple(\n  a: Int32,\n  # b: Int32\n)"
+  assert_format "NamedTuple(\n  a: Int32, # c\n  b: Int32,\n)"
 
   assert_format "def foo(a, **b : Int32)\nend"
 
