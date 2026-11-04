@@ -23,6 +23,15 @@ describe "Call errors" do
       CRYSTAL
   end
 
+  it "says wrong number of arguments for variadic top-level fun" do
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'foo' (given 1, expected 2+)"
+      fun foo(x : Int32, y : Int32, ...)
+      end
+
+      foo(1)
+      CRYSTAL
+  end
+
   it "says not expected to be invoked with a block" do
     assert_error <<-CRYSTAL, "'foo' is not expected to be invoked with a block, but a block was given"
       def foo
