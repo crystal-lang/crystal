@@ -79,6 +79,7 @@ class Crystal::Doc::Generator
     generate_types_docs types, @output_dir, types
     generate_readme program_type, types
     generate_sitemap types
+    generate_sidebar types
   end
 
   def generate_readme(program_type, types)
@@ -100,12 +101,18 @@ class Crystal::Doc::Generator
     end
   end
 
+  def generate_sidebar(types)
+    File.write File.join(@output_dir, "sidebar.html"), SidebarTemplate.new(project_info, types)
+  end
+
   def copy_files
     Dir.mkdir_p File.join(@output_dir, "css")
     Dir.mkdir_p File.join(@output_dir, "js")
 
     File.write File.join(@output_dir, "css", "style.css"), StyleTemplate.new
+    File.write File.join(@output_dir, "css", "style-sidebar.css"), StyleTemplate.new
     File.write File.join(@output_dir, "js", "doc.js"), JsTypeTemplate.new
+    File.write File.join(@output_dir, "js", "doc-sidebar.js"), JsTypeSidebarTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
