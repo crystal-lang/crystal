@@ -580,7 +580,7 @@ struct Slice(T)
   end
 
   # Returns a new `Slice` pointing at the same contents as `self`, but
-  # reinterpreted as elements of the given *type*.
+  # reinterpreted as elements of type `U`.
   #
   # The returned slice never refers to more memory than `self`; if the last
   # bytes of `self` do not fit into a `U`, they are excluded from the returned

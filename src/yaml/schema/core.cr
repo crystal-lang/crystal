@@ -324,10 +324,10 @@ module YAML::Schema::Core
     parse_int?(string) || parse_float?(string)
   end
 
-  # Parses an integer of the given *type* according to the core schema.
+  # Parses an integer of type `T` according to the core schema.
   #
-  # *type* must be a primitive integer type. Raises `YAML::ParseException` if
-  # *node* is not a valid integer or its value is outside *type*'s range.
+  # `T` must be a primitive integer type. Raises `YAML::ParseException` if
+  # *node* is not a valid integer or its value is outside `T`'s range.
   def self.parse_int(node : Nodes::Node, type : T.class) : T forall T
     {% unless Int::Primitive.union_types.includes?(T) %}
       {% raise "Expected `type` to be a primitive integer type, not #{T}" %}

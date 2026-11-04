@@ -494,7 +494,7 @@ class Object
   # ```
   abstract def dup
 
-  # Unsafely reinterprets the bytes of an object as being of another `type`.
+  # Unsafely reinterprets the bytes of an object as being of type `T`.
   #
   # This method is useful to treat a type that is represented as a chunk of
   # bytes as another type where those bytes convey useful information. As an
@@ -510,9 +510,9 @@ class Object
   # 1.234_f64.unsafe_as(Int64) # => 4608236261112822104
   # ```
   #
-  # This method is **unsafe** because it behaves unpredictably when the given
-  # `type` doesn't have the same bytesize as the receiver, or when the given
-  # `type` representation doesn't semantically match the underlying bytes.
+  # This method is **unsafe** because it behaves unpredictably when `T`
+  # doesn't have the same bytesize as the receiver, or when the
+  # representation of `T` doesn't semantically match the underlying bytes.
   #
   # Also note that because `unsafe_as` is a regular method, unlike the pseudo-method
   # `as`, you can't specify some types in the type grammar using a short notation, so

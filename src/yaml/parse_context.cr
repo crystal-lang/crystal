@@ -31,7 +31,7 @@ class YAML::ParseContext
   end
 
   # Similar to `read_alias` but doesn't raise if an alias exists
-  # but an instance of type T isn't associated with the current anchor.
+  # but an instance of type `T` isn't associated with the current anchor.
   def read_alias?(node, type : T.class, &) forall T
     if ptr = read_alias_impl(node, T.crystal_instance_type_id, raise_on_alias: false)
       yield Box(T).unbox(ptr)
