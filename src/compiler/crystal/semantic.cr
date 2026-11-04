@@ -68,6 +68,7 @@ class Crystal::Program
 
       node.accept visitor
       visitor.process_finished_hooks
+      revirtualize_generic_ancestors
       visitor.new_expansions
     end
     @progress_tracker.stage("Semantic (new)") do
