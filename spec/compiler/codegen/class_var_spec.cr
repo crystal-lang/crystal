@@ -637,4 +637,31 @@ describe "Codegen: class var" do
       a &+ Foo.x
       CRYSTAL
   end
+
+  it "subclass writes to its own class var initialized by superclass (#5161)" do
+    # Returns B.x * 100 + A.x. B.x must be 10 (set by foo) and A.x must
+    # remain 0 (storage is per-subclass).
+    run(<<-CRYSTAL).to_i.should eq(1000)
+      class A
+        @@x = 0
+
+        def self.x
+          @@x
+        end
+      end
+
+      class B < A
+        def foo
+          @@x = 10
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      B.new.foo
+      B.x &* 100 &+ A.x
+      CRYSTAL
+  end
 end
