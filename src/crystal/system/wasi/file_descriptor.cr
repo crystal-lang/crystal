@@ -37,7 +37,16 @@ module Crystal::System::FileDescriptor
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
+    {% if flag?(:wasip1) %}
+      raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen requires wasip2 or later"
+    {% else %}
+      if LibC.dup2(other.fd, fd) == -1
+        raise IO::Error.from_errno("Could not reopen file descriptor")
+      end
+
+      @closed = false
+      event_loop.reopened(self)
+    {% end %}
   end
 
   private def system_lock(blocking : Bool, exclusive : Bool) : Nil

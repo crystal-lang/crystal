@@ -13,6 +13,9 @@ lib LibC
   fun faccessat(Int, Char*, Int, Int) : Int
   fun chdir(x0 : Char*) : Int
   fun close(fd : Int) : Int
+  {% unless flag?(:wasip1) %}
+    fun dup2(fd : Int, fd2 : Int) : Int
+  {% end %}
   fun _exit(x0 : Int) : NoReturn
   fun fdatasync(x0 : Int) : Int
   fun fsync(x0 : Int) : Int
