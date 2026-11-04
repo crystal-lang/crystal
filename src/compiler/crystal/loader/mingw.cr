@@ -19,12 +19,13 @@ require "crystal/system/win32/library_archive"
 class Crystal::Loader
   alias Handle = Void*
 
-  def initialize(@search_paths : Array(String))
+  def initialize(@search_paths : Array(String), @dll_search_paths : Array(String)? = nil)
   end
 
   # Parses linker arguments in the style of `ld`.
   #
-  # This is identical to the Unix loader. *dll_search_paths* has no effect.
+  # This is identical to the Unix loader. *dll_search_paths* is used to locate
+  # DLLs by full path before falling back to bare-name loading.
   def self.parse(args : Array(String), *, search_paths : Array(String) = default_search_paths, dll_search_paths : Array(String)? = nil) : self
     libnames = [] of String
     file_paths = [] of String
@@ -63,7 +64,7 @@ class Crystal::Loader
     libnames << crt_dll
 
     begin
-      loader = new(search_paths)
+      loader = new(search_paths, dll_search_paths)
       loader.load_all(libnames, file_paths)
       loader
     rescue exc : LoadError
@@ -82,6 +83,15 @@ class Crystal::Loader
       address = LibC.GetProcAddress(handle, name.check_no_null_byte)
       return address if address
     end
+
+    if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+      STDERR.puts "  find_symbol?(#{name}): not found in #{@handles.size} handle(s)"
+      @handles.each_with_index do |h, i|
+        STDERR.puts "    handle[#{i}]=0x#{h.address.to_s(16)} lib=#{@loaded_libraries[i]? || "?"}"
+      end
+    end
+
+    nil
   end
 
   def load_file(path : String | ::Path) : Nil
@@ -101,12 +111,63 @@ class Crystal::Loader
   end
 
   private def load_dll?(dll)
-    handle = open_library(dll)
+    # For DLLs that are already loaded in the process (e.g. libpcre2-8-0.dll
+    # as a load-time dep of crystal.exe), LoadLibraryExW with a bare name can
+    # return a module handle that doesn't work with GetProcAddress.  Try
+    # GetModuleHandleExW first: it returns the canonical HMODULE that the
+    # Windows loader already tracks for the named DLL, and GetProcAddress works
+    # on it reliably.
+    via_get_module = false
+    handle = if LibC.GetModuleHandleExW(0, System.to_wstr(dll), out existing) != 0
+      via_get_module = true
+      existing.as(Handle)
+    else
+      # DLL not yet in process: load by full path when possible to avoid the
+      # same duplicate-handle issue if the DLL appears in the process later.
+      full_path = resolve_dll_full_path(dll)
+      open_library(full_path || dll)
+    end
+
+    if ENV["CRYSTAL_INTERPRETER_LOADER_INFO"]?.presence
+      if handle
+        STDERR.puts "  load_dll?(#{dll}): handle=0x#{handle.address.to_s(16)} via_GetModuleHandleExW=#{via_get_module} path=#{module_filename(handle) || "?"}"
+      else
+        STDERR.puts "  load_dll?(#{dll}): FAILED (handle is null)"
+      end
+    end
+
     return false unless handle
 
     @handles << handle
     @loaded_libraries << (module_filename(handle) || dll)
     true
+  end
+
+  # Searches for *dll* by full path in dll_search_paths and in sibling `bin/`
+  # directories relative to each library search path.
+  # Returns the full path if found, or nil to fall back to the bare name.
+  private def resolve_dll_full_path(dll : String) : String?
+    # Skip if it's already a path (contains a separator)
+    return nil if ::Path::SEPARATORS.any? { |sep| dll.includes?(sep) }
+
+    # Search in explicit dll_search_paths first
+    @dll_search_paths.try &.each do |dir|
+      path = File.join(dir, dll)
+      return path if File.file?(path)
+    end
+
+    # Search in library search paths and their sibling bin/ directories.
+    # In a typical MinGW layout, .dll.a files live in lib/ and .dll files in bin/,
+    # so for each search path like D:\Crystal\lib\ we also check D:\Crystal\bin\.
+    @search_paths.each do |lib_dir|
+      bin_dir = File.join(::Path[lib_dir].parent.to_s, "bin")
+      {% for dir in %w(bin_dir lib_dir) %}
+        path = File.join({{dir.id}}, dll)
+        return path if File.file?(path)
+      {% end %}
+    end
+
+    nil
   end
 
   def load_library(libname : String) : Nil
