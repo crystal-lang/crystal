@@ -43,4 +43,8 @@ class LLVM::PassBuilderOptions
   def set_slp_vectorization(enabled : Bool)
     LibLLVM.pass_builder_options_set_slp_vectorization(self, enabled)
   end
+
+  def set_merge_functions(enabled : Bool)
+    LibLLVM.pass_builder_options_set_merge_functions(self, enabled)
+  end
 end
