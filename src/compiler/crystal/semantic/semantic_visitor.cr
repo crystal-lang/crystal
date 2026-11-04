@@ -284,6 +284,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def expand_macro(node, raise_on_missing_const = true, first_pass = false, accept = true)
     if expanded = node.expanded
+      forward_undeleted_annotations(node)
       @exp_nest -= 1
       eval_macro(node) do
         expanded.accept self if accept
@@ -322,6 +323,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     expansion_scope = (macro_scope || @scope || current_type)
 
     args, named_args = expand_macro_arguments(node, expansion_scope)
+    attach_call_annotations(node)
 
     @exp_nest -= 1
     generated_nodes = expand_macro(the_macro, node, visibility: node.visibility, accept: accept) do
@@ -367,6 +369,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     )
 
     node.doc ||= annotations_doc @annotations
+    forward_undeleted_annotations(node) if node.is_a?(Call)
 
     if node_doc = node.doc
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
@@ -492,6 +495,24 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def lookup_annotation(ann)
+    type = lookup_builtin_annotation(ann) || lookup_type(ann.path)
+
+    unless type.is_a?(AnnotationType)
+      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
+    end
+
+    type
+  end
+
+  # Similar to `lookup_annotation`, but returns `nil` if *ann* doesn't
+  # name an annotation type.
+  def lookup_annotation?(ann) : AnnotationType?
+    type = lookup_builtin_annotation(ann) ||
+           current_type.lookup_type?(ann.path, allow_typeof: false)
+    type.as?(AnnotationType)
+  end
+
+  private def lookup_builtin_annotation(ann)
     # TODO: Since there's `Int::Primitive`, and now we'll have
     # `::Primitive`, but there's no way to specify ::Primitive
     # just yet in annotations, we temporarily hardcode
@@ -500,18 +521,34 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     # We also have the same problem with File::Flags, which
     # is an enum marked with Flags annotation.
     if ann.path.single?("Primitive")
-      type = @program.primitive_annotation
+      @program.primitive_annotation
     elsif ann.path.single?("Flags")
-      type = @program.flags_annotation
-    else
-      type = lookup_type(ann.path)
+      @program.flags_annotation
     end
+  end
 
-    unless type.is_a?(AnnotationType)
-      ann.raise "#{ann.path} is not an annotation, it's a #{type.type_desc}"
+  # Makes the pending annotations available to the macro that *node*
+  # expands to, through `Call#annotation` and `Call#annotations`, and to
+  # remove through `Call#delete_annotation` and `Call#delete_annotations`.
+  # Annotations that don't name an annotation type are left out, and
+  # are reported where they are forwarded to.
+  private def attach_call_annotations(node : Call)
+    node.annotations = nil
+    @annotations.try &.each do |ann|
+      if annotation_type = lookup_annotation?(ann)
+        node.add_annotation(annotation_type, ann)
+      end
     end
+  end
 
-    type
+  # Keeps pending only the annotations that the macro *node* expands to
+  # didn't remove, so that only those are forwarded to its expansion.
+  private def forward_undeleted_annotations(node : Call)
+    return unless deleted = node.deleted_annotations
+    return unless annotations = @annotations
+
+    annotations = annotations.reject { |ann| deleted.any?(&.same?(ann)) }
+    @annotations = annotations.empty? ? nil : annotations
   end
 
   def validate_annotation(annotation_type, ann)
