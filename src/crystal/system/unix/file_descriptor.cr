@@ -1,5 +1,7 @@
 require "c/fcntl"
-require "termios"
+{% unless flag?(:wasi) %}
+  require "termios"
+{% end %}
 {% if flag?(:android) && LibC::ANDROID_API < 28 %}
   require "c/sys/ioctl"
 {% end %}
@@ -182,7 +184,7 @@ module Crystal::System::FileDescriptor
       end
 
       ret, errno =
-        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        {% if !flag?(:without_mt) %}
           ::Fiber.syscall { {LibC.flock(fd, flags), Errno.value} }
         {% else %}
           # poll at regular intervals (no unlock event)

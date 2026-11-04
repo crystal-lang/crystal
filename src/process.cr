@@ -612,7 +612,7 @@ class Process
     fork_io
   end
 
-  # :nodoc
+  # :nodoc:
   def initialize(@process_info : Crystal::System::Process)
   end
 
