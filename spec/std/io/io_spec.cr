@@ -102,20 +102,22 @@ end
 
 describe IO do
   describe "partial read" do
-    pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
-      IO.pipe do |read, write|
-        write.puts "hello"
-        slice = Bytes.new 1024
+    {% unless flag?(:wasip1) || flag?(:wasip2) %}
+      pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
+        IO.pipe do |read, write|
+          write.puts "hello"
+          slice = Bytes.new 1024
 
-        read.read_timeout = 1.second
-        read.read(slice).should eq(6)
+          read.read_timeout = 1.second
+          read.read(slice).should eq(6)
 
-        expect_raises(IO::TimeoutError) do
-          read.read_timeout = 0.1.microseconds
-          read.read(slice)
+          expect_raises(IO::TimeoutError) do
+            read.read_timeout = 0.1.microseconds
+            read.read(slice)
+          end
         end
       end
-    end
+    {% end %}
   end
 
   it_iterates "#each_line", ["hello", "bye"], SimpleIOMemory.new("hello\nbye\n").each_line
@@ -429,8 +431,8 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
-      pending_wasm32 "raises if trying to read to an IO not opened for reading" do
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
+      it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
             w.gets
@@ -589,8 +591,8 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
-      pending_wasm32 "raises if trying to write to an IO not opened for writing" do
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
+      it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
           r.sync = true
@@ -998,49 +1000,51 @@ describe IO do
   {% end %}
 
   describe "#close" do
-    pending_wasm32 "aborts 'read' in a different fiber" do
-      ch = Channel(SpecChannelStatus).new(1)
+    {% unless flag?(:wasip1) || flag?(:wasip2) %}
+      pending_wasm32 "aborts 'read' in a different fiber" do
+        ch = Channel(SpecChannelStatus).new(1)
 
-      IO.pipe do |read, write|
-        f = spawn do
-          ch.send :begin
-          read.gets
-        rescue
-          ch.send :end
-        end
-
-        schedule_timeout ch
-
-        ch.receive.should eq SpecChannelStatus::Begin
-        wait_until_blocked f
-
-        read.close
-        ch.receive.should eq SpecChannelStatus::End
-      end
-    end
-
-    pending_wasm32 "aborts 'write' in a different fiber" do
-      ch = Channel(SpecChannelStatus).new(1)
-
-      IO.pipe do |read, write|
-        f = spawn do
-          ch.send :begin
-          loop do
-            write.puts "some line"
+        IO.pipe do |read, write|
+          f = spawn do
+            ch.send :begin
+            read.gets
+          rescue
+            ch.send :end
           end
-        rescue
-          ch.send :end
+
+          schedule_timeout ch
+
+          ch.receive.should eq SpecChannelStatus::Begin
+          wait_until_blocked f
+
+          read.close
+          ch.receive.should eq SpecChannelStatus::End
         end
-
-        schedule_timeout ch
-
-        ch.receive.should eq SpecChannelStatus::Begin
-        wait_until_blocked f
-
-        write.close
-        ch.receive.should eq SpecChannelStatus::End
       end
-    end
+
+      pending_wasm32 "aborts 'write' in a different fiber" do
+        ch = Channel(SpecChannelStatus).new(1)
+
+        IO.pipe do |read, write|
+          f = spawn do
+            ch.send :begin
+            loop do
+              write.puts "some line"
+            end
+          rescue
+            ch.send :end
+          end
+
+          schedule_timeout ch
+
+          ch.receive.should eq SpecChannelStatus::Begin
+          wait_until_blocked f
+
+          write.close
+          ch.receive.should eq SpecChannelStatus::End
+        end
+      end
+    {% end %}
   end
 
   describe IO::Error do
