@@ -386,6 +386,30 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
 
+    it "does as? on a virtual struct" do
+      interpret(<<-CRYSTAL).should eq(10)
+        abstract struct Foo
+        end
+
+        struct Bar < Foo
+          def x
+            1
+          end
+        end
+
+        struct Baz < Foo
+          def x
+            2
+          end
+        end
+
+        foo = 1 > 0 ? Bar.new.as(Foo) : Baz.new
+        bar = foo.as?(Bar)
+        baz = foo.as?(Baz)
+        (bar ? bar.x : 0) * 10 + (baz ? baz.x : 0)
+        CRYSTAL
+    end
+
     it "upcasts mixed union with tuple to mixed union with compatible tuple (1) (#12331)" do
       interpret(<<-CRYSTAL).should eq(1)
         class Foo
