@@ -118,7 +118,7 @@ struct Struct
           {% if i > 0 %}
             pp.comma
           {% end %}
-          pp.instance_var "@{{ivar.id}}=", @{{ivar.id}}
+          pp.key_value "@{{ivar.id}}", "=", @{{ivar.id}}
         {% end %}
       end
     {% end %}

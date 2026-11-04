@@ -110,13 +110,32 @@ class PrettyPrint
   # objects are either turned into newlines or are output
   # as is, depending on the available width.
   def group(indent = 0, open_obj = "", close_obj = "", &)
-    text open_obj
-    group_sub do
-      nest(indent) do
-        yield
-      end
+    group = open_group indent, open_obj
+    begin
+      yield
+    ensure
+      close_group group, indent
     end
     text close_obj
+  end
+
+  # Does what `#group` does before yielding, i.e. what `#group_sub` and `#nest` do.
+  private def open_group(indent, open_obj) : Group
+    text open_obj
+    group = Group.new(@group_stack.last.depth + 1)
+    @group_stack.push group
+    @group_queue.enq group
+    @indent += indent
+    group
+  end
+
+  # Does what `#group` does once its block returns or raises.
+  private def close_group(group : Group, indent) : Nil
+    @indent -= indent
+    @group_stack.pop
+    if group.breakables.empty?
+      @group_queue.delete group
+    end
   end
 
   # :nodoc:
@@ -185,10 +204,28 @@ class PrettyPrint
     end
   end
 
-  # :nodoc:
-  def instance_var(name : String, value) : Nil
+  # Appends *key* and *separator* followed by *value*, in a group where *value* is nested after a breakable.
+  # If the group doesn't fit, *value* is moved to the next line.
+  #
+  # ```
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 20) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \"Crystal\""
+  #
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 10) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \n \"Crystal\""
+  # ```
+  #
+  # This method should be considered more performant when printing many keys and values over nested `#group` and `#nest` blocks.
+  def key_value(key : String, separator : String, value) : Nil
     group do
-      text name
+      text key
+      text separator
       nest do
         breakable ""
         value.pretty_print(self)
