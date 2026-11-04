@@ -211,10 +211,11 @@ module Crystal
         return
       end
 
-      # For `MacroIf` nodes whose both then and else bodies consist only of a single `MacroLiteral`, the cond and then's body will both have the same start location.
-      # We need to handle the edge case of if the then body was missed by marking the cond as hit, and the `else` control line as hit (which is the end location of then's body.
-      # This will at least indicate the else block executed as we can't actually mark any line in either body as hit since they're non-macro code.
-      if first_node.is_a?(MacroIf) && (last_node = nodes.last?) && last_node[0].is_a?(MacroLiteral) && last_node[2]
+      # For `MacroIf` nodes whose then/else bodies live on the same line as another
+      # missed node, the cond and then's body may share a start location.
+      # We need to handle the edge case of if the "then" body was missed by marking the cond as hit,
+      # and the "else" control line as hit (which is the end location of then's body).
+      if first_node.is_a?(MacroIf) && (last_node = nodes.last?) && last_node[0].is_a?(MacroLiteral | Expressions) && last_node[2]
         yield({1, location, nil})
 
         if end_loc = last_node[0].end_location

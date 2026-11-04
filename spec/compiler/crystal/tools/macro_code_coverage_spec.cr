@@ -1026,4 +1026,121 @@ describe "macro_code_coverage" do
     test 1
     test 2
     CRYSTAL
+
+  # else is Expressions: top-level if/else statement, both branches taken across expansions
+  assert_coverage <<-'CRYSTAL', {2 => 2, 4 => 1}
+    macro test(val)
+      {% if val %}
+        1 + 1
+      {% else %}
+        2 + 2
+      {% end %}
+    end
+
+    test(true)
+    test(false)
+    CRYSTAL
+
+  # else is Expressions: if/else statement inside a def, no outer `if`
+  assert_coverage <<-'CRYSTAL', {4 => 2, 6 => 1}
+    macro test(val)
+      struct Example
+        def foo
+          {% if val %}
+            puts "true"
+          {% else %}
+            puts "false"
+          {% end %}
+        end
+      end
+    end
+
+    test(true)
+    test(false)
+    CRYSTAL
+
+  # else is Expressions: if/else statement inside a def wrapped in a runtime `if v`
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1}
+    macro test(name, val)
+      struct {{name}}
+        def foo(v)
+          if v
+            {% if val %}
+              puts "true"
+            {% else %}
+              return v if v
+            {% end %}
+          end
+        end
+      end
+    end
+
+    test(A, true)
+    test(B, false)
+    CRYSTAL
+
+  # else is Expressions: inline MacroIf (foo2) must not affect a sibling
+  # method's if/else statement coverage (foo1). Neither branch reads 0.
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 13 => "2/2"}
+    macro test(name, flag)
+      struct {{name}}
+        def foo1(v)
+          if v
+            {% if flag %}
+              v.each { |k, v| puts v }
+            {% else %}
+              return v if v
+            {% end %}
+          end
+        end
+        def foo2
+          x = {% if flag %} "a" {% else %} "b" {% end %}
+        end
+      end
+    end
+    test(A, true)
+    test(B, false)
+    CRYSTAL
+
+  # else is Expressions: same as above, plus a third method (foo3) with two
+  # duplicate-body if/else statements, to check the separated tracking.
+  assert_coverage <<-'CRYSTAL', {2 => 2, 5 => 2, 7 => 1, 14 => "2/2", 19 => 2, 21 => 1, 27 => 2, 29 => 1}
+    macro test(name, flag)
+      struct {{name}}
+        def foo1(v)
+          if v
+            {% if flag %}
+              v.each { |k, v| puts v }
+            {% else %}
+              return v if v
+            {% end %}
+          end
+        end
+
+        def foo2
+          x = {% if flag %} "a" {% else %} "b" {% end %}
+        end
+
+        def foo3(v)
+          if v.nil?
+            {% if flag %}
+              v.each { |k, v| puts v }
+            {% else %}
+              v.each { |k, v| puts v }
+            {% end %}
+            return
+          end
+
+          {% if flag %}
+            v.each { |k, v| puts v }
+          {% else %}
+            v.each { |k, v| puts v }
+          {% end %}
+        end
+      end
+    end
+
+    test(A, true)
+    test(B, false)
+    CRYSTAL
 end
