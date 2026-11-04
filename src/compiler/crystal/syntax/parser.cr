@@ -3743,10 +3743,7 @@ module Crystal
         end
 
         # Unlike after `def`, a newline isn't allowed between the period and the name
-        wants_def_or_macro_name do
-          next_token_skip_space
-          check DefOrMacroCheck1
-        end
+        consume_def_or_macro_name(skip_newline: false)
 
         if @token.type.ident?
           check_valid_def_name
@@ -6435,13 +6432,17 @@ module Crystal
       :OP_AMP_PLUS, :OP_AMP_MINUS, :OP_AMP_STAR, :OP_AMP_STAR_STAR,
     ] of Token::Kind
 
-    def consume_def_or_macro_name
+    def consume_def_or_macro_name(*, skip_newline : Bool = true)
       # Force lexer return if possible a def or macro name
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
       wants_def_or_macro_name do
-        next_token_skip_space_or_newline
+        if skip_newline
+          next_token_skip_space_or_newline
+        else
+          next_token_skip_space
+        end
         check DefOrMacroCheck1
       end
       @token.to_s
