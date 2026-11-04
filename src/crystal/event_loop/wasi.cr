@@ -80,6 +80,16 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        {% if flag?(:wasip2) %}
+          # wasi-libc preview 2 reports EIO for writes to read-only files.
+          if return_code == -1 && Errno.value == Errno::EIO
+            flags = LibC.fcntl(file_descriptor.fd, LibC::F_GETFL)
+            if flags != -1 && (flags & LibC::O_RDWR) == LibC::O_RDONLY
+              raise IO::Error.new "File not open for writing", target: file_descriptor
+            end
+            Errno.value = Errno::EIO
+          end
+        {% end %}
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing", target: file_descriptor
         end
