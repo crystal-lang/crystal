@@ -1383,7 +1383,7 @@ struct Time
     Time.new(
       seconds: total_seconds,
       nanoseconds: nanosecond,
-      location: location
+      location: location,
     )
   end
 
@@ -1397,7 +1397,7 @@ struct Time
     else
       Time.utc(
         seconds: total_seconds,
-        nanoseconds: nanosecond
+        nanoseconds: nanosecond,
       )
     end
   end

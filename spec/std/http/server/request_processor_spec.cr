@@ -510,7 +510,7 @@ describe HTTP::Server::RequestProcessor do
       IO::Stapled.new(
         IO::Memory.new("GET / HTTP/1.1\r\n\r\n"),
         output,
-      )
+      ),
     )
     io.local_address = Socket::IPAddress.new("0.0.0.0", 12345)
     io.remote_address = Socket::IPAddress.new("1.2.3.4", 5678)

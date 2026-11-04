@@ -336,7 +336,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       nil,
       disposition,
       attributes,
-      LibC::HANDLE.null
+      LibC::HANDLE.null,
     )
 
     if handle == LibC::INVALID_HANDLE_VALUE

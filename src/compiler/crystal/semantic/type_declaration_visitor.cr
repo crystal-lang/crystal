@@ -102,7 +102,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     setter = External.new(
       "#{node.name}=", [Arg.new("value", type: var_type)],
-      Primitive.new("external_var_set", var_type), node.real_name || node.name
+      Primitive.new("external_var_set", var_type), node.real_name || node.name,
     ).at(node.location)
     setter.set_type(var_type)
     setter.external_var = true
@@ -111,7 +111,7 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     getter = External.new(
       "#{node.name}", [] of Arg,
-      Primitive.new("external_var_get", var_type), node.real_name || node.name
+      Primitive.new("external_var_get", var_type), node.real_name || node.name,
     ).at(node.location)
     getter.set_type(var_type)
     getter.external_var = true

@@ -152,7 +152,7 @@ class Crystal::Repl
     Parser.new(
       source,
       string_pool: @context.program.string_pool,
-      var_scopes: [@interpreter.local_vars.names_at_block_level_zero.to_set]
+      var_scopes: [@interpreter.local_vars.names_at_block_level_zero.to_set],
     )
   end
 end

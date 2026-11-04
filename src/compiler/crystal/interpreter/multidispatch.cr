@@ -280,7 +280,7 @@ module Crystal::Repl::Multidispatch
     node.args.each_with_index do |arg, arg_index|
       def_args["arg#{i}"] = MetaVar.new(
         "arg#{i}",
-        autocast_types.try &.[arg_index]? || arg.type
+        autocast_types.try &.[arg_index]? || arg.type,
       )
       i += 1
     end

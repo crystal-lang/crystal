@@ -654,7 +654,7 @@ describe "Dir" do
           ["cmd", "/c", "cd"]
         {% else %}
           "pwd"
-        {% end %}
+        {% end %},
       ).chomp
       Dir.current.should eq(pwd)
     end

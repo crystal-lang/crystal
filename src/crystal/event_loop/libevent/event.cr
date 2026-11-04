@@ -31,7 +31,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       @timeout_data.try &.timeout_select_action=(timeout_select_action)
       timeval = LibC::Timeval.new(
         tv_sec: LibC::TimeT.new(timeout.to_seconds),
-        tv_usec: timeout.nanoseconds // 1_000
+        tv_usec: timeout.nanoseconds // 1_000,
       )
       LibEvent2.event_add(@event, pointerof(timeval))
     end
