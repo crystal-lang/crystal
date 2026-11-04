@@ -11,6 +11,8 @@
 # This has no effect on yielding methods because they are already always inlined.
 #
 # May not be used together with `NoInline`.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `AlwaysInline`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#alwaysinline).
 annotation AlwaysInline
 end
 
@@ -42,6 +44,8 @@ end
 # See the [LLVM
 # documentation](https://llvm.org/docs/LangRef.html#calling-conventions) for
 # more details.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `CallConvention`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#callconvention).
 annotation CallConvention
 end
 
@@ -73,6 +77,8 @@ end
 # example.
 # Deprecated parameters only trigger a warning when the particular parameter is
 # passed in a call. Calls without this parameter are unaffected.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Deprecated`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#deprecated).
 annotation Deprecated
 end
 
@@ -86,6 +92,8 @@ end
 # def foo
 # end
 # ```
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Experimental`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#experimental).
 annotation Experimental
 end
 
@@ -121,6 +129,8 @@ end
 # s.char = 'A'
 # s.int # => 65
 # ```
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Extern`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#extern).
 annotation Extern
 end
 
@@ -138,6 +148,8 @@ end
 # (IOMode::Write | IOMode::Async).value # => 6
 # (IOMode::Write | IOMode::Async).to_s  # => "Write | Async"
 # ```
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Flags`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#flags).
 annotation Flags
 end
 
@@ -170,6 +182,8 @@ end
 # paths passed with the `-L` option. Any paths in `CRYSTAL_LIBRARY_PATH` are
 # added by default. Custom paths can be passed using `ldflags`:
 # `@[Link(ldflags: "-Lvendor/bin")]`.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Link`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#link).
 annotation Link
 end
 
@@ -186,6 +200,8 @@ end
 # always inlined.
 #
 # May not be used together with `AlwaysInline`.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `NoInline`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#noinline).
 annotation NoInline
 end
 
@@ -218,6 +234,8 @@ end
 #
 # This is typically only needed when interfacing with a C library that
 # explicitly uses packed structs.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Packed`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#packed).
 annotation Packed
 end
 
@@ -236,6 +254,8 @@ end
 #   fun foo(callback : ->)
 # end
 # ```
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `Raises`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#raises).
 annotation Raises
 end
 
@@ -247,6 +267,8 @@ end
 #
 # The compiler disables some optimizations (like tail calls) in the caller of
 # these functions.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `ReturnsTwice`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#returnstwice).
 annotation ReturnsTwice
 end
 
@@ -290,6 +312,8 @@ end
 # WARNING: When a method has been compiled with a feature and that feature is
 # not supported at runtime, calling this method will result in an illegal
 # instruction, and is undefined behaviour.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `TargetFeature`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#targetfeature).
 annotation TargetFeature
 end
 
@@ -300,5 +324,7 @@ end
 #
 # This annotation is used in the standard library to implement the runtime and
 # shouldn't be needed or used outside of it.
+#
+# INFO: The Crystal book has a section about [Built-in Annotations: `ThreadLocal`](https://crystal-lang.org/reference/syntax_and_semantics/annotations/built_in_annotations.html#threadlocal).
 annotation ThreadLocal
 end
