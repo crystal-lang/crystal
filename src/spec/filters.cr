@@ -6,7 +6,7 @@ module Spec
   module Item
     # :nodoc:
     def matches_pattern?(pattern : Regex) : Bool
-      !!(@description =~ pattern)
+      @description.matches?(pattern)
     end
 
     # :nodoc:

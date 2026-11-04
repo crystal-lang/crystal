@@ -91,17 +91,16 @@ class Crystal::Call
 
   def check_fun_args_size_match(obj_type, external)
     call_args_count = args.size
-    all_args_count = external.args.size
+    regular_params_count = external.args.size
 
-    if external.varargs? && call_args_count >= all_args_count
-      return
+    if external.varargs?
+      return if call_args_count >= regular_params_count
+    else
+      return if call_args_count == regular_params_count
     end
 
-    required_args_count = external.args.count { |arg| !arg.default_value }
-
-    return if required_args_count <= call_args_count <= all_args_count
-
-    wrong_number_of_arguments "'#{full_name(obj_type)}'", args.size, external.args.size
+    expected = external.varargs? ? "#{regular_params_count}+" : regular_params_count
+    wrong_number_of_arguments "'#{full_name(obj_type)}'", call_args_count, expected
   end
 
   def check_fun_out_args(untyped_def)

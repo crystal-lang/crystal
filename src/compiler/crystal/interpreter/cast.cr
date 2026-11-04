@@ -98,7 +98,7 @@ class Crystal::Repl::Compiler
     # 2. It's not inside the target union
     # 3. There's a compatible type inside the target union
     return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
-    !union_type.union_types.any?(&.==(value_type)) &&
+    !union_type.union_types.includes?(value_type) &&
       union_type.union_types.any? { |ut| value_type.implements?(ut) || ut.implements?(value_type) }
   end
 
@@ -113,7 +113,7 @@ class Crystal::Repl::Compiler
     # This same logic exists in codegen/cast.cr
     case from
     when TupleInstanceType, NamedTupleInstanceType
-      unless to.union_types.any? &.==(from)
+      unless to.union_types.includes?(from)
         compatible_type = to.union_types.find! { |ut| from.implements?(ut) }
         upcast(node, from, compatible_type)
         return upcast(node, compatible_type, to)

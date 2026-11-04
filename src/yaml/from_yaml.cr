@@ -296,9 +296,9 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
   {% begin %}
     # String must come last because anything can be parsed into a String.
     # So, we give a chance first to types in the union to be parsed.
-    {% string_type = T.find { |type| type == ::String } %}
+    {% has_string_type = T.includes?(::String) %}
 
-    {% if string_type %}
+    {% if has_string_type %}
       if node.as?(YAML::Nodes::Scalar).try(&.style.quoted?)
         # do prefer String if it's a quoted scalar though
         return String.new(ctx, node)
@@ -306,7 +306,7 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
     {% end %}
 
     {% for type in T %}
-      {% unless type == string_type %}
+      {% unless type == ::String %}
         begin
           return {{type}}.new(ctx, node)
         rescue YAML::ParseException
@@ -315,9 +315,9 @@ def Union.new(ctx : YAML::ParseContext, node : YAML::Nodes::Node)
       {% end %}
     {% end %}
 
-    {% if string_type %}
+    {% if has_string_type %}
       begin
-        return {{string_type}}.new(ctx, node)
+        return String.new(ctx, node)
       rescue YAML::ParseException
         # Ignore
       end

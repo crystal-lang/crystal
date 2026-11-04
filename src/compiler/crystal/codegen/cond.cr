@@ -33,9 +33,8 @@ class Crystal::CodeGenVisitor
     has_bool = union_types.any? &.bool_type?
     has_pointer = union_types.any?(PointerInstanceType)
 
-    cond = llvm_true
-
     if has_nil || has_bool || has_pointer
+      cond = nil
       type_id, value_ptr = union_type_and_value_pointer(@last, type)
 
       if has_nil
@@ -59,9 +58,11 @@ class Crystal::CodeGenVisitor
           cond = and cond, not(and(is_pointer, pointer_null))
         end
       end
-    end
 
-    cond
+      cond.not_nil!
+    else
+      llvm_true
+    end
   end
 
   private def codegen_cond_impl(type : Type)
