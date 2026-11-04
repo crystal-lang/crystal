@@ -5803,18 +5803,19 @@ module Crystal
     end
 
     def parse_break
-      parse_control_expression Break, "break"
+      parse_control_expression Break
     end
 
     def parse_return
-      parse_control_expression Return, "return"
+      parse_control_expression Return
     end
 
     def parse_next
-      parse_control_expression Next, "next"
+      parse_control_expression Next
     end
 
-    def parse_control_expression(klass, keyword)
+    def parse_control_expression(klass)
+      keyword = @token.value.to_s
       end_location = token_end_location
       next_token
 
