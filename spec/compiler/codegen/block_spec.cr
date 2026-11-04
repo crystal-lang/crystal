@@ -1625,7 +1625,7 @@ describe "Code gen: block" do
   end
 
   it "doesn't materialize an unused yield block value in debug builds (#12693)" do
-    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::Full)
       def foo : Nil
         yield Pointer(Bool).new(0).value
         nil

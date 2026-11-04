@@ -426,7 +426,7 @@ class Crystal::Command
           end
         end
         opts.on("-d", "--debug", "Add full symbolic debug info") do
-          compiler.debug = Crystal::Debug::All
+          compiler.debug = Crystal::Debug::Full
         end
         opts.on("--no-debug", "Skip any symbolic debug info") do
           compiler.debug = Crystal::Debug::None
@@ -690,7 +690,7 @@ class Crystal::Command
 
   private def setup_simple_compiler_options(compiler, opts)
     opts.on("-d", "--debug", "Add full symbolic debug info") do
-      compiler.debug = Crystal::Debug::All
+      compiler.debug = Crystal::Debug::Full
     end
     opts.on("--no-debug", "Skip any symbolic debug info") do
       compiler.debug = Crystal::Debug::None

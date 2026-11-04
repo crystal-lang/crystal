@@ -106,6 +106,7 @@ class Crystal::CodeGenVisitor
   end
 
   def lazy_initialize_class_var(node, init_func, global, initialized_flag)
+    shadow_stack_location(node.location)
     set_current_debug_location node if @debug.line_numbers?
     run_once(initialized_flag, init_func)
 
@@ -125,6 +126,7 @@ class Crystal::CodeGenVisitor
       new_func = in_main do
         define_main_function(init_function_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
           set_internal_fun_debug_location(func, init_function_name, node.location)
+          shadow_stack_push(init_function_name, node.location)
 
           with_cloned_context do
             # "self" in a constant is the class_var owner
@@ -167,28 +169,28 @@ class Crystal::CodeGenVisitor
 
   def read_class_var(node : ClassVar)
     set_current_debug_location node if @debug.line_numbers?
-    read_class_var(node.var)
+    read_class_var(node.var, node.location)
   end
 
-  def read_class_var(class_var : MetaTypeVar)
-    last = read_class_var_ptr(class_var)
+  def read_class_var(class_var : MetaTypeVar, location = nil)
+    last = read_class_var_ptr(class_var, location)
     to_lhs last, class_var.type
   end
 
   def read_class_var_ptr(node : ClassVar)
     class_var = node.var
-    read_class_var_ptr(class_var)
+    read_class_var_ptr(class_var, node.location)
   end
 
-  def read_class_var_ptr(class_var : MetaTypeVar)
+  def read_class_var_ptr(class_var : MetaTypeVar, location = nil)
     class_var.read = true
 
     owner = class_var.owner
     case owner
     when VirtualType
-      return read_virtual_class_var_ptr(class_var, owner)
+      return read_virtual_class_var_ptr(class_var, owner, location)
     when VirtualMetaclassType
-      return read_virtual_metaclass_class_var_ptr(class_var, owner)
+      return read_virtual_metaclass_class_var_ptr(class_var, owner, location)
     end
 
     initializer = class_var.initializer
@@ -202,6 +204,7 @@ class Crystal::CodeGenVisitor
     func = create_read_class_var_function(class_var, initializer)
     if func
       func = check_main_fun func.func.name, func
+      shadow_stack_location(location)
       call func
     else
       get_class_var_global(class_var)
@@ -215,12 +218,13 @@ class Crystal::CodeGenVisitor
     global
   end
 
-  def read_virtual_class_var_ptr(class_var, owner)
+  def read_virtual_class_var_ptr(class_var, owner, location = nil)
     self_type_id = type_id(llvm_self, owner)
     read_function_name = "~#{class_var_global_name(class_var)}:read"
     func = typed_fun?(@main_mod, read_function_name) ||
            create_read_virtual_class_var_ptr_function(read_function_name, class_var, owner)
     func = check_main_fun read_function_name, func
+    shadow_stack_location(location)
     call func, self_type_id
   end
 
@@ -262,12 +266,13 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def read_virtual_metaclass_class_var_ptr(class_var, owner)
+  def read_virtual_metaclass_class_var_ptr(class_var, owner, location = nil)
     self_type_id = type_id(llvm_self, owner)
     read_function_name = "~#{class_var_global_name(class_var)}:read"
     func = typed_fun?(@main_mod, read_function_name) ||
            create_read_virtual_metaclass_var_ptr_function(read_function_name, class_var, owner)
     func = check_main_fun read_function_name, func
+    shadow_stack_location(location)
     call func, self_type_id
   end
 

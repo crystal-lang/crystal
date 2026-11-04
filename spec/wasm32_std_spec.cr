@@ -250,6 +250,7 @@ require "./std/uuid/json_spec.cr"
 # require "./std/uuid/yaml_spec.cr" (failed linking)
 require "./std/uuid_spec.cr"
 # require "./std/va_list_spec.cr" (failed to run)
+require "./std/wasm_shadow_stack_spec.cr"
 # require "./std/weak_ref_spec.cr" (failed to run)
 require "./std/winerror_spec.cr"
 # require "./std/xml/builder_spec.cr" (failed linking)

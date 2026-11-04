@@ -178,7 +178,9 @@ class Crystal::CodeGenVisitor
 
     in_main do
       define_main_function(fun_name, ([] of LLVM::Type), llvm_context.void, needs_alloca: true) do |func|
-        set_internal_fun_debug_location(func, fun_name, const.locations.try &.first?)
+        location = const.locations.try &.first?
+        set_internal_fun_debug_location(func, fun_name, location)
+        shadow_stack_push(fun_name, location)
 
         with_cloned_context do
           # "self" in a constant is the constant's namespace
@@ -234,12 +236,12 @@ class Crystal::CodeGenVisitor
       when UInt128 then int128(value)
       else
         set_current_debug_location node if @debug.line_numbers?
-        last = read_const_pointer(const)
+        last = read_const_pointer(const, node.location)
         to_lhs last, const.value.type
       end
   end
 
-  def read_const_pointer(const)
+  def read_const_pointer(const, location = nil)
     const.read = true
 
     if !const.needs_init_flag?
@@ -257,6 +259,7 @@ class Crystal::CodeGenVisitor
     read_function_name = "~#{const.llvm_name}:const_read"
     func = typed_fun?(@main_mod, read_function_name) || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
+    shadow_stack_location(location)
     call func
   end
 

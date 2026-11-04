@@ -81,6 +81,12 @@ class Crystal::CodeGenVisitor
               cast_to_void_pointer void_ptr_throwinfo
             when "va_arg"
               codegen_va_arg call, node, target_def, call_args
+            when "shadow_stack_head"
+              if shadow_stack_enabled?
+                load(llvm_context.void_pointer, shadow_stack_head)
+              else
+                llvm_context.void_pointer.null
+              end
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end
@@ -399,8 +405,10 @@ class Crystal::CodeGenVisitor
   end
 
   private def codegen_raise_overflow
-    location = @call_location
-    set_current_debug_location(location) if location && @debug.line_numbers?
+    if location = @call_location
+      shadow_stack_location(location)
+      set_current_debug_location(location) if @debug.line_numbers?
+    end
 
     func = crystal_raise_overflow_fun
     call_args = [] of LLVM::Value
@@ -937,7 +945,7 @@ class Crystal::CodeGenVisitor
     if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
     elsif field_type.proc?
-      call_arg = check_proc_is_not_closure(call_arg, field_type)
+      call_arg = check_proc_is_not_closure(call_arg, field_type, node.location)
     end
 
     value = to_rhs call_arg, field_type
@@ -1101,8 +1109,10 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_proc_call(node, target_def, call_args)
-    location = @call_location
-    set_current_debug_location(location) if location && @debug.line_numbers?
+    if location = @call_location
+      shadow_stack_location(location)
+      set_current_debug_location(location) if @debug.line_numbers?
+    end
 
     closure_ptr = call_args[0]
 
