@@ -29,6 +29,19 @@
 annotation Deprecated
 end
 
+# This annotation marks methods, classes, constants, and macros as experimental.
+#
+# Experimental features are subject to change or be removed despite the
+# [https://semver.org/](https://semver.org/) guarantees.
+#
+# ```
+# @[Experimental("Join discussion about this topic at ...")]
+# def foo
+# end
+# ```
+annotation Experimental
+end
+
 # An enum can be marked with `@[Flags]`. This changes the default values.
 # The first constant's value is 1, and successive constants are multiplied by 2.
 #
@@ -76,19 +89,6 @@ end
 # added by default. Custom paths can be passed using `ldflags`:
 # `@[Link(ldflags: "-Lvendor/bin")]`.
 annotation Link
-end
-
-# This annotation marks methods, classes, constants, and macros as experimental.
-#
-# Experimental features are subject to change or be removed despite the
-# [https://semver.org/](https://semver.org/) guarantees.
-#
-# ```
-# @[Experimental("Join discussion about this topic at ...")]
-# def foo
-# end
-# ```
-annotation Experimental
 end
 
 # The annotation allows to assume special CPU model/features for a method.
