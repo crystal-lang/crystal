@@ -150,6 +150,10 @@ module Crystal
     property? self_closured = false
     property? captured_block = false
 
+    # When this typed_def participates in multi-dispatch on block return type,
+    # this is the narrowed block return type this def handles.
+    property narrowed_block_return_type : Type?
+
     # `true` if this def has the `@[NoInline]` annotation
     property? no_inline = false
 
