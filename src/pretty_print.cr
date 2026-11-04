@@ -201,8 +201,6 @@ class PrettyPrint
   # end
   # io.to_s # => "name: \n \"Crystal\""
   # ```
-  #
-  # This method should be considered more performant when printing many keys and values over nested `#group` and `#nest` blocks.
   def key_value(key : String, separator : String, value) : Nil
     group do
       text key
