@@ -79,6 +79,7 @@ Lint/ShadowingOuterLocalVar:
 Lint/SpecFilename:
   Excluded:
   - spec/compiler/data/**/*
+  - spec/compiler/interpreter/repl_pty_spec_helper.cr
   - spec/compiler/lexer/lexer_objects/strings.cr
   - spec/compiler-cli/fixtures/**/*
   - spec/compiler-cli/support/**/*
