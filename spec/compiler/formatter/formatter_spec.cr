@@ -1125,6 +1125,9 @@ describe Crystal::Formatter do
   assert_format "a = if 1\n2\n3\nend", "a = if 1\n      2\n      3\n    end"
   assert_format "a = if 1\n2\nelse\n3\nend", "a = if 1\n      2\n    else\n      3\n    end"
   assert_format "a = if 1\n2\nelsif 3\n4\nend", "a = if 1\n      2\n    elsif 3\n      4\n    end"
+  assert_format "a = unless 1\n2\n3\nend", "a = unless 1\n      2\n      3\n    end" # #15487
+  assert_format "a = unless 1\n2\nelse\n3\nend", "a = unless 1\n      2\n    else\n      3\n    end"
+  assert_format "a = 1\na ||= unless 1\n2\nend", "a = 1\na ||= unless 1\n        2\n      end"
   assert_format "a = [\n1,\n2]", "a = [\n  1,\n  2,\n]"
   assert_format "a = while 1\n2\nend", "a = while 1\n  2\nend"
   assert_format "a = case 1\nwhen 2\n3\nend", "a = case 1\n    when 2\n      3\n    end"
