@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasip1) || flag?(:wasip2) %}
+
 require "spec"
 require "io/hexdump"
 
