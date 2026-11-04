@@ -668,6 +668,65 @@ describe "Semantic: abstract def" do
       "can't resolve return type Unknown"
   end
 
+  it "doesn't error if the parent return type uses a free var (#8766)" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Foo
+        abstract def foo(x : T.class) : T forall T
+      end
+
+      class Bar < Foo
+        def foo(x : T.class) : T forall T
+          x.allocate
+        end
+      end
+      CRYSTAL
+  end
+
+  it "doesn't error if a generic parent return type uses a free var (#8766)" do
+    assert_no_errors <<-CRYSTAL
+      module Foo(T)
+        abstract def foo(& : T -> U) : Foo(U) forall U
+      end
+
+      class Bar(T)
+        include Foo(T)
+
+        def foo(& : T -> U) : Bar(U) forall U
+          Bar(U).new
+        end
+      end
+      CRYSTAL
+  end
+
+  it "errors if missing return type and the parent return type uses a free var" do
+    assert_error <<-CRYSTAL,
+      abstract class Foo
+        abstract def foo(x : T.class) : T forall T
+      end
+
+      class Bar < Foo
+        def foo(x : T.class) forall T
+          x.allocate
+        end
+      end
+      CRYSTAL
+      "this method overrides Foo#foo(x : T.class) forall T which has an explicit return type of T.\n\nPlease add an explicit return type to this method as well."
+  end
+
+  it "doesn't error if the child return type uses a free var" do
+    assert_no_errors <<-CRYSTAL
+      abstract class Foo
+        abstract def foo(x : Int32) : Int32
+      end
+
+      class Bar < Foo
+        def foo(x : U) : U forall U
+          x
+        end
+      end
+      CRYSTAL
+  end
+
   it "implements through extend (considers original type for generic lookup) (#8096)" do
     assert_no_errors <<-CRYSTAL
       module ICallable(T)

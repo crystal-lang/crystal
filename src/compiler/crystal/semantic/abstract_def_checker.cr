@@ -116,7 +116,7 @@ class Crystal::AbstractDefChecker
 
         if implements?(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
           unless implemented
-            check_return_type(target_type, ancestor_type, a_def, base, method)
+            check_return_type(target_type, ancestor_type, a_def, def_free_vars, base, method, method_free_vars)
             implemented = true
           end
 
@@ -318,9 +318,18 @@ class Crystal::AbstractDefChecker
 
   # Checks that the return type of `type#method` matches that of `base_type#base_method`
   # when computing that information for `target_type` (`type` is an ancestor of `target_type`).
-  def check_return_type(target_type : Type, type : Type, method : Def, base_type : Type, base_method : Def)
+  def check_return_type(target_type : Type, type : Type, method : Def, free_vars, base_type : Type, base_method : Def, base_free_vars)
     base_return_type_node = base_method.return_type
     return unless base_return_type_node
+
+    # A return type with free variables can't be resolved to a type to compare
+    # against, so, like `#check_arg`, only require an explicit return type
+    if uses_free_vars?(base_return_type_node, base_free_vars)
+      unless method.return_type
+        report_error(method, "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{base_return_type_node}.\n#{@program.colorize("Please add an explicit return type to this method as well.").yellow.bold}\n")
+      end
+      return
+    end
 
     original_base_return_type = base_type.lookup_type?(base_return_type_node)
     unless original_base_return_type
@@ -351,6 +360,8 @@ class Crystal::AbstractDefChecker
       report_error(method, "this method overrides #{Call.def_full_name(base_type, base_method)} which has an explicit return type of #{original_base_return_type}.\n#{@program.colorize("Please add an explicit return type (#{base_return_type} or a subtype of it) to this method as well.").yellow.bold}\n")
       return
     end
+
+    return if uses_free_vars?(return_type_node, free_vars)
 
     return_type = type.lookup_type?(return_type_node)
     unless return_type
@@ -408,6 +419,34 @@ class Crystal::AbstractDefChecker
   private def free_var_nodes(a_def : Def)
     a_def.free_vars.try &.to_h do |var|
       {var, Path.new(var).as(TypeVar)}
+    end
+  end
+
+  # Returns `true` if *node* refers to any of the given *free_vars*.
+  private def uses_free_vars?(node : ASTNode, free_vars) : Bool
+    return false unless free_vars
+
+    finder = FreeVarFinder.new(free_vars)
+    node.accept(finder)
+    finder.found?
+  end
+
+  class FreeVarFinder < Visitor
+    getter? found = false
+
+    def initialize(@free_vars : Hash(String, TypeVar))
+    end
+
+    def visit(node : Path)
+      if (name = node.single_name?) && @free_vars.has_key?(name)
+        @found = true
+      end
+
+      false
+    end
+
+    def visit(node : ASTNode)
+      !@found
     end
   end
 
