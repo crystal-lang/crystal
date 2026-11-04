@@ -1656,6 +1656,48 @@ describe "Semantic: def overload" do
       foo(1)
       CRYSTAL
   end
+
+  it "treats single splats with same restriction followed by a required named parameter as equivalent" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(x : Int32, *y : Int32, z : String)
+        'a'
+      end
+
+      def foo(x : Int32, *y : Int32, z : String)
+        1
+      end
+
+      foo(1, 2, z: "")
+      CRYSTAL
+  end
+
+  it "treats single splats with same restriction followed by required named parameters and a double splat as equivalent" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def foo(x : Int32, *y : Int32, z : String, w, **opts)
+        'a'
+      end
+
+      def foo(x : Int32, *y : Int32, z : String, w, **opts)
+        1
+      end
+
+      foo(1, 2, z: "", w: 3)
+      CRYSTAL
+  end
+
+  it "keeps single splats with different restrictions followed by a required named parameter as overloads" do
+    assert_type(<<-CRYSTAL) { tuple_of([char, int32]) }
+      def foo(x : Int32, *y : Int32, z : String)
+        'a'
+      end
+
+      def foo(x : Int32, *y : String, z : String)
+        1
+      end
+
+      {foo(1, 2, z: ""), foo(1, "", z: "")}
+      CRYSTAL
+  end
 end
 
 private def each_union_variant(t1, t2, &)
