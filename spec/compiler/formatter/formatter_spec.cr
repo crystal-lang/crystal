@@ -2316,6 +2316,17 @@ describe Crystal::Formatter do
   assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
 
+  # #14609
+  assert_format "foo(\n  a: 1,\n  # b: 2\n) do\nend"
+  assert_format "foo(\n  1,\n  # 2\n  # 3\n) { }"
+  assert_format "foo(\n  1,\n  # 2\n  &.bar\n)"
+  assert_format "foo(\n  1, # 2\n  # 3\n) do\nend"
+
+  # #10912
+  assert_format "NamedTuple(\n  a: Int32,\n  b: Int32, # c\n)"
+  assert_format "NamedTuple(\n  a: Int32,\n  # b: Int32\n)"
+  assert_format "NamedTuple(\n  a: Int32, # c\n  b: Int32,\n)"
+
   assert_format "def foo(a, **b : Int32)\nend"
 
   assert_format "foo\n  \nbar", "foo\n\nbar"
