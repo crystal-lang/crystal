@@ -94,7 +94,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
+    # No events to update until the event loop supports waiting for file I/O.
   end
 
   # TODO: LibWasi.sock_shutdown
