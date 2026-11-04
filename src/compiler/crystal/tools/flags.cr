@@ -12,6 +12,7 @@ class Crystal::Command
 
       opts.on("--no-color", "Disable colored output") do
         @color = false
+        @diagnostic_color = false
       end
     end
 
