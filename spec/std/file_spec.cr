@@ -721,13 +721,14 @@ describe "File" do
       end
     end
 
-    # The WASI event loop does not implement pipes.
-    pending_wasm32 "gets for pipe" do
-      IO.pipe do |r, w|
-        r.info.type.should eq(File::Type::Pipe)
-        w.info.type.should eq(File::Type::Pipe)
+    {% unless flag?(:wasip1) || flag?(:wasip2) %}
+      it "gets for pipe" do
+        IO.pipe do |r, w|
+          r.info.type.should eq(File::Type::Pipe)
+          w.info.type.should eq(File::Type::Pipe)
+        end
       end
-    end
+    {% end %}
 
     it "gets for non-existent file and raises" do
       expect_raises(File::NotFoundError, "Unable to get file info: 'non-existent'") do
