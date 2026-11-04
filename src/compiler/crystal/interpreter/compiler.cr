@@ -1650,7 +1650,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         ] of ASTNode,
         global: true,
       )
-      @context.program.semantic(call)
+      @context.program.visit_main(call)
 
       target_def = call.target_def
 
