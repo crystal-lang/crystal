@@ -383,6 +383,13 @@ class Crystal::Repl::Compiler
 
     return if from == to
 
+    # A generic class is only left after `remove_indirection` if it has no
+    # instances, so no value can have that type and this is never reached
+    if to.is_a?(GenericClassType)
+      unreachable "BUG: reached a downcast to #{to}, which has no instances", node: node
+      return
+    end
+
     downcast_distinct(node, from, to)
   end
 
