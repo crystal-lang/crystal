@@ -1542,7 +1542,7 @@ module Crystal
       end
 
       if found_first_newline && !wrote_newline
-        write_line
+        write_line unless @wrote_newline
         wrote_newline = true
       end
       write_indent(found_first_newline ? old_indent : @indent) if wrote_newline
@@ -2720,7 +2720,10 @@ module Crystal
         if @token.type.newline?
           ends_with_newline = true
         end
-        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: ends_with_newline) }
+        # A pending heredoc's terminator already ends the line, so a comment
+        # following it doesn't need an additional newline
+        at_least_one = ends_with_newline && !heredocs_pending_at_newline?
+        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: at_least_one) }
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
@@ -2926,6 +2929,9 @@ module Crystal
                 write_line
               end
               write_indent(column)
+            elsif @wrote_newline
+              # A heredoc or comment already ended the line
+              write_indent(column)
             end
           end
         elsif found_comment
@@ -2952,7 +2958,7 @@ module Crystal
         ends_with_newline = true
         next_token
       end
-      skip_space_or_newline
+      skip_space_or_newline(@indent + 2)
       finish_args(true, has_newlines, ends_with_newline, found_comment, @indent)
     end
 
