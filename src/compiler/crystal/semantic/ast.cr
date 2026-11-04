@@ -144,6 +144,11 @@ module Crystal
     property next : Def?
     property special_vars : Set(String)?
     property freeze_type : Type?
+
+    # Set when `type?` handed out `freeze_type` because the body was not
+    # typed yet (a recursive call). The def's type must not shrink below
+    # that provisional type afterwards, see `restrict_type_to_freeze_type`.
+    property? freeze_type_exposed = false
     property block_nest = 0
     property? raises = false
     property? closure = false

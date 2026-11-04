@@ -83,7 +83,12 @@ module Crystal
     end
 
     def type?
-      @type || freeze_type
+      if type = @type
+        type
+      elsif freeze_type = self.freeze_type
+        self.freeze_type_exposed = true if self.is_a?(Def)
+        freeze_type
+      end
     end
 
     def type(*, with_autocast = false)
@@ -307,6 +312,15 @@ module Crystal
     #
     # Special cases are listed inside the method body.
     def restrict_type_to_freeze_type(freeze_type, type)
+      # A def whose declared return type was already used as its provisional
+      # type (recursive call typed before the body) keeps that type: letting
+      # it shrink to the body's narrower type leaves dependent nodes with
+      # stale, wider types (codegen "BUG: trying to downcast" or endless
+      # recalculation).
+      if self.is_a?(Def) && self.freeze_type_exposed? && type != freeze_type && type.implements?(freeze_type)
+        return freeze_type
+      end
+
       if freeze_type.is_a?(ProcInstanceType)
         # We allow assigning Proc(*T, R) to Proc(*T, Nil)
         if freeze_type.return_type.nil_type? &&
