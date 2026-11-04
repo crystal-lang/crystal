@@ -16,9 +16,9 @@ lib LibC
   alias PidT = Int
 
   union PthreadAttrTU
-    __i : StaticArray(Int, 14)
-    __vi : StaticArray(Int, 14)
-    __s : StaticArray(ULong, 7)
+    __i : StaticArray(Int, 9)
+    __vi : StaticArray(Int, 9)
+    __s : StaticArray(ULong, 9)
   end
 
   struct PthreadAttrT
@@ -28,7 +28,7 @@ lib LibC
   union PthreadCondTU
     __i : StaticArray(Int, 12)
     __vi : StaticArray(Int, 12)
-    __p : StaticArray(Void*, 6)
+    __p : StaticArray(Void*, 12)
   end
 
   struct PthreadCondT
@@ -40,9 +40,9 @@ lib LibC
   end
 
   union PthreadMutexTU
-    __i : StaticArray(Int, 10)
-    __vi : StaticArray(Int, 10)
-    __p : StaticArray(Void*, 5)
+    __i : StaticArray(Int, 6)
+    __vi : StaticArray(Int, 6)
+    __p : StaticArray(Void*, 6)
   end
 
   struct PthreadMutexT

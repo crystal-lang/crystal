@@ -60,7 +60,7 @@ class Crystal::CodeGenVisitor
     #
     # Note we codegen the ensure body three times! In practice this isn't a big deal, since ensure bodies are typically small.
 
-    msvc = @program.has_flag?("msvc")
+    msvc = @program.codegen_target.msvc?
 
     context.fun.personality_function = windows_personality_fun.func if msvc
 
@@ -284,7 +284,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_re_raise(node, unwind_ex_obj)
-    if @program.has_flag?("msvc")
+    if @program.codegen_target.msvc?
       # On the MSVC C++ ABI we can re-raise by calling _CxxThrowException with two null arguments
       call windows_throw_fun, [llvm_context.void_pointer.null, llvm_context.void_pointer.null]
       unreachable
