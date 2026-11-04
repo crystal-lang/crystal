@@ -158,6 +158,11 @@ describe Number do
     it { assert_prints 0.000_000_001.humanize, "1.0n" }
     it { assert_prints 0.000_000_001_235.humanize, "1.24n" }
     it { assert_prints 0.123_456_78.humanize, "123m" }
+    it { assert_prints 999.9.humanize, "1.0k" }
+    it { assert_prints 999_999.humanize, "1.0M" }
+    it { assert_prints 0.999_9.humanize, "1.0" }
+    it { assert_prints 0.000_999_9.humanize, "1.0m" }
+    it { assert_prints 999_999.humanize(2, significant: false), "1.00M" }
     it { assert_prints 0.123_456_78.humanize(5), "123.46m" }
 
     it { assert_prints 1.0e-35.humanize, "0.00001q" }

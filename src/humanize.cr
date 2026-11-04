@@ -232,32 +232,43 @@ struct Number
       digits = log.floor.to_i + 1
     end
 
-    magnitude = digits
-
     proper_fraction = 0 < abs < 1
-    if proper_fraction
-      magnitude -= 1
-    elsif magnitude == 0
-      magnitude = 1
-    end
+    carried = false
 
-    yield_result = yield magnitude, self.to_f
-    magnitude, unit = yield_result[0..1]
+    while true
+      magnitude = digits
 
-    decimal_places = precision
-    if significant
-      scrap_digits = digits - precision
-      decimal_places += magnitude - digits
-    else
-      scrap_digits = magnitude - precision
-    end
-    scrap_digits *= -1 if proper_fraction
+      if proper_fraction
+        magnitude -= 1
+      elsif magnitude == 0
+        magnitude = 1
+      end
 
-    exponent = 10 ** scrap_digits.to_f
-    if proper_fraction
-      number = (to_f * exponent).round / exponent
-    else
-      number = (to_f / exponent).round * exponent
+      yield_result = yield magnitude, self.to_f
+      magnitude, unit = yield_result[0..1]
+
+      decimal_places = precision
+      if significant
+        scrap_digits = digits - precision
+        decimal_places += magnitude - digits
+      else
+        scrap_digits = magnitude - precision
+      end
+      scrap_digits *= -1 if proper_fraction
+
+      exponent = 10 ** scrap_digits.to_f
+      if proper_fraction
+        number = (to_f * exponent).round / exponent
+      else
+        number = (to_f / exponent).round * exponent
+      end
+
+      # Rounding can carry over into the next order of magnitude
+      # (e.g. `999_999` => `1_000_000`), then retry with one more digit.
+      break if carried || !(number.abs >= 10.0 ** digits)
+      carried = true
+      digits += 1
+      proper_fraction = digits <= 0
     end
 
     number /= base.to_f ** (magnitude.to_f / 3.0)
