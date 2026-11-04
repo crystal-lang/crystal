@@ -1217,6 +1217,7 @@ module Crystal
       assert_syntax_error "#{keyword}(a: 1)", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
       assert_syntax_error "#{keyword}(1, a: 2)", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 5
       assert_syntax_error %(#{keyword}("a": 1)), "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+      assert_syntax_error "#{keyword} a:", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
 
       assert_syntax_error "a = #{keyword}", "void value expression"
       assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
@@ -1284,6 +1285,7 @@ module Crystal
     assert_syntax_error "yield(a: 1)", "named arguments are not allowed in `yield`", 1, 7
     assert_syntax_error "yield(1, a: 2)", "named arguments are not allowed in `yield`", 1, 10
     assert_syntax_error %(yield("a": 1)), "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "yield a:", "named arguments are not allowed in `yield`", 1, 7
     assert_syntax_error "with 1 yield a: 1", "named arguments are not allowed in `yield`", 1, 14
 
     it_parses "Int", "Int".path
