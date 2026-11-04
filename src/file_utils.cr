@@ -113,6 +113,7 @@ module FileUtils
   # Copies a file or directory *src_path* to *dest_path*.
   # If *src_path* is a directory, this method copies all its contents recursively.
   # If *dest* is a directory, copies src to dest/src.
+  # Symbolic links are copied as symbolic links rather than being followed.
   #
   # ```
   # require "file_utils"
@@ -125,7 +126,9 @@ module FileUtils
   end
 
   private def cp_recursive(src_path : Path | String, dest_path : Path | String)
-    if Dir.exists?(src_path)
+    if File.symlink?(src_path)
+      File.symlink(File.readlink(src_path), dest_path)
+    elsif Dir.exists?(src_path)
       Dir.mkdir(dest_path) unless Dir.exists?(dest_path)
       Dir.each_child(src_path) do |entry|
         src = File.join(src_path, entry)
