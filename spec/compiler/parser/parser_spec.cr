@@ -4243,11 +4243,6 @@ module Crystal
       a_def = Parser.parse(source).as(Def)
       node_source(source, a_def.args[0]).should eq("*")
       node_source(source, a_def.args[1]).should eq("a")
-      node_source(source, a_def.block_arg.should_not be_nil).should eq("&")
-
-      source = "def foo(& : Int32 ->); end"
-      a_def = Parser.parse(source).as(Def)
-      node_source(source, a_def.block_arg.should_not be_nil).should eq("& : Int32 ->")
     end
 
     it "sets correct location of splat restriction of parameter in def" do
@@ -4294,13 +4289,6 @@ module Crystal
       node_source(source, assign).should eq("@@b")
       node_source(source, assign.target).should eq("@@b")
       node_source(source, assign.value).should eq("@@b")
-    end
-
-    it "sets correct location of parameter with heredoc default value in def" do
-      source = "def foo(x = <<-FOO, y = 1)\n  bar\n  FOO\nend"
-      a_def = Parser.parse(source).as(Def)
-      node_source(source, a_def.args[0]).should eq("x = <<-FOO")
-      node_source(source, a_def.args[1]).should eq("y = 1")
     end
 
     it "sets correct location of parameters in macro" do
