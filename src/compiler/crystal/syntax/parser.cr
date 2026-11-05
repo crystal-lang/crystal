@@ -3980,10 +3980,6 @@ module Crystal
         whitespace_after_amp = space_after_amp || @token.type.newline?
         skip_space_or_newline
 
-        if whitespace_after_amp && (@token.type.ident? || @token.type.instance_var? || @token.type.class_var?)
-          raise "no whitespace allowed between '&' and block parameter name", @token
-        end
-
         if @token.type.op_colon? && !space_after_amp # anonymous block arg without space
           warnings.add_warning_at @token.location, "space required before colon in type restriction (run `crystal tool format` to fix this)"
         end
@@ -3995,6 +3991,10 @@ module Crystal
         # (In fact `params` may contain anonymous splat parameter. See #9108).
         # So check is skipped.
         unless block_param.name.empty?
+          if whitespace_after_amp
+            raise "no whitespace allowed between '&' and block parameter name", block_param.location.not_nil!
+          end
+
           conflict_param = params.any?(&.name.==(block_param.name))
           conflict_double_splat = found_double_splat && found_double_splat.name == block_param.name
           if conflict_param || conflict_double_splat
