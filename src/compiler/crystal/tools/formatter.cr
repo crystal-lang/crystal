@@ -1282,9 +1282,9 @@ module Crystal
     # apart, as in `if a; b; end if c`.
     private def suffix_if_or_unless?(node)
       return false unless node.else.is_a?(Nop)
+      return false unless location = node.location
 
-      location = node.location
-      !location.nil? && node.then.location == location
+      node.then.location == location
     end
 
     def format_if_at_cond(node, keyword : Keyword, check_end = true)
