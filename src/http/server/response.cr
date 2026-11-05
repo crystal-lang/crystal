@@ -9,6 +9,9 @@ class HTTP::Server
   # the response body. Once response output is written, changing the `status`
   # and `headers` properties has no effect.
   #
+  # Mutating `headers` after the first body write is detected via a digest
+  # captured on that write and raises `IO::Error` when the headers are flushed.
+  #
   # The `HTTP::Server::Response` is a write-only `IO`, so all `IO` methods are available
   # in it.
   #
@@ -45,12 +48,14 @@ class HTTP::Server
     property upgrade_handler : (IO ->)?
 
     @cookies : HTTP::Cookies?
+    @headers_digest : UInt64?
 
     # :nodoc:
     def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
       @status = :ok
       @wrote_headers = false
+      @headers_digest = nil
       @output = output = @original_output = Output.new(@io)
       output.response = self
     end
@@ -63,6 +68,7 @@ class HTTP::Server
       @status = :ok
       @status_message = nil
       @wrote_headers = false
+      @headers_digest = nil
       @output = @original_output
       @original_output.reset
     end
@@ -216,12 +222,29 @@ class HTTP::Server
 
     private def check_headers
       raise IO::Error.new "Closed stream" if @original_output.closed?
-      if wrote_headers?
+      if wrote_headers? || @headers_digest
         raise IO::Error.new("Headers already sent")
       end
     end
 
+    # Records `headers.hash` on the first body write to the response output.
+    protected def remember_headers_digest : Nil
+      @headers_digest ||= headers.hash
+    end
+
+    # Raises if `headers` changed after the first body write, then clears the
+    # digest so transport headers and cookies can still be applied.
+    protected def verify_and_release_headers_digest! : Nil
+      if digest = @headers_digest
+        if headers.hash != digest
+          raise IO::Error.new("Headers were modified after writing the response body")
+        end
+        @headers_digest = nil
+      end
+    end
+
     protected def write_headers
+      verify_and_release_headers_digest!
       @io << @version << ' ' << @status.code << ' ' << status_message << "\r\n"
       headers.each do |name, values|
         values.each do |value|
@@ -263,6 +286,10 @@ class HTTP::Server
         @closed = false
       end
 
+      protected def before_buffered_write : Nil
+        response.remember_headers_digest
+      end
+
       private def unbuffered_read(slice : Bytes) : Int32
         raise "Can't read from HTTP::Server::Response"
       end
@@ -274,6 +301,7 @@ class HTTP::Server
           @chunked = true
         elsif !response.wrote_headers?
           if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
+            response.verify_and_release_headers_digest!
             response.headers["Transfer-Encoding"] = "chunked"
             @chunked = true
           end
@@ -307,7 +335,10 @@ class HTTP::Server
         set_content_length = !(status.not_modified? || status.no_content? || status.informational?)
 
         if !response.wrote_headers? && !response.headers.has_key?("Transfer-Encoding") && !response.headers.has_key?("Content-Length") && set_content_length
-          response.content_length = @out_count
+          # Set Content-Length directly: `content_length=` refuses writes after
+          # the body started. Verify user headers are unchanged first.
+          response.verify_and_release_headers_digest!
+          response.headers["Content-Length"] = @out_count.to_s
         end
 
         ensure_headers_written
