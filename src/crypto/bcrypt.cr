@@ -51,13 +51,17 @@ class Crypto::Bcrypt
     )
   {% end %}
 
-  # Hashes the *password* using bcrypt algorithm using salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
+  # Hashes the *password* using the bcrypt algorithm with a random salt obtained via `Random::Secure.random_bytes(SALT_SIZE)`.
+  #
+  # For higher-level password hashing and verification, see `Crypto::Bcrypt::Password.create`.
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # Crypto::Bcrypt.hash_secret "secret"
+  # Crypto::Bcrypt.hash_secret("secret") # => "$2a$11$..."
   # ```
+  #
+  # Raises `Error` if *cost* is outside `COST_RANGE` or *password* exceeds 72 bytes.
   def self.hash_secret(password : String, cost : Int32 = DEFAULT_COST) : String
     passwordb = password_bytes(password)
     saltb = Random::Secure.random_bytes(SALT_SIZE)
@@ -66,14 +70,20 @@ class Crypto::Bcrypt
 
   # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* and *cost*.
   #
-  # *salt* must be a base64 encoded string of 16 bytes (128 bits).
+  # *salt* must be a bcrypt-base64 encoded string using the `./A-Za-z0-9` alphabet that decodes to 16 bytes (`SALT_SIZE`).
+  #
+  # For password hashing, prefer `.hash_secret` or `Crypto::Bcrypt::Password.create`, which generate a random salt automatically. Supplying an explicit *salt* is intended for verifying existing hashes or reproducing test vectors.
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret", "CJjskaIgXR32DJYjVyNPdA=="
+  # password = Crypto::Bcrypt.new("secret", "CJjskaIgXR32DJYjVyNPd.")
   # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
+  #
+  # Crypto::Bcrypt.new("secret", "salt_of_16_chars") # raises Crypto::Bcrypt::Error: Invalid salt size
   # ```
+  #
+  # Raises `Error` if *salt* does not decode to 16 bytes, *cost* is outside `COST_RANGE`, or *password* exceeds 72 bytes.
   def self.new(password : String, salt : String, cost : Int32 = DEFAULT_COST) : self
     passwordb = password_bytes(password)
     saltb = Base64.decode(salt, SALT_SIZE)
@@ -94,14 +104,18 @@ class Crypto::Bcrypt
   getter salt : Bytes
   getter cost : Int32
 
-  # Creates a new `Crypto::Bcrypt` object from the given *password* with *salt* in bytes and *cost*.
+  # Creates a new `Crypto::Bcrypt` object from the given *password* bytes with *salt* bytes and *cost*.
+  #
+  # *salt* must be 16 bytes (`SALT_SIZE`).
   #
   # ```
   # require "crypto/bcrypt"
   #
-  # password = Crypto::Bcrypt.new "secret".to_slice, "salt_of_16_chars".to_slice
-  # password.digest
+  # password = Crypto::Bcrypt.new("secret".to_slice, "salt_of_16_chars".to_slice)
+  # password.digest # => Bytes[20, 176, 41, 229, 234, 155, 26, 77, 155, 51, 133, 158, 47, 169, 137, 170, 170, 30, 139, 188, 58, 65, 56, 106]
   # ```
+  #
+  # Raises `Error` if *salt* size is not `SALT_SIZE`, *cost* is outside `COST_RANGE`, or *password* size is outside `PASSWORD_RANGE`.
   def initialize(@password : Bytes, @salt : Bytes, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == SALT_SIZE
