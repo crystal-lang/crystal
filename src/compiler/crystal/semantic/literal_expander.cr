@@ -54,7 +54,7 @@ module Crystal
       generic = Generic.new(Path.global("Array"), type_var).at(node)
 
       if node.elements.any?(Splat)
-        ary_var = new_temp_var.at(node)
+        ary_var = new_temp_var(node).at(node)
 
         ary_instance = Call.new(generic, "new", NumberLiteral.new(capacity).at(node)).at(node)
 
@@ -82,12 +82,12 @@ module Crystal
       elsif capacity.zero?
         Call.new(generic, "new").at(node)
       else
-        ary_var = new_temp_var.at(node)
+        ary_var = new_temp_var(node).at(node)
 
         ary_instance = Call.new(generic, "unsafe_build", NumberLiteral.new(capacity).at(node)).at(node)
 
         buffer = Call.new(ary_var, "to_unsafe").at(node)
-        buffer_var = new_temp_var.at(node)
+        buffer_var = new_temp_var(node).at(node)
 
         exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 3)
         elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
@@ -119,7 +119,7 @@ module Crystal
         next if elem.is_a?(Var) || elem.is_a?(InstanceVar) || elem.is_a?(ClassVar) || elem.simple_literal?
 
         temp_vars ||= Array(Var?).new(elems.size, nil)
-        temp_vars[i] = new_temp_var.at(elem)
+        temp_vars[i] = new_temp_var(elem).at(elem)
         count += 1
       end
 
@@ -186,7 +186,7 @@ module Crystal
         return constructor
       end
 
-      ary_var = new_temp_var.at(node)
+      ary_var = new_temp_var(node).at(node)
 
       exps = Array(ASTNode).new(node.elements.size + elem_temp_var_count + 2)
       elem_temp_vars.try &.each_with_index do |elem_temp_var, i|
@@ -276,7 +276,7 @@ module Crystal
       constructor = Call.new(generic, "new").at(node)
       return constructor if node.entries.empty?
 
-      hash_var = new_temp_var
+      hash_var = new_temp_var(node)
 
       exps = Array(ASTNode).new(node.entries.size + key_temp_var_count + value_temp_var_count + 2)
       node.entries.each_with_index do |entry, i|
@@ -374,7 +374,7 @@ module Crystal
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
                    If.new(left, node.right, left.clone).at(node)
                  else
-                   temp_var = new_temp_var
+                   temp_var = new_temp_var(node)
                    If.new(Assign.new(temp_var.clone, left).at(node), node.right, temp_var.clone).at(node)
                  end
       new_node.and = true
@@ -407,7 +407,7 @@ module Crystal
                  elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
                    If.new(left, left.clone, node.right).at(node)
                  else
-                   temp_var = new_temp_var
+                   temp_var = new_temp_var(node)
                    If.new(Assign.new(temp_var.clone, left).at(node), temp_var.clone, node.right).at(node)
                  end
       new_node.or = true
@@ -565,7 +565,7 @@ module Crystal
             temp_var = cond.target
             assigns << cond
           else
-            temp_var = new_temp_var
+            temp_var = new_temp_var(node_cond)
             assigns << Assign.new(temp_var.clone, cond).at(node_cond)
           end
           temp_var
@@ -709,8 +709,8 @@ module Crystal
     #     end
     #
     def expand(node : Select)
-      index_name = @program.new_temp_var_name
-      value_name = @program.new_temp_var_name
+      index_name = @program.new_temp_var_name(node)
+      value_name = @program.new_temp_var_name(node)
 
       targets = [Var.new(index_name).at(node), Var.new(value_name).at(node)] of ASTNode
       channel = Path.global("Channel").at(node)
@@ -1030,13 +1030,13 @@ module Crystal
       obj = node.obj
 
       if obj && !obj.is_a?(Path)
-        temp_var = new_temp_var.at(obj)
+        temp_var = new_temp_var(obj).at(obj)
         assign = Assign.new(temp_var, obj)
         obj = temp_var
       end
 
       def_args = node.args.map do |arg|
-        Arg.new(@program.new_temp_var_name, restriction: arg).at(arg)
+        Arg.new(@program.new_temp_var_name(arg), restriction: arg).at(arg)
       end
 
       call_args = def_args.map do |def_arg|

@@ -104,7 +104,7 @@ module Crystal
           left = obj
           right = Call.new(middle.clone, node.name, node.args).at(middle)
         else
-          temp_var = program.new_temp_var
+          temp_var = program.new_temp_var(middle)
           temp_assign = Assign.new(temp_var.clone, middle).at(middle)
           left = Call.new(obj.obj, obj.name, temp_assign).at(obj.obj)
           right = Call.new(temp_var.clone, node.name, node.args).at(node)
@@ -247,7 +247,7 @@ module Crystal
       when Var, InstanceVar, ClassVar, .simple_literal?
         tmp = obj
       else
-        tmp = program.new_temp_var
+        tmp = program.new_temp_var(obj)
 
         # (1) = tmp = a
         assign = Assign.new(tmp, obj).at(node)
@@ -459,7 +459,7 @@ module Crystal
       next_unpacks = [] of {String, Expressions}
 
       unpacks.each do |index, expressions|
-        temp_name = program.new_temp_var_name
+        temp_name = program.new_temp_var_name(node.args[index])
         node.args[index] = Var.new(temp_name).at(node.args[index])
 
         extra_expressions << block_unpack_multiassign(temp_name, expressions, next_unpacks)
@@ -497,7 +497,7 @@ module Crystal
         when Splat
           exp
         when Expressions
-          next_temp_name = program.new_temp_var_name
+          next_temp_name = program.new_temp_var_name(exp)
 
           next_unpacks << {next_temp_name, exp}
 

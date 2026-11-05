@@ -67,4 +67,20 @@ describe "Normalize: proc pointer" do
       end
       CRYSTAL
   end
+
+  it "normalizes with filename" do
+    assert_expand "foo = 1; ->foo.bar(Int32)", <<-CRYSTAL, filename: "foo.cr"
+      __temp_cd6ae5dd_1 = foo
+      ->(__temp_cd6ae5dd_2 : Int32) do
+        __temp_cd6ae5dd_1.bar(__temp_cd6ae5dd_2)
+      end
+      CRYSTAL
+
+    assert_expand "foo = 1; ->foo.bar(Int32)", <<-CRYSTAL, filename: "bar.cr"
+      __temp_fbcf3d84_1 = foo
+      ->(__temp_fbcf3d84_2 : Int32) do
+        __temp_fbcf3d84_1.bar(__temp_fbcf3d84_2)
+      end
+      CRYSTAL
+  end
 end
