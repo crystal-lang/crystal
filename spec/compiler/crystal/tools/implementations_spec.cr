@@ -474,6 +474,34 @@ describe "implementations" do
     )
   end
 
+  it "find implementation of argument in index call" do
+    assert_implementations %(
+    ༓def x
+      1
+    end
+
+    class Foo
+      def [](i)
+        i
+      end
+    end
+
+    Foo.new[‸x]
+    )
+  end
+
+  it "find implementation from any character of operator ending in =" do
+    assert_implementations %(
+    class Foo
+      ༓def <=(other)
+        true
+      end
+    end
+
+    Foo.new <‸= 1
+    )
+  end
+
   it "find implementation on def with no location" do
     _, result = processed_implementation_visitor <<-CRYSTAL, Location.new(".", 5, 5)
       enum Foo

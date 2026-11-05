@@ -291,3 +291,32 @@ describe "Normalize: multi assign" do
       CRYSTAL
   end
 end
+
+private class SetterCollector < Crystal::Visitor
+  getter calls = [] of Crystal::Call
+
+  def visit(node : Crystal::Call)
+    @calls << node if node.name.ends_with?('=')
+    true
+  end
+
+  def visit(node : Crystal::ASTNode)
+    true
+  end
+end
+
+private def setter_name_sizes(source)
+  collector = SetterCollector.new
+  assert_expand(Parser.parse(source)) { |node, _| node.accept(collector) }
+  collector.calls.map { |call| {call.name, call.name_size} }
+end
+
+describe "Normalize: multi assign name size" do
+  it "keeps the size of the written name in setter targets" do
+    setter_name_sizes("a.foo, b = 1, 2").should eq([{"foo=", 3}])
+  end
+
+  it "keeps the size of index targets" do
+    setter_name_sizes("a[0], b = 1, 2").should eq([{"[]=", 0}])
+  end
+end
