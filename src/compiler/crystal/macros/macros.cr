@@ -26,7 +26,8 @@ class Crystal::Program
     a_macro.body.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
   rescue ex
-    raise ex if @program.macro_expansion_error_hook.nil?
+    # `skip_file` isn't an error, so it's handled the same with or without macro code coverage.
+    raise ex if @program.macro_expansion_error_hook.nil? || ex.is_a?(SkipMacroException)
 
     # See SkipMacroCodeCoverageException's definition for more information.
     raise SkipMacroCodeCoverageException.new ex
@@ -40,7 +41,8 @@ class Crystal::Program
     node.accept interpreter
     {interpreter.to_s, interpreter.macro_expansion_pragmas}
   rescue ex
-    raise ex if @program.macro_expansion_error_hook.nil?
+    # `skip_file` isn't an error, so it's handled the same with or without macro code coverage.
+    raise ex if @program.macro_expansion_error_hook.nil? || ex.is_a?(SkipMacroException)
 
     # See SkipMacroCodeCoverageException's definition for more information.
     raise SkipMacroCodeCoverageException.new ex
