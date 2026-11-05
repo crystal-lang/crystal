@@ -5,7 +5,11 @@ lib LibC
   alias BlkcntT = LongLong
   alias BlksizeT = Long
   alias ClockT = LongLong
-  alias ClockidT = Int
+  {% if flag?(:wasip1) %}
+    alias ClockidT = Int
+  {% else %}
+    type ClockidT = Void*
+  {% end %}
   alias DevT = ULongLong
   alias GidT = UInt
   alias IdT = UInt
