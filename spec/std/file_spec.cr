@@ -429,6 +429,8 @@ describe "File" do
         expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
           File.readlink(symlink)
         end
+      ensure
+        File.chmod(path, File::Permissions::All)
       end
     end
   end
@@ -471,6 +473,8 @@ describe "File" do
         expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
           File.readlink?(symlink)
         end
+      ensure
+        File.chmod(path, File::Permissions::All)
       end
     end
   end
