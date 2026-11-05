@@ -496,7 +496,7 @@ module Crystal
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type, fun_name : String)
-      index = @closure_counters[fun_name] += 1
+      index = @closure_counters.update(fun_name) { |count| count + 1 }
       llvm_name = "closure.#{fun_name}.#{index}"
 
       has_inner_pointers = !parent_llvm_type.nil?
