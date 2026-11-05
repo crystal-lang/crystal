@@ -615,6 +615,16 @@ module Crystal
     assert_syntax_error "def foo(*a foo); end"
     assert_syntax_error "def foo(**a foo); end"
     assert_syntax_error "def foo(&a foo); end"
+    assert_syntax_error "def foo(& block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(a, & block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(& block : Int -> Double); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(&\nblock); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(& @block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(& @@block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "def foo(@[Foo] & block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "macro foo(& block); end", "no whitespace allowed between '&' and block parameter name"
+    assert_syntax_error "foo(& block)"
+    assert_syntax_error "foo(&\nblock)"
 
     it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
 
