@@ -20,7 +20,7 @@ require "./tcp_socket"
 # ```
 #
 # Options:
-# - *host* local interface to bind on, or `::` to bind on all local interfaces.
+# - *host* local IP address or hostname to bind to (see `#initialize` for details).
 # - *port* specific port to bind on, or `0` to receive an "ephemeral" (free, assigned by kernel) port.
 # - *backlog* to specify how many pending connections are allowed.
 # - *reuse_port* to enable multiple processes to bind to the same port (`SO_REUSEPORT`).
@@ -33,6 +33,20 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
+  #
+  # When *host* is a hostname, `TCPServer` resolves the name using the
+  # system resolver, attempts to bind and listen on each resolved IP address in
+  # order, and returns as soon as an address succeeds, skipping all remaining
+  # candidates.
+  #
+  # For example, `localhost` may resolve to `::1` then `127.0.0.1`; the server
+  # will try to bind to `::1` and succeed, then skip `127.0.0.1`, thus
+  # only accept IPv6 connections and refuse IPv4 connections.
+  #
+  # To listen on all local addresses for both IPv4 and IPv6, you may pass `::`
+  # or use `.new(port)` though that may not work on every target: on FreeBSD and
+  # Dragonfly BSD, for example, you must bind two sockets, one to `::` and
+  # another to `0.0.0.0` to bind all the local IPv6 and IPv4 addresses.
   def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout : Time::Span? = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
@@ -70,7 +84,10 @@ class TCPServer < TCPSocket
     super(fd: fd, family: family)
   end
 
-  # Creates a new TCP server, listening on all local interfaces (`::`).
+  # Creates a new TCP server, listening on all local addresses (`::`).
+  #
+  # Depending on the target OS, binding to `::` may only accept IPv6
+  # connections (see `#initialize` for details).
   def self.new(port : Int, backlog = SOMAXCONN, reuse_port = false)
     new("::", port, backlog, reuse_port: reuse_port)
   end
