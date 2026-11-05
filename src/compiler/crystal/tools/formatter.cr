@@ -2801,13 +2801,16 @@ module Crystal
         has_newlines, found_comment, needed_indent = format_args_simple(args, needed_indent, do_consume_newlines)
       end
 
+      # Newlines in any part make the whole argument list multiline
       if named_args
-        has_newlines, named_args_found_comment, needed_indent = format_named_args(args, named_args, needed_indent)
+        named_args_has_newlines, named_args_found_comment, needed_indent = format_named_args(args, named_args, needed_indent)
+        has_newlines ||= named_args_has_newlines
         found_comment = true if args.empty? && named_args_found_comment
       end
 
       if block_arg
-        has_newlines = format_block_arg(block_arg, needed_indent)
+        block_arg_has_newlines = format_block_arg(block_arg, needed_indent)
+        has_newlines ||= block_arg_has_newlines
       end
 
       @inside_call_or_assign -= 1
