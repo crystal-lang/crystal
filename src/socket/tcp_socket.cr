@@ -1,4 +1,5 @@
 require "./ip_socket"
+require "./happy_eyeballs"
 
 # A Transmission Control Protocol (TCP/IP) socket.
 #
@@ -26,15 +27,25 @@ class TCPSocket < IPSocket
     #
     # You may limit the DNS resolution time with `dns_timeout` and limit the
     # connection time to the remote server with `connect_timeout`. Both values
-    # should be `Time::Span`.
+    # should be `Time::Span`. The `connect_timeout` applies to each connection
+    # attempt individually.
+    #
+    # When *host* resolves to multiple addresses, the connection is established
+    # following the Happy Eyeballs algorithm ([RFC 8305](https://www.rfc-editor.org/rfc/rfc8305)):
+    # the addresses are interleaved by address family (IPv6 and IPv4) while
+    # preserving the order of preference returned by the resolver, then a
+    # connection attempt is started for each address in turn. A new attempt
+    # starts as soon as the previous one fails, or after 250 milliseconds
+    # without the previous attempts having succeeded, in which case several
+    # attempts race in parallel. The first established connection is used and
+    # all the other attempts are canceled.
+    #
+    # NOTE: The DNS resolution itself doesn't follow RFC 8305 (the AAAA and A
+    # queries aren't made in parallel); the addresses are resolved before any
+    # connection attempt starts.
     def initialize(host : String, port, dns_timeout : Time::Span? = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
-      Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
-        super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
-        connect(addrinfo, timeout: connect_timeout) do |error|
-          close
-          error
-        end
-      end
+      addrinfos = Addrinfo.tcp(host, port, timeout: dns_timeout)
+      initialize(addrinfos, host, port, connect_timeout: connect_timeout, blocking: blocking)
     end
   {% end %}
 
@@ -42,6 +53,66 @@ class TCPSocket < IPSocket
   @[Deprecated("Use `.new(String, _, Time::Span?)` instead.")]
   def initialize(host : String, port, dns_timeout : Number, connect_timeout = nil, blocking = nil)
     initialize(host, port, dns_timeout.seconds, connect_timeout, blocking: blocking)
+  end
+
+  # :nodoc:
+  #
+  # Connects to one of *addrinfos* following the Happy Eyeballs algorithm (see
+  # `.new(String, _, Time::Span?)`). The *host* and *port* are only used to
+  # build the error message.
+  def initialize(addrinfos : Indexable(Addrinfo), host, port, *, connect_timeout = nil, connection_attempt_delay : Time::Span = HappyEyeballs::CONNECTION_ATTEMPT_DELAY, blocking = nil)
+    if addrinfos.size == 1
+      # fast path: no need for concurrent connection attempts
+      addrinfo = addrinfos.first
+      super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
+      connect(addrinfo, timeout: connect_timeout) do |error|
+        close
+        raise TCPSocket.connect_error(error, host, port)
+      end
+    else
+      result = HappyEyeballs.connect(addrinfos, connect_timeout, connection_attempt_delay) do |addrinfo|
+        ConnectionAttempt.new(addrinfo, blocking)
+      end
+      raise TCPSocket.connect_error(result, host, port) unless result.is_a?(ConnectionAttempt)
+
+      # adopt the connected socket
+      addrinfo = result.addrinfo
+      super(handle: result.socket.release_handle, family: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: result.blocking)
+      self.sync = true
+    end
+  end
+
+  # :nodoc:
+  def self.connect_error(error : Exception?, host, port) : Exception
+    case error
+    when Socket::ConnectError
+      Socket::ConnectError.from_os_error("Error connecting to '#{host}:#{port}'", error.os_error)
+    when Exception
+      error
+    else
+      Socket::ConnectError.new("Error connecting to '#{host}:#{port}': No address found")
+    end
+  end
+
+  # A bare socket to race in `HappyEyeballs.connect`, with the information
+  # needed to adopt it into a `TCPSocket` once connected.
+  private struct ConnectionAttempt
+    getter socket : Socket
+    getter addrinfo : Addrinfo
+    getter blocking : Bool
+
+    def initialize(@addrinfo : Addrinfo, blocking)
+      handle, @blocking = Crystal::EventLoop.current.socket(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
+      @socket = Socket.new(handle: handle, family: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: @blocking)
+    end
+
+    def connect(addrinfo, timeout, &)
+      @socket.connect(addrinfo, timeout) { |error| yield error }
+    end
+
+    def close : Nil
+      @socket.close
+    end
   end
 
   protected def initialize(family : Family, type : Type, protocol : Protocol = Protocol::IP)
