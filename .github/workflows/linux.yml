@@ -44,9 +44,6 @@ jobs:
       - name: Prepare System
         run: bin/ci prepare_system
 
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
       - name: Test
         run: bin/ci build
         env: ${{ matrix.env }}
@@ -81,11 +78,6 @@ jobs:
       - name: Prepare System
         run: bin/ci prepare_system
 
-      - name: Prepare Build
-        run: |
-          bin/ci prepare_build
-          bin/ci with_build_env crystal version
-
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
 
@@ -99,9 +91,6 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
 
       - name: Check Format
         run: bin/ci format

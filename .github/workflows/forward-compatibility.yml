@@ -45,9 +45,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
       - name: Test
         run: bin/ci build
         env: ${{ matrix.env }}
