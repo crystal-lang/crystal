@@ -1137,6 +1137,16 @@ module Crystal
         return false
       end
 
+      # Check if it's A..B instead of Range(A, B)
+      if node.suffix.range?
+        accept node.type_vars[0]
+        skip_space_or_newline
+        write_token :OP_PERIOD_PERIOD
+        skip_space_or_newline
+        accept node.type_vars[1]
+        return false
+      end
+
       # NOTE: not `name.single_name?` as this is only for the expanded tuple literals
       first_name = name.names.first if name.global? && name.names.size == 1
 
