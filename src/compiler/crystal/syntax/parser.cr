@@ -5133,7 +5133,7 @@ module Crystal
     # Generally it is entry point of type parsing and
     # it is used on the context expected type (e.g. type restrictions, rhs of `alias` and more)
     def parse_bare_proc_type
-      type = parse_type_splat { parse_union_type }
+      type = parse_type_splat { parse_range_type }
 
       # To determine to consume comma, looking-ahead is needed.
       # Consider `[ [] of Int32, Foo.new ]`, we want to parse it as `[ ([] of Int32), Foo.new ]` of course.
@@ -5149,12 +5149,34 @@ module Crystal
       if !@token.type.op_minus_gt?
         loop do
           next_token_skip_space_or_newline
-          input_types << parse_type_splat { parse_union_type }
+          input_types << parse_type_splat { parse_range_type }
           break unless @token.type.op_comma? && type_start?(consume_newlines: true)
         end
       end
 
       parse_proc_type_output(input_types, input_types.first.location)
+    end
+
+    # Parses a range type like `A..B`, which is sugar for `::Range(A, B)`.
+    # `..` binds weaker than `|` but stronger than `->`, so `A | B..C -> D`
+    # is `::Proc(::Range(A | B, C), D)`. Only inclusive ranges with both
+    # a begin and an end type are allowed.
+    def parse_range_type
+      type = parse_union_type
+
+      case @token.type
+      when .op_period_period?
+        next_token_skip_space_or_newline
+        end_type = parse_union_type
+        if @token.type.op_period_period? || @token.type.op_period_period_period?
+          raise "range types cannot be chained, use parentheses", @token
+        end
+        make_range_type(type, end_type)
+      when .op_period_period_period?
+        raise "exclusive range types are not supported, use `..` instead", @token
+      else
+        type
+      end
     end
 
     def parse_union_type
@@ -5221,7 +5243,7 @@ module Crystal
           return parse_proc_type_output([] of ASTNode, location)
         end
 
-        type = parse_type_splat { parse_union_type }
+        type = parse_type_splat { parse_range_type }
         if @token.type.op_rparen?
           end_location = @token.location
           next_token_skip_space
@@ -5237,7 +5259,7 @@ module Crystal
           while @token.type.op_comma?
             next_token_skip_space_or_newline
             break if @token.type.op_rparen? # allow trailing comma
-            input_types << parse_type_splat { parse_union_type }
+            input_types << parse_type_splat { parse_range_type }
           end
           if @token.type.op_minus_gt? # `(A, B, C -> D)` case
             type = parse_proc_type_output(input_types, input_types.first.location)
@@ -5261,13 +5283,13 @@ module Crystal
     end
 
     def parse_union_types(end_token : Token::Kind, *, allow_splats = false)
-      type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+      type = allow_splats ? parse_type_splat { parse_range_type } : parse_range_type
       types = [type]
 
       while @token.type.op_comma?
         next_token_skip_space_or_newline
         break if @token.type == end_token # allow trailing comma
-        type = allow_splats ? parse_type_splat { parse_union_type } : parse_union_type
+        type = allow_splats ? parse_type_splat { parse_range_type } : parse_range_type
         types << type
       end
 
@@ -5446,7 +5468,7 @@ module Crystal
       when .keyword?(:offsetof)
         parse_offsetof
       else
-        parse_union_type
+        parse_range_type
       end
     end
 
@@ -5484,7 +5506,8 @@ module Crystal
     end
 
     def parse_proc_type_output(input_types, location)
-      has_output_type = type_start?(consume_newlines: false)
+      # `..` may follow the output type, as in `A -> B..C`
+      has_output_type = type_start?(consume_newlines: false, allow_range: true)
 
       check :OP_MINUS_GT
       end_location = token_end_location
@@ -5492,7 +5515,7 @@ module Crystal
 
       if has_output_type
         skip_space_or_newline
-        output_type = parse_union_type
+        output_type = parse_range_type
         end_location = output_type.end_location
       end
 
@@ -5521,6 +5544,12 @@ module Crystal
       type
     end
 
+    def make_range_type(begin_type, end_type)
+      type = Generic.new(Path.global("Range").at(begin_type), [begin_type, end_type] of ASTNode).at(begin_type).at_end(end_type)
+      type.suffix = :range
+      type
+    end
+
     def make_tuple_type(types)
       Generic.new(Path.global("Tuple"), types)
     end
@@ -5530,7 +5559,7 @@ module Crystal
     end
 
     # Looks ahead next tokens to check whether they indicate type.
-    def type_start?(*, consume_newlines)
+    def type_start?(*, consume_newlines, allow_range = false)
       peek_ahead do
         if consume_newlines
           next_token_skip_space_or_newline
@@ -5538,13 +5567,13 @@ module Crystal
           next_token_skip_space
         end
 
-        type_start?
+        type_start?(allow_range: allow_range)
       rescue
         false
       end
     end
 
-    def type_start?
+    def type_start?(*, allow_range = false)
       while @token.type.op_lparen? || @token.type.op_lcurly?
         next_token_skip_space_or_newline
       end
@@ -5559,27 +5588,27 @@ module Crystal
           true
         when Keyword::SELF, "self?"
           next_token_skip_space
-          delimiter_or_type_suffix?
+          delimiter_or_type_suffix?(allow_range: allow_range)
         else
           false
         end
       when .const?
         return false if named_tuple_start?
-        type_path_start?
+        type_path_start?(allow_range: allow_range)
       when .op_colon_colon?
         next_token
-        type_path_start?
+        type_path_start?(allow_range: allow_range)
       when .underscore?, .op_minus_gt?
         true
       when .op_star?
         next_token_skip_space_or_newline
-        type_start?
+        type_start?(allow_range: allow_range)
       else
         false
       end
     end
 
-    def type_path_start?
+    def type_path_start?(*, allow_range = false)
       while @token.type.const?
         next_token
         break unless @token.type.op_colon_colon?
@@ -5587,10 +5616,10 @@ module Crystal
       end
 
       skip_space
-      delimiter_or_type_suffix?
+      delimiter_or_type_suffix?(allow_range: allow_range)
     end
 
-    def delimiter_or_type_suffix?
+    def delimiter_or_type_suffix?(*, allow_range = false)
       case @token.type
       when .op_period?
         next_token_skip_space_or_newline
@@ -5598,11 +5627,13 @@ module Crystal
       when .op_question?, .op_star?, .op_star_star?
         # They are conflicted with operators, so more look-ahead is needed.
         next_token_skip_space
-        delimiter_or_type_suffix?
+        delimiter_or_type_suffix?(allow_range: allow_range)
       when .op_minus_gt?, .op_bar?, .op_comma?, .op_eq_gt?, .newline?, .eof?,
            .op_eq?, .op_semicolon?, .op_lparen?, .op_rparen?, .op_lsquare?, .op_rsquare?
         # -> | , => \n EOF = ; ( ) [ ]
         true
+      when .op_period_period?
+        allow_range
       else
         false
       end

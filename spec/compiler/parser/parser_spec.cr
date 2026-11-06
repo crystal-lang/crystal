@@ -22,6 +22,10 @@ private def symbol_array(*args)
   ary.array_of(Crystal::Path.global("Symbol"))
 end
 
+private def range_type(begin_type, end_type)
+  Crystal::Generic.new(Crystal::Path.global("Range"), [begin_type, end_type] of Crystal::ASTNode, suffix: Crystal::Generic::Suffix::Range)
+end
+
 private def it_parses(string, expected_node, file = __FILE__, line = __LINE__, *, focus : Bool = false)
   it "parses #{string.dump}", file, line, focus: focus do
     parser = Parser.new(string)
@@ -1868,6 +1872,34 @@ module Crystal
     it_parses "Foo()?", Generic.new("Union".path(global: true), [Generic.new("Foo".path, [] of ASTNode), "Nil".path(global: true)] of ASTNode)
     it_parses "a : Foo()*", TypeDeclaration.new("a".var, Generic.new("Pointer".path(global: true), [Generic.new("Foo".path, [] of ASTNode)] of ASTNode, suffix: Generic::Suffix::Asterisk))
     it_parses "a : Foo()[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), [Generic.new("Foo".path, [] of ASTNode), 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
+
+    it_parses "a : A..B", TypeDeclaration.new("a".var, range_type("A".path, "B".path))
+    it_parses "a : A .. \n B", TypeDeclaration.new("a".var, range_type("A".path, "B".path))
+    it_parses "a : A..B[2]", TypeDeclaration.new("a".var, range_type("A".path, Generic.new("StaticArray".path(global: true), ["B".path, 2.int32] of ASTNode, suffix: Generic::Suffix::Bracket)))
+    it_parses "a : (A..B)[2]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), [Union.parens(range_type("A".path, "B".path)), 2.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
+    it_parses "a : A..B?", TypeDeclaration.new("a".var, range_type("A".path, Union.new(["B".path, "Nil".path(global: true)] of ASTNode)))
+    it_parses "a : (A..B)?", TypeDeclaration.new("a".var, Union.new([Union.parens(range_type("A".path, "B".path)), "Nil".path(global: true)] of ASTNode))
+    it_parses "a : A | B..C | D", TypeDeclaration.new("a".var, range_type(Union.new(["A".path, "B".path] of ASTNode), Union.new(["C".path, "D".path] of ASTNode)))
+    it_parses "a : A..B -> C", TypeDeclaration.new("a".var, ProcNotation.new([range_type("A".path, "B".path)] of ASTNode, "C".path))
+    it_parses "a : A..(B -> C)", TypeDeclaration.new("a".var, range_type("A".path, Union.parens(ProcNotation.new(["B".path] of ASTNode, "C".path))))
+    it_parses "a : A -> B..C", TypeDeclaration.new("a".var, ProcNotation.new(["A".path] of ASTNode, range_type("B".path, "C".path)))
+    it_parses "a : (A, B..C) -> D", TypeDeclaration.new("a".var, ProcNotation.new(["A".path, range_type("B".path, "C".path)] of ASTNode, "D".path))
+    it_parses "a : {A..B, C}", TypeDeclaration.new("a".var, Generic.new(Path.global("Tuple"), [range_type("A".path, "B".path), "C".path] of ASTNode))
+    it_parses "a : {x: A..B}", TypeDeclaration.new("a".var, Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", range_type("A".path, "B".path))]))
+    it_parses "a : Foo(A..B)", TypeDeclaration.new("a".var, Generic.new("Foo".path, [range_type("A".path, "B".path)] of ASTNode))
+    it_parses "alias Foo = A..B", Alias.new("Foo".path, range_type("A".path, "B".path))
+    it_parses "[] of A..B", ArrayLiteral.new(of: range_type("A".path, "B".path))
+    it_parses "{} of A..B => C..D", HashLiteral.new(of: HashLiteral::Entry.new(range_type("A".path, "B".path), range_type("C".path, "D".path)))
+    it_parses "x.as(A..B)", Cast.new("x".call, range_type("A".path, "B".path))
+    it_parses "x.is_a?(A..B)", IsA.new("x".call, range_type("A".path, "B".path))
+    it_parses "def foo(x : A..B) : C..D; end", Def.new("foo", [Arg.new("x", restriction: range_type("A".path, "B".path))], return_type: range_type("C".path, "D".path))
+    it_parses "A..B", RangeLiteral.new("A".path, "B".path, false)
+    it_parses "[[] of A, B..C]", ([ArrayLiteral.new(of: "A".path), RangeLiteral.new("B".path, "C".path, false)] of ASTNode).array
+    assert_syntax_error "a : A...B", "exclusive range types are not supported, use `..` instead", 1, 6
+    assert_syntax_error "a : A..B..C", "range types cannot be chained, use parentheses", 1, 9
+    assert_syntax_error "a : A..B...C", "range types cannot be chained, use parentheses", 1, 9
+    assert_syntax_error "a : A..", "unexpected token: EOF"
+    assert_syntax_error "a : ..A", "unexpected token: \"..\""
 
     it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
     it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)

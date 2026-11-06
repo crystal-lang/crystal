@@ -2134,6 +2134,7 @@ module Crystal
       Question # T?
       Asterisk # T*
       Bracket  # T[N]
+      Range    # A..B
     end
 
     def initialize(@name, @type_vars : Array, @named_args = nil, @suffix = Suffix::None)
