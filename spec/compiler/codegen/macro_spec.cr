@@ -150,6 +150,22 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "doesn't expand macro vars inside %{} string literal with nested curly braces (#16159)" do
+    run(<<-CRYSTAL).to_string.should eq(" %a {} %b {} %c ")
+      {% begin %}
+        %{ %a {} %b {} %c }
+      {% end %}
+      CRYSTAL
+  end
+
+  it "doesn't expand macro vars inside %<> string literal with nested angle brackets (#16159)" do
+    run(<<-CRYSTAL).to_string.should eq(" %a <> %b <> %c ")
+      {% begin %}
+        %< %a <> %b <> %c >
+      {% end %}
+      CRYSTAL
+  end
+
   it "expands def macro with @type.instance_vars" do
     run(<<-CRYSTAL).to_string.should eq("x")
       class Foo
