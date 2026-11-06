@@ -40,12 +40,18 @@ class TCPSocket < IPSocket
     # attempts race in parallel. The first established connection is used and
     # all the other attempts are canceled.
     #
+    # Happy Eyeballs can be disabled with *fast_fallback* set to `false`, or
+    # globally with `.fast_fallback=` (used when *fast_fallback* is `nil`), in
+    # which case the addresses are tried sequentially in the order returned by
+    # the resolver.
+    #
     # NOTE: The DNS resolution itself doesn't follow RFC 8305 (the AAAA and A
     # queries aren't made in parallel); the addresses are resolved before any
     # connection attempt starts.
-    def initialize(host : String, port, dns_timeout : Time::Span? = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil)
+    def initialize(host : String, port, dns_timeout : Time::Span? = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil, *, fast_fallback : Bool? = nil)
       addrinfos = Addrinfo.tcp(host, port, timeout: dns_timeout)
-      initialize(addrinfos, host, port, connect_timeout: connect_timeout, blocking: blocking)
+      fast_fallback = TCPSocket.fast_fallback? if fast_fallback.nil?
+      initialize(addrinfos, host, port, connect_timeout: connect_timeout, fast_fallback: fast_fallback, blocking: blocking)
     end
   {% end %}
 
@@ -55,20 +61,48 @@ class TCPSocket < IPSocket
     initialize(host, port, dns_timeout.seconds, connect_timeout, blocking: blocking)
   end
 
+  # Returns whether `.new(String, _, Time::Span?)` uses Happy Eyeballs (RFC
+  # 8305) by default when connecting to a host that resolves to multiple
+  # addresses. Defaults to `true`.
+  def self.fast_fallback? : Bool
+    HappyEyeballs.enabled?
+  end
+
+  # Enables or disables Happy Eyeballs (RFC 8305) by default for
+  # `.new(String, _, Time::Span?)`. When disabled, the resolved addresses are
+  # tried sequentially.
+  #
+  # This is a global setting. It can be overridden for each connection with
+  # the *fast_fallback* argument.
+  #
+  # ```
+  # require "socket"
+  #
+  # TCPSocket.fast_fallback = false
+  # ```
+  def self.fast_fallback=(value : Bool) : Bool
+    HappyEyeballs.enabled = value
+  end
+
   # :nodoc:
   #
-  # Connects to one of *addrinfos* following the Happy Eyeballs algorithm (see
-  # `.new(String, _, Time::Span?)`). The *host* and *port* are only used to
-  # build the error message.
-  def initialize(addrinfos : Indexable(Addrinfo), host, port, *, connect_timeout = nil, connection_attempt_delay : Time::Span = HappyEyeballs::CONNECTION_ATTEMPT_DELAY, blocking = nil)
-    if addrinfos.size == 1
-      # fast path: no need for concurrent connection attempts
-      addrinfo = addrinfos.first
-      super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
-      connect(addrinfo, timeout: connect_timeout) do |error|
-        close
-        raise TCPSocket.connect_error(error, host, port)
+  # Connects to one of *addrinfos*, following the Happy Eyeballs algorithm
+  # unless *fast_fallback* is `false` (see `.new(String, _, Time::Span?)`). The
+  # *host* and *port* are only used to build the error message.
+  def initialize(addrinfos : Indexable(Addrinfo), host, port, *, connect_timeout = nil, fast_fallback : Bool = true, connection_attempt_delay : Time::Span = HappyEyeballs::CONNECTION_ATTEMPT_DELAY, blocking = nil)
+    if addrinfos.size < 2 || !fast_fallback
+      # try each address in turn (no need for concurrent connection attempts
+      # with a single address)
+      error = nil
+      addrinfos.each do |addrinfo|
+        super(af: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: blocking)
+        if error = connect(addrinfo, timeout: connect_timeout) { |err| err }
+          close
+        else
+          return
+        end
       end
+      raise TCPSocket.connect_error(error, host, port)
     else
       result = HappyEyeballs.connect(addrinfos, connect_timeout, connection_attempt_delay) do |addrinfo|
         ConnectionAttempt.new(addrinfo, blocking)

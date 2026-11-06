@@ -10,6 +10,10 @@ module Socket::HappyEyeballs
   # one in parallel ("Connection Attempt Delay").
   CONNECTION_ATTEMPT_DELAY = 250.milliseconds
 
+  # Global switch for `TCPSocket.fast_fallback?`. Kept here rather than in
+  # `TCPSocket` because class variables aren't shared with subclasses.
+  class_property? enabled : Bool = true
+
   # Interleaves the addresses by address family, starting with the family of
   # the first address, while keeping the relative order within each family
   # (section 4, with a "First Address Family Count" of 1).
