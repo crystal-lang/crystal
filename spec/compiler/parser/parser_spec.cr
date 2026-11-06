@@ -416,13 +416,38 @@ module Crystal
     assert_syntax_error "def foo=(**kwargs); end", "setter method 'foo=' cannot have more than one parameter"
     assert_syntax_error "def foo=(&block); end", "setter method 'foo=' cannot have a block"
 
+    # #10023
+    assert_syntax_error "def foo=(x, &block); end", "setter method 'foo=' cannot have a block", 1, 5
+    assert_syntax_error "def foo=(x, &); end", "setter method 'foo=' cannot have a block", 1, 5
+    assert_syntax_error "def foo=; end", "setter method 'foo=' must have a parameter", 1, 5
+    assert_syntax_error "def foo=(); end", "setter method 'foo=' must have a parameter", 1, 5
+    assert_syntax_error "def self.foo=; end", "setter method 'foo=' must have a parameter", 1, 10
+    assert_syntax_error "abstract def foo=", "setter method 'foo=' must have a parameter", 1, 14
+    assert_syntax_error "def foo=(x = 1); end", "setter method 'foo=' cannot have a default value for its parameter", 1, 10
+    assert_syntax_error "def foo=(@x = 1); end", "setter method 'foo=' cannot have a default value for its parameter", 1, 10
+    assert_syntax_error "def []=; end", "setter method '[]=' must have at least one positional parameter", 1, 5
+    assert_syntax_error "def []=(); end", "setter method '[]=' must have at least one positional parameter", 1, 5
+    assert_syntax_error "def []=(&); end", "setter method '[]=' must have at least one positional parameter", 1, 5
+    assert_syntax_error "def []=(*, x); end", "setter method '[]=' must have at least one positional parameter", 1, 5
+    assert_syntax_error "def []=(**opts); end", "setter method '[]=' must have at least one positional parameter", 1, 5
+    assert_syntax_error "def []=(a, b = 0); end", "setter method '[]=' cannot have default values for positional parameters", 1, 12
+    assert_syntax_error "def []=(a = 0, b = 1); end", "setter method '[]=' cannot have default values for positional parameters", 1, 9
+    assert_syntax_error "def self.[]=(a, b = 1); end", "setter method '[]=' cannot have default values for positional parameters", 1, 17
+    it_parses "def foo=(x); end", Def.new("foo=", ["x".arg])
+    it_parses "def []=(b); end", Def.new("[]=", ["b".arg])
+    it_parses "def []=(a, b); end", Def.new("[]=", ["a".arg, "b".arg])
+    it_parses "def []=(*args); end", Def.new("[]=", ["args".arg], splat_index: 0)
+    it_parses "def []=(*args, value); end", Def.new("[]=", ["args".arg, "value".arg], splat_index: 0)
+    it_parses "def []=(*args, foo = 1); end", Def.new("[]=", ["args".arg, Arg.new("foo", 1.int32)], splat_index: 0)
+    it_parses "def []=(a, *, foo = 1); end", Def.new("[]=", ["a".arg, Arg.new(""), Arg.new("foo", 1.int32)], splat_index: 1)
+
     # #10397
     describe "multiple parameters and blocks for operators ending in `=`" do
       it_parses "def <=(other, file = 1); end", Def.new("<=", ["other".arg, Arg.new("file", 1.int32)])
       it_parses "def >=(other, file = 1); end", Def.new(">=", ["other".arg, Arg.new("file", 1.int32)])
       it_parses "def ==(other, file = 1); end", Def.new("==", ["other".arg, Arg.new("file", 1.int32)])
       it_parses "def !=(other, file = 1); end", Def.new("!=", ["other".arg, Arg.new("file", 1.int32)])
-      it_parses "def []=(other, file = 1); end", Def.new("[]=", ["other".arg, Arg.new("file", 1.int32)])
+      it_parses "def []=(other, file); end", Def.new("[]=", ["other".arg, "file".arg])
       it_parses "def ===(other, file = 1); end", Def.new("===", ["other".arg, Arg.new("file", 1.int32)])
 
       it_parses "def <=(*args, **opts); end", Def.new("<=", ["args".arg], splat_index: 0, double_splat: "opts".arg)
@@ -485,8 +510,8 @@ module Crystal
 
     it_parses "def self.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
     it_parses "def self.foo()\n1\nend", Def.new("foo", body: 1.int32, receiver: "self".var)
-    it_parses "def self.foo=\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
-    it_parses "def self.foo=()\n1\nend", Def.new("foo=", body: 1.int32, receiver: "self".var)
+    it_parses "def self.foo=(x)\n1\nend", Def.new("foo=", ["x".arg], body: 1.int32, receiver: "self".var)
+    it_parses "def self.foo= (x)\n1\nend", Def.new("foo=", ["x".arg], body: 1.int32, receiver: "self".var)
     it_parses "def Foo.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: "Foo".path)
     it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", body: 1.int32, receiver: ["Foo", "Bar"].path)
 
