@@ -9,6 +9,7 @@ class Crystal::CodeGenVisitor
     property vars : Hash(String, LLVMVar)
     property return_type : Type?
     property return_phi : Phi?
+    property sret_pointer : LLVM::Value?
     property break_phi : Phi?
     property next_phi : Phi?
     property while_block : LLVM::BasicBlock?
@@ -41,6 +42,7 @@ class Crystal::CodeGenVisitor
       context = Context.new @fun, @fun_type, @type, @vars
       context.return_type = @return_type
       context.return_phi = @return_phi
+      context.sret_pointer = @sret_pointer
       context.break_phi = @break_phi
       context.next_phi = @next_phi
       context.while_block = @while_block
