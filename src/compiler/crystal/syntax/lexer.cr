@@ -1737,8 +1737,13 @@ module Crystal
           @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
-          # Make sure to decrease the '}' count if inside an interpolation
-          @macro_curly_count += 1 if @macro_curly_count > 0
+          if delimiter_state
+            # A nested '{' inside a literal delimited by curly braces, like `%{a{b}c}`
+            delimiter_state = delimiter_state.with_open_count_delta(+1) if delimiter_state.nest == '{'
+          elsif @macro_curly_count > 0
+            # Make sure to decrease the '}' count if inside an interpolation
+            @macro_curly_count += 1
+          end
         end
       end
 
@@ -1893,11 +1898,14 @@ module Crystal
             break
           end
         when '}'
-          if delimiter_state && delimiter_state.end == '}'
-            if delimiter_state.open_count == 0
-              delimiter_state = nil
-            else
-              delimiter_state = delimiter_state.with_open_count_delta(-1)
+          if delimiter_state
+            # Inside a literal, a '}' doesn't close an interpolation
+            if delimiter_state.end == '}'
+              if delimiter_state.open_count == 0
+                delimiter_state = nil
+              else
+                delimiter_state = delimiter_state.with_open_count_delta(-1)
+              end
             end
           elsif @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
@@ -1913,6 +1921,11 @@ module Crystal
             heredocs << heredoc_delimiter_state
             char = current_char
             next
+          end
+
+          # A nested '<' inside a literal delimited by angle brackets, like `%<a<b>c>`
+          if delimiter_state && delimiter_state.nest == '<'
+            delimiter_state = delimiter_state.with_open_count_delta(+1)
           end
         else
           if delimiter_state
