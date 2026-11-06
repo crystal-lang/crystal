@@ -9,7 +9,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
@@ -18,9 +17,6 @@ jobs:
   # A more advanced test which runs against *each* supported version is available in `forward-compatibility.yml` and
   # runs regularly on a nightly schedule.
   test:
-    env:
-      ARCH: ${{ matrix.arch }}
-      ARCH_CMD: linux64
     runs-on: ${{ case(startsWith(matrix.arch, 'aarch64'), 'ubuntu-24.04-arm', 'ubuntu-latest') }}
     strategy:
       fail-fast: false
@@ -44,13 +40,16 @@ jobs:
       - run: scripts/ci-docker-enable-ipv6.sh
 
       - name: Test
-        run: bin/ci build
+        run: |
+          case "${{ matrix.arch }}" in
+            *-musl) image_suffix=alpine-build ;;
+            *) image_suffix=build ;;
+          esac
+
+          scripts/ci-docker-run.sh "$image_suffix" scripts/ci-build.sh
         env: ${{ matrix.env }}
 
   test-std:
-    env:
-      ARCH: ${{ matrix.arch }}
-      ARCH_CMD: linux64
     runs-on: ${{ case(startsWith(matrix.arch, 'aarch64'), 'ubuntu-24.04-arm', 'ubuntu-latest') }}
     strategy:
       fail-fast: false
@@ -77,12 +76,9 @@ jobs:
       - run: scripts/ci-docker-enable-ipv6.sh
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
+        run: scripts/ci-docker-run.sh 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
 
   check_format:
-    env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
     runs-on: ubuntu-latest
     steps:
       - name: Download Crystal source
@@ -91,4 +87,4 @@ jobs:
           persist-credentials: false
 
       - name: Check Format
-        run: bin/ci with_build_env 'make crystal format threads=1 check=1'
+        run: scripts/ci-docker-run.sh 'make crystal format threads=1 check=1'

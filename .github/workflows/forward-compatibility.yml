@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
@@ -27,8 +26,6 @@ jobs:
   # We run a basic version of this test on every commit which covers only the earliest and latest supported versions in `linux.yml#x86_64-gnu-test`.
   x86_64-gnu-test-forward_compatibility:
     env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
       CRYSTAL_BOOTSTRAP_VERSION: ${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
@@ -46,5 +43,5 @@ jobs:
           persist-credentials: false
 
       - name: Test
-        run: bin/ci build
+        run: scripts/ci-docker-run.sh scripts/ci-build.sh
         env: ${{ matrix.env }}
