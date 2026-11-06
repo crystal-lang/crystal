@@ -621,7 +621,10 @@ module Crystal
           when "[]", "[]?", "<", "<=", ">", ">="
             false
           else
-            true
+            # Calls with identifier names always print their arguments
+            # within parentheses, so they don't need extra ones.
+            # Setters (`a.b = 1`) and operators (`a + b`) still do.
+            !Lexer.ident?(obj.name) || Lexer.setter?(obj.name)
           end
         end
       when Not
