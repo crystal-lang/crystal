@@ -41,8 +41,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
+      - run: scripts/ci-docker-enable-ipv6.sh
 
       - name: Test
         run: bin/ci build
@@ -75,8 +74,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
+      - run: scripts/ci-docker-enable-ipv6.sh
 
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
