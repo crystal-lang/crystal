@@ -1285,6 +1285,7 @@ module Crystal
     end
 
     def parse_type_declaration(var, is_const = false)
+      check_single_quoted_symbol
       next_token_skip_space_or_newline
       var_type = parse_bare_proc_type
       skip_space
@@ -6575,7 +6576,17 @@ module Crystal
       end
     end
 
+    # `:'foo'` is lexed as a colon followed by a char literal, which would
+    # otherwise result in a confusing error about the enclosing construct
+    def check_single_quoted_symbol
+      if @token.type.op_colon? && current_char == '\''
+        raise %|unexpected token: ":'" (quoted symbols use double quotes, for example `:"foo"`)|, @token
+      end
+    end
+
     def unexpected_token_in_atomic
+      check_single_quoted_symbol
+
       if unclosed = @unclosed_stack.last?
         raise "unterminated #{unclosed.name}", unclosed.location
       end
