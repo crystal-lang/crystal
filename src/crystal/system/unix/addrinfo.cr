@@ -42,7 +42,7 @@ module Crystal::System::Addrinfo
       # out-of-range service values correctly, so we validate manually.
       # https://github.com/crystal-lang/crystal/issues/17847
       unless 0 <= service <= UInt16::MAX
-        raise ::Socket::Addrinfo::Error.from_os_error(nil, Errno.new(LibC::EAI_SERVICE), domain: domain, type: type, protocol: protocol, service: service)
+        raise ::Socket::Addrinfo::Error.from_os_error(nil, Errno.new({{ (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) ? LibC::EAI_SERVICE : LibC::EAI_NONAME }}), domain: domain, type: type, protocol: protocol, service: service)
       end
     end
 
