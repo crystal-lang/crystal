@@ -5895,7 +5895,7 @@ module Crystal
         when Keyword::UNION
           parse_c_struct_or_union union: true
         when Keyword::ENUM
-          parse_enum_def
+          parse_enum_def allow_namespace: false
         else
           unexpected_token
         end
@@ -6265,13 +6265,20 @@ module Crystal
       end
     end
 
-    def parse_enum_def
+    def parse_enum_def(*, allow_namespace = true)
       location = @token.location
       doc = @token.doc
 
       next_token_skip_space_or_newline
 
-      name = parse_path
+      if allow_namespace
+        name = parse_path
+      else
+        # C enums inside a lib can't be namespaced, same as C structs and unions
+        name_location = @token.location
+        name = Path.new(check_const).at(name_location).at_end(token_end_location)
+        next_token
+      end
       skip_space
 
       if @token.type.op_colon?
