@@ -1,7 +1,4 @@
-require "spec"
-require "llvm"
-require "compiler/crystal/codegen/abi/x86_64"
-require "compiler/crystal/codegen/abi/x86_win64"
+require "../../../spec_helper"
 
 {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
   LLVM.init_x86
@@ -15,12 +12,18 @@ private def abi(win64 = false)
   win64 ? Crystal::ABI::X86_Win64.new(machine) : Crystal::ABI::X86_64.new(machine)
 end
 
-private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : Crystal::ABI, LLVM::Context ->)
+private def test(msg, *, win64 = false, file = __FILE__, line = __LINE__, &block : Crystal::ABI, LLVM::Context, Crystal::Program ->)
   it msg, file: file, line: line do
     abi = abi(win64)
-    ctx = LLVM::Context.new
-    block.call(abi, ctx)
+    program = Crystal::Program.new
+    ctx = program.llvm_typer.llvm_context
+    block.call(abi, ctx, program)
   end
+end
+
+# wraps the static array into a 1-tuple to prevent C array-to-pointer type decay
+private def extern_array(program, type, size)
+  program.extern_struct_of([program.static_array_of(type, size)])
 end
 
 class Crystal::ABI
@@ -100,10 +103,10 @@ class Crystal::ABI
       end
 
       describe "abi_info" do
-        test "does with primitives" do |abi, ctx|
-          arg_types = [ctx.int32, ctx.int64]
-          return_type = ctx.int8
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+        test "does with primitives" do |abi, ctx, program|
+          arg_types = [program.int32, program.int64]
+          return_type = program.int8
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(2)
 
           info.arg_types[0].should eq(ArgType.direct(ctx.int32))
@@ -111,90 +114,97 @@ class Crystal::ABI
           info.return_type.should eq(ArgType.direct(ctx.int8))
         end
 
-        test "does with structs less than 64 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int8, ctx.int16])
+        test "does with structs less than 64 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int8, program.int16])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
         end
 
-        test "does with structs between 64 and 128 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int16])
+        test "does with structs between 64 and 128 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int16])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64, ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64, ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64, ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64, ctx.int64])))
         end
 
-        test "does with structs larger than 128 bits" do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
+        test "does with structs larger than 128 bits" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int64, program.int8])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with non-packed struct containing packed struct with unaligned fields" do |abi, ctx|
-          inner = ctx.struct([ctx.int16, ctx.int8], packed: true)
-          str = ctx.struct([ctx.int8, inner])
+        test "does with non-packed struct containing packed struct with unaligned fields" do |abi, ctx, program|
+          inner = program.extern_struct_of([program.int16, program.int8], packed: true)
+          str = program.extern_struct_of([program.int8, inner])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with non-packed struct containing single-element array of packed struct with unaligned fields" do |abi, ctx|
-          inner = ctx.struct([ctx.int16, ctx.int8], packed: true).array(1)
-          str = ctx.struct([ctx.int8, inner])
+        test "does with non-packed struct containing single-element array of packed struct with unaligned fields" do |abi, ctx, program|
+          inner = program.static_array_of(program.extern_struct_of([program.int16, program.int8], packed: true), 1)
+          str = program.extern_struct_of([program.int8, inner])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with structs less than 64 bits containing float followed-by non-float" do |abi, ctx|
-          str = ctx.struct([ctx.float, ctx.int8])
+        test "does with structs less than 64 bits containing float followed-by non-float" do |abi, ctx, program|
+          str = program.extern_struct_of([program.float, program.int8])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
         end
 
-        test "does with structs less than 64 bits containing non-float followed by float" do |abi, ctx|
-          str = ctx.struct([ctx.int8, ctx.float])
+        test "does with structs less than 64 bits containing non-float followed by float" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int8, program.float])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
         end
       end
     {% end %}
@@ -203,96 +213,104 @@ class Crystal::ABI
   describe X86_Win64 do
     {% if LibLLVM::BUILT_TARGETS.includes?(:x86) %}
       describe "abi_info" do
-        test "does with structs between 64 and 128 bits", win64: true do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int16])
+        test "does with structs between 64 and 128 bits", win64: true do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int16])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with structs larger than 128 bits", win64: true do |abi, ctx|
-          str = ctx.struct([ctx.int64, ctx.int64, ctx.int8])
+        test "does with structs larger than 128 bits", win64: true do |abi, ctx, program|
+          str = program.extern_struct_of([program.int64, program.int64, program.int8])
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with packed struct containing unaligned fields (#9873)" do |abi, ctx|
-          str = ctx.struct([ctx.int8, ctx.int16], packed: true)
+        test "does with packed struct containing unaligned fields (#9873)" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int8, program.int16], packed: true)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with packed struct not containing unaligned fields" do |abi, ctx|
-          str = ctx.struct([ctx.int16, ctx.int8], packed: true)
+        test "does with packed struct not containing unaligned fields" do |abi, ctx, program|
+          str = program.extern_struct_of([program.int16, program.int8], packed: true)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
         end
 
-        test "does with array of packed struct containing unaligned fields (#16312)" do |abi, ctx|
-          str = ctx.struct([ctx.int8, ctx.int16], packed: true).array(1)
+        test "does with array of packed struct containing unaligned fields (#16312)" do |abi, ctx, program|
+          str = extern_array(program, program.extern_struct_of([program.int8, program.int16], packed: true), 1)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
 
-          str = ctx.struct([ctx.int8, ctx.int16], packed: true).array(2)
+          str = extern_array(program, program.extern_struct_of([program.int8, program.int16], packed: true), 2)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
 
-          str = ctx.struct([ctx.int16, ctx.int8], packed: true).array(2)
+          str = extern_array(program, program.extern_struct_of([program.int16, program.int8], packed: true), 2)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
-          info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.indirect(llvm_str, LLVM::Attribute::ByVal))
+          info.return_type.should eq(ArgType.indirect(llvm_str, LLVM::Attribute::StructRet))
         end
 
-        test "does with array of packed struct not containing unaligned fields (#16312)" do |abi, ctx|
-          str = ctx.struct([ctx.int16, ctx.int8], packed: true).array(1)
+        test "does with array of packed struct not containing unaligned fields (#16312)" do |abi, ctx, program|
+          str = extern_array(program, program.extern_struct_of([program.int16, program.int8], packed: true), 1)
           arg_types = [str]
           return_type = str
 
-          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info = abi.abi_info(arg_types, return_type, program.llvm_typer)
           info.arg_types.size.should eq(1)
 
-          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
-          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          llvm_str = program.llvm_typer.llvm_type(str)
+          info.arg_types[0].should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(llvm_str, cast: ctx.struct([ctx.int64])))
         end
       end
     {% end %}

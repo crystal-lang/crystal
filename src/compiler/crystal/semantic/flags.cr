@@ -75,6 +75,7 @@ class Crystal::Program
     flags.concat target.environment_parts
 
     flags.add "bits#{target.pointer_bit_width}"
+    flags.add "system_endian=#{target.system_endian}"
 
     flags.add "armhf" if target.armhf?
 

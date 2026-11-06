@@ -26,6 +26,12 @@ abstract class Crystal::ABI
       ARM.new(target_machine)
     when /avr/
       AVR.new(target_machine, target_machine.cpu)
+    when /ppc64le|ppc64.+(?:freebsd|musl)/
+      PPC64.new(target_machine, PPC64::ELFv2)
+    when /ppc64/
+      PPC64.new(target_machine, PPC64::ELFv1)
+    when /ppc/
+      PPC.new(target_machine)
     when /wasm32/
       Wasm32.new(target_machine)
     else
@@ -33,7 +39,7 @@ abstract class Crystal::ABI
     end
   end
 
-  abstract def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : Context)
+  abstract def abi_info(args_types : Array(Type), return_type : Type, llvm_typer : LLVMTyper) : FunctionType
   abstract def size(type : LLVM::Type)
   abstract def align(type : LLVM::Type)
 
