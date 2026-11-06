@@ -25,6 +25,7 @@ end
 
 describe "ASTNode#to_s" do
   expect_to_s "([] of T).foo"
+  expect_to_s "foo[]?"
   expect_to_s "({} of K => V).foo"
   expect_to_s "foo(bar)"
   expect_to_s "(~1).foo"
