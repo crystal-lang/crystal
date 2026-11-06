@@ -205,6 +205,45 @@ describe HTTP::Server::Response do
     end
   end
 
+  it "raises when setting content type after a buffered body write" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    expect_raises(IO::Error, "Headers already sent") do
+      response.content_type = "text/plain"
+    end
+  end
+
+  it "raises when headers are mutated after a buffered body write" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("Hello")
+    response.headers["Content-Encoding"] = "gzip"
+    expect_raises(IO::Error, "Headers were modified after writing the response body") do
+      response.close
+    end
+  end
+
+  it "raises when headers are mutated after writing less than the buffer size" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.print("a" * (IO::DEFAULT_BUFFER_SIZE - 1))
+    response.headers["Content-Type"] = "text/plain"
+    expect_raises(IO::Error, "Headers were modified after writing the response body") do
+      response.close
+    end
+  end
+
+  it "allows setting headers before the first body write" do
+    io = IO::Memory.new
+    response = Response.new(io)
+    response.headers["Content-Encoding"] = "gzip"
+    response.content_type = "text/plain"
+    response.print("Hello")
+    response.close
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
+  end
+
   it "sets status code" do
     io = IO::Memory.new
     response = Response.new(io)
