@@ -24,9 +24,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
       - name: Build docs
         run: bin/ci with_build_env 'make crystal docs threads=1'
 
