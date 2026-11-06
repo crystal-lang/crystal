@@ -162,5 +162,17 @@ describe Crystal::Repl::Interpreter do
         end
         CRYSTAL
     end
+
+    it "does is_a? to a generic type the operand can never be (false)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        abstract struct Seg; end
+        struct Foo < Seg; end
+        struct Bar < Seg; end
+        struct Baz(T) < Seg; end
+
+        x = Foo.new.as(Foo | Bar)
+        x.is_a?(Baz) ? 1 : 2
+        CRYSTAL
+    end
   end
 end
