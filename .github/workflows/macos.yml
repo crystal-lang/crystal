@@ -40,9 +40,6 @@ jobs:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
       - name: Prepare Build
         run: bin/ci prepare_build
 
@@ -75,9 +72,6 @@ jobs:
         with:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-
-      - name: Prepare System
-        run: bin/ci prepare_system
 
       - name: Prepare Build
         run: bin/ci prepare_build
