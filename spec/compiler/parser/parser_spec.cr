@@ -1272,6 +1272,9 @@ module Crystal
     it_parses "def []=(value); end", Def.new("[]=", ["value".arg])
     it_parses "def self.[]; end", Def.new("[]", receiver: "self".var)
     it_parses "def self.[]?; end", Def.new("[]?", receiver: "self".var)
+    it_parses "def#<loc:push>foo(a)\nend", Def.new("foo", ["a".arg])
+
+    assert_syntax_error "def#<loc:push>foo bar(a)\nend", "parentheses are mandatory for def parameters"
 
     it_parses "Int[8]", Call.new("Int".path, "[]", 8.int32)
     it_parses "Int[8, 4]", Call.new("Int".path, "[]", 8.int32, 4.int32)
