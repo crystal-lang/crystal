@@ -1504,8 +1504,8 @@ module Enumerable(T)
   end
 
   # Returns a `Tuple` with two arrays. The first one contains the elements
-  # in the collection that are of the given *type*,
-  # and the second one that are **not** of the given *type*.
+  # in the collection that are of type `U`,
+  # and the second one that are **not** of type `U`.
   #
   # ```
   # ints, others = [1, true, nil, 3, false, "string", 'c'].partition(Int32)
@@ -1539,7 +1539,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection
-  # that are **not** of the given *type*.
+  # that are **not** of type `U`.
   #
   # ```
   # ints = [1, true, 3, false].reject(Bool)
@@ -1666,7 +1666,7 @@ module Enumerable(T)
   end
 
   # Returns an `Array` with all the elements in the collection
-  # that are of the given *type*.
+  # that are of type `U`.
   #
   # ```
   # ints = [1, true, nil, 3, false].select(Int32)
