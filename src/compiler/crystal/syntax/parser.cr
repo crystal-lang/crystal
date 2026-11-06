@@ -5108,7 +5108,7 @@ module Crystal
 
         case @token.type
         when .ident?
-          Var.new(@token.value.to_s)
+          Var.new(@token.value.to_s).tap { |var| push_var var }
         when .instance_var?
           InstanceVar.new(@token.value.to_s)
         when .underscore?
@@ -5117,7 +5117,6 @@ module Crystal
       end
       return unless var
 
-      push_var var if var.is_a?(Var)
       var.at(@token.location).at_end(token_end_location)
       next_token
       Out.new(var).at(location).at_end(var)
