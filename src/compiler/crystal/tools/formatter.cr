@@ -1690,7 +1690,10 @@ module Crystal
 
       format_def_args node
 
-      if macro_literal_source = macro_literal_contents(node.body)
+      # `end` may have been lexed already if it directly follows the parameter list
+      if @token.keyword?(:end)
+        format_macro_end
+      elsif macro_literal_source = macro_literal_contents(node.body)
         format_macro_literal_only(node, macro_literal_source, macro_node_line)
       else
         format_macro_body node
