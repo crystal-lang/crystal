@@ -129,44 +129,6 @@ format() {
   with_build_env 'make clean crystal format threads=1 check=1'
 }
 
-prepare_build() {
-  on_linux verify_linux_environment
-
-  on_osx curl -L "https://github.com/crystal-lang/crystal/releases/download/${CRYSTAL_BOOTSTRAP_VERSION}/crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1-darwin-universal.tar.gz" -o ~/crystal.tar.gz
-  on_osx "pushd ~;gunzip -c ~/crystal.tar.gz | tar xopf -;mv crystal-${CRYSTAL_BOOTSTRAP_VERSION}-1 crystal;popd"
-
-  # These commands may take a few minutes to run due to the large size of the repositories.
-  # This restriction has been made on GitHub's request because updating shallow
-  # clones is an extremely expensive operation due to the tree layout and
-  # traffic of Homebrew/homebrew-core and Homebrew/homebrew-cask. We don't do
-  # this for you automatically to avoid repeatedly performing an expensive
-  # unshallow operation in CI systems (which should instead be fixed to not use
-  # shallow clones). Sorry for the inconvenience!
-  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core fetch --unshallow
-  on_osx git -C /usr/local/Homebrew/Library/Taps/homebrew/homebrew-cask fetch --unshallow
-
-  on_osx brew update --preinstall
-  on_osx brew bundle --no-lock
-
-  # Install a recent bash version for nix-shell.
-  # macos ships with an ancient one.
-  if [ "$(uname)" = "Darwin" ]; then
-    on_nix_shell "brew install bash"
-  fi
-  # initialize nix environment
-  on_nix_shell nix-shell
-
-  # Note: brew link --force might show:
-  #   Warning: Refusing to link macOS-provided software: llvm
-  #
-  #   If you need to have llvm first in your PATH run:
-  #     echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile
-  #
-  # This is added in the .circleci/config.yml
-
-  on_tag verify_version
-}
-
 verify_version() {
   # If building a tag, check it matches with file
   FILE_VERSION=$(cat ./src/VERSION)
@@ -233,7 +195,6 @@ bin/ci [-h|--help] command [parameter ...]
 Helper script to prepare and run the testsuite on Travis CI.
 
 Commands:
-  prepare_build           download and extract any dependencies needed for the build
   build                   run specs, build crystal, build samples, build the docs
   format                  build crystal, run format check
   with_build_env command  run command in the build environment
@@ -245,9 +206,6 @@ EOF
 command="$1"
 shift
 case $command in
-  prepare_build)
-    prepare_build
-    ;;
   with_build_env)
     target_command="${*}"
     with_build_env "$target_command"

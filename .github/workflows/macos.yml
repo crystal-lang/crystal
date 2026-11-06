@@ -40,8 +40,7 @@ jobs:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Prepare Build
-        run: bin/ci prepare_build
+      - run: scripts/ci-nix-init.sh
 
       - name: Test
         run: bin/ci build
@@ -73,8 +72,7 @@ jobs:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Prepare Build
-        run: bin/ci prepare_build
+      - run: scripts/ci-nix-init.sh
 
       - name: Test
         run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
