@@ -1273,6 +1273,8 @@ module Crystal
     it_parses "def self.[]; end", Def.new("[]", receiver: "self".var)
     it_parses "def self.[]?; end", Def.new("[]?", receiver: "self".var)
     it_parses "def#<loc:push>foo(a)\nend", Def.new("foo", ["a".arg])
+    it_parses "def#<loc:push>self.foo; end", Def.new("foo", receiver: "self".var)
+    it_parses "def/(x); end", Def.new("/", ["x".arg])
 
     assert_syntax_error "def#<loc:push>foo bar(a)\nend", "parentheses are mandatory for def parameters"
 
