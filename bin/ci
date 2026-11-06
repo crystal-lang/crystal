@@ -116,34 +116,18 @@ with_build_env() {
 
   on_linux verify_linux_environment
 
-  export DOCKER_TEST_PREFIX="${DOCKER_TEST_PREFIX:="crystallang/crystal:${CRYSTAL_BOOTSTRAP_VERSION}"}"
-
   case $ARCH in
     aarch64 | x86_64)
-      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-build"
+      export DOCKER_IMAGE_SUFFIX="build"
       ;;
     aarch64-musl | x86_64-musl)
-      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-alpine-build"
-      ;;
-    i386)
-      export DOCKER_TEST_IMAGE="$DOCKER_TEST_PREFIX-i386-build"
+      export DOCKER_IMAGE_SUFFIX="alpine-build"
       ;;
   esac
 
-  # NOTE: disabling seccomp because the default profile disables io_uring syscalls
-  on_linux docker run \
-    --rm -t \
-    -u "$(id -u)" \
-    -v "$PWD":/mnt \
-    -v /etc/passwd:/etc/passwd \
-    -v /etc/group:/etc/group \
-    -w /mnt \
-    -e CRYSTAL_CACHE_DIR="/tmp/crystal" \
-    -e SPEC_SPLIT_DOTS \
-    -e USE_PCRE1 \
-    --security-opt seccomp=unconfined \
-    "$DOCKER_TEST_IMAGE" \
-    "$ARCH_CMD" /bin/sh -c "'$command'"
+  on_linux ./scripts/ci-docker-run.sh \
+    "$DOCKER_IMAGE_SUFFIX" \
+    "'$command'"
 
   on_osx sudo systemsetup -settimezone $TZ
   on_osx PATH="~/crystal/bin:\$PATH" \

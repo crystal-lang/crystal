@@ -35,7 +35,7 @@ rm -f src/SOURCE_DATE_EPOCH
 ##    release to keep restricted compatibility window (if new minor branch)
 ##
 
-previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' bin/ci)
+previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' scripts/ci-docker-run.sh)
 if [ "${minor_branch}" != "${previous_release%.*}" ]; then
   min_forward_compat_version=$(grep -o -P '(?<=crystal_bootstrap_version: \[)[0-9.]+(?=,)' .github/workflows/forward-compatibility.yml)
   sed -i -E "s/CRYSTAL_BOOTSTRAP_VERSION: [0-9.]+/CRYSTAL_BOOTSTRAP_VERSION: ${min_forward_compat_version}/" .github/workflows/linux.yml
@@ -56,9 +56,8 @@ fi
 # Edit previous_crystal_base_url parameter in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
-# Edit DOCKER_TEST_PREFIX in bin/ci
-# shellcheck disable=SC2016
-sed -i -E 's|\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\${CRYSTAL_BOOTSTRAP_VERSION:='"$CRYSTAL_VERSION"'}|' bin/ci
+# Edit CRYSTAL_BOOTSTRAP_VERSION default in scripts/ci-docker-run.sh
+sed -i -E "s|\\\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\\\${CRYSTAL_BOOTSTRAP_VERSION:=$CRYSTAL_VERSION}|" scripts/ci-docker-run.sh
 
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
