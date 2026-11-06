@@ -286,7 +286,7 @@ describe "Lexer string" do
   end
 
   it "lexes string with six-digit unicode codepoint in curly followed by another one (#13527)" do
-    lexer = Lexer.new "\"\\u{10FFFF 30 100000 A5}\""
+    lexer = Lexer.new %("\\u{10FFFF 30 100000 A5}")
     tester = LexerObjects::Strings.new(lexer)
 
     tester.string_should_start_correctly
