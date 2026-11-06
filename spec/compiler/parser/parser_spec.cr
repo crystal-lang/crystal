@@ -137,6 +137,11 @@ module Crystal
     it_parses %("hello \\\n     world"), "hello world".string
     it_parses %("hello \\\r\n     world"), "hello world".string
 
+    # Octal escapes take at most three digits (#13520)
+    it_parses %("\\0002"), "\u{0}2".string
+    it_parses %("\\1111"), "I1".string
+    it_parses %(:"\\1111"), "I1".symbol
+
     it_parses %(%Q{hello \\n world}), "hello \n world".string
     it_parses %(%q{hello \\n world}), "hello \\n world".string
     it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
