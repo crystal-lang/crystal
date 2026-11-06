@@ -1480,15 +1480,15 @@ module Crystal
               incr_line_number
               @token.line_number = @line_number
 
-              # Skip until the next non-whitespace char
+              # Skip until the next non-whitespace char. Only a single
+              # newline is escaped, so the next one is part of the string.
               while true
                 char = next_char
                 case char
                 when '\0'
                   raise_unterminated_quoted delimiter_state
-                when '\n'
-                  incr_line_number
-                  @token.line_number = @line_number
+                when '\r', '\n'
+                  break
                 when .ascii_whitespace?
                   # Continue
                 else
