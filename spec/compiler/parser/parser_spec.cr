@@ -461,6 +461,37 @@ module Crystal
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
     end
 
+    # #15223
+    %w(
+      begin nil true false yield with abstract
+      def macro require case select if unless include
+      extend class struct module enum while until return
+      next break lib fun alias pointerof sizeof alignof
+      instance_sizeof instance_alignof offsetof typeof
+      private protected asm annotation
+      end self in do then else elsif when rescue ensure
+    ).each do |kw|
+      assert_syntax_error "#{kw} : Int32", "cannot use '#{kw}' as a local variable name", 1, 1
+      assert_syntax_error "#{kw} : Int32 = 1", "cannot use '#{kw}' as a local variable name", 1, 1
+
+      # Inside a def these close it or start a `rescue`/`ensure` clause instead
+      unless kw.in?("end", "rescue", "ensure")
+        assert_syntax_error "def foo\n  #{kw} : Int32\nend", "cannot use '#{kw}' as a local variable name", 2, 3
+      end
+
+      it_parses "foo(#{kw} : Int32)", Call.new("foo", TypeDeclaration.new(kw.var, "Int32".path))
+      it_parses "foo x, #{kw} : Int32 = 1", Call.new("foo", ["x".call, TypeDeclaration.new(kw.var, "Int32".path, 1.int32)] of ASTNode)
+      it_parses "foo(x: #{kw} : Int32)", Call.new("foo", named_args: [NamedArgument.new("x", TypeDeclaration.new(kw.var, "Int32".path))])
+    end
+
+    it_parses "getter begin : Int32", Call.new("getter", TypeDeclaration.new("begin".var, "Int32".path))
+
+    # Keywords which can be used as local variable names
+    %w(for of out super type uninitialized union verbatim).each do |kw|
+      it_parses "#{kw} : Int32", TypeDeclaration.new(kw.var, "Int32".path)
+      it_parses "#{kw} : Int32 = 1; #{kw}", [TypeDeclaration.new(kw.var, "Int32".path, 1.int32), kw.var]
+    end
+
     # #10917
     %w(
       bar? bar!
@@ -2277,7 +2308,6 @@ module Crystal
       instance_sizeof offsetof typeof private protected asm
       end self in do else elsif when rescue ensure
     ).each do |keyword|
-      it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
       it_parses "property #{keyword} : Int32", Call.new("property", TypeDeclaration.new(keyword.var, "Int32".path))
     end
 
@@ -3970,8 +4000,8 @@ module Crystal
       node = Parser.new(source).parse.as(TypeDeclaration).var
       node_source(source, node).should eq("foo")
 
-      source = "begin : Int32"
-      node = Parser.new(source).parse.as(TypeDeclaration).var
+      source = "property begin : Int32"
+      node = Parser.new(source).parse.as(Call).args.first.as(TypeDeclaration).var
       node_source(source, node).should eq("begin")
     end
 
