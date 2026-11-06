@@ -41,8 +41,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
+      - name: Prepare docker for IPv6
+        run: |
+          echo '{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}' | sudo tee /etc/docker/daemon.json
+          sudo service docker restart
 
       - name: Prepare Build
         run: bin/ci prepare_build
@@ -78,8 +80,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
+      - name: Prepare docker for IPv6
+        run: |
+          echo '{"ipv6":true, "fixed-cidr-v6":"2001:db8:1::/64"}' | sudo tee /etc/docker/daemon.json
+          sudo service docker restart
 
       - name: Prepare Build
         run: |
