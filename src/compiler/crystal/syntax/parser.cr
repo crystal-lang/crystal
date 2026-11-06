@@ -5011,7 +5011,7 @@ module Crystal
         slash_is_regex!
         next_token_skip_space_or_newline
 
-        if @token.keyword?(:out)
+        if out_argument?
           value = parse_out
         else
           @call_args_start_locations << @token.location
@@ -5045,7 +5045,7 @@ module Crystal
     def parse_call_arg(found_double_splat = false)
       @call_args_start_locations.push @token.location
 
-      if @token.keyword?(:out)
+      if out_argument?
         if found_double_splat
           raise "out argument not allowed after double splat"
         end
@@ -5092,6 +5092,21 @@ module Crystal
       end
     ensure
       @call_args_start_locations.pop
+    end
+
+    # Returns `true` if the current token is an `out` keyword starting an out
+    # argument (like `out x`, `out @x` or `out _`), as opposed to an identifier
+    # named `out` (like in `property out : Int32` or `foo(out)`).
+    private def out_argument?
+      return false unless @token.keyword?(:out)
+
+      peek_ahead do
+        while current_char.in?(' ', '\t')
+          next_char
+        end
+        char = current_char
+        ident_start?(char) || char.in?('@', '\n', '\r', '#', '\\')
+      end
     end
 
     def parse_out
