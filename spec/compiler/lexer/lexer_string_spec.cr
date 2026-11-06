@@ -378,4 +378,30 @@ describe "Lexer string" do
     tester.token_should_be_at(line: 2)
     tester.should_have_reached_eof
   end
+
+  it "lexes string with backslash followed by multiple newlines (#13537)" do
+    lexer = Lexer.new(%("hello \\\n\n\n    world"1))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('"', '"')
+    tester.next_string_token_should_be("hello ")
+    tester.next_string_token_should_be("\n")
+    tester.next_string_token_should_be("\n")
+    tester.next_string_token_should_be("    world")
+    tester.string_should_end_correctly(eof: false)
+    tester.next_token_should_be(:NUMBER)
+    tester.token_should_be_at(line: 4)
+    tester.should_have_reached_eof
+  end
+
+  it "lexes string with backslash followed by CRLF and multiple newlines (#13537)" do
+    lexer = Lexer.new(%("hello \\\r\n\r\n    world"))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('"', '"')
+    tester.next_string_token_should_be("hello ")
+    tester.next_string_token_should_be("\r\n")
+    tester.next_string_token_should_be("    world")
+    tester.string_should_end_correctly
+  end
 end
