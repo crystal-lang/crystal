@@ -1914,14 +1914,14 @@ module Crystal
         when .op_rparen?
           @wants_regex = false
           end_location = token_end_location
-          next_token_skip_space
+          next_token
           break
         when .newline?, .op_semicolon?
           next_token_skip_statement_end
           if @token.type.op_rparen?
             @wants_regex = false
             end_location = token_end_location
-            next_token_skip_space
+            next_token
             break
           end
         else
@@ -1929,7 +1929,10 @@ module Crystal
         end
       end
 
-      unexpected_token if @token.type.op_lparen?
+      # `(a)(b)` is not valid, but `(a) (b)` might be, e.g. `if (a) (b) end`
+      space_consumed = @token.type.space?
+      skip_space
+      unexpected_token if @token.type.op_lparen? && !space_consumed
 
       node = Expressions.new(exps).at(location).at_end(end_location)
       node.keyword = :paren
