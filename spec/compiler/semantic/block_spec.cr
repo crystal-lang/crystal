@@ -1230,6 +1230,41 @@ describe "Block inference" do
       CRYSTAL
   end
 
+  it "uses splat in captured block parameter (#15373)" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, char, bool, tuple_of([int32, tuple_of([char]), bool])]) }
+      def capture(&block : Int32, Char, Bool -> {Int32, {Char}, Bool})
+        block
+      end
+
+      capture do |x, *y, z|
+        {x, y, z}
+      end
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter with Proc restriction (#15373)" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, char, tuple_of([int32, char])]) }
+      def capture(&block : Proc(Int32, Char, {Int32, Char}))
+        block
+      end
+
+      capture do |*args|
+        args
+      end
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter, but not enough arguments" do
+    assert_error <<-CRYSTAL, "too many block parameters (given 2+, expected maximum 1)"
+      def capture(&block : Int32 ->)
+        block
+      end
+
+      capture do |x, y, *z|
+      end
+      CRYSTAL
+  end
+
   it "errors if splat parameter becomes a union" do
     assert_error <<-CRYSTAL, "yield argument to block splat parameter must be a Tuple"
       def foo

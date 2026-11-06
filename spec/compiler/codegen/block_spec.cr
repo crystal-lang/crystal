@@ -1422,6 +1422,64 @@ describe "Code gen: block" do
       CRYSTAL
   end
 
+  it "uses splat in captured block parameter (#15373)" do
+    run(<<-CRYSTAL).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
+      def capture(&block : Int32, Int32, Int32, Int32, Int32, Int32 -> Int32)
+        block
+      end
+
+      proc = capture do |x, y, *z, w|
+        ((((x &+ y) &* z[0]) &- z[1]) &* z[2]) &- w
+      end
+      proc.call(1, 2, 3, 4, 5, 6)
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter with Proc restriction (#15373)" do
+    run(<<-CRYSTAL).to_i.should eq(3)
+      def capture(&block : Proc(Int32, Int32, Int32))
+        block
+      end
+
+      proc = capture do |*args|
+        args[0] &+ args[1]
+      end
+      proc.call(1, 2)
+      CRYSTAL
+  end
+
+  it "forwards splat in captured block parameter (#15373)" do
+    run(<<-CRYSTAL).to_i.should eq(84)
+      struct Proc
+        def self.new(&block : self)
+          block
+        end
+      end
+
+      def wrap(proc : P) : P forall P
+        P.new do |*args|
+          proc.call(*args)
+        end
+      end
+
+      wrapped = wrap(->(x : Int32) { x &* 2 })
+      wrapped.call(42)
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter with underscore parameters" do
+    run(<<-CRYSTAL, Int32).should eq(18)
+      def capture(&block : Int32, Int32, Int32, Int32, Int32 -> Int32)
+        block
+      end
+
+      proc = capture do |_, a, *_, b|
+        a &+ b
+      end
+      proc.call(1, 2, 4, 8, 16)
+      CRYSTAL
+  end
+
   it "works if block has both splat and non-splat underscore parameters" do
     run(<<-CRYSTAL, Int32).should eq(34)
       def foo(&)
