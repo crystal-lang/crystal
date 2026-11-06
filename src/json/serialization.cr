@@ -233,12 +233,10 @@ module JSON
                       end
                     {% end %}
 
+                    {% roots = !value[:root] ? [] of ASTNode : value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
                     %var{name} =
-                      {% if value[:root] %}
-                        {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
-                        {% for root in roots %}
-                          pull.on_key!({{root}}) do
-                        {% end %}
+                      {% if !roots.empty? %}
+                        pull.on_key!({{roots.splat}}) do
                       {% else %}
                         begin
                       {% end %}
@@ -247,14 +245,7 @@ module JSON
                         {% else %}
                           ::Union(typeof(@{{ name }})).new(pull)
                         {% end %}
-                      {% if value[:root] %}
-                        {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
-                        {% for root in roots %}
-                          end
-                        {% end %}
-                      {% else %}
-                        end
-                      {% end %}
+                      end
                     %found{name} = true
                   rescue exc : ::JSON::ParseException
                     raise ::JSON::SerializableError.new(exc.message, self.class.to_s, {{value[:key]}}, *%key_location, exc)
