@@ -1719,6 +1719,18 @@ module Crystal
     it_parses "foo(out @x); @x", [Call.new("foo", Out.new("@x".instance_var)), "@x".instance_var]
     it_parses "foo out _", Call.new("foo", Out.new(Underscore.new))
     it_parses "foo z: out x; x", [Call.new("foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
+    it_parses "property out : Int32", Call.new("property", TypeDeclaration.new("out".var, "Int32".path))
+    it_parses "property out : Int32 = 1", Call.new("property", TypeDeclaration.new("out".var, "Int32".path, 1.int32))
+    it_parses "foo(out)", Call.new("foo", "out".call)
+    it_parses "foo out", Call.new("foo", "out".call)
+    it_parses "foo(out, 1)", Call.new("foo", "out".call, 1.int32)
+    it_parses "foo(out.bar)", Call.new("foo", Call.new("out".call, "bar"))
+    it_parses "foo(z: out)", Call.new("foo", named_args: [NamedArgument.new("z", "out".call)])
+    it_parses "foo(out\n)", Call.new("foo", "out".call)
+    it_parses "foo(out # comment\n)", Call.new("foo", "out".call)
+    it_parses "foo(out\nx); x", [Call.new("foo", Out.new("x".var)), "x".var]
+    it_parses "foo(out # comment\nx); x", [Call.new("foo", Out.new("x".var)), "x".var]
+    it_parses "foo(z: out\n)", Call.new("foo", named_args: [NamedArgument.new("z", "out".call)])
 
     it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
     it_parses "{1 =>\n2, 3 =>\n4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
