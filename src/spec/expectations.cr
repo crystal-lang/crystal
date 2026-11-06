@@ -486,6 +486,7 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) : T forall T
+      Spec.cli.root_context.check_expectation("should", file, line)
       if expectation.match self
         self.is_a?(T) ? self : (raise "Bug: expected #{self} to be a #{T}")
       else
@@ -499,6 +500,7 @@ module Spec
     # See `Spec::Expectations` for available expectations.
     def should(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
       # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
+      Spec.cli.root_context.check_expectation("should", file, line)
       if expectation.match self
         self
       else
@@ -522,6 +524,7 @@ module Spec
     # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeAExpectation(T), failure_message : String? = nil, *, file = __FILE__, line = __LINE__) forall T
       # FIXME: Cannot add `self` type restriction due to https://github.com/crystal-lang/crystal/issues/17009
+      Spec.cli.root_context.check_expectation("should_not", file, line)
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -543,6 +546,7 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should_not(expectation : BeNilExpectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+      Spec.cli.root_context.check_expectation("should_not", file, line)
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)
@@ -555,6 +559,7 @@ module Spec
     #
     # See `Spec::Expectations` for available expectations.
     def should_not(expectation, failure_message : String? = nil, *, file = __FILE__, line = __LINE__)
+      Spec.cli.root_context.check_expectation("should_not", file, line)
       if expectation.match self
         failure_message ||= expectation.negative_failure_message(self)
         fail(failure_message, file, line)

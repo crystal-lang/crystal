@@ -40,6 +40,10 @@ module Spec
   end
 
   # :nodoc:
+  class OutsideExampleError < SpecError
+  end
+
+  # :nodoc:
   def self.to_human(span : Time::Span)
     total_milliseconds = span.total_milliseconds
     if total_milliseconds < 1
@@ -182,8 +186,11 @@ module Spec
 
     def run
       @start_time = Time.instant
+      root_context.defining = true
 
       at_exit do |status|
+        root_context.defining = false
+
         # Do not run specs if the process is exiting on an error
         next unless status == 0
 
