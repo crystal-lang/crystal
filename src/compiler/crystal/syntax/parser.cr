@@ -5913,10 +5913,17 @@ module Crystal
         name = @token.value.to_s[1..-1]
         next_token_skip_space_or_newline
         if @token.type.op_eq?
-          next_token_skip_space
-          check IdentOrConst
-          real_name = @token.value.to_s
-          next_token_skip_space
+          next_token_skip_space_or_newline
+          case @token.type
+          when .ident?, .const?
+            real_name = @token.value.to_s
+            next_token_skip_space
+          when .delimiter_start?
+            real_name = parse_string_without_interpolation("external variable name")
+            skip_space
+          else
+            unexpected_token
+          end
         end
         check :OP_COLON
         next_token_skip_space_or_newline
