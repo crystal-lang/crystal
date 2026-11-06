@@ -40,9 +40,6 @@ jobs:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
       - name: Prepare Build
         run: bin/ci prepare_build
 
@@ -75,9 +72,6 @@ jobs:
         with:
           name: crystal-ci
           signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
-
-      - name: Prepare System
-        run: bin/ci prepare_system
 
       - name: Prepare Build
         run: bin/ci prepare_build
