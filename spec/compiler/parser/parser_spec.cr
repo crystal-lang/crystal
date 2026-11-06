@@ -1345,6 +1345,9 @@ module Crystal
     it_parses "lib LibC; union Foo; end end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", union: true)] of ASTNode)
     it_parses "lib LibC; enum Foo; A\nB; C\nD = 1; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
     it_parses "lib LibC; enum Foo; A = 1; B; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
+    it_parses "lib LibC; enum Foo : UInt8; A; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A")] of ASTNode, "UInt8".path)] of ASTNode)
+    assert_syntax_error "lib LibC; enum ::Foo; A; end end", "expecting token 'CONST', not '::'"
+    assert_syntax_error "lib LibC; enum Foo::Bar; A; end end", "expecting any of these tokens: ;, NEWLINE (not '::')"
     it_parses "lib LibC; Foo = 1; end", LibDef.new("LibC".path, [Assign.new("Foo".path, 1.int32)] of ASTNode)
     it_parses "lib LibC\nfun getch = GetChar\nend", LibDef.new("LibC".path, [FunDef.new("getch", real_name: "GetChar")] of ASTNode)
     it_parses %(lib LibC\nfun getch = "get.char"\nend), LibDef.new("LibC".path, [FunDef.new("getch", real_name: "get.char")] of ASTNode)
