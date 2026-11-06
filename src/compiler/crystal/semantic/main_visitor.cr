@@ -1162,6 +1162,12 @@ module Crystal
       fun_vars = @vars.dup
       meta_vars = @meta_vars.dup
 
+      # Block parameters shadow the outer variables with the same name
+      node.block_param_names.try &.each do |name|
+        fun_vars.delete(name)
+        meta_vars.delete(name)
+      end
+
       node.def.args.each do |arg|
         # It can happen that the argument has a type already,
         # when converting a block to a proc literal

@@ -575,6 +575,12 @@ module Crystal
     property expected_return_type : Type?
     property? from_block = false
 
+    # Names of the block parameters, when this proc literal was created
+    # from a captured block. Some of them are assigned at the beginning
+    # of the body (unpacked or splat parameters), so they must shadow
+    # the variables from the outer scope instead of closuring them.
+    property block_param_names : Array(String)?
+
     def update(from = nil)
       return unless self.def.args.all? &.type?
       return unless self.def.type?
@@ -851,6 +857,18 @@ module Crystal
 
   class Block
     property binder : YieldBlockBinder?
+
+    # Replaces the *types* matching the splat parameter (if any)
+    # with a single tuple type of them, in place.
+    def pack_splat_types(types : Array(Type), program : Program) : Nil
+      return unless splat_index = self.splat_index
+
+      if types.size < args.size - 1
+        raise "too many block parameters (given #{args.size - 1}+, expected maximum #{types.size})"
+      end
+      splat_range = (splat_index..splat_index - args.size)
+      types[splat_range] = program.tuple_of(types[splat_range])
+    end
   end
 
   # Fictitious node to bind yield expressions to block arguments
@@ -914,14 +932,7 @@ module Crystal
         end
       end
 
-      if splat_index
-        # Error if there are less expressions than the number of block arguments
-        if exps_types.size < (args_size - 1)
-          block.raise "too many block parameters (given #{args_size - 1}+, expected maximum #{exps_types.size})"
-        end
-        splat_range = (splat_index..splat_index - args_size)
-        exps_types[splat_range] = @program.tuple_of(exps_types[splat_range])
-      end
+      block.pack_splat_types(exps_types, @program)
 
       # Check if there are missing yield expressions to match
       # the (optional) block signature, and if they match the declared types
