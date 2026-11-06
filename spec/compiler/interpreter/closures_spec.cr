@@ -514,5 +514,21 @@ describe Crystal::Repl::Interpreter do
         bar.value
       CRYSTAL
     end
+
+    it "inspects the result when a top-level variable is closured (#17739)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("42")
+        x = 42
+        f = ->{ x }
+        x
+      CRYSTAL
+    end
+
+    it "spawns a fiber that captures a top-level variable (#17739)" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("1")
+        ch = Channel(Int32).new
+        spawn { ch.send 1 }
+        ch.receive
+      CRYSTAL
+    end
   end
 end
