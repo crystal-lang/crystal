@@ -125,10 +125,6 @@ build() {
   with_build_env 'CRYSTAL_OPTS=--debug make samples'
 }
 
-format() {
-  with_build_env 'make clean crystal format threads=1 check=1'
-}
-
 verify_version() {
   # If building a tag, check it matches with file
   FILE_VERSION=$(cat ./src/VERSION)
@@ -196,7 +192,6 @@ Helper script to prepare and run the testsuite on Travis CI.
 
 Commands:
   build                   run specs, build crystal, build samples, build the docs
-  format                  build crystal, run format check
   with_build_env command  run command in the build environment
   help                    display this
 
@@ -212,9 +207,6 @@ case $command in
     ;;
   build)
     build
-    ;;
-  format)
-    format
     ;;
   -h | --help | help)
     usage

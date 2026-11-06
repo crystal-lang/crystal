@@ -91,4 +91,4 @@ jobs:
           persist-credentials: false
 
       - name: Check Format
-        run: bin/ci format
+        run: bin/ci with_build_env 'make crystal format threads=1 check=1'
