@@ -1467,6 +1467,23 @@ describe "Code gen: block" do
       CRYSTAL
   end
 
+  it "closures outer variable in captured block with splat parameter" do
+    run(<<-CRYSTAL).to_i.should eq(10)
+      def capture(&block : Int32, Int32 -> Int32)
+        block
+      end
+
+      args = 0
+      total = 0
+      proc = capture do |*args|
+        total &+= args[0] &+ args[1]
+      end
+      proc.call(1, 2)
+      proc.call(3, 4)
+      total &+ args
+      CRYSTAL
+  end
+
   it "uses splat in captured block parameter with underscore parameters" do
     run(<<-CRYSTAL, Int32).should eq(18)
       def capture(&block : Int32, Int32, Int32, Int32, Int32 -> Int32)

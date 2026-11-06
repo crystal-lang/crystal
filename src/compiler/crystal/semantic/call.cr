@@ -846,17 +846,10 @@ class Crystal::Call
     end
 
     if proc_arg_types
-      yield_types = proc_arg_types.dup
-
       # A block splat parameter (`|*args|`) receives the corresponding
       # arguments as a tuple
-      if splat_index = block.splat_index
-        if yield_types.size < block.args.size - 1
-          block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
-        end
-        splat_range = (splat_index..splat_index - block.args.size)
-        yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
-      end
+      yield_types = proc_arg_types.dup
+      block.pack_splat_types(yield_types, program)
 
       yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
     end
@@ -981,6 +974,7 @@ class Crystal::Call
           fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
           fun_literal.from_block = true
+          fun_literal.block_param_names = block_param_names(block)
           fun_literal.force_nil = true unless output
           fun_literal.accept parent_visitor
         end
@@ -1086,6 +1080,27 @@ class Crystal::Call
     end
 
     {yield_vars, block_arg_type}
+  end
+
+  private def block_param_names(block)
+    names = block.args.map(&.name)
+    block.unpacks.try &.each_value do |unpack|
+      collect_unpacked_block_param_names(unpack, names)
+    end
+    names
+  end
+
+  private def collect_unpacked_block_param_names(node, names)
+    case node
+    when Var
+      names << node.name
+    when Splat
+      collect_unpacked_block_param_names(node.exp, names)
+    when Expressions
+      node.expressions.each do |exp|
+        collect_unpacked_block_param_names(exp, names)
+      end
+    end
   end
 
   private def prepend_block_body(body, exps)

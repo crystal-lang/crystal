@@ -1254,6 +1254,54 @@ describe "Block inference" do
       CRYSTAL
   end
 
+  it "uses splat in block parameter with Proc restriction" do
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
+      def foo(&block : Proc(Int32, Char, Nil))
+        yield 1, 'a'
+      end
+
+      foo do |*args|
+        args
+      end
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by captured block splat parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : Int32, Int32 ->)
+        block
+      end
+
+      args = "outer"
+      capture { |*args| args }
+      args
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by auto-unpacked captured block parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : {Int32, Int32} ->)
+        block
+      end
+
+      x = "outer"
+      capture { |x, y| x }
+      x
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by unpacked captured block parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : {Int32, Int32}, Int32 ->)
+        block
+      end
+
+      x = "outer"
+      capture { |(x, y), z| x }
+      x
+      CRYSTAL
+  end
+
   it "uses splat in captured block parameter, but not enough arguments" do
     assert_error <<-CRYSTAL, "too many block parameters (given 2+, expected maximum 1)"
       def capture(&block : Int32 ->)
