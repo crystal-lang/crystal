@@ -1,12 +1,14 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  def type_id(value, type)
-    type_id_impl(value, type.remove_indirection)
+  def type_id(value, type, *, remove_indirection : Bool = true)
+    type_id_impl(value, remove_indirection ? type.remove_indirection : type)
   end
 
-  def type_id(type)
-    type_id_impl(type.remove_indirection)
+  # The `class_crystal_instance_type_id` primitive sets `remove_indirection` to
+  # `false` to purposefully allocate instance type IDs for module metaclasses
+  def type_id(type, *, remove_indirection : Bool = true)
+    type_id_impl(remove_indirection ? type.remove_indirection : type)
   end
 
   private def type_id_impl(value, type : NilableType)
