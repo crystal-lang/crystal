@@ -1073,6 +1073,18 @@ describe Crystal::Formatter do
   assert_format "+ 1", "+1"
   assert_format "&- 1", "&-1"
   assert_format "&+ 1", "&+1"
+
+  # #12913
+  assert_format "+ +1"
+  assert_format "- -1"
+  assert_format "+ +x"
+  assert_format "- -x"
+  assert_format "- ->{ }", "- -> { }"
+  assert_format "! ~x"
+  assert_format "+ -1", "+-1"
+  assert_format "~ ~1", "~~1"
+  assert_format "!!x"
+
   assert_format "a-1", "a - 1"
   assert_format "a+1", "a + 1"
   assert_format "a&-1", "a &- 1"
