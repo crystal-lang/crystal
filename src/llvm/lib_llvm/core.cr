@@ -180,8 +180,13 @@ lib LibLLVM
   fun get_param = LLVMGetParam(fn : ValueRef, index : UInt) : ValueRef
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 
-  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : MetadataRef
-  fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : ValueRef*, count : SizeT) : ValueRef
+  {% if LibLLVM::IS_LT_90 %}
+    fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
+    fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, mds : ValueRef*, count : UInt) : ValueRef
+  {% else %}
+    fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : MetadataRef
+    fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : MetadataRef*, count : SizeT) : MetadataRef
+  {% end %}
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   fun get_md_node_num_operands = LLVMGetMDNodeNumOperands(v : ValueRef) : UInt
