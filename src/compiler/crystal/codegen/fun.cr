@@ -569,9 +569,12 @@ class Crystal::CodeGenVisitor
     else
       abi_info = target_def.abi_info? ? abi_info(target_def) : nil
 
+      # If an argument is a Proc inside a C function, we need to cast it to Proc
+      fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
+
       # If it's a type on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
-      if target_def.c_calling_convention? && abi_info && !context.fun.attributes(index + 1).by_val?
+      if target_def.c_calling_convention? && abi_info && !fun_proc && !context.fun.attributes(index + 1).by_val?
         # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
         sret = sret?(abi_info)
         if abi_info.arg_types[index - (sret ? 1 : 0)].kind.indirect?
@@ -590,9 +593,6 @@ class Crystal::CodeGenVisitor
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
-        # If an argument is a Proc inside a C function, we need to cast it to Proc
-        fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
-
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
         needs_copy = target_def_var.try &.assigned_to?
