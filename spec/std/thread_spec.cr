@@ -1,6 +1,12 @@
 require "./spec_helper"
 require "../support/thread"
 
+{% if flag?(:win32) %}
+  private lib LibThreadSpec
+    fun GetHandleInformation(hObject : LibC::HANDLE, lpdwFlags : LibC::DWORD*) : LibC::BOOL
+  end
+{% end %}
+
 # interpreter doesn't support threads yet (#14287)
 pending_interpreted describe: Thread do
   it "allows passing an argumentless fun to execute" do
@@ -16,6 +22,28 @@ pending_interpreted describe: Thread do
       thread.join
     end
   end
+
+  {% if flag?(:win32) %}
+    it "closes its semaphore when joined before exiting" do
+      thread = Thread.new do |current|
+        deadline = Time.instant + 2.seconds
+        # Keep the worker alive until join claims the detach gate.
+        until current.@detached.get
+          raise "Thread was not joined in time" if Time.instant >= deadline
+          Thread.sleep(1.millisecond)
+        end
+      end
+      semaphore = thread.@semaphore
+      before_join = LibThreadSpec.GetHandleInformation(semaphore, out flags)
+      thread.join
+      after_join = LibThreadSpec.GetHandleInformation(semaphore, pointerof(flags))
+      error = WinError.value
+
+      before_join.should_not eq(0)
+      after_join.should eq(0)
+      error.should eq(WinError::ERROR_INVALID_HANDLE)
+    end
+  {% end %}
 
   it "returns current thread object" do
     current = nil

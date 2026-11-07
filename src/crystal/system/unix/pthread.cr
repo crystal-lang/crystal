@@ -139,12 +139,15 @@ module Crystal::System::Thread
   end
 
   private def system_close
+    GC.pthread_detach(@system_handle)
+  end
+
+  private def close_semaphore
     {% if flag?(:darwin) %}
       LibC.sem_close(semaphore)
     {% else %}
       LibC.sem_destroy(semaphore)
     {% end %}
-    GC.pthread_detach(@system_handle)
   end
 
   private def stack_address : Void*

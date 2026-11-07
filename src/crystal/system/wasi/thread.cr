@@ -46,6 +46,9 @@ module Crystal::System::Thread
   private def system_close
   end
 
+  private def close_semaphore
+  end
+
   private def stack_address : Void*
     # TODO: Implement
     Pointer(Void).null

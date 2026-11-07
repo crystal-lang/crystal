@@ -37,6 +37,8 @@ module Crystal::System::Thread
   # Called to initialize the object (usually a semaphore) for #wait and #wake.
   # protected def init_semaphore : Nil
 
+  # private def close_semaphore
+
   # Suspend a thread until #wake is called. Synchronizes with #wake so it won't
   # block if #wake was called before (race).
   #
@@ -269,6 +271,7 @@ class Thread
     ensure
       Thread.threads.delete(self)
       Fiber.inactive(fiber)
+      close_semaphore
       detach { system_close }
     end
   end
