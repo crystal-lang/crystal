@@ -373,6 +373,18 @@ module Crystal
     assert_syntax_error "*a == 1"
     assert_syntax_error "*a === 1"
 
+    assert_syntax_error "a, b.[]=, 2", %(unexpected token: ",")
+    assert_syntax_error "a, b.[]=, c = 1, 2, 3", %(unexpected token: ",")
+    assert_syntax_error "a.[]=, b = 1, 2", %(unexpected token: ",")
+    assert_syntax_error "a, b.[]=(), 2", %(unexpected token: ",")
+    assert_syntax_error "a, b.[]=(c: 1), 2", %(unexpected token: ",")
+    assert_syntax_error "a, b.[]=(&c), 2", %(unexpected token: ",")
+    assert_syntax_error "a.[]=(), 2", %(unexpected token: ",")
+    assert_syntax_error "a, b.[]=()", %(unexpected token: EOF)
+    assert_syntax_error "*a.[]=()", %(unexpected token: EOF)
+    it_parses "a.[]=()", Call.new("a".call, "[]=")
+    it_parses "a, b = 1, c.[]=()", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, Call.new("c".call, "[]=")] of ASTNode)
+
     assert_syntax_error "a {}, b = 1"
     assert_syntax_error "a.b {}, c = 1"
 
