@@ -4794,7 +4794,7 @@ module Crystal
       end_location : Location?,
       has_parentheses : Bool
 
-    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
+    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false, forbid_named_args_in : String? = nil)
       case @token.type
       when .op_lcurly?
         nil
@@ -4817,11 +4817,11 @@ module Crystal
             end
 
             if named_tuple_start?
-              return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true)
+              return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true, forbid_in: forbid_named_args_in)
             else
               arg = parse_call_arg(found_double_splat)
               if @token.type.op_colon? && arg.is_a?(StringLiteral)
-                return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true)
+                return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true, forbid_in: forbid_named_args_in)
               else
                 args << arg
                 found_double_splat = arg.is_a?(DoubleSplat)
@@ -4857,14 +4857,14 @@ module Crystal
           unexpected_token
         end
 
-        parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control
+        parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control, forbid_named_args_in: forbid_named_args_in
       else
         nil
       end
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token : Token::Kind = :OP_RPAREN,
-                                       allow_beginless_range = false)
+                                       allow_beginless_range = false, forbid_named_args_in : String? = nil)
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -4932,11 +4932,11 @@ module Crystal
         end
 
         if @token.type.ident? && current_char == ':'
-          return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false)
+          return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false, forbid_in: forbid_named_args_in)
         else
           arg = parse_call_arg(found_double_splat)
           if @token.type.op_colon? && arg.is_a?(StringLiteral)
-            return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false)
+            return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false, forbid_in: forbid_named_args_in)
           else
             args << arg
             found_double_splat = arg.is_a?(DoubleSplat)
@@ -4959,7 +4959,9 @@ module Crystal
       CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
     end
 
-    def parse_call_args_named_args(location, args, first_name, allow_newline)
+    def parse_call_args_named_args(location, args, first_name, allow_newline, forbid_in : String? = nil)
+      raise "named arguments are not allowed in `#{forbid_in}`", location if forbid_in
+
       named_args = parse_named_args(location, first_name: first_name, allow_newline: allow_newline)
 
       if call_block_arg_follows?
@@ -5785,7 +5787,7 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args control: true }
+      call_args = preserve_stop_on_do { parse_call_args control: true, forbid_named_args_in: "yield" }
 
       if call_args
         args = call_args.args
@@ -5813,10 +5815,11 @@ module Crystal
     end
 
     def parse_control_expression(klass)
+      keyword = @token.value.to_s
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true }
+      call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true, forbid_named_args_in: keyword }
       args = call_args.args if call_args
 
       if args && !args.empty?

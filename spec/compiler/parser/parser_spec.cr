@@ -1207,6 +1207,18 @@ module Crystal
       it_parses "#{keyword} 1, *2", klass.new(TupleLiteral.new([1.int32, 2.int32.splat]))
       it_parses "#{keyword} *{1, 2}", klass.new(TupleLiteral.new([TupleLiteral.new([1.int32, 2.int32] of ASTNode).splat] of ASTNode))
 
+      it_parses "#{keyword} {a: 1}", klass.new(NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)]))
+      it_parses "#{keyword} foo a: 1", klass.new(Call.new("foo", named_args: [NamedArgument.new("a", 1.int32)]))
+      it_parses "#{keyword} foo(a: 1)", klass.new(Call.new("foo", named_args: [NamedArgument.new("a", 1.int32)]))
+
+      assert_syntax_error "#{keyword} a: 1", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+      assert_syntax_error "#{keyword} 1, a: 2", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 5
+      assert_syntax_error %(#{keyword} "a": 1), "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+      assert_syntax_error "#{keyword}(a: 1)", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+      assert_syntax_error "#{keyword}(1, a: 2)", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 5
+      assert_syntax_error %(#{keyword}("a": 1)), "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+      assert_syntax_error "#{keyword} a:", "named arguments are not allowed in `#{keyword}`", 1, keyword.size + 2
+
       assert_syntax_error "a = #{keyword}", "void value expression"
       assert_syntax_error "a = 1; a += #{keyword}", "void value expression"
       assert_syntax_error "yield #{keyword}", "void value expression"
@@ -1263,6 +1275,18 @@ module Crystal
     it_parses "yield 1", Yield.new([1.int32] of ASTNode)
     it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int32] of ASTNode))
     it_parses "yield if true", If.new(true.bool, Yield.new)
+    it_parses "yield({a: 1})", Yield.new([NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)])] of ASTNode, has_parentheses: true)
+    it_parses "yield foo a: 1", Yield.new([Call.new("foo", named_args: [NamedArgument.new("a", 1.int32)])] of ASTNode)
+    it_parses "yield foo(a: 1)", Yield.new([Call.new("foo", named_args: [NamedArgument.new("a", 1.int32)])] of ASTNode)
+
+    assert_syntax_error "yield a: 1", "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "yield 1, a: 2", "named arguments are not allowed in `yield`", 1, 10
+    assert_syntax_error %(yield "a": 1), "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "yield(a: 1)", "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "yield(1, a: 2)", "named arguments are not allowed in `yield`", 1, 10
+    assert_syntax_error %(yield("a": 1)), "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "yield a:", "named arguments are not allowed in `yield`", 1, 7
+    assert_syntax_error "with 1 yield a: 1", "named arguments are not allowed in `yield`", 1, 14
 
     it_parses "Int", "Int".path
 
