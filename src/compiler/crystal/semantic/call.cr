@@ -225,7 +225,7 @@ class Crystal::Call
   end
 
   def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
-    attach_subclass_observer owner
+    subscribe_to_hierarchy(owner)
 
     including_types = owner.including_types
     if including_types
@@ -314,7 +314,7 @@ class Crystal::Call
 
     instance_type = owner.instance_type
     if instance_type.is_a?(VirtualType)
-      attach_subclass_observer instance_type.base_type
+      subscribe_to_hierarchy(instance_type.base_type)
     end
 
     instantiate signature, matches, owner, self_type, with_autocast
@@ -1262,13 +1262,6 @@ class Crystal::Call
     end
 
     {typed_def, args}
-  end
-
-  def attach_subclass_observer(type : Type)
-    # Receiver and argument dependencies can refer to the same hierarchy.
-    # Keep them in one subscription set so changing the receiver cannot remove
-    # a subscription that is still required by an argument (or a wider receiver).
-    subscribe_to_hierarchy(type)
   end
 
   def super?

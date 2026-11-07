@@ -1078,7 +1078,7 @@ module Crystal
         type.tuple_types.each { |member| observe_hierarchy(member) }
       when NamedTupleInstanceType
         type.entries.each { |entry| observe_hierarchy(entry.type) }
-      when GenericType, NonGenericModuleType
+      when GenericType, NonGenericModuleType, GenericModuleInstanceType
         subscribe_to_hierarchy(type)
       end
     end
@@ -1100,10 +1100,6 @@ module Crystal
     def add_subclass_observer(observer : SubclassObserver)
       observers = (@subclass_observers ||= [] of SubclassObserver)
       observers << observer
-    end
-
-    def remove_subclass_observer(observer)
-      @subclass_observers.try &.reject! &.same?(observer)
     end
 
     def notify_subclass_added

@@ -37,4 +37,31 @@ describe "Code gen: hierarchy-dependent type filters" do
         CRYSTAL
     end
   end
+
+  it "updates narrowing in a cached method when a generic module gains including types" do
+    run(<<-CRYSTAL).to_i.should eq(48)
+      module Base(T)
+      end
+
+      class Good(T, U)
+        include Base(T)
+
+        def value
+          sizeof(U)
+        end
+      end
+
+      def foo(value : Base(Int32))
+        if value.is_a?(Good)
+          value.value
+        else
+          0
+        end
+      end
+
+      first = foo(Good(Int32, Int32).new.as(Base(Int32)))
+      second = foo(Good(Int32, Int64).new.as(Base(Int32)))
+      (first &* 10) &+ second
+      CRYSTAL
+  end
 end
