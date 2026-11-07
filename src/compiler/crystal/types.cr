@@ -1066,25 +1066,24 @@ module Crystal
 
     @observed_hierarchies : Array(Type)?
 
-    private def observe_hierarchy(type : Type, visited : Array(Type)? = nil)
+    private def observe_hierarchy(type : Type, expanded_aliases : Array(AliasType)? = nil)
       case type
-      when AliasType, UnionType, TupleInstanceType, NamedTupleInstanceType
-        # Recursive aliases can reach this pass before the recursive-struct
-        # checker. Track wrappers too, not just subscribable hierarchies.
-        visited ||= [] of Type
-        return if visited.includes?(type)
-        visited << type
-
-        case type
-        when AliasType
-          observe_hierarchy(type.remove_alias, visited)
-        when UnionType
-          type.union_types.each { |member| observe_hierarchy(member, visited) }
-        when TupleInstanceType
-          type.tuple_types.each { |member| observe_hierarchy(member, visited) }
-        when NamedTupleInstanceType
-          type.entries.each { |entry| observe_hierarchy(entry.type, visited) }
+      when AliasType
+        expanded = type.remove_alias
+        # Resolving an alias can discover recursion and mark it non-simple.
+        # Expand each recursive alias once, including its non-recursive branches.
+        unless type.simple?
+          expanded_aliases ||= [] of AliasType
+          return if expanded_aliases.includes?(type)
+          expanded_aliases << type
         end
+        observe_hierarchy(expanded, expanded_aliases)
+      when UnionType
+        type.union_types.each { |member| observe_hierarchy(member, expanded_aliases) }
+      when TupleInstanceType
+        type.tuple_types.each { |member| observe_hierarchy(member, expanded_aliases) }
+      when NamedTupleInstanceType
+        type.entries.each { |entry| observe_hierarchy(entry.type, expanded_aliases) }
       when VirtualType
         subscribe_to_hierarchy(type.base_type)
       when GenericType, NonGenericModuleType, GenericModuleInstanceType
