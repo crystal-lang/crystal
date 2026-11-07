@@ -39,22 +39,24 @@ module Crystal
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
-
+      builder = llvm_mod.new_builder
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # It seems the JIT doesn't like it if we return an empty type (struct {})
       llvm_context = llvm_mod.context
+
       main_return_type = main.type.return_type
       main_return_type = llvm_context.void if node.type.nil_type?
 
       wrapper_type = LLVM::Type.function([] of LLVM::Type, main_return_type)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
-        end
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
       end
 
       llvm_mod.verify
@@ -103,25 +105,27 @@ module Crystal
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
+      builder = llvm_mod.new_builder
 
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # void (*__evaluate_wrapper)(void*)
       wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          unless node.type.void? || node.type.nil_type?
-            out_ptr = func.params[0]
-            {% if LibLLVM::IS_LT_150 %}
-              out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
-            {% end %}
-            builder.store(ret, out_ptr)
-          end
-          builder.ret
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        unless node.type.void? || node.type.nil_type?
+          out_ptr = func.params[0]
+          {% if LibLLVM::IS_LT_150 %}
+            out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
+          {% end %}
+          builder.store(ret, out_ptr)
         end
+        builder.ret
       end
 
       llvm_mod.verify

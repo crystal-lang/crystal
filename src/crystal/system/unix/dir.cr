@@ -95,7 +95,17 @@ module Crystal::System::Dir
   end
 
   def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    return true if LibC.rmdir(path.check_no_null_byte) == 0
+    path.check_no_null_byte
+
+    {% if flag?(:wasi) %}
+      # WASI's rmdir rejects trailing separators with EINVAL.
+      # Keep root path intact (don't pass empty path).
+      unless path.empty?
+        path = path.rstrip('/')
+        path = "/" if path.empty?
+      end
+    {% end %}
+    return true if LibC.rmdir(path) == 0
 
     if !raise_on_missing && Errno.value == Errno::ENOENT
       false

@@ -1,7 +1,7 @@
 require "./lib_llvm"
 
 @[Experimental("The C API wrapped by this type is marked as experimental by LLVM.")]
-struct LLVM::DIBuilder
+class LLVM::DIBuilder
   private DW_TAG_structure_type = 19
 
   private def initialize(@unwrap : LibLLVM::DIBuilderRef, @llvm_module : Module)
@@ -9,6 +9,10 @@ struct LLVM::DIBuilder
 
   def self.new(mod : LLVM::Module)
     new(LibLLVM.create_di_builder(mod), mod)
+  end
+
+  def finalize
+    dispose
   end
 
   def dispose
