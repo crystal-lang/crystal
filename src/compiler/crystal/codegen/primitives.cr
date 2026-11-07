@@ -1265,12 +1265,14 @@ class Crystal::CodeGenVisitor
       ptr = aggregate_index llvm_type(type), value, index
       to_lhs ptr, type.entries[index].type
     else
+      # convert virtual metaclasses to non-virtual ones, because only the
+      # non-virtual type IDs are needed
       type = type.instance_type
       case type
       when TupleInstanceType
-        type_id(type.tuple_types[index].as(Type).metaclass)
+        type_id(type.tuple_types[index].as(Type).metaclass.devirtualize)
       when NamedTupleInstanceType
-        type_id(type.entries[index].type.as(Type).metaclass)
+        type_id(type.entries[index].type.as(Type).metaclass.devirtualize)
       else
         raise "BUG: unsupported codegen for tuple_indexer"
       end
