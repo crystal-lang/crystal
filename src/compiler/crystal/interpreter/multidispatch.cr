@@ -296,7 +296,6 @@ module Crystal::Repl::Multidispatch
     # puts a_def
 
     # visitor.scope = obj_type
-    # visitor.yield_vars = yield_vars
     # visitor.match_context = match.context
     # visitor.call = self
     # visitor.path_lookup = match.context.defining_type
