@@ -157,6 +157,7 @@ describe "URI" do
 
     context "bad urls" do
       it { expect_raises(URI::Error) { URI.parse("http://some.com:8f80/path") } }
+      it { expect_raises(URI::Error) { URI.parse("http://some.com:99999999999/path") } }
     end
   end
 
