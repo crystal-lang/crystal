@@ -1066,18 +1066,27 @@ module Crystal
 
     @observed_hierarchies : Array(Type)?
 
-    private def observe_hierarchy(type : Type)
+    private def observe_hierarchy(type : Type, visited : Array(Type)? = nil)
       case type
-      when AliasType
-        observe_hierarchy(type.remove_alias)
+      when AliasType, UnionType, TupleInstanceType, NamedTupleInstanceType
+        # Recursive aliases can reach this pass before the recursive-struct
+        # checker. Track wrappers too, not just subscribable hierarchies.
+        visited ||= [] of Type
+        return if visited.includes?(type)
+        visited << type
+
+        case type
+        when AliasType
+          observe_hierarchy(type.remove_alias, visited)
+        when UnionType
+          type.union_types.each { |member| observe_hierarchy(member, visited) }
+        when TupleInstanceType
+          type.tuple_types.each { |member| observe_hierarchy(member, visited) }
+        when NamedTupleInstanceType
+          type.entries.each { |entry| observe_hierarchy(entry.type, visited) }
+        end
       when VirtualType
         subscribe_to_hierarchy(type.base_type)
-      when UnionType
-        type.union_types.each { |member| observe_hierarchy(member) }
-      when TupleInstanceType
-        type.tuple_types.each { |member| observe_hierarchy(member) }
-      when NamedTupleInstanceType
-        type.entries.each { |entry| observe_hierarchy(entry.type) }
       when GenericType, NonGenericModuleType, GenericModuleInstanceType
         subscribe_to_hierarchy(type)
       end

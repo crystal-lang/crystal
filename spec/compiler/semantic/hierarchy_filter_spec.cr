@@ -1,6 +1,22 @@
 require "../../spec_helper"
 
 describe "Hierarchy-dependent inference" do
+  {"tuple" => "Tuple(Node)", "named tuple" => "NamedTuple(value: Node)"}.each do |name, member|
+    {"cast" => "consume(1.as(Node))", "argument" => "value = uninitialized Node; consume(value)"}.each do |operation, expression|
+      it "rejects a recursive #{name} alias used as a #{operation} without overflowing" do
+        assert_error <<-CRYSTAL, "recursive struct Node detected"
+          alias Node = Int32 | #{member}
+
+          def consume(value : Node)
+            1
+          end
+
+          #{expression}
+          CRYSTAL
+      end
+    end
+  end
+
   {
     "as"          => "value.as(Good).value",
     "as?"         => "if narrowed = value.as?(Good); narrowed.value; else; 0; end",
