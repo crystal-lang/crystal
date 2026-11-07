@@ -64,9 +64,15 @@ describe "Block inference" do
   end
 
   it "infer type with union" do
-    assert_type(<<-CRYSTAL) { union_of(array_of(int32), array_of(float64)) }
-      require "prelude"
-      a = [1] || [1.1]
+    assert_type(<<-CRYSTAL) { union_of(generic_class("Box", int32), generic_class("Box", float64)) }
+      class Box(T)
+        def tap
+          yield self
+          self
+        end
+      end
+
+      a = Box(Int32).new || Box(Float64).new
       a.tap { |x| x }
       CRYSTAL
   end
@@ -675,8 +681,6 @@ describe "Block inference" do
 
   it "allows invoking method on a object of a captured block with a type that was never instantiated" do
     assert_type(<<-CRYSTAL) { proc_of(types["Bar"], void) }
-      require "prelude"
-
       class Bar
         def initialize(@bar : NoReturn)
         end
