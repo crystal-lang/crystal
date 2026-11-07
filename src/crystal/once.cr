@@ -131,16 +131,17 @@ module Crystal
       begin
         yield
       rescue ex
+      ensure
+        # also runs when the block returns or breaks: `operation` lives on the
+        # caller's stack and must not stay registered, waiters must be resumed
+        @@spin.lock
+        flag.value = true unless ex
+        @@operations.delete pointerof(operation)
+        @@spin.unlock
+        operation.resume_all unless ex
       end
 
-      @@spin.lock
-      flag.value = true unless ex
-      @@operations.delete pointerof(operation)
-      @@spin.unlock
-
       raise ex if ex
-
-      operation.resume_all
     end
   end
 
