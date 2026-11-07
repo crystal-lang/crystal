@@ -1055,14 +1055,16 @@ module Crystal
     end
   end
 
-  # Temporary type to recompute calls when a subclass is added to a type
-  # hierarchy. This shouldn't be needed, because the type hierarchy is
-  # now computed in a first pass, but for generic types, instantiations
-  # are considered as kind of subclasses, and calls must be recomputed
-  # to take them into account (but this should change in the future).
+  module SubclassObserver
+    abstract def on_new_subclass
+  end
+
+  # Recompute dependent calls and filters when a hierarchy grows. Ordinary
+  # subclasses are known after the first pass, but generic instantiations can
+  # introduce new concrete members later during type inference.
   module SubclassObservable
-    def add_subclass_observer(observer)
-      observers = (@subclass_observers ||= [] of Call)
+    def add_subclass_observer(observer : SubclassObserver)
+      observers = (@subclass_observers ||= [] of SubclassObserver)
       observers << observer
     end
 

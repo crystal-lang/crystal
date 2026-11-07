@@ -3,6 +3,8 @@ require "../types"
 require "./type_lookup"
 
 class Crystal::Call
+  include SubclassObserver
+
   property! scope : Type
   property with_scope : Type?
   property! parent_visitor : MainVisitor

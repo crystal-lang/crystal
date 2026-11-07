@@ -1,5 +1,9 @@
 module Crystal
   class TypeFilteredNode < ASTNode
+    include SubclassObserver
+
+    @observed_hierarchies : Array(Type)?
+
     def initialize(@filter : TypeFilter, @node : ASTNode)
       @dependencies.push @node
       node.add_observer self
@@ -10,7 +14,29 @@ module Crystal
       from_type = from.try &.type?
 
       if from_type
+        observe_hierarchy(from_type) if @filter.depends_on_hierarchy?
         self.type = @filter.apply(from_type)
+      end
+    end
+
+    def on_new_subclass
+      update(@node)
+    end
+
+    # A type's identity can stay fixed while its concrete members grow. Filtering
+    # must be recomputed on that change even when the input node's type is stable.
+    private def observe_hierarchy(type)
+      case type
+      when VirtualType
+        observe_hierarchy(type.base_type)
+      when UnionType
+        type.union_types.each { |member| observe_hierarchy(member) }
+      when SubclassObservable
+        observed = @observed_hierarchies ||= [] of Type
+        unless observed.includes?(type)
+          observed << type
+          type.add_subclass_observer(self)
+        end
       end
     end
 
@@ -30,6 +56,10 @@ module Crystal
   end
 
   abstract class TypeFilter
+    def depends_on_hierarchy?
+      false
+    end
+
     def self.and(type_filter1, type_filter2)
       if type_filter1 == type_filter2
         type_filter1
@@ -58,6 +88,10 @@ module Crystal
   class SimpleTypeFilter < TypeFilter
     getter type : Type
 
+    def depends_on_hierarchy?
+      true
+    end
+
     def initialize(@type)
     end
 
@@ -77,6 +111,10 @@ module Crystal
   end
 
   class AndTypeFilter < TypeFilter
+    def depends_on_hierarchy?
+      @filter1.depends_on_hierarchy? || @filter2.depends_on_hierarchy?
+    end
+
     def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
     end
 
@@ -102,6 +140,10 @@ module Crystal
   end
 
   class OrTypeFilter < TypeFilter
+    def depends_on_hierarchy?
+      @filter1.depends_on_hierarchy? || @filter2.depends_on_hierarchy?
+    end
+
     def initialize(@filter1 : TypeFilter, @filter2 : TypeFilter)
     end
 
@@ -161,6 +203,10 @@ module Crystal
 
   class NotFilter < TypeFilter
     getter filter : TypeFilter
+
+    def depends_on_hierarchy?
+      @filter.depends_on_hierarchy?
+    end
 
     def initialize(@filter : TypeFilter)
     end
@@ -227,6 +273,10 @@ module Crystal
   end
 
   class RespondsToTypeFilter < TypeFilter
+    def depends_on_hierarchy?
+      true
+    end
+
     def initialize(@name : String)
     end
 
