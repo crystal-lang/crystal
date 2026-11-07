@@ -3977,6 +3977,7 @@ module Crystal
       if @token.type.op_amp?
         next_token
         space_after_amp = @token.type.space?
+        whitespace_after_amp = space_after_amp || @token.type.newline?
         skip_space_or_newline
 
         if @token.type.op_colon? && !space_after_amp # anonymous block arg without space
@@ -3990,6 +3991,10 @@ module Crystal
         # (In fact `params` may contain anonymous splat parameter. See #9108).
         # So check is skipped.
         unless block_param.name.empty?
+          if whitespace_after_amp
+            raise "no whitespace allowed between '&' and block parameter name", block_param.location.not_nil!
+          end
+
           conflict_param = params.any?(&.name.==(block_param.name))
           conflict_double_splat = found_double_splat && found_double_splat.name == block_param.name
           if conflict_param || conflict_double_splat
