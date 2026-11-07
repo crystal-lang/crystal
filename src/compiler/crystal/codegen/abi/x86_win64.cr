@@ -14,6 +14,12 @@ class Crystal::ABI::X86_Win64 < Crystal::ABI::X86
         when 8 then ArgType.direct(t, context.int64)
         else        ArgType.indirect(t, LLVM::Attribute::ByVal)
         end
+      when LLVM::Type::Kind::Integer
+        if t == context.int128
+          ArgType.indirect(t, nil)
+        else
+          non_struct(t, context)
+        end
       else
         non_struct(t, context)
       end

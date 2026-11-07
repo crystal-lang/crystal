@@ -223,7 +223,7 @@ class Crystal::CodeGenVisitor
       in .direct?
         call_arg = codegen_direct_abi_call(arg.type, call_arg, abi_arg_type) unless arg.type.nil_type?
       in .indirect?
-        call_arg = codegen_indirect_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
+        call_arg = codegen_indirect_abi_call(arg.type, call_arg, abi_arg_type) unless arg.type.nil_type?
       in .ignore?
         # Ignore
         next
@@ -266,13 +266,18 @@ class Crystal::CodeGenVisitor
 
   # For an indirect argument we need to make a copy of the value in the stack
   # and *replace* the call argument by a pointer to the allocated memory
-  def codegen_indirect_abi_call(call_arg, abi_arg_type)
+  def codegen_indirect_abi_call(call_arg_type, call_arg, abi_arg_type)
     final_value = alloca abi_arg_type.type
-    final_value_casted = cast_to_void_pointer final_value
-    call_arg_casted = cast_to_void_pointer call_arg
-    size = @abi.size(abi_arg_type.type)
-    align = @abi.align(abi_arg_type.type)
-    memcpy(final_value_casted, call_arg_casted, size_t(size), align, int1(0))
+    if call_arg_type.passed_by_value?
+      final_value_casted = cast_to_void_pointer final_value
+      call_arg_casted = cast_to_void_pointer call_arg
+      size = @abi.size(abi_arg_type.type)
+      align = @abi.align(abi_arg_type.type)
+      memcpy(final_value_casted, call_arg_casted, size_t(size), align, int1(0))
+    else
+      # For types like i128 on MinGW-w64 the call argument isn't a pointer
+      store call_arg, final_value
+    end
     final_value
   end
 
