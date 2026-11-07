@@ -191,26 +191,99 @@ module HTTP
       end
     end
 
+    # always expect CRLF in chunk framing, reject lone LF
     private def read_crlf
-      char = @io.read_byte
-      if char === '\r'
-        char = @io.read_byte
-      end
-      unless char === '\n'
+      buf = uninitialized UInt8[2]
+      size = @io.read_fully(buf.to_slice)
+
+      unless crlf?(buf.to_slice[0, size])
         raise IO::Error.new("Invalid HTTP chunked content: expected CRLF")
       end
     end
 
-    private def read_chunk_size
-      line = @io.read_line(@max_headers_size, chomp: true)
+    private def crlf?(bytes)
+      bytes.size == 2 &&
+        bytes[0] == '\r'.ord &&
+        bytes[1] == '\n'.ord
+    end
 
-      if index = line.byte_index(';'.ord)
-        chunk_size = line.byte_slice(0, index)
-      else
-        chunk_size = line
+    private def read_chunk_size : Int32
+      line = @io.read_line(@max_headers_size, chomp: false)
+      valid = false
+
+      # chunk-line MUST end with CRLF: https://errata.rfc-editor.org/eid7633/
+      # read_line stopped at LF, so rejects lone LF by design
+      if line.bytesize > 2 && crlf?(line.to_slice[-2, 2])
+        bytes = line.to_slice[0...-2]
+
+        chunk_size, digits = read_chunk_size_impl(bytes)
+        if digits > 0
+          bytes += digits
+
+          case bytes.first?
+          when nil
+            # end-of-line
+            valid = true
+          when ' '.ord, '\t'.ord, ';'.ord
+            valid = skip_chunk_ext(bytes)
+          else
+            # invalid character
+            valid = false
+          end
+
+          return chunk_size if valid
+        end
       end
 
-      chunk_size.to_i?(16) || raise IO::Error.new("Invalid HTTP chunked content: invalid chunk size")
+      raise IO::Error.new("Invalid HTTP chunked content: invalid chunk line")
+    end
+
+    private def read_chunk_size_impl(bytes) : {Int32, Int32}
+      digits = 0
+      chunk_size = 0_u32
+
+      bytes.each do |byte|
+        if chunk_size > 0x07ffffff
+          # abort: the next digit would overflow, let read_chunk_size validate the rest
+          break
+        end
+
+        case byte
+        when ('0'.ord)..('9'.ord)
+          digits += 1
+          chunk_size = chunk_size << 4 | (byte &- '0'.ord)
+        when ('a'.ord)..('f'.ord)
+          digits += 1
+          chunk_size = chunk_size << 4 | (10 &+ byte &- 'a'.ord)
+        when ('A'.ord)..('F'.ord)
+          digits += 1
+          chunk_size = chunk_size << 4 | (10 &+ byte &- 'A'.ord)
+        else
+          break
+        end
+      end
+
+      {chunk_size.to_i32!, digits}
+    end
+
+    private def skip_chunk_ext(slice)
+      bws = false
+
+      slice.each_with_index do |byte, i|
+        case byte
+        when ';'.ord
+          # skip chunk-ext; reject lone CR (lone LF already rejected)
+          return slice[i..].none? { |byte| byte == '\r'.ord }
+        when ' '.ord, '\t'.ord
+          # BWS is valid only if followed by ';'
+          bws = true
+        else
+          # invalid separator character
+          return false
+        end
+      end
+
+      !bws
     end
 
     private def read_trailer
