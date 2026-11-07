@@ -562,13 +562,18 @@ class Crystal::CodeGenVisitor
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
-            cast2 = cast_to_void_pointer(cast1)
-            final_value = alloca abi_return.type
-            final_value_casted = cast_to_void_pointer final_value
-            size = @abi.size(abi_return.type)
-            align = @abi.align(abi_return.type)
-            memcpy(final_value_casted, cast2, size_t(size), align, int1(0))
-            @last = final_value
+
+            if type.passed_by_value?
+              cast2 = cast_to_void_pointer(cast1)
+              final_value = alloca abi_return.type
+              final_value_casted = cast_to_void_pointer final_value
+              size = @abi.size(abi_return.type)
+              align = @abi.align(abi_return.type)
+              memcpy(final_value_casted, cast2, size_t(size), align, int1(0))
+              @last = final_value
+            else
+              @last = load abi_return.type, pointer_cast(cast1, abi_return.type.pointer)
+            end
           end
         in .indirect?
           @last = @sret_value.not_nil!

@@ -1,6 +1,35 @@
 require "../../../spec_helper"
 
 describe "Code gen: C ABI" do
+  # 128-bit integers (and C23's `_BitInt`) are unavailable on MSVC, so their ABI
+  # remains undefined; in practice, compiler-independent C code would probably
+  # use a vector type like `__m128i` on MSVC
+  {% unless flag?(:msvc) %}
+    it "passes 128-bit integer to lib fun" do
+      test_c(<<-C, <<-CRYSTAL, &.to_b.should be_true)
+        __int128 foo(__int128 x) {
+          return x * x;
+        }
+        C
+        lib LibFoo
+          fun foo(x : Int128) : Int128
+        end
+
+        LibFoo.foo(0x1_00000001_00000001_i128) == 0x2_00000003_00000002_00000001_i128
+        CRYSTAL
+    end
+
+    it "passes 128-bit integer to top-level fun" do
+      run(<<-CRYSTAL, Bool).should be_true
+        fun foo(x : Int128) : Int128
+          x &* x
+        end
+
+        foo(0x1_00000001_00000001_i128) == 0x2_00000003_00000002_00000001_i128
+        CRYSTAL
+    end
+  {% end %}
+
   it "passes struct less than 64 bits (for real)" do
     test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
       struct s {
