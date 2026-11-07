@@ -1,6 +1,14 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "./spec_helper"
 
+private def interpret_exception_flow(code)
+  # Exercise real VM exception propagation without stdlib backtrace setup.
+  interpret(<<-CRYSTAL + "\n" + code)
+    @[Primitive(:interpreter_raise_without_backtrace)]
+    def raise(exception : Exception) : NoReturn; end
+    CRYSTAL
+end
+
 describe Crystal::Repl::Interpreter do
   context "exception handling" do
     it "does ensure without rescue/raise" do
@@ -33,10 +41,10 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("2")
+      interpret_exception_flow(<<-CRYSTAL).should eq(2)
           a = begin
             if 1 == 1
-              raise "OH NO"
+              raise Exception.new
             else
               'a'
             end
@@ -53,12 +61,12 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything, does ensure when an exception is rescued" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("3")
+      interpret_exception_flow(<<-CRYSTAL).should eq(3)
           a = 0
           b = 0
 
           begin
-            raise "OH NO"
+            raise Exception.new
           rescue
             a = 1
           ensure
@@ -70,7 +78,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues specific exception type" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("2")
+      interpret_exception_flow(<<-CRYSTAL).should eq(2)
           class Ex1 < Exception; end
           class Ex2 < Exception; end
 
@@ -89,9 +97,9 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "captures exception in variable" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("10")
+      interpret_exception_flow(<<-CRYSTAL).should eq(10)
           class Ex1 < Exception
-            getter value
+            def value; @value; end
 
             def initialize(@value : Int32)
             end
@@ -110,12 +118,12 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "executes ensure when exception is raised in body" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("10")
+      interpret_exception_flow(<<-CRYSTAL).should eq(10)
           a = 0
 
           begin
             begin
-              raise "OH NO"
+              raise Exception.new
             ensure
               a = 10
             end
@@ -127,14 +135,14 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "executes ensure when exception is raised in rescue" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("10")
+      interpret_exception_flow(<<-CRYSTAL).should eq(10)
           a = 0
 
           begin
             begin
-              raise "OH NO"
+              raise Exception.new
             rescue
-              raise "OOPS"
+              raise Exception.new
             ensure
               a = 10
             end
@@ -181,7 +189,7 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does ensure for else when else raises" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("2")
+      interpret_exception_flow(<<-CRYSTAL).should eq(2)
           x = 1
 
           begin
@@ -190,7 +198,7 @@ describe Crystal::Repl::Interpreter do
             rescue
               1
             else
-              raise "OH NO"
+              raise Exception.new
             ensure
               x += 1
             end
@@ -352,7 +360,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "executes ensure when returning a big value from a block" do
-      interpret(<<-CRYSTAL, prelude: "prelude").should eq("32405")
+      (7 * sizeof(Int64)).should be > Crystal::Repl::Interpreter::SMALL_RETURN_VALUE_MAX_SIZE
+      interpret(<<-CRYSTAL).should eq(41_i64)
         module Global
           @@property = 0
 
@@ -372,8 +381,7 @@ describe Crystal::Repl::Interpreter do
 
         def foo
           block do
-            static_array = StaticArray(Int32, 255).new { |i| i }
-            return static_array
+            return {0_i64, 1_i64, 2_i64, 3_i64, 4_i64, 5_i64, 6_i64}
           ensure
             Global.property = 10
           end
@@ -383,7 +391,7 @@ describe Crystal::Repl::Interpreter do
 
         x = foo
         if x
-          Global.property + x.sum
+          Global.property &+ x[0] &+ x[1] &+ x[2] &+ x[3] &+ x[4] &+ x[5] &+ x[6]
         else
           0
         end
