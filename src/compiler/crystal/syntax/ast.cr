@@ -97,7 +97,14 @@ module Crystal
     end
 
     def name_size
-      self.responds_to?(:name) ? self.name.to_s.size : 0
+      return 0 unless self.responds_to?(:name) && (name = self.name)
+
+      case name
+      when ASTNode
+        name.name_size
+      else
+        name.to_s.size
+      end
     end
 
     def name_location
