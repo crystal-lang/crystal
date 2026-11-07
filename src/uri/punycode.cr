@@ -41,6 +41,7 @@ class URI
         end
       end
 
+      io << DELIMITER if others.size < string.size
       return if others.empty?
       others.sort!
 
@@ -50,8 +51,6 @@ class URI
       bias = INITIAL_BIAS
       firsttime = true
       prev = nil
-
-      io << DELIMITER if h > 1
 
       others.each do |m|
         next if m == prev
