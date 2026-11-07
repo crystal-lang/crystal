@@ -185,10 +185,26 @@ class PrettyPrint
     end
   end
 
-  # :nodoc:
-  def instance_var(name : String, value) : Nil
+  # Appends *key* and *separator* followed by *value*, in a group where *value* is nested after a breakable.
+  # If the group doesn't fit, *value* is moved to the next line.
+  #
+  # ```
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 20) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \"Crystal\""
+  #
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 10) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \n \"Crystal\""
+  # ```
+  def key_value(key : String, separator : String, value) : Nil
     group do
-      text name
+      text key
+      text separator
       nest do
         breakable ""
         value.pretty_print(self)

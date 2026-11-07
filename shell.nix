@@ -19,13 +19,13 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 16, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 22, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-23.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
-    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
+    name = "nixpkgs-26.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/26.05.tar.gz";
+    sha256 = "sha256:0am8xx09fx5yf2p0wb001v0jx1g5hrfb76h4r37xph378jgk7pcr";
   }) {
     inherit system;
   };

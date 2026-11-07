@@ -250,6 +250,7 @@ end
   #
   # This will set the exception's callstack if it hasn't been already.
   # Re-raising a previously caught exception won't replace the callstack.
+  @[Raises]
   def raise(exception : Exception) : NoReturn
     {% if flag?(:debug_raise) %}
       STDERR.puts
@@ -263,6 +264,7 @@ end
 {% end %}
 
 # Raises an Exception with the *message*.
+@[Raises]
 def raise(message : String) : NoReturn
   raise Exception.new(message)
 end
