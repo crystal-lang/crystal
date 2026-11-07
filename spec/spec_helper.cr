@@ -343,7 +343,8 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
   end
 end
 
-def run(code, return_type : T.class, *,
+def run(
+  code, return_type : T.class, *,
   filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, obj_paths = nil, file = __FILE__,
 ) forall T
   if inject_primitives
