@@ -37,6 +37,38 @@ describe "Code gen: tuple" do
     run("Tuple(Int32, Char)[2]?.nil?").to_b.should be_true
   end
 
+  it "codegens tuple metaclass indexer for class with subclass (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def Tuple.foo
+        self[0].new
+      end
+
+      Tuple(Foo).foo.crystal_type_id == Foo.crystal_instance_type_id
+      CRYSTAL
+  end
+
+  it "codegens tuple metaclass nilable indexer for class with subclass (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def Tuple.foo
+        self[0]?.new
+      end
+
+      Tuple(Foo).foo.crystal_type_id == Foo.crystal_instance_type_id
+      CRYSTAL
+  end
+
   it "codegens tuple [0..0]" do
     run(<<-CRYSTAL).to_b.should be_true
       #{range_new}
