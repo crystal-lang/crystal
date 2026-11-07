@@ -188,7 +188,7 @@ describe "Codegen: extern struct" do
   # it's just that the specs need to be a bit different)
   {% if flag?(:x86_64) || flag?(:aarch64) %}
     it "codegens proc that takes an extern struct with C ABI" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
         struct Struct {
           int x;
           int y;
@@ -231,6 +231,11 @@ describe "Codegen: extern struct" do
           end
         end
 
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
+        end
+
         LibMylib.foo(->(s) {
           Global.x = s.x
           Global.y = s.y
@@ -241,7 +246,7 @@ describe "Codegen: extern struct" do
     end
 
     it "codegens proc that takes an extern struct with C ABI (2)" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(33))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(33)
         struct Struct {
           int x;
           int y;
@@ -284,6 +289,11 @@ describe "Codegen: extern struct" do
           end
         end
 
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
+        end
+
         LibMylib.foo(->(x, s, y) {
           Global.x = s.x &+ x
           Global.y = s.y &+ y
@@ -294,7 +304,7 @@ describe "Codegen: extern struct" do
     end
 
     it "codegens proc that takes an extern struct with C ABI, callback returns nil" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
         struct Struct {
           int x;
           int y;
@@ -337,6 +347,11 @@ describe "Codegen: extern struct" do
           end
         end
 
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
+        end
+
         LibMylib.foo(->(s) {
           Global.x = s.x
           Global.y = s.y
@@ -348,7 +363,7 @@ describe "Codegen: extern struct" do
     end
 
     it "codegens proc that takes and returns an extern struct with C ABI" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(303))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(303)
         struct Struct {
           int x;
           int y;
@@ -391,6 +406,11 @@ describe "Codegen: extern struct" do
           end
         end
 
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
+        end
+
         s2 = LibMylib.foo(->(s) {
           Global.x = s.x
           Global.y = s.y
@@ -404,7 +424,7 @@ describe "Codegen: extern struct" do
     end
 
     it "codegens proc that takes and returns an extern struct with C ABI" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(30))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(30)
         struct Struct {
           int x;
           int y;
@@ -425,6 +445,11 @@ describe "Codegen: extern struct" do
           fun foo(callback : Callback) : LibMylib::Struct
         end
 
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
+        end
+
         s2 = LibMylib.foo(->(x, y) {
           s = LibMylib::Struct.new
           s.x = x
@@ -437,7 +462,7 @@ describe "Codegen: extern struct" do
     end
 
     it "codegens proc that takes and returns an extern struct with sret" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(12))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(12)
         struct Struct {
           long long x;
           long long y;
@@ -473,6 +498,11 @@ describe "Codegen: extern struct" do
           def self.x
             @@x
           end
+        end
+
+        def raise(msg)
+          x = uninitialized NoReturn
+          x
         end
 
         s2 = LibMylib.foo(->(s) {

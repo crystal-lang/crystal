@@ -343,7 +343,9 @@ def run(code, filename : String? = nil, inject_primitives = true, debug = Crysta
   end
 end
 
-def run(code, return_type : T.class, filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, *, file = __FILE__) forall T
+def run(code, return_type : T.class, *,
+  filename : String? = nil, inject_primitives = true, debug = Crystal::Debug::None, flags = nil, obj_paths = nil, file = __FILE__,
+) forall T
   if inject_primitives
     code = %(require "primitives"\n#{code})
   end
@@ -352,15 +354,17 @@ def run(code, return_type : T.class, filename : String? = nil, inject_primitives
     fail "TODO: support the prelude in typed codegen specs", file: file
   else
     program = new_program(flags)
-    program.run(code, return_type: T, filename: filename, debug: debug)
+    program.run(code, return_type: T, filename: filename, debug: debug, obj_paths: obj_paths)
   end
 end
 
-def test_c(c_code, crystal_code, *, file = __FILE__, &)
-  with_temp_c_object_file(c_code, file: file) do |o_filename|
-    yield run(<<-CRYSTAL)
-      require "prelude"
+def test_c(c_code, crystal_code, return_type : T.class, *, file = __FILE__) forall T
+  {% if LibLLVM::IS_LT_110 %}
+    pending! "`LLVM::JITCompiler` does not support loading symbols from object files"
+  {% end %}
 
+  with_temp_c_object_file(c_code, file: file) do |o_filename|
+    run(<<-CRYSTAL, T, obj_paths: [o_filename])
       @[Link(ldflags: #{o_filename.inspect})]
       #{crystal_code}
       CRYSTAL

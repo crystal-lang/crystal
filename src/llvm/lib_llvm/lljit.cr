@@ -14,4 +14,5 @@ lib LibLLVM
   fun orc_lljit_get_global_prefix = LLVMOrcLLJITGetGlobalPrefix(j : OrcLLJITRef) : Char
   fun orc_lljit_add_llvm_ir_module = LLVMOrcLLJITAddLLVMIRModule(j : OrcLLJITRef, jd : OrcJITDylibRef, tsm : OrcThreadSafeModuleRef) : ErrorRef
   fun orc_lljit_lookup = LLVMOrcLLJITLookup(j : OrcLLJITRef, result : OrcExecutorAddress*, name : Char*) : ErrorRef
+  fun orc_lljit_get_obj_linking_layer = LLVMOrcLLJITGetObjLinkingLayer(j : OrcLLJITRef) : OrcObjectLayerRef
 end

@@ -39,6 +39,12 @@ class LLVM::Orc::LLJIT
     LLVM.assert LibLLVM.orc_lljit_add_llvm_ir_module(self, dylib, tsm)
   end
 
+  def add_object_file(dylib : JITDylib, object : MemoryBuffer) : Nil
+    object.take_ownership { raise "Failed to take ownership of LLVM::MemoryBuffer" }
+    obj_layer = LibLLVM.orc_lljit_get_obj_linking_layer(self)
+    LLVM.assert LibLLVM.orc_object_layer_add_object_file(obj_layer, dylib, object)
+  end
+
   def lookup(name : String) : Void*
     LLVM.assert LibLLVM.orc_lljit_lookup(self, out address, name.check_no_null_byte)
     Pointer(Void).new(address)

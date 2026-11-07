@@ -608,7 +608,7 @@ describe "Code gen: proc" do
   end
 
   it "gets proc to lib fun with parameter types" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(8))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(8)
       #include <stdint.h>
 
       int32_t foo(int32_t x, int32_t y) {
@@ -625,7 +625,7 @@ describe "Code gen: proc" do
   end
 
   it "gets proc to lib fun with compatible parameter types" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(0x1235))
+    test_c(<<-C, <<-CRYSTAL, UInt64).should eq(0x1235)
       void *foo(void *x) {
         return (void *)((char *)x + 1);
       }
@@ -641,7 +641,7 @@ describe "Code gen: proc" do
   end
 
   it "gets proc to lib fun with compatible `#to_unsafe` type" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(42))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(42)
       #include <stdint.h>
 
       int32_t foo(int32_t x) {
@@ -664,7 +664,7 @@ describe "Code gen: proc" do
   end
 
   it "gets proc to variadic lib fun with parameter types" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(1110))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(1110)
       #include <stdarg.h>
       #include <stdint.h>
 
@@ -687,7 +687,7 @@ describe "Code gen: proc" do
   end
 
   it "gets same pointer from proc pointers to lib fun with compatible types" do
-    test_c(<<-C, <<-CRYSTAL, &.to_b.should be_true)
+    test_c(<<-C, <<-CRYSTAL, Bool).should be_true
       void foo(void *x) {
       }
       C
@@ -695,10 +695,18 @@ describe "Code gen: proc" do
         fun foo(x : Void*)
       end
 
+      struct Proc
+        def pointer
+          func = self
+          ptr = pointerof(func).as({Void*, Void*}*)
+          ptr.value[0]
+        end
+      end
+
       a = ->LibFoo.foo
       b = ->LibFoo.foo(Void*)
       c = ->LibFoo.foo(UInt8*)
-      a.pointer == b.pointer && a.pointer == c.pointer
+      a.pointer.address == b.pointer.address && a.pointer.address == c.pointer.address
       CRYSTAL
   end
 
