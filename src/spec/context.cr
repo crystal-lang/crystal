@@ -311,8 +311,8 @@ module Spec
       add_example(description, file, line, end_line, focus, tags, block)
     end
 
-    def pending(description, file, line, end_line, focus, tags)
-      add_example(description, file, line, end_line, focus, tags, nil)
+    def pending(description, file, line, end_line, tags)
+      add_example(description, file, line, end_line, false, tags, nil)
     end
 
     private def add_example(description, file, line, end_line, focus, tags, block)
