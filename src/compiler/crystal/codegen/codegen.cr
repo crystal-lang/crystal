@@ -928,7 +928,13 @@ module Crystal
         abi_info = abi_info(target_def)
         abi_ret_type = abi_info.return_type
         if cast = abi_ret_type.cast
-          casted_last = pointer_cast @last, cast.pointer
+          if return_type.passed_by_value?
+            casted_last = pointer_cast @last, cast.pointer
+          else
+            # For types like i128 on MinGW-w64 `@last` isn't a pointer
+            casted_last = alloca cast
+            store @last, pointer_cast(casted_last, abi_ret_type.type.pointer)
+          end
           last = load cast, casted_last
           ret last
           return

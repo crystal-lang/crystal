@@ -568,13 +568,13 @@ class Crystal::CodeGenVisitor
       end
     else
       abi_info = target_def.abi_info? ? abi_info(target_def) : nil
-      sret = abi_info && sret?(abi_info)
 
-      # If it's an extern struct on a def that must be codegened with C ABI
+      # If it's a type on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
-      if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
+      if target_def.c_calling_convention? && abi_info && !context.fun.attributes(index + 1).by_val?
         # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
-        if abi_info.try &.arg_types[index - (sret ? 1 : 0)].kind.indirect?
+        sret = sret?(abi_info)
+        if abi_info.arg_types[index - (sret ? 1 : 0)].kind.indirect?
           value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(value, var_type)
         else
