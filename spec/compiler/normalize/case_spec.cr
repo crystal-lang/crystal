@@ -61,6 +61,30 @@ describe "Normalize: case" do
     assert_expand "case x; when .!; 2; end", "__temp_1 = x\nif !__temp_1\n  2\nend"
   end
 
+  it "normalizes case with chained call to implicit obj" do
+    assert_expand "case x; when .foo.bar; 2; end", "__temp_1 = x\nif __temp_1.foo.bar\n  2\nend"
+  end
+
+  it "normalizes case with binary operator on implicit call" do
+    assert_expand "case x; when .foo > 1; 2; end", "__temp_1 = x\nif __temp_1.foo > 1\n  2\nend"
+  end
+
+  it "normalizes case with && on implicit call" do
+    assert_expand "case x; when .foo && y; 2; end", "__temp_1 = x\nif __temp_1.foo && y\n  2\nend"
+  end
+
+  it "normalizes case with chained is_a? on implicit call" do
+    assert_expand "case x; when .foo.is_a?(T); 2; end", "__temp_1 = x\nif __temp_1.foo.is_a?(T)\n  2\nend"
+  end
+
+  it "normalizes case with call chained on negated implicit obj" do
+    assert_expand "case x; when .!.foo; 2; end", "__temp_1 = x\nif (!__temp_1).foo\n  2\nend"
+  end
+
+  it "doesn't replace implicit obj of nested case in arguments" do
+    assert_expand "case x; when .foo(case y; when .bar; 1; end) > 2; 3; end", "__temp_1 = x\nif (__temp_1.foo(case y\nwhen .bar\n  1\nend)) > 2\n  3\nend"
+  end
+
   it "normalizes case with assignment" do
     assert_expand "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end
