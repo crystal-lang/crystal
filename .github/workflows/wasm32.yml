@@ -25,6 +25,15 @@ jobs:
         with:
           crystal: 1.22.2
 
+      - name: "Install LLVM 24"
+        run: |
+          curl -sL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/resolute/ llvm-toolchain-resolute main
+          sudo apt-get install -qy llvm-24-dev
+
+      - name: "Build Crystal with LLVM 24"
+        run: make crystal LLVM_CONFIG=llvm-config-24
+
       - name: "Install WASI SDK"
         uses: bytecodealliance/setup-wasi-sdk-action@77d09f3df1e8da344d8403cf8631af8977938b4c # v1.0.0
         id: wasi-sdk

@@ -394,9 +394,9 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    {% if flag?(:wasm32) %}
+    {% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
-        # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
+        # NOTE: can only enable WASM exception handling with the LLVM C API 24+
       end
     {% else %}
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
