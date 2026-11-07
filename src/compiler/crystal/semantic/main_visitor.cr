@@ -1719,6 +1719,7 @@ module Crystal
         if loc = named_arg.location
           assign_call.location = loc
           assign_call.name_location = loc
+          assign_call.name_size = named_arg.name.size
         end
         exps << assign_call
       end

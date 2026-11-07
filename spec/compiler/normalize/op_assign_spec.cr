@@ -109,3 +109,39 @@ private def assert_name_location(node, line_number, column_number, spec_file = _
   name_location.line_number.should eq(line_number), file: spec_file, line: spec_line
   name_location.column_number.should eq(column_number), file: spec_file, line: spec_line
 end
+
+private class CallCollector < Crystal::Visitor
+  getter calls = [] of Crystal::Call
+
+  def visit(node : Crystal::Call)
+    @calls << node
+    true
+  end
+
+  def visit(node : Crystal::ASTNode)
+    true
+  end
+end
+
+private def normalized_calls(source)
+  collector = CallCollector.new
+  Program.new.normalize(Parser.parse(source)).accept(collector)
+  collector.calls
+end
+
+describe "Normalize: op assign name size" do
+  {
+    "a **= 1", "a.foo **= 1", "a.foo ||= 1", "a.foo &&= 1", "a.foo += 1",
+    "a[0] **= 1", "a[0] ||= 1", "a[0] &&= 1", "a[0] += 1",
+  }.each do |source|
+    it "uses the size of the operator for #{source.inspect}" do
+      source = "a = 1; #{source}"
+      operator = source.split(' ')[-2]
+      column = source.rindex!(operator) + 1
+
+      calls = normalized_calls(source).select { |call| call.name_location.try(&.column_number) == column }
+      calls.should_not be_empty
+      calls.map(&.name_size).uniq!.should eq([operator.size])
+    end
+  end
+end

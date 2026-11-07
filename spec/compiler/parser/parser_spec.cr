@@ -3952,6 +3952,52 @@ module Crystal
       source_between(source, node.name_location, node.name_end_location).should eq("bar")
     end
 
+    {
+      "a < b"       => "<",
+      "a <= b"      => "<=",
+      "a >= b"      => ">=",
+      "a == b"      => "==",
+      "a != b"      => "!=",
+      "a === b"     => "===",
+      "a =~ b"      => "=~",
+      "a <=> b"     => "<=>",
+      "a.<=(b)"     => "<=",
+      "a.==(b)"     => "==",
+      "a.[](1)"     => "[]",
+      "a.[]=(1, 2)" => "[]=",
+      "a.foo = 1"   => "foo",
+      "a.foo=(1)"   => "foo",
+      "-a"          => "-",
+    }.each do |source, name|
+      it "sets correct location of call name in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq(name)
+      end
+    end
+
+    it "sets correct location of call name in setter with implicit object" do
+      ["foo &.bar = 1", "foo &.bar=(1)"].each do |source|
+        node = Parser.parse(source).as(Call).block.should_not(be_nil).body.as(Call)
+        node.name.should eq("bar=")
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+    end
+
+    ["a[1]", "a[1]?", "a[1] = 2", "foo &.[1] = 2", "foo &.bar[1] = 2"].each do |source|
+      it "doesn't set name size of index call in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        node = node.block.should_not(be_nil).body.as(Call) if node.block
+        node.name_size.should eq(0)
+        node.name_end_location.should be_nil
+      end
+    end
+
+    it "retains name size when cloning a call" do
+      Parser.parse("a == b").clone.name_size.should eq(2)
+      Parser.parse("a.foo = 1").clone.name_size.should eq(3)
+      Parser.parse("a[1]").clone.name_size.should eq(0)
+    end
+
     it "sets correct location of element in array literal" do
       source = "%i(foo bar)"
       elements = Parser.new(source).parse.as(ArrayLiteral).elements

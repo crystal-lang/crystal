@@ -927,7 +927,7 @@ module Crystal
       end
 
       if target.is_a?(Call)
-        target.name = "#{target.name}="
+        target.make_setter
         target.args << value
         target
       else
