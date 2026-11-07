@@ -1307,6 +1307,7 @@ module Crystal
       else
         newline
         accept_with_indent node.body
+        write_extra_newlines (node.body.nop? ? node.location : node.body.end_location), node.end_location
       end
 
       if single_line_block
