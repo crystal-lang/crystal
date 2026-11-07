@@ -38,6 +38,43 @@ describe "Code gen: hierarchy-dependent type filters" do
     end
   end
 
+  it "keeps shared receiver and argument dependencies across union receiver lookup" do
+    run(<<-CRYSTAL).to_i.should eq(48)
+      module Base
+        def read(value : Good)
+          value.value
+        end
+      end
+
+      module Other
+        def read(value : Good)
+          value.value
+        end
+      end
+
+      class Good(T)
+        include Base
+
+        def value
+          sizeof(T)
+        end
+      end
+
+      class Alternate
+        include Other
+      end
+
+      def foo(receiver : Base | Other, value : Base)
+        receiver.read(value)
+      end
+
+      receiver = Good(Int32).new.as(Base | Other)
+      first = foo(receiver, Good(Int32).new.as(Base))
+      second = foo(receiver, Good(Int64).new.as(Base))
+      (first &* 10) &+ second
+      CRYSTAL
+  end
+
   it "updates narrowing in a cached method when a generic module gains including types" do
     run(<<-CRYSTAL).to_i.should eq(48)
       module Base(T)
