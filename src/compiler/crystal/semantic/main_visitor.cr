@@ -2724,6 +2724,8 @@ module Crystal
     end
 
     def visit(node : TypeOf)
+      @typed_def.try &.depends_on_typing_time = true
+
       # A typeof shouldn't change the type of variables:
       # so we keep the ones before it and restore them at the end
       old_vars = @vars.dup

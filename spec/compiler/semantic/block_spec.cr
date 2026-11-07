@@ -1604,4 +1604,113 @@ describe "Block inference" do
       Foo.new.bar(1_i64) { "hi" }
       CRYSTAL
   end
+
+  it "doesn't type the targets of a call with a block again when the receiver's hierarchy grows" do
+    result = semantic(<<-CRYSTAL)
+      abstract class Foo
+        abstract def each(& : Int32 ->)
+      end
+
+      class Bar(T) < Foo
+        def each(& : Int32 ->)
+          yield 1
+        end
+      end
+
+      foo = Bar(Int32).new.as(Foo)
+      foo.each { |x| x }
+      Bar(Char).new
+      Bar(Bool).new
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions[-3].as(Call)
+    call.target_defs.should_not(be_nil).size.should eq(3)
+
+    block = call.block.should_not be_nil
+    block.binder.should_not(be_nil).@yields.size.should eq(3)
+    block.args.first.dependencies.size.should eq(1)
+  end
+
+  it "types the targets of a call with a block again if they expanded a macro, when the receiver's hierarchy grows" do
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not String"
+      abstract class Foo
+        abstract def each(& : Int32 ->)
+      end
+
+      class Bar(T) < Foo
+        def each(& : Int32 ->)
+          {% if T == Int32 && Foo.subclasses.size > 2 %}
+            yield "wrong"
+          {% else %}
+            yield 1
+          {% end %}
+        end
+      end
+
+      def use(foo : Foo)
+        foo.each { |x| x }
+      end
+
+      use Bar(Int32).new.as(Foo)
+      use Bar(Char).new.as(Foo)
+      CRYSTAL
+  end
+
+  it "types the targets of a call with a block again if they called a macro, when the receiver's hierarchy grows" do
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not String"
+      macro yield_value
+        {% if @type.type_vars.first == Int32 && Foo.subclasses.size > 2 %}
+          yield "wrong"
+        {% else %}
+          yield 1
+        {% end %}
+      end
+
+      abstract class Foo
+        abstract def each(& : Int32 ->)
+      end
+
+      class Bar(T) < Foo
+        def each(& : Int32 ->)
+          yield_value
+        end
+      end
+
+      def use(foo : Foo)
+        foo.each { |x| x }
+      end
+
+      use Bar(Int32).new.as(Foo)
+      use Bar(Char).new.as(Foo)
+      CRYSTAL
+  end
+
+  it "types the targets of a call with a block again if a call with a block in them expanded a macro, when the receiver's hierarchy grows" do
+    assert_error <<-CRYSTAL, "argument #1 of yield expected to be Int32, not String"
+      abstract class Foo
+        abstract def each(& : Int32 ->)
+      end
+
+      def yield_value(value : U, & : Int32 ->) forall U
+        {% if U.type_vars.first == Int32 && Foo.subclasses.size > 2 %}
+          yield "wrong"
+        {% else %}
+          yield 1
+        {% end %}
+      end
+
+      class Bar(T) < Foo
+        def each(& : Int32 ->)
+          yield_value(self) { |x| yield x }
+        end
+      end
+
+      def use(foo : Foo)
+        foo.each { |x| x }
+      end
+
+      use Bar(Int32).new.as(Foo)
+      use Bar(Char).new.as(Foo)
+      CRYSTAL
+  end
 end
