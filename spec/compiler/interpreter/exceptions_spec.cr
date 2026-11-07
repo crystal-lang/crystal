@@ -1,12 +1,12 @@
 {% skip_file if flag?(:without_interpreter) %}
 require "./spec_helper"
 
-private def interpret_exception_flow(code)
+private def def_raise
   # Exercise real VM exception propagation without stdlib backtrace setup.
-  interpret(<<-CRYSTAL + "\n" + code)
-    @[Primitive(:interpreter_raise_without_backtrace)]
-    def raise(exception : Exception) : NoReturn; end
-    CRYSTAL
+  <<-CRYSTAL
+  @[Primitive(:interpreter_raise_without_backtrace)]
+  def raise(exception : Exception) : NoReturn; end
+  CRYSTAL
 end
 
 describe Crystal::Repl::Interpreter do
@@ -41,7 +41,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
+          #{def_raise}
           a = begin
             if 1 == 1
               raise Exception.new
@@ -61,7 +62,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues anything, does ensure when an exception is rescued" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(3)
+      interpret(<<-CRYSTAL).should eq(3)
+          #{def_raise}
           a = 0
           b = 0
 
@@ -78,7 +80,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "raises and rescues specific exception type" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
+          #{def_raise}
           class Ex1 < Exception; end
           class Ex2 < Exception; end
 
@@ -97,7 +100,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "captures exception in variable" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
+          #{def_raise}
           class Ex1 < Exception
             def value; @value; end
 
@@ -118,7 +122,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "executes ensure when exception is raised in body" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
+          #{def_raise}
           a = 0
 
           begin
@@ -135,7 +140,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "executes ensure when exception is raised in rescue" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(10)
+      interpret(<<-CRYSTAL).should eq(10)
+          #{def_raise}
           a = 0
 
           begin
@@ -189,7 +195,8 @@ describe Crystal::Repl::Interpreter do
     end
 
     it "does ensure for else when else raises" do
-      interpret_exception_flow(<<-CRYSTAL).should eq(2)
+      interpret(<<-CRYSTAL).should eq(2)
+          #{def_raise}
           x = 1
 
           begin
