@@ -215,7 +215,9 @@ module Crystal
       when Call
         assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
         targets << assign
-        values << assign.args.pop
+        value = assign.args.pop
+        raise %(unexpected token: "*"), value.location.not_nil! if value.is_a?(Splat)
+        values << value
       else
         raise "BUG: multi_assign index expression can only be Assign or Call"
       end
