@@ -93,7 +93,7 @@ module LLVM::ValueMethods
   end
 
   def global_set_metadata(kind : String, metadata)
-    kind = LibLLVM.get_md_kind_id_in_context(type.context, kind, kind.bytesize)
+    kind = LibLLVM.get_md_kind_id_in_context(LibLLVM.get_type_context(type), kind, kind.bytesize)
     global_set_metadata(kind, metadata)
   end
 
