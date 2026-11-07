@@ -51,7 +51,7 @@ module Crystal::System::Socket
 
   private def initialize_handle(fd, blocking = nil)
     {% if Crystal::EventLoop.has_constant?(:Polling) %}
-      @__evloop_data = Crystal::EventLoop::Polling::Arena::INVALID_INDEX
+      @__poll_descriptor = Crystal::EventLoop::Polling::PollDescriptor.new
     {% end %}
   end
 

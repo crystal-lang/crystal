@@ -11,7 +11,7 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
     false
   end
 
-  getter operations = [] of {Symbol, Int32, Arena::Index | Bool}
+  getter operations = [] of {Symbol, IO, Nil | Bool}
 
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
   end
@@ -19,89 +19,105 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
   def interrupt : Nil
   end
 
-  protected def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
-    operations << {:add, fd, index}
+  protected def system_add(io) : RegisteredEvents
+    operations << {:add, io, nil}
     RegisteredEvents::READ
   end
 
-  protected def system_del(fd : Int32, closing = true) : Nil
-    operations << {:del, fd, closing}
+  protected def system_del(io, closing = true) : Nil
+    operations << {:del, io, closing}
   end
 
-  protected def system_del(fd : Int32, closing = true, &) : Nil
-    operations << {:del, fd, closing}
+  protected def system_del(io, closing = true, &) : Nil
+    operations << {:del, io, closing}
   end
 
   private def system_set_timer(time : Time::Instant?) : Nil
   end
 end
 
-describe Crystal::EventLoop::Polling::Waiters do
+describe Crystal::EventLoop::Polling::PollDescriptor do
+  it "allows at most one reader and one writer" do
+    pd = Crystal::EventLoop::Polling::PollDescriptor.new
+    reader = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
+    writer = Crystal::EventLoop::Polling::Event.new(:io_write, Fiber.current)
+
+    pd.empty?.should be_true
+    pd.@reader.add(pointerof(reader)).should be_true
+    pd.@writer.add(pointerof(writer)).should be_true
+    pd.empty?.should be_false
+
+    pd.@reader.delete(pointerof(reader))
+    pd.empty?.should be_false
+    pd.@writer.delete(pointerof(writer))
+    pd.empty?.should be_true
+  end
+
   describe "#take_ownership" do
     it "associates a poll descriptor to an evloop instance" do
-      fd = Int32::MAX
+      io = IO::FileDescriptor.new(Int32::MAX)
       pd = Crystal::EventLoop::Polling::PollDescriptor.new
-      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
       evloop = Crystal::EventLoop::Polling::FakeLoop.new
 
-      pd.take_ownership(evloop, fd, index)
+      pd.take_ownership(evloop, io)
       pd.@event_loop.should be(evloop)
 
       evloop.operations.should eq([
-        {:add, fd, index},
+        {:add, io, nil},
       ])
     end
 
     it "moves a poll descriptor to another evloop instance" do
-      fd = Int32::MAX
+      io = IO::FileDescriptor.new(Int32::MAX)
       pd = Crystal::EventLoop::Polling::PollDescriptor.new
-      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
 
       evloop1 = Crystal::EventLoop::Polling::FakeLoop.new
       evloop2 = Crystal::EventLoop::Polling::FakeLoop.new
 
-      pd.take_ownership(evloop1, fd, index)
-      pd.take_ownership(evloop2, fd, index)
+      pd.take_ownership(evloop1, io)
+      pd.take_ownership(evloop2, io)
 
       pd.@event_loop.should be(evloop2)
 
       evloop1.operations.should eq([
-        {:add, fd, index},
-        {:del, fd, false},
+        {:add, io, nil},
+        {:del, io, false},
       ])
       evloop2.operations.should eq([
-        {:add, fd, index},
+        {:add, io, nil},
       ])
     end
 
-    it "can't move to the current evloop" do
-      fd = Int32::MAX
+    it "associates a poll descriptor once to the same evloop instance" do
+      io = IO::FileDescriptor.new(Int32::MAX)
       pd = Crystal::EventLoop::Polling::PollDescriptor.new
-      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
 
       evloop = Crystal::EventLoop::Polling::FakeLoop.new
 
-      pd.take_ownership(evloop, fd, index)
-      expect_raises(Exception) { pd.take_ownership(evloop, fd, index) }
+      pd.take_ownership(evloop, io)
+      pd.take_ownership(evloop, io)
+
+      evloop.operations.should eq([
+        {:add, io, nil},
+      ])
     end
 
     it "can't move with pending waiters" do
-      fd = Int32::MAX
+      io = IO::FileDescriptor.new(Int32::MAX)
       pd = Crystal::EventLoop::Polling::PollDescriptor.new
-      index = Crystal::EventLoop::Polling::Arena::Index.new(fd, 0)
       event = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
 
       evloop1 = Crystal::EventLoop::Polling::FakeLoop.new
-      pd.take_ownership(evloop1, fd, index)
-      pd.@readers.add(pointerof(event))
+      pd.take_ownership(evloop1, io)
+      pd.@reader.add(pointerof(event))
 
       evloop2 = Crystal::EventLoop::Polling::FakeLoop.new
-      expect_raises(RuntimeError) { pd.take_ownership(evloop2, fd, index) }
+      expect_raises(RuntimeError) { pd.take_ownership(evloop2, io) }
 
       pd.@event_loop.should be(evloop1)
 
       evloop1.operations.should eq([
-        {:add, fd, index},
+        {:add, io, nil},
       ])
       evloop2.operations.should be_empty
     end
