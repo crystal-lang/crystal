@@ -653,6 +653,7 @@ describe "Lexer" do
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
+  assert_syntax_error "'\\u{10FFFF 30}'", "expected '}' to close unicode escape"
   assert_syntax_error "'\\uD800'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error "'\\uDFFF'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error "'\\u{D800}'", "invalid unicode codepoint (surrogate half)"
