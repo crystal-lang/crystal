@@ -450,6 +450,12 @@ module Crystal
   end
 
   class Cast
+    include HierarchyObserver
+
+    def on_new_subclass
+      update
+    end
+
     property? upcast = false
 
     def update(from = nil)
@@ -479,6 +485,8 @@ module Crystal
       @upcast = false
 
       if obj_type && !(obj_type.pointer? || to_type.pointer?)
+        observe_hierarchy(obj_type)
+        observe_hierarchy(to_type)
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an
@@ -506,6 +514,12 @@ module Crystal
   end
 
   class NilableCast
+    include HierarchyObserver
+
+    def on_new_subclass
+      update
+    end
+
     property? upcast = false
     getter! non_nilable_type : Type
 
@@ -536,6 +550,8 @@ module Crystal
       @upcast = false
 
       if obj_type
+        observe_hierarchy(obj_type)
+        observe_hierarchy(to_type)
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an

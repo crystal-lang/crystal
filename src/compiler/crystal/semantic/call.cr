@@ -3,7 +3,7 @@ require "../types"
 require "./type_lookup"
 
 class Crystal::Call
-  include SubclassObserver
+  include HierarchyObserver
 
   property! scope : Type
   property with_scope : Type?
@@ -190,6 +190,11 @@ class Crystal::Call
   end
 
   def lookup_matches_without_splat(arg_types, named_args_types, with_autocast)
+    # Restrictions can narrow an argument to the currently instantiated members
+    # of its hierarchy, even when the receiver and argument identities are stable.
+    arg_types.each { |type| observe_hierarchy(type) }
+    named_args_types.try &.each { |arg| observe_hierarchy(arg.type) }
+
     if obj = @obj
       lookup_matches_in(obj.type, arg_types, named_args_types, with_autocast: with_autocast)
     elsif name == "super"
@@ -1260,17 +1265,10 @@ class Crystal::Call
   end
 
   def attach_subclass_observer(type : Type)
-    if subclass_notifier = @subclass_notifier
-      # If the new notifier is a subtype of (or equal to) the current one,
-      # keep observing the wider type. Migrating to the narrower type would
-      # stop us from being woken when sibling subtypes are later added to
-      # the wider one — leaving the dispatch table stale (#16947).
-      return if type.implements?(subclass_notifier)
-      subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
-    end
-
-    type.as(SubclassObservable).add_subclass_observer(self)
-    @subclass_notifier = type
+    # Receiver and argument dependencies can refer to the same hierarchy.
+    # Keep them in one subscription set so changing the receiver cannot remove
+    # a subscription that is still required by an argument (or a wider receiver).
+    subscribe_to_hierarchy(type)
   end
 
   def super?

@@ -6,6 +6,11 @@ describe "Code gen: hierarchy-dependent type filters" do
     "responds_to?" => "if value.responds_to?(:value); value.value; else; 0; end",
     "case"         => "case value; when Good; value.value; else; 0; end",
     "negation"     => "if !value.is_a?(Good); 0; else; value.value; end",
+    "as?"          => "if narrowed = value.as?(Good); narrowed.value; else; 0; end",
+    "restriction"  => "extract(value)",
+    "named arg"    => "extract(value: value)",
+    "splat"        => "extract(*{value})",
+    "double splat" => "extract(**{value: value})",
   }.each do |operation, body|
     it "updates #{operation} narrowing in a cached method when the source hierarchy grows" do
       run(<<-CRYSTAL).to_i.should eq(48)
@@ -16,6 +21,10 @@ describe "Code gen: hierarchy-dependent type filters" do
           def value
             sizeof(U)
           end
+        end
+
+        def extract(value : Good)
+          value.value
         end
 
         def foo(value : Base(Int32))

@@ -1059,7 +1059,41 @@ module Crystal
     abstract def on_new_subclass
   end
 
-  # Recompute dependent calls and filters when a hierarchy grows. Ordinary
+  # Type identity does not change when a hierarchy gains concrete members.
+  # Consumers of its membership must subscribe separately from AST type bindings.
+  module HierarchyObserver
+    include SubclassObserver
+
+    @observed_hierarchies : Array(Type)?
+
+    private def observe_hierarchy(type : Type)
+      case type
+      when AliasType
+        observe_hierarchy(type.remove_alias)
+      when VirtualType
+        subscribe_to_hierarchy(type.base_type)
+      when UnionType
+        type.union_types.each { |member| observe_hierarchy(member) }
+      when TupleInstanceType
+        type.tuple_types.each { |member| observe_hierarchy(member) }
+      when NamedTupleInstanceType
+        type.entries.each { |entry| observe_hierarchy(entry.type) }
+      when GenericType, NonGenericModuleType
+        subscribe_to_hierarchy(type)
+      end
+    end
+
+    private def subscribe_to_hierarchy(type : Type)
+      return unless type.is_a?(SubclassObservable)
+      observed = @observed_hierarchies ||= [] of Type
+      unless observed.includes?(type)
+        observed << type
+        type.add_subclass_observer(self)
+      end
+    end
+  end
+
+  # Recompute dependent calls, casts and filters when a hierarchy grows. Ordinary
   # subclasses are known after the first pass, but generic instantiations can
   # introduce new concrete members later during type inference.
   module SubclassObservable

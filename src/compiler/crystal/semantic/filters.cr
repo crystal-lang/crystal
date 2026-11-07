@@ -1,8 +1,6 @@
 module Crystal
   class TypeFilteredNode < ASTNode
-    include SubclassObserver
-
-    @observed_hierarchies : Array(Type)?
+    include HierarchyObserver
 
     def initialize(@filter : TypeFilter, @node : ASTNode)
       @dependencies.push @node
@@ -21,23 +19,6 @@ module Crystal
 
     def on_new_subclass
       update(@node)
-    end
-
-    # A type's identity can stay fixed while its concrete members grow. Filtering
-    # must be recomputed on that change even when the input node's type is stable.
-    private def observe_hierarchy(type)
-      case type
-      when VirtualType
-        observe_hierarchy(type.base_type)
-      when UnionType
-        type.union_types.each { |member| observe_hierarchy(member) }
-      when SubclassObservable
-        observed = @observed_hierarchies ||= [] of Type
-        unless observed.includes?(type)
-          observed << type
-          type.add_subclass_observer(self)
-        end
-      end
     end
 
     def clone_without_location
