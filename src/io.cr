@@ -118,7 +118,7 @@ abstract class IO
   end
 
   protected def check_open
-    raise IO::Error.new "Closed stream" if closed?
+    raise IO::ClosedError.new if closed?
   end
 
   # Flushes buffered data, if any.
