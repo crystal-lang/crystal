@@ -5699,8 +5699,15 @@ class String
   # ```
   # "llo!".ensure_prefix("He")   # => "Hello!"
   # "Hello!".ensure_prefix("He") # => "Hello!"
-  # "ello".ensure_prefix('H')    # => "Hello!"
+  # "ello!".ensure_prefix('H')   # => "Hello!"
   # "Hello!".ensure_prefix('H')  # => "Hello!"
+  # ```
+  #
+  # The *prefix* is prepended in full, instead of filling in the missing
+  # characters to "ensure" the *prefix*.
+  #
+  # ```
+  # "ello!".ensure_prefix("He") # => "Heello!"
   # ```
   def ensure_prefix(prefix : String | Char) : self
     return self if starts_with?(prefix)
@@ -5716,6 +5723,13 @@ class String
   # "Hello!".ensure_suffix("o!") # => "Hello!"
   # "Hello".ensure_suffix('!')   # => "Hello!"
   # "Hello!".ensure_suffix('!')  # => "Hello!"
+  # ```
+  #
+  # The *suffix* is appended in full, instead of filling in the missing
+  # characters to "ensure" the *suffix*.
+  #
+  # ```
+  # "Hello".ensure_suffix("o!") # => "Helloo!"
   # ```
   def ensure_suffix(suffix : String | Char) : self
     return self if ends_with?(suffix)

@@ -2,19 +2,6 @@ require "./codegen"
 
 module Crystal
   class CodeGenVisitor
-    # workaround for `LLVM::Builder` not being GC'ed (#13250)
-    private class DIBuilder
-      def initialize(mod : LLVM::Module)
-        @builder = LLVM::DIBuilder.new(mod)
-      end
-
-      def finalize
-        @builder.dispose
-      end
-
-      forward_missing_to @builder
-    end
-
     record FunMetadata, filename : String, metadata : LibLLVM::MetadataRef
 
     alias DebugFilename = Crystal::VirtualFile | String?
@@ -26,8 +13,8 @@ module Crystal
     @debug_types_per_module = {} of LLVM::Module => Hash(Type, LibLLVM::MetadataRef?)
 
     def di_builder(llvm_module = @llvm_mod || @main_mod)
-      di_builders = @di_builders ||= {} of LLVM::Module => DIBuilder
-      di_builders[llvm_module] ||= DIBuilder.new(llvm_module).tap do |di_builder|
+      di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
+      di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module).tap do |di_builder|
         file, dir = file_and_dir(llvm_module.name == "" ? "main" : llvm_module.name)
         # @debug.variables? is set to true if parameter --debug is set in command line.
         # This flag affects only debug variables generation. It sets Optimized parameter to false.

@@ -520,8 +520,8 @@ abstract struct Enum
                          max_charsize * 4
                        end
       %}
-      buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
-      normalized = ::Enum.normalize_for_parse?(string, buffer.to_slice, {{ max_charsize }})
+      buffer = uninitialized UInt8[{{ max_bytesize + 4 }}]
+      normalized = ::Enum.normalize_for_parse?(string, buffer.to_slice, {{ max_charsize }}, {{ max_bytesize }})
       return nil unless normalized
 
       # Temporarily map all constants to their normalized value in order to
@@ -550,12 +550,15 @@ abstract struct Enum
   #
   # Writes the normalized *string* that `.parse?` compares to the member names
   # into *buffer*, and returns the written bytes. Returns `nil` if *string* has
-  # more than *max_charsize* chars, not counting dashes and underscores.
+  # more than *max_charsize* chars, not counting dashes and underscores, or if
+  # the normalized string exceeds *max_bytesize* bytes. *buffer* must hold at
+  # least `max_bytesize + 4` bytes, as the size is checked before writing each
+  # char.
   #
   # Only `.parse?` is generated for each enum type: this method is not generic,
   # so it is compiled once, rather than inlining the blocks of `Char#downcase`
   # and `Char#each_byte` into every enum type's `.parse?`.
-  def self.normalize_for_parse?(string : String, buffer : Bytes, max_charsize : Int32) : Bytes?
+  def self.normalize_for_parse?(string : String, buffer : Bytes, max_charsize : Int32, max_bytesize : Int32) : Bytes?
     # The following is an optimized normalization. It is equivalent to
     # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
     appender = buffer.to_unsafe.appender
@@ -563,6 +566,7 @@ abstract struct Enum
     string.each_char do |char|
       next if char == '-' || char == '_'
       char_counter += 1
+      return nil if appender.size > max_bytesize
       return nil if char_counter > max_charsize
       char.downcase &.each_byte do |byte|
         appender << byte

@@ -188,7 +188,7 @@ require "./std/pretty_print_spec.cr"
 require "./std/proc_spec.cr"
 # require "./std/process/find_executable_spec.cr" (failed to run)
 require "./std/process_spec.cr"
-# require "./std/raise_spec.cr" (failed codegen)
+require "./std/raise_spec.cr"
 require "./std/random/isaac_spec.cr"
 require "./std/random/pcg32_spec.cr"
 require "./std/random/secure_spec.cr"

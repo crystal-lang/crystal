@@ -104,6 +104,13 @@ module Crystal
       nil
     end
 
+    def name_end_location
+      return unless loc = self.name_location
+      return unless (name_size = self.name_size).positive?
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
+    end
+
     def visibility=(visibility : Visibility)
     end
 
@@ -938,13 +945,6 @@ module Crystal
       clone
     end
 
-    def name_end_location
-      loc = @name_location
-      return unless loc
-
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
-    end
-
     # Returns `true` if this call has any arguments.
     #
     # Does not consider a block, only block argument.
@@ -1360,6 +1360,12 @@ module Crystal
     property doc : String?
     property parsed_annotations : Array(Annotation)?
 
+    # The location of the internal name, which differs from `#location`
+    # if the parameter has an external name (i.e. `baz` in `bar baz`).
+    # For instance/class variable parameters it points at the prefix
+    # (i.e. `@baz` in `bar @baz`).
+    property name_location : Location?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
@@ -1370,7 +1376,9 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg = Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg.name_location = name_location
+      arg
     end
 
     def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
