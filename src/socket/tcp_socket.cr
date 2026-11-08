@@ -47,9 +47,9 @@ class TCPSocket < IPSocket
     # the resolver, and the `connect_timeout` applies to each address
     # individually.
     #
-    # NOTE: The DNS resolution itself doesn't follow RFC 8305 (the AAAA and A
-    # queries aren't made in parallel); the addresses are resolved before any
-    # connection attempt starts.
+    # NOTE: The DNS resolution itself doesn't follow RFC 8305: the addresses
+    # are resolved with a single lookup that only returns once both the AAAA
+    # and A queries completed, before any connection attempt starts.
     def initialize(host : String, port, dns_timeout : Time::Span? = nil, connect_timeout = nil, {% if compare_versions(Crystal::VERSION, "1.5.0") >= 0 %} @[Deprecated("Use Socket.set_blocking instead.")] {% end %} blocking = nil, *, fast_fallback : Bool? = nil)
       addrinfos = Addrinfo.tcp(host, port, timeout: dns_timeout)
       fast_fallback = TCPSocket.fast_fallback? if fast_fallback.nil?
