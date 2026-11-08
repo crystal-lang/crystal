@@ -38,6 +38,9 @@ module Socket::HappyEyeballs
   # after *delay* without any attempt having succeeded. An address is skipped
   # when creating its socket raises.
   #
+  # The *connect_timeout* limits the whole race, not each attempt: every
+  # attempt times out at the same deadline, and no attempt starts after it.
+  #
   # Returns the first connected socket and closes all the other ones. Returns
   # the last error if every attempt failed, or `nil` if there are no addresses.
   # Only returns once every connection attempt has finished.
@@ -45,8 +48,9 @@ module Socket::HappyEyeballs
   # The socket must implement `#connect(addrinfo, timeout, &)` that yields the
   # error (if any) instead of raising, and `#close` that cancels a pending
   # connection attempt.
-  def self.connect(addrinfos : Indexable(Addrinfo), connect_timeout = nil, delay : Time::Span = CONNECTION_ATTEMPT_DELAY, & : Addrinfo -> T) : T | Exception | Nil forall T
+  def self.connect(addrinfos : Indexable(Addrinfo), connect_timeout : Time::Span? = nil, delay : Time::Span = CONNECTION_ATTEMPT_DELAY, & : Addrinfo -> T) : T | Exception | Nil forall T
     addrinfos = interleave(addrinfos)
+    deadline = Time.instant + connect_timeout if connect_timeout
 
     # buffered so attempts never block when reporting their result, even after
     # we stopped listening
@@ -59,6 +63,16 @@ module Socket::HappyEyeballs
       loop do
         # start the next connection attempt
         while index < addrinfos.size
+          if deadline
+            attempt_timeout = deadline - Time.instant
+            unless attempt_timeout.positive?
+              # too late to start another attempt: skip the remaining addresses
+              error = IO::TimeoutError.new("Connect timed out")
+              index = addrinfos.size
+              break
+            end
+          end
+
           addrinfo = addrinfos[index]
           index += 1
 
@@ -71,7 +85,7 @@ module Socket::HappyEyeballs
           end
 
           pending << socket
-          spawn_attempt(socket, addrinfo, connect_timeout, results)
+          spawn_attempt(socket, addrinfo, attempt_timeout, results)
           break
         end
 

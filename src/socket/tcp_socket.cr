@@ -27,8 +27,7 @@ class TCPSocket < IPSocket
     #
     # You may limit the DNS resolution time with `dns_timeout` and limit the
     # connection time to the remote server with `connect_timeout`. Both values
-    # should be `Time::Span`. The `connect_timeout` applies to each connection
-    # attempt individually.
+    # should be `Time::Span`.
     #
     # When *host* resolves to multiple addresses, the connection is established
     # following the Happy Eyeballs algorithm ([RFC 8305](https://www.rfc-editor.org/rfc/rfc8305)):
@@ -38,12 +37,15 @@ class TCPSocket < IPSocket
     # starts as soon as the previous one fails, or after 250 milliseconds
     # without the previous attempts having succeeded, in which case several
     # attempts race in parallel. The first established connection is used and
-    # all the other attempts are canceled.
+    # all the other attempts are canceled. The `connect_timeout` then limits
+    # the whole connection establishment: all the pending attempts time out
+    # at once, and no new attempt starts after it expired.
     #
     # Happy Eyeballs can be disabled with *fast_fallback* set to `false`, or
     # globally with `.fast_fallback=` (used when *fast_fallback* is `nil`), in
     # which case the addresses are tried sequentially in the order returned by
-    # the resolver.
+    # the resolver, and the `connect_timeout` applies to each address
+    # individually.
     #
     # NOTE: The DNS resolution itself doesn't follow RFC 8305 (the AAAA and A
     # queries aren't made in parallel); the addresses are resolved before any
@@ -90,6 +92,7 @@ class TCPSocket < IPSocket
   # unless *fast_fallback* is `false` (see `.new(String, _, Time::Span?)`). The
   # *host* and *port* are only used to build the error message.
   def initialize(addrinfos : Indexable(Addrinfo), host, port, *, connect_timeout = nil, fast_fallback : Bool = true, connection_attempt_delay : Time::Span = HappyEyeballs::CONNECTION_ATTEMPT_DELAY, blocking = nil)
+    connect_timeout = connect_timeout.seconds unless connect_timeout.is_a?(Time::Span?)
     if addrinfos.size < 2 || !fast_fallback
       # try each address in turn (no need for concurrent connection attempts
       # with a single address)

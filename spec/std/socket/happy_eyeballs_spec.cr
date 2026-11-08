@@ -24,9 +24,18 @@ private class FakeSocket
     when :fail
       yield Socket::ConnectError.new("Connection refused")
     when :stall
-      # wait for #close to cancel the attempt
-      @cancel.receive
-      yield IO::Error.new("Closed stream")
+      # wait for #close to cancel the attempt, or the timeout
+      if timeout
+        select
+        when @cancel.receive
+          yield IO::Error.new("Closed stream")
+        when timeout(timeout)
+          yield IO::TimeoutError.new("Connect timed out")
+        end
+      else
+        @cancel.receive
+        yield IO::Error.new("Closed stream")
+      end
     end
   ensure
     @finished = true
@@ -109,7 +118,11 @@ describe Socket::HappyEyeballs do
       sockets[0].closed?.should be_true
       sockets[0].finished?.should be_true
       sockets[1].closed?.should be_false
-      sockets.each(&.timeout.should(eq(2.seconds)))
+
+      # the timeout applies to the whole race
+      timeouts = sockets.map(&.timeout.should_not(be_nil))
+      timeouts[0].should be <= 2.seconds
+      timeouts[1].should be < timeouts[0]
     end
 
     it "lets an earlier attempt win after a later attempt started" do
@@ -131,6 +144,34 @@ describe Socket::HappyEyeballs do
       sockets[1].closed?.should be_true
       sockets[2].closed?.should be_true
       sockets[2].finished?.should be_true
+    end
+
+    it "times out the whole race at once" do
+      behaviors = {"::1" => :stall, "127.0.0.1" => :stall}
+      result, sockets = nil, nil
+      elapsed = Time.measure do
+        result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), behaviors, delay: 200.milliseconds, connect_timeout: 300.milliseconds)
+      end
+
+      # an individual timeout per attempt would take 200ms + 300ms
+      elapsed.should be >= 300.milliseconds
+      elapsed.should be < 450.milliseconds
+
+      result.should be_a(IO::TimeoutError)
+      sockets = sockets.should_not be_nil
+      sockets.size.should eq(2)
+      sockets.all?(&.finished?).should be_true
+    end
+
+    it "doesn't start attempts after the timeout" do
+      addresses = (1..20).map { |i| "127.0.0.#{i}" }
+      behaviors = addresses.to_h { |address| {address, :stall} }
+      list = addresses.map { |address| Socket::Addrinfo.tcp(address, 80).first }
+      result, sockets = happy_eyeballs(list, behaviors, delay: 10.milliseconds, connect_timeout: 50.milliseconds)
+
+      result.should be_a(IO::TimeoutError)
+      sockets.size.should be < 20
+      sockets.all?(&.finished?).should be_true
     end
 
     it "returns the last error and closes every socket when all attempts fail" do

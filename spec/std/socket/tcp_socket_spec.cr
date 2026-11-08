@@ -173,28 +173,24 @@ describe TCPSocket, tags: "network" do
       end
 
       it "starts the next attempt in parallel after the attempt delay" do
-        port = unused_local_tcp_port
+        with_stalled_address do |stalled|
+          TCPServer.open("127.0.0.1", 0) do |server|
+            addrinfos = [stalled, Socket::Addrinfo.tcp("127.0.0.1", server.local_address.port).first]
 
-        TCPServer.open("127.0.0.1", port) do |server|
-          addrinfos = [
-            # TEST-NET-1 (RFC 5737): never answers (or is unreachable)
-            Socket::Addrinfo.tcp("192.0.2.1", port).first,
-            Socket::Addrinfo.tcp("127.0.0.1", port).first,
-          ]
+            client = nil
+            elapsed = Time.measure do
+              client = TCPSocket.new(addrinfos, "example", 1234, connect_timeout: 30.seconds, connection_attempt_delay: 10.milliseconds)
+            end
+            elapsed.should be < 10.seconds
 
-          client = nil
-          elapsed = Time.measure do
-            client = TCPSocket.new(addrinfos, "example", port, connect_timeout: 30.seconds, connection_attempt_delay: 10.milliseconds)
+            client = client.should_not be_nil
+            client.remote_address.should eq(server.local_address)
+            client << "ping"
+            sock = server.accept
+            sock.gets(4).should eq("ping")
+            sock.close
+            client.close
           end
-          elapsed.should be < 10.seconds
-
-          client = client.should_not be_nil
-          client.remote_address.address.should eq("127.0.0.1")
-          client << "ping"
-          sock = server.accept
-          sock.gets(4).should eq("ping")
-          sock.close
-          client.close
         end
       end
 
@@ -233,6 +229,31 @@ describe TCPSocket, tags: "network" do
         end
       end
 
+      it "applies connect_timeout to the whole race" do
+        with_stalled_address do |stalled|
+          elapsed = Time.measure do
+            expect_raises(IO::TimeoutError) do
+              TCPSocket.new([stalled, stalled], "example", 1234, connect_timeout: 300.milliseconds,
+                connection_attempt_delay: 200.milliseconds)
+            end
+          end
+          # an individual timeout per attempt would take 200ms + 300ms
+          elapsed.should be >= 300.milliseconds
+          elapsed.should be < 450.milliseconds
+        end
+      end
+
+      it "applies connect_timeout to each address with fast_fallback: false" do
+        with_stalled_address do |stalled|
+          elapsed = Time.measure do
+            expect_raises(IO::TimeoutError) do
+              TCPSocket.new([stalled, stalled], "example", 1234, connect_timeout: 100.milliseconds, fast_fallback: false)
+            end
+          end
+          elapsed.should be >= 200.milliseconds
+        end
+      end
+
       it ".fast_fallback=" do
         TCPSocket.fast_fallback?.should be_true
 
@@ -257,18 +278,17 @@ describe TCPSocket, tags: "network" do
       it "connects with a subclass" do
         TCPServer.open("127.0.0.1", 0) do |server|
           port = server.local_address.port
-          addrinfos = [
-            Socket::Addrinfo.tcp("192.0.2.1", port).first,
-            Socket::Addrinfo.tcp("127.0.0.1", port).first,
-          ]
 
-          socket = TCPSocketSubclass.new(addrinfos, port)
-          begin
-            socket.initialized?.should be_true
-            socket.remote_address.should eq(server.local_address)
-            server.accept.close
-          ensure
-            socket.close
+          with_stalled_address do |stalled|
+            # wins the race against the stalled address
+            socket = TCPSocketSubclass.new([stalled, Socket::Addrinfo.tcp("127.0.0.1", port).first], port)
+            begin
+              socket.initialized?.should be_true
+              socket.remote_address.should eq(server.local_address)
+              server.accept.close
+            ensure
+              socket.close
+            end
           end
 
           socket = TCPSocketSubclass.new("localhost", port)
