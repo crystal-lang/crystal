@@ -39,22 +39,24 @@ module Crystal
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
-
+      builder = llvm_mod.new_builder
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # It seems the JIT doesn't like it if we return an empty type (struct {})
       llvm_context = llvm_mod.context
+
       main_return_type = main.type.return_type
       main_return_type = llvm_context.void if node.type.nil_type?
 
       wrapper_type = LLVM::Type.function([] of LLVM::Type, main_return_type)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
-        end
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
       end
 
       llvm_mod.verify
@@ -103,25 +105,27 @@ module Crystal
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
+      builder = llvm_mod.new_builder
 
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # void (*__evaluate_wrapper)(void*)
       wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          unless node.type.void? || node.type.nil_type?
-            out_ptr = func.params[0]
-            {% if LibLLVM::IS_LT_150 %}
-              out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
-            {% end %}
-            builder.store(ret, out_ptr)
-          end
-          builder.ret
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        unless node.type.void? || node.type.nil_type?
+          out_ptr = func.params[0]
+          {% if LibLLVM::IS_LT_150 %}
+            out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
+          {% end %}
+          builder.store(ret, out_ptr)
         end
+        builder.ret
       end
 
       llvm_mod.verify
@@ -306,6 +310,12 @@ module Crystal
       if @program.codegen_target.msvc?
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
+      elsif @program.codegen_target.wasm?
+        # The WASMEHPrepare pass needs the personality function to be declared
+        # and associated to every function with a catchpad, but it won't be
+        # linked or called at runtime.
+        @personality_name = "__gxx_wasm_personality_v0"
+        @main.personality_function = wasm_personality_fun.func
       else
         @personality_name = "__crystal_personality"
       end
@@ -389,6 +399,22 @@ module Crystal
 
     def configure_module(llvm_mod)
       llvm_mod.data_layout = @program.target_machine.data_layout
+
+      {% unless LibLLVM::IS_LT_240 %}
+        if @program.codegen_target.wasm?
+          # enable WASM exception handling (EH)
+          llvm_mod.add_flag(:error, "exception-model", "wasm")
+
+          # LLVM uses this tag for llvm.wasm.throw and typed catch pads. A weak
+          # definition allows separate codegen modules to share a single tag.
+          llvm_mod.inline_asm = <<-ASM
+            .tagtype __cpp_exception i32
+            .weak __cpp_exception
+            __cpp_exception:
+
+            ASM
+        end
+      {% end %}
 
       # enable branch authentication instructions (BTI)
       if @program.codegen_target.aarch64?

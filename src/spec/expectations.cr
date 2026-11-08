@@ -388,7 +388,7 @@ module Spec
       ::Spec::BeAExpectation({{type}}).new
     end
 
-    {% if flag?(:wasm32) %}
+    {% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
       # Runs the block and passes if it raises an exception of type `T` and the error message matches.
       #
       # If *message* is a string, it matches if the exception's error message contains that string.
@@ -396,7 +396,7 @@ module Spec
       #
       # It returns the rescued exception.
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
-        # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
+        # NOTE: can only enable WASM exception handling with the LLVM C API 24+
       end
     {% else %}
       # Runs the block and passes if it raises an exception of type `T` and the error message matches.

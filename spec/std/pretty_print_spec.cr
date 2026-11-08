@@ -263,6 +263,30 @@ describe PrettyPrint do
     end
     text.should eq("abc defghi\njkl")
   end
+
+  it "#key_value" do
+    String.build do |io|
+      PrettyPrint.format(io, 20) do |q|
+        q.key_value "name", ": ", "Crystal"
+      end
+    end.should eq(%(name: "Crystal"))
+
+    String.build do |io|
+      PrettyPrint.format(io, 10) do |q|
+        q.key_value "name", ": ", "Crystal"
+      end
+    end.should eq(%(name: \n "Crystal"))
+
+    String.build do |io|
+      PrettyPrint.format(io, 10) do |q|
+        q.group(1, "{", "}") do
+          q.key_value "a", "=", 1
+          q.comma
+          q.key_value "name", "=", "Crystal"
+        end
+      end
+    end.should eq(%({a=1,\n name=\n  "Crystal"}))
+  end
 end
 
 private class Tree
