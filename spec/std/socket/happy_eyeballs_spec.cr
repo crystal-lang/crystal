@@ -10,6 +10,8 @@ private class FakeSocket
   getter timeout : Time::Span?
 
   @cancel = Channel(Nil).new(1)
+  @release = Channel(Nil).new(1)
+  @released = false
 
   def initialize(@address, @behavior : Symbol)
   end
@@ -19,8 +21,13 @@ private class FakeSocket
     case @behavior
     when :success
       # connected
-    when :late_success
-      sleep 20.milliseconds
+    when :wait
+      # succeed once released (see #release), unless closed before
+      select
+      when @release.receive
+      when @cancel.receive
+        yield IO::Error.new("Closed stream")
+      end
     when :fail
       yield Socket::ConnectError.new("Connection refused")
     when :stall
@@ -41,6 +48,13 @@ private class FakeSocket
     @finished = true
   end
 
+  # Lets a `:wait` attempt succeed.
+  def release : Nil
+    return if @released
+    @released = true
+    @release.send(nil)
+  end
+
   def close : Nil
     return if @closed
     @closed = true
@@ -53,11 +67,17 @@ private def addrinfos(*addresses)
 end
 
 # Runs `HappyEyeballs.connect` with a fake socket per address, whose behavior
-# is given by *behaviors* (indexed by address).
-private def happy_eyeballs(addrinfos, behaviors : Hash(String, Symbol), delay = 10.milliseconds, connect_timeout = nil)
+# is given by *behaviors* (indexed by address). Creating the attempt for the
+# *release_on* address lets the previous `:wait` attempts succeed, which orders
+# events deterministically without relying on timers.
+#
+# The default *delay* is long so that the next attempt only starts on failure,
+# even when the event loop wakes up late (e.g. on CI).
+private def happy_eyeballs(addrinfos, behaviors : Hash(String, Symbol), delay = 10.seconds, connect_timeout = nil, release_on = nil)
   sockets = [] of FakeSocket
   result = Socket::HappyEyeballs.connect(addrinfos, connect_timeout, delay) do |addrinfo|
     address = addrinfo.ip_address.address
+    sockets.each(&.release) if address == release_on
     socket = FakeSocket.new(address, behaviors[address])
     sockets << socket
     socket
@@ -112,7 +132,8 @@ describe Socket::HappyEyeballs do
     end
 
     it "starts the next attempt in parallel after the delay and cancels the loser" do
-      result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), {"::1" => :stall, "127.0.0.1" => :success}, connect_timeout: 2.seconds)
+      result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), {"::1" => :stall, "127.0.0.1" => :success},
+        delay: 1.millisecond, connect_timeout: 10.seconds)
 
       result.should be(sockets[1])
       sockets[0].closed?.should be_true
@@ -121,12 +142,13 @@ describe Socket::HappyEyeballs do
 
       # the timeout applies to the whole race
       timeouts = sockets.map(&.timeout.should_not(be_nil))
-      timeouts[0].should be <= 2.seconds
+      timeouts[0].should be <= 10.seconds
       timeouts[1].should be < timeouts[0]
     end
 
     it "lets an earlier attempt win after a later attempt started" do
-      result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), {"::1" => :late_success, "127.0.0.1" => :stall}, delay: 1.millisecond)
+      result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), {"::1" => :wait, "127.0.0.1" => :stall},
+        delay: 1.millisecond, release_on: "127.0.0.1")
 
       sockets.size.should eq(2)
       result.should be(sockets[0])
@@ -137,7 +159,7 @@ describe Socket::HappyEyeballs do
 
     it "keeps an earlier attempt pending when a later attempt fails" do
       result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1", "::2"),
-        {"::1" => :late_success, "127.0.0.1" => :fail, "::2" => :stall}, delay: 1.millisecond)
+        {"::1" => :wait, "127.0.0.1" => :fail, "::2" => :stall}, delay: 1.millisecond, release_on: "::2")
 
       result.should be(sockets[0])
       sockets[0].closed?.should be_false
@@ -150,17 +172,20 @@ describe Socket::HappyEyeballs do
       behaviors = {"::1" => :stall, "127.0.0.1" => :stall}
       result, sockets = nil, nil
       elapsed = Time.measure do
-        result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), behaviors, delay: 200.milliseconds, connect_timeout: 300.milliseconds)
+        result, sockets = happy_eyeballs(addrinfos("::1", "127.0.0.1"), behaviors, delay: 1.millisecond, connect_timeout: 1.second)
       end
-
-      # an individual timeout per attempt would take 200ms + 300ms
-      elapsed.should be >= 300.milliseconds
-      elapsed.should be < 450.milliseconds
+      elapsed.should be >= 1.second
 
       result.should be_a(IO::TimeoutError)
       sockets = sockets.should_not be_nil
       sockets.size.should eq(2)
       sockets.all?(&.finished?).should be_true
+
+      # the later attempt only got the time remaining until the deadline (an
+      # individual timeout per attempt would give each attempt 1 second)
+      timeouts = sockets.map(&.timeout.should_not(be_nil))
+      timeouts[0].should be <= 1.second
+      timeouts[1].should be < timeouts[0]
     end
 
     it "doesn't start attempts after the timeout" do

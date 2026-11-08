@@ -233,13 +233,14 @@ describe TCPSocket, tags: "network" do
         with_stalled_address do |stalled|
           elapsed = Time.measure do
             expect_raises(IO::TimeoutError) do
-              TCPSocket.new([stalled, stalled], "example", 1234, connect_timeout: 300.milliseconds,
-                connection_attempt_delay: 200.milliseconds)
+              TCPSocket.new([stalled, stalled], "example", 1234, connect_timeout: 700.milliseconds,
+                connection_attempt_delay: 500.milliseconds)
             end
           end
-          # an individual timeout per attempt would take 200ms + 300ms
-          elapsed.should be >= 300.milliseconds
-          elapsed.should be < 450.milliseconds
+          # an individual timeout per attempt would take 500ms + 700ms (large
+          # margins since the event loop may wake up late on CI)
+          elapsed.should be >= 700.milliseconds
+          elapsed.should be < 1100.milliseconds
         end
       end
 
