@@ -310,6 +310,12 @@ module Crystal
       if @program.codegen_target.msvc?
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
+      elsif @program.codegen_target.wasm?
+        # The WASMEHPrepare pass needs the personality function to be declared
+        # and associated to every function with a catchpad, but it won't be
+        # linked or called at runtime.
+        @personality_name = "__gxx_wasm_personality_v0"
+        @main.personality_function = wasm_personality_fun.func
       else
         @personality_name = "__crystal_personality"
       end
@@ -393,6 +399,22 @@ module Crystal
 
     def configure_module(llvm_mod)
       llvm_mod.data_layout = @program.target_machine.data_layout
+
+      {% unless LibLLVM::IS_LT_240 %}
+        if @program.codegen_target.wasm?
+          # enable WASM exception handling (EH)
+          llvm_mod.add_flag(:error, "exception-model", "wasm")
+
+          # LLVM uses this tag for llvm.wasm.throw and typed catch pads. A weak
+          # definition allows separate codegen modules to share a single tag.
+          llvm_mod.inline_asm = <<-ASM
+            .tagtype __cpp_exception i32
+            .weak __cpp_exception
+            __cpp_exception:
+
+            ASM
+        end
+      {% end %}
 
       # enable branch authentication instructions (BTI)
       if @program.codegen_target.aarch64?

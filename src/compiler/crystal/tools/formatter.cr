@@ -3005,7 +3005,9 @@ module Crystal
 
       if @token.type.op_comma?
         next_token
-        next_token if @token.type.space?
+        while @token.type.space? || @token.type.newline?
+          next_token
+        end
         if @token.type.comment?
           write ","
           needs_comma = false
@@ -3055,7 +3057,11 @@ module Crystal
       else
         # It's foo &.bar
         write "," if needs_comma
-        write " " if needs_space
+        if comma_before_comment
+          write_indent(@indent + 2)
+        elsif needs_space
+          write " "
+        end
         write_token :OP_AMP
         skip_space_or_newline
         write "."
