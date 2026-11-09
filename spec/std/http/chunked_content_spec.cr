@@ -195,6 +195,27 @@ describe HTTP::ChunkedContent do
   end
 
   describe "trailing headers" do
+    it "rejects lone LF terminating an empty trailer part" do
+      mem = IO::Memory.new("0\r\n\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
+    it "rejects lone LF terminating a trailer header line" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
+    it "rejects lone LF terminating a nonempty trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
     it "reads chunked trailer part" do
       mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
 
@@ -208,9 +229,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
 
       chunked = HTTP::ChunkedContent.new(mem)
-      expect_raises IO::EOFError do
-        chunked.gets
-      end
+      expect_raises(IO::Error) { chunked.gets }
     end
 
     it "fails on invalid trailer" do
@@ -246,9 +265,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar Baz Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, "Trailing headers too long") do
-        chunked.gets
-      end
+      expect_raises(IO::Error, /invalid trailer/) { chunked.gets }
       chunked.headers.should be_empty
     end
 
@@ -256,9 +273,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar\r\nBaz: Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, "Trailing headers too long") do
-        chunked.gets
-      end
+      expect_raises(IO::Error, /invalid trailer/) { chunked.gets }
       chunked.headers.should eq HTTP::Headers{"Foo" => "Bar"}
     end
   end

@@ -290,17 +290,21 @@ module HTTP
       max_size = @max_headers_size
 
       while true
-        line = @io.read_line(max_size + 1, chomp: true)
-        break if line.empty?
-        max_size -= line.bytesize
-        if max_size < 0
-          raise IO::Error.new("Trailing headers too long")
-        end
+        line = @io.read_line(max_size + 2, chomp: false)
+
+        # always expect CRLF in chunk framing, reject lone LF, reject reached max_size
+        break unless line.size >= 2 && crlf?(line.to_slice[-2..])
+
+        # done on empty line (CRLF)
+        return if line.bytesize == 2
+
+        max_size -= line.bytesize - 2
 
         key, value = HTTP.parse_header(line)
-        raise IO::Error.new("Invalid HTTP chunked content: invalid trailer") unless key.present?
-        break unless headers.add(key, value)
+        break unless key.present? && headers.add(key, value)
       end
+
+      raise IO::Error.new("Invalid HTTP chunked content: invalid trailer")
     end
 
     def write(slice : Bytes) : NoReturn
