@@ -1,7 +1,7 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def self.default_file_blocking?
-    false
+    true
   end
 
   def self.default_socket_blocking?
@@ -34,7 +34,11 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
+    fd = LibC.open(path.check_no_null_byte, flags, permissions)
+    return Errno.value if fd == -1
+
+    # WASI filesystem descriptors are always blocking
+    {fd, true}
   end
 
   # TODO: LibWasi.fd_read
@@ -202,7 +206,7 @@ end
 struct Crystal::EventLoop::Wasi::Event
   include Crystal::EventLoop::Event
 
-  def add(timeout : Time::Span) : Nil
+  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
   end
 
   def add(timeout : Nil) : Nil

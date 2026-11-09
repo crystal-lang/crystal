@@ -25,6 +25,14 @@ module Crystal::System::File
   end
 
   def self.info?(path : String, follow_symlinks : Bool) : ::File::Info?
+    {% if flag?(:wasi) %}
+      # WASI libc treats an empty stat path as the current directory.
+      if path.empty?
+        Errno.value = Errno::ENOENT
+        return
+      end
+    {% end %}
+
     stat = uninitialized LibC::Stat
     if follow_symlinks
       ret = stat(path.check_no_null_byte, pointerof(stat))
@@ -96,8 +104,20 @@ module Crystal::System::File
   end
 
   private def self.accessible?(path, mode, *, follow_symlinks = true)
-    flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
-    LibC.faccessat(LibC::AT_FDCWD, path.check_no_null_byte, mode, flags) == 0
+    path.check_no_null_byte
+
+    {% if flag?(:dragonfly) || flag?(:openbsd) || flag?(:solaris) || flag?(:wasi) %}
+      unless follow_symlinks
+        ret = LibC.lstat(path, out stat)
+        return false if ret == -1
+        return true if mode == LibC::F_OK
+        return true if (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
+      end
+      LibC.access(path, mode) == 0
+    {% else %}
+      flags = follow_symlinks ? 0 : LibC::AT_SYMLINK_NOFOLLOW
+      LibC.faccessat(LibC::AT_FDCWD, path, mode, flags) == 0
+    {% end %}
   end
 
   def self.chown(path, uid : Int, gid : Int, follow_symlinks)

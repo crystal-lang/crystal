@@ -172,6 +172,30 @@ class Crystal::ABI
           info.arg_types[0].should eq(ArgType.indirect(str, LLVM::Attribute::ByVal))
           info.return_type.should eq(ArgType.indirect(str, LLVM::Attribute::StructRet))
         end
+
+        test "does with structs less than 64 bits containing float followed-by non-float" do |abi, ctx|
+          str = ctx.struct([ctx.float, ctx.int8])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+        end
+
+        test "does with structs less than 64 bits containing non-float followed by float" do |abi, ctx|
+          str = ctx.struct([ctx.int8, ctx.float])
+          arg_types = [str]
+          return_type = str
+
+          info = abi.abi_info(arg_types, return_type, true, ctx)
+          info.arg_types.size.should eq(1)
+
+          info.arg_types[0].should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+          info.return_type.should eq(ArgType.direct(str, cast: ctx.struct([ctx.int64])))
+        end
       end
     {% end %}
   end

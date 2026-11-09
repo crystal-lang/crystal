@@ -71,6 +71,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_address(ip)
-    ip.address &- @@base_address
+    ip.address &- @@base_address &- 1
   end
 end

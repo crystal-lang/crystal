@@ -391,6 +391,8 @@ describe Enum do
     SpecEnum.parse?("Two".to_slice).should eq(SpecEnum::Two)
     SpecEnum.parse?("Four".to_slice).should be_nil
     SpecEnum.parse?("Fo-ur".to_slice).should be_nil
+    SpecEnum.parse?("aaaa👍").should be_nil
+    SpecEnum.parse?("👍👍👍👍👍").should be_nil
 
     # invalid UTF-8 never matches a member name
     SpecEnumWithUnicodeMembers.parse?(Bytes[0xff, 0xfe]).should be_nil

@@ -103,7 +103,7 @@ module Crystal
       fiber = Fiber.current
 
       waiter =
-        {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+        {% if !flag?(:without_mt) %}
           if fiber.execution_context?
             Waiter.new(fiber)
           else
@@ -128,12 +128,17 @@ module Crystal
       @@operations.push pointerof(operation)
       @@spin.unlock
 
-      yield
+      begin
+        yield
+      rescue ex
+      end
 
       @@spin.lock
-      flag.value = true
+      flag.value = true unless ex
       @@operations.delete pointerof(operation)
       @@spin.unlock
+
+      raise ex if ex
 
       operation.resume_all
     end

@@ -5,8 +5,9 @@ class Crystal::EventLoop::IoUring::FiberEvent
     @event = Event.new(type, fiber)
   end
 
-  def add(timeout : Time::Span) : Nil
+  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
     @event.wake_at = System::Time.instant + timeout
+    @event.timeout_select_action = timeout_select_action
     EventLoop.current.as(IoUring).add_timer(pointerof(@event))
   end
 

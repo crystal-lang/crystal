@@ -212,10 +212,14 @@ class Crystal::ABI::X86_64 < Crystal::ABI
       cls[i] = newv
     when newv == RegClass::NoClass
       return
-    when cls[i] == RegClass::Memory, newv == RegClass::Memory
+    when cls[i] == RegClass::Memory
       return
-    when cls[i] == RegClass::Int, newv == RegClass::Int
+    when newv == RegClass::Memory
+      cls[i] = newv
+    when cls[i] == RegClass::Int
       return
+    when newv == RegClass::Int
+      cls[i] = newv
     when cls[i] == RegClass::X87,
          cls[i] == RegClass::X87Up,
          cls[i] == RegClass::ComplexX87,
