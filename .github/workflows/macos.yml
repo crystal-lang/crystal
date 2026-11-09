@@ -78,6 +78,6 @@ jobs:
 
       - name: Test
         run: make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"
-        shell: nix-shell --pure --run {0}
+        shell: nix-shell --pure --run "bash {0}"
         env:
           CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}

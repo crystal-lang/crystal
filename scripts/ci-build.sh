@@ -8,10 +8,10 @@ set -eu
 
 run() {
   if [ "$GITHUB_ACTIONS" = "true" ]; then
-    echo "::group::${@}"
+    echo "::group::${*}"
   fi
 
-  "${@}"
+  eval "${*}"
 
   if [ "$GITHUB_ACTIONS" = "true" ]; then
     echo "::endgroup::"
