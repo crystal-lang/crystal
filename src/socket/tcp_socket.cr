@@ -108,13 +108,15 @@ class TCPSocket < IPSocket
       raise TCPSocket.connect_error(error, host, port)
     else
       result = HappyEyeballs.connect(addrinfos, connect_timeout, connection_attempt_delay) do |addrinfo|
-        ConnectionAttempt.new(addrinfo, blocking)
+        handle, socket_blocking = Crystal::EventLoop.current.socket(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
+        Socket.new(handle: handle, family: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: socket_blocking)
       end
-      raise TCPSocket.connect_error(result, host, port) unless result.is_a?(ConnectionAttempt)
+      raise TCPSocket.connect_error(result, host, port) unless result.is_a?(Socket)
 
-      # adopt the connected socket
-      addrinfo = result.addrinfo
-      super(handle: result.socket.release_handle, family: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: result.blocking)
+      # adopt the connected socket; the blocking mode is the one requested by
+      # the caller (it's merely informational, except on Windows where `nil`
+      # means the default mode of the event loop)
+      super(handle: result.release_handle, family: result.family, type: result.type, protocol: result.protocol, blocking: blocking)
       self.sync = true
     end
   end
@@ -128,27 +130,6 @@ class TCPSocket < IPSocket
       error
     else
       Socket::ConnectError.new("Error connecting to '#{host}:#{port}': No address found")
-    end
-  end
-
-  # A bare socket to race in `HappyEyeballs.connect`, with the information
-  # needed to adopt it into a `TCPSocket` once connected.
-  private struct ConnectionAttempt
-    getter socket : Socket
-    getter addrinfo : Addrinfo
-    getter blocking : Bool
-
-    def initialize(@addrinfo : Addrinfo, blocking)
-      handle, @blocking = Crystal::EventLoop.current.socket(addrinfo.family, addrinfo.type, addrinfo.protocol, blocking)
-      @socket = Socket.new(handle: handle, family: addrinfo.family, type: addrinfo.type, protocol: addrinfo.protocol, blocking: @blocking)
-    end
-
-    def connect(addrinfo, timeout, &)
-      @socket.connect(addrinfo, timeout) { |error| yield error }
-    end
-
-    def close : Nil
-      @socket.close
     end
   end
 
