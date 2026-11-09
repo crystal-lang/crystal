@@ -26,7 +26,7 @@ run make std_spec clean threads=1 junit_output=.junit/std_spec.xml
 
 # 2. Build compiler and run primitives, std, and compiler specs. Build docs.
 run make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml \
-  DOCS_OPTIONS="--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/"
+  DOCS_OPTIONS=\"--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/\"
 
 # 3.a Build and run samples
 run make samples
