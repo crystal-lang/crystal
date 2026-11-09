@@ -405,6 +405,23 @@ module Crystal
       in .f64?  then number.to_f64
       end
     end
+
+    def cast!(number) : Number::Primitive
+      case self
+      in .i8?   then number.to_i8!
+      in .i16?  then number.to_i16!
+      in .i32?  then number.to_i32!
+      in .i64?  then number.to_i64!
+      in .i128? then number.to_i128!
+      in .u8?   then number.to_u8!
+      in .u16?  then number.to_u16!
+      in .u32?  then number.to_u32!
+      in .u64?  then number.to_u64!
+      in .u128? then number.to_u128!
+      in .f32?  then number.to_f32!
+      in .f64?  then number.to_f64!
+      end
+    end
   end
 
   # Any number literal.

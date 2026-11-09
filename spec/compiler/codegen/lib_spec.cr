@@ -197,6 +197,16 @@ describe "Code gen: lib" do
       CRYSTAL
   end
 
+  it "passes int literal to int128" do
+    codegen(<<-CRYSTAL)
+      lib LibFoo
+        fun foo(x : Int128)
+      end
+
+      LibFoo.foo(1)
+      CRYSTAL
+  end
+
   it "passes nil to varargs (#1570)" do
     codegen(<<-CRYSTAL)
       lib LibFoo
