@@ -348,6 +348,14 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "does not call `~instance_type` on generic metaclasses" do
+    mod = codegen(<<-CRYSTAL)
+      Array(Int32).crystal_instance_type_id
+      CRYSTAL
+
+    mod.to_s.should_not contain %(call i32 @"~instance_type")
+  end
+
   describe "va_arg" do
     # On AArch64 llvm's va_arg instruction works incorrectly.
     {% unless flag?(:aarch64) %}

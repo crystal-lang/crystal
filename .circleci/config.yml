@@ -18,101 +18,8 @@ defaults:
   environment: &env
     TRAVIS_BRANCH: $CIRCLE_BRANCH
     TRAVIS_PULL_REQUEST: $CI_PULL_REQUEST || "false"
-  steps: &ci_steps
-    - checkout
-    - run: bin/ci prepare_system
-    - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-    - run: bin/ci prepare_build
-    - run:
-        command: bin/ci build
-        no_output_timeout: 30m
-    - run:
-        when: always
-        command: |
-          mkdir -p ~/test-results/spec
-          cp .junit/*.xml ~/test-results/spec/
-    - store_test_results:
-        path: ~/test-results
-    - store_artifacts:
-        path: ~/test-results/spec
 
 jobs:
-  test_linux:
-    machine:
-      image: default
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64
-      ARCH_CMD: linux64
-    resource_class: large
-    steps:
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run:
-          command: bin/ci build
-          no_output_timeout: 30m
-      - run:
-          when: always
-          command: |
-            mkdir -p ~/test-results/spec
-            cp .junit/*.xml ~/test-results/spec/
-      - store_test_results:
-          path: ~/test-results
-      - store_artifacts:
-          path: ~/test-results/spec
-      - persist_to_workspace:
-          root: .
-          paths:
-            - docs
-
-  test_alpine:
-    machine:
-      image: default
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: linux
-      ARCH: x86_64-musl
-      ARCH_CMD: linux64
-    resource_class: large
-    steps: *ci_steps
-
-  test_darwin:
-    macos:
-      xcode: 16.4.0
-    environment:
-      <<: *env
-      TRAVIS_OS_NAME: osx
-      LLVM_CONFIG: /usr/local/opt/llvm/bin/llvm-config
-    steps:
-      - restore_cache:
-          keys:
-            - brew-cache-v1
-      - checkout
-      - run: bin/ci prepare_system
-      - run: echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl@1.1/lib/pkgconfig"' >> $BASH_ENV
-      - run: echo 'export CURRENT_TAG="$CIRCLE_TAG"' >> $BASH_ENV
-      - run: bin/ci prepare_build
-      - run:
-          command: bin/ci build
-          no_output_timeout: 30m
-      - run:
-          when: always
-          command: |
-            mkdir -p ~/test-results/spec
-            cp .junit/*.xml ~/test-results/spec/
-      - store_test_results:
-          path: ~/test-results
-      - store_artifacts:
-          path: ~/test-results/spec
-      - save_cache:
-          key: brew-cache-v1
-          paths:
-            - /usr/local/Homebrew
-            - ~/Library/Caches/Homebrew/downloads
-
   prepare_common:
     docker:
       - image: docker:stable-git
@@ -410,7 +317,7 @@ workflows:
   version: 2
   release:
     jobs:
-      - test_linux:
+      - prepare_common:
           filters: &release
             branches:
               only:
@@ -418,12 +325,6 @@ workflows:
                 - /.*\bci\b.*/
             tags:
               only: /.*/
-      - test_alpine:
-          filters: *release
-      # - test_darwin: # See https://github.com/crystal-lang/crystal/pull/9763
-      #     filters: *release
-      - prepare_common:
-          filters: *release
       - prepare_maintenance:
           filters: &maintenance
             branches:
@@ -481,9 +382,6 @@ workflows:
               only:
                 - master
     jobs:
-      - test_linux
-      - test_alpine
-      # - test_darwin # See https://github.com/crystal-lang/crystal/pull/9763
       - prepare_common
       - prepare_nightly:
           requires:
