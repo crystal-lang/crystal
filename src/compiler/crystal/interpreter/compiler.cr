@@ -471,8 +471,6 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       upcast node.body, node.body.type, node.type if @wants_value
     end
 
-    @ensure_stack.pop if node_ensure
-
     body_end_index = instructions_index
 
     # Now we'll write the catch tables so we want to skip this
@@ -519,6 +517,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       jump 0, node: nil
       rescue_jump_locations << patch_location
     end
+
+    @ensure_stack.pop if node_ensure
 
     if node_ensure
       # If there's an ensure block we also generate another ensure
