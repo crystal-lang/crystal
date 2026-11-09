@@ -96,12 +96,26 @@ module Crystal
     def doc=(doc)
     end
 
+    def name_size
+      return 0 unless self.responds_to?(:name) && (name = self.name)
+
+      case name
+      when ASTNode
+        name.name_size
+      else
+        name.to_s.size
+      end
+    end
+
     def name_location
       nil
     end
 
-    def name_size
-      0
+    def name_end_location
+      return unless loc = self.name_location
+      return unless (name_size = self.name_size).positive?
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     def visibility=(visibility : Visibility)
@@ -794,10 +808,6 @@ module Crystal
     def initialize(@name : String)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       Var.new(@name)
     end
@@ -940,13 +950,6 @@ module Crystal
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
-    end
-
-    def name_end_location
-      loc = @name_location
-      return unless loc
-
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     # Returns `true` if this call has any arguments.
@@ -1226,10 +1229,6 @@ module Crystal
     def initialize(@name)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       InstanceVar.new(@name)
     end
@@ -1293,10 +1292,6 @@ module Crystal
     property name : String
 
     def initialize(@name)
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -1372,6 +1367,12 @@ module Crystal
     property doc : String?
     property parsed_annotations : Array(Annotation)?
 
+    # The location of the internal name, which differs from `#location`
+    # if the parameter has an external name (i.e. `baz` in `bar baz`).
+    # For instance/class variable parameters it points at the prefix
+    # (i.e. `@baz` in `bar @baz`).
+    property name_location : Location?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
@@ -1381,12 +1382,10 @@ module Crystal
       @restriction.try &.accept visitor
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg = Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg.name_location = name_location
+      arg
     end
 
     def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
@@ -1485,10 +1484,6 @@ module Crystal
       @body.accept visitor
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @block_arity, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
@@ -1550,10 +1545,6 @@ module Crystal
       @body.accept visitor
       @double_splat.try &.accept visitor
       @block_arg.try &.accept visitor
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -2678,10 +2669,6 @@ module Crystal
       clone = FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
       clone.name_location = name_location
       clone
-    end
-
-    def name_size
-      @name.size
     end
 
     def has_any_args?

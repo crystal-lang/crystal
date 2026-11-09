@@ -243,6 +243,18 @@ describe "Code gen: union type" do
       CRYSTAL
   end
 
+  it "codegens metaclasses using `Union` on types in the same hierarchy (#11891)" do
+    codegen(<<-CRYSTAL)
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      Union(Foo, Bar)
+      CRYSTAL
+  end
+
   it "respects union payload alignment when upcasting Bool (#14898)" do
     mod = codegen(<<-CRYSTAL)
       x = uninitialized Bool | UInt8[64]

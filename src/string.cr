@@ -944,10 +944,20 @@ class String
     self[str]?.not_nil!
   end
 
+  # Returns the entire match of the `Regex` in this string.
+  #
+  # ```
+  # "cryyystal"[/y+/] # => "yyy"
+  # ```
   def [](regex : Regex, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     self[regex, options: options]?.not_nil!
   end
 
+  # Returns the nth *group* of the matched `Regex` in this string.
+  #
+  # ```
+  # "crystal"[/y(st)/, 1] # => "st"
+  # ```
   def [](regex : Regex, group, *, options : Regex::MatchOptions = Regex::MatchOptions::None) : String
     self[regex, group, options: options]?.not_nil!
   end
@@ -5689,8 +5699,15 @@ class String
   # ```
   # "llo!".ensure_prefix("He")   # => "Hello!"
   # "Hello!".ensure_prefix("He") # => "Hello!"
-  # "ello".ensure_prefix('H')    # => "Hello!"
+  # "ello!".ensure_prefix('H')   # => "Hello!"
   # "Hello!".ensure_prefix('H')  # => "Hello!"
+  # ```
+  #
+  # The *prefix* is prepended in full, instead of filling in the missing
+  # characters to "ensure" the *prefix*.
+  #
+  # ```
+  # "ello!".ensure_prefix("He") # => "Heello!"
   # ```
   def ensure_prefix(prefix : String | Char) : self
     return self if starts_with?(prefix)
@@ -5706,6 +5723,13 @@ class String
   # "Hello!".ensure_suffix("o!") # => "Hello!"
   # "Hello".ensure_suffix('!')   # => "Hello!"
   # "Hello!".ensure_suffix('!')  # => "Hello!"
+  # ```
+  #
+  # The *suffix* is appended in full, instead of filling in the missing
+  # characters to "ensure" the *suffix*.
+  #
+  # ```
+  # "Hello".ensure_suffix("o!") # => "Helloo!"
   # ```
   def ensure_suffix(suffix : String | Char) : self
     return self if ends_with?(suffix)

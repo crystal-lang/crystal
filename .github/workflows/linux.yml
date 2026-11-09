@@ -34,7 +34,7 @@ jobs:
         include:
           - arch: x86_64
             env:
-              CRYSTAL_BOOTSTRAP_VERSION: 1.14.1
+              CRYSTAL_BOOTSTRAP_VERSION: 1.15.1
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v7
@@ -65,8 +65,6 @@ jobs:
         opts:
           - flags: "-Dwithout_mt"
           - workers: 4 # execution_context: parallel
-          - flags: "-Dpreview_mt"
-            workers: 4
           - flags: "-Devloop=io_uring"
             workers: 4
           - flags: "-Devloop=io_uring -Dwithout_mt"
