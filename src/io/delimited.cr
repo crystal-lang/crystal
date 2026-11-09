@@ -21,6 +21,9 @@ class IO::Delimited < IO
   @delimiter_buffer : Bytes
   @active_delimiter_buffer : Bytes
 
+  # Data in @active_delimiter_buffer waiting to be read, before a delimiter prefix.
+  @pending_read_size = 0
+
   # Creates a new `IO::Delimited` which wraps *io*, and can read until the
   # byte sequence *read_delimiter* (interpreted as UTF-8) is found. If
   # *sync_close* is set, calling `#close` calls `#close` on the underlying
@@ -62,6 +65,14 @@ class IO::Delimited < IO
   end
 
   private def read_with_peek(slice : Bytes, peek : Bytes) : Int32
+    if @pending_read_size > 0
+      # consume pending bytes before delimiter prefix
+      size = Math.min(@pending_read_size, slice.size)
+      read_from_active_delimited_buffer(slice[0, size])
+      @pending_read_size -= size
+      return size
+    end
+
     # If there's nothing else to peek, we reached EOF
     if peek.empty?
       @finished = true
@@ -80,6 +91,10 @@ class IO::Delimited < IO
 
     # If we have something in the active delimiter buffer
     unless @active_delimiter_buffer.empty?
+      # Copy the prefix at the buffer's start.
+      @delimiter_buffer.move_from(@active_delimiter_buffer)
+      @active_delimiter_buffer = @delimiter_buffer[0, @active_delimiter_buffer.size]
+
       # This is the rest of the delimiter we have to match
       delimiter_remaining = @read_delimiter[@active_delimiter_buffer.size..]
 
@@ -107,18 +122,18 @@ class IO::Delimited < IO
         end
       else
         # No match.
-        # We first need to check if the delimiter could actually start in this active buffer.
-        next_index = @active_delimiter_buffer.index(first_byte, 1)
+        # Find the earliest suffix that matches the delimiter's beginning.
+        offset = 1
+        while offset < @active_delimiter_buffer.size
+          suffix = @active_delimiter_buffer[offset..]
+          break if suffix == @read_delimiter[0, suffix.size]
+          offset += 1
+        end
 
-        # We read up to that new match, if any, or the entire buffer
-        read_bytes = Math.min(next_index || @active_delimiter_buffer.size, slice.size)
-
-        slice.copy_from(@active_delimiter_buffer[0, read_bytes])
-        slice += read_bytes
-        @active_delimiter_buffer += read_bytes
-
-        return read_bytes if slice.empty?
-        return read_bytes + read_internal(slice)
+        # All bytes before a valid prefix must be emitted, even if the caller's
+        # slice is too small to receive them in one read.
+        @pending_read_size = offset
+        return read_internal(slice)
       end
     end
 
@@ -285,6 +300,11 @@ class IO::Delimited < IO
       # clients aren't supposed to write to that buffer.
       return @active_delimiter_buffer
     end
+
+    if @pending_read_size > 0
+      return @active_delimiter_buffer[0, @pending_read_size]
+    end
+    return nil unless @active_delimiter_buffer.empty?
 
     peek = @io.peek
     return nil unless peek
