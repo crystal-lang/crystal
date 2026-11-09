@@ -1,45 +1,16 @@
-require "spec"
-
-private def once_and_return(flag, &)
-  Crystal.once(flag) do
-    yield
-    return
-  end
-end
-
-private def once_and_break(flag)
-  Crystal.once(flag) { break }
-end
+require "../spec_helper"
 
 describe "Crystal.once" do
-  it "marks the flag when the initializer returns" do
-    flag = false
-    once_and_return(pointerof(flag)) { }
-    flag.should be_true
-  end
+  pending_wasm32 "doesn't allow returning from the block", tags: %w[slow] do
+    assert_compile_error <<-CRYSTAL, "can't return from captured block"
+      require "prelude"
 
-  it "marks the flag when the initializer breaks" do
-    flag = false
-    once_and_break(pointerof(flag))
-    flag.should be_true
-  end
-
-  it "resumes waiting fibers when the initializer returns" do
-    flag = false
-    done = Channel(Nil).new
-
-    once_and_return(pointerof(flag)) do
-      spawn do
-        Crystal.once(pointerof(flag)) { }
-        done.send nil
+      def init(flag : Bool*) : Nil
+        Crystal.once(flag) { return }
       end
-      Fiber.yield
-    end
 
-    select
-    when done.receive
-    when timeout(1.second)
-      fail "waiting fiber was not resumed"
-    end
+      flag = false
+      init(pointerof(flag))
+      CRYSTAL
   end
 end
