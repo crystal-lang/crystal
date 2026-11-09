@@ -171,21 +171,78 @@ describe HTTP::ChunkedContent do
 
   it "skips chunk extensions" do
     mem = IO::Memory.new(%(1;progress=50;foo="bar"\r\nA\r\n1;progress=100\r\nB\r\n0\r\n\r\n"))
-
     chunked = HTTP::ChunkedContent.new(mem)
     chunked.gets(2).should eq "AB"
   end
 
-  it "accepts BWS after chunk-size if chunk-ext" do
-    mem = IO::Memory.new(%(1 ; progress=50\r\nA\r\n1\t\t;progress=100\r\nB\r\n0\r\n\r\n"))
+  it "accepts syntactically valid chunk extensions" do
+    escapable = ['\t'] + (' '..'~').to_a + ((0x80.chr)..(0xff.chr)).to_a
+    quotable = (escapable + ['!'] + ('#'..'[').to_a + (']'..'~').to_a).uniq
+    [
+      "",
+      ";foo",
+      ";foo;bar",
+      %(;0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      " \t ;  \t\tfoo",
+      ";foo=bar",
+      ";foo \t =  \t\tbar",
+      ";foo=bar;arg",
+      ";foo=bar\t ;\t arg",
+      %(;name=0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      %(;name \t =\t \t 0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      %(;quoted=""),
+      %(;quoted \t=\t ""),
+      %(;name="\\""),
+      %(;name="#{quotable.map { |char| char.in?('"', '\\') ? "\\#{char}" : char }.join}"),
+      %(;name="#{escapable.map { |char| "\\#{char}" }.join}"),
+    ].each do |extension|
+      mem = IO::Memory.new("1#{extension}\r\nZ\r\n")
+      chunked = HTTP::ChunkedContent.new(mem)
+      chunked.gets(1).should eq("Z")
+    end
+  end
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    chunked.gets(2).should eq "AB"
+  it "rejects syntactically invalid chunk extensions" do
+    [
+      " ",
+      "\t",
+      ";",
+      "; ",
+      ";\t",
+      "; =",
+      ";=\t",
+      ";=value",
+      ";key=",
+      ";key= ",
+      ";key= \t",
+      ";key=value;",
+      ";key=value; ",
+      ";key=value ",
+      ";key=value\t",
+      ";key value",
+      ";key=two words",
+      ";key=\"unterminated",
+      ";key=\"value\"junk",
+      ";key=\"bad\u0001\"",
+      ";key=\"bad\\\u007f\"",
+      ";key=;foo",
+    ].each do |extension|
+      mem = IO::Memory.new("1#{extension}\r\nA\r\n0\r\n\r\n")
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid chunk line") { chunked.gets(1) }
+    end
   end
 
   it "rejects lone LF/CR in chunk-line" do
     [
       "1\nA\r\n",
+      "1\rA\r\n",
+    ].each do |line|
+      chunked = HTTP::ChunkedContent.new(IO::Memory.new(line))
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid chunk line") { chunked.gets(1) }
+    end
+
+    [
       "3;foo\nbar\r\nbaz\r\n",
       "3;foo\rbar\r\nbaz\r\n",
     ].each do |line|

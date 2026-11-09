@@ -266,24 +266,97 @@ module HTTP
       {chunk_size.to_i32!, digits}
     end
 
-    private def skip_chunk_ext(slice)
-      bws = false
+    private def skip_chunk_ext(bytes)
+      # chunk-ext = *( BWS ";" BWS chunk-ext-name [ BWS "=" BWS chunk-ext-val ] )
+      bytes, bws = skip_whitespace(bytes)
 
-      slice.each_with_index do |byte, i|
-        case byte
-        when ';'.ord
-          # skip chunk-ext; reject lone CR (lone LF already rejected)
-          return slice[i..].none? { |byte| byte == '\r'.ord }
-        when ' '.ord, '\t'.ord
-          # BWS is valid only if followed by ';'
-          bws = true
+      while true
+        break unless byte = bytes.first?
+        return false unless byte == ';'.ord
+
+        bytes += 1 # consume ';'
+        bytes, bws = skip_whitespace(bytes)
+
+        # chunk-ext-name = token
+        name = read_token(bytes)
+        return false if name.empty?
+
+        bytes += name.size
+        bytes, bws = skip_whitespace(bytes)
+        break unless byte = bytes.first?
+        next unless byte == '='.ord
+
+        bytes += 1 # consume '='
+        bytes, bws = skip_whitespace(bytes)
+        return false unless byte = bytes.first?
+
+        # chunk-ext-val = token / quoted-string
+        if byte == '"'.ord
+          value = read_quoted_string(bytes)
+          return false unless value
+          bytes += value.size + 2
         else
-          # invalid separator character
-          return false
+          value = read_token(bytes)
+          return false if value.empty?
+          bytes += value.size
         end
+
+        bytes, bws = skip_whitespace(bytes)
       end
 
       !bws
+    end
+
+    private def read_token(bytes)
+      bytes.each_with_index do |byte, index|
+        case byte
+        when '0'.ord..'9'.ord, 'a'.ord..'z'.ord, 'A'.ord..'Z'.ord,
+             '!'.ord, '#'.ord, '$'.ord, '%'.ord, '&'.ord, '\''.ord,
+             '*'.ord, '+'.ord, '-'.ord, '.'.ord, '^'.ord, '_'.ord,
+             '`'.ord, '|'.ord, '~'.ord
+          # valid token byte
+        else
+          return index > 0 ? bytes[0, index] : Bytes.empty
+        end
+      end
+
+      bytes
+    end
+
+    private def read_quoted_string(bytes)
+      backslash = false
+
+      bytes[1..].each_with_index do |byte, index|
+        case byte
+        when '"'.ord
+          return bytes[1..index] unless backslash
+          backslash = false
+        when '\\'.ord
+          backslash = !backslash
+        when '\t'.ord, (' '.ord)..('~'.ord), 0x80..
+          backslash = false
+        when '!'.ord, ('#'.ord)..('['.ord), (']'.ord)..('~'.ord)
+          return if backslash
+        else
+          return
+        end
+      end
+    end
+
+    private def skip_whitespace(bytes)
+      bws = false
+
+      while byte = bytes.first?
+        case byte
+        when ' '.ord, '\t'.ord
+          bws = true
+          bytes += 1
+        else
+          break
+        end
+      end
+
+      {bytes, bws}
     end
 
     private def read_trailer
