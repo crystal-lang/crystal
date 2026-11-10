@@ -522,12 +522,13 @@ abstract struct Enum
                          max_charsize * 4
                        end
       %}
-      buffer = uninitialized UInt8[{{ max_bytesize + 1 }}]
+      buffer = uninitialized UInt8[{{ max_bytesize + 4 }}]
       appender = buffer.to_unsafe.appender
       char_counter = 0
       string.each_char do |char|
         next if char == '-' || char == '_'
         char_counter += 1
+        return nil if appender.size > {{ max_bytesize }}
         return nil if char_counter > {{ max_charsize }}
         char.downcase &.each_byte do |byte|
           appender << byte

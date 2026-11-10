@@ -32,29 +32,31 @@ module Crystal
     end
 
     def evaluate(node, debug = Debug::Default)
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
-
+      builder = llvm_mod.new_builder
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # It seems the JIT doesn't like it if we return an empty type (struct {})
       llvm_context = llvm_mod.context
+
       main_return_type = main.type.return_type
       main_return_type = llvm_context.void if node.type.nil_type?
 
       wrapper_type = LLVM::Type.function([] of LLVM::Type, main_return_type)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
-        end
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        (node.type.void? || node.type.nil_type?) ? builder.ret : builder.ret(ret)
       end
 
       llvm_mod.verify
@@ -96,32 +98,34 @@ module Crystal
           LLVM::Context.new(dispose_on_finalize: false)
         {% end %}
 
-      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context
+      visitor = CodeGenVisitor.new self, node, single_module: true, debug: debug, llvm_context: llvm_context, main_returns_value: true
       visitor.accept node
       visitor.process_finished_hooks
       visitor.finish
 
       llvm_mod = visitor.modules[""].mod
       llvm_mod.target = target_machine.triple
+      builder = llvm_mod.new_builder
 
       main = visitor.typed_fun?(llvm_mod, MAIN_NAME).not_nil!
 
       # void (*__evaluate_wrapper)(void*)
       wrapper_type = LLVM::Type.function([llvm_context.void_pointer], llvm_context.void)
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", wrapper_type) do |func|
-        func.basic_blocks.append "entry" do |builder|
-          argc = llvm_context.int32.const_int(0)
-          argv = llvm_context.void_pointer.pointer.null
-          ret = builder.call(main.type, main.func, [argc, argv])
-          unless node.type.void? || node.type.nil_type?
-            out_ptr = func.params[0]
-            {% if LibLLVM::IS_LT_150 %}
-              out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
-            {% end %}
-            builder.store(ret, out_ptr)
-          end
-          builder.ret
+        block = func.basic_blocks.append "entry"
+        builder.position_at_end block
+
+        argc = llvm_context.int32.const_int(0)
+        argv = llvm_context.void_pointer.pointer.null
+        ret = builder.call(main.type, main.func, [argc, argv])
+        unless node.type.void? || node.type.nil_type?
+          out_ptr = func.params[0]
+          {% if LibLLVM::IS_LT_150 %}
+            out_ptr = builder.bit_cast out_ptr, main.type.return_type.pointer
+          {% end %}
+          builder.store(ret, out_ptr)
         end
+        builder.ret
       end
 
       llvm_mod.verify
@@ -283,7 +287,8 @@ module Crystal
                    @single_module : Bool = false,
                    @debug = Debug::Default,
                    @frame_pointers : FramePointers = :auto,
-                   @llvm_context : LLVM::Context = LLVM::Context.new)
+                   @llvm_context : LLVM::Context = LLVM::Context.new,
+                   main_returns_value : Bool = false)
       @abi = ABI.from(@program.target_machine)
       # LLVM::Context.register(@llvm_context, "main")
       @llvm_mod = configure_module(@llvm_context.new_module("main_module"))
@@ -291,16 +296,26 @@ module Crystal
       @main_llvm_context = @main_mod.context
       @llvm_typer = LLVMTyper.new(@program, @llvm_context)
       @main_llvm_typer = @llvm_typer
-      @main_ret_type = node.type? || @program.nil_type
+
+      @main_ret_type = @program.nil_type
+      if main_returns_value && (node_type = node.type?)
+        @main_ret_type = node_type
+      end
       ret_type = @llvm_typer.llvm_return_type(@main_ret_type)
       main_type = LLVM::Type.function([llvm_context.int32, llvm_context.void_pointer.pointer], ret_type)
       @main = @llvm_mod.functions.add(MAIN_NAME, main_type)
       @main.linkage = LLVM::Linkage::Internal if @single_module
       @fun_types = { {@llvm_mod, MAIN_NAME} => main_type }
 
-      if @program.has_flag?("msvc")
+      if @program.codegen_target.msvc?
         @personality_name = "__CxxFrameHandler3"
         @main.personality_function = windows_personality_fun.func
+      elsif @program.codegen_target.wasm?
+        # The WASMEHPrepare pass needs the personality function to be declared
+        # and associated to every function with a catchpad, but it won't be
+        # linked or called at runtime.
+        @personality_name = "__gxx_wasm_personality_v0"
+        @main.personality_function = wasm_personality_fun.func
       else
         @personality_name = "__crystal_personality"
       end
@@ -314,7 +329,7 @@ module Crystal
       @argv = @main.params[1]
       @argv.name = "argv"
 
-      @builder = new_builder(@main_llvm_context)
+      @builder = new_builder(@main_mod)
       @main_builder = @builder
 
       @main_module_info = ModuleInfo.new(@main_mod, @main_llvm_typer, @builder)
@@ -385,15 +400,31 @@ module Crystal
     def configure_module(llvm_mod)
       llvm_mod.data_layout = @program.target_machine.data_layout
 
+      {% unless LibLLVM::IS_LT_240 %}
+        if @program.codegen_target.wasm?
+          # enable WASM exception handling (EH)
+          llvm_mod.add_flag(:error, "exception-model", "wasm")
+
+          # LLVM uses this tag for llvm.wasm.throw and typed catch pads. A weak
+          # definition allows separate codegen modules to share a single tag.
+          llvm_mod.inline_asm = <<-ASM
+            .tagtype __cpp_exception i32
+            .weak __cpp_exception
+            __cpp_exception:
+
+            ASM
+        end
+      {% end %}
+
       # enable branch authentication instructions (BTI)
-      if @program.has_flag?("aarch64")
+      if @program.codegen_target.aarch64?
         if @program.has_flag?("branch-protection=bti")
           llvm_mod.add_flag(:override, "branch-target-enforcement", 1)
         end
       end
 
       # enable control flow enforcement protection (CET): IBT and/or SHSTK
-      if @program.has_flag?("x86_64") || @program.has_flag?("i386")
+      if @program.codegen_target.x86?
         if @program.has_flag?("cf-protection=branch") || @program.has_flag?("cf-protection=full")
           llvm_mod.add_flag(:override, "cf-protection-branch", 1)
         end
@@ -406,8 +437,8 @@ module Crystal
       llvm_mod
     end
 
-    def new_builder(llvm_context)
-      wrap_builder(llvm_context.new_builder)
+    def new_builder(llvm_mod)
+      wrap_builder(llvm_mod.new_builder)
     end
 
     # Here we only initialize simple constants, those
@@ -423,7 +454,7 @@ module Crystal
     end
 
     def wrap_builder(builder)
-      CrystalLLVMBuilder.new builder, llvm_typer, c_printf_fun
+      CrystalLLVMBuilder.new builder, llvm_typer
     end
 
     def define_symbol_table(llvm_mod, llvm_typer)
@@ -527,10 +558,6 @@ module Crystal
       !@builder.end
     end
 
-    def type
-      context.type.not_nil!
-    end
-
     def finish
       clear_current_debug_location if @debug.line_numbers?
       codegen_return @main_ret_type, nil
@@ -563,7 +590,7 @@ module Crystal
         mod = info.mod
         push_debug_info_metadata(mod) unless @debug.none?
 
-        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
+        mod.dump if dump_all_llvm || dump_llvm_regex.try &.matches?(name)
 
         # Always run verifications so we can catch bugs earlier and more often.
         # We can probably remove this, or only enable this when compiling in
@@ -1737,7 +1764,7 @@ module Crystal
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
-        if @program.has_flag?("win32") && !@program.has_flag?("static")
+        if @program.codegen_target.win32? && !@program.has_flag?("static")
           var.dll_storage_class = LLVM::DLLStorageClass::DLLImport
         end
         var.thread_local = thread_local
@@ -2654,7 +2681,7 @@ module Crystal
   end
 
   def self.safe_mangling(program, name)
-    if program.has_flag?("msvc")
+    if program.codegen_target.msvc?
       String.build do |str|
         name.each_char do |char|
           if char.ascii_alphanumeric? || char == '_'

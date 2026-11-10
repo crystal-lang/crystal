@@ -36,4 +36,19 @@ describe "Codegen: fun" do
       foo
       CRYSTAL
   end
+
+  it "returns void from `__crystal_main` in non-evaluated code" do
+    mod = codegen(<<-CRYSTAL, inject_primitives: false)
+      struct Foo
+        @x = 1
+        @y = ""
+        @z = ""
+        @w = ""
+      end
+
+      Foo.new
+      CRYSTAL
+
+    mod.to_s.should contain("define void @__crystal_main")
+  end
 end

@@ -19,10 +19,21 @@ class Crystal::CodeGenVisitor
 
   def target_def_fun(target_def, self_type) : LLVMTypedFunction
     mangled_name = target_def.mangled_name(@program, self_type)
-    self_type_mod = type_module(self_type).mod
 
-    func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
-    check_mod_fun self_type_mod, mangled_name, func
+    if target_def.is_a?(External)
+      # All lib funs and LLVM intrinsics have no body, so a declaration in the
+      # current module is sufficient. `#codegen_fun` performs declaration as no
+      # function body is emitted (not to be confused with `#declare_fun`).
+      #
+      # `self_type` is the lib type and merely serves to ensure that the
+      # function does not have an automatic `%self` parameter.
+      func = typed_fun?(@llvm_mod, mangled_name)
+      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+    else
+      self_type_mod = type_module(self_type).mod
+      func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+      check_mod_fun self_type_mod, mangled_name, func
+    end
   end
 
   def main_fun(name)
@@ -102,12 +113,12 @@ class Crystal::CodeGenVisitor
         {% if LibLLVM::IS_LT_150 %}
           context.fun.add_attribute LLVM::Attribute::UWTable
         {% else %}
-          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.has_flag?("aarch64") ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
+          context.fun.add_attribute LLVM::Attribute::UWTable, value: @program.codegen_target.aarch64? ? LLVM::UWTableKind::Sync : LLVM::UWTableKind::Async
         {% end %}
 
         if @frame_pointers.always?
           context.fun.add_attribute "frame-pointer", value: "all"
-        elsif @program.has_flag?("darwin") || @program.has_flag?("solaris")
+        elsif @program.codegen_target.macos? || @program.codegen_target.solaris?
           # Disable frame pointer elimination, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "frame-pointer", "all"
         elsif @frame_pointers.non_leaf?
@@ -221,7 +232,7 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      if @program.has_flag?("wasm32")
+      if @program.codegen_target.wasm?
         if target_def.is_a?(External) && (wasm_import_module = target_def.wasm_import_module)
           context.fun.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
           context.fun.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
@@ -374,7 +385,7 @@ class Crystal::CodeGenVisitor
     if @single_module && mangled_name.starts_with?("__crystal_")
       # FIXME: macos ld fails to link when the personality fun is internal; it
       # might work with lld so we might want to check the linker?
-      unless @program.has_flag?("darwin") && mangled_name.starts_with?("__crystal_personality")
+      unless @program.codegen_target.macos? && mangled_name.starts_with?("__crystal_personality")
         context.fun.linkage = LLVM::Linkage::Internal
       end
     end
@@ -404,17 +415,17 @@ class Crystal::CodeGenVisitor
   def abi_info(external : Def)
     external.abi_info = true
 
-    llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
-    llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
+    args_types = external.args.map(&.type)
+    return_type = external.type
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def abi_info(external : Def, node : Call)
-    llvm_args_types = node.args.map_with_index do |arg, i|
-      llvm_c_type((external.args[i]? || arg).type)
+    args_types = node.args.map_with_index do |arg, i|
+      (external.args[i]? || arg).type
     end
-    llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
+    return_type = external.type
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
@@ -451,10 +462,10 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
   end
 
-  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)
+  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr, seen = Set(String).new)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
+      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr, seen)
     else
       def_vars = target_def.vars
       closure_vars.each_with_index do |var, i|
@@ -464,6 +475,12 @@ class Crystal::CodeGenVisitor
         # consider the local var as closured.
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
+
+        # A closured var in this context might have the same name as
+        # a closured var in a parent context, for example a block var
+        # that shadows an outer var. The innermost one wins, so skip
+        # a name that was already bound.
+        next unless seen.add?(var.name)
 
         if context.fun.naked?
           debug_variable_created = false
@@ -480,7 +497,7 @@ class Crystal::CodeGenVisitor
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
         parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
-        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
+        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure, seen)
       elsif closure_self = context.closure_self
         self_index = closure_vars.size + (context.closure_parent_context ? 1 : 0)
         if context.fun.naked?
@@ -637,7 +654,7 @@ class Crystal::CodeGenVisitor
 
         llvm_typer = LLVMTyper.new(@program, llvm_context)
         llvm_mod = configure_module(llvm_context.new_module(type_name))
-        llvm_builder = new_builder(llvm_context)
+        llvm_builder = new_builder(llvm_mod)
 
         ModuleInfo.new(llvm_mod, llvm_typer, llvm_builder)
       end

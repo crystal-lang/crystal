@@ -5,7 +5,7 @@ require "./subtle"
 # Mazières, as [presented at USENIX in
 # 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
 #
-# The algorithm has a maximum password length limit of 71 characters (see
+# The algorithm has a maximum password length limit of 72 bytes (see
 # [this comment](https://security.stackexchange.com/questions/39849/does-bcrypt-have-a-maximum-password-length#answer-39851)
 # on stackoverflow).
 #
@@ -59,8 +59,7 @@ class Crypto::Bcrypt
   # Crypto::Bcrypt.hash_secret "secret"
   # ```
   def self.hash_secret(password : String, cost : Int32 = DEFAULT_COST) : String
-    # We make a clone here to we don't keep a mutable reference to the original string
-    passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
+    passwordb = password_bytes(password)
     saltb = Random::Secure.random_bytes(SALT_SIZE)
     new(passwordb, saltb, cost).to_s
   end
@@ -76,10 +75,19 @@ class Crypto::Bcrypt
   # password.to_s # => "$2a$11$CJjskaIgXR32DJYjVyNPd./ajV3Yj6GiP0IAI6rR.fMnjRgozqqqG"
   # ```
   def self.new(password : String, salt : String, cost : Int32 = DEFAULT_COST) : self
-    # We make a clone here to we don't keep a mutable reference to the original string
-    passwordb = password.to_unsafe.to_slice(password.bytesize + 1).clone # include leading 0
+    passwordb = password_bytes(password)
     saltb = Base64.decode(salt, SALT_SIZE)
     new(passwordb, saltb, cost)
+  end
+
+  # Returns the bytes bcrypt derives the hash from: the *password* followed by its NUL terminator.
+  # Only the first 72 bytes are used, so the terminator of a 72-byte password is left out.
+  private def self.password_bytes(password : String) : Bytes
+    bytesize = password.bytesize
+    bytesize += 1 if bytesize < PASSWORD_RANGE.end
+
+    # We make a clone here so we don't keep a mutable reference to the original string
+    password.to_unsafe.to_slice(bytesize).clone
   end
 
   getter password : Bytes

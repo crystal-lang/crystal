@@ -18,6 +18,7 @@ describe "Crypto::Bcrypt" do
     {5, utf8_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
     {5, bit8_unicode_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
     {5, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678", "VU6N0LbtX7trKLCg4Uf8qe", "5WYPzqIUUIrkveFjCbMg/hXc592OQLK"},
+    {5, "a" * 72, "CCCCCCCCCCCCCCCCCCCCC.", "ODcEJfYFxKziEakDsjep8mcF3zSCvHq"},
   ]
 
   it "computes digest vectors" do
@@ -59,6 +60,12 @@ describe "Crypto::Bcrypt" do
 
     expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
       Crypto::Bcrypt.new("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 invalid".to_slice, salt)
+    end
+  end
+
+  it "validates password size of strings" do
+    expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
+      Crypto::Bcrypt.new("a" * 73, "CCCCCCCCCCCCCCCCCCCCC.")
     end
   end
 

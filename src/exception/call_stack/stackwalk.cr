@@ -231,6 +231,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_address(ip)
-    ip.address
+    ip.address &- 1
   end
 end

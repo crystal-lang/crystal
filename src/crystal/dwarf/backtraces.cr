@@ -50,10 +50,7 @@ module Crystal
           m = l &+ (r &- l) // 2
           low_pc, high_pc, cstring = a.to_unsafe[m]
 
-          # high PC is defined as "the address of the first location past the
-          # last instruction associated with the entity", so the range should
-          # exclude high PC, but in practice PC can be equal to high PC
-          if low_pc <= pc <= high_pc
+          if low_pc <= pc < high_pc
             return Bytes.new(cstring, LibC.strlen(cstring))
           end
 

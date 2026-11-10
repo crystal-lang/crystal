@@ -98,7 +98,7 @@ module Float::Printer
       io << '0'
     end
 
-    unless fraction.remove_if_zero? && digits.all?(&.=== '0')
+    unless fraction.remove_if_zero? && digits.all?('0')
       io << '.'
 
       # add leading zeros after point

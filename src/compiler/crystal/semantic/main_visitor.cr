@@ -3600,6 +3600,17 @@ module Crystal
       unless var
         undefined_class_variable(node, class_var_owner)
       end
+
+      # A class variable in a non-virtual instance or class method can only
+      # belong to a single class; a virtual method causes class variables to be
+      # dispatched according to the receiver instance or metaclass, thus `self`
+      # needs to be closured
+      if scope = @scope
+        if scope.virtual? || scope.virtual_metaclass?
+          check_self_closured
+        end
+      end
+
       var
     end
 
