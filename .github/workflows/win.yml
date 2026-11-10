@@ -11,7 +11,7 @@ concurrency:
 jobs:
   x86_64-msvc:
     name: x64 MSVC
-    uses: ./.github/workflows/win_steps.yml
+    uses: $/.github/workflows/win_steps.yml
     with:
       arch: x86_64
       runs-on: windows-2025-vs2026
@@ -21,7 +21,7 @@ jobs:
 
   aarch64-msvc:
     name: ARM64 MSVC
-    uses: ./.github/workflows/win_steps.yml
+    uses: $/.github/workflows/win_steps.yml
     with:
       arch: aarch64
       runs-on: windows-11-vs2026-arm

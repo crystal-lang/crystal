@@ -143,13 +143,7 @@ class Reference
             {% else %}
               pp.comma
             {% end %}
-            pp.group do
-              pp.text "@{{ivar.id}}="
-              pp.nest do
-                pp.breakable ""
-                @{{ivar.id}}.pretty_print(pp)
-              end
-            end
+            pp.key_value "@{{ivar.id}}", "=", @{{ivar.id}}
           {% end %}
         end
       end
@@ -176,7 +170,8 @@ class Reference
     io << '>'
   end
 
-  private def exec_recursive(method, &)
+  # :nodoc:
+  def exec_recursive(method, &)
     # NOTE: can't use `Set` because of prelude require order
     hash = Fiber.current.exec_recursive_hash
     key = {object_id, method}

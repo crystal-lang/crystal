@@ -21,6 +21,7 @@ struct Crystal::EventLoop::IOCP::Timer
 
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
+  property timeout_select_action : Channel::TimeoutAction?
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node

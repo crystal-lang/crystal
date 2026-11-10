@@ -25,6 +25,12 @@ module Crystal
       # line registers to quickly find a sub-section and resume the iteration.
       @line_numbers = Slice({Line::Registers, Int32, Int32}).empty
 
+      # Unlike function names, a decompressed table of file and line numbers
+      # quickly allocates several megabytes of memory, much more than the
+      # compressed DEBUG_LINE section. Instead, we build an index of offsets and
+      # line registers to quickly find a sub-section and resume the iteration.
+      @line_numbers = Slice({Line::Registers, Int32, Int32}).empty
+
       @initialized = false
 
       def build_caches : Nil
@@ -44,10 +50,7 @@ module Crystal
           m = l &+ (r &- l) // 2
           low_pc, high_pc, cstring = a.to_unsafe[m]
 
-          # high PC is defined as "the address of the first location past the
-          # last instruction associated with the entity", so the range should
-          # exclude high PC, but in practice PC can be equal to high PC
-          if low_pc <= pc <= high_pc
+          if low_pc <= pc < high_pc
             return Bytes.new(cstring, LibC.strlen(cstring))
           end
 

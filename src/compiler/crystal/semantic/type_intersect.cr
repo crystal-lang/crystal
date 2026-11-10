@@ -81,19 +81,23 @@ module Crystal
         common_descendent_base(type1, type2)
     end
 
+    def self.common_descendent(type1 : VirtualMetaclassType, type2 : MetaclassType)
+      # A class can't be restricted into a module class
+      return nil if type2.instance_type.module?
+
+      # `T+.class` is always a subtype of `Class`
+      return type1 if type2 == type2.program.class_type
+
+      restricted = common_descendent(type2.instance_type, type1.base_type)
+      restricted.try(&.metaclass)
+    end
+
     def self.common_descendent(type1 : MetaclassType, type2 : VirtualMetaclassType)
       # A module class can't be restricted into a class
       return nil if type1.instance_type.module?
 
-      # `T+.class` is always a subtype of `Class`
-      return type2 if type1 == type1.program.class_type
-
-      restricted = common_descendent(type1.instance_type, type2.instance_type.base_type)
+      restricted = common_descendent(type1.instance_type, type2.base_type)
       restricted.try(&.metaclass)
-    end
-
-    def self.common_descendent(type1 : VirtualMetaclassType, type2 : MetaclassType)
-      common_descendent(type2, type1)
     end
 
     def self.common_descendent(type1 : VirtualMetaclassType, type2 : VirtualMetaclassType)

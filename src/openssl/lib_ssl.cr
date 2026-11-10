@@ -117,13 +117,23 @@ lib LibSSL
   SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG = 54
 
   enum Options : ULong
-    LEGACY_SERVER_CONNECT       = 0x00000004
-    ENABLE_KTLS                 = 0x00000008
+    LEGACY_SERVER_CONNECT = 0x00000004
+
+    {% if compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+      ENABLE_KTLS = 0x00000008
+    {% else %}
+      ENABLE_KTLS = 0x00000000
+    {% end %}
+
+    {% if compare_versions(OPENSSL_VERSION, "4.1.0") < 0 %}
+      TLSEXT_PADDING = 0x00000010
+    {% else %}
+      @[Deprecated("Removed from LibSSL.")]
+      TLSEXT_PADDING = 0x00000000
+    {% end %}
+
     SAFARI_ECDHE_ECDSA_BUG      = 0x00000040
     DONT_INSERT_EMPTY_FRAGMENTS = 0x00000800
-
-    # Various bug workarounds that should be rather harmless.
-    ALL = 0x80000BFF
 
     NO_QUERY_MTU     = 0x00001000
     COOKIE_EXCHANGE  = 0x00002000
@@ -184,6 +194,17 @@ lib LibSSL
 
     @[Deprecated("Removed from LibSSL.")]
     SINGLE_DH_USE = 0x00000000
+
+    # Various bug workarounds that should be rather harmless.
+    {% if LIBRESSL_VERSION != "0.0.0" %}
+      ALL = LEGACY_SERVER_CONNECT
+    {% elsif compare_versions(OPENSSL_VERSION, "4.1.0") >= 0 %}
+      ALL = CRYPTOPRO_TLSEXT_BUG | DONT_INSERT_EMPTY_FRAGMENTS | SAFARI_ECDHE_ECDSA_BUG
+    {% elsif compare_versions(OPENSSL_VERSION, "3.0.0") >= 0 %}
+      ALL = CRYPTOPRO_TLSEXT_BUG | DONT_INSERT_EMPTY_FRAGMENTS | TLSEXT_PADDING | SAFARI_ECDHE_ECDSA_BUG
+    {% else %}
+      ALL = CRYPTOPRO_TLSEXT_BUG | DONT_INSERT_EMPTY_FRAGMENTS | LEGACY_SERVER_CONNECT | TLSEXT_PADDING | SAFARI_ECDHE_ECDSA_BUG
+    {% end %}
   end
 
   @[Flags]

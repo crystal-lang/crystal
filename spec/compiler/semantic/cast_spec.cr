@@ -396,4 +396,16 @@ describe "Semantic: cast" do
       end
       CRYSTAL
   end
+
+  it "doesn't cast Class to virtual metaclass (#11668)" do
+    assert_error <<-CRYSTAL, "can't cast Class to Foo+.class"
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      Class.as(Foo.class)
+      CRYSTAL
+  end
 end

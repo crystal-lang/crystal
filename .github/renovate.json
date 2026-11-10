@@ -3,6 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "lib/**"
+  ],
   "separateMajorMinor": false,
   "packageRules": [
     {
@@ -23,5 +26,16 @@
   ],
   "labels": [
     "topic:infrastructure/ci"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.yml$/"],
+      "matchStrings": [
+        "repository:\\s*(?<depName>[^\\s]+)\\s+ref:\\s*(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver-coerced"
+    }
   ]
 }

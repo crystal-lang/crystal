@@ -2,7 +2,7 @@ module Crystal
   class CrystalLLVMBuilder
     property end : Bool
 
-    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVMTypedFunction)
+    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper)
       @end = false
     end
 
@@ -36,20 +36,6 @@ module Crystal
       value = @builder.unreachable
       @end = true
       value
-    end
-
-    def printf(format, args = [] of LLVM::Value, catch_pad = nil)
-      if catch_pad
-        funclet = build_operand_bundle_def("funclet", [catch_pad])
-      else
-        funclet = LLVM::OperandBundleDef.null
-      end
-
-      begin
-        call @printf, [global_string_pointer(format)] + args, bundle: funclet
-      ensure
-        funclet.dispose
-      end
     end
 
     def position_at_end(block)
