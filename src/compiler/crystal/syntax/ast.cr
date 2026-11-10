@@ -1,14 +1,12 @@
 # Helper for `#pretty_print` implementation. It describes the type.
 private def pp_type(pp, left, right, &) : Nil
-  pp.text left
-  pp.group_sub do
+  pp.group(0, left, right) do
     pp.nest(2) do
       pp.breakable ""
       yield
     end
     pp.breakable ""
   end
-  pp.text right
 end
 
 # Helper for `#pretty_print` to emit optional properties.

@@ -110,46 +110,31 @@ class PrettyPrint
   # objects are either turned into newlines or are output
   # as is, depending on the available width.
   def group(indent = 0, open_obj = "", close_obj = "", &)
-    group = open_group indent, open_obj
+    text open_obj
+    group = open_group
+    @indent += indent
     begin
       yield
     ensure
-      close_group group, indent
+      @indent -= indent
+      close_group group
     end
     text close_obj
   end
 
-  # Does what `#group` does before yielding, i.e. what `#group_sub` and `#nest` do.
-  private def open_group(indent, open_obj) : Group
-    text open_obj
+  # Starts a group that the following breakables belong to.
+  private def open_group : Group
     group = Group.new(@group_stack.last.depth + 1)
     @group_stack.push group
     @group_queue.enq group
-    @indent += indent
     group
   end
 
-  # Does what `#group` does once its block returns or raises.
-  private def close_group(group : Group, indent) : Nil
-    @indent -= indent
+  # Ends a group started by `#open_group`.
+  private def close_group(group : Group) : Nil
     @group_stack.pop
     if group.breakables.empty?
       @group_queue.delete group
-    end
-  end
-
-  # :nodoc:
-  def group_sub(&)
-    group = Group.new(@group_stack.last.depth + 1)
-    @group_stack.push group
-    @group_queue.enq group
-    begin
-      yield
-    ensure
-      @group_stack.pop
-      if group.breakables.empty?
-        @group_queue.delete group
-      end
     end
   end
 
