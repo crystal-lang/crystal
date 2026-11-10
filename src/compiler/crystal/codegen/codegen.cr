@@ -1972,7 +1972,7 @@ module Crystal
 
         unreachable
       else
-        # fallback for stdlib before 1.16.2 when using a 1.16.2 or later compiler
+        # fallback for stdlib before 1.23 when using a 1.23 or later compiler
         accept cant_pass_closure_to_c_exception_call
       end
     end
