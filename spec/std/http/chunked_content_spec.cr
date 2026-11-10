@@ -237,12 +237,6 @@ describe HTTP::ChunkedContent do
     [
       "1\nA\r\n",
       "1\rA\r\n",
-    ].each do |line|
-      chunked = HTTP::ChunkedContent.new(IO::Memory.new(line))
-      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid chunk line") { chunked.gets(1) }
-    end
-
-    [
       "3;foo\nbar\r\nbaz\r\n",
       "3;foo\rbar\r\nbaz\r\n",
     ].each do |line|
