@@ -126,7 +126,7 @@ class Fiber
   end
   {% end %}
 
-  {% if !flag?(:without_mt) && (!flag?(:preview_mt) || flag?(:execution_context)) %}
+  {% unless flag?(:without_mt) %}
     # :nodoc:
     #
     # Internal constructor for running the main user code in a new fiber. No

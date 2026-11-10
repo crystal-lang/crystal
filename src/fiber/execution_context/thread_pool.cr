@@ -202,7 +202,13 @@ class Fiber
         current_fiber = thread.current_fiber
 
         GC.lock_read
+
+        # gc/boehm requires to save the stack bottom of the main thread after
+        # the initial main fiber -> main user code fiber switch (at least),
+        # otherwise it won't try to collect memory anymore and instead keep
+        # growing the HEAP.
         GC.set_stackbottom(thread.gc_thread_handler, fiber.@stack.bottom)
+
         thread.current_fiber = fiber
         Fiber.swapcontext(pointerof(current_fiber.@context), pointerof(fiber.@context))
         GC.unlock_read
