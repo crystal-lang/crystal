@@ -353,7 +353,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       {% if LibLLVM::IS_LT_130 %}
-        if @codegen_target.architecture == "aarch64"
+        if @codegen_target.aarch64?
           stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
           exit 1
         end
@@ -446,22 +446,10 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        # LLVM reports file system errors (eg. a missing output directory)
-        # as a plain error string; rewrap it so it surfaces as a proper
-        # error message instead of a compiler bug report.
         emit_filename = emit_base_filename || output_filename
-        begin
-          unit.emit(@emit_targets, emit_filename)
-        rescue ex : Exception
-          raise CompilerError.new("Could not write output file '#{emit_filename}': #{ex.message}", :FAILURE)
-        end
-
-        begin
-          target_machine.emit_obj_to_file llvm_mod, output_filename
-        rescue ex : Exception
-          raise CompilerError.new("Could not write output file '#{output_filename}': #{ex.message}", :FAILURE)
-        end
+        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
       end
+
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
@@ -473,7 +461,9 @@ module Crystal
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
-      if program.has_flag? "msvc"
+      codegen_target = program.codegen_target
+
+      if codegen_target.msvc?
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
 
@@ -517,14 +507,14 @@ module Crystal
         end
 
         {linker, cmd, nil}
-      elsif program.has_flag? "wasm32"
+      elsif codegen_target.wasm?
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
-      elsif program.has_flag? "avr"
+      elsif codegen_target.avr?
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
-      elsif program.has_flag?("win32") && program.has_flag?("gnu")
+      elsif codegen_target.mingw?
         link_flags = @link_flags || ""
         link_flags += " -Wl,--stack,0x800000"
         link_flags = use_modern_linker(link_flags)
@@ -552,7 +542,7 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        if program.has_flag?("freebsd") || program.has_flag?("openbsd")
+        if codegen_target.freebsd? || codegen_target.openbsd?
           # pkgs are installed to usr/local/lib but it's not in LIBRARY_PATH by
           # default; we declare it to ease linking on these platforms:
           link_flags += " -L/usr/local/lib"
@@ -963,31 +953,53 @@ module Crystal
         memory_buffer.dispose
       end
 
-      private def compile_to_object
+      private def compile_to_object(file_name = object_name, *, optimize = true)
         temporary_object_name = self.temporary_object_name
         target_machine = compiler.create_target_machine
-        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+        compiler.optimize llvm_mod, target_machine if optimize && !compiler.optimization_mode.o0?
         target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-        File.rename(temporary_object_name, object_name)
+        FileUtils.mv(temporary_object_name, file_name)
       end
 
       private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_targets : EmitTarget, output_filename)
+      def emit(emit_targets : EmitTarget, output_filename, *, from_cache = true)
+        filename = output_filename
+
         if emit_targets.asm?
-          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+          filename = "#{output_filename}.s"
+          compiler.target_machine.emit_asm_to_file llvm_mod, filename
         end
+
         if emit_targets.llvm_bc?
-          FileUtils.cp(bc_name, "#{output_filename}.bc")
+          filename = "#{output_filename}.bc"
+          if from_cache
+            FileUtils.cp(bc_name, filename)
+          else
+            llvm_mod.write_bitcode_to_file(filename)
+          end
         end
+
         if emit_targets.llvm_ir?
-          llvm_mod.print_to_file "#{output_filename}.ll"
+          filename = "#{output_filename}.ll"
+          llvm_mod.print_to_file filename
         end
+
         if emit_targets.obj?
-          FileUtils.cp(object_name, output_filename + @object_extension)
+          filename = "#{output_filename}#{@object_extension}"
+          if from_cache
+            FileUtils.cp(object_name, filename)
+          else
+            compile_to_object(filename, optimize: false)
+          end
         end
+      rescue ex
+        # LLVM reports file system errors (eg. a missing output directory)
+        # as a plain error string; rewrap it so it surfaces as a proper
+        # error message instead of a compiler bug report.
+        raise CompilerError.new("Could not write output file '#{filename}': #{ex.message}", :FAILURE)
       end
 
       def object_name

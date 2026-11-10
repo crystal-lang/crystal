@@ -64,6 +64,20 @@ describe CSV do
       end, %('he said ''no'''\n))
     end
 
+    it "builds with CR and LF" do
+      assert_prints(CSV.build do |csv|
+        csv.row do |row|
+          row << %(hello\nworld)
+        end
+      end, %("hello\nworld"\n))
+
+      assert_prints(CSV.build do |csv|
+        csv.row do |row|
+          row << %(hello\rworld)
+        end
+      end, %("hello\rworld"\n))
+    end
+
     it "builds row from enumerable" do
       assert_prints(CSV.build do |csv|
         csv.row [1, 2, 3]

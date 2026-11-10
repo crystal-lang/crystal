@@ -34,7 +34,7 @@ jobs:
         include:
           - arch: x86_64
             env:
-              CRYSTAL_BOOTSTRAP_VERSION: 1.14.1
+              CRYSTAL_BOOTSTRAP_VERSION: 1.15.1
     steps:
       - name: Download Crystal source
         uses: actions/checkout@v7
@@ -65,8 +65,6 @@ jobs:
         opts:
           - flags: "-Dwithout_mt"
           - workers: 4 # execution_context: parallel
-          - flags: "-Dpreview_mt"
-            workers: 4
           - flags: "-Devloop=io_uring"
             workers: 4
           - flags: "-Devloop=io_uring -Dwithout_mt"
@@ -121,7 +119,7 @@ jobs:
         persist-credentials: false
 
     - name: Spell Check Repo
-      uses: crate-ci/typos@512fc24f32f44ab01972217aaaf3dc86ec234d53 # v1.50.2
+      uses: crate-ci/typos@00f422f3b19c57bc6338715ebfe3316d38768461 # v1.50.3
       env:
         CLICOLOR: 1
 

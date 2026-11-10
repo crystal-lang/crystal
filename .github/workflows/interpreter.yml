@@ -15,7 +15,7 @@ jobs:
   test-interpreter_spec:
     runs-on: ubuntu-26.04
     container:
-      image: crystallang/crystal:1.21.0-build
+      image: crystallang/crystal:1.22.2-build
     name: "Test Interpreter"
     steps:
       - uses: actions/checkout@v7
@@ -28,7 +28,7 @@ jobs:
   build-interpreter:
     runs-on: ubuntu-26.04
     container:
-      image: crystallang/crystal:1.21.0-build
+      image: crystallang/crystal:1.22.2-build
     name: Build interpreter
     steps:
       - uses: actions/checkout@v7
@@ -53,7 +53,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-26.04
     container:
-      image: crystallang/crystal:1.21.0-build
+      image: crystallang/crystal:1.22.2-build
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +80,7 @@ jobs:
     needs: build-interpreter
     runs-on: ubuntu-26.04
     container:
-      image: crystallang/crystal:1.21.0-build
+      image: crystallang/crystal:1.22.2-build
     name: "Test primitives_spec with interpreter"
     steps:
       - uses: actions/checkout@v7

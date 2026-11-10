@@ -1,0 +1,10 @@
+def maybe_raise(really)
+  raise "boom" if really
+end
+
+def not_last_statement
+  maybe_raise(true)
+  puts "C"
+end
+
+not_last_statement

@@ -35,7 +35,16 @@ module Crystal::System::Addrinfo
     hints.ai_socktype = type
     hints.ai_protocol = protocol
 
-    flags |= LibC::AI_NUMERICSERV if service.is_a?(Int)
+    if service.is_a?(Int)
+      flags |= LibC::AI_NUMERICSERV
+
+      # Some getadrinfo implementations (notably glibc) do not handle
+      # out-of-range service values correctly, so we validate manually.
+      # https://github.com/crystal-lang/crystal/issues/17847
+      unless 0 <= service <= UInt16::MAX
+        raise ::Socket::Addrinfo::Error.from_os_error(nil, Errno.new({{ (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) ? LibC::EAI_SERVICE : LibC::EAI_NONAME }}), domain: domain, type: type, protocol: protocol, service: service)
+      end
+    end
 
     # On OS X < 10.12, the libsystem implementation of getaddrinfo segfaults
     # if AI_NUMERICSERV is set, and servname is NULL or 0.

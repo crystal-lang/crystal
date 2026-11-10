@@ -830,7 +830,7 @@ module Crystal
         # raise ... if temp.size < ...
         if raise_on_count_mismatch
           size_call = Call.new(temp_var.clone, "size").at(value)
-          if middle_splat
+          if splat_index
             size_comp = Call.new(size_call, "<", NumberLiteral.new(node.targets.size - 1)).at(value)
           else
             size_comp = Call.new(size_call, "!=", NumberLiteral.new(node.targets.size)).at(value)

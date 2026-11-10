@@ -296,10 +296,91 @@ describe "Semantic: exception" do
     call.target_defs.should_not(be_nil).first.raises?.should be_true
   end
 
-  it "marks proc literal as raises" do
+  it "marks method as raises through recursive cycle (#17644)" do
+    result = assert_type(<<-CRYSTAL) { int32 }
+      @[Raises]
+      def foo
+        -1
+      end
+
+      def foo1(first)
+        foo2 if first
+        foo4 if first
+        foo
+      end
+
+      def foo2
+        foo3
+      end
+
+      def foo3
+        foo1(false)
+      end
+
+      def foo4
+        foo2
+      end
+
+      foo1(true)
+      foo2
+      foo3
+      foo4
+      CRYSTAL
+    [-1, -2, -3, -4].each do |index|
+      call = result.node.as(Expressions).expressions[index].as(Call)
+      call.target_defs.should_not(be_nil).first.raises?.should be_true
+    end
+  end
+
+  it "marks proc calls as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)
     call.target_def.raises?.should be_true
+  end
+
+  it "marks a proc definition calling a raising method as raises" do
+    result = assert_type(<<-CRYSTAL) { proc_of(int32) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      -> { raising }
+      CRYSTAL
+    proc = result.node.as(Expressions).last.as(ProcLiteral)
+    proc.def.raises?.should be_true
+  end
+
+  it "does not mark a method returning a raising proc as raises" do
+    result = assert_type(<<-CRYSTAL) { proc_of(int32) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      def foo
+        -> { raising }
+      end
+
+      foo
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_false
+    a_def.body.as(ProcLiteral).def.raises?.should be_true
+  end
+
+  it "does not mark an outer proc as raises when returning a raising proc" do
+    result = assert_type(<<-CRYSTAL) { proc_of(proc_of(int32)) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      -> { -> { raising } }
+      CRYSTAL
+    proc = result.node.as(Expressions).last.as(ProcLiteral)
+    proc.def.raises?.should be_false
+    proc.def.body.as(ProcLiteral).def.raises?.should be_true
   end
 
   it "shadows local variable (1)" do

@@ -991,6 +991,25 @@ describe "Code gen: proc" do
       CRYSTAL
   end
 
+  it "returns ProcPointer with an explicit `return` inside top-level fun (#14392)" do
+    run(<<-CRYSTAL, Int32).should eq(8)
+      def raise(msg)
+        while true
+        end
+      end
+
+      fun foo(x : Int32) : Int32
+        x &+ 5
+      end
+
+      fun bar : Int32 -> Int32
+        return ->foo(Int32)
+      end
+
+      bar.call(3)
+      CRYSTAL
+  end
+
   it "raises if returning closure from top-level fun (#14691)" do
     run(<<-CRYSTAL).to_b.should be_true
       require "prelude"
