@@ -349,19 +349,20 @@ module HTTP
 
   # :nodoc:
   def self.keep_alive?(message) : Bool
-    case message.headers["Connection"]?.try &.downcase
-    when "keep-alive"
-      true
-    when "close", "upgrade"
-      false
-    else
-      case message.version
-      when "HTTP/1.0"
-        false
-      else
-        true
+    keep_alive = message.version != "HTTP/1.0"
+
+    message.headers.get?("Connection").try &.each do |value|
+      value.downcase.split(',') do |token|
+        case token.strip(" \t")
+        when "close", "upgrade"
+          return false
+        when "keep-alive"
+          keep_alive = true
+        end
       end
     end
+
+    keep_alive
   end
 
   def self.expect_continue?(headers : HTTP::Headers) : Bool

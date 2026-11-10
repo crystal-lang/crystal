@@ -684,6 +684,29 @@ module HTTP
     end
 
     describe "#keep_alive?" do
+      it "gives close precedence in connection token lists" do
+        {"HTTP/1.0", "HTTP/1.1"}.each do |version|
+          {"close, keep-alive", "keep-alive, close", "keep-alive, \tClOsE \t"}.each do |value|
+            request = Request.new "GET", "/", headers: HTTP::Headers{"Connection" => value}, version: version
+            request.keep_alive?.should be_false
+          end
+
+          headers = HTTP::Headers{"Connection" => ["keep-alive", "close"]}
+          Request.new("GET", "/", headers: headers, version: version).keep_alive?.should be_false
+        end
+      end
+
+      it "recognizes complete connection tokens" do
+        headers = HTTP::Headers{"Connection" => "other, \tKeEp-AlIvE "}
+        Request.new("GET", "/", headers: headers, version: "HTTP/1.0").keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "x-close, close-extra"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_false
+      end
+
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
         request.keep_alive?.should be_false
