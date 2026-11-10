@@ -209,7 +209,6 @@ module HTTP
 
     private def read_chunk_size : Int32
       line = @io.read_line(@max_headers_size, chomp: false)
-      valid = false
 
       # chunk-line MUST end with CRLF: https://errata.rfc-editor.org/eid7633/
       # read_line stopped at LF, so rejects lone LF by design
@@ -218,20 +217,20 @@ module HTTP
 
         chunk_size, digits = read_chunk_size_impl(bytes)
         if digits > 0
+          # valid chunk-size, or integer overflow
           bytes += digits
 
           case bytes.first?
           when nil
             # end-of-line
-            valid = true
+            return chunk_size
           when ' '.ord, '\t'.ord, ';'.ord
-            valid = skip_chunk_ext(bytes)
+            if skip_chunk_ext?(bytes)
+              return chunk_size
+            end
           else
-            # invalid character
-            valid = false
+            # invalid character, includes hexdigits in case of overflow
           end
-
-          return chunk_size if valid
         end
       end
 
@@ -266,12 +265,11 @@ module HTTP
       {chunk_size.to_i32!, digits}
     end
 
-    private def skip_chunk_ext(bytes)
+    private def skip_chunk_ext?(bytes)
       # chunk-ext = *( BWS ";" BWS chunk-ext-name [ BWS "=" BWS chunk-ext-val ] )
       bytes, bws = skip_whitespace(bytes)
 
-      while true
-        break unless byte = bytes.first?
+      while byte = bytes.first?
         return false unless byte == ';'.ord
 
         bytes += 1 # consume ';'
@@ -307,19 +305,12 @@ module HTTP
       !bws
     end
 
-    private def read_token(bytes)
+    private def read_token(bytes : Bytes)
       bytes.each_with_index do |byte, index|
-        case byte
-        when '0'.ord..'9'.ord, 'a'.ord..'z'.ord, 'A'.ord..'Z'.ord,
-             '!'.ord, '#'.ord, '$'.ord, '%'.ord, '&'.ord, '\''.ord,
-             '*'.ord, '+'.ord, '-'.ord, '.'.ord, '^'.ord, '_'.ord,
-             '`'.ord, '|'.ord, '~'.ord
-          # valid token byte
-        else
+        if HTTP::VALID_TOKEN_CHAR_MAP.to_unsafe[byte] == 0
           return index > 0 ? bytes[0, index] : Bytes.empty
         end
       end
-
       bytes
     end
 

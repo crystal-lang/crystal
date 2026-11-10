@@ -322,7 +322,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar Baz Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, /invalid trailer/) { chunked.gets }
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid trailer") { chunked.gets }
       chunked.headers.should be_empty
     end
 
@@ -330,7 +330,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar\r\nBaz: Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, /invalid trailer/) { chunked.gets }
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid trailer") { chunked.gets }
       chunked.headers.should eq HTTP::Headers{"Foo" => "Bar"}
     end
   end
@@ -354,15 +354,24 @@ describe HTTP::ChunkedContent do
   end
 
   it "accepts valid chunk-size" do
-    0.upto(64) do |size|
-      value = "." * size
-
-      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size.to_s(16)}\r\n#{value}\r\n0\r\n\r\n"))
-      content.gets_to_end.should eq(value)
-
-      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size.to_s(16, upcase: true)}\r\n#{value}\r\n0\r\n\r\n"))
+    [
+      "0",
+      "1",
+      "05",
+      "a",
+      "00b",
+      "5b",
+      "FF",
+      "Ab5C",
+    ].each do |size|
+      value = "." * size.to_i(16)
+      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size}\r\n#{value}\r\n0\r\n\r\n"))
       content.gets_to_end.should eq(value)
     end
+
+    # expect EOF to skip allocating, streaming and comparing 2GB
+    content = HTTP::ChunkedContent.new(IO::Memory.new("7fffffff\r\n..."))
+    expect_raises(IO::EOFError) { content.gets_to_end }
   end
 
   it "rejects invalid chunk-size" do
