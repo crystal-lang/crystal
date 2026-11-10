@@ -394,6 +394,59 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands @type.name in virtual metaclass with generic subclasses (1)" do
+    run(<<-CRYSTAL).to_string.should eq("Bar(Int32)")
+      class Class
+        def to_s : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      def name_of(klass : Foo.class)
+        klass.to_s
+      end
+
+      p = Pointer(Foo.class).malloc(1_u64)
+      p.value = Bar(Int32)
+      name_of(p.value)
+      p.value = Bar(Char)
+      p.value = Bar(Int32)
+      name_of(p.value)
+      CRYSTAL
+  end
+
+  it "expands @type.name in virtual metaclass with generic subclasses (2)" do
+    run(<<-CRYSTAL).to_string.should eq("Bar(Char)")
+      class Class
+        def to_s : String
+          {{ @type.name.stringify }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      def name_of(klass : Foo.class)
+        klass.to_s
+      end
+
+      p = Pointer(Foo.class).malloc(1_u64)
+      p.value = Bar(Int32)
+      name_of(p.value)
+      p.value = Bar(Char)
+      name_of(p.value)
+      CRYSTAL
+  end
+
   it "doesn't skip abstract classes when defining macro methods" do
     run(<<-CRYSTAL).to_i.should eq(2)
       class Object

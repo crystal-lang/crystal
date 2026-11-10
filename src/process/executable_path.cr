@@ -20,7 +20,7 @@ class Process
   # and `Process.executable_path_impl` on openbsd.
   INITIAL_PWD = begin
     Dir.current
-  rescue File::NotFoundError
+  rescue File::Error
     nil
   end
 
@@ -52,7 +52,7 @@ class Process
     {% else %}
       File::Info.executable?(path)
     {% end %}
-  rescue File::AccessDeniedError
+  rescue File::Error
     false
   end
 

@@ -52,6 +52,8 @@ module Crystal
       @landing_pad_type = @llvm_context.struct([@llvm_context.void_pointer, @llvm_context.int32], "landing_pad")
     end
 
+    getter llvm_context : LLVM::Context
+
     def type_id_pointer
       @llvm_context.int32.pointer
     end

@@ -75,8 +75,20 @@ module Crystal
     def store_in_union(union_type, union_pointer, value_type, value)
       struct_type = llvm_type(union_type)
       store type_id(value, value_type), union_type_id(struct_type, union_pointer)
-      casted_value_ptr = cast_to_pointer(union_value(struct_type, union_pointer), value_type)
-      store value, casted_value_ptr
+      union_value_ptr = union_value(struct_type, union_pointer)
+      store value, cast_to_pointer(union_value_ptr, value_type)
+
+      if union_type.has_inner_pointers?
+        value_size = @llvm_typer.size_of(llvm_type(value_type))
+        union_value_size = @llvm_typer.size_of(struct_type.struct_element_types[1])
+
+        if value_size < union_value_size
+          # source value is smaller than destination union value,
+          # zero the remaining bytes so we don't keep pointer references
+          pointer = gep(llvm_type(@program.int8), cast_to_void_pointer(union_value_ptr), size_t(value_size))
+          memset(pointer, int8(0), size_t(union_value_size - value_size))
+        end
+      end
     end
 
     def store_bool_in_union(target_type, union_pointer, value)
@@ -153,6 +165,20 @@ module Crystal
       else
         # Otherwise, the type ID and the value must be stored separately
         store_union_in_union to_type, to_pointer, from_type, from_pointer
+      end
+
+      if to_type.has_inner_pointers?
+        struct_type = llvm_type(to_type)
+        to_size = @llvm_typer.size_of(struct_type.struct_element_types[1])
+        from_size = @llvm_typer.size_of(llvm_type(from_type).struct_element_types[1])
+
+        if from_size < to_size
+          # source union is smaller than destination union,
+          # zero the remaining bytes so we don't keep pointer references
+          value_ptr = union_value(struct_type, to_pointer)
+          pointer = gep(llvm_type(@program.int8), cast_to_void_pointer(value_ptr), size_t(from_size))
+          memset(pointer, int8(0), size_t(to_size - from_size))
+        end
       end
     end
 

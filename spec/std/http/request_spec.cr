@@ -202,7 +202,23 @@ module HTTP
         req.content_length.should be_nil
         String.build do |io|
           req.to_io(io)
-        end.should eq "PATCH / HTTP/1.1\r\n\r\n"
+        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+      end
+
+      it "serializes POST, PUT and PATCH without body with Content-Length: 0" do
+        {"POST", "PUT", "PATCH"}.each do |method|
+          String.build do |io|
+            Request.new(method, "/").to_io(io)
+          end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+        end
+      end
+
+      it "serializes POST and PUT without body with Content-Length: 0" do
+        {"POST", "PUT"}.each do |method|
+          String.build do |io|
+            Request.new(method, "/").to_io(io)
+          end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+        end
       end
     end
 
@@ -644,6 +660,27 @@ module HTTP
       request.headers["Content-Encoding"].should eq "gzip"
       body = request.body.should_not be_nil
       body.gets_to_end.should eq compressed
+    end
+
+    it ".from_io can decompress body on demand" do
+      compressed = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("foobar"))
+      end
+
+      io = IO::Memory.new
+      io << <<-HTTP
+        POST / HTTP/1.1
+        Content-Encoding: gzip
+        Content-Length: #{compressed.bytesize}
+
+        #{compressed}
+
+        HTTP
+      io.rewind
+      request = HTTP::Request.from_io(io).should be_a(HTTP::Request)
+      request.headers["Content-Encoding"].should eq "gzip"
+      body = request.body.should_not be_nil
+      Compress::Gzip::Reader.open(body, &.gets_to_end).should eq "foobar"
     end
 
     describe "#keep_alive?" do

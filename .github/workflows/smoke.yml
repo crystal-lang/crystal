@@ -33,11 +33,13 @@ on:
     paths:
       - 'src/lib_c/**'
       - 'src/crystal/system/**'
+      - 'src/compiler/crystal/codegen/**'
       - '.github/workflows/smoke.yml'
   pull_request:
     paths:
       - 'src/lib_c/**'
       - 'src/crystal/system/**'
+      - 'src/compiler/crystal/codegen/**'
       - '.github/workflows/smoke.yml'
   schedule:
     - cron: '0 3 * * *'

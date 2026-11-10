@@ -379,8 +379,8 @@ class XML::Node
       "#cdata-section"
     elsif fragment?
       "#document-fragment"
-    elsif @node.value && @node.value.name
-      String.new(@node.value.name)
+    elsif name = @node.value.name
+      String.new(name)
     else
       ""
     end

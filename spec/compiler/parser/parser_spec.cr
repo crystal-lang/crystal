@@ -657,6 +657,43 @@ module Crystal
     it_parses "foo(\n1)", "foo".call(1.int32)
     it_parses "::foo", Call.new("foo", [] of ASTNode, nil, nil, nil, true)
 
+    ["", "()"].each do |suffix|
+      it_parses "foo = 1; ::foo#{suffix}", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", global: true),
+      ]
+    end
+
+    it_parses "foo = 1; ::foo /bar/", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar"), global: true),
+    ]
+    it_parses "foo = 1; ::foo /bar/i", [
+      Assign.new("foo".var, 1.int32),
+      Call.new("foo", regex("bar", Regex::CompileOptions::IGNORE_CASE), global: true),
+    ]
+
+    [" / ", "/", "/ "].each do |separator|
+      it_parses "foo = 1; ::foo#{separator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new(Call.new("foo", global: true), "/", "bar".call),
+      ]
+    end
+
+    ["+", "-"].each do |operator|
+      [" #{operator} ", operator, "#{operator} "].each do |separator|
+        it_parses "foo = 1; ::foo#{separator}bar", [
+          Assign.new("foo".var, 1.int32),
+          Call.new(Call.new("foo", global: true), operator, "bar".call),
+        ]
+      end
+
+      it_parses "foo = 1; ::foo #{operator}bar", [
+        Assign.new("foo".var, 1.int32),
+        Call.new("foo", [Call.new("bar".call, operator)] of ASTNode, global: true),
+      ]
+    end
+
     it_parses "foo + 1", Call.new("foo".call, "+", 1.int32)
     it_parses "foo +1", Call.new("foo", 1.int32)
     it_parses "foo +1.0", Call.new("foo", 1.float64)
@@ -3439,6 +3476,41 @@ module Crystal
       name_location = node.name_location.should_not be_nil
       name_location.line_number.should eq(1)
       name_location.column_number.should eq(14)
+    end
+
+    {
+      {"def foo(bar); end", 9},
+      {"def foo(bar baz); end", 13},
+      {"def foo(bar  baz); end", 14},
+      {"def foo(\"bar\" baz); end", 15},
+      {"def foo(bar baz : Int32 = 1); end", 13},
+      {"def foo(*bar); end", 10},
+      {"def foo(**bar); end", 11},
+      {"def foo(@bar); end", 9},
+      {"def foo(@@bar); end", 9},
+      {"def foo(baz @bar); end", 13},
+      {"def foo(&bar); end", 10},
+      {"def foo(&@bar); end", 10},
+      {"macro foo(bar baz); end", 15},
+    }.each do |source, column_number|
+      it "sets location of parameter name in #{source.inspect}" do
+        param =
+          case node = Parser.new(source).parse
+          when Def   then node.block_arg || node.double_splat || node.args.first
+          when Macro then node.args.first
+          else            fail "unexpected node: #{node}"
+          end
+
+        name_location = param.name_location.should_not be_nil
+        name_location.line_number.should eq(1)
+        name_location.column_number.should eq(column_number)
+      end
+    end
+
+    it "doesn't set location of parameter name not present in the source" do
+      node = Parser.new("def foo(@select); end").parse.as(Def)
+      node.args.first.name.should eq("__arg0")
+      node.args.first.name_location.should be_nil
     end
 
     it "sets correct location of proc literal" do

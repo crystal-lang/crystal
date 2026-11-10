@@ -185,6 +185,33 @@ class PrettyPrint
     end
   end
 
+  # Appends *key* and *separator* followed by *value*, in a group where *value* is nested after a breakable.
+  # If the group doesn't fit, *value* is moved to the next line.
+  #
+  # ```
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 20) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \"Crystal\""
+  #
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 10) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \n \"Crystal\""
+  # ```
+  def key_value(key : String, separator : String, value) : Nil
+    group do
+      text key
+      text separator
+      nest do
+        breakable ""
+        value.pretty_print(self)
+      end
+    end
+  end
+
   # Outputs any buffered data.
   def flush : Nil
     @buffer.each do |data|

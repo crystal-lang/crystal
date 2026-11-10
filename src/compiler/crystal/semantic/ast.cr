@@ -206,6 +206,7 @@ module Crystal
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
+
       splat_index = self.splat_index
       if splat_index
         min_size = {default_value_index || splat_index, splat_index}.min
@@ -218,6 +219,12 @@ module Crystal
           max_size = Int32::MAX
         end
       end
+
+      # variadic top-level funs
+      if varargs?
+        max_size = Int32::MAX
+      end
+
       {min_size, max_size}
     end
 

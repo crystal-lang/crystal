@@ -37,7 +37,11 @@ module Crystal::System::Addrinfo
 
     if service.is_a?(Int)
       flags |= LibC::AI_NUMERICSERV
-      if service < 0
+
+      # The win32 implementation of getadrinfo does not handle
+      # out-of-range service values correctly, so we validate manually.
+      # https://github.com/crystal-lang/crystal/issues/17847
+      unless 0 <= service <= UInt16::MAX
         raise ::Socket::Addrinfo::Error.from_os_error(nil, WinError::WSATYPE_NOT_FOUND, domain: domain, type: type, protocol: protocol, service: service)
       end
     end

@@ -27,6 +27,32 @@ describe "Crypto::Bcrypt::Password" do
       end
     end
 
+    it "validates the salt and digest sizes" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid salt size") do
+        Crypto::Bcrypt::Password.new("$2a$08$K8y0i4Wyqyei")
+      end
+
+      expect_raises(Crypto::Bcrypt::Error, "Invalid salt size") do
+        Crypto::Bcrypt::Password.new("$2a$08$")
+      end
+
+      expect_raises(Crypto::Bcrypt::Error, "Invalid digest size") do
+        Crypto::Bcrypt::Password.new("$2a$08$K8y0i4Wyqyei3SiGHLEd.OweXJt7")
+      end
+    end
+
+    it "validates the cost" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid cost") do
+        Crypto::Bcrypt::Password.new("$2a$xx$K8y0i4Wyqyei3SiGHLEd.OweXJt7sno2HdPVrMvVf06kGgAZvPkga")
+      end
+    end
+
+    it "validates the salt characters" do
+      expect_raises(Crypto::Bcrypt::Error, "Invalid salt") do
+        Crypto::Bcrypt::Password.new("$2a$08$K8y0i4Wyqyei3SiGHLEd!OweXJt7sno2HdPVrMvVf06kGgAZvPkga")
+      end
+    end
+
     it "raises on unsupported version (#11584)" do
       expect_raises(Crypto::Bcrypt::Error, "Invalid hash version") do
         Crypto::Bcrypt::Password.new("$-1$10$blarp")
@@ -76,6 +102,14 @@ describe "Crypto::Bcrypt::Password" do
     end
     it "verifies password version 2y is correct" do
       (password2y.verify "secret").should be_true
+    end
+
+    it "verifies a 72-byte password" do
+      (Crypto::Bcrypt::Password.create("a" * 72, 4).verify "a" * 72).should be_true
+
+      password72 = Crypto::Bcrypt::Password.new("$2y$05$CCCCCCCCCCCCCCCCCCCCC.ODcEJfYFxKziEakDsjep8mcF3zSCvHq")
+      (password72.verify "a" * 72).should be_true
+      (password72.verify "a" * 71).should be_false
     end
   end
 end
