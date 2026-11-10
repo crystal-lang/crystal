@@ -35,8 +35,10 @@ lib LibLLVM
   {% end %}
 
   fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : Char*, c : ContextRef) : ModuleRef
+  fun dispose_module = LLVMDisposeModule(m : ModuleRef)
   fun get_module_identifier = LLVMGetModuleIdentifier(m : ModuleRef, len : SizeT*) : Char*
   fun set_module_identifier = LLVMSetModuleIdentifier(m : ModuleRef, ident : Char*, len : SizeT)
+  fun set_module_inline_asm2 = LLVMSetModuleInlineAsm2(mod : ModuleRef, asm : Char*, len : SizeT)
   fun set_target = LLVMSetTarget(m : ModuleRef, triple : Char*)
   fun add_module_flag = LLVMAddModuleFlag(m : ModuleRef, behavior : ModuleFlagBehavior, key : Char*, key_len : SizeT, val : MetadataRef)
   fun dump_module = LLVMDumpModule(m : ModuleRef)
@@ -148,6 +150,8 @@ lib LibLLVM
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : LLVM::Linkage)
   fun set_dll_storage_class = LLVMSetDLLStorageClass(global : ValueRef, class : LLVM::DLLStorageClass)
 
+  fun global_get_value_type = LLVMGlobalGetValueType(global : ValueRef) : TypeRef
+
   fun set_alignment = LLVMSetAlignment(v : ValueRef, bytes : UInt)
 
   fun add_global = LLVMAddGlobal(m : ModuleRef, ty : TypeRef, name : Char*) : ValueRef
@@ -177,14 +181,21 @@ lib LibLLVM
   fun get_param = LLVMGetParam(fn : ValueRef, index : UInt) : ValueRef
   fun set_param_alignment = LLVMSetParamAlignment(arg : ValueRef, align : UInt)
 
-  fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : ValueRef
-  fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : ValueRef*, count : SizeT) : ValueRef
+  {% if LibLLVM::IS_LT_90 %}
+    fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
+    fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, mds : ValueRef*, count : UInt) : ValueRef
+  {% else %}
+    fun md_string_in_context2 = LLVMMDStringInContext2(c : ContextRef, str : Char*, s_len : SizeT) : MetadataRef
+    fun md_node_in_context2 = LLVMMDNodeInContext2(c : ContextRef, mds : MetadataRef*, count : SizeT) : MetadataRef
+  {% end %}
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
   fun get_md_node_num_operands = LLVMGetMDNodeNumOperands(v : ValueRef) : UInt
   fun get_md_node_operands = LLVMGetMDNodeOperands(v : ValueRef, dest : ValueRef*)
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef
   fun md_node_in_context = LLVMMDNodeInContext(c : ContextRef, vals : ValueRef*, count : UInt) : ValueRef
+
+  fun token_type_in_context = LLVMTokenTypeInContext(c : ContextRef) : TypeRef
 
   {% unless LibLLVM::IS_LT_180 %}
     fun create_operand_bundle = LLVMCreateOperandBundle(tag : Char*, tag_len : SizeT, args : ValueRef*, num_args : UInt) : OperandBundleRef

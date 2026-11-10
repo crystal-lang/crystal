@@ -12,8 +12,7 @@ class LLVM::Module
     new(module_ref, context)
   end
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-    @owned = false
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context, *, @dispose_on_finalize : Bool = true)
   end
 
   def name : String
@@ -31,6 +30,10 @@ class LLVM::Module
 
   def data_layout=(data : TargetData)
     LibLLVM.set_module_data_layout(self, data)
+  end
+
+  def inline_asm=(assembly : String)
+    LibLLVM.set_module_inline_asm2(self, assembly, assembly.bytesize)
   end
 
   def dump
@@ -62,6 +65,20 @@ class LLVM::Module
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
     add_flag(module_flag, key, @context.int32.const_int(val))
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : String)
+    LibLLVM.add_module_flag(
+      self,
+      module_flag,
+      key,
+      key.bytesize,
+      {% if LibLLVM::IS_LT_90 %}
+        LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(@context, val, val.bytesize))
+      {% else %}
+        LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+      {% end %},
+    )
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
@@ -129,11 +146,22 @@ class LLVM::Module
     @unwrap
   end
 
+  def dispose : Nil
+    if @unwrap
+      LibLLVM.dispose_module(self)
+      @unwrap = Pointer(Void).null.as(LibLLVM::ModuleRef)
+    end
+  end
+
+  def finalize
+    dispose if @dispose_on_finalize
+  end
+
   def take_ownership(&)
-    if @owned
-      yield
+    if @dispose_on_finalize
+      @dispose_on_finalize = false
     else
-      @owned = true
+      yield
     end
   end
 end

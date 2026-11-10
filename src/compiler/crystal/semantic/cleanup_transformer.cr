@@ -799,12 +799,17 @@ module Crystal
     end
 
     def transform(node : ProcLiteral)
+      current_def = @current_def
+      @current_def = node.def
+
       body = node.def.body
       if node.def.no_returns? && !body.type?
         node.def.body = untyped_expression(body)
       else
         node.def.body = node.def.body.transform(self)
       end
+
+      @current_def = current_def
       node
     end
 

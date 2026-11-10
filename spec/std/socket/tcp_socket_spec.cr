@@ -53,6 +53,19 @@ describe TCPSocket, tags: "network" do
         {% end %})
       end
 
+      it "raises when port is out of range" do
+        error = expect_raises(Socket::Addrinfo::Error) do
+          TCPSocket.new(address, UInt16::MAX.to_i + 1)
+        end
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
+      end
+
       {% if flag?(:dragonfly) %}
         # FIXME: this spec regularly hangs in a vagrant/libvirt VM
         pending "raises when port is zero"

@@ -1027,6 +1027,34 @@ describe "Semantic: generic class" do
       CRYSTAL
   end
 
+  it "types macro def copied to generic instance metaclass only once" do
+    result = semantic(<<-CRYSTAL)
+      class Class
+        def foo
+          {{ @type.name.stringify }}
+        end
+      end
+
+      abstract class At
+      end
+
+      class Bt(T) < At
+      end
+
+      def describe(klass : At.class)
+        klass.foo
+      end
+
+      describe Bt(Int32).as(At.class)
+      describe Bt(Char).as(At.class)
+      describe Bt(Bool).as(At.class)
+      CRYSTAL
+
+    program = result.program
+    metaclass = program.generic_class("Bt", program.int32).metaclass.as(DefInstanceContainer)
+    metaclass.def_instances.values.count(&.name.==("foo")).should eq(1)
+  end
+
   it "unifies generic metaclass types" do
     assert_type(<<-CRYSTAL) { generic_class("Foo", int32).metaclass.virtual_type! }
       class Foo(T)
