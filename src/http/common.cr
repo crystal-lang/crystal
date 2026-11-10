@@ -337,6 +337,9 @@ module HTTP
     if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
       raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
     end
+    if first_header.empty? || !first_header.each_byte.all? { |byte| '0'.ord <= byte <= '9'.ord }
+      raise ArgumentError.new("Invalid Content-Length: #{first_header}")
+    end
     first_header.to_u64
   end
 
