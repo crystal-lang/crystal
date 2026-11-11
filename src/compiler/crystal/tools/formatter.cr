@@ -2730,7 +2730,7 @@ module Crystal
         if @token.type.newline?
           ends_with_newline = true
         end
-        indent(base_indent + 2) { skip_space_or_newline(last: true, at_least_one: ends_with_newline) }
+        indent(base_indent + 2) { skip_space_or_newline(last: true) }
       elsif has_args || node.block_arg
         write " " unless passed_backslash_newline
         skip_space
