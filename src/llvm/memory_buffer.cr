@@ -8,7 +8,7 @@ class LLVM::MemoryBuffer
   end
 
   def initialize(@unwrap : LibLLVM::MemoryBufferRef)
-    @finalized = false
+    @dispose_on_finalize = true
   end
 
   def to_slice
@@ -19,18 +19,25 @@ class LLVM::MemoryBuffer
   end
 
   def dispose
-    return if @finalized
-    @finalized = true
-    finalize
+    if @unwrap
+      LibLLVM.dispose_memory_buffer(@unwrap)
+      @unwrap = Pointer(Void).null.as(LibLLVM::MemoryBufferRef)
+    end
   end
 
   def finalize
-    return if @finalized
-
-    LibLLVM.dispose_memory_buffer(@unwrap)
+    dispose if @dispose_on_finalize
   end
 
   def to_unsafe
     @unwrap
+  end
+
+  def take_ownership(&) : Nil
+    if @dispose_on_finalize
+      @dispose_on_finalize = false
+    else
+      yield
+    end
   end
 end
