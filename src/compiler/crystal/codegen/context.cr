@@ -4,7 +4,7 @@ class Crystal::CodeGenVisitor
   class Context
     property fun : LLVM::Function
     property fun_type : LLVM::Type
-    property fun_debug_params = [] of LibLLVM::MetadataRef
+    property fun_debug_params = [] of LLVM::Metadata
     property type : Type
     property vars : Hash(String, LLVMVar)
     property return_type : Type?
