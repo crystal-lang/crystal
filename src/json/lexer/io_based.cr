@@ -8,7 +8,11 @@ class JSON::Lexer::IOBased < JSON::Lexer
   private getter current_char
 
   private def next_char_no_column_increment
-    @current_char = @io.read_char || '\0'
+    char = @io.read_char
+    if char == '\0'
+      unexpected_char
+    end
+    @current_char = char || '\0'
   end
 
   private def consume_string
