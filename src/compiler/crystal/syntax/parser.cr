@@ -3699,8 +3699,6 @@ module Crystal
       # not to calls that might have this def as a macro argument.
       @stop_on_do = false
 
-      next_token
-
       consume_def_or_macro_name
 
       receiver = nil
