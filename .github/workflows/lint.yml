@@ -25,8 +25,6 @@ jobs:
         run: nix profile install nixpkgs#devenv
       - name: "Download target branch: ${{ github.base_ref || 'master' }}"
         run: git fetch origin "${TARGET_BRANCH}"
-      - name: Initialize Devenv shell environment
-        run: devenv --profile lint shell -- true
       - name: Check whether to run full test on all files
         id: test_full_run
         if: ${{ github.event_name != 'workflow_dispatch' }}
@@ -37,6 +35,8 @@ jobs:
           else
             echo "test_full_run=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Initialize Devenv shell environment
+        run: devenv --profile lint shell -- true
       - name: Run prek on all files
         id: run_full
         run: prek run --all-files
