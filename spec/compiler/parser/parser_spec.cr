@@ -1438,6 +1438,15 @@ module Crystal
     assert_syntax_error "$foo", "$global_variables are not supported, use @@class_variables instead"
 
     it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
+    it_parses "macro foo()end", Macro.new("foo", [] of Arg, Expressions.new)
+    it_parses "macro foo(x)end", Macro.new("foo", [Arg.new("x")], Expressions.new)
+    it_parses "macro foo(x) end", Macro.new("foo", [Arg.new("x")], Expressions.new)
+    it_parses "macro foo(x) 1\nend", Macro.new("foo", [Arg.new("x")], "1\n".macro_literal)
+    it_parses "macro foo(x)#comment\n1\nend", Macro.new("foo", [Arg.new("x")], "1\n".macro_literal)
+    assert_syntax_error "macro foo()1\nend", %(unexpected token: "1" (expected ';' or newline))
+    assert_syntax_error "macro foo(x)bar.baz\nend", %(unexpected token: "bar" (expected ';' or newline))
+    assert_syntax_error "macro foo(x){{x}}\nend", %(unexpected token: "{{" (expected ';' or newline))
+    assert_syntax_error "macro foo(x)", "unterminated macro"
     it_parses "macro [];end", Macro.new("[]", [] of Arg, Expressions.new)
     it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
     it_parses %(macro foo(x); 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))

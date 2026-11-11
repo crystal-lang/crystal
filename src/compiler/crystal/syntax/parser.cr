@@ -3315,6 +3315,12 @@ module Crystal
           end
 
           next_token
+
+          # The macro body is lexed starting after the current token, so any
+          # other token here would be silently dropped from the body.
+          unless @token.type.space? || @token.type.newline? || @token.type.op_semicolon? || @token.type.eof? || @token.keyword?(:end)
+            unexpected_token "expected ';' or newline"
+          end
         when .ident?, .op_star?
           if @token.keyword?(:end)
             unexpected_token "expected ';' or newline"
