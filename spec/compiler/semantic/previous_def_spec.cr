@@ -197,4 +197,59 @@ describe "Semantic: previous_def" do
       Foo.new.x
       CRYSTAL
   end
+
+  it "looks up types in previous def from its defining type, not from a subclass in another namespace" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Outer
+        X = 1
+
+        class Foo
+          def foo
+            X
+          end
+        end
+
+        class Foo
+          def foo
+            previous_def
+          end
+        end
+      end
+
+      module Elsewhere
+        X = "x"
+
+        class Bar < Outer::Foo
+        end
+      end
+
+      Elsewhere::Bar.new.foo
+      CRYSTAL
+  end
+
+  it "looks up restrictions in previous def from its defining type, not from a subclass in another namespace" do
+    assert_type(<<-CRYSTAL) { types["Outer"].types["Item"] }
+      module Outer
+        class Item
+        end
+
+        class Foo
+          def foo(x : Item) : Item
+            x
+          end
+        end
+
+        class Foo
+          def foo(x : Item) : Item
+            previous_def
+          end
+        end
+      end
+
+      class Bar < Outer::Foo
+      end
+
+      Bar.new.foo(Outer::Item.new)
+      CRYSTAL
+  end
 end
