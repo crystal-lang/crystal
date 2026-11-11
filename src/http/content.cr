@@ -184,7 +184,10 @@ module HTTP
       # delimiter and next chunk start on the next call to `read`.
       read_crlf unless @chunk_remaining == -1 # -1 is the initial value
 
-      @chunk_remaining = read_chunk_size
+      chunk_size = read_chunk_size?
+      raise IO::Error.new("Invalid HTTP chunked content: invalid chunk line") unless chunk_size
+
+      @chunk_remaining = chunk_size
       if @chunk_remaining == 0
         read_trailer
         @received_final_chunk = true
@@ -207,34 +210,27 @@ module HTTP
         bytes[1] == '\n'.ord
     end
 
-    private def read_chunk_size : Int32
+    private def read_chunk_size? : Int32?
       line = @io.read_line(@max_headers_size, chomp: false)
 
       # chunk-line MUST end with CRLF: https://errata.rfc-editor.org/eid7633/
       # read_line stopped at LF, so rejects lone LF by design
-      if line.bytesize > 2 && crlf?(line.to_slice[-2, 2])
-        bytes = line.to_slice[0...-2]
+      return unless line.bytesize > 2 && crlf?(line.to_slice[-2, 2])
 
-        chunk_size, digits = read_chunk_size_impl(bytes)
-        if digits > 0
-          # valid chunk-size, or integer overflow
-          bytes += digits
+      bytes = line.to_slice[0...-2]
+      chunk_size, digits = read_chunk_size_impl(bytes)
+      return unless digits > 0
 
-          case bytes.first?
-          when nil
-            # end-of-line
-            return chunk_size
-          when ' '.ord, '\t'.ord, ';'.ord
-            if skip_chunk_ext?(bytes)
-              return chunk_size
-            end
-          else
-            # invalid character, includes hexdigits in case of overflow
-          end
-        end
+      bytes += digits
+      case bytes.first?
+      when nil
+        # end-of-line
+        chunk_size
+      when ' '.ord, '\t'.ord, ';'.ord
+        chunk_size if skip_chunk_ext?(bytes)
+      else
+        # invalid character, includes hexdigits in case of overflow
       end
-
-      raise IO::Error.new("Invalid HTTP chunked content: invalid chunk line")
     end
 
     private def read_chunk_size_impl(bytes) : {Int32, Int32}
@@ -316,11 +312,12 @@ module HTTP
 
     private def read_quoted_string(bytes)
       backslash = false
+      bytes += 1 # consume opening quote
 
-      bytes[1..].each_with_index do |byte, index|
+      bytes.each_with_index do |byte, index|
         case byte
         when '"'.ord
-          return bytes[1..index] unless backslash
+          return bytes[0...index] unless backslash
           backslash = false
         when '\\'.ord
           backslash = !backslash
