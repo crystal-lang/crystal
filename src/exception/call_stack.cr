@@ -27,7 +27,7 @@ struct Exception::CallStack
   # :nodoc:
   def self.load_debug_info : Nil
     Crystal.once(pointerof(@@loaded)) do
-      return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+      next if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
       begin
         load_debug_info_impl

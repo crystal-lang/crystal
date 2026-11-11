@@ -10,7 +10,9 @@ module Crystal
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 
-    @@closure_counter = 0
+    # Closure counts per enclosing function, so closure type names are unique
+    # across modules (`copy_type` caches by name) and stable across builds.
+    @closure_counters = Hash(String, Int32).new(0)
 
     def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
@@ -495,9 +497,9 @@ module Crystal
       LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
-    def closure_context_type(vars, parent_llvm_type, self_type)
-      @@closure_counter += 1
-      llvm_name = "closure_#{@@closure_counter}"
+    def closure_context_type(vars, parent_llvm_type, self_type, fun_name : String)
+      index = @closure_counters.update(fun_name) { |count| count + 1 }
+      llvm_name = "closure.#{fun_name}.#{index}"
 
       has_inner_pointers = !parent_llvm_type.nil?
       closure_type = @llvm_context.struct(llvm_name) do |a_struct|
