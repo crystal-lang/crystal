@@ -53,7 +53,7 @@ fi
 ## 3. Update CI and build scripts to use latest release as bootstrap version
 ##
 
-# Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
+# Edit previous_crystal_base_url parameter in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
 # Edit DOCKER_TEST_PREFIX in bin/ci

@@ -37,8 +37,8 @@ jobs:
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
-          name: crystal-ci
-          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+          name: crystal-lang-ci
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
       - name: Prepare System
         run: bin/ci prepare_system
@@ -73,8 +73,8 @@ jobs:
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
-          name: crystal-ci
-          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+          name: crystal-lang-ci
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
       - name: Prepare System
         run: bin/ci prepare_system

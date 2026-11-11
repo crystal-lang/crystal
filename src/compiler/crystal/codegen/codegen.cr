@@ -18,6 +18,8 @@ module Crystal
   ONCE_INIT              = "__crystal_once_init"
   ONCE                   = "__crystal_once"
 
+  METACLASS_ID_NAME         = "~metaclass"
+  INSTANCE_TYPE_ID_NAME     = "~instance_type"
   TYPE_ID_TO_CLASS_NAME_PTR = "__crystal_type_id_to_class_name_ptr"
   TYPE_ID_TO_CLASS_NAME_MAP = "__crystal_type_id_to_class_name_map"
 
@@ -343,7 +345,7 @@ module Crystal
 
       # Whether to build the mapping from type IDs to their names. Currently
       # required for raising `TypeCastError`.
-      @needs_typeinfo = false
+      @needs_type_id_to_class_name = false
 
       set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
@@ -1685,7 +1687,7 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      @needs_typeinfo = true
+      @needs_type_id_to_class_name = true
 
       type_id_map = load llvm_type(@program.string).pointer, define_type_id_to_class_name_ptr
       str_ptr = gep llvm_type(@program.string), type_id_map, type_id
@@ -1703,18 +1705,26 @@ module Crystal
     end
 
     def codegen_typeinfo : Nil
-      return unless @needs_typeinfo
+      if @needs_type_id_to_class_name
+        str_type = @main_llvm_typer.llvm_type(@program.string)
+        map_type = str_type.array(@program.llvm_id.@ids.size)
 
-      str_type = @main_llvm_typer.llvm_type(@program.string)
-      map_type = str_type.array(@program.llvm_id.@ids.size)
+        map_global = @main_mod.globals.add(map_type, TYPE_ID_TO_CLASS_NAME_MAP)
+        map_global.linkage = LLVM::Linkage::Private
+        map_global.initializer = create_type_id_to_class_name_map
+        map_global.global_constant = true
 
-      map_global = @main_mod.globals.add(map_type, TYPE_ID_TO_CLASS_NAME_MAP)
-      map_global.linkage = LLVM::Linkage::Private
-      map_global.initializer = create_type_id_to_class_name_map
-      map_global.global_constant = true
+        ptr_global = define_type_id_to_class_name_ptr(llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
+        ptr_global.initializer = gep(map_type, map_global, 0, 0)
+      end
 
-      ptr_global = define_type_id_to_class_name_ptr(llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
-      ptr_global.initializer = gep(map_type, map_global, 0, 0)
+      if func = typed_fun?(@main_mod, METACLASS_ID_NAME)
+        define_metaclass_fun(func.func)
+      end
+
+      if func = typed_fun?(@main_mod, INSTANCE_TYPE_ID_NAME)
+        define_instance_type_fun(func.func)
+      end
     end
 
     private def define_type_id_to_class_name_ptr(*, llvm_mod = @llvm_mod, llvm_typer = @llvm_typer)
@@ -2209,7 +2219,7 @@ module Crystal
         closure_vars ||= [] of MetaVar
 
         closure_type, closure_has_inner_pointers =
-          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
+          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil), current_context.fun.name)
         closure_ptr = closure_has_inner_pointers ? malloc(closure_type) : malloc_atomic(closure_type)
 
         closure_vars.each_with_index do |var, i|
