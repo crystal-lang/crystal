@@ -49,11 +49,15 @@ module Sync
 
     private def lock_slow : Nil
       if owns_lock?
-        raise Error::Deadlock.new("Can't lock mutex recursively") unless @type.reentrant?
+        raise Error.deadlock(Fiber.current, self) unless @type.reentrant?
         @counter += 1
         return
       end
-      @mu.lock_slow
+
+      @mu.lock_slow do
+        {% unless flag?(:without_deadlock_detection) %} detect_deadlock! {% end %}
+      end
+
       set_owner
     end
 
@@ -95,6 +99,10 @@ module Sync
       unless @type.unchecked?
         set_owner(counter)
       end
+    end
+
+    private def set_owner(counter = 1) : Nil
+      set_owner(counter) { unlock }
     end
 
     # :nodoc:

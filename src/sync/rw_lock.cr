@@ -50,7 +50,22 @@ module Sync
     # Tries to acquire the shared (read) lock without blocking. Returns true
     # when acquired, otherwise returns false immediately.
     def try_lock_read? : Bool
-      @mu.try_rlock?
+      success = @mu.try_rlock?
+
+      {% unless flag?(:without_deadlock_detection) %}
+        if success && !@type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            # don't relock read (it can deadlock)
+            @mu.runlock
+            return false
+          else
+            acquired_lock(fiber)
+          end
+        end
+      {% end %}
+
+      success
     end
 
     # Acquires the shared (read) lock.
@@ -62,7 +77,26 @@ module Sync
     # relock read can result in a deadlock if another fiber is trying to lock
     # write!
     def lock_read : Nil
+      {% unless flag?(:without_deadlock_detection) %}
+        unless @type.unchecked?
+          fiber = Fiber.current
+          if owns_lock?(fiber)
+            message =
+              if fiber == locked_by?
+                "Can't acquire read lock while holding the write lock"
+              else
+                "Can't acquire read lock recursively"
+              end
+            raise Error::Deadlock.new(message, fiber, fiber, self, self)
+          end
+        end
+      {% end %}
+
       @mu.rlock
+
+      {% unless flag?(:without_deadlock_detection) %}
+        acquired_lock(Fiber.current) unless @type.unchecked?
+      {% end %}
     end
 
     # Releases the shared (read) lock.
@@ -72,6 +106,10 @@ module Sync
     # behavior) then it must unlock that many times.
     def unlock_read : Nil
       @mu.runlock
+
+      {% unless flag?(:without_deadlock_detection) %}
+        released_lock(Fiber.current) unless @type.unchecked?
+      {% end %}
     end
 
     # Acquires the exclusive (write) lock for the duration of the block.
@@ -116,11 +154,22 @@ module Sync
 
     private def lock_slow : Nil
       if owns_lock?
-        raise Error::Deadlock.new("Can't lock rwlock recursively") unless @type.reentrant?
+        raise Error.deadlock(Fiber.current, self) unless @type.reentrant?
         @counter += 1
         return
       end
-      @mu.lock_slow
+
+      {% unless flag?(:without_deadlock_detection) %}
+        fiber = Fiber.current
+        if owns_lock?(fiber)
+          raise Error::Deadlock.new("Can't acquire write lock while holding the read lock", fiber, fiber, self, self)
+        end
+      {% end %}
+
+      @mu.lock_slow do
+        {% unless flag?(:without_deadlock_detection) %} detect_deadlock! {% end %}
+      end
+
       set_owner
     end
 
@@ -162,6 +211,10 @@ module Sync
       unless @type.unchecked? || @mu.rheld?
         set_owner(counter)
       end
+    end
+
+    private def set_owner(counter = 1) : Nil
+      set_owner(counter) { unlock_write }
     end
 
     # :nodoc:
