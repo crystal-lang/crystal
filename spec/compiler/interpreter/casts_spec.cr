@@ -247,6 +247,23 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "raises when as can never succeed" do
+      interpret(<<-CRYSTAL, prelude: "prelude").to_s.should contain("Cast from Foo to Baz(T) failed")
+        abstract struct Seg; end
+        struct Foo < Seg; end
+        struct Bar < Seg; end
+        struct Baz(T) < Seg; end
+
+        x = Foo.new.as(Foo | Bar)
+        begin
+          x.as(Baz)
+          ""
+        rescue ex : TypeCastError
+          ex.message.not_nil!
+        end
+      CRYSTAL
+    end
+
     it "casts to filtered type, not type in as(...)" do
       interpret(<<-CRYSTAL, prelude: "prelude").should eq("1")
         ({1} || 2).as(Tuple)[0]
