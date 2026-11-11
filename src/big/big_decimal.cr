@@ -14,6 +14,9 @@ end
 #
 # NOTE: To use `BigDecimal`, you must explicitly import it with `require "big"`
 #
+# NOTE: Converting a `BigDecimal` to or from JSON requires `require "big/json"`.
+# Deserializing it from YAML requires `require "big/yaml"`.
+#
 # The general idea and some of the arithmetic algorithms were adapted from
 # the MIT/APACHE-licensed [bigdecimal-rs](https://github.com/akubera/bigdecimal-rs).
 struct BigDecimal < Number

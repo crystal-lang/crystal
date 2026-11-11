@@ -32,6 +32,10 @@
 # `to_json(builder : JSON::Builder)` for serializing. The following sections
 # show convenient ways to do this using `JSON::Serializable`.
 #
+# NOTE: Some types in the standard library can only be deserialized from JSON
+# after requiring an additional file: `require "big/json"` for `BigInt`, `BigFloat`
+# and `BigDecimal`, `require "uri/json"` for `URI` and `require "uuid/json"` for `UUID`.
+#
 # NOTE: JSON object keys are always strings but they can still be parsed
 # and deserialized to other types. To deserialize, define a
 # `T.from_json_object_key?(key : String) : T?` method, which can return `nil`
