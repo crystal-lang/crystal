@@ -1997,6 +1997,10 @@ module Crystal
     it_parses "foo\n  #comment\n  .bar", Call.new("foo".call, "bar")
 
     it_parses "{1}", TupleLiteral.new([1.int32] of ASTNode)
+    it_parses "{1\n}", TupleLiteral.new([1.int32] of ASTNode)
+    it_parses "{1 # foo\n}", TupleLiteral.new([1.int32] of ASTNode)
+    it_parses "{1 # foo\n# bar\n}", TupleLiteral.new([1.int32] of ASTNode)
+    it_parses "{1\n# foo\n\n# bar\n}", TupleLiteral.new([1.int32] of ASTNode)
     it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
     it_parses "{A::B}", TupleLiteral.new([Path.new("A", "B")] of ASTNode)
     it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)

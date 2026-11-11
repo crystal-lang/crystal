@@ -2654,7 +2654,7 @@ module Crystal
           when .op_rcurly?
             return parse_tuple first_key, location
           when .newline?
-            next_token_skip_space
+            next_token_skip_space_or_newline
             check :OP_RCURLY
             return parse_tuple first_key, location
           else
