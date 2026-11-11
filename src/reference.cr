@@ -121,7 +121,11 @@ class Reference
           io << ','
         {% end %}
         io << " @{{ivar.id}}="
-        @{{ivar.id}}.inspect io
+        if @{{ivar.id}}.is_a?(Reference) && (%tmp{ivar.id} = @{{ivar.id}}).is_a?(Reference) && %tmp{ivar.id}.as(Void*).null?
+          io << "<invalid nullptr>"
+        else
+          @{{ivar.id}}.inspect io
+        end
       {% end %}
     end
     unless executed

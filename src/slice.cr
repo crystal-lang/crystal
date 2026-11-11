@@ -885,7 +885,13 @@ struct Slice(T)
       io << ']'
     else
       io << "Slice["
-      join io, ", ", &.inspect(io)
+      join io, ", " do |el|
+        if el.is_a?(Reference) && el.as(Void*).null?
+          io << "<invalid nullptr>"
+        else
+          el.inspect io
+        end
+      end
       io << ']'
     end
   end
