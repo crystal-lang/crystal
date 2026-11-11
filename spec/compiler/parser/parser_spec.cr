@@ -376,6 +376,21 @@ module Crystal
     assert_syntax_error "a {}, b = 1"
     assert_syntax_error "a.b {}, c = 1"
 
+    # #11648
+    ["+", "-", "&+", "&-", "~", "==", "[]?", "[]="].each do |name|
+      assert_syntax_error "a.#{name} = 1"
+      assert_syntax_error "a.#{name}, b = 1, 2"
+      assert_syntax_error "b, a.#{name}, c = 1, 2, 3"
+      assert_syntax_error "b, a.#{name}"
+    end
+    assert_syntax_error "+a, b = 1, 2"
+    assert_syntax_error "b, -a, c = 1, 2, 3"
+    assert_syntax_error "*a.[]="
+    assert_syntax_error "a.[]=(x: 1), b = 2"
+    assert_syntax_error "a.[]=(&c), b = 2"
+    assert_syntax_error "a.foo &b, c = 1, 2"
+    it_parses "a.[], b = 1, 2", MultiAssign.new([Call.new("a".call, "[]"), "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
+
     assert_syntax_error "a.b(), c.d = 1"
     assert_syntax_error "a.b, c.d() = 1"
 
