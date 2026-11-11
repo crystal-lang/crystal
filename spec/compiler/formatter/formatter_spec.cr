@@ -1461,6 +1461,8 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  %foo{x.id+2}\nend", "macro foo\n  %foo{x.id + 2}\nend"
   assert_format "macro foo\n  %foo{x,y}\nend", "macro foo\n  %foo{x, y}\nend"
   assert_format "macro foo;%var{}end", "macro foo\n%var{}end"
+  assert_format "macro foo\n  %foo{{{1}}}\nend"
+  assert_format "macro foo\n  %foo{1, {2}}\nend"
   assert_format "def foo : Int32\n  1\nend"
   assert_format "class Foo\n  macro foo\n    1\n  end\nend"
   assert_format "   {{ 1 + 2 }}", "{{ 1 + 2 }}"

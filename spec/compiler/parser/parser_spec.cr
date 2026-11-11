@@ -1556,6 +1556,11 @@ module Crystal
     it_parses "macro foo;%var{{1}}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroExpression.new(1.int32)] of ASTNode))
     assert_syntax_error "macro foo;%var{{x}end", %q(expecting token '}', not 'end')
 
+    # #12731
+    it_parses "macro foo;%var{{{1}}}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), MacroExpression.new(TupleLiteral.new([1.int32] of ASTNode))] of ASTNode))
+    it_parses "macro foo;%var{1, {2}}end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var", [1.int32, TupleLiteral.new([2.int32] of ASTNode)] of ASTNode)] of ASTNode))
+    assert_syntax_error "macro foo;%var{{{1}} = 1;end", %q(expecting token '}', not 'SPACE')
+
     # #4087
     describe "suffix `if`/`unless` in macros after macro var" do
       it_parses "macro foo;%var if true;end", Macro.new("foo", [] of Arg, Expressions.from([MacroVar.new("var"), " if true;".macro_literal] of ASTNode))
