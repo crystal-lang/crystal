@@ -1165,6 +1165,30 @@ describe "Code gen: class" do
       CRYSTAL
   end
 
+  it "dispatches virtual metaclass call to uninstantiated generic subclass (#11134)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Baz < Foo
+        def self.foo
+          3
+        end
+      end
+
+      Bar.as(Foo.class).foo
+      CRYSTAL
+  end
+
   it "can assign virtual metaclass to virtual metaclass (#3007)" do
     run(<<-CRYSTAL).to_i.should eq(2)
       class Foo
