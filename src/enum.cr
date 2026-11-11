@@ -492,6 +492,10 @@ abstract struct Enum
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
+  def self.parse(slice : Bytes) : self
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{String.new(slice)}")
+  end
+
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
@@ -508,6 +512,10 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
+    parse? string.to_slice
+  end
+
+  def self.parse?(slice : Bytes) : self?
     {% begin %}
       # The following is an optimized normalization. It is equivalent to
       # `string.gsub('-', '_').camelcase.downcase` but does not allocate.
@@ -525,7 +533,11 @@ abstract struct Enum
       buffer = uninitialized UInt8[{{ max_bytesize + 4 }}]
       appender = buffer.to_unsafe.appender
       char_counter = 0
-      string.each_char do |char|
+      reader = Char::Reader.new(slice)
+      while reader.has_next?
+        char = reader.current_char
+        reader.next_char
+
         next if char == '-' || char == '_'
         char_counter += 1
         return nil if appender.size > {{ max_bytesize }}
