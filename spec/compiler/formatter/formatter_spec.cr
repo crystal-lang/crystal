@@ -1099,6 +1099,9 @@ describe Crystal::Formatter do
   assert_format "foo[ 1,  2 ]?", "foo[1, 2]?"
   assert_format "foo[] =1", "foo[] = 1"
   assert_format "foo[ 1 , 2 ]   =3", "foo[1, 2] = 3"
+  assert_format "foo[1 ,\n]", "foo[1]"
+  assert_format "foo[\n  1 ,\n]", "foo[\n  1,\n]"
+  assert_format "foo[\n  1 , # bar\n]", "foo[\n  1, # bar\n]"
 
   assert_format "foo.[]"
   assert_format "foo.[ 1 , 2 ]", "foo.[1, 2]"
