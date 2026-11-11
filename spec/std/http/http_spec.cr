@@ -23,7 +23,7 @@ describe HTTP do
     end
 
     it "rejects empty values and non-decimal characters" do
-      ["", "+1", "-1", "+0", "-0", " 1", "1 ", "1\t", "1_0", "0x1", "1.0", "1,1", "١"].each do |value|
+      ["", "+1", "-1", "+0", "-0", " 1", "1 ", "1\t", "1_0", "0x1", "d", "D", "1d", "1D", "1.0", "1,1", "١"].each do |value|
         expect_raises(ArgumentError, "Invalid Content-Length: #{value}") do
           HTTP.content_length(HTTP::Headers{"Content-Length" => value})
         end
