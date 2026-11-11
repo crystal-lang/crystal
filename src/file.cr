@@ -335,8 +335,17 @@ class File < IO::FileDescriptor
   # File.file?("dir1")   # => false
   # File.file?("foobar") # => false
   # ```
-  def self.file?(path : Path | String) : Bool
-    if info = info?(path)
+  #
+  # If *follow_symlinks* is `true`, a symbolic link to a file counts as a file.
+  # If it is `false`, a symbolic link is never a file.
+  #
+  # ```
+  # File.symlink("foo", "bar")
+  # File.file?("bar")                         # => true
+  # File.file?("bar", follow_symlinks: false) # => false
+  # ```
+  def self.file?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+    if info = info?(path, follow_symlinks)
       info.type.file?
     else
       false
@@ -352,8 +361,17 @@ class File < IO::FileDescriptor
   # File.directory?("dir2")   # => true
   # File.directory?("foobar") # => false
   # ```
-  def self.directory?(path : Path | String) : Bool
-    Dir.exists?(path)
+  #
+  # If *follow_symlinks* is `true`, a symbolic link to a directory counts as a
+  # directory. If it is `false`, a symbolic link is never a directory.
+  #
+  # ```
+  # File.symlink("dir2", "dir3")
+  # File.directory?("dir3")                         # => true
+  # File.directory?("dir3", follow_symlinks: false) # => false
+  # ```
+  def self.directory?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+    Dir.exists?(path, follow_symlinks: follow_symlinks)
   end
 
   # Returns all components of the given *path* except the last one.
