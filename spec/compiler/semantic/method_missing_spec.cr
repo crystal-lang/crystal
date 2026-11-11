@@ -101,6 +101,60 @@ describe "Semantic: method_missing" do
       CRYSTAL
   end
 
+  it "allows escape sequences in strings in method_missing expansion (#8092)" do
+    assert_type(<<-'CRYSTAL') { string }
+      class Foo
+        macro method_missing(call)
+          "\tHello \"{{call.name}}\"!\n"
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "doesn't treat `def` in a string as a def in method_missing expansion" do
+    assert_type(<<-CRYSTAL) { string }
+      class Foo
+        macro method_missing(call)
+          "def"
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "doesn't treat `def` as a named argument as a def in method_missing expansion" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def baz(def value)
+        value
+      end
+
+      class Foo
+        macro method_missing(call)
+          baz(def: 1)
+        end
+      end
+
+      Foo.new.bar
+      CRYSTAL
+  end
+
+  it "reports syntax error location in method_missing expansion" do
+    expect_raises(Crystal::SyntaxException, "There was a problem expanding macro 'method_missing'") do
+      semantic(<<-'CRYSTAL')
+        class Foo
+          macro method_missing(call)
+            \x
+          end
+        end
+
+        Foo.new.bar
+        CRYSTAL
+    end
+  end
+
   it "finds method_missing with 'with ... yield'" do
     assert_type(<<-CRYSTAL) { int32 }
       class Foo

@@ -178,10 +178,9 @@ end
 
 private def starts_with_def?(source)
   lexer = Crystal::Lexer.new(source)
-  while true
-    token = lexer.next_token
-    return true if token.keyword?(:def)
-    break if token.type.eof?
-  end
+  lexer.next_token_skip_statement_end
+  lexer.token.keyword?(:def)
+rescue Crystal::SyntaxException
+  # Let the parser report the error, as it knows about the macro expansion
   false
 end
