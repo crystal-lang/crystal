@@ -5653,7 +5653,6 @@ module Crystal
       exp = parse_op_assign
 
       modifier = VisibilityModifier.new(modifier, exp).at(location)
-      modifier.doc = doc
       exp.doc = doc
       modifier
     end
