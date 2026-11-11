@@ -2,6 +2,17 @@
 
 private SPEC_TIMEOUT = 15.seconds
 
+module Spec
+  class Example
+    # Defined inside the `Spec` namespace to have access to the protected
+    # `ExampleGroup#report`
+    def report_timeout(timeout)
+      ex = Spec::AssertionFailed.new("spec timed out after #{timeout}", file, line)
+      parent.report(:fail, description, file, line, timeout, ex)
+    end
+  end
+end
+
 Spec.around_each do |example|
   done = Channel(Exception?).new
 
@@ -24,8 +35,6 @@ Spec.around_each do |example|
   when res = done.receive
     raise res if res
   when timeout(timeout)
-    _it = example.example
-    ex = Spec::AssertionFailed.new("spec timed out after #{timeout}", _it.file, _it.line)
-    _it.parent.report(:fail, _it.description, _it.file, _it.line, timeout, ex)
+    example.example.report_timeout(timeout)
   end
 end
