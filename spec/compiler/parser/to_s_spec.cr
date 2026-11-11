@@ -636,6 +636,48 @@ describe "ASTNode#to_s" do
     %}
     CRYSTAL
 
+  expect_to_s <<-CRYSTAL
+    foo do
+      1
+
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    foo do
+
+      1
+
+
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    foo do |x|
+      1
+      2
+
+    end
+    CRYSTAL
+
+  expect_to_s <<-CRYSTAL
+    foo do
+
+    end
+    CRYSTAL
+
+  expect_to_s "foo do\n  # comment\n  1\n  # comment\nend", <<-CRYSTAL
+    foo do
+
+      1
+
+    end
+    CRYSTAL
+
+  expect_to_s "foo { 1 }", "foo do 1 end"
+  expect_to_s "foo do\n  1\nend"
+  expect_to_s "foo do\nend"
+
   expect_to_s %(asm("nop" ::::))
   expect_to_s %(asm("nop" : "a"(1), "b"(2) : "c"(3), "d"(4) : "e", "f" : "volatile", "alignstack", "intel"))
   expect_to_s %(asm("nop" :: "c"(3), "d"(4) ::))
