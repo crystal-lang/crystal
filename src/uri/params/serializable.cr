@@ -65,6 +65,27 @@ struct URI::Params
   # including type, which means the default constructor (`def initialize; end`)
   # is absent unless explicitly defined by the user, even when all instance
   # variables have a default initializer.
+  # ## `after_initialize` method
+  #
+  # `#after_initialize` is a method that runs after an instance is deserialized
+  # from URI::Params. It can be used as a hook to post-process the initialized object.
+  #
+  # Example:
+  # ```
+  # require "uri/params/serializable"
+  #
+  # class Person
+  #   include URI::Params::Serializable
+  #   getter name : String
+  #
+  #   def after_initialize
+  #     @name = @name.upcase
+  #   end
+  # end
+  #
+  # person = Person.from_www_form("name=Jane")
+  # person.name # => "JANE"
+  # ```
   module Serializable
     macro included
       def self.from_www_form(params : ::String)
@@ -122,7 +143,11 @@ struct URI::Params
             {% end %}
           {% end %}
         {% end %}
+        after_initialize
       end
+    end
+
+    protected def after_initialize
     end
 
     def to_www_form(*, space_to_plus : Bool = true) : String
