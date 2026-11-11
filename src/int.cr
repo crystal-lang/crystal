@@ -33,8 +33,12 @@
 #
 # Literals without a suffix that are larger than `Int64::MAX` represent a
 # `UInt64` if the number fits, e.g. `9223372036854775808` and
-# `0x80000000_00000000`. This behavior is deprecated and will become an error in
-# the future.
+# `0x80000000_00000000`. This emits a compile-time warning, as this behavior
+# is deprecated and will become an error in the future. An explicit suffix such
+# as `u64` should be added instead.
+#
+# Numeric values outside the range of `Int64` require a type suffix such as
+# `u64`, `i128`, or `u128`.
 #
 # The underscore `_` before the suffix is optional.
 #
