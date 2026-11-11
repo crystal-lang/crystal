@@ -122,40 +122,6 @@ module YAML
       end
     end
 
-    it "prevents stack overflow for arrays" do
-      parser = YAML::PullParser.new(("[" * 513) + ("]" * 513))
-      expect_raises YAML::ParseException, "Nesting of 513 is too deep" do
-        until parser.read_next == EventKind::NONE
-        end
-      end
-    end
-
-    it "prevents stack overflow for hashes" do
-      parser = YAML::PullParser.new(("{" * 513) + ("}" * 513))
-      expect_raises YAML::ParseException, "Nesting of 513 is too deep" do
-        until parser.read_next == EventKind::NONE
-        end
-      end
-    end
-
-    it "prevents excessive node expansions (billion-laugh attacks)" do
-      parser = PullParser.new(<<-YAML)
-      a: &a ["lol","lol","lol","lol","lol","lol","lol","lol","lol"]
-      b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]
-      c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]
-      d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]
-      e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]
-      f: &f [*e,*e,*e,*e,*e,*e,*e,*e,*e]
-      g: &g [*f,*f,*f,*f,*f,*f,*f,*f,*f]
-      h: &h [*g,*g,*g,*g,*g,*g,*g,*g,*g]
-      i: &i [*h,*h,*h,*h,*h,*h,*h,*h,*h]
-      YAML
-      expect_raises(ParseException, "Document contains excessive aliasing") do
-        until parser.read_next == EventKind::NONE
-        end
-      end
-    end
-
     describe "skip" do
       it "scalar" do
         parser = PullParser.new("[1, 2]")
@@ -242,6 +208,72 @@ module YAML
         parser.kind.should eq(EventKind::STREAM_END)
         parser.skip
         parser.kind.should eq(EventKind::NONE)
+      end
+    end
+
+    describe "budget" do
+      it_raises = ->(parser : PullParser, msg : String) {
+        expect_raises(ParseException, msg) do
+          until parser.read_next == EventKind::NONE
+          end
+        end
+      }
+
+      it "limits maximum number of events" do
+        parser = PullParser.new("- 1\n" * 1001, Options.new(max_events: 1_000))
+        it_raises.call(parser, "Exceeded maximum number of events")
+      end
+
+      it "limits maximum number of documents" do
+        parser = PullParser.new("---\n" * 1001)
+        it_raises.call(parser, "Exceeded maximum number of documents")
+      end
+
+      it "limits maximum number of nodes" do
+        parser = PullParser.new("- lol\n" * 1001, Options.new(max_nodes: 1_000))
+        it_raises.call(parser, "Exceeded maximum number of nodes")
+      end
+
+      it "limits maximum number of aliases" do
+        yaml = String.build do |str|
+          str << %(x: &x lol\n)
+          50_001.times { |i| str << "a" << i << ": *x\n" }
+        end
+        parser = PullParser.new(yaml, Options.new(enforce_alias_anchor_ratio: false))
+        it_raises.call(parser, "Exceeded maximum number of aliases")
+      end
+
+      it "limits maximum number of anchors" do
+        yaml = String.build do |str|
+          50_001.times { |i| str << "a" << i << ": &a" << i << " lol\n" }
+        end
+        parser = PullParser.new(yaml, Options.new(enforce_alias_anchor_ratio: false))
+        it_raises.call(parser, "Exceeded maximum number of anchors")
+      end
+
+      it "limits maximum depth to prevent stack overflows (sequence)" do
+        parser = PullParser.new("x: " + ("[" * 1000))
+        it_raises.call(parser, "Exceeded maximum depth")
+      end
+
+      it "limits maximum depth to prevent stack overflows (mapping)" do
+        parser = PullParser.new "x: " + ("{" * 1000)
+        it_raises.call(parser, "Exceeded maximum depth")
+      end
+
+      it "prevents excessive node expansions (billion-laugh attacks)" do
+        parser = PullParser.new(<<-YAML)
+        a: &a ["lol","lol","lol","lol","lol","lol","lol","lol","lol"]
+        b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]
+        c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]
+        d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]
+        e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]
+        f: &f [*e,*e,*e,*e,*e,*e,*e,*e,*e]
+        g: &g [*f,*f,*f,*f,*f,*f,*f,*f,*f]
+        h: &h [*g,*g,*g,*g,*g,*g,*g,*g,*g]
+        i: &i [*h,*h,*h,*h,*h,*h,*h,*h,*h]
+        YAML
+        it_raises.call(parser, "Document contains excessive aliasing")
       end
     end
   end
