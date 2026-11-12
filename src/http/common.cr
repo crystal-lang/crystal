@@ -172,7 +172,7 @@ module HTTP
     # ```
     # line = "Server: nginx"
     # name, value = line.split ':', 2
-    # {name, value.lstrip} # => {"Server", "nginx"}
+    # {name, value.lstrip(" \t")} # => {"Server", "nginx"}
     # ```
     #
     # except that it's faster because we only create 2 strings
@@ -186,9 +186,9 @@ module HTTP
     colon_index = slice.index(':'.ord.to_u8) || 0
     name = header_name(slice[0, colon_index])
 
-    # Get where the header value starts (skip space)
+    # Get where the header value starts (skip only HTTP optional whitespace)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
+    while middle_index < bytesize && cstr[middle_index].in?(' '.ord, '\t'.ord)
       middle_index += 1
     end
 

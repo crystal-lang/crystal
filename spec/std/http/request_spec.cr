@@ -563,6 +563,27 @@ module HTTP
           Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
+        it "rejects control whitespace before framing values" do
+          {"\v", "\f", "\r"}.each do |whitespace|
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: #{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:\t#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: #{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:\t#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+          end
+        end
+
+        it "accepts space and tab before framing values" do
+          io = IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: \t chunked\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Transfer-Encoding"].should eq "chunked"
+
+          io = IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: \t 1\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Content-Length"].should eq "1"
+        end
+
         it "doesn't raise on request with multiple Content-Length headers" do
           io = IO::Memory.new <<-HTTP
             GET / HTTP/1.1
