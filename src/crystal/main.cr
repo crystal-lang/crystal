@@ -185,7 +185,7 @@ module Crystal
   #
   # Note that before `Crystal.main` is invoked the GC
   # is not setup yet, so nothing that allocates memory
-  # in Crystal (like `new` for classes) can be used. Complex
+  # in Crystal (like `new` for classes) can be used.
   def self.main(argc : Int32, argv : UInt8**)
     init_runtime
     run_main_with_user_code(argc, argv)
