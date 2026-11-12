@@ -357,6 +357,37 @@ describe "Code gen: primitives" do
   end
 
   describe "va_arg" do
+    def_va_list = <<-CRYSTAL
+      require "lib_c"
+      require "c/stdarg"
+
+      lib LibIntrinsics
+        {% if #{LibLLVM::IS_LT_190} %}
+          fun va_start = "llvm.va_start"(ap : Void*)
+          fun va_end = "llvm.va_end"(ap : Void*)
+        {% else %}
+          fun va_start = "llvm.va_start.p0"(ap : Void*)
+          fun va_end = "llvm.va_end.p0"(ap : Void*)
+        {% end %}
+      end
+
+      struct VaList
+        def initialize(@to_unsafe : LibC::VaList)
+        end
+
+        def self.open(&)
+          ap = uninitialized LibC::VaList
+          LibIntrinsics.va_start pointerof(ap)
+          yield new(ap)
+          LibIntrinsics.va_end pointerof(ap)
+        end
+
+        @[Primitive(:va_arg)]
+        def next(type)
+        end
+      end
+      CRYSTAL
+
     # On AArch64 llvm's va_arg instruction works incorrectly.
     {% unless flag?(:aarch64) %}
       # On Windows the va_arg instruction is broken, so Crystal directly
@@ -381,34 +412,7 @@ describe "Code gen: primitives" do
 
       it "works with Crystal code" do
         run(<<-CRYSTAL, Int32).should eq(6)
-          require "lib_c"
-          require "c/stdarg"
-
-          lib LibIntrinsics
-            \{% if #{LibLLVM::IS_LT_190} %}
-              fun va_start = "llvm.va_start"(ap : Void*)
-              fun va_end = "llvm.va_end"(ap : Void*)
-            \{% else %}
-              fun va_start = "llvm.va_start.p0"(ap : Void*)
-              fun va_end = "llvm.va_end.p0"(ap : Void*)
-            \{% end %}
-          end
-
-          struct VaList
-            def initialize(@to_unsafe : LibC::VaList)
-            end
-
-            def self.open(&)
-              ap = uninitialized LibC::VaList
-              LibIntrinsics.va_start pointerof(ap)
-              yield new(ap)
-              LibIntrinsics.va_end pointerof(ap)
-            end
-
-            @[Primitive(:va_arg)]
-            def next(type)
-            end
-          end
+          #{def_va_list}
 
           fun foo_f(count : Int32, ...) : LibC::Int
             sum = 0
@@ -429,12 +433,14 @@ describe "Code gen: primitives" do
       end
 
       it "works with small element type" do
-        test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
+        test_c(<<-C, <<-CRYSTAL, Int32).should eq(6)
           extern int foo_f(int,...);
           int foo() {
             return foo_f(3,1,2,3);
           }
           C
+          #{def_va_list}
+
           lib LibFoo
             fun foo() : LibC::Int
           end
@@ -442,8 +448,9 @@ describe "Code gen: primitives" do
           fun foo_f(count : Int32, ...) : LibC::Int
             sum = 0
             VaList.open do |list|
-              count.times do |i|
-                sum += list.next(Int32)
+              while count > 0
+                sum &+= list.next(Int32)
+                count &-= 1
               end
             end
             sum
@@ -457,7 +464,7 @@ describe "Code gen: primitives" do
         # On non-Windows platforms we use the va_arg instruction, and that
         # doesn't support aggregate types
         it "works with large element type" do
-          test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(15182124))
+          test_c(<<-C, <<-CRYSTAL, Int64).should eq(15182124)
             #include <stdint.h>
 
             typedef struct {
@@ -473,6 +480,8 @@ describe "Code gen: primitives" do
               return foo_f(3, a, b, c);
             }
             C
+            #{def_va_list}
+
             lib LibFoo
               struct PointT
                 x : Int64
@@ -487,9 +496,10 @@ describe "Code gen: primitives" do
             fun foo_f(count : Int32, ...) : Int64
               sum = 0_i64
               VaList.open do |list|
-                count.times do |i|
+                while count > 0
                   point = list.next(LibFoo::PointT)
-                  sum += point.x * 1000000 + point.y * 10000 + point.z * 100 + point.w
+                  sum &+= point.x &* 1000000 &+ point.y &* 10000 &+ point.z &* 100 &+ point.w
+                  count &-= 1
                 end
               end
               sum

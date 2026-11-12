@@ -78,16 +78,16 @@ module Crystal
       end
     end
 
-    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default) forall T
+    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default, obj_paths = nil) forall T
       parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
       node = semantic node
-      evaluate node, T, debug: debug
+      evaluate node, T, debug: debug, obj_paths: obj_paths
     end
 
-    def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
+    def evaluate(node, return_type : T.class, debug = Debug::Default, obj_paths = nil) : T forall T
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
@@ -150,6 +150,11 @@ module Crystal
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
+        obj_paths.try &.each do |obj_path|
+          memory_buf = LLVM::MemoryBuffer.from_file(obj_path)
+          lljit.add_object_file(dylib, memory_buf)
+        end
+
         tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
         lljit.add_llvm_ir_module(dylib, tsm)
 
