@@ -11,6 +11,17 @@ class Crystal::Call
   property expanded_macro : Macro?
   property? uses_with_scope = false
 
+  # Typed defs from earlier lookups of this call that can't be cached in their owner,
+  # because they yield to this call's block. A call is looked up again whenever the
+  # hierarchy of its receiver grows (see `SubclassObservable`), and reusing them avoids
+  # typing every target again each time. Defs whose typing depends on when they're
+  # typed aren't kept, since typing them now could give a different result (see
+  # `Def#depends_on_typing_time?`).
+  @block_def_instances : Hash({DefInstanceContainer, DefInstanceKey}, Def)?
+
+  # See `#block_yield_vars`.
+  @block_yield_vars : Hash(Array(Type), Array(Var))?
+
   class RetryLookupWithLiterals < ::Exception
     def initialize
       self.callstack = Exception::CallStack.empty
@@ -367,6 +378,7 @@ class Crystal::Call
     block = @block
 
     typed_defs = Array(Def).new(matches.size)
+    reused_block_def_instance = false
 
     matches.each do |match|
       check_visibility match
@@ -394,7 +406,13 @@ class Crystal::Call
       named_args_types = match.named_arg_types
 
       def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_types)
-      typed_def = def_instance_owner.lookup_def_instance def_instance_key if use_cache
+      cache_in_call = !use_cache && !match.def.uses_block_arg?
+      if use_cache
+        typed_def = def_instance_owner.lookup_def_instance def_instance_key
+      elsif cache_in_call
+        typed_def = @block_def_instances.try &.[{def_instance_owner, def_instance_key}]?
+        reused_block_def_instance = true if typed_def
+      end
 
       unless typed_def
         typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, block_arg_type, named_args_types)
@@ -435,10 +453,25 @@ class Crystal::Call
             end
           end
         end
+
+        # A target that isn't cached in its owner is typed again whenever the def
+        # holding this call is, so that def depends on when it's typed as well
+        if !use_cache && typed_def.depends_on_typing_time?
+          parent_visitor.typed_def?.try &.depends_on_typing_time = true
+        end
+
+        if cache_in_call && !typed_def.depends_on_typing_time?
+          (@block_def_instances ||= {} of {DefInstanceContainer, DefInstanceKey} => Def)[{def_instance_owner, def_instance_key}] = typed_def
+        end
       end
 
       typed_defs << typed_def
     end
+
+    # `match_block_arg` assigns the types of block parameters that unpack a yielded tuple directly, and
+    # typing a target's yields merges them back with what every other target yields. Reused targets
+    # aren't typed again, so merge them here.
+    block.binder.try &.update if block && reused_block_def_instance
 
     typed_defs
   end
@@ -788,6 +821,19 @@ class Crystal::Call
     macros
   end
 
+  # Returns the vars holding the types this call's block is yielded, and whether
+  # they were just created. Every target of the call, and every lookup of it,
+  # yields the same types when the targets share a block restriction, so the
+  # block parameters only need to be bound to them once.
+  private def block_yield_vars(yield_types : Array(Type)) : {Array(Var), Bool}
+    cache = @block_yield_vars ||= {} of Array(Type) => Array(Var)
+    if yield_vars = cache[yield_types]?
+      {yield_vars, false}
+    else
+      {cache[yield_types.dup] = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }, true}
+    end
+  end
+
   # Match the given block with the given block argument specification (&block : A, B, C -> D)
   def match_block_arg(match)
     block_arg = match.def.block_arg
@@ -831,7 +877,7 @@ class Crystal::Call
           yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
         end
 
-        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
+        yield_vars, new_yield_vars = block_yield_vars(yield_types)
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
@@ -847,9 +893,7 @@ class Crystal::Call
         return nil, nil
       end
 
-      yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
-        Var.new("var#{i}", input)
-      end
+      yield_vars, new_yield_vars = block_yield_vars(block_arg_restriction_type.arg_types)
       output = block_arg_restriction_type.return_type
       output_type = output
       output_type = program.nil if output_type.void?
@@ -868,7 +912,7 @@ class Crystal::Call
           arg = block.args[i]?
           arg.type = tuple_type if arg
         end
-      else
+      elsif new_yield_vars
         yield_vars.each_with_index do |yield_var, i|
           arg = block.args[i]?
           arg.bind_to(yield_var || program.nil_var) if arg
