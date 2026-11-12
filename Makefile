@@ -12,6 +12,8 @@ all: ##
 ##   $ make clean crystal
 ## Build the compiler in release mode
 ##   $ make crystal release=1 interpreter=1
+## Build a stage-1 compiler without docs, tools, playground or the interpreter
+##   $ make bootstrap
 ## Build all assets for a package install (compiler and manpages)
 ##   $ make build
 ## Build and install crystal package
@@ -193,6 +195,10 @@ docs: ## Generate standard library documentation
 
 .PHONY: crystal
 crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler [default]
+
+.PHONY: bootstrap
+bootstrap: ## Build the compiler without docs, tools, playground, or the interpreter
+	$(MAKE) crystal FLAGS="-Dwithout_docs -Dwithout_tools -Dwithout_playground"
 
 .PHONY: build
 build: ## Build all files for a package install (currently the compiler and manpages)

@@ -12,6 +12,8 @@ all: ##
 ##   $ make -f Makefile.win clean crystal
 ## Build the compiler in release mode
 ##   $ make -f Makefile.win crystal release=1 interpreter=1
+## Build a stage-1 compiler without docs, tools, playground or the interpreter
+##   $ make -f Makefile.win bootstrap
 ## Build all assets for a package install (compiler)
 ##   $ make -f Makefile.win build
 ## Build and install crystal package
@@ -157,6 +159,10 @@ docs: ## Generate standard library documentation
 
 .PHONY: crystal
 crystal: $(O)\crystal.exe ## Build the compiler [default]
+
+.PHONY: bootstrap
+bootstrap: ## Build the compiler without docs, tools, playground, or the interpreter
+	$(MAKE) -f Makefile.win crystal FLAGS="-Dwithout_docs -Dwithout_tools -Dwithout_playground"
 
 .PHONY: build
 build: ## Build all files for a package install (currently the compiler)
