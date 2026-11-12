@@ -180,6 +180,9 @@ describe "ASTNode#to_s" do
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
   expect_to_s %(lib Foo\nend)
+  expect_to_s %(lib Foo\n  $foo = bar : Int32\nend)
+  expect_to_s %(lib Foo\n  $foo = "bar" : Int32\nend), %(lib Foo\n  $foo = bar : Int32\nend)
+  expect_to_s %(lib Foo\n  $foo = "llvm.bar" : Int32\nend)
   expect_to_s %(lib LibC\n  fun getchar(Int, Float)\nend)
   expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\nend)
   expect_to_s %(fun foo\nend)

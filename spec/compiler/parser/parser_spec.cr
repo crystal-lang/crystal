@@ -1353,6 +1353,9 @@ module Crystal
     it_parses "lib LibC\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path), ExternalVar.new("errno2", "Int32".path)] of ASTNode)
     it_parses "lib LibC\n$errno : B, C -> D\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", ProcNotation.new(["B".path, "C".path] of ASTNode, "D".path))] of ASTNode)
     it_parses "lib LibC\n$errno = Foo : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path, "Foo")] of ASTNode)
+    it_parses "lib LibC\n$errno = \"llvm.foo\" : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path, "llvm.foo")] of ASTNode)
+    it_parses "lib LibC\n$errno =\n  \"llvm.foo\" : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path, "llvm.foo")] of ASTNode)
+    it_parses "lib LibC\n$errno = \"\\u{1}foo@@\" : Int32\nend", LibDef.new("LibC".path, [ExternalVar.new("errno", "Int32".path, "\u{1}foo@@")] of ASTNode)
     it_parses "lib LibC\nalias Foo = Bar\nend", LibDef.new("LibC".path, [Alias.new("Foo".path, "Bar".path)] of ASTNode)
     it_parses "lib LibC; struct Foo; include Bar; end; end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", Include.new("Bar".path))] of ASTNode)
 
@@ -2577,6 +2580,7 @@ module Crystal
 
     assert_syntax_error "require 1", "expected string literal for require"
     assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
+    assert_syntax_error %(lib LibC\n$foo = "bar \#{1}" : Int32\nend), "interpolation not allowed in external variable name"
 
     assert_syntax_error "def Foo(Int32).bar;end"
 

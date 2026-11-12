@@ -4287,8 +4287,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space_or_newline
-        write @token.value
-        next_token_skip_space_or_newline
+        if @token.type.delimiter_start?
+          indent(@column, StringLiteral.new(node.real_name.not_nil!))
+          skip_space_or_newline
+        else
+          write @token.value
+          next_token_skip_space_or_newline
+        end
       end
 
       write_token " ", :OP_COLON, " "

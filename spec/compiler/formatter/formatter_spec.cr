@@ -1602,6 +1602,8 @@ describe Crystal::Formatter do
     CRYSTAL
   assert_format "lib Foo\n  $foo  :  Int32 \nend", "lib Foo\n  $foo : Int32\nend"
   assert_format "lib Foo\n  $foo = hello  :  Int32 \nend", "lib Foo\n  $foo = hello : Int32\nend"
+  assert_format "lib Foo\n  $foo  =  \"llvm.hello\"  :  Int32 \nend", "lib Foo\n  $foo = \"llvm.hello\" : Int32\nend"
+  assert_format "lib Foo\n  $foo =\n    \"llvm.hello\" : Int32\nend", "lib Foo\n  $foo = \"llvm.hello\" : Int32\nend"
   assert_format "lib Foo\nalias  Foo  =  Bar -> \n$a : Int32\nend", "lib Foo\n  alias Foo = Bar ->\n  $a : Int32\nend"
   assert_format "lib Foo\nstruct Foo\nend\nend", "lib Foo\n  struct Foo\n  end\nend"
   assert_format "lib Foo\nstruct Foo\nx  :  Int32\nend\nend", "lib Foo\n  struct Foo\n    x : Int32\n  end\nend"

@@ -1022,7 +1022,7 @@ module Crystal
       @str << node.name
       if real_name = node.real_name
         @str << " = "
-        @str << real_name
+        Symbol.quote_for_named_argument(@str, real_name)
       end
       @str << " : "
       node.type_spec.accept self
