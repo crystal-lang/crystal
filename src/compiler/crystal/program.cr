@@ -59,6 +59,14 @@ module Crystal
     # should simplify a bit of code.
     getter after_inference_types = Set(Type).new
 
+    # Counts the subclasses added to any type, so that a list of subtypes
+    # computed from them knows when it is out of date.
+    getter subclasses_version = 0_u64
+
+    def subclasses_changed : Nil
+      @subclasses_version &+= 1
+    end
+
     # Top-level variables found in a program (only in the main file).
     getter vars = MetaVars.new
 
