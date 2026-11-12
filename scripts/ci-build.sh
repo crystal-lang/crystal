@@ -28,8 +28,8 @@ run make std_spec clean threads=1 junit_output=.junit/std_spec.xml
 run make crystal primitives_spec std_spec compiler_spec docs threads=1 junit_output=.junit/spec.xml \
   DOCS_OPTIONS=\"--json-config-url=/api/versions.json --canonical-base-url=https://crystal-lang.org/api/latest/\"
 
-# 3.a Build and run samples
+# 3.a Build samples
 run make samples
 
-# 3.b Build and run samples in debug mode
+# 3.b Build samples in debug mode
 run CRYSTAL_OPTS=--debug make samples
