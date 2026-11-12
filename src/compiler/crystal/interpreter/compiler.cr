@@ -3398,7 +3398,8 @@ class Crystal::Repl::Compiler < Crystal::Visitor
       return
     end
 
-    if scope.struct?
+    # An enum is a value too, as wide as its base type
+    if scope.struct? || scope.is_a?(EnumType)
       if scope.passed_by_value?
         get_local 0, sizeof(Pointer(UInt8)), node: node
       else
