@@ -224,6 +224,50 @@ describe Crystal::EventLoop::Polling::Arena do
     end
   end
 
+  describe "#free_at" do
+    it "deallocates the object whatever its generation" do
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+      called = 0
+
+      old_index = arena.allocate_at(3) { }
+      arena.free(old_index) { }
+      new_index = arena.allocate_at(3) { |ptr| ptr.value = 123 }
+
+      value = nil
+      arena.free_at(3) do |ptr|
+        value = ptr.value
+        called += 1
+      end
+      called.should eq(1)
+      value.should eq(123)
+
+      arena.get?(new_index) { }.should be_false
+    end
+
+    it "does nothing when not allocated" do
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+      called = 0
+
+      arena.free_at(3) { called += 1 }
+
+      index = arena.allocate_at(3) { }
+      arena.free(index) { }
+      arena.free_at(3) { called += 1 }
+
+      called.should eq(0)
+    end
+
+    it "checks out of bounds" do
+      arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
+      called = 0
+
+      arena.free_at(-1) { called += 1 }
+      arena.free_at(33) { called += 1 }
+
+      called.should eq(0)
+    end
+  end
+
   it "#each_index" do
     arena = Crystal::EventLoop::Polling::Arena(Int32, 96).new(32)
     indices = [] of {Int32, Crystal::EventLoop::Polling::Arena::Index}
