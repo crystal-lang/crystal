@@ -50,7 +50,7 @@ module Crystal::Repl::Multidispatch
     end
 
     obj = node.obj
-    obj_type = obj.try(&.type) || node.scope
+    obj_type = obj.try(&.type) || node.with_scope_for_dispatch || node.scope
 
     signature = CallSignature.new(
       name: node.name,
@@ -103,7 +103,7 @@ module Crystal::Repl::Multidispatch
     end
 
     obj = node.obj
-    obj_type = obj.try(&.type) || node.scope
+    obj_type = obj.try(&.type) || node.with_scope_for_dispatch || node.scope
 
     a_def = Def.new(node.name).at(node)
 
