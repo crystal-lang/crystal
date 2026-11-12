@@ -57,12 +57,8 @@ struct NamedTuple
   # {}             # syntax error
   # ```
   def self.new(**options : **T)
-    {% if @type.name(generic_args: false) == "NamedTuple" %}
-      # deduced type vars
-      options
-    {% elsif @type.name(generic_args: false) == "NamedTuple()" %}
-      # special case: empty named tuple
-      # TODO: check against `NamedTuple()` directly after 1.5.0
+    {% if @type == NamedTuple || @type == NamedTuple() %}
+      # deduced type vars, or the empty named tuple
       options
     {% else %}
       # explicitly provided type vars
