@@ -1069,6 +1069,9 @@ module Crystal
     def skip_comment
       char = current_char
       while !char.in?('\n', '\0')
+        if char == '\r' && peek_next_char != '\n'
+          raise "expected '\\n' after '\\r'"
+        end
         char = next_char_no_column_increment
       end
     end
