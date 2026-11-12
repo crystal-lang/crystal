@@ -1094,7 +1094,13 @@ module Crystal
 
     def codegen_if_branch(phi, node, branch_block, last)
       position_at_end branch_block
-      set_artificial_debug_location if @debug.line_numbers?
+      if @debug.line_numbers?
+        if node.location
+          set_current_debug_location node
+        else
+          set_artificial_debug_location
+        end
+      end
       accept node
       phi.add @last, node.type?, last
     end

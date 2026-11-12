@@ -382,7 +382,7 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
-  it "doesn't attribute branch entries, merges and def epilogue to the previous line" do
+  it "attributes branches to their body, and merges and def epilogue to no line" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
       lib LibC
         fun exit(status : Int32) : NoReturn
@@ -417,7 +417,9 @@ describe "Code gen: debug" do
     foo = str[/^define [^\n]+ %self, i32 %value\).+?^}/m]
     debug_line_of(str, foo, / = phi /).should eq(0)
     debug_line_of(str, foo, /^\s+ret /).should eq(0)
-    debug_line_of(str, foo, /getelementptr inbounds %Foo,/).should eq(0)
+    debug_line_of(str, foo, /^\s+br label %exit, /).should eq(17)
+    debug_line_of(str, foo, /^\s+br label %exit3, /).should eq(19)
+    debug_line_of(str, foo, /getelementptr inbounds %Foo,/).should eq(21)
     debug_line_of(str, foo, /call void @exit/).should eq(21)
   end
 
