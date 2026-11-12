@@ -3242,6 +3242,44 @@ module Crystal
       @is_macro_def = false
     end
 
+    # Checks the parameters of setter methods:
+    #
+    # * A regular setter (`foo=`) must have exactly one parameter, without
+    #   a default value, and no block.
+    # * `[]=` must have at least one positional parameter (a splat counts,
+    #   as it's used for forwarding), none of them with a default value.
+    #   The last positional argument is always the assigned value, so in
+    #   `def []=(a, b = 0)` the call `x[] = 1` would assign `1` to `a`.
+    def check_setter_params(name, location, params, splat_index, double_splat, found_block)
+      if Lexer.setter?(name)
+        if params.size > 1 || splat_index || double_splat
+          raise "setter method '#{name}' cannot have more than one parameter", location
+        elsif found_block
+          raise "setter method '#{name}' cannot have a block", location
+        elsif params.empty?
+          raise "setter method '#{name}' must have a parameter", location
+        elsif params.first.default_value
+          raise "setter method '#{name}' cannot have a default value for its parameter", params.first.location || location
+        end
+      elsif name == "[]="
+        positional_params =
+          if splat_index
+            # A bare `*` only separates named parameters
+            params[splat_index].name.empty? ? params[0...splat_index] : params[0..splat_index]
+          else
+            params
+          end
+
+        if positional_params.empty?
+          raise "setter method '[]=' must have at least one positional parameter", location
+        end
+
+        if param = positional_params.find(&.default_value)
+          raise "setter method '[]=' cannot have default values for positional parameters", param.location || location
+        end
+      end
+    end
+
     def parse_macro
       doc = @token.doc
 
@@ -3820,14 +3858,6 @@ module Crystal
 
         end_location = token_end_location
 
-        if Lexer.setter?(name)
-          if params.size > 1 || found_splat || found_double_splat
-            raise "setter method '#{name}' cannot have more than one parameter"
-          elsif found_block
-            raise "setter method '#{name}' cannot have a block"
-          end
-        end
-
         if splat_index == params.size - 1 && params.last.name.empty?
           raise "named parameters must follow bare *", params.last.location.not_nil!
         end
@@ -3859,6 +3889,8 @@ module Crystal
           unexpected_token
         end
       end
+
+      check_setter_params name, name_location, params, splat_index, found_double_splat, found_block
 
       if @token.type.op_colon?
         unless last_was_space
