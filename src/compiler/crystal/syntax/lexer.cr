@@ -2247,12 +2247,11 @@ module Crystal
         raise "invalid unicode codepoint (surrogate half)"
       end
 
-      unless found_space
-        unless found_curly
-          char = next_char
-        end
-
-        unless char == '}'
+      unless found_space || found_curly
+        char = next_char
+        if char == ' ' && allow_spaces
+          found_space = true
+        elsif char != '}'
           raise "expected '}' to close unicode escape"
         end
       end
