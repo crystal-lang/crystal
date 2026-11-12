@@ -2151,7 +2151,7 @@ module Crystal
     def consume_octal_escape(char)
       value = char - '0'
       count = 1
-      while count <= 3 && '0' <= peek_next_char < '8'
+      while count < 3 && '0' <= peek_next_char < '8'
         next_char
         value = value * 8 + (current_char - '0')
         count += 1

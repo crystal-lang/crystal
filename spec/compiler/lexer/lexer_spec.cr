@@ -678,6 +678,9 @@ describe "Lexer" do
   it_lexes_string %("\\4"), String.new(Bytes[4])
   it_lexes_string %("\\10"), String.new(Bytes[8])
   it_lexes_string %("\\110"), String.new(Bytes[72])
+  it_lexes_string %("\\377"), String.new(Bytes[255])
+  it_lexes_string %("\\0002"), String.new(Bytes[0]) # (#13520)
+  it_lexes_string %("\\1111"), String.new(Bytes[73])
   it_lexes_string %("\\8"), "8"
   assert_syntax_error %("\\400"), "octal value too big"
 
