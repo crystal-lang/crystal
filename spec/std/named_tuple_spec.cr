@@ -456,6 +456,11 @@ describe "NamedTuple" do
     tup.to_s.should eq(%({a: 1, b: "hello"}))
   end
 
+  it "does pretty_print" do
+    {a: 1, "b c": "hello"}.pretty_inspect.should eq(%({a: 1, "b c": "hello"}))
+    {a: 1, "b c": "foo" * 30}.pretty_inspect.should eq(%({a: 1,\n "b c": \n  "#{"foo" * 30}"}))
+  end
+
   it "dups" do
     tup1 = {a: 1, b: [1, 2, 3]}
     tup2 = tup1.dup
