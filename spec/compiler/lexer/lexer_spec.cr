@@ -519,6 +519,9 @@ describe "Lexer" do
   assert_syntax_error "/foo", "Unterminated regular expression"
   assert_syntax_error "/\\", "Unterminated regular expression"
   assert_syntax_error ":\"foo", "unterminated quoted symbol"
+  assert_syntax_error ":\"foo\rbar\"", "expecting '\\n' after '\\r'"
+
+  it_lexes ":\"foo\r\nbar\"", :SYMBOL, "foo\r\nbar"
 
   it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"

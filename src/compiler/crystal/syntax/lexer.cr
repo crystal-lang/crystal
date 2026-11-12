@@ -2578,6 +2578,9 @@ module Crystal
             break
           when '\0'
             raise "unterminated quoted symbol", line, column
+          when '\r'
+            raise "expecting '\\n' after '\\r'" unless peek_next_char == '\n'
+            io << char
           else
             io << char
           end
