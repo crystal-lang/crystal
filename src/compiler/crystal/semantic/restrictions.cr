@@ -827,7 +827,10 @@ module Crystal
       if self == other
         self
       else
-        restrict(other.remove_alias, context)
+        # An alias of a union must restrict against the union's members, not
+        # their common ancestor, so `def foo(x : BarBaz)` behaves like the
+        # inline `def foo(x : Bar | Baz)` (#9665).
+        restrict(other.remove_alias_union_of, context)
       end
     end
 

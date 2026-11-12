@@ -231,7 +231,11 @@ module Crystal
         #
         # It's different if from a virtual type we do `v.class.new`
         # because the class could be any in the hierarchy.
-        node.type = check_type_in_type_args(type.remove_alias_if_simple).devirtualize
+        # Inside `is_a?`, an alias of a union must keep the union's members
+        # rather than generalize to their common ancestor, so that it behaves
+        # like an inline union (#9665).
+        unaliased = @inside_is_a ? type.remove_alias_union_of : type.remove_alias_if_simple
+        node.type = check_type_in_type_args(unaliased).devirtualize
         node.target_type = type
       when ASTNode
         type.accept self unless type.type?
@@ -1898,6 +1902,27 @@ module Crystal
         return false
       end
 
+      # A `when Foo | Bar` is expanded into an `is_a?` against a union, but if
+      # any member is a constant (an enum member or a numeric constant) rather
+      # than a type it must keep its original `(Foo | Bar) === x` value
+      # comparison. This happens after type resolution, so we can tell apart a
+      # union of constants from a union of types here (#9665).
+      if const.is_a?(Union)
+        members = const.types
+        if members.any? { |member| member.is_a?(Path) && member.target_const }
+          obj = node.obj.clone.at(node.obj)
+          combined = members.first.clone
+          members[1..].each do |member|
+            combined = Call.new(combined, "|", member.clone).at(node.const)
+          end
+          comp = Call.new(combined, "===", obj).at(node)
+          comp.accept self
+          node.syntax_replacement = comp
+          node.bind_to comp
+          return false
+        end
+      end
+
       if needs_type_filters? && (var = get_expression_var(node.obj))
         @type_filters = TypeFilters.new var, SimpleTypeFilter.new(node.const.type)
       end
@@ -2900,6 +2925,21 @@ module Crystal
       if node_types = node.types
         types = node_types.map do |type|
           type.accept self
+
+          # A `rescue ex : BarBaz` where `alias BarBaz = Bar | Baz` must catch
+          # the union's members, not their common ancestor, like the inline
+          # `rescue ex : Bar | Baz` (#9665). Re-resolve the alias keeping the
+          # members and update the node so codegen matches the same types.
+          if type.is_a?(Path)
+            target_type = type.target_type
+            if target_type.is_a?(AliasType)
+              unaliased = target_type.remove_alias_union_of
+              if unaliased != type.type.instance_type
+                type.type = unaliased.metaclass
+              end
+            end
+          end
+
           instance_type = type.type.instance_type
 
           unless self.allowed_type_in_rescue? instance_type
