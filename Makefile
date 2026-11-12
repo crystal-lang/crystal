@@ -197,8 +197,8 @@ docs: ## Generate standard library documentation
 crystal: $(O)/$(CRYSTAL_BIN) ## Build the compiler [default]
 
 .PHONY: bootstrap
-bootstrap: ## Build the compiler without docs, tools, playground, or the interpreter
-	$(MAKE) crystal FLAGS="-Dwithout_docs -Dwithout_tools -Dwithout_playground"
+bootstrap: FLAGS += -Dwithout_docs -Dwithout_tools -Dwithout_playground
+bootstrap: crystal ## Build the compiler without docs, tools, playground, or the interpreter
 
 .PHONY: build
 build: ## Build all files for a package install (currently the compiler and manpages)
