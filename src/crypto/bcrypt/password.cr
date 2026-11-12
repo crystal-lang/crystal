@@ -1,7 +1,9 @@
 require "../bcrypt"
 require "../subtle"
 
-# Generate, read and verify `Crypto::Bcrypt` hashes.
+# Generate, read, and verify `Crypto::Bcrypt` hashes.
+#
+# Use `.create` to hash a new plaintext password with a random salt, and `.new` to parse an existing hash string for verification via `#verify`.
 #
 # NOTE: To use `Password`, you must explicitly import it with `require "crypto/bcrypt/password"`
 #
@@ -9,7 +11,7 @@ require "../subtle"
 # require "crypto/bcrypt/password"
 #
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
-# # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
+# password.to_s # => "$2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq"
 #
 # password.verify("wrong secret") # => false
 # password.verify("super secret") # => true
@@ -19,14 +21,16 @@ require "../subtle"
 class Crypto::Bcrypt::Password
   private SUPPORTED_VERSIONS = ["2", "2a", "2b", "2y"]
 
-  # Hashes a password.
+  # Hashes a plaintext *password* with a randomly generated salt.
   #
   # ```
   # require "crypto/bcrypt/password"
   #
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
-  # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
+  # password.to_s # => "$2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq"
   # ```
+  #
+  # Raises `Crypto::Bcrypt::Error` if *cost* is outside `COST_RANGE` or *password* exceeds 72 bytes.
   def self.create(password : String, cost : Int32 = DEFAULT_COST) : self
     new(Bcrypt.hash_secret(password, cost).to_s)
   end
@@ -36,7 +40,9 @@ class Crypto::Bcrypt::Password
   getter salt : String
   getter digest : String
 
-  # Loads a bcrypt hash.
+  # Loads and parses an existing bcrypt hash string.
+  #
+  # This constructor does not hash plaintext passwords; use `.create` to hash a new password.
   #
   # ```
   # require "crypto/bcrypt/password"
@@ -45,7 +51,11 @@ class Crypto::Bcrypt::Password
   # password.version # => "2a"
   # password.salt    # => "X6rw/jDiLBuzHV./JjBNXe"
   # password.digest  # => "8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya"
+  #
+  # Crypto::Bcrypt::Password.new("my_password") # raises Crypto::Bcrypt::Error: Invalid hash string
   # ```
+  #
+  # Raises `Crypto::Bcrypt::Error` if *raw_hash* is malformed, uses an unsupported version, or has an invalid cost, salt, or digest.
   def initialize(@raw_hash : String)
     parts = @raw_hash.split('$')
     raise Error.new("Invalid hash string") unless parts.size == 4
