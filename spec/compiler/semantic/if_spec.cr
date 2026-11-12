@@ -65,7 +65,8 @@ describe "Semantic: if" do
       end
 
       def noreturn(*args) : NoReturn
-        noreturn(*args)
+        x = uninitialized NoReturn
+        x
       end
 
       def bar
