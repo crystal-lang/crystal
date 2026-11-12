@@ -3486,11 +3486,12 @@ module Crystal
       {"def foo(bar baz : Int32 = 1); end", 13},
       {"def foo(*bar); end", 10},
       {"def foo(**bar); end", 11},
-      {"def foo(@bar); end", 9},
-      {"def foo(@@bar); end", 9},
-      {"def foo(baz @bar); end", 13},
+      {"def foo(@bar); end", 10},
+      {"def foo(@@bar); end", 11},
+      {"def foo(baz @bar); end", 14},
+      {"def foo(baz @@bar); end", 15},
       {"def foo(&bar); end", 10},
-      {"def foo(&@bar); end", 10},
+      {"def foo(&@bar); end", 11},
       {"macro foo(bar baz); end", 15},
     }.each do |source, column_number|
       it "sets location of parameter name in #{source.inspect}" do
@@ -3504,6 +3505,22 @@ module Crystal
         name_location = param.name_location.should_not be_nil
         name_location.line_number.should eq(1)
         name_location.column_number.should eq(column_number)
+      end
+    end
+
+    {
+      "def foo(bar); end",
+      "def foo(baz bar); end",
+      "def foo(@bar); end",
+      "def foo(@@bar); end",
+      "def foo(baz @bar); end",
+      "def foo(baz @@bar); end",
+      "def foo(&@bar); end",
+    }.each do |source|
+      it "sets correct location of parameter name in #{source.inspect}" do
+        node = Parser.new(source).parse.as(Def)
+        param = node.block_arg || node.args.first
+        source_between(source, param.name_location, param.name_end_location).should eq("bar")
       end
     end
 

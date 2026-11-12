@@ -4200,7 +4200,6 @@ module Crystal
       when .instance_var?
         # Transform `def foo(@x); end` to `def foo(x); @x = x; end`
         param_name = @token.value.to_s[1..-1]
-        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4221,7 +4220,10 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
-          param_name_location = nil
+        else
+          # The name starts after the `@` prefix
+          token_location = @token.location
+          param_name_location = Location.new(token_location.filename, token_location.line_number, token_location.column_number + 1)
         end
 
         ivar = InstanceVar.new(@token.value.to_s).at(location)
@@ -4236,7 +4238,6 @@ module Crystal
         do_next_token = true
       when .class_var?
         param_name = @token.value.to_s[2..-1]
-        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4245,7 +4246,10 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
-          param_name_location = nil
+        else
+          # The name starts after the `@@` prefix
+          token_location = @token.location
+          param_name_location = Location.new(token_location.filename, token_location.line_number, token_location.column_number + 2)
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
