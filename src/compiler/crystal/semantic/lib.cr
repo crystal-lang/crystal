@@ -91,17 +91,16 @@ class Crystal::Call
 
   def check_fun_args_size_match(obj_type, external)
     call_args_count = args.size
-    all_args_count = external.args.size
+    regular_params_count = external.args.size
 
-    if external.varargs? && call_args_count >= all_args_count
-      return
+    if external.varargs?
+      return if call_args_count >= regular_params_count
+    else
+      return if call_args_count == regular_params_count
     end
 
-    required_args_count = external.args.count { |arg| !arg.default_value }
-
-    return if required_args_count <= call_args_count <= all_args_count
-
-    wrong_number_of_arguments "'#{full_name(obj_type)}'", args.size, external.args.size
+    expected = external.varargs? ? "#{regular_params_count}+" : regular_params_count
+    wrong_number_of_arguments "'#{full_name(obj_type)}'", call_args_count, expected
   end
 
   def check_fun_out_args(untyped_def)
@@ -242,19 +241,7 @@ class Crystal::Call
 
       num = self_arg.to_number
 
-      self_arg.value =
-        case unaliased_type
-        when program.uint8  ; num.to_u8!.to_s
-        when program.uint16 ; num.to_u16!.to_s
-        when program.uint32 ; num.to_u32!.to_s
-        when program.uint64 ; num.to_u64!.to_s
-        when program.int8   ; num.to_i8!.to_s
-        when program.int16  ; num.to_i16!.to_s
-        when program.int32  ; num.to_i32!.to_s
-        when program.int64  ; num.to_i64!.to_s
-        when program.float32; num.to_f32!.to_s
-        else                  num.to_f64!.to_s
-        end
+      self_arg.value = unaliased_type.kind.cast!(num).to_s
       self_arg.kind = unaliased_type.kind
       self_arg.type = unaliased_type
       return true

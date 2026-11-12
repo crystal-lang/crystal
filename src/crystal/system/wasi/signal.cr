@@ -1,3 +1,5 @@
+require "c/signal"
+
 module Crystal::System::Signal
   def self.trap(signal, handler) : Nil
     raise NotImplementedError.new("Crystal::System::Signal.trap")

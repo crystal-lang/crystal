@@ -114,6 +114,7 @@ describe JSON::Lexer do
   it_errors_to_lex %("\\uD800")
   it_errors_to_lex %("\\uDC00")
   it_errors_to_lex %("\\uD800\\u0020")
+  it_errors_to_lex "2\x003"
   it_lexes_int "0", 0
   it_lexes_int "1", 1
   it_lexes_int "1234", 1234

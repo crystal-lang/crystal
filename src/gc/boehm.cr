@@ -111,9 +111,9 @@ lib LibGC
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
   fun set_max_heap_size = GC_set_max_heap_size(Word)
 
-  fun get_prof_stats = GC_get_prof_stats(stats : ProfStats*, size : SizeT)
+  fun get_prof_stats = GC_get_prof_stats(stats : ProfStats*, size : SizeT) : SizeT
 
-  fun get_start_callback = GC_get_start_callback : Void*
+  fun get_start_callback = GC_get_start_callback : ->
   fun set_start_callback = GC_set_start_callback(callback : ->)
 
   fun set_push_other_roots = GC_set_push_other_roots(proc : ->)
@@ -123,7 +123,7 @@ lib LibGC
 
   {% if !flag?(:without_mt) || flag?(:win32) || compare_versions(VERSION, "8.2.0") >= 0 %}
     fun get_my_stackbottom = GC_get_my_stackbottom(sb : StackBase*) : ThreadHandle
-    fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*) : ThreadHandle
+    fun set_stackbottom = GC_set_stackbottom(th : ThreadHandle, sb : StackBase*)
   {% else %}
     $stackbottom = GC_stackbottom : Void*
   {% end %}
@@ -165,7 +165,7 @@ lib LibGC
   # Boehm GC requires to use its own thread manipulation routines instead of pthread's or Win32's
   {% if flag?(:win32) %}
     fun beginthreadex = GC_beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt,
-                                         arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : Void*
+                                         arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::UIntPtrT
   {% elsif !flag?(:wasm32) %}
     fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : LibC::PthreadAttrT*, start : Void* -> Void*, arg : Void*) : LibC::Int
     fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
@@ -418,8 +418,8 @@ module GC
     # :nodoc:
     def self.beginthreadex(security : Void*, stack_size : LibC::UInt, start_address : Void* -> LibC::UInt, arglist : Void*, initflag : LibC::UInt, thrdaddr : LibC::UInt*) : LibC::HANDLE
       ret = LibGC.beginthreadex(security, stack_size, start_address, arglist, initflag, thrdaddr)
-      raise RuntimeError.from_errno("GC_beginthreadex") if ret.null?
-      ret.as(LibC::HANDLE)
+      raise RuntimeError.from_errno("GC_beginthreadex") if ret.zero?
+      LibC::HANDLE.new(ret)
     end
   {% else %}
     # :nodoc:

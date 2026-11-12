@@ -43,6 +43,10 @@ module LLVM::ValueMethods
     Type.new LibLLVM.type_of(self)
   end
 
+  def global_value_type : Type
+    Type.new LibLLVM.global_get_value_type(self)
+  end
+
   def thread_local=(thread_local)
     LibLLVM.set_thread_local(self, thread_local ? 1 : 0)
   end
@@ -89,7 +93,7 @@ module LLVM::ValueMethods
   end
 
   def global_set_metadata(kind : String, metadata)
-    kind = LibLLVM.get_md_kind_id_in_context(type.context, kind, kind.bytesize)
+    kind = LibLLVM.get_md_kind_id_in_context(LibLLVM.get_type_context(type), kind, kind.bytesize)
     global_set_metadata(kind, metadata)
   end
 

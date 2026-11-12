@@ -172,7 +172,7 @@ module HTTP
     # ```
     # line = "Server: nginx"
     # name, value = line.split ':', 2
-    # {name, value.lstrip} # => {"Server", "nginx"}
+    # {name, value.lstrip(" \t")} # => {"Server", "nginx"}
     # ```
     #
     # except that it's faster because we only create 2 strings
@@ -186,9 +186,9 @@ module HTTP
     colon_index = slice.index(':'.ord.to_u8) || 0
     name = header_name(slice[0, colon_index])
 
-    # Get where the header value starts (skip space)
+    # Get where the header value starts (skip only HTTP optional whitespace)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
+    while middle_index < bytesize && cstr[middle_index].in?(' '.ord, '\t'.ord)
       middle_index += 1
     end
 
@@ -349,19 +349,20 @@ module HTTP
 
   # :nodoc:
   def self.keep_alive?(message) : Bool
-    case message.headers["Connection"]?.try &.downcase
-    when "keep-alive"
-      true
-    when "close", "upgrade"
-      false
-    else
-      case message.version
-      when "HTTP/1.0"
-        false
-      else
-        true
+    keep_alive = message.version != "HTTP/1.0"
+
+    message.headers.get?("Connection").try &.each do |value|
+      value.downcase.split(',') do |token|
+        case token.strip(" \t")
+        when "close", "upgrade"
+          return false
+        when "keep-alive"
+          keep_alive = true
+        end
       end
     end
+
+    keep_alive
   end
 
   def self.expect_continue?(headers : HTTP::Headers) : Bool
