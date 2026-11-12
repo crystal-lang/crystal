@@ -35,6 +35,8 @@ jobs:
           else
             echo "test_full_run=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Initialize Devenv shell environment
+        run: devenv --profile lint shell -- true
       - name: Run prek on all files
         id: run_full
         run: prek run --all-files
