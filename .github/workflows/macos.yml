@@ -44,11 +44,11 @@ jobs:
 
       - name: Test
         run: scripts/ci-build.sh
-        shell: nix-shell --pure --run {0}
+        shell: nix-shell --pure --run "bash {0}"
 
       - name: Test interpreter
         run: make interpreter_spec
-        shell: nix-shell --pure --run {0}
+        shell: nix-shell --pure --run "bash {0}"
 
   test-std:
     runs-on: macos-26
