@@ -25,7 +25,7 @@ jobs:
           ref: master
           persist-credentials: false
 
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
 
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
@@ -49,7 +49,7 @@ jobs:
 
       - name: Create PR
         if: steps.changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8
         with:
           commit-message: "Update `devenv.lock`"
           title: "Update `devenv.lock`"
