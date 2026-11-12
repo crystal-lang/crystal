@@ -193,6 +193,18 @@ module Crystal
     it_parses %(:"\\u{61}"), "a".symbol
     it_parses %(:""), "".symbol
 
+    assert_syntax_error ":'foo'", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 1
+    assert_syntax_error "[1, :'2']", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 5
+    assert_syntax_error "{1 => :'2'}", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 7
+    assert_syntax_error "foo(:'bar')", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 5
+    assert_syntax_error "foo :'bar'", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 5
+    assert_syntax_error "x = :'foo'", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 5
+    assert_syntax_error "{a: :'b'}", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 5
+    assert_syntax_error "{:'a' => 1}", %|unexpected token: ":'" (quoted symbols use double quotes|, 1, 2
+    assert_syntax_error "case x\nwhen :'a'\nend", %|unexpected token: ":'" (quoted symbols use double quotes|, 2, 6
+    it_parses "a ? 1 :'b'", If.new("a".call, 1.int32, CharLiteral.new('b'))
+    it_parses "a ? b :'c'", If.new("a".call, "b".call, CharLiteral.new('c'))
+
     it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
     it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array
     it_parses "[1,\n 2,]", ([1.int32, 2.int32] of ASTNode).array
