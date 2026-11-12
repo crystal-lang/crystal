@@ -23,7 +23,7 @@ jobs:
       - name: "Install Crystal"
         uses: crystal-lang/install-crystal@v1
         with:
-          crystal: 1.22.2
+          crystal: "1.22.2"
 
       - name: "Install LLVM 24"
         run: |
