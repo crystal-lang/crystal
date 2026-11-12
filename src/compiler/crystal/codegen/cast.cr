@@ -290,6 +290,13 @@ class Crystal::CodeGenVisitor
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
 
+    # A generic class is only left after `remove_indirection` if it has no
+    # instances, so no value can have that type and this is never reached
+    if to_type.is_a?(GenericClassType) && from_type != to_type
+      unreachable
+      return llvm_nil
+    end
+
     unless already_loaded
       value = extern ? extern_to_lhs(value, from_type) : to_lhs(value, from_type)
     end
