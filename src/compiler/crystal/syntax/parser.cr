@@ -813,14 +813,15 @@ module Crystal
             atomic.at(location)
             atomic
           end
-        when .op_lsquare_rsquare?
+        when .op_lsquare_rsquare?, .op_lsquare_rsquare_question?
           check_void_value atomic, location
 
+          method_name = @token.type.op_lsquare_rsquare? ? "[]" : "[]?"
           name_location = @token.location
           end_location = token_end_location
           @wants_regex = false
           next_token_skip_space
-          atomic = Call.new(atomic, "[]").at(location)
+          atomic = Call.new(atomic, method_name).at(location)
           atomic.name_location = name_location
           atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
@@ -879,7 +880,7 @@ module Crystal
 
     def parse_atomic_method_suffix_special(call, location)
       case @token.type
-      when .op_period?, .op_lsquare?, .op_lsquare_rsquare?
+      when .op_period?, .op_lsquare?, .op_lsquare_rsquare?, .op_lsquare_rsquare_question?
         parse_atomic_method_suffix(call, location)
       else
         call

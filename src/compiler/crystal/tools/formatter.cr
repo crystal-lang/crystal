@@ -2568,6 +2568,10 @@ module Crystal
             end
 
             return false
+          elsif @token.type.op_lsquare_rsquare_question?
+            write "[]?"
+            next_token
+            return false
           end
 
           write " " if needs_space && !passed_backslash_newline

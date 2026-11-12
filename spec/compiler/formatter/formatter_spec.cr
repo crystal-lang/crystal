@@ -1095,6 +1095,9 @@ describe Crystal::Formatter do
   assert_format "foo(1 &- 2)"
 
   assert_format "foo[]", "foo[]"
+  assert_format "foo[]?", "foo[]?"
+  assert_format "foo[]?.bar", "foo[]?.bar"
+  assert_format "foo[]?[]?", "foo[]?[]?"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
   assert_format "foo[ 1,  2 ]?", "foo[1, 2]?"
   assert_format "foo[] =1", "foo[] = 1"

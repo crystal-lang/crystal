@@ -248,6 +248,13 @@ module Crystal
     it_parses "previous_def/2", Call.new("previous_def".call, "/", 2.int32)
     it_parses "1+2*3", Call.new(1.int32, "+", Call.new(2.int32, "*", 3.int32))
     it_parses "foo[] /2", Call.new(Call.new("foo".call, "[]"), "/", 2.int32)
+    it_parses "foo[]?", Call.new("foo".call, "[]?")
+    it_parses "foo[]?.bar", Call.new(Call.new("foo".call, "[]?"), "bar")
+    it_parses "foo[]?[]?", Call.new(Call.new("foo".call, "[]?"), "[]?")
+
+    assert_syntax_error "foo[]? = 1"
+    assert_syntax_error "foo[]? += 1"
+
     it_parses "foo[1] /2", Call.new(Call.new("foo".call, "[]", 1.int32), "/", 2.int32)
     it_parses "[1] /2", Call.new(([1.int32] of ASTNode).array, "/", 2.int32)
     it_parses "2**3**4", Call.new(2.int32, "**", Call.new(3.int32, "**", 4.int32))
