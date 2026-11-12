@@ -1265,8 +1265,7 @@ module Crystal
     end
 
     def visit_if_or_unless(node, keyword : Keyword)
-      if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless
+      if suffix_if_or_unless?(node)
         accept node.then
         write_keyword " ", keyword, " "
         inside_cond do
@@ -1279,6 +1278,16 @@ module Crystal
       format_if_at_cond node, keyword
 
       false
+    end
+
+    # Returns `true` for a suffix `if`/`unless`, whose `then` branch starts at
+    # the node's own location. The current token alone can't tell the forms
+    # apart, as in `if a; b; end if c`.
+    private def suffix_if_or_unless?(node)
+      return false unless node.else.is_a?(Nop)
+      return false unless location = node.location
+
+      node.then.location == location
     end
 
     def format_if_at_cond(node, keyword : Keyword, check_end = true)
