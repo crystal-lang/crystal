@@ -813,14 +813,15 @@ module Crystal
             atomic.at(location)
             atomic
           end
-        when .op_lsquare_rsquare?
+        when .op_lsquare_rsquare?, .op_lsquare_rsquare_question?
           check_void_value atomic, location
 
+          method_name = @token.type.op_lsquare_rsquare? ? "[]" : "[]?"
           name_location = @token.location
           end_location = token_end_location
           @wants_regex = false
           next_token_skip_space
-          atomic = Call.new(atomic, "[]").at(location)
+          atomic = Call.new(atomic, method_name).at(location)
           atomic.name_location = name_location
           atomic.end_location = end_location
           atomic.name_size = 0 if atomic.is_a?(Call)
@@ -879,7 +880,7 @@ module Crystal
 
     def parse_atomic_method_suffix_special(call, location)
       case @token.type
-      when .op_period?, .op_lsquare?, .op_lsquare_rsquare?
+      when .op_period?, .op_lsquare?, .op_lsquare_rsquare?, .op_lsquare_rsquare_question?
         parse_atomic_method_suffix(call, location)
       else
         call
@@ -3742,7 +3743,8 @@ module Crystal
           end
         end
 
-        consume_def_or_macro_name
+        # Unlike after `def`, a newline isn't allowed between the period and the name
+        consume_def_or_macro_name(skip_newline: false)
 
         if @token.type.ident?
           check_valid_def_name
@@ -4032,7 +4034,7 @@ module Crystal
         allow_restrictions = false
       else
         param_location = @token.location
-        param_name, external_name, found_space, _uses_param = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
+        param_name, external_name, found_space, _uses_param, param_name_location = parse_param_name(param_location, extra_assigns, allow_external_name: allow_external_name)
 
         params.each do |param|
           if param.name == param_name
@@ -4114,6 +4116,7 @@ module Crystal
       raise "BUG: param_name is nil" unless param_name
 
       param = Arg.new(param_name, default_value, restriction, external_name: external_name, parsed_annotations: annotations).at(param_location)
+      param.name_location = param_name_location
       params << param
       push_var param
 
@@ -4126,7 +4129,7 @@ module Crystal
       if @token.type.op_rparen? || @token.type.newline? || @token.type.op_colon?
         param_name = ""
       else
-        param_name, _external_name, found_space, uses_param = parse_param_name(name_location, extra_assigns, allow_external_name: false)
+        param_name, _external_name, found_space, uses_param, param_name_location = parse_param_name(name_location, extra_assigns, allow_external_name: false)
         @uses_block_arg = true if uses_param
       end
 
@@ -4142,6 +4145,7 @@ module Crystal
       end
 
       block_param = Arg.new(param_name, restriction: type_spec, parsed_annotations: annotations).at(name_location)
+      block_param.name_location = param_name_location
 
       push_var block_param
 
@@ -4186,6 +4190,7 @@ module Crystal
         end
 
         param_name = @token.value.to_s
+        param_name_location = @token.location
         if param_name == external_name
           raise "when specified, external name must be different than internal name", @token
         end
@@ -4217,6 +4222,10 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
+        else
+          # The name starts after the `@` prefix
+          token_location = @token.location
+          param_name_location = Location.new(token_location.filename, token_location.line_number, token_location.column_number + 1)
         end
 
         ivar = InstanceVar.new(@token.value.to_s).at(location)
@@ -4239,6 +4248,10 @@ module Crystal
         if invalid_internal_name?(param_name)
           external_name ||= param_name
           param_name = temp_arg_name
+        else
+          # The name starts after the `@@` prefix
+          token_location = @token.location
+          param_name_location = Location.new(token_location.filename, token_location.line_number, token_location.column_number + 2)
         end
 
         cvar = ClassVar.new(@token.value.to_s).at(location)
@@ -4260,6 +4273,7 @@ module Crystal
             raise "cannot use '#{invalid_internal_name}' as a parameter name", invalid_internal_name
           end
           param_name = external_name
+          param_name_location = name_location
           if external_name_token.nil?
             raise "missing external name token"
           end
@@ -4276,7 +4290,7 @@ module Crystal
 
       skip_space
 
-      {param_name, external_name, found_space, uses_param}
+      {param_name, external_name, found_space, uses_param, param_name_location}
     end
 
     def invalid_internal_name?(keyword)
@@ -4794,7 +4808,7 @@ module Crystal
       end_location : Location?,
       has_parentheses : Bool
 
-    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
+    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false, forbid_named_args_in : String? = nil)
       case @token.type
       when .op_lcurly?
         nil
@@ -4817,11 +4831,11 @@ module Crystal
             end
 
             if named_tuple_start?
-              return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true)
+              return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true, forbid_in: forbid_named_args_in)
             else
               arg = parse_call_arg(found_double_splat)
               if @token.type.op_colon? && arg.is_a?(StringLiteral)
-                return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true)
+                return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true, forbid_in: forbid_named_args_in)
               else
                 args << arg
                 found_double_splat = arg.is_a?(DoubleSplat)
@@ -4857,14 +4871,14 @@ module Crystal
           unexpected_token
         end
 
-        parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control
+        parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly, control: control, forbid_named_args_in: forbid_named_args_in
       else
         nil
       end
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false, control = false, end_token : Token::Kind = :OP_RPAREN,
-                                       allow_beginless_range = false)
+                                       allow_beginless_range = false, forbid_named_args_in : String? = nil)
       if @token.keyword?(:end) && !next_comes_colon_space?
         return nil
       end
@@ -4932,11 +4946,11 @@ module Crystal
         end
 
         if @token.type.ident? && current_char == ':'
-          return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false)
+          return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false, forbid_in: forbid_named_args_in)
         else
           arg = parse_call_arg(found_double_splat)
           if @token.type.op_colon? && arg.is_a?(StringLiteral)
-            return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false)
+            return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false, forbid_in: forbid_named_args_in)
           else
             args << arg
             found_double_splat = arg.is_a?(DoubleSplat)
@@ -4959,7 +4973,9 @@ module Crystal
       CallArgs.new args, nil, nil, nil, false, end_location, has_parentheses: false
     end
 
-    def parse_call_args_named_args(location, args, first_name, allow_newline)
+    def parse_call_args_named_args(location, args, first_name, allow_newline, forbid_in : String? = nil)
+      raise "named arguments are not allowed in `#{forbid_in}`", location if forbid_in
+
       named_args = parse_named_args(location, first_name: first_name, allow_newline: allow_newline)
 
       if call_block_arg_follows?
@@ -5785,7 +5801,7 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args control: true }
+      call_args = preserve_stop_on_do { parse_call_args control: true, forbid_named_args_in: "yield" }
 
       if call_args
         args = call_args.args
@@ -5813,10 +5829,11 @@ module Crystal
     end
 
     def parse_control_expression(klass)
+      keyword = @token.value.to_s
       end_location = token_end_location
       next_token
 
-      call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true }
+      call_args = preserve_stop_on_do { parse_call_args allow_curly: true, control: true, forbid_named_args_in: keyword }
       args = call_args.args if call_args
 
       if args && !args.empty?
@@ -5895,7 +5912,7 @@ module Crystal
         when Keyword::UNION
           parse_c_struct_or_union union: true
         when Keyword::ENUM
-          parse_enum_def
+          parse_enum_def allow_namespace: false
         else
           unexpected_token
         end
@@ -5913,10 +5930,17 @@ module Crystal
         name = @token.value.to_s[1..-1]
         next_token_skip_space_or_newline
         if @token.type.op_eq?
-          next_token_skip_space
-          check IdentOrConst
-          real_name = @token.value.to_s
-          next_token_skip_space
+          next_token_skip_space_or_newline
+          case @token.type
+          when .ident?, .const?
+            real_name = @token.value.to_s
+            next_token_skip_space
+          when .delimiter_start?
+            real_name = parse_string_without_interpolation("external variable name")
+            skip_space
+          else
+            unexpected_token
+          end
         end
         check :OP_COLON
         next_token_skip_space_or_newline
@@ -6265,13 +6289,20 @@ module Crystal
       end
     end
 
-    def parse_enum_def
+    def parse_enum_def(*, allow_namespace = true)
       location = @token.location
       doc = @token.doc
 
       next_token_skip_space_or_newline
 
-      name = parse_path
+      if allow_namespace
+        name = parse_path
+      else
+        # C enums inside a lib can't be namespaced, same as C structs and unions
+        name_location = @token.location
+        name = Path.new(check_const).at(name_location).at_end(token_end_location)
+        next_token
+      end
       skip_space
 
       if @token.type.op_colon?
@@ -6431,13 +6462,17 @@ module Crystal
       :OP_AMP_PLUS, :OP_AMP_MINUS, :OP_AMP_STAR, :OP_AMP_STAR_STAR,
     ] of Token::Kind
 
-    def consume_def_or_macro_name
+    def consume_def_or_macro_name(*, skip_newline : Bool = true)
       # Force lexer return if possible a def or macro name
       # cases like: def `, def /, def //
       # that in regular statements states for delimiters
       # here must be treated as method names.
       wants_def_or_macro_name do
-        next_token_skip_space_or_newline
+        if skip_newline
+          next_token_skip_space_or_newline
+        else
+          next_token_skip_space
+        end
         check DefOrMacroCheck1
       end
       @token.to_s

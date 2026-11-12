@@ -71,6 +71,19 @@ describe "Code gen: lib" do
       CRYSTAL
   end
 
+  it "uses quoted real name of external variable (#14210)" do
+    mod = codegen(<<-CRYSTAL)
+      lib LibFoo
+        $foo = "llvm.foo" : Int32
+      end
+
+      LibFoo.foo
+      CRYSTAL
+
+    mod.globals["llvm.foo"]?.should_not be_nil
+    mod.globals["foo"]?.should be_nil
+  end
+
   it "can use enum as fun argument" do
     codegen(<<-CRYSTAL)
       enum Foo
@@ -194,6 +207,16 @@ describe "Code gen: lib" do
       end
 
       LibFoo.foo 1234.5
+      CRYSTAL
+  end
+
+  it "passes int literal to int128" do
+    codegen(<<-CRYSTAL)
+      lib LibFoo
+        fun foo(x : Int128)
+      end
+
+      LibFoo.foo(1)
       CRYSTAL
   end
 

@@ -83,7 +83,7 @@ class String
   #
   # ```
   # slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16, 0_u16]
-  # String.from_utf16(slice) # => "hi\0000𐂥\u0000"
+  # String.from_utf16(slice) # => "hi\u0000𐂥\u0000"
   # pointer = slice.to_unsafe
   # string, pointer = String.from_utf16(pointer)
   # string # => "hi"

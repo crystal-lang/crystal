@@ -53,7 +53,7 @@ fi
 ## 3. Update CI and build scripts to use latest release as bootstrap version
 ##
 
-# Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
+# Edit previous_crystal_base_url parameter in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
 # Edit DOCKER_TEST_PREFIX in bin/ci
@@ -63,7 +63,7 @@ sed -i -E 's|\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\${CRYSTAL_BOOTSTRAP_VERSION:='
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
 # Edit .github/workflows/*.yml to update version for install-crystal action
-sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
+sed -i -E "s|crystal: \"?[0-9.]+\"?|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
 
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
 update_shell_nix_release() {

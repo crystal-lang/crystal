@@ -111,26 +111,30 @@ class PrettyPrint
   # as is, depending on the available width.
   def group(indent = 0, open_obj = "", close_obj = "", &)
     text open_obj
-    group_sub do
-      nest(indent) do
-        yield
-      end
+    group = open_group
+    @indent += indent
+    begin
+      yield
+    ensure
+      @indent -= indent
+      close_group group
     end
     text close_obj
   end
 
-  # :nodoc:
-  def group_sub(&)
+  # Starts a group that the following breakables belong to.
+  private def open_group : Group
     group = Group.new(@group_stack.last.depth + 1)
     @group_stack.push group
     @group_queue.enq group
-    begin
-      yield
-    ensure
-      @group_stack.pop
-      if group.breakables.empty?
-        @group_queue.delete group
-      end
+    group
+  end
+
+  # Ends a group started by `#open_group`.
+  private def close_group(group : Group) : Nil
+    @group_stack.pop
+    if group.breakables.empty?
+      @group_queue.delete group
     end
   end
 
@@ -185,10 +189,26 @@ class PrettyPrint
     end
   end
 
-  # :nodoc:
-  def instance_var(name : String, value) : Nil
+  # Appends *key* and *separator* followed by *value*, in a group where *value* is nested after a breakable.
+  # If the group doesn't fit, *value* is moved to the next line.
+  #
+  # ```
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 20) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \"Crystal\""
+  #
+  # io = IO::Memory.new
+  # PrettyPrint.format(io, 10) do |pp|
+  #   pp.key_value "name", ": ", "Crystal"
+  # end
+  # io.to_s # => "name: \n \"Crystal\""
+  # ```
+  def key_value(key : String, separator : String, value) : Nil
     group do
-      text name
+      text key
+      text separator
       nest do
         breakable ""
         value.pretty_print(self)

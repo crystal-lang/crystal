@@ -860,7 +860,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node.expressions.each_with_index do |child, i|
       child.accept self
     rescue ex : SkipMacroException
-      @program.macro_expansion_error_hook.try &.call(ex.cause) if ex.is_a? SkipMacroCodeCoverageException
+      # Unlike `skip_file`, a macro error while computing macro code coverage stops the compilation, as it would without the tool.
+      raise ex if ex.is_a? SkipMacroCodeCoverageException
+
       node.expressions.delete_at(i..-1)
       break
     end

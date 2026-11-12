@@ -1,14 +1,12 @@
 # Helper for `#pretty_print` implementation. It describes the type.
 private def pp_type(pp, left, right, &) : Nil
-  pp.text left
-  pp.group_sub do
+  pp.group(0, left, right) do
     pp.nest(2) do
       pp.breakable ""
       yield
     end
     pp.breakable ""
   end
-  pp.text right
 end
 
 # Helper for `#pretty_print` to emit optional properties.
@@ -97,7 +95,14 @@ module Crystal
     end
 
     def name_size
-      self.responds_to?(:name) ? self.name.to_s.size : 0
+      return 0 unless self.responds_to?(:name) && (name = self.name)
+
+      case name
+      when ASTNode
+        name.name_size
+      else
+        name.to_s.size
+      end
     end
 
     def name_location
@@ -396,6 +401,23 @@ module Crystal
       in .u128? then number.to_u128
       in .f32?  then number.to_f32
       in .f64?  then number.to_f64
+      end
+    end
+
+    def cast!(number) : Number::Primitive
+      case self
+      in .i8?   then number.to_i8!
+      in .i16?  then number.to_i16!
+      in .i32?  then number.to_i32!
+      in .i64?  then number.to_i64!
+      in .i128? then number.to_i128!
+      in .u8?   then number.to_u8!
+      in .u16?  then number.to_u16!
+      in .u32?  then number.to_u32!
+      in .u64?  then number.to_u64!
+      in .u128? then number.to_u128!
+      in .f32?  then number.to_f32!
+      in .f64?  then number.to_f64!
       end
     end
   end
@@ -1360,6 +1382,12 @@ module Crystal
     property doc : String?
     property parsed_annotations : Array(Annotation)?
 
+    # The location of the internal name, which differs from `#location`
+    # if the parameter has an external name (i.e. `baz` in `bar baz`).
+    # For instance/class variable parameters it points past the prefix
+    # (i.e. `baz` in `bar @baz`).
+    property name_location : Location?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
@@ -1370,7 +1398,9 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg = Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg.name_location = name_location
+      arg
     end
 
     def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations

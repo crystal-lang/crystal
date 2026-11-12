@@ -139,7 +139,6 @@ module Crystal
     property! owner : Type
     property! original_owner : Type
     property vars : MetaVars?
-    property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?

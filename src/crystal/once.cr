@@ -131,16 +131,17 @@ module Crystal
       begin
         yield
       rescue ex
+        # capture ex
+      ensure
+        # always cleanup (no dangling pointers)
+        @@spin.lock
+        flag.value = true unless ex
+        @@operations.delete pointerof(operation)
+        @@spin.unlock
+        operation.resume_all unless ex
       end
 
-      @@spin.lock
-      flag.value = true unless ex
-      @@operations.delete pointerof(operation)
-      @@spin.unlock
-
       raise ex if ex
-
-      operation.resume_all
     end
   end
 
@@ -154,17 +155,14 @@ module Crystal
   end
 
   # :nodoc:
-  #
-  # NOTE: should also never be inlined, but that would capture the block, which
-  # would be a breaking change when we use this method to protect class getter
-  # and class property macros with lazy initialization (the block may return or
-  # break).
-  #
-  # TODO: consider a compile time flag to enable/disable the capture? returning
-  # from the block is unexpected behavior: the returned value won't be saved in
-  # the class variable.
-  def self.once(flag : Bool*, &)
-    Once.exec(flag) { yield } unless flag.value
+  @[AlwaysInline]
+  def self.once(flag : Bool*, &block : ->)
+    once_impl(flag, &block) unless flag.value
+  end
+
+  @[NoInline]
+  private def self.once_impl(flag, &block)
+    Once.exec(flag, &block)
   end
 end
 

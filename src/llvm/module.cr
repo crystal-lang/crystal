@@ -12,8 +12,7 @@ class LLVM::Module
     new(module_ref, context)
   end
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-    @owned = false
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context, *, @dispose_on_finalize : Bool = true)
   end
 
   def name : String
@@ -74,7 +73,11 @@ class LLVM::Module
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+      {% if LibLLVM::IS_LT_90 %}
+        LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(@context, val, val.bytesize))
+      {% else %}
+        LibLLVM.md_string_in_context2(@context, val, val.bytesize)
+      {% end %},
     )
   end
 
@@ -143,11 +146,22 @@ class LLVM::Module
     @unwrap
   end
 
+  def dispose : Nil
+    if @unwrap
+      LibLLVM.dispose_module(self)
+      @unwrap = Pointer(Void).null.as(LibLLVM::ModuleRef)
+    end
+  end
+
+  def finalize
+    dispose if @dispose_on_finalize
+  end
+
   def take_ownership(&)
-    if @owned
-      yield
+    if @dispose_on_finalize
+      @dispose_on_finalize = false
     else
-      @owned = true
+      yield
     end
   end
 end
