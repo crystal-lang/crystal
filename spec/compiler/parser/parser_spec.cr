@@ -161,6 +161,11 @@ module Crystal
     it_parses %({% begin %}\n%(%t{)\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(%t".macro_literal, "{)\n".macro_literal] of ASTNode))
     it_parses %({% begin %}\n%(\#{%foo})\n{% end %}), MacroIf.new(true.bool, Expressions.from(["\n%(\#{".macro_literal, MacroVar.new("foo"), "})\n".macro_literal] of ASTNode))
 
+    # #17930
+    it_parses %(macro foo\n"\#{ "{" }"\nend), Macro.new("foo", body: Expressions.from([%("\#{ ").macro_literal, %({" }"\n).macro_literal] of ASTNode))
+    it_parses %(macro foo\n"\#{ "}" }"\nend), Macro.new("foo", body: MacroLiteral.new(%("\#{ "}" }"\n)))
+    it_parses %({% begin %}\n"\#{ "{" }" + "%c"\n{% end %}), MacroIf.new(true.bool, Expressions.from([%(\n"\#{ ").macro_literal, %({" }" + "%c"\n).macro_literal] of ASTNode))
+
     it_parses ":foo", "foo".symbol
     it_parses ":foo!", "foo!".symbol
     it_parses ":foo?", "foo?".symbol

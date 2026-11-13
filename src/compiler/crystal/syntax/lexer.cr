@@ -81,11 +81,14 @@ module Crystal
       # the current one to nil. The reason is, inside strings
       # we don't want to consider %foo a macro variable, but
       # we do want to do this inside interpolations.
-      # We then count curly braces, with @macro_curly_count,
+      # We then count curly braces outside of literals, with @macro_curly_count,
       # until we find the last `}` and then we pop from the stack
-      # and get the original delimiter.
+      # and get the original delimiter. As interpolations can be nested,
+      # the count of the enclosing interpolation is saved in
+      # @macro_curly_count_stack.
       @delimiter_state_stack = [] of Token::DelimiterState
       @macro_curly_count = 0
+      @macro_curly_count_stack = [] of Int32
 
       @stacked = false
       @stacked_filename = ""
@@ -1741,7 +1744,8 @@ module Crystal
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
-          @macro_curly_count += 1 if @macro_curly_count > 0
+          # (but not if inside a literal, e.g. `"#{ "{" }"`)
+          @macro_curly_count += 1 if !delimiter_state && @macro_curly_count > 0
         end
       end
 
@@ -1887,7 +1891,8 @@ module Crystal
 
               # We should now consider things that follow as crystal expressions,
               # so we reset the delimiter state but save it in a stack
-              @macro_curly_count += 1
+              @macro_curly_count_stack.push @macro_curly_count
+              @macro_curly_count = 1
               @delimiter_state_stack.push delimiter_state
               delimiter_state = nil
             end
@@ -1902,13 +1907,14 @@ module Crystal
             else
               delimiter_state = delimiter_state.with_open_count_delta(-1)
             end
-          elsif @macro_curly_count > 0
+          elsif !delimiter_state && @macro_curly_count > 0
             # Once we find the final '}' that closes the interpolation,
             # we are back inside the delimiter
-            if @macro_curly_count == 1
-              delimiter_state = @delimiter_state_stack.pop
-            end
             @macro_curly_count -= 1
+            if @macro_curly_count == 0
+              delimiter_state = @delimiter_state_stack.pop
+              @macro_curly_count = @macro_curly_count_stack.pop
+            end
           end
         when '<'
           if !delimiter_state && @delimiter_state_stack.empty? && (heredoc_delimiter_state = lookahead { check_heredoc_start })
