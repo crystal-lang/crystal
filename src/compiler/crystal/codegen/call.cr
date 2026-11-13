@@ -374,6 +374,9 @@ class Crystal::CodeGenVisitor
       type_id(@last, arg.type)
     end
 
+    # The type checks belong to this call, not to the code before it
+    set_current_debug_location node if @debug.line_numbers?
+
     # Reuse this call for each dispatch branch
     call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}").as(ASTNode) }, node.block).at(node)
     call.scope = with_scope || node.scope
@@ -458,6 +461,8 @@ class Crystal::CodeGenVisitor
 
     # We also always inline primitives
     if body.is_a?(Primitive)
+      set_current_debug_location node if @debug.line_numbers?
+
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
