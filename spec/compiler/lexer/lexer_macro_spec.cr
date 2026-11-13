@@ -187,6 +187,32 @@ describe "Lexer macro" do
     end
   end
 
+  [
+    %(foo{begin; 1; end}),
+    %(foo{case 1; when 1; 2; end}),
+    %(foo{|x| begin; 1; end}),
+    %("\#{begin; 1; end}"),
+    %({begin: 1, end: 2}),
+  ].each do |code|
+    it "lexes macro with keyword right after curly brace: #{code} (#17929)" do
+      lexer = Lexer.new("#{code} end")
+
+      literal = String.build do |io|
+        macro_state = Token::MacroState.default
+        loop do
+          token = lexer.next_macro_token(macro_state, false)
+          break if token.type.macro_end?
+
+          token.type.should eq(t :MACRO_LITERAL)
+          io << token.value
+          macro_state = token.macro_state
+        end
+        macro_state.nest.should eq(0)
+      end
+      literal.should eq("#{code} ")
+    end
+  end
+
   it "reaches end" do
     lexer = Lexer.new(%(fail))
 
