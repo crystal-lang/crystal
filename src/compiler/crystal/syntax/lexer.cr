@@ -1685,30 +1685,27 @@ module Crystal
           while (char = next_char_check_line).ascii_whitespace?
           end
 
-          case char
-          when 'e'
-            if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest -= 1
-              lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
+          delta =
+            case char
+            when 'e'
+              -1 if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
+            when 'f'
+              1 if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
+            when 'i'
+              1 if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+            when 'u'
+              1 if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
+            else
+              # no nesting
             end
-          when 'f'
-            if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          when 'i'
-            if next_char == 'f' && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          when 'u'
-            if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          else
-            # no nesting
+
+          if delta
+            next_char
+            # An escaped macro control doesn't leave the lib body it's in,
+            # so the lib body level moves along with it
+            lib_body_nest = nest + delta if nest == lib_body_nest
+            nest += delta
+            lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
           end
         end
 

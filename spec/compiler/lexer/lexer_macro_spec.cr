@@ -19,7 +19,8 @@ private def assert_macro_literal_nest_zero(code, *, file = __FILE__, line = __LI
     end
     macro_state.nest.should eq(0), file: file, line: line
   end
-  literal.should eq("#{code} "), file: file, line: line
+  # Escaped macro controls (`\{% ... %}`) are output without the backslash
+  literal.should eq("#{code.gsub("\\{", "{")} "), file: file, line: line
 end
 
 describe "Lexer macro" do
@@ -528,6 +529,8 @@ describe "Lexer macro" do
     %(lib Foo; struct Bar; x : Int32; end; fun foo; end),
     %(module Foo; lib Bar; fun foo; end; end),
     %(lib Foo; end; fun foo; end),
+    %(lib Foo; \\{% for x in y %} fun foo; \\{% end %} end),
+    %(lib Foo; @[Raises] fun foo; end),
   ].each do |code|
     it "lexes macro with fun not nesting inside a lib body: #{code}" do
       assert_macro_literal_nest_zero code
@@ -540,6 +543,7 @@ describe "Lexer macro" do
     %(lib Foo; struct Bar; x : Int32; end; union Baz; end; end),
     %(module Foo; lib Bar; union Baz; end; end; end),
     %(lib Foo; fun foo : Int32; union Bar; x : Int32; end; fun bar; end),
+    %(lib Foo; \\{% if x %} union Bar; end \\{% end %} union Baz; end; end),
   ].each do |code|
     it "lexes macro with union as a keyword inside a lib body: #{code}" do
       assert_macro_literal_nest_zero code
