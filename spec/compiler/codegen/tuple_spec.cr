@@ -535,6 +535,27 @@ describe "Code gen: tuple" do
       x = {0, z}
       CRYSTAL
   end
+
+  it "codegens tuple indexer returning NoReturn (#17639)" do
+    codegen(<<-CRYSTAL)
+      lib LibC
+        fun exit(Int32) : NoReturn
+      end
+
+      def foo(x)
+        LibC.exit(1) if x.nil?
+        {x}
+      end
+
+      def bar(x)
+        v = foo(x)
+        v[0]
+        1
+      end
+
+      bar(nil)
+      CRYSTAL
+  end
 end
 
 private def range_new
