@@ -538,12 +538,13 @@ describe "Code gen: tuple" do
 
   it "codegens tuple indexer returning NoReturn (#17639)" do
     codegen(<<-CRYSTAL)
-      lib LibC
-        fun exit(Int32) : NoReturn
+      def noreturn
+        x = uninitialized NoReturn
+        x
       end
 
       def foo(x)
-        LibC.exit(1) if x.nil?
+        noreturn if x.nil?
         {x}
       end
 
