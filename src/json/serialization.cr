@@ -63,7 +63,7 @@ module JSON
   # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
-  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`). An `Array` or `Tuple` of keys unwraps nested objects (see `JSON::PullParser#on_key!`). The keys can also be given as constants whose values are string, `Array` or `Tuple` literals. They are resolved at compile time: a constant used as `root` is looked up from the annotated type, and constants inside its value are looked up from where it is defined.
+  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`). An `Array` or `Tuple` literal of keys unwraps nested objects (see `JSON::PullParser#on_key!`). Any other value, such as a constant, is evaluated at runtime and must be a `String` or a `Tuple` of `String` keys (not an `Array`). Constants should be given by their full path (like `Foo::ROOT`), because the serialization methods are defined in `JSON::Serializable`.
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
@@ -186,47 +186,16 @@ module JSON
         {% verbatim do %}
           {% begin %}
             {% properties = {} of Nil => Nil %}
-            {% type_names = @type.name(generic_args: false).split("::") %}
-            {% root_scopes = (0..type_names.size).map { |i| type_names.size == i ? "::" : "::#{type_names[0...type_names.size - i].join("::").id}::" } %}
             {% for ivar in @type.instance_vars %}
               {% ann = ivar.annotation(::JSON::Field) %}
               {% unless ann && (ann[:ignore] || ann[:ignore_deserialize]) %}
-                {%
-                  # Look up constants the way the annotated type would: from the type
-                  # itself outward through its enclosing namespaces up to the top level.
-                  # Constants inside a constant's value are looked up from where it is defined.
-                  root = ann && ann[:root]
-                  key_scopes = root_scopes
-                  if root.is_a?(Path)
-                    path = (root.global? ? ["#{root}"] : root_scopes.map { |scope| "#{scope.id}#{root}" }).find { |candidate| parse_type(candidate).resolve? }
-                    resolved = path && parse_type(path).resolve
-                    if resolved.is_a?(StringLiteral) || resolved.is_a?(ArrayLiteral) || resolved.is_a?(TupleLiteral)
-                      root = resolved
-                      # The constant may be defined in an ancestor of the type it was found through
-                      names = path.split("::").reject { |name| name.empty? }
-                      owner_names = [] of StringLiteral
-                      if names.size > 1
-                        container = parse_type("::#{names[0...names.size - 1].join("::").id}").resolve
-                        owner = ([container] + container.ancestors).map { |type| parse_type("::#{type.name(generic_args: false).id}").resolve }.find { |type| type.has_constant?(names.last) } || container
-                        owner_names = owner.name(generic_args: false).split("::")
-                      end
-                      key_scopes = (0..owner_names.size).map { |i| owner_names.size == i ? "::" : "::#{owner_names[0...owner_names.size - i].join("::").id}::" }
-                    end
-                  end
-                  roots = !root ? [] of ASTNode : root.is_a?(ArrayLiteral) || root.is_a?(TupleLiteral) ? root : [root]
-                  roots = roots.map do |key|
-                    path = key.is_a?(Path) && (key.global? ? ["#{key}"] : key_scopes.map { |scope| "#{scope.id}#{key}" }).find { |candidate| parse_type(candidate).resolve? }
-                    resolved = path && parse_type(path).resolve
-                    resolved.is_a?(StringLiteral) ? resolved : key
-                  end
-                %}
                 {%
                   properties[ivar.id] = {
                     key:         ((ann && ann[:key]) || ivar).id.stringify,
                     has_default: ivar.has_default_value?,
                     default:     ivar.default_value,
                     nilable:     ivar.type.nilable?,
-                    roots:       roots,
+                    root:        ann && ann[:root],
                     converter:   ann && ann[:converter],
                     presence:    ann && ann[:presence],
                   }
@@ -254,7 +223,7 @@ module JSON
               {% for name, value in properties %}
                 when {{value[:key]}}
                   begin
-                    {% if value[:has_default] || value[:nilable] || !value[:roots].empty? %}
+                    {% if value[:has_default] || value[:nilable] || value[:root] %}
                       if pull.read_null?
                         {% if value[:nilable] %}
                           %var{name} = nil
@@ -265,8 +234,12 @@ module JSON
                     {% end %}
 
                     %var{name} =
-                      {% if !value[:roots].empty? %}
-                        pull.on_key!({{value[:roots].splat}}) do
+                      {% if (value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral)) && value[:root].empty? %}
+                        begin
+                      {% elsif value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                        pull.on_key!({{value[:root].is_a?(StringLiteral) ? value[:root] : value[:root].splat}}) do
+                      {% elsif value[:root] %}
+                        pull.on_key!(*::JSON::Serializable.__root_keys({{value[:root]}})) do
                       {% else %}
                         begin
                       {% end %}
@@ -306,6 +279,32 @@ module JSON
       end
     end
 
+    # :nodoc:
+    def self.__root_keys(root : String)
+      {root}
+    end
+
+    # :nodoc:
+    def self.__root_keys(root : Tuple)
+      root
+    end
+
+    # :nodoc:
+    def self.__write_root(json : ::JSON::Builder, keys : Tuple(String), &) : Nil
+      json.object do
+        json.field(keys[0]) { yield }
+      end
+    end
+
+    # :nodoc:
+    def self.__write_root(json : ::JSON::Builder, keys : Tuple, &) : Nil
+      json.object do
+        json.field(keys[0]) do
+          __write_root(json, keys[1..]) { yield }
+        end
+      end
+    end
+
     protected def after_initialize
     end
 
@@ -322,44 +321,13 @@ module JSON
         {% emit_nulls = options && options[:emit_nulls] %}
 
         {% properties = {} of Nil => Nil %}
-        {% type_names = @type.name(generic_args: false).split("::") %}
-        {% root_scopes = (0..type_names.size).map { |i| type_names.size == i ? "::" : "::#{type_names[0...type_names.size - i].join("::").id}::" } %}
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::JSON::Field) %}
           {% unless ann && (ann[:ignore] || ann[:ignore_serialize] == true) %}
             {%
-              # Look up constants the way the annotated type would: from the type
-              # itself outward through its enclosing namespaces up to the top level.
-              # Constants inside a constant's value are looked up from where it is defined.
-              root = ann && ann[:root]
-              key_scopes = root_scopes
-              if root.is_a?(Path)
-                path = (root.global? ? ["#{root}"] : root_scopes.map { |scope| "#{scope.id}#{root}" }).find { |candidate| parse_type(candidate).resolve? }
-                resolved = path && parse_type(path).resolve
-                if resolved.is_a?(StringLiteral) || resolved.is_a?(ArrayLiteral) || resolved.is_a?(TupleLiteral)
-                  root = resolved
-                  # The constant may be defined in an ancestor of the type it was found through
-                  names = path.split("::").reject { |name| name.empty? }
-                  owner_names = [] of StringLiteral
-                  if names.size > 1
-                    container = parse_type("::#{names[0...names.size - 1].join("::").id}").resolve
-                    owner = ([container] + container.ancestors).map { |type| parse_type("::#{type.name(generic_args: false).id}").resolve }.find { |type| type.has_constant?(names.last) } || container
-                    owner_names = owner.name(generic_args: false).split("::")
-                  end
-                  key_scopes = (0..owner_names.size).map { |i| owner_names.size == i ? "::" : "::#{owner_names[0...owner_names.size - i].join("::").id}::" }
-                end
-              end
-              roots = !root ? [] of ASTNode : root.is_a?(ArrayLiteral) || root.is_a?(TupleLiteral) ? root : [root]
-              roots = roots.map do |key|
-                path = key.is_a?(Path) && (key.global? ? ["#{key}"] : key_scopes.map { |scope| "#{scope.id}#{key}" }).find { |candidate| parse_type(candidate).resolve? }
-                resolved = path && parse_type(path).resolve
-                resolved.is_a?(StringLiteral) ? resolved : key
-              end
-            %}
-            {%
               properties[ivar.id] = {
                 key:              ((ann && ann[:key]) || ivar).id.stringify,
-                roots:            roots,
+                root:             ann && ann[:root],
                 converter:        ann && ann[:converter],
                 emit_null:        (ann && (ann[:emit_null] != nil) ? ann[:emit_null] : emit_nulls),
                 ignore_serialize: ann && ann[:ignore_serialize],
@@ -381,16 +349,20 @@ module JSON
               {% end %}
 
                 json.field({{value[:key]}}) do
-                  {% unless value[:roots].empty? %}
+                  {% if value[:root] %}
                     {% if value[:emit_null] %}
                       if _{{name}}.nil?
                         nil.to_json(json)
                       else
                     {% end %}
 
-                    {% for root in value[:roots] %}
-                      json.object do
-                        json.field({{root}}) do
+                    {% if value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                      {% for root in value[:root].is_a?(StringLiteral) ? [value[:root]] : value[:root] %}
+                        json.object do
+                          json.field({{root}}) do
+                      {% end %}
+                    {% else %}
+                      ::JSON::Serializable.__write_root(json, ::JSON::Serializable.__root_keys({{value[:root]}})) do
                     {% end %}
                   {% end %}
 
@@ -404,9 +376,13 @@ module JSON
                     _{{name}}.to_json(json)
                   {% end %}
 
-                  {% unless value[:roots].empty? %}
-                    {% for root in value[:roots] %}
+                  {% if value[:root] %}
+                    {% if value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                      {% for root in value[:root].is_a?(StringLiteral) ? [value[:root]] : value[:root] %}
+                          end
                         end
+                      {% end %}
+                    {% else %}
                       end
                     {% end %}
                     {% if value[:emit_null] %}

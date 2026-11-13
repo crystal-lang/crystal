@@ -264,126 +264,58 @@ class JSONAttrWithNestedRoot
   property bar : Int32
 end
 
-JSON_ATTR_TOP_LEVEL_ROOT = {"data", "level"}
-
-class JSONAttrWithConstantRootBase
-  INHERITED_ROOT = "inherited"
-end
-
-class JSONAttrWithConstantRoot < JSONAttrWithConstantRootBase
-  include JSON::Serializable
-
-  NESTED_ROOT = ["data", "value"]
-  TUPLE_ROOT  = {"data", "score"}
-  SINGLE_ROOT = "single"
-
-  @[JSON::Field(root: NESTED_ROOT)]
-  property foo : String
-
-  @[JSON::Field(root: TUPLE_ROOT)]
-  property bar : Int32
-
-  @[JSON::Field(root: SINGLE_ROOT)]
-  property baz : Int32
-
-  @[JSON::Field(root: INHERITED_ROOT)]
-  property qux : Int32
-
-  @[JSON::Field(root: JSON_ATTR_TOP_LEVEL_ROOT)]
-  property quux : Int32
-end
-
-module JSONAttrConstantRootNamespace
-  OUTER_ROOT = {"outer", "value"}
-
-  class Inner
-    include JSON::Serializable
-
-    KEY  = "key"
-    ROOT = {KEY, "value"}
-
-    @[JSON::Field(root: OUTER_ROOT)]
-    property foo : Int32
-
-    @[JSON::Field(root: ROOT)]
-    property bar : Int32
-
-    @[JSON::Field(root: [KEY, "other"])]
-    property baz : Int32
-  end
-end
-
-module JSONAttrConstantRootKeys
+module JSONAttrRootKeys
   KEY  = "data"
   ROOT = {KEY, "value"}
-end
+  ONE  = {"one"}
 
-class JSONAttrWithForeignConstantRoot
-  include JSON::Serializable
-
-  @[JSON::Field(root: JSONAttrConstantRootKeys::ROOT)]
-  property foo : Int32
-end
-
-class JSONAttrWithInheritedConstantRootBase
-  KEY  = "right"
-  ROOT = {KEY, "value"}
-end
-
-class JSONAttrWithInheritedConstantRoot < JSONAttrWithInheritedConstantRootBase
-  include JSON::Serializable
-
-  KEY = "wrong"
-
-  @[JSON::Field(root: ROOT)]
-  property foo : Int32
-end
-
-module JSONAttrGenericConstantRootModule(T)
-  MODULE_ROOT = "module"
-end
-
-class JSONAttrGenericConstantRootBase(T)
-  KEY  = "right"
-  ROOT = {KEY, "value"}
-end
-
-class JSONAttrWithGenericAncestorConstantRoot < JSONAttrGenericConstantRootBase(String)
-  include JSON::Serializable
-  include JSONAttrGenericConstantRootModule(Int32)
-
-  KEY = "wrong"
-
-  @[JSON::Field(root: MODULE_ROOT)]
-  property foo : Int32
-
-  @[JSON::Field(root: ROOT)]
-  property bar : Int32
-end
-
-# A type with the same name inside `JSON` must not shadow the annotated type
-class JSONAttrWithShadowedConstantRoot
-  include JSON::Serializable
-
-  ROOT = "right"
-
-  @[JSON::Field(root: ROOT)]
-  property foo : Int32
-end
-
-module JSON
-  class JSONAttrWithShadowedConstantRoot
-    ROOT = "wrong"
+  def self.single
+    "single"
   end
 end
 
-class JSONAttrWithGenericConstantRoot(T)
+class JSONAttrWithRuntimeRoot
+  include JSON::Serializable
+
+  @[JSON::Field(root: JSONAttrRootKeys::ROOT)]
+  property foo : String
+
+  @[JSON::Field(root: JSONAttrRootKeys.single)]
+  property bar : Int32
+
+  @[JSON::Field(root: JSONAttrWithRuntimeRoot::NESTED_ROOT, emit_null: true)]
+  property baz : Int32?
+
+  @[JSON::Field(root: JSONAttrRootKeys::ONE, converter: JSONAttrRootConverter)]
+  property qux : String
+
+  NESTED_ROOT = {"a", "b", "c"}
+end
+
+module JSONAttrRootConverter
+  def self.from_json(pull : JSON::PullParser) : String
+    pull.read_int.to_s
+  end
+
+  def self.to_json(value : String, json : JSON::Builder) : Nil
+    json.number(value.to_i)
+  end
+end
+
+class JSONAttrWithEmptyRoot
+  include JSON::Serializable
+
+  @[JSON::Field(root: [] of String)]
+  property foo : Int32
+end
+
+class JSONAttrWithLocalConstantRoot
   include JSON::Serializable
 
   ROOT = {"data", "value"}
 
   @[JSON::Field(root: ROOT)]
-  property foo : T
+  property foo : String
 end
 
 class JSONAttrWithRoot
@@ -1147,60 +1079,27 @@ describe "JSON::Serializable" do
     obj.to_json.should eq(%({"foo":{"data":{"value":"bar"}},"bar":{"data":{"score":42}}}))
   end
 
-  it "parses and serializes root properties given as constants" do
-    json = %({"foo":{"data":{"value":"bar"}},"bar":{"data":{"score":42}},"baz":{"single":1},"qux":{"inherited":2},"quux":{"data":{"level":3}}})
-    obj = JSONAttrWithConstantRoot.from_json(json)
+  it "parses and serializes root properties evaluated at runtime" do
+    json = %({"foo":{"data":{"value":"bar"}},"bar":{"single":1},"baz":{"a":{"b":{"c":2}}},"qux":{"one":3}})
+    obj = JSONAttrWithRuntimeRoot.from_json(json)
     obj.foo.should eq("bar")
-    obj.bar.should eq(42)
-    obj.baz.should eq(1)
-    obj.qux.should eq(2)
-    obj.quux.should eq(3)
+    obj.bar.should eq(1)
+    obj.baz.should eq(2)
+    obj.qux.should eq("3")
     obj.to_json.should eq(json)
+
+    obj.baz = nil
+    obj.to_json.should eq(%({"foo":{"data":{"value":"bar"}},"bar":{"single":1},"baz":null,"qux":{"one":3}}))
   end
 
-  it "parses and serializes root properties given as constants of a generic type" do
-    json = %({"foo":{"data":{"value":1}}})
-    obj = JSONAttrWithGenericConstantRoot(Int32).from_json(json)
-    obj.foo.should eq(1)
-    obj.to_json.should eq(json)
+  it "parses and serializes an empty root as no root" do
+    json = %({"foo":1})
+    JSONAttrWithEmptyRoot.from_json(json).to_json.should eq(json)
   end
 
-  it "parses and serializes root properties given as constants from enclosing namespaces and inside literals" do
-    json = %({"foo":{"outer":{"value":1}},"bar":{"key":{"value":2}},"baz":{"key":{"other":3}}})
-    obj = JSONAttrConstantRootNamespace::Inner.from_json(json)
-    obj.foo.should eq(1)
-    obj.bar.should eq(2)
-    obj.baz.should eq(3)
-    obj.to_json.should eq(json)
-  end
-
-  it "resolves constants inside a root constant from where it is defined" do
-    json = %({"foo":{"data":{"value":1}}})
-    obj = JSONAttrWithForeignConstantRoot.from_json(json)
-    obj.foo.should eq(1)
-    obj.to_json.should eq(json)
-  end
-
-  it "resolves constants inside an inherited root constant from where it is defined" do
-    json = %({"foo":{"right":{"value":1}}})
-    obj = JSONAttrWithInheritedConstantRoot.from_json(json)
-    obj.foo.should eq(1)
-    obj.to_json.should eq(json)
-  end
-
-  it "resolves root constants from generic ancestors" do
-    json = %({"foo":{"module":1},"bar":{"right":{"value":2}}})
-    obj = JSONAttrWithGenericAncestorConstantRoot.from_json(json)
-    obj.foo.should eq(1)
-    obj.bar.should eq(2)
-    obj.to_json.should eq(json)
-  end
-
-  it "resolves root constants relative to the annotated type" do
-    json = %({"foo":{"right":1}})
-    obj = JSONAttrWithShadowedConstantRoot.from_json(json)
-    obj.foo.should eq(1)
-    obj.to_json.should eq(json)
+  it "parses root properties given as constants of the annotated type" do
+    obj = JSONAttrWithLocalConstantRoot.from_json(%({"foo":{"data":{"value":"bar"}}}))
+    obj.foo.should eq("bar")
   end
 
   it "parses with root" do
