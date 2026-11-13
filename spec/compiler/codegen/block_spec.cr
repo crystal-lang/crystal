@@ -401,7 +401,6 @@ describe "Code gen: block" do
 
   it "returns from block with value" do
     run(<<-CRYSTAL).to_i.should eq(1)
-      require "prelude"
 
       def foo
         while true
@@ -416,7 +415,7 @@ describe "Code gen: block" do
         end
       end
 
-      bar.to_i
+      bar
       CRYSTAL
   end
 
