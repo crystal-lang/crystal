@@ -68,66 +68,74 @@ module Crystal
     end
   {% end %}
 
-  # Defines the main routine run by normal Crystal programs:
-  #
-  # - Initializes runtime requirements (GC, ...)
-  # - Invokes the given *block*
-  # - Handles unhandled exceptions
-  # - Invokes `at_exit` handlers
-  # - Flushes `STDOUT` and `STDERR`
-  #
-  # This method can be invoked if you need to define a custom
-  # main (as in C main) function, doing all the above steps.
-  #
-  # For example:
-  #
-  # ```
-  # fun main(argc : Int32, argv : UInt8**) : Int32
-  #   Crystal.main do
-  #     elapsed = Time.measure do
-  #       Crystal.main_user_code(argc, argv)
-  #     end
-  #     puts "Time to execute program: #{elapsed}"
-  #   end
-  # end
-  # ```
-  #
-  # Note that the above is really just an example, almost the
-  # same can be accomplished with `at_exit`. But in some cases
-  # redefinition of C's main is needed.
-  def self.main(&block)
-    init_stdio
-    {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
-    GC.init
-
+  # @[Deprecated("Crystal.main(&) is unsafe since Crystal 1.23. Use Crystal.main(argc, argv) instead.")]
+  def self.main(&block : ->)
     init_runtime
-
-    status =
-      begin
-        yield
-        0
-      rescue ex
-        1
-      end
-
-    exit(status, ex)
+    run_main(&block)
   end
 
   # :nodoc:
+  #
+  # Manually initializes parts of the corelib and stdlib that must be setup
+  # before we can execute main user code, that will initialize globals, runtime
+  # (kernel) then run the actual program.
   def self.init_runtime : Nil
-    # `__crystal_once` directly or indirectly depends on `Fiber` and `Thread`
-    # so we explicitly initialize their class vars, then init crystal/once
+    {% unless flag?(:interpreted) %}
+      init_stdio
+      {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
+      GC.init
+    {% end %}
+
     Thread.init
     Fiber.init
     Thread.current # define main thread & main fiber
     Crystal::Once.init
+
+    {% unless flag?(:without_mt) %}
+      Fiber::ExecutionContext.init
+    {% end %}
   end
+
+  {% begin %}
+  private def self.run_main(&block : ->) : Int32
+    {% if !flag?(:without_mt) %}
+      # Run main user code in a fiber so the main program doesn't run on a
+      # thread's stack. This avoids situations where thread B would pick and
+      # resume the main fiber of thread A (crashes on aarch64-darwin), and
+      # allows every fiber to run on the same stack size.
+      main_user_code_fiber = Fiber.new(-> {
+        status =
+          begin
+            block.call
+            0
+          rescue ex
+            1
+          end
+        status = exit(status , ex) rescue 1
+        LibC.exit(status)
+      })
+      Fiber::ExecutionContext.thread_pool.enter_main_thread_loop(main_user_code_fiber)
+
+      # unreachable (the above never returns)
+      1
+    {% else %}
+      status =
+        begin
+          yield
+          0
+        rescue ex
+          1
+        end
+      exit(status, ex)
+    {% end %}
+  end
+  {% end %}
 
   # :nodoc:
   def self.exit(status : Int32, exception : Exception?) : Int32
     status = Crystal::AtExitHandlers.run status, exception
 
-    if exception
+    if exception && !STDERR.closed?
       STDERR.print "Unhandled exception: "
       exception.inspect_with_backtrace(STDERR)
     end
@@ -146,8 +154,11 @@ module Crystal
 
   # Main method run by all Crystal programs at startup.
   #
-  # This setups up the GC, invokes your program, rescuing
-  # any handled exception, and then runs `at_exit` handlers.
+  # - Initializes runtime requirements (GC, ...)
+  # - Invokes `.main_user_code`
+  # - Handles unhandled exceptions
+  # - Invokes `at_exit` handlers
+  # - Flushes `STDOUT` and `STDERR`
   #
   # This method is automatically invoked for you, so you
   # don't need to invoke it.
@@ -159,11 +170,12 @@ module Crystal
   # fun main(argc : Int32, argv : UInt8**) : Int32
   #   # some setup before Crystal main
   #   Crystal.main(argc, argv)
-  #   # some cleanup logic after Crystal main
+  #   # without MT: some cleanup logic after Crystal main
+  #   # with MT: unreachable (Crystal.main never returns)
   # end
   # ```
   #
-  # The `Crystal.main` can also be passed as a callback:
+  # Can also be passed as a callback:
   #
   # ```
   # fun main(argc : Int32, argv : UInt8**) : Int32
@@ -175,12 +187,20 @@ module Crystal
   # is not setup yet, so nothing that allocates memory
   # in Crystal (like `new` for classes) can be used.
   def self.main(argc : Int32, argv : UInt8**)
-    main do
-      main_user_code(argc, argv)
-    end
+    init_runtime
+    run_main_with_user_code(argc, argv)
   rescue ex
     Crystal::System.print_exception "Unhandled exception", ex
     1
+  end
+
+  # DO NOT MANUALLY INLINE: this must be a distinct method because run_main
+  # captures the block and silently closures the argc and argv variables,
+  # which silently initializes the GC before we call init_runtime (oh no).
+  private def self.run_main_with_user_code(argc : Int32, argv : UInt8**)
+    run_main do
+      main_user_code(argc, argv)
+    end
   end
 
   # Executes the main user code. This normally is executed
