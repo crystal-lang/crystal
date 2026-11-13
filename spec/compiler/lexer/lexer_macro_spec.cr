@@ -523,10 +523,23 @@ describe "Lexer macro" do
   end
 
   [
+    %(lib Foo; fun foo : Int32; end),
+    %(lib Foo\n  fun foo(x : Int32) : Int32\n  fun bar = Bar\nend),
+    %(lib Foo; struct Bar; x : Int32; end; fun foo; end),
+    %(module Foo; lib Bar; fun foo; end; end),
+    %(lib Foo; end; fun foo; end),
+  ].each do |code|
+    it "lexes macro with fun not nesting inside a lib body: #{code}" do
+      assert_macro_literal_nest_zero code
+    end
+  end
+
+  [
     %(lib Foo; union Bar; x : Int32; end; end),
     %(lib Foo\n  union  Bar\n  end\nend),
     %(lib Foo; struct Bar; x : Int32; end; union Baz; end; end),
     %(module Foo; lib Bar; union Baz; end; end; end),
+    %(lib Foo; fun foo : Int32; union Bar; x : Int32; end; fun bar; end),
   ].each do |code|
     it "lexes macro with union as a keyword inside a lib body: #{code}" do
       assert_macro_literal_nest_zero code

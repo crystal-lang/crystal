@@ -1394,6 +1394,7 @@ module Crystal
     it_parses "lib LibC; {% begin %}union Foo; end{% end %}; end", LibDef.new("LibC".path, [MacroIf.new(true.bool, Expressions.from(["union Foo; ".macro_literal, "end".macro_literal] of ASTNode))] of ASTNode)
     it_parses "lib LibC; struct Foo; {% begin %}union : Int32{% end %}; end; end", LibDef.new("LibC".path, [CStructOrUnionDef.new("Foo", Expressions.from(MacroIf.new(true.bool, "union : Int32".macro_literal)))] of ASTNode)
     it_parses "macro foo; union Foo; end", Macro.new("foo", body: " union Foo; ".macro_literal)
+    it_parses "macro foo; lib LibC; fun bar : Int32; end; end", Macro.new("foo", body: Expressions.from([" lib LibC; fun bar : Int32; ".macro_literal, "end; ".macro_literal] of ASTNode))
     it_parses "lib LibC; enum Foo; A\nB; C\nD = 1; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)] of ASTNode)
     it_parses "lib LibC; enum Foo; A = 1; B; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)] of ASTNode)
     it_parses "lib LibC; enum Foo : UInt8; A; end end", LibDef.new("LibC".path, [EnumDef.new("Foo".path, [Arg.new("A")] of ASTNode, "UInt8".path)] of ASTNode)

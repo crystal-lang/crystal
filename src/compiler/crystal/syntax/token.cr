@@ -286,8 +286,9 @@ module Crystal
       yields : Bool,
       comment : Bool,
       heredocs : Array(DelimiterState)?,
-      # The `nest` level of the innermost `lib` body, if any. `union` is
-      # only a keyword there; elsewhere it's a regular identifier.
+      # The `nest` level of the innermost `lib` body, if any. `union` is only
+      # a keyword there (elsewhere it's a regular identifier), and a `fun`
+      # there is a declaration without a body.
       lib_body_nest : Int32? = nil do
       def self.default
         MacroState.new(true, 0, 0, nil, true, false, false, nil)

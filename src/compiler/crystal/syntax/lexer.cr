@@ -2030,6 +2030,8 @@ module Crystal
 
     # `union` is only a keyword directly inside a `lib` body (*lib_body*),
     # elsewhere it's a regular identifier (`union = 1`, `union Foo`).
+    # A `fun` there is a declaration without a body, so it doesn't open
+    # a nesting level.
     def macro_starts_with_keyword?(beginning_of_line, lib_body = false) : MacroKeywordState?
       case current_char
       when 'a'
@@ -2065,7 +2067,7 @@ module Crystal
           MacroKeywordState::Other if next_char == 'f' && peek_not_ident_part_or_end_next_char
         end
       when 'f'
-        MacroKeywordState::Other if char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if !lib_body && char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
       when 'i'
         MacroKeywordState::Other if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
       when 'l'
