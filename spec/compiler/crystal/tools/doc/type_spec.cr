@@ -41,6 +41,19 @@ describe Doc::Type do
     foo.lookup_class_method("new", 1).should_not be_nil
   end
 
+  it "includes the methods generated for enums (#15275)" do
+    program = top_level_semantic(<<-CRYSTAL, wants_doc: true).program
+      enum Foo : UInt8
+        Bar
+      end
+      CRYSTAL
+
+    generator = Doc::Generator.new program, [""]
+    foo = generator.type(program.types["Foo"])
+    foo.lookup_class_method("new", 1).should_not be_nil
+    foo.lookup_method("value", 0).should_not be_nil
+  end
+
   describe "#node_to_html" do
     it "shows relative path" do
       program = semantic(<<-CRYSTAL).program
