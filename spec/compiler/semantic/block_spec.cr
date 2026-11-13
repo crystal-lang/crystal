@@ -1230,6 +1230,89 @@ describe "Block inference" do
       CRYSTAL
   end
 
+  it "uses splat in captured block parameter (#15373)" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, char, bool, tuple_of([int32, tuple_of([char]), bool])]) }
+      def capture(&block : Int32, Char, Bool -> {Int32, {Char}, Bool})
+        block
+      end
+
+      capture do |x, *y, z|
+        {x, y, z}
+      end
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter with Proc restriction (#15373)" do
+    assert_type(<<-CRYSTAL) { proc_of([int32, char, tuple_of([int32, char])]) }
+      def capture(&block : Proc(Int32, Char, {Int32, Char}))
+        block
+      end
+
+      capture do |*args|
+        args
+      end
+      CRYSTAL
+  end
+
+  it "uses splat in block parameter with Proc restriction" do
+    assert_type(<<-CRYSTAL) { tuple_of([int32, char]) }
+      def foo(&block : Proc(Int32, Char, Nil))
+        yield 1, 'a'
+      end
+
+      foo do |*args|
+        args
+      end
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by captured block splat parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : Int32, Int32 ->)
+        block
+      end
+
+      args = "outer"
+      capture { |*args| args }
+      args
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by auto-unpacked captured block parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : {Int32, Int32} ->)
+        block
+      end
+
+      x = "outer"
+      capture { |x, y| x }
+      x
+      CRYSTAL
+  end
+
+  it "doesn't closure outer variable shadowed by unpacked captured block parameter" do
+    assert_type(<<-CRYSTAL) { string }
+      def capture(&block : {Int32, Int32}, Int32 ->)
+        block
+      end
+
+      x = "outer"
+      capture { |(x, y), z| x }
+      x
+      CRYSTAL
+  end
+
+  it "uses splat in captured block parameter, but not enough arguments" do
+    assert_error <<-CRYSTAL, "too many block parameters (given 2+, expected maximum 1)"
+      def capture(&block : Int32 ->)
+        block
+      end
+
+      capture do |x, y, *z|
+      end
+      CRYSTAL
+  end
+
   it "errors if splat parameter becomes a union" do
     assert_error <<-CRYSTAL, "yield argument to block splat parameter must be a Tuple"
       def foo
