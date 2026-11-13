@@ -1,5 +1,6 @@
 require "c/stringapiset"
 require "c/winnls"
+require "c/heapapi"
 require "c/stdlib"
 
 # we have both `main` and `wmain`, so we must choose an unambiguous entry point
@@ -22,12 +23,12 @@ end
 #
 # NOTE: we cannot use anything from the standard library here, including the GC.
 fun wmain(argc : Int32, argv : UInt16**) : Int32
-  utf8_argv = LibC.malloc(sizeof(UInt8*) &* argc).as(UInt8**)
+  utf8_argv = LibC.HeapAlloc(LibC.GetProcessHeap, 0, sizeof(UInt8*) &* argc).as(UInt8**)
   i = 0_i64
   while i < argc
     arg = (argv + i).value
     utf8_size = LibC.WideCharToMultiByte(LibC::CP_UTF8, 0, arg, -1, nil, 0, nil, nil)
-    utf8_arg = LibC.malloc(utf8_size).as(UInt8*)
+    utf8_arg = LibC.HeapAlloc(LibC.GetProcessHeap, 0, utf8_size).as(UInt8*)
     LibC.WideCharToMultiByte(LibC::CP_UTF8, 0, arg, -1, utf8_arg, utf8_size, nil, nil)
     (utf8_argv + i).value = utf8_arg
     i &+= 1
@@ -37,10 +38,10 @@ fun wmain(argc : Int32, argv : UInt16**) : Int32
 
   i = 0_i64
   while i < argc
-    LibC.free((utf8_argv + i).value)
+    LibC.HeapFree(LibC.GetProcessHeap, 0, (utf8_argv + i).value)
     i &+= 1
   end
-  LibC.free(utf8_argv)
+  LibC.HeapFree(LibC.GetProcessHeap, 0, utf8_argv)
 
   # prefer explicit exit over returning the status, so we are free to resume the
   # main thread's fiber on any thread, without occurring a weird behavior where
