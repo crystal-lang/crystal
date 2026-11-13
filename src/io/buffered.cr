@@ -41,6 +41,11 @@ module IO::Buffered
   # TODO: Add return type restriction `Nil`
   abstract def unbuffered_rewind
 
+  # Called at the start of `#write` / `#write_byte` before buffering.
+  # Override to react to the first write without reimplementing buffering.
+  protected def before_buffered_write : Nil
+  end
+
   # Return the buffer size used
   def buffer_size : Int32
     @buffer_size
@@ -141,6 +146,8 @@ module IO::Buffered
 
     return if slice.empty?
 
+    before_buffered_write
+
     count = slice.size
 
     if sync?
@@ -174,6 +181,8 @@ module IO::Buffered
   # :nodoc:
   def write_byte(byte : UInt8) : Nil
     check_open
+
+    before_buffered_write
 
     if sync?
       return super
