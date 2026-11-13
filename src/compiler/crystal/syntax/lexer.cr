@@ -1659,6 +1659,7 @@ module Crystal
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
       heredocs = macro_state.heredocs
+      lib_body_nest = macro_state.lib_body_nest
       yields = false
 
       if skip_whitespace
@@ -1689,6 +1690,7 @@ module Crystal
             if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
               next_char
               nest -= 1
+              lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
             end
           when 'f'
             if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
@@ -1712,7 +1714,7 @@ module Crystal
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1722,7 +1724,7 @@ module Crystal
         next_char
         next_char :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         @token.raw = "\\%"
         return @token
       end
@@ -1732,12 +1734,12 @@ module Crystal
         when '{'
           beginning_of_line = false
           next_char :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
           return @token
         when '%'
           beginning_of_line = false
           next_char :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -1776,7 +1778,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1790,7 +1792,7 @@ module Crystal
         beginning_of_line = false
         @token.type = :MACRO_VAR
         @token.value = string_range_from_pool(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         return @token
       end
 
@@ -1806,6 +1808,7 @@ module Crystal
                 return @token
               else
                 nest -= 1
+                lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
                 whitespace = current_char.ascii_whitespace?
                 next_char
               end
@@ -1934,10 +1937,11 @@ module Crystal
               yields = true
               char = current_char
               beginning_of_line = false
-            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) }
+            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line, lib_body: nest == lib_body_nest) }
               char = current_char
 
               nest += 1 unless keyword.abstract_def?
+              lib_body_nest = nest if keyword.lib?
               beginning_of_line = false
               next
             end
@@ -1959,7 +1963,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
       set_token_raw_from_start(start)
 
       @token
@@ -2020,10 +2024,13 @@ module Crystal
 
     enum MacroKeywordState
       AbstractDef
+      Lib
       Other
     end
 
-    def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
+    # `union` is only a keyword directly inside a `lib` body (*lib_body*),
+    # elsewhere it's a regular identifier (`union = 1`, `union Foo`).
+    def macro_starts_with_keyword?(beginning_of_line, lib_body = false) : MacroKeywordState?
       case current_char
       when 'a'
         case next_char
@@ -2062,7 +2069,7 @@ module Crystal
       when 'i'
         MacroKeywordState::Other if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
       when 'l'
-        MacroKeywordState::Other if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Lib if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
       when 'm'
         case next_char
         when 'a'
@@ -2081,7 +2088,7 @@ module Crystal
         if next_char == 'n'
           case next_char
           when 'i'
-            MacroKeywordState::Other if char_sequence?('o', 'n') && union_declaration_next_char?
+            MacroKeywordState::Other if lib_body && char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
           when 'l'
             MacroKeywordState::Other if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
           when 't'
@@ -2820,17 +2827,6 @@ module Crystal
 
     def peek_not_ident_part_or_end_next_char
       !ident_part_or_end?(peek_next_char) && peek_next_char != ':' && next_char
-    end
-
-    # Returns `true` if the current char is followed by a type name on the same
-    # line (`union Foo`, `union {{name}}`), moving to it. `union` isn't a reserved
-    # word, so it could also be a variable or method name (`union = 1`, `foo(union)`).
-    private def union_declaration_next_char?
-      return false unless next_char.in?(' ', '\t')
-      while current_char.in?(' ', '\t')
-        next_char
-      end
-      current_char.ascii_uppercase? || current_char == '{'
     end
 
     def closing_char(char = current_char)
