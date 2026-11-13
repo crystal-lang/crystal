@@ -1869,7 +1869,8 @@ module Crystal
             case char
             when delimiter_state.end
               char = next_char
-            when '\\'
+            when '\\', '#'
+              # An escaped `#` must not start an interpolation
               char = next_char
             end
             whitespace = false
