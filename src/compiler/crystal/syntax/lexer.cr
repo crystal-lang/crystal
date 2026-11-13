@@ -1850,11 +1850,15 @@ module Crystal
         when '\\'
           char = next_char
           if delimiter_state
-            case char
-            when delimiter_state.end
-              char = next_char
-            when '\\'
-              char = next_char
+            # Backslashes are not escapes in raw string literals (`%q`, `<<-'HEREDOC'`),
+            # but `%w` and `%i` still allow escaping their delimiters
+            if delimiter_state.allow_escapes || delimiter_state.kind.array?
+              case char
+              when delimiter_state.end
+                char = next_char
+              when '\\'
+                char = next_char
+              end
             end
             whitespace = false
           else
