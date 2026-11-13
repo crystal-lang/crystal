@@ -477,6 +477,66 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
+  it "lexes macro with identifier endo (#17926)" do
+    lexer = Lexer.new("endo = 1 end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("endo = 1 ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with identifier encase (#17926)" do
+    lexer = Lexer.new("encase = 1 end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("encase = 1 ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with identifier enumif (#17926)" do
+    lexer = Lexer.new("enumif = 1 end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("enumif = 1 ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with identifier enend (#17926)" do
+    lexer = Lexer.new("enend = 1 end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("enend = 1 ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with identifier endif (#17926)" do
+    lexer = Lexer.new("endif = 1 end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("endif = 1 ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
   it "lexes macro with semicolon before end" do
     lexer = Lexer.new(";end")
 
