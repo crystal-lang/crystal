@@ -907,7 +907,12 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-    @name_size = -1
+
+    # The size of this call's name as written in the source code, which isn't
+    # always the size of `name`: see `#make_setter` and index calls such as `a[1]`,
+    # whose name isn't contiguous and so has a size of zero.
+    property name_size : Int32 { name.size }
+
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
@@ -941,14 +946,15 @@ module Crystal
       new nil, name, *args, global: true
     end
 
-    def name_size
-      if @name_size == -1
-        @name_size = name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.size - 1 : name.size
-      end
-      @name_size
+    # :nodoc:
+    #
+    # Turns this call into its setter: `foo` becomes `foo=`.
+    #
+    # The `=` is a separate token, so it doesn't count towards `name_size`.
+    def make_setter : Nil
+      @name_size = name_size
+      @name = "#{@name}="
     end
-
-    setter name_size
 
     def accept_children(visitor)
       @obj.try &.accept visitor

@@ -774,7 +774,7 @@ module Crystal
               end
 
               atomic.at(location).at_end(end_location)
-              atomic.name = "#{name}="
+              atomic.make_setter
               atomic.args = [arg] of ASTNode
               atomic.name_location = name_location
               next
@@ -1677,7 +1677,7 @@ module Crystal
         if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
           next_token_skip_space
           exp = parse_op_assign
-          call.name = "#{call.name}="
+          call.make_setter
           call.args << exp
           call.at_end(exp)
         end
@@ -1706,13 +1706,13 @@ module Crystal
             exp = parse_op_assign
             check :OP_RPAREN
             next_token_skip_space
-            call.name = "#{call.name}="
+            call.make_setter
             call.args = [exp] of ASTNode
             call = parse_atomic_method_suffix call, location
           else
             skip_space
             exp = parse_op_assign
-            call.name = "#{call.name}="
+            call.make_setter
             call.args = [exp] of ASTNode
           end
 
@@ -1723,7 +1723,7 @@ module Crystal
           if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
             next_token_skip_space
             exp = parse_op_assign
-            call.name = "#{call.name}="
+            call.make_setter
             call.args << exp
             call.at_end(exp)
           end
