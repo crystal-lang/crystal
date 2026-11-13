@@ -340,7 +340,8 @@ describe Enum do
     SpecEnum.parse?("Two").should eq(SpecEnum::Two)
     SpecEnum.parse?("Four").should be_nil
     SpecEnum.parse?("Fo-ur").should be_nil
-
+    SpecEnum.parse?("Threes").should be_nil
+    SpecEnum.parse?("Three_").should eq(SpecEnum::Three)
     SpecEnum.parse?("aaaa👍").should be_nil
     SpecEnum.parse?("👍👍👍👍👍").should be_nil
   end

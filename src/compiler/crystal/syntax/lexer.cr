@@ -1069,6 +1069,9 @@ module Crystal
     def skip_comment
       char = current_char
       while !char.in?('\n', '\0')
+        if char == '\r' && peek_next_char != '\n'
+          raise "expected '\\n' after '\\r'"
+        end
         char = next_char_no_column_increment
       end
     end
@@ -1480,15 +1483,15 @@ module Crystal
               incr_line_number
               @token.line_number = @line_number
 
-              # Skip until the next non-whitespace char
+              # Skip until the next non-whitespace char. Only a single
+              # newline is escaped, so the next one is part of the string.
               while true
                 char = next_char
                 case char
                 when '\0'
                   raise_unterminated_quoted delimiter_state
-                when '\n'
-                  incr_line_number
-                  @token.line_number = @line_number
+                when '\r', '\n'
+                  break
                 when .ascii_whitespace?
                   # Continue
                 else
@@ -2148,7 +2151,7 @@ module Crystal
     def consume_octal_escape(char)
       value = char - '0'
       count = 1
-      while count <= 3 && '0' <= peek_next_char < '8'
+      while count < 3 && '0' <= peek_next_char < '8'
         next_char
         value = value * 8 + (current_char - '0')
         count += 1
@@ -2247,12 +2250,11 @@ module Crystal
         raise "invalid unicode codepoint (surrogate half)"
       end
 
-      unless found_space
-        unless found_curly
-          char = next_char
-        end
-
-        unless char == '}'
+      unless found_space || found_curly
+        char = next_char
+        if char == ' ' && allow_spaces
+          found_space = true
+        elsif char != '}'
           raise "expected '}' to close unicode escape"
         end
       end
@@ -2579,6 +2581,9 @@ module Crystal
             break
           when '\0'
             raise "unterminated quoted symbol", line, column
+          when '\r'
+            raise "expecting '\\n' after '\\r'" unless peek_next_char == '\n'
+            io << char
           else
             io << char
           end

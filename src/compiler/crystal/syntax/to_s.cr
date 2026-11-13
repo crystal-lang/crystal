@@ -621,7 +621,10 @@ module Crystal
           when "[]", "[]?", "<", "<=", ">", ">="
             false
           else
-            true
+            # Calls with identifier names always print their arguments
+            # within parentheses, so they don't need extra ones.
+            # Setters (`a.b = 1`) and operators (`a + b`) still do.
+            !Lexer.ident?(obj.name) || Lexer.setter?(obj.name)
           end
         end
       when Not
@@ -1022,7 +1025,7 @@ module Crystal
       @str << node.name
       if real_name = node.real_name
         @str << " = "
-        @str << real_name
+        Symbol.quote_for_named_argument(@str, real_name)
       end
       @str << " : "
       node.type_spec.accept self

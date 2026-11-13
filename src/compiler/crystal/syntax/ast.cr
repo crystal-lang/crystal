@@ -1,14 +1,12 @@
 # Helper for `#pretty_print` implementation. It describes the type.
 private def pp_type(pp, left, right, &) : Nil
-  pp.text left
-  pp.group_sub do
+  pp.group(0, left, right) do
     pp.nest(2) do
       pp.breakable ""
       yield
     end
     pp.breakable ""
   end
-  pp.text right
 end
 
 # Helper for `#pretty_print` to emit optional properties.
@@ -1386,8 +1384,8 @@ module Crystal
 
     # The location of the internal name, which differs from `#location`
     # if the parameter has an external name (i.e. `baz` in `bar baz`).
-    # For instance/class variable parameters it points at the prefix
-    # (i.e. `@baz` in `bar @baz`).
+    # For instance/class variable parameters it points past the prefix
+    # (i.e. `baz` in `bar @baz`).
     property name_location : Location?
 
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)

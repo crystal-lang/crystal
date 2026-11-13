@@ -63,7 +63,7 @@ sed -i -E 's|\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\${CRYSTAL_BOOTSTRAP_VERSION:='
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
 # Edit .github/workflows/*.yml to update version for install-crystal action
-sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
+sed -i -E "s|crystal: \"?[0-9.]+\"?|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
 
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
 update_shell_nix_release() {

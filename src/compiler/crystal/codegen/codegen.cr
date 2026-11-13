@@ -7,16 +7,17 @@ require "./llvm_builder_helper"
 require "./abi/*"
 
 module Crystal
-  MAIN_NAME              = "__crystal_main"
-  RAISE_NAME             = "__crystal_raise"
-  RAISE_OVERFLOW_NAME    = "__crystal_raise_overflow"
-  RAISE_CAST_FAILED_NAME = "__crystal_raise_cast_failed"
-  MALLOC_NAME            = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME     = "__crystal_malloc_atomic64"
-  REALLOC_NAME           = "__crystal_realloc64"
-  GET_EXCEPTION_NAME     = "__crystal_get_exception"
-  ONCE_INIT              = "__crystal_once_init"
-  ONCE                   = "__crystal_once"
+  MAIN_NAME               = "__crystal_main"
+  RAISE_NAME              = "__crystal_raise"
+  RAISE_OVERFLOW_NAME     = "__crystal_raise_overflow"
+  RAISE_CAST_FAILED_NAME  = "__crystal_raise_cast_failed"
+  RAISE_CLOSURE_TO_C_NAME = "__crystal_raise_closure_to_c"
+  MALLOC_NAME             = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME      = "__crystal_malloc_atomic64"
+  REALLOC_NAME            = "__crystal_realloc64"
+  GET_EXCEPTION_NAME      = "__crystal_get_exception"
+  ONCE_INIT               = "__crystal_once_init"
+  ONCE                    = "__crystal_once"
 
   METACLASS_ID_NAME         = "~metaclass"
   INSTANCE_TYPE_ID_NAME     = "~instance_type"
@@ -282,6 +283,7 @@ module Crystal
     @realloc_fun : LLVMTypedFunction?
     @raise_overflow_fun : LLVMTypedFunction?
     @raise_cast_failed_fun : LLVMTypedFunction?
+    @raise_closure_to_c_fun : LLVMTypedFunction?
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
 
@@ -539,7 +541,8 @@ module Crystal
         case node.name
         when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
-             RAISE_CAST_FAILED_NAME, ONCE_INIT, ONCE
+             RAISE_CAST_FAILED_NAME, RAISE_CLOSURE_TO_C_NAME,
+             ONCE_INIT, ONCE
           @codegen.accept node
         end
 
@@ -930,7 +933,13 @@ module Crystal
         abi_info = abi_info(target_def)
         abi_ret_type = abi_info.return_type
         if cast = abi_ret_type.cast
-          casted_last = pointer_cast @last, cast.pointer
+          if return_type.passed_by_value?
+            casted_last = pointer_cast @last, cast.pointer
+          else
+            # For types like i128 on MinGW-w64 `@last` isn't a pointer
+            casted_last = alloca cast
+            store @last, pointer_cast(casted_last, abi_ret_type.type.pointer)
+          end
           last = load cast, casted_last
           ret last
           return
@@ -1643,15 +1652,6 @@ module Crystal
       false
     end
 
-    def cant_pass_closure_to_c_exception_call
-      @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
-        @program.visit_main call
-        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
-        call
-      end
-    end
-
     def codegen_raise_cast_failed(value, type_id, obj_type, to_type, node)
       location = node.location
       set_current_debug_location(location) if location && @debug.line_numbers?
@@ -1969,8 +1969,37 @@ module Crystal
           ret fun_ptr
 
           position_at_end ctx_is_not_null_block
-          accept cant_pass_closure_to_c_exception_call
+          codegen_raise_closure_to_c
         end
+      end
+    end
+
+    def codegen_raise_closure_to_c
+      if func = crystal_raise_closure_to_c_fun
+        call_args = [] of LLVM::Value
+
+        if (rescue_block = @rescue_block)
+          invoke_out_block = new_block "invoke_out"
+          invoke func, call_args, invoke_out_block, rescue_block
+          position_at_end invoke_out_block
+        else
+          call func, call_args
+        end
+
+        unreachable
+      else
+        # fallback for stdlib before 1.23 when using a 1.23 or later compiler
+        accept cant_pass_closure_to_c_exception_call
+      end
+    end
+
+    # fallback for stdlib before 1.23 when using a 1.23 or later compiler
+    def cant_pass_closure_to_c_exception_call
+      @cant_pass_closure_to_c_exception_call ||= begin
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
+        @program.visit_main call
+        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
+        call
       end
     end
 
@@ -2483,6 +2512,15 @@ module Crystal
       @raise_cast_failed_fun ||= typed_fun?(@main_mod, RAISE_CAST_FAILED_NAME)
       if raise_cast_failed_fun = @raise_cast_failed_fun
         check_main_fun RAISE_CAST_FAILED_NAME, raise_cast_failed_fun
+      else
+        nil
+      end
+    end
+
+    def crystal_raise_closure_to_c_fun
+      @raise_closure_to_c_fun ||= typed_fun?(@main_mod, RAISE_CLOSURE_TO_C_NAME)
+      if raise_closure_to_c_fun = @raise_closure_to_c_fun
+        check_main_fun RAISE_CLOSURE_TO_C_NAME, raise_closure_to_c_fun
       else
         nil
       end
