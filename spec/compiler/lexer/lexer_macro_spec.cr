@@ -488,6 +488,35 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
+  [
+    %(union = 1),
+    %(foo(union)),
+    %(foo "\#{ union }"),
+    %(foo 1, union),
+    %(union patterns),
+    %(struct Foo; union : Int32; end),
+    %(lib Foo; union Bar; x : Int32; end; end),
+    %(lib Foo; union  Bar; end; end),
+  ].each do |code|
+    it "lexes macro with union not as a keyword unless followed by a type name: #{code}" do
+      lexer = Lexer.new("#{code} end")
+
+      literal = String.build do |io|
+        macro_state = Token::MacroState.default
+        loop do
+          token = lexer.next_macro_token(macro_state, false)
+          break if token.type.macro_end?
+
+          token.type.should eq(t :MACRO_LITERAL)
+          io << token.value
+          macro_state = token.macro_state
+        end
+        macro_state.nest.should eq(0)
+      end
+      literal.should eq("#{code} ")
+    end
+  end
+
   it "lexes macro with if after assign" do
     lexer = Lexer.new("x = if 1; 2; else; 3; end; end")
 

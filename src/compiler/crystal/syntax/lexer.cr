@@ -2081,7 +2081,7 @@ module Crystal
         if next_char == 'n'
           case next_char
           when 'i'
-            MacroKeywordState::Other if char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
+            MacroKeywordState::Other if char_sequence?('o', 'n') && union_declaration_next_char?
           when 'l'
             MacroKeywordState::Other if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
           when 't'
@@ -2820,6 +2820,17 @@ module Crystal
 
     def peek_not_ident_part_or_end_next_char
       !ident_part_or_end?(peek_next_char) && peek_next_char != ':' && next_char
+    end
+
+    # Returns `true` if the current char is followed by a type name on the same
+    # line (`union Foo`, `union {{name}}`), moving to it. `union` isn't a reserved
+    # word, so it could also be a variable or method name (`union = 1`, `foo(union)`).
+    private def union_declaration_next_char?
+      return false unless next_char.in?(' ', '\t')
+      while current_char.in?(' ', '\t')
+        next_char
+      end
+      current_char.ascii_uppercase? || current_char == '{'
     end
 
     def closing_char(char = current_char)
