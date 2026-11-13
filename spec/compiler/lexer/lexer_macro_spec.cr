@@ -43,6 +43,26 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "annotation", "select", "enum"].each do |keyword|
+    it "lexes macro with #{keyword} as named argument (#17927)" do
+      lexer = Lexer.new(%(foo(#{keyword}: 1) end))
+
+      literal = String.build do |io|
+        macro_state = Token::MacroState.default
+        loop do
+          token = lexer.next_macro_token(macro_state, false)
+          break if token.type.macro_end?
+
+          token.type.should eq(t :MACRO_LITERAL)
+          io << token.value
+          macro_state = token.macro_state
+        end
+        macro_state.nest.should eq(0)
+      end
+      literal.should eq("foo(#{keyword}: 1) ")
+    end
+  end
+
   ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "annotation", "select"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
