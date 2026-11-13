@@ -21,16 +21,17 @@ of lines with columns separated by tab.
 Output fields:
 
 *count*::  sum of all calls to this method (only with *--tallies* option; otherwise skipped)
-*location*::  pathname, line and column, all separated by colon name
-*lines*::  length of the def in lines annotations
+*location*::  pathname, line and column, all separated by colon
+*name*::  short reference of the method
+*lines*::  length of the def in lines
+*annotations*::  annotations of the method, separated by space
 
 == Options
 
 *-D* _FLAG_, *--define*=_FLAG_::
-  Define a compile-time flag. This is useful to con    ditionally define types,
+  Define a compile-time flag. This is useful to conditionally define types,
   methods, or commands based on flags available at compile time. The default
-  flags are from the target triple given with *--target-triple* or the hosts
-  default, if none is given.
+  flags are from the host's target triple.
 *-f* _FORMAT_, *--format*=_FORMAT_::
   Output format 'text' (default), 'json', 'codecov', or 'csv'.
 *--tallies*::
