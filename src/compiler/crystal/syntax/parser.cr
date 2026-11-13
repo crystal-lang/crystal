@@ -5027,9 +5027,8 @@ module Crystal
         slash_is_regex!
         next_token_skip_space_or_newline
 
-        if @token.keyword?(:out)
-          value = parse_out
-        else
+        value = parse_out?
+        unless value
           @call_args_start_locations << @token.location
           value =
             begin
@@ -5061,14 +5060,15 @@ module Crystal
     def parse_call_arg(found_double_splat = false)
       @call_args_start_locations.push @token.location
 
-      if @token.keyword?(:out)
+      location = @token.location
+
+      if out = parse_out?
         if found_double_splat
-          raise "out argument not allowed after double splat"
+          raise "out argument not allowed after double splat", location
         end
 
-        parse_out
+        out
       else
-        location = @token.location
         splat = nil
         case @token.type
         when .op_star?
@@ -5110,22 +5110,29 @@ module Crystal
       @call_args_start_locations.pop
     end
 
-    def parse_out
-      location = @token.location
-      next_token_skip_space_or_newline
-      name = @token.value.to_s
+    # Parses an out argument (like `out x`, `out @x` or `out _`) if the current
+    # token is the `out` keyword followed by a variable, an instance variable
+    # or an underscore. Otherwise returns `nil` and leaves the parser state
+    # untouched, so `out` can be parsed as a regular identifier (like in
+    # `property out : Int32` or `foo(out)`).
+    def parse_out? : Out?
+      return unless @token.keyword?(:out)
 
-      case @token.type
-      when .ident?
-        var = Var.new(name)
-        push_var var
-      when .instance_var?
-        var = InstanceVar.new(name)
-      when .underscore?
-        var = Underscore.new
-      else
-        raise "expecting variable or instance variable after out"
+      location = @token.location
+      var = lookahead(preserve_token_on_fail: true) do
+        next_token_skip_space_or_newline
+
+        case @token.type
+        when .ident?
+          Var.new(@token.value.to_s).tap { |var| push_var var }
+        when .instance_var?
+          InstanceVar.new(@token.value.to_s)
+        when .underscore?
+          Underscore.new
+        end
       end
+      return unless var
+
       var.at(@token.location).at_end(token_end_location)
       next_token
       Out.new(var).at(location).at_end(var)
