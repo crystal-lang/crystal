@@ -339,6 +339,28 @@ class JSONAttrWithInheritedConstantRoot < JSONAttrWithInheritedConstantRootBase
   property foo : Int32
 end
 
+module JSONAttrGenericConstantRootModule(T)
+  MODULE_ROOT = "module"
+end
+
+class JSONAttrGenericConstantRootBase(T)
+  KEY  = "right"
+  ROOT = {KEY, "value"}
+end
+
+class JSONAttrWithGenericAncestorConstantRoot < JSONAttrGenericConstantRootBase(String)
+  include JSON::Serializable
+  include JSONAttrGenericConstantRootModule(Int32)
+
+  KEY = "wrong"
+
+  @[JSON::Field(root: MODULE_ROOT)]
+  property foo : Int32
+
+  @[JSON::Field(root: ROOT)]
+  property bar : Int32
+end
+
 # A type with the same name inside `JSON` must not shadow the annotated type
 class JSONAttrWithShadowedConstantRoot
   include JSON::Serializable
@@ -1163,6 +1185,14 @@ describe "JSON::Serializable" do
     json = %({"foo":{"right":{"value":1}}})
     obj = JSONAttrWithInheritedConstantRoot.from_json(json)
     obj.foo.should eq(1)
+    obj.to_json.should eq(json)
+  end
+
+  it "resolves root constants from generic ancestors" do
+    json = %({"foo":{"module":1},"bar":{"right":{"value":2}}})
+    obj = JSONAttrWithGenericAncestorConstantRoot.from_json(json)
+    obj.foo.should eq(1)
+    obj.bar.should eq(2)
     obj.to_json.should eq(json)
   end
 

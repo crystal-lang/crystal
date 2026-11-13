@@ -63,7 +63,7 @@ module JSON
   # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
-  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`). An `Array` or `Tuple` of keys unwraps nested objects (see `JSON::PullParser#on_key!`). The keys can also be given as constants holding string, `Array` or `Tuple` literals, which are looked up from the annotated type.
+  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`). An `Array` or `Tuple` of keys unwraps nested objects (see `JSON::PullParser#on_key!`). The keys can also be given as constants whose values are string, `Array` or `Tuple` literals. They are resolved at compile time: a constant used as `root` is looked up from the annotated type, and constants inside its value are looked up from where it is defined.
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
@@ -207,7 +207,7 @@ module JSON
                       owner_names = [] of StringLiteral
                       if names.size > 1
                         container = parse_type("::#{names[0...names.size - 1].join("::").id}").resolve
-                        owner = ([container] + container.ancestors).find { |type| type.has_constant?(names.last) } || container
+                        owner = ([container] + container.ancestors).map { |type| parse_type("::#{type.name(generic_args: false).id}").resolve }.find { |type| type.has_constant?(names.last) } || container
                         owner_names = owner.name(generic_args: false).split("::")
                       end
                       key_scopes = (0..owner_names.size).map { |i| owner_names.size == i ? "::" : "::#{owner_names[0...owner_names.size - i].join("::").id}::" }
@@ -343,7 +343,7 @@ module JSON
                   owner_names = [] of StringLiteral
                   if names.size > 1
                     container = parse_type("::#{names[0...names.size - 1].join("::").id}").resolve
-                    owner = ([container] + container.ancestors).find { |type| type.has_constant?(names.last) } || container
+                    owner = ([container] + container.ancestors).map { |type| parse_type("::#{type.name(generic_args: false).id}").resolve }.find { |type| type.has_constant?(names.last) } || container
                     owner_names = owner.name(generic_args: false).split("::")
                   end
                   key_scopes = (0..owner_names.size).map { |i| owner_names.size == i ? "::" : "::#{owner_names[0...owner_names.size - i].join("::").id}::" }
