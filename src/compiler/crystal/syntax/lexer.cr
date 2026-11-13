@@ -1659,6 +1659,7 @@ module Crystal
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
       heredocs = macro_state.heredocs
+      lib_body_nest = macro_state.lib_body_nest
       yields = false
 
       if skip_whitespace
@@ -1684,35 +1685,33 @@ module Crystal
           while (char = next_char_check_line).ascii_whitespace?
           end
 
-          case char
-          when 'e'
-            if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest -= 1
+          delta =
+            case char
+            when 'e'
+              -1 if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
+            when 'f'
+              1 if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
+            when 'i'
+              1 if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+            when 'u'
+              1 if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
+            else
+              # no nesting
             end
-          when 'f'
-            if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          when 'i'
-            if next_char == 'f' && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          when 'u'
-            if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
-              next_char
-              nest += 1
-            end
-          else
-            # no nesting
+
+          if delta
+            next_char
+            # An escaped macro control doesn't leave the lib body it's in,
+            # so the lib body level moves along with it
+            lib_body_nest = nest + delta if nest == lib_body_nest
+            nest += delta
+            lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
           end
         end
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1722,7 +1721,7 @@ module Crystal
         next_char
         next_char :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         @token.raw = "\\%"
         return @token
       end
@@ -1732,12 +1731,12 @@ module Crystal
         when '{'
           beginning_of_line = false
           next_char :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
           return @token
         when '%'
           beginning_of_line = false
           next_char :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -1776,7 +1775,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1790,7 +1789,7 @@ module Crystal
         beginning_of_line = false
         @token.type = :MACRO_VAR
         @token.value = string_range_from_pool(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
         return @token
       end
 
@@ -1806,6 +1805,7 @@ module Crystal
                 return @token
               else
                 nest -= 1
+                lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
                 whitespace = current_char.ascii_whitespace?
                 next_char
               end
@@ -1934,10 +1934,11 @@ module Crystal
               yields = true
               char = current_char
               beginning_of_line = false
-            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line) }
+            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line, lib_body: nest == lib_body_nest) }
               char = current_char
 
               nest += 1 unless keyword.abstract_def?
+              lib_body_nest = nest if keyword.lib?
               beginning_of_line = false
               next
             end
@@ -1959,7 +1960,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
       set_token_raw_from_start(start)
 
       @token
@@ -2020,10 +2021,15 @@ module Crystal
 
     enum MacroKeywordState
       AbstractDef
+      Lib
       Other
     end
 
-    def macro_starts_with_keyword?(beginning_of_line) : MacroKeywordState?
+    # `union` is only a keyword directly inside a `lib` body (*lib_body*),
+    # elsewhere it's a regular identifier (`union = 1`, `union Foo`).
+    # A `fun` there is a declaration without a body, so it doesn't open
+    # a nesting level.
+    def macro_starts_with_keyword?(beginning_of_line, lib_body = false) : MacroKeywordState?
       case current_char
       when 'a'
         case next_char
@@ -2058,11 +2064,11 @@ module Crystal
           MacroKeywordState::Other if next_char == 'f' && peek_not_ident_part_or_end_next_char
         end
       when 'f'
-        MacroKeywordState::Other if char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Other if !lib_body && char_sequence?('u', 'n') && peek_not_ident_part_or_end_next_char
       when 'i'
         MacroKeywordState::Other if beginning_of_line && next_char == 'f' && peek_not_ident_part_or_end_next_char
       when 'l'
-        MacroKeywordState::Other if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
+        MacroKeywordState::Lib if char_sequence?('i', 'b') && peek_not_ident_part_or_end_next_char
       when 'm'
         case next_char
         when 'a'
@@ -2081,7 +2087,7 @@ module Crystal
         if next_char == 'n'
           case next_char
           when 'i'
-            MacroKeywordState::Other if char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
+            MacroKeywordState::Other if lib_body && char_sequence?('o', 'n') && peek_not_ident_part_or_end_next_char
           when 'l'
             MacroKeywordState::Other if beginning_of_line && char_sequence?('e', 's', 's') && peek_not_ident_part_or_end_next_char
           when 't'

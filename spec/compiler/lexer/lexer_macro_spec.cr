@@ -4,6 +4,25 @@ private def t(kind : Crystal::Token::Kind)
   kind
 end
 
+private def assert_macro_literal_nest_zero(code, *, file = __FILE__, line = __LINE__)
+  lexer = Lexer.new("#{code} end")
+  macro_state = Token::MacroState.default
+
+  literal = String.build do |io|
+    loop do
+      token = lexer.next_macro_token(macro_state, false)
+      break if token.type.macro_end?
+
+      token.type.should eq(t :MACRO_LITERAL), file: file, line: line
+      io << token.value
+      macro_state = token.macro_state
+    end
+    macro_state.nest.should eq(0), file: file, line: line
+  end
+  # Escaped macro controls (`\{% ... %}`) are output without the backslash
+  literal.should eq("#{code.gsub("\\{", "{")} "), file: file, line: line
+end
+
 describe "Lexer macro" do
   it "lexes simple macro" do
     lexer = Lexer.new(%(hello end))
@@ -43,7 +62,7 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
-  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "union", "annotation", "select"].each do |keyword|
+  ["begin", "do", "if", "unless", "class", "struct", "module", "def", "while", "until", "case", "macro", "fun", "lib", "annotation", "select"].each do |keyword|
     it "lexes macro with nested #{keyword}" do
       lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
@@ -486,6 +505,49 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(t :MACRO_END)
+  end
+
+  [
+    %(union = 1),
+    %(foo(union)),
+    %(foo "\#{ union }"),
+    %(foo 1, union),
+    %(union patterns),
+    %(union Foo),
+    %(struct Foo; union : Int32; end),
+    %(lib Foo; struct Bar; union : Int32; end; end),
+    %(lib Foo; end; class Bar; union Baz; end),
+  ].each do |code|
+    it "lexes macro with union as an identifier outside a lib body: #{code}" do
+      assert_macro_literal_nest_zero code
+    end
+  end
+
+  [
+    %(lib Foo; fun foo : Int32; end),
+    %(lib Foo\n  fun foo(x : Int32) : Int32\n  fun bar = Bar\nend),
+    %(lib Foo; struct Bar; x : Int32; end; fun foo; end),
+    %(module Foo; lib Bar; fun foo; end; end),
+    %(lib Foo; end; fun foo; end),
+    %(lib Foo; \\{% for x in y %} fun foo; \\{% end %} end),
+    %(lib Foo; @[Raises] fun foo; end),
+  ].each do |code|
+    it "lexes macro with fun not nesting inside a lib body: #{code}" do
+      assert_macro_literal_nest_zero code
+    end
+  end
+
+  [
+    %(lib Foo; union Bar; x : Int32; end; end),
+    %(lib Foo\n  union  Bar\n  end\nend),
+    %(lib Foo; struct Bar; x : Int32; end; union Baz; end; end),
+    %(module Foo; lib Bar; union Baz; end; end; end),
+    %(lib Foo; fun foo : Int32; union Bar; x : Int32; end; fun bar; end),
+    %(lib Foo; \\{% if x %} union Bar; end \\{% end %} union Baz; end; end),
+  ].each do |code|
+    it "lexes macro with union as a keyword inside a lib body: #{code}" do
+      assert_macro_literal_nest_zero code
+    end
   end
 
   it "lexes macro with if after assign" do
