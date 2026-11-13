@@ -2219,13 +2219,7 @@ module Crystal
     def name_size
       var = @var
       case var
-      when Var
-        var.name.size
-      when InstanceVar
-        var.name.size
-      when ClassVar
-        var.name.size
-      when Global
+      when Var, InstanceVar, ClassVar, Global
         var.name.size
       when Path
         var.name_size
@@ -2265,11 +2259,7 @@ module Crystal
     def name_size
       var = @var
       case var
-      when Var
-        var.name.size
-      when InstanceVar
-        var.name.size
-      when ClassVar
+      when Var, InstanceVar, ClassVar
         var.name.size
       else
         raise "can't happen"
