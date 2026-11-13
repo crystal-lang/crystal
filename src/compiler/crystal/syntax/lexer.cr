@@ -2583,6 +2583,7 @@ module Crystal
             raise "unterminated quoted symbol", line, column
           when '\n'
             incr_line_number 0
+            io << char
           when '\r'
             raise "expecting '\\n' after '\\r'" unless peek_next_char == '\n'
             io << char
