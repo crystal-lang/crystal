@@ -1871,23 +1871,9 @@ module Crystal
 
     it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
 
-    assert_syntax_error "b = a : Bool", "type declaration without a value can't be used as a value", 1, 5
-    assert_syntax_error "b = (a : Bool)", "type declaration without a value can't be used as a value", 1, 6
-    assert_syntax_error "b = begin\n  a : Bool\nend", "type declaration without a value can't be used as a value", 2, 3
-    assert_syntax_error "b = (x = 1; a : Bool)", "type declaration without a value can't be used as a value", 1, 13
-    assert_syntax_error "b = c = a : Bool", "type declaration without a value can't be used as a value", 1, 9
-    assert_syntax_error "@b = a : Bool", "type declaration without a value can't be used as a value", 1, 6
-    assert_syntax_error "B = a : Bool", "type declaration without a value can't be used as a value", 1, 5
-    assert_syntax_error "b = @a : Bool", "type declaration without a value can't be used as a value", 1, 5
-    assert_syntax_error "b = 1; b ||= a : Bool", "type declaration without a value can't be used as a value", 1, 14
-    assert_syntax_error "b = 1; b += a : Int32", "type declaration without a value can't be used as a value", 1, 13
-    assert_syntax_error "x[0] = a : Int32", "type declaration without a value can't be used as a value", 1, 8
-    assert_syntax_error "b, c = 1, a : Bool", "type declaration without a value can't be used as a value", 1, 11
-    assert_syntax_error "b, c = a : Bool, 1", "type declaration without a value can't be used as a value", 1, 8
-    it_parses "b = a : Bool = true", Assign.new("b".var, TypeDeclaration.new("a".var, "Bool".path, true.bool))
-    it_parses "b = (a : Bool = true)", Assign.new("b".var, Expressions.new([TypeDeclaration.new("a".var, "Bool".path, true.bool)] of ASTNode))
-    it_parses "b, c = 1, (a : Bool = true)", MultiAssign.new(["b".var, "c".var] of ASTNode, [1.int32, Expressions.new([TypeDeclaration.new("a".var, "Bool".path, true.bool)] of ASTNode)] of ASTNode)
-    it_parses "b = begin\n  a : Bool\n  1\nend", Assign.new("b".var, Expressions.new([TypeDeclaration.new("a".var, "Bool".path), 1.int32] of ASTNode))
+    # #5700: this is a semantic error, as a macro can give it a meaning
+    it_parses "b = a : Bool", Assign.new("b".var, TypeDeclaration.new("a".var, "Bool".path))
+    it_parses "foo b = a : Bool", Call.new("foo", Assign.new("b".var, TypeDeclaration.new("a".var, "Bool".path)))
     it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
     it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
 

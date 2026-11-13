@@ -227,7 +227,6 @@ module Crystal
       end
 
       values.concat exps[assign_index + 1..-1]
-      values.each { |value| check_type_declaration_value value }
       if values.size != 1
         if lhs_splat
           raise "Multiple assignment count mismatch", location if targets.size - 1 > values.size
@@ -400,7 +399,6 @@ module Crystal
             atomic.name = "[]="
             atomic.name_size = 0
             arg = parse_op_assign_no_control
-            check_type_declaration_value arg
             atomic.args << arg
             atomic.end_location = arg.end_location
           else
@@ -460,8 +458,6 @@ module Crystal
 
             @is_constant_assignment = false if atomic.is_a?(Path)
 
-            check_type_declaration_value atomic_value
-
             push_var atomic
 
             atomic = Assign.new(atomic, atomic_value).at(location)
@@ -489,7 +485,6 @@ module Crystal
           method = @token.type.to_s.byte_slice(0, @token.to_s.bytesize - 1)
           next_token_skip_space_or_newline
           value = parse_op_assign_no_control
-          check_type_declaration_value value
           atomic = OpAssign.new(atomic, method, value).at(location)
           atomic.name_location = name_location
         else
@@ -6537,23 +6532,6 @@ module Crystal
     def check_void_value(exp, location)
       if exp.is_a?(ControlExpression)
         raise "void value expression", location
-      end
-    end
-
-    # A type declaration without a value, like `a : Int32`, has no meaningful
-    # value, so it can't be used where one is expected (e.g. `b = a : Int32`).
-    # Parenthesized and `begin` expressions are checked through their last
-    # expression, which is their value.
-    def check_type_declaration_value(exp)
-      case exp
-      when TypeDeclaration
-        unless exp.value
-          raise "type declaration without a value can't be used as a value", exp.location || @token.location
-        end
-      when Expressions
-        if last = exp.expressions.last?
-          check_type_declaration_value last
-        end
       end
     end
 
