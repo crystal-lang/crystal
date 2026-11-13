@@ -112,6 +112,31 @@ describe "IO::Delimited" do
     end
 
     context "with peeking" do
+      it "only retains suffixes that match a delimiter prefix after a mismatch" do
+        {"ABAACX", "ABAACXABACtail", "ABABACtail"}.each do |payload|
+          (1..5).each do |peek_size|
+            (1..5).each do |read_size|
+              io = MemoryIOWithFixedPeek.new(payload)
+              io.peek_size = peek_size
+              delimited = IO::Delimited.new(io, read_delimiter: "ABAC")
+
+              output = String.build do |str|
+                buffer = Bytes.new(read_size)
+
+                while (size = delimited.read(buffer)) > 0
+                  str.write(buffer[0, size])
+                end
+              end
+              index = payload.index("ABAC")
+
+              output.should eq(index ? payload[0, index] : payload)
+              delimited.read_byte.should be_nil
+              io.gets_to_end.should eq(index ? payload[index + 4..] : "")
+            end
+          end
+        end
+      end
+
       it "returns empty when there's no data" do
         io = IO::Memory.new("")
         delimited = IO::Delimited.new(io, read_delimiter: "zr")
