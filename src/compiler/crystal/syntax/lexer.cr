@@ -1809,15 +1809,22 @@ module Crystal
                 whitespace = current_char.ascii_whitespace?
                 next_char
               end
+            else
+              # Inside an identifier like `endo`, so the rest isn't a keyword
+              whitespace = false
             end
           when 'u'
             if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
               char = current_char
               nest += 1
               whitespace = true
+            else
+              # Inside an identifier like `enumx`, so the rest isn't a keyword
+              whitespace = false
             end
           else
-            # not a keyword
+            # Inside an identifier like `encase`, so the rest isn't a keyword
+            whitespace = false
           end
         else
           whitespace = false
