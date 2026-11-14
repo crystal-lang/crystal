@@ -93,4 +93,24 @@ describe "Normalize: block" do
       end
       CRYSTAL
   end
+
+  it "normalizes unpacking with filename" do
+    assert_normalize <<-CRYSTAL, <<-CRYSTAL, filename: "foo.cr"
+      foo do |(x, y), z|
+      end
+      CRYSTAL
+      foo do |__temp_cd6ae5dd_1, z|
+        x, y = __temp_cd6ae5dd_1
+      end
+      CRYSTAL
+
+    assert_normalize <<-CRYSTAL, <<-CRYSTAL, filename: "bar.cr"
+      foo do |(x, y), z|
+      end
+      CRYSTAL
+      foo do |__temp_fbcf3d84_1, z|
+        x, y = __temp_fbcf3d84_1
+      end
+      CRYSTAL
+  end
 end

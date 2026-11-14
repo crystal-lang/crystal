@@ -134,8 +134,8 @@ def assert_normalize(from, to, flags = nil, *, filename = nil, file = __FILE__, 
   to_nodes
 end
 
-def assert_expand(from : String, to, *, flags = nil, file = __FILE__, line = __LINE__)
-  node = Parser.parse(from)
+def assert_expand(from : String, to, *, flags = nil, filename = nil, file = __FILE__, line = __LINE__)
+  node = parse(from, filename: filename)
   if node.is_a?(Expressions)
     node = node.last
   end

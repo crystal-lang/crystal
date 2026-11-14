@@ -27,6 +27,11 @@ describe "Normalize: op assign" do
     assert_normalize "a.b ||= 1", "__temp_1 = a\n__temp_1.b || (__temp_1.b = 1)"
   end
 
+  it "normalizes exp.value += with filename" do
+    assert_normalize "a.b += 1", "__temp_cd6ae5dd_1 = a\n__temp_cd6ae5dd_1.b = __temp_cd6ae5dd_1.b + 1", filename: "foo.cr"
+    assert_normalize "a.b += 1", "__temp_fbcf3d84_1 = a\n__temp_fbcf3d84_1.b = __temp_fbcf3d84_1.b + 1", filename: "bar.cr"
+  end
+
   it "normalizes exp.value &&=" do
     assert_normalize "a.b &&= 1", "__temp_1 = a\n__temp_1.b && (__temp_1.b = 1)"
   end
