@@ -50,17 +50,17 @@ describe "Normalize: op assign" do
   end
 
   it "normalizes exp[value] +=" do
-    node = assert_normalize "a[b, c] += 1", "__temp_1 = b\n__temp_2 = c\n__temp_3 = a\n__temp_3[__temp_1, __temp_2] = __temp_3[__temp_1, __temp_2] + 1"
+    node = assert_normalize "a[b, c] += 1", "__temp_3 = a\n__temp_1 = b\n__temp_2 = c\n__temp_3[__temp_1, __temp_2] = __temp_3[__temp_1, __temp_2] + 1"
     assert_name_location node.as(Expressions).expressions[3].as(Call).args[2],
       1, 9
   end
 
   it "normalizes exp[value] ||=" do
-    assert_normalize "a[b, c] ||= 1", "__temp_1 = b\n__temp_2 = c\n__temp_3 = a\n__temp_3[__temp_1, __temp_2]? || (__temp_3[__temp_1, __temp_2] = 1)"
+    assert_normalize "a[b, c] ||= 1", "__temp_3 = a\n__temp_1 = b\n__temp_2 = c\n__temp_3[__temp_1, __temp_2]? || (__temp_3[__temp_1, __temp_2] = 1)"
   end
 
   it "normalizes exp[value] &&=" do
-    assert_normalize "a[b, c] &&= 1", "__temp_1 = b\n__temp_2 = c\n__temp_3 = a\n__temp_3[__temp_1, __temp_2]? && (__temp_3[__temp_1, __temp_2] = 1)"
+    assert_normalize "a[b, c] &&= 1", "__temp_3 = a\n__temp_1 = b\n__temp_2 = c\n__temp_3[__temp_1, __temp_2]? && (__temp_3[__temp_1, __temp_2] = 1)"
   end
 
   it "normalizes exp[0] +=" do
@@ -89,16 +89,16 @@ describe "Normalize: op assign" do
 
   it "normalizes with filename" do
     assert_normalize "a[b, c] += 1", <<-CRYSTAL, filename: "foo.cr"
+      __temp_cd6ae5dd_3 = a
       __temp_cd6ae5dd_1 = b
       __temp_cd6ae5dd_2 = c
-      __temp_cd6ae5dd_3 = a
       __temp_cd6ae5dd_3[__temp_cd6ae5dd_1, __temp_cd6ae5dd_2] = __temp_cd6ae5dd_3[__temp_cd6ae5dd_1, __temp_cd6ae5dd_2] + 1
       CRYSTAL
 
     assert_normalize "a[b, c] += 1", <<-CRYSTAL, filename: "bar.cr"
+      __temp_fbcf3d84_3 = a
       __temp_fbcf3d84_1 = b
       __temp_fbcf3d84_2 = c
-      __temp_fbcf3d84_3 = a
       __temp_fbcf3d84_3[__temp_fbcf3d84_1, __temp_fbcf3d84_2] = __temp_fbcf3d84_3[__temp_fbcf3d84_1, __temp_fbcf3d84_2] + 1
       CRYSTAL
   end
