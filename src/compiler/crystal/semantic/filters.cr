@@ -37,6 +37,8 @@ module Crystal
   end
 
   abstract class TypeFilter
+    # Whether hierarchy growth can change the result for the same input type.
+    # TypeFilteredNode observes the input hierarchy when this is true.
     def depends_on_hierarchy?
       false
     end

@@ -1066,6 +1066,8 @@ module Crystal
 
     @observed_hierarchies : Array(Type)?
 
+    # Subscribes to hierarchy dependencies through aliases and structural wrappers.
+    # Tuple members participate in argument matching; arbitrary generic arguments do not.
     private def observe_hierarchy(type : Type, expanded_aliases : Array(AliasType)? = nil)
       case type
       when AliasType
@@ -1091,6 +1093,8 @@ module Crystal
       end
     end
 
+    # Deduplicates notification sources. Subscriptions persist across lookups
+    # because receivers and arguments can depend on the same hierarchy.
     private def subscribe_to_hierarchy(type : Type)
       return unless type.is_a?(SubclassObservable)
       observed = @observed_hierarchies ||= [] of Type

@@ -33,6 +33,7 @@ describe "Code gen: hierarchy-dependent type filters" do
 
         first = foo(Good(Int32, Int32).new.as(Base(Int32)))
         second = foo(Good(Int32, Int64).new.as(Base(Int32)))
+        # sizeof(Int32) = 4 and sizeof(Int64) = 8; encode both results as 48.
         (first &* 10) &+ second
         CRYSTAL
     end
@@ -68,6 +69,7 @@ describe "Code gen: hierarchy-dependent type filters" do
         receiver.read(value)
       end
 
+      # Receiver dispatch and argument matching share the Base dependency.
       receiver = Good(Int32).new.as(Base | Other)
       first = foo(receiver, Good(Int32).new.as(Base))
       second = foo(receiver, Good(Int64).new.as(Base))
