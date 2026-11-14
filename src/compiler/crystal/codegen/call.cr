@@ -463,6 +463,7 @@ class Crystal::CodeGenVisitor
       context.type = self_type
       codegen_primitive(node, body, target_def, call_args)
       context.type = old_type
+      unreachable if target_def.type.no_return?
       return true
     end
 
