@@ -17,7 +17,7 @@ module Crystal::System::FileDescriptor
     end
   end
 
-  {% unless flag?(:wasip3) %}
+  {% if flag?(:wasip1) || flag?(:wasip2) %}
     def self.get_blocking(fd : Handle)
       raise NotImplementedError.new("Crystal::System::FileDescriptor.get_blocking requires wasip3 or later")
     end

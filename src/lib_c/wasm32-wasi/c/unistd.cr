@@ -24,7 +24,7 @@ lib LibC
   fun isatty(x0 : Int) : Int
   fun link(x0 : Char*, x1 : Char*) : Int
   fun lseek(x0 : Int, x1 : OffT, x2 : Int) : OffT
-  {% if flag?(:wasip3) %}
+  {% unless flag?(:wasip1) || flag?(:wasip2) %}
     fun pipe(fds : Int[2]) : Int
     fun pipe2(fds : Int[2], flags : Int) : Int
   {% end %}

@@ -52,7 +52,7 @@ describe IO::FileDescriptor do
   {% end %}
 
   describe "#finalize" do
-    # wasm targets don't have a garbage collector, yet
+    # wasip1, wasip2: no pipe; wasip3: no gc
     pending_wasm32 "closes" do
       pipes = [] of IO::FileDescriptor
       assert_finalizes("fd") do
@@ -122,21 +122,20 @@ describe IO::FileDescriptor do
     end
   {% end %}
 
-  {% unless flag?(:wasip1) || flag?(:wasip2) %}
-    pending_wasm32 "does not close if close_on_finalize is false" do
-      pipes = [] of IO::FileDescriptor
-      assert_finalizes("fd") do
-        a, b = IO.pipe
-        a.close_on_finalize = false
-        pipes << b
-        a
-      end
-
-      pipes.each do |p|
-        p.puts "123"
-      end
+  # wasip1, wasip2: no pipe; wasip3: no gc
+  pending_wasm32 "does not close if close_on_finalize is false" do
+    pipes = [] of IO::FileDescriptor
+    assert_finalizes("fd") do
+      a, b = IO.pipe
+      a.close_on_finalize = false
+      pipes << b
+      a
     end
-  {% end %}
+
+    pipes.each do |p|
+      p.puts "123"
+    end
+  end
 
   {% unless flag?(:wasip1) %}
     it "reopens" do

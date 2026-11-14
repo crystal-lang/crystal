@@ -102,22 +102,21 @@ end
 
 describe IO do
   describe "partial read" do
-    {% unless flag?(:wasip1) || flag?(:wasip2) %}
-      pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
-        IO.pipe do |read, write|
-          write.puts "hello"
-          slice = Bytes.new 1024
+    # wasip1, wasip2: no pipe; wasip3: blocking event-loop
+    pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
+      IO.pipe do |read, write|
+        write.puts "hello"
+        slice = Bytes.new 1024
 
-          read.read_timeout = 1.second
-          read.read(slice).should eq(6)
+        read.read_timeout = 1.second
+        read.read(slice).should eq(6)
 
-          expect_raises(IO::TimeoutError) do
-            read.read_timeout = 0.1.microseconds
-            read.read(slice)
-          end
+        expect_raises(IO::TimeoutError) do
+          read.read_timeout = 0.1.microseconds
+          read.read(slice)
         end
       end
-    {% end %}
+    end
   end
 
   it_iterates "#each_line", ["hello", "bye"], SimpleIOMemory.new("hello\nbye\n").each_line
@@ -1000,51 +999,51 @@ describe IO do
   {% end %}
 
   describe "#close" do
-    {% unless flag?(:wasip1) || flag?(:wasip2) %}
-      pending_wasm32 "aborts 'read' in a different fiber" do
-        ch = Channel(SpecChannelStatus).new(1)
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'read' in a different fiber" do
+      ch = Channel(SpecChannelStatus).new(1)
 
-        IO.pipe do |read, write|
-          f = spawn do
-            ch.send :begin
-            read.gets
-          rescue
-            ch.send :end
-          end
-
-          schedule_timeout ch
-
-          ch.receive.should eq SpecChannelStatus::Begin
-          wait_until_blocked f
-
-          read.close
-          ch.receive.should eq SpecChannelStatus::End
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :begin
+          read.gets
+        rescue
+          ch.send :end
         end
+
+        schedule_timeout ch
+
+        ch.receive.should eq SpecChannelStatus::Begin
+        wait_until_blocked f
+
+        read.close
+        ch.receive.should eq SpecChannelStatus::End
       end
+    end
 
-      pending_wasm32 "aborts 'write' in a different fiber" do
-        ch = Channel(SpecChannelStatus).new(1)
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'write' in a different fiber" do
+      ch = Channel(SpecChannelStatus).new(1)
 
-        IO.pipe do |read, write|
-          f = spawn do
-            ch.send :begin
-            loop do
-              write.puts "some line"
-            end
-          rescue
-            ch.send :end
+      IO.pipe do |read, write|
+        f = spawn do
+          ch.send :begin
+          loop do
+            write.puts "some line"
           end
-
-          schedule_timeout ch
-
-          ch.receive.should eq SpecChannelStatus::Begin
-          wait_until_blocked f
-
-          write.close
-          ch.receive.should eq SpecChannelStatus::End
+        rescue
+          ch.send :end
         end
+
+        schedule_timeout ch
+
+        ch.receive.should eq SpecChannelStatus::Begin
+        wait_until_blocked f
+
+        write.close
+        ch.receive.should eq SpecChannelStatus::End
       end
-    {% end %}
+    end
   end
 
   describe IO::Error do
