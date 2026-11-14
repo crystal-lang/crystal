@@ -1742,6 +1742,9 @@ module Crystal
         else
           # Make sure to decrease the '}' count if inside an interpolation
           @macro_curly_count += 1 if @macro_curly_count > 0
+
+          # Like whitespace, '{' may be followed by a keyword (e.g. `{begin ... end}`)
+          whitespace = true unless delimiter_state
         end
       end
 
@@ -1890,8 +1893,12 @@ module Crystal
               @macro_curly_count += 1
               @delimiter_state_stack.push delimiter_state
               delimiter_state = nil
+
+              # Like whitespace, '#{' may be followed by a keyword (e.g. `"#{begin ... end}"`)
+              whitespace = true
+            else
+              whitespace = false
             end
-            whitespace = false
           else
             break
           end
