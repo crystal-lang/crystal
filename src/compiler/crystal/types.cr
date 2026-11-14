@@ -1055,19 +1055,63 @@ module Crystal
     end
   end
 
-  # Temporary type to recompute calls when a subclass is added to a type
-  # hierarchy. This shouldn't be needed, because the type hierarchy is
-  # now computed in a first pass, but for generic types, instantiations
-  # are considered as kind of subclasses, and calls must be recomputed
-  # to take them into account (but this should change in the future).
-  module SubclassObservable
-    def add_subclass_observer(observer)
-      observers = (@subclass_observers ||= [] of Call)
-      observers << observer
+  module SubclassObserver
+    abstract def on_new_subclass
+  end
+
+  # Type identity does not change when a hierarchy gains concrete members.
+  # Consumers of its membership must subscribe separately from AST type bindings.
+  module HierarchyObserver
+    include SubclassObserver
+
+    @observed_hierarchies : Array(Type)?
+
+    # Subscribes to hierarchy dependencies through aliases and structural wrappers.
+    # Tuple members participate in argument matching; arbitrary generic arguments do not.
+    private def observe_hierarchy(type : Type, expanded_aliases : Array(AliasType)? = nil)
+      case type
+      when AliasType
+        expanded = type.remove_alias
+        # Resolving an alias can discover recursion and mark it non-simple.
+        # Expand each recursive alias once, including its non-recursive branches.
+        unless type.simple?
+          expanded_aliases ||= [] of AliasType
+          return if expanded_aliases.includes?(type)
+          expanded_aliases << type
+        end
+        observe_hierarchy(expanded, expanded_aliases)
+      when UnionType
+        type.union_types.each { |member| observe_hierarchy(member, expanded_aliases) }
+      when TupleInstanceType
+        type.tuple_types.each { |member| observe_hierarchy(member, expanded_aliases) }
+      when NamedTupleInstanceType
+        type.entries.each { |entry| observe_hierarchy(entry.type, expanded_aliases) }
+      when VirtualType
+        subscribe_to_hierarchy(type.base_type)
+      when GenericType, NonGenericModuleType, GenericModuleInstanceType
+        subscribe_to_hierarchy(type)
+      end
     end
 
-    def remove_subclass_observer(observer)
-      @subclass_observers.try &.reject! &.same?(observer)
+    # Deduplicates notification sources. Subscriptions persist across lookups
+    # because receivers and arguments can depend on the same hierarchy.
+    private def subscribe_to_hierarchy(type : Type)
+      return unless type.is_a?(SubclassObservable)
+      observed = @observed_hierarchies ||= [] of Type
+      unless observed.includes?(type)
+        observed << type
+        type.add_subclass_observer(self)
+      end
+    end
+  end
+
+  # Recompute dependent calls, casts and filters when a hierarchy grows. Ordinary
+  # subclasses are known after the first pass, but generic instantiations can
+  # introduce new concrete members later during type inference.
+  module SubclassObservable
+    def add_subclass_observer(observer : SubclassObserver)
+      observers = (@subclass_observers ||= [] of SubclassObserver)
+      observers << observer
     end
 
     def notify_subclass_added

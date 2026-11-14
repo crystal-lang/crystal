@@ -3,6 +3,8 @@ require "../types"
 require "./type_lookup"
 
 class Crystal::Call
+  include HierarchyObserver
+
   property! scope : Type
   property with_scope : Type?
   property! parent_visitor : MainVisitor
@@ -188,6 +190,11 @@ class Crystal::Call
   end
 
   def lookup_matches_without_splat(arg_types, named_args_types, with_autocast)
+    # Restrictions can narrow an argument to the currently instantiated members
+    # of its hierarchy, even when the receiver and argument identities are stable.
+    arg_types.each { |type| observe_hierarchy(type) }
+    named_args_types.try &.each { |arg| observe_hierarchy(arg.type) }
+
     if obj = @obj
       lookup_matches_in(obj.type, arg_types, named_args_types, with_autocast: with_autocast)
     elsif name == "super"
@@ -218,7 +225,7 @@ class Crystal::Call
   end
 
   def lookup_matches_in(owner : NonGenericModuleType | GenericModuleInstanceType | GenericType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true, with_autocast = false)
-    attach_subclass_observer owner
+    subscribe_to_hierarchy(owner)
 
     including_types = owner.including_types
     if including_types
@@ -307,7 +314,7 @@ class Crystal::Call
 
     instance_type = owner.instance_type
     if instance_type.is_a?(VirtualType)
-      attach_subclass_observer instance_type.base_type
+      subscribe_to_hierarchy(instance_type.base_type)
     end
 
     instantiate signature, matches, owner, self_type, with_autocast
@@ -1255,20 +1262,6 @@ class Crystal::Call
     end
 
     {typed_def, args}
-  end
-
-  def attach_subclass_observer(type : Type)
-    if subclass_notifier = @subclass_notifier
-      # If the new notifier is a subtype of (or equal to) the current one,
-      # keep observing the wider type. Migrating to the narrower type would
-      # stop us from being woken when sibling subtypes are later added to
-      # the wider one — leaving the dispatch table stale (#16947).
-      return if type.implements?(subclass_notifier)
-      subclass_notifier.as(SubclassObservable).remove_subclass_observer(self)
-    end
-
-    type.as(SubclassObservable).add_subclass_observer(self)
-    @subclass_notifier = type
   end
 
   def super?
