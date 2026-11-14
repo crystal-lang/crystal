@@ -9,8 +9,28 @@
 # an executable.
 
 require "json"
-require "./command/*"
-require "./tools/*"
+require "./command/clear_cache"
+require "./command/env"
+require "./command/eval"
+require "./command/repl"
+require "./command/spec"
+
+{% unless flag?(:without_docs) %}
+  require "./command/docs"
+  require "./tools/doc"
+  require "./tools/git"
+{% end %}
+
+{% unless flag?(:without_playground) %}
+  require "./command/playground"
+  require "./tools/playground"
+{% end %}
+
+{% unless flag?(:without_tools) %}
+  require "./command/cursor"
+  require "./command/format"
+  require "./tools/*"
+{% end %}
 
 class Crystal::Command
   enum Exit
@@ -30,29 +50,38 @@ class Crystal::Command
     SOFTWARE_ERROR = 1
   end
 
-  USAGE = <<-USAGE
-    Usage: crystal [command] [switches] [program file] [--] [arguments]
+  USAGE = String.build do |io|
+    io.puts "Usage: crystal [command] [switches] [program file] [--] [arguments]"
+    io.puts ""
+    io.puts "Command:"
+    {% unless flag?(:without_tools) %}
+      io.puts "    init                     generate a new project"
+    {% end %}
+    io.puts "    build                    build an executable"
+    io.puts "    clear_cache              clear the compiler cache"
+    {% unless flag?(:without_docs) %}
+      io.puts "    docs                     generate documentation"
+    {% end %}
+    io.puts "    env                      print Crystal environment information"
+    io.puts "    eval                     eval code from args or standard input"
+    io.puts "    i/interactive            starts interactive Crystal"
+    {% unless flag?(:without_playground) %}
+      io.puts "    play                     starts Crystal playground server"
+    {% end %}
+    io.puts "    run (default)            build and run program"
+    io.puts "    spec                     build and run specs (in spec directory)"
+    {% unless flag?(:without_tools) %}
+      io.puts "    tool                     run a tool"
+    {% end %}
+    io.puts "    help, --help, -h         show this help"
+    io.puts "    version, --version, -v   show version"
+    io.puts ""
+    io.puts "Run a command followed by --help to see command specific information, ex:"
+    io.puts "    crystal <command> --help"
+  end
 
-    Command:
-        init                     generate a new project
-        build                    build an executable
-        clear_cache              clear the compiler cache
-        docs                     generate documentation
-        env                      print Crystal environment information
-        eval                     eval code from args or standard input
-        i/interactive            starts interactive Crystal
-        play                     starts Crystal playground server
-        run (default)            build and run program
-        spec                     build and run specs (in spec directory)
-        tool                     run a tool
-        help, --help, -h         show this help
-        version, --version, -v   show version
-
-    Run a command followed by --help to see command specific information, ex:
-        crystal <command> --help
-    USAGE
-
-  COMMANDS_USAGE = <<-USAGE
+  {% unless flag?(:without_tools) %}
+    COMMANDS_USAGE = <<-USAGE
     Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 
     Tool:
@@ -68,6 +97,7 @@ class Crystal::Command
         unreachable              show methods that are never called
         --help, -h               show this help
     USAGE
+  {% end %}
 
   def self.run(options = ARGV)
     new(options).run
@@ -90,7 +120,11 @@ class Crystal::Command
       exit
     when command == "init"
       options.shift
-      init
+      {% if flag?(:without_tools) %}
+        abort! "Crystal was compiled without init support", :USAGE_ERROR
+      {% else %}
+        init
+      {% end %}
     when "build".starts_with?(command)
       options.shift
       build
@@ -110,7 +144,11 @@ class Crystal::Command
       exit 1
     when "docs".starts_with?(command)
       options.shift
-      docs
+      {% if flag?(:without_docs) %}
+        abort! "Crystal was compiled without docs support", :USAGE_ERROR
+      {% else %}
+        docs
+      {% end %}
     when command == "env"
       options.shift
       env
@@ -133,7 +171,11 @@ class Crystal::Command
       spec
     when "tool".starts_with?(command)
       options.shift
-      tool
+      {% if flag?(:without_tools) %}
+        abort! "Crystal was compiled without tool support", :USAGE_ERROR
+      {% else %}
+        tool
+      {% end %}
     when command == "clear_cache"
       options.shift
       clear_cache

@@ -1,3 +1,5 @@
+{% skip_file if flag?(:without_tools) %}
+
 # This file exists so you can do:
 #
 # ```

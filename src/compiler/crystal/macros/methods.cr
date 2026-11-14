@@ -124,15 +124,13 @@ module Crystal
         format = true
       end
 
-      if format
-        begin
-          @program.stdout.puts Crystal::Formatter.format(@str.to_s)
-        rescue
-          @program.stdout.puts @str
+      str = nil
+      {% unless flag?(:without_tools) %}
+        if format
+          str = Crystal::Formatter.format(@str.to_s) rescue nil
         end
-      else
-        @program.stdout.puts @str
-      end
+      {% end %}
+      @program.stdout.puts(str || @str.to_s)
 
       @last = Nop.new
     end
