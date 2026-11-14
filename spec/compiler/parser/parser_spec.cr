@@ -1924,6 +1924,10 @@ module Crystal
     it_parses "a : Foo()[12]", TypeDeclaration.new("a".var, Generic.new("StaticArray".path(global: true), [Generic.new("Foo".path, [] of ASTNode), 12.int32] of ASTNode, suffix: Generic::Suffix::Bracket))
 
     it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
+
+    # #5700: this is a semantic error, as a macro can give it a meaning
+    it_parses "b = a : Bool", Assign.new("b".var, TypeDeclaration.new("a".var, "Bool".path))
+    it_parses "foo b = a : Bool", Call.new("foo", Assign.new("b".var, TypeDeclaration.new("a".var, "Bool".path)))
     it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
     it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
 
