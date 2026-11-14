@@ -114,10 +114,10 @@ describe "File" do
       File.write(filename, "hello")
 
       File.open(filename, "a") do |file|
-        {% if flag?(:wasip2) || flag?(:wasip3) %}
-          file.tell.should eq(5)
-        {% else %}
+        {% if flag?(:wasip1) %}
           file.tell.should eq(0)
+        {% else %}
+          file.tell.should eq(5)
         {% end %}
 
         file.write "12345".to_slice
@@ -706,11 +706,7 @@ describe "File" do
     it "gets for a symlink" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
-        target = file_path
-        {% if flag?(:wasm32) %}
-          target = symlink_target(target, symlink_path)
-        {% end %}
-        File.symlink(target, symlink_path)
+        File.symlink(symlink_target(file_path, symlink_path), symlink_path)
         info = File.info(symlink_path, follow_symlinks: false)
         info.type.should eq(File::Type::Symlink)
         info = File.info(symlink_path, follow_symlinks: true)
@@ -802,11 +798,7 @@ describe "File" do
           pending! if {{ flag?(:win32) }}
           with_tempfile("good_symlink_x.txt") do |good_path|
             crystal = Process.executable_path || pending! "Unable to locate compiler executable"
-            target = File.expand_path(crystal)
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, good_path)
-            {% end %}
-            File.symlink(target, good_path)
+            File.symlink(symlink_target(File.expand_path(crystal), good_path), good_path)
             File::Info.executable?(good_path, follow_symlinks: false).should be_true
           end
         end
@@ -814,11 +806,7 @@ describe "File" do
         it "gives true for a symlink to a non-existent file" do
           pending! if {{ flag?(:win32) }}
           with_tempfile("missing_symlink_x.txt") do |missing_path|
-            target = File.expand_path(datapath("non_existing_file.txt"))
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, missing_path)
-            {% end %}
-            File.symlink(target, missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.executable?(missing_path, follow_symlinks: false).should be_true
 
             # File.chmod(missing_path, 0o444)#, follow_symlinks: false)
@@ -868,14 +856,8 @@ describe "File" do
             File.chmod(unreadable, 0o222)
             pending_if_superuser!
 
-            good_target = File.expand_path(datapath("test_file.txt"))
-            bad_target = File.expand_path(unreadable)
-            {% if flag?(:wasm32) %}
-              good_target = symlink_target(good_target, good_path)
-              bad_target = symlink_target(bad_target, bad_path)
-            {% end %}
-            File.symlink(good_target, good_path)
-            File.symlink(bad_target, bad_path)
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(File.expand_path(unreadable), bad_path)
 
             File::Info.readable?(good_path).should be_true
             File::Info.readable?(bad_path).should be_false
@@ -885,11 +867,7 @@ describe "File" do
 
       it "gives false when the symbolic link destination doesn't exist" do
         with_tempfile("missing_symlink_r.txt") do |missing_path|
-          target = File.expand_path(datapath("non_existing_file.txt"))
-          {% if flag?(:wasm32) %}
-            target = symlink_target(target, missing_path)
-          {% end %}
-          File.symlink(target, missing_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
           File::Info.readable?(missing_path).should be_false
         end
       end
@@ -897,22 +875,14 @@ describe "File" do
       context "follow_symlinks: false" do
         it "gives true for a symlink" do
           with_tempfile("good_symlink_r.txt") do |good_path|
-            target = File.expand_path(datapath("test_file.txt"))
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, good_path)
-            {% end %}
-            File.symlink(target, good_path)
+            File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
             File::Info.readable?(good_path, follow_symlinks: false).should be_true
           end
         end
 
         it "gives false for a symlink to a non-existent file" do
           with_tempfile("missing_symlink_r.txt") do |missing_path|
-            target = File.expand_path(datapath("non_existing_file.txt"))
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, missing_path)
-            {% end %}
-            File.symlink(target, missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.readable?(missing_path, follow_symlinks: false).should be_true
           end
         end
@@ -949,14 +919,8 @@ describe "File" do
             File.chmod(readonly, 0o444)
             pending_if_superuser!
 
-            good_target = File.expand_path(datapath("test_file.txt"))
-            bad_target = File.expand_path(readonly)
-            {% if flag?(:wasm32) %}
-              good_target = symlink_target(good_target, good_path)
-              bad_target = symlink_target(bad_target, bad_path)
-            {% end %}
-            File.symlink(good_target, good_path)
-            File.symlink(bad_target, bad_path)
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(File.expand_path(readonly), bad_path)
 
             File::Info.writable?(good_path).should be_true
             File::Info.writable?(bad_path).should be_false
@@ -966,11 +930,7 @@ describe "File" do
 
       it "gives false when the symbolic link destination doesn't exist" do
         with_tempfile("missing_symlink_w.txt") do |missing_path|
-          target = File.expand_path(datapath("non_existing_file.txt"))
-          {% if flag?(:wasm32) %}
-            target = symlink_target(target, missing_path)
-          {% end %}
-          File.symlink(target, missing_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
           File::Info.writable?(missing_path).should be_false
         end
       end
@@ -978,22 +938,14 @@ describe "File" do
       context "follow_symlinks: false" do
         it "gives true for a symlink" do
           with_tempfile("good_symlink_w.txt") do |good_path|
-            target = File.expand_path(datapath("test_file.txt"))
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, good_path)
-            {% end %}
-            File.symlink(target, good_path)
+            File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
             File::Info.writable?(good_path, follow_symlinks: false).should be_true
           end
         end
 
         it "gives false for a symlink to a non-existent file" do
           with_tempfile("missing_symlink_w.txt") do |missing_path|
-            target = File.expand_path(datapath("non_existing_file.txt"))
-            {% if flag?(:wasm32) %}
-              target = symlink_target(target, missing_path)
-            {% end %}
-            File.symlink(target, missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.writable?(missing_path, follow_symlinks: false).should be_true
           end
         end
@@ -1080,11 +1032,7 @@ describe "File" do
     it "deletes a symlink directory" do
       with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
         Dir.mkdir(target_path)
-        target = target_path
-        {% if flag?(:wasm32) %}
-          target = symlink_target(target, symlink_path)
-        {% end %}
-        File.symlink(target, symlink_path)
+        File.symlink(symlink_target(target_path, symlink_path), symlink_path)
         File.delete(symlink_path)
       end
     end
@@ -1161,11 +1109,7 @@ describe "File" do
     it "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
-        target = file_path
-        {% if flag?(:wasm32) %}
-          target = symlink_target(target, symlink_path)
-        {% end %}
-        File.symlink(target, symlink_path)
+        File.symlink(symlink_target(file_path, symlink_path), symlink_path)
         real_symlink_path = File.realpath(symlink_path)
         real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
@@ -1176,12 +1120,9 @@ describe "File" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink1.txt") do |symlink_path1|
         with_tempfile("symlink2.txt") do |symlink_path2|
-          target1 = file_path
-          target2 = symlink_path1
-          {% if flag?(:wasm32) %}
-            target1 = symlink_target(target1, symlink_path1)
-            target2 = symlink_target(target2, symlink_path2)
-          {% end %}
+          target1 = symlink_target(file_path, symlink_path1)
+          target2 = symlink_target(symlink_path1, symlink_path2)
+
           File.symlink(target1, symlink_path1)
           File.symlink(target2, symlink_path2)
           real_symlink_path = File.realpath(symlink_path2)
