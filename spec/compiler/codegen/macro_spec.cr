@@ -1222,6 +1222,26 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with abstract def separated by several spaces (#17928)" do
+    run(<<-'CRYSTAL').to_i.should eq(1)
+      macro foo
+        abstract class A
+          abstract  def a : Int32
+        end
+
+        class B < A
+          def a : Int32
+            1
+          end
+        end
+      end
+
+      foo
+
+      B.new.a
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo

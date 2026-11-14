@@ -2029,7 +2029,11 @@ module Crystal
         case next_char
         when 'b'
           if char_sequence?('s', 't', 'r', 'a', 'c', 't') && next_char.whitespace?
-            case next_char
+            # Skip any further spaces between `abstract` and the next keyword
+            while (char = next_char).in?(' ', '\t')
+            end
+
+            case char
             when 'd'
               MacroKeywordState::AbstractDef if char_sequence?('e', 'f') && peek_not_ident_part_or_end_next_char
             when 'c'

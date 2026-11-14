@@ -187,6 +187,38 @@ describe "Lexer macro" do
     end
   end
 
+  ["  ", "\t", " \t "].each do |spaces|
+    it "lexes macro with nested abstract def separated by #{spaces.inspect} (#17928)" do
+      lexer = Lexer.new(%(hello\n  abstract#{spaces}def foo\nend))
+
+      token = lexer.next_macro_token(Token::MacroState.default, false)
+      token.type.should eq(t :MACRO_LITERAL)
+      token.value.should eq("hello\n  abstract#{spaces}def foo\n")
+      token.macro_state.nest.should eq(0)
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(t :MACRO_END)
+    end
+
+    {"class", "struct"}.each do |keyword|
+      it "lexes macro with nested abstract #{keyword} separated by #{spaces.inspect} (#17928)" do
+        lexer = Lexer.new(%(hello\n  abstract#{spaces}#{keyword} Foo; end; end))
+
+        token = lexer.next_macro_token(Token::MacroState.default, false)
+        token.type.should eq(t :MACRO_LITERAL)
+        token.value.should eq("hello\n  abstract#{spaces}#{keyword} Foo; ")
+        token.macro_state.nest.should eq(1)
+
+        token = lexer.next_macro_token(token.macro_state, false)
+        token.type.should eq(t :MACRO_LITERAL)
+        token.value.should eq("end; ")
+
+        token = lexer.next_macro_token(token.macro_state, false)
+        token.type.should eq(t :MACRO_END)
+      end
+    end
+  end
+
   it "reaches end" do
     lexer = Lexer.new(%(fail))
 
