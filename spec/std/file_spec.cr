@@ -114,7 +114,11 @@ describe "File" do
       File.write(filename, "hello")
 
       File.open(filename, "a") do |file|
-        file.tell.should eq(0)
+        {% if !flag?(:wasi) || flag?(:wasip1) %}
+          file.tell.should eq(0)
+        {% else %}
+          file.tell.should eq(5)
+        {% end %}
 
         file.write "12345".to_slice
         file.tell.should eq(10)
@@ -215,17 +219,19 @@ describe "File" do
 
     it "follows symlinks" do
       with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-        File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-        File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+        File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
+        File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), bad_path), bad_path)
 
         File.exists?(good_path).should be_true
         File.exists?(bad_path).should be_false
       end
     end
 
-    it "gives true for null file (#15019)" do
-      File.exists?(File::NULL).should be_true
-    end
+    {% unless flag?(:wasm32) %}
+      it "gives true for null file (#15019)" do
+        File.exists?(File::NULL).should be_true
+      end
+    {% end %}
 
     describe "follow_symlinks: false" do
       it "gives true for a file" do
@@ -246,17 +252,19 @@ describe "File" do
 
       it "checks existence of symlink" do
         with_tempfile("good_symlink.txt", "bad_symlink.txt") do |good_path, bad_path|
-          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+          File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), bad_path), bad_path)
 
           File.exists?(good_path, follow_symlinks: false).should be_true
           File.exists?(bad_path, follow_symlinks: false).should be_true
         end
       end
 
-      it "gives true for null file (#15019)" do
-        File.exists?(File::NULL, follow_symlinks: false).should be_true
-      end
+      {% unless flag?(:wasm32) %}
+        it "gives true for null file (#15019)" do
+          File.exists?(File::NULL, follow_symlinks: false).should be_true
+        end
+      {% end %}
     end
   end
 
@@ -317,7 +325,7 @@ describe "File" do
       other = datapath("test_file.ini")
 
       with_tempfile("test_file_symlink.txt") do |symlink|
-        File.symlink(File.realpath(file), symlink)
+        File.symlink(symlink_target(File.realpath(file), symlink), symlink)
 
         File.same?(file, symlink).should be_false
         File.same?(file, symlink, follow_symlinks: true).should be_true
@@ -331,7 +339,7 @@ describe "File" do
     it "creates a symbolic link" do
       in_path = datapath("test_file.txt")
       with_tempfile("test_file_link.txt") do |out_path|
-        File.symlink(File.realpath(in_path), out_path)
+        File.symlink(symlink_target(File.realpath(in_path), out_path), out_path)
         File.symlink?(out_path).should be_true
         File.same?(in_path, out_path, follow_symlinks: true).should be_true
       end
@@ -415,24 +423,26 @@ describe "File" do
       end
     end
 
-    it "raises when inaccessible" do
-      # Crystal does not expose ways to make a file unreadable on Windows
-      pending! if {{ flag?(:win32) }}
-      pending_if_superuser!
+    {% unless flag?(:wasm32) %}
+      it "raises when inaccessible" do
+        # Crystal does not expose ways to make a file unreadable on Windows
+        pending! if {{ flag?(:win32) }}
+        pending_if_superuser!
 
-      with_tempfile("readlink-inaccessible") do |path|
-        Dir.mkdir_p(path)
-        symlink = File.join(path, "symlink.txt")
-        File.symlink("nonexistent.txt", symlink)
-        File.chmod(path, File::Permissions::None)
+        with_tempfile("readlink-inaccessible") do |path|
+          Dir.mkdir_p(path)
+          symlink = File.join(path, "symlink.txt")
+          File.symlink("nonexistent.txt", symlink)
+          File.chmod(path, File::Permissions::None)
 
-        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
-          File.readlink(symlink)
+          expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+            File.readlink(symlink)
+          end
+        ensure
+          File.chmod(path, File::Permissions::All)
         end
-      ensure
-        File.chmod(path, File::Permissions::All)
       end
-    end
+    {% end %}
   end
 
   describe ".readlink?" do
@@ -459,24 +469,26 @@ describe "File" do
       end
     end
 
-    it "raises when inaccessible" do
-      # Crystal does not expose ways to make a file unreadable on Windows
-      pending! if {{ flag?(:win32) }}
-      pending_if_superuser!
+    {% unless flag?(:wasm32) %}
+      it "raises when inaccessible" do
+        # Crystal does not expose ways to make a file unreadable on Windows
+        pending! if {{ flag?(:win32) }}
+        pending_if_superuser!
 
-      with_tempfile("readlink-inaccessible2") do |path|
-        Dir.mkdir_p(path)
-        symlink = File.join(path, "symlink.txt")
-        File.symlink("nonexistent.txt", symlink)
-        File.chmod(path, File::Permissions::None)
+        with_tempfile("readlink-inaccessible2") do |path|
+          Dir.mkdir_p(path)
+          symlink = File.join(path, "symlink.txt")
+          File.symlink("nonexistent.txt", symlink)
+          File.chmod(path, File::Permissions::None)
 
-        expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
-          File.readlink?(symlink)
+          expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
+            File.readlink?(symlink)
+          end
+        ensure
+          File.chmod(path, File::Permissions::All)
         end
-      ensure
-        File.chmod(path, File::Permissions::All)
       end
-    end
+    {% end %}
   end
 
   it "gets dirname" do
@@ -561,78 +573,82 @@ describe "File" do
     typeof(File.chown("."))
     typeof(File.chown(".", uid: 1001, gid: 100, follow_symlinks: true))
 
-    File.open(File::NULL, "w") do |file|
-      typeof(file.chown)
-      typeof(file.chown(uid: 1001, gid: 100))
-    end
+    {% unless flag?(:wasm32) %}
+      File.open(File::NULL, "w") do |file|
+        typeof(file.chown)
+        typeof(file.chown(uid: 1001, gid: 100))
+      end
+    {% end %}
   end
 
-  describe "chmod" do
-    it "changes file permissions with class method" do
-      path = datapath("chmod.txt")
-      begin
-        File.write(path, "")
-        File.chmod(path, 0o775)
-        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
-      ensure
-        File.delete?(path)
-      end
-    end
-
-    it "changes file permissions with instance method" do
-      path = datapath("chmod.txt")
-      begin
-        File.open(path, "w") do |file|
-          file.chmod(0o775)
+  {% unless flag?(:wasm32) %}
+    describe "chmod" do
+      it "changes file permissions with class method" do
+        path = datapath("chmod.txt")
+        begin
+          File.write(path, "")
+          File.chmod(path, 0o775)
+          File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+        ensure
+          File.delete?(path)
         end
-        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
-      ensure
-        File.delete(path) if File.exists?(path)
+      end
+
+      it "changes file permissions with instance method" do
+        path = datapath("chmod.txt")
+        begin
+          File.open(path, "w") do |file|
+            file.chmod(0o775)
+          end
+          File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+        ensure
+          File.delete(path) if File.exists?(path)
+        end
+      end
+
+      it "changes dir permissions" do
+        path = datapath("chmod")
+        begin
+          Dir.mkdir(path, 0o775)
+          File.chmod(path, 0o664)
+          File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
+        ensure
+          Dir.delete?(path)
+        end
+      end
+
+      it "can take File::Permissions" do
+        path = datapath("chmod.txt")
+        begin
+          File.write(path, "")
+          File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
+          File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
+        ensure
+          File.delete?(path)
+        end
+      end
+
+      it "follows symlinks" do
+        with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
+          File.write(source_path, "")
+
+          File.symlink(symlink_target(File.realpath(source_path), target_path), target_path)
+          File.symlink?(target_path).should be_true
+
+          File.chmod(source_path, 0o664)
+          File.chmod(target_path, 0o444)
+
+          File.info(source_path).permissions.should eq(normalize_permissions(0o444, directory: false))
+        end
+      end
+
+      it "raises when destination doesn't exist" do
+        expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt").inspect_unquoted}'") do
+          File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
+        end
       end
     end
-
-    it "changes dir permissions" do
-      path = datapath("chmod")
-      begin
-        Dir.mkdir(path, 0o775)
-        File.chmod(path, 0o664)
-        File.info(path).permissions.should eq(normalize_permissions(0o664, directory: true))
-      ensure
-        Dir.delete?(path)
-      end
-    end
-
-    it "can take File::Permissions" do
-      path = datapath("chmod.txt")
-      begin
-        File.write(path, "")
-        File.chmod(path, File::Permissions.flags(OwnerAll, GroupAll, OtherExecute, OtherRead))
-        File.info(path).permissions.should eq(normalize_permissions(0o775, directory: false))
-      ensure
-        File.delete?(path)
-      end
-    end
-
-    it "follows symlinks" do
-      with_tempfile("chmod-destination.txt", "chmod-source.txt") do |source_path, target_path|
-        File.write(source_path, "")
-
-        File.symlink(File.realpath(source_path), target_path)
-        File.symlink?(target_path).should be_true
-
-        File.chmod(source_path, 0o664)
-        File.chmod(target_path, 0o444)
-
-        File.info(source_path).permissions.should eq(normalize_permissions(0o444, directory: false))
-      end
-    end
-
-    it "raises when destination doesn't exist" do
-      expect_raises(File::NotFoundError, "Error changing permissions: '#{datapath("unknown_chmod_path.txt").inspect_unquoted}'") do
-        File.chmod(datapath("unknown_chmod_path.txt"), 0o664)
-      end
-    end
-  end
+  {% end %}
 
   long_path = "a" * 1000
   describe ".info" do
@@ -680,15 +696,17 @@ describe "File" do
       info.type.should eq(File::Type::Directory)
     end
 
-    it "gets for a character device" do
-      info = File.info(File::NULL)
-      info.type.should eq(File::Type::CharacterDevice)
-    end
+    {% unless flag?(:wasm32) %}
+      it "gets for a character device" do
+        info = File.info(File::NULL)
+        info.type.should eq(File::Type::CharacterDevice)
+      end
+    {% end %}
 
     it "gets for a symlink" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
-        File.symlink(file_path, symlink_path)
+        File.symlink(symlink_target(file_path, symlink_path), symlink_path)
         info = File.info(symlink_path, follow_symlinks: false)
         info.type.should eq(File::Type::Symlink)
         info = File.info(symlink_path, follow_symlinks: true)
@@ -703,12 +721,14 @@ describe "File" do
       end
     end
 
-    it "gets for pipe" do
-      IO.pipe do |r, w|
-        r.info.type.should eq(File::Type::Pipe)
-        w.info.type.should eq(File::Type::Pipe)
+    {% unless flag?(:wasip1) || flag?(:wasip2) %}
+      it "gets for pipe" do
+        IO.pipe do |r, w|
+          r.info.type.should eq(File::Type::Pipe)
+          w.info.type.should eq(File::Type::Pipe)
+        end
       end
-    end
+    {% end %}
 
     it "gets for non-existent file and raises" do
       expect_raises(File::NotFoundError, "Unable to get file info: 'non-existent'") do
@@ -749,7 +769,8 @@ describe "File" do
         File.executable?(crystal).should be_true # deprecated
       end
 
-      it "gives false" do
+      # WASI does not expose executable permission bits.
+      pending_wasm32 "gives false" do
         File::Info.executable?(datapath("test_file.txt")).should be_false
       end
 
@@ -764,8 +785,8 @@ describe "File" do
       it "follows symlinks" do
         with_tempfile("good_symlink_x.txt", "bad_symlink_x.txt") do |good_path, bad_path|
           crystal = Process.executable_path || pending! "Unable to locate compiler executable"
-          File.symlink(File.expand_path(crystal), good_path)
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), bad_path)
+          File.symlink(symlink_target(File.expand_path(crystal), good_path), good_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), bad_path), bad_path)
 
           File::Info.executable?(good_path).should be_true
           File::Info.executable?(bad_path).should be_false
@@ -777,7 +798,7 @@ describe "File" do
           pending! if {{ flag?(:win32) }}
           with_tempfile("good_symlink_x.txt") do |good_path|
             crystal = Process.executable_path || pending! "Unable to locate compiler executable"
-            File.symlink(File.expand_path(crystal), good_path)
+            File.symlink(symlink_target(File.expand_path(crystal), good_path), good_path)
             File::Info.executable?(good_path, follow_symlinks: false).should be_true
           end
         end
@@ -785,7 +806,7 @@ describe "File" do
         it "gives true for a symlink to a non-existent file" do
           pending! if {{ flag?(:win32) }}
           with_tempfile("missing_symlink_x.txt") do |missing_path|
-            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.executable?(missing_path, follow_symlinks: false).should be_true
 
             # File.chmod(missing_path, 0o444)#, follow_symlinks: false)
@@ -810,7 +831,7 @@ describe "File" do
       end
 
       # win32 doesn't have a way to make files unreadable via chmod
-      {% unless flag?(:win32) %}
+      {% unless flag?(:win32) || flag?(:wasm32) %}
         it "gives false when the file has no read permissions" do
           with_tempfile("unreadable.txt") do |path|
             File.write(path, "")
@@ -846,7 +867,7 @@ describe "File" do
 
       it "gives false when the symbolic link destination doesn't exist" do
         with_tempfile("missing_symlink_r.txt") do |missing_path|
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
           File::Info.readable?(missing_path).should be_false
         end
       end
@@ -854,14 +875,14 @@ describe "File" do
       context "follow_symlinks: false" do
         it "gives true for a symlink" do
           with_tempfile("good_symlink_r.txt") do |good_path|
-            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
             File::Info.readable?(good_path, follow_symlinks: false).should be_true
           end
         end
 
         it "gives false for a symlink to a non-existent file" do
           with_tempfile("missing_symlink_r.txt") do |missing_path|
-            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.readable?(missing_path, follow_symlinks: false).should be_true
           end
         end
@@ -882,32 +903,34 @@ describe "File" do
         File::Info.writable?(datapath("dir", "test_file.txt", "")).should be_false
       end
 
-      it "gives false when the file has no write permissions" do
-        with_tempfile("readonly.txt") do |path|
-          File.write(path, "")
-          File.chmod(path, 0o444)
-          pending_if_superuser!
-          File::Info.writable?(path).should be_false
+      {% unless flag?(:wasm32) %}
+        it "gives false when the file has no write permissions" do
+          with_tempfile("readonly.txt") do |path|
+            File.write(path, "")
+            File.chmod(path, 0o444)
+            pending_if_superuser!
+            File::Info.writable?(path).should be_false
+          end
         end
-      end
 
-      it "follows symlinks" do
-        with_tempfile("good_symlink_w.txt", "bad_symlink_w.txt", "readonly.txt") do |good_path, bad_path, readonly|
-          File.write(readonly, "")
-          File.chmod(readonly, 0o444)
-          pending_if_superuser!
+        it "follows symlinks" do
+          with_tempfile("good_symlink_w.txt", "bad_symlink_w.txt", "readonly.txt") do |good_path, bad_path, readonly|
+            File.write(readonly, "")
+            File.chmod(readonly, 0o444)
+            pending_if_superuser!
 
-          File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
-          File.symlink(File.expand_path(readonly), bad_path)
+            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(File.expand_path(readonly), bad_path)
 
-          File::Info.writable?(good_path).should be_true
-          File::Info.writable?(bad_path).should be_false
+            File::Info.writable?(good_path).should be_true
+            File::Info.writable?(bad_path).should be_false
+          end
         end
-      end
+      {% end %}
 
       it "gives false when the symbolic link destination doesn't exist" do
         with_tempfile("missing_symlink_w.txt") do |missing_path|
-          File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+          File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
           File::Info.writable?(missing_path).should be_false
         end
       end
@@ -915,14 +938,14 @@ describe "File" do
       context "follow_symlinks: false" do
         it "gives true for a symlink" do
           with_tempfile("good_symlink_w.txt") do |good_path|
-            File.symlink(File.expand_path(datapath("test_file.txt")), good_path)
+            File.symlink(symlink_target(File.expand_path(datapath("test_file.txt")), good_path), good_path)
             File::Info.writable?(good_path, follow_symlinks: false).should be_true
           end
         end
 
         it "gives false for a symlink to a non-existent file" do
           with_tempfile("missing_symlink_w.txt") do |missing_path|
-            File.symlink(File.expand_path(datapath("non_existing_file.txt")), missing_path)
+            File.symlink(symlink_target(File.expand_path(datapath("non_existing_file.txt")), missing_path), missing_path)
             File::Info.writable?(missing_path, follow_symlinks: false).should be_true
           end
         end
@@ -972,19 +995,21 @@ describe "File" do
       end
     end
 
-    it "deletes a read-only file" do
-      with_tempfile("delete-file-dir") do |path|
-        Dir.mkdir(path)
-        File.chmod(path, 0o755)
+    {% unless flag?(:wasm32) %}
+      it "deletes a read-only file" do
+        with_tempfile("delete-file-dir") do |path|
+          Dir.mkdir(path)
+          File.chmod(path, 0o755)
 
-        filename = File.join(path, "foo")
-        File.open(filename, "w") { }
-        File.exists?(filename).should be_true
-        File.chmod(filename, 0o000)
-        File.delete(filename)
-        File.exists?(filename).should be_false
+          filename = File.join(path, "foo")
+          File.open(filename, "w") { }
+          File.exists?(filename).should be_true
+          File.chmod(filename, 0o000)
+          File.delete(filename)
+          File.exists?(filename).should be_false
+        end
       end
-    end
+    {% end %}
 
     it "deletes? a file" do
       with_tempfile("delete-file.txt") do |filename|
@@ -1007,7 +1032,7 @@ describe "File" do
     it "deletes a symlink directory" do
       with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
         Dir.mkdir(target_path)
-        File.symlink(target_path, symlink_path)
+        File.symlink(symlink_target(target_path, symlink_path), symlink_path)
         File.delete(symlink_path)
       end
     end
@@ -1084,7 +1109,7 @@ describe "File" do
     it "expands paths of symlinks" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink.txt") do |symlink_path|
-        File.symlink(file_path, symlink_path)
+        File.symlink(symlink_target(file_path, symlink_path), symlink_path)
         real_symlink_path = File.realpath(symlink_path)
         real_file_path = File.realpath(file_path)
         real_symlink_path.should eq(real_file_path)
@@ -1095,8 +1120,11 @@ describe "File" do
       file_path = File.expand_path(datapath("test_file.txt"))
       with_tempfile("symlink1.txt") do |symlink_path1|
         with_tempfile("symlink2.txt") do |symlink_path2|
-          File.symlink(file_path, symlink_path1)
-          File.symlink(symlink_path1, symlink_path2)
+          target1 = symlink_target(file_path, symlink_path1)
+          target2 = symlink_target(symlink_path1, symlink_path2)
+
+          File.symlink(target1, symlink_path1)
+          File.symlink(target2, symlink_path2)
           real_symlink_path = File.realpath(symlink_path2)
           real_file_path = File.realpath(file_path)
           real_symlink_path.should eq(real_file_path)
@@ -1228,7 +1256,8 @@ describe "File" do
     end
   end
 
-  it "opens with perm (int)" do
+  # WASI does not expose Unix permission bits in file metadata.
+  pending_wasm32 "opens with perm (int)" do
     with_tempfile("write_with_perm-int.txt") do |path|
       perm = 0o600
       File.open(path, "w", perm) do |file|
@@ -1237,7 +1266,7 @@ describe "File" do
     end
   end
 
-  it "opens with perm (File::Permissions)" do
+  pending_wasm32 "opens with perm (File::Permissions)" do
     with_tempfile("write_with_perm.txt") do |path|
       perm = File::Permissions.flags(OwnerRead, OwnerWrite)
       File.open(path, "w", perm) do |file|
@@ -1325,15 +1354,17 @@ describe "File" do
     end
   end
 
-  it "locks file opened in append mode (#14702)" do
-    with_tempfile("truncate-append.txt") do |path|
-      File.write(path, "0123456789")
+  {% unless flag?(:wasm32) %}
+    it "locks file opened in append mode (#14702)" do
+      with_tempfile("truncate-append.txt") do |path|
+        File.write(path, "0123456789")
 
-      File.open(path, "a") do |file|
-        file.flock_exclusive { }
+        File.open(path, "a") do |file|
+          file.flock_exclusive { }
+        end
       end
     end
-  end
+  {% end %}
 
   it "can navigate with pos" do
     File.open(datapath("test_file.txt")) do |file|
@@ -1389,26 +1420,28 @@ describe "File" do
     end
   end
 
-  # Crystal does not expose ways to make a file unreadable on Windows
-  {% unless flag?(:win32) %}
-    it "raises when reading a file with no permission" do
+  {% unless flag?(:wasm32) %}
+    # Crystal does not expose ways to make a file unreadable on Windows
+    {% unless flag?(:win32) %}
+      it "raises when reading a file with no permission" do
+        with_tempfile("file.txt") do |path|
+          File.touch(path)
+          File.chmod(path, File::Permissions::None)
+          pending_if_superuser!
+          expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
+        end
+      end
+    {% end %}
+
+    it "raises when writing to a file with no permission" do
       with_tempfile("file.txt") do |path|
         File.touch(path)
         File.chmod(path, File::Permissions::None)
         pending_if_superuser!
-        expect_raises(File::AccessDeniedError, "Error opening file with mode 'r': '#{path.inspect_unquoted}'") { File.read(path) }
+        expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
       end
     end
   {% end %}
-
-  it "raises when writing to a file with no permission" do
-    with_tempfile("file.txt") do |path|
-      File.touch(path)
-      File.chmod(path, File::Permissions::None)
-      pending_if_superuser!
-      expect_raises(File::AccessDeniedError, "Error opening file with mode 'w': '#{path.inspect_unquoted}'") { File.write(path, "foo") }
-    end
-  end
 
   describe "truncate" do
     it "truncates" do
@@ -1461,68 +1494,70 @@ describe "File" do
     end
   end
 
-  describe "flock" do
-    it "#flock_exclusive" do
-      File.open(datapath("test_file.txt")) do |file1|
-        File.open(datapath("test_file.txt")) do |file2|
-          file1.flock_exclusive do
-            exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
-              file2.flock_exclusive(blocking: false) { }
-            end
-            exc.os_error.should eq({% if flag?(:win32) %}WinError::ERROR_LOCK_VIOLATION{% else %}Errno::EWOULDBLOCK{% end %})
-          end
-        end
-      end
-    end
-
-    {true, false}.each do |blocking|
-      context "blocking: #{blocking}" do
-        it "#flock_shared" do
-          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
-            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
-              file1.flock_shared do
-                file2.flock_shared(blocking: false) { }
+  {% unless flag?(:wasm32) %}
+    describe "flock" do
+      it "#flock_exclusive" do
+        File.open(datapath("test_file.txt")) do |file1|
+          File.open(datapath("test_file.txt")) do |file2|
+            file1.flock_exclusive do
+              exc = expect_raises(IO::Error, "Error applying file lock: file is already locked") do
+                file2.flock_exclusive(blocking: false) { }
               end
-            end
-          end
-        end
-
-        it "#flock_shared soft blocking fiber" do
-          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
-            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
-              done = Channel(Nil).new
-              file1.flock_exclusive
-
-              spawn do
-                file1.flock_unlock
-                done.send nil
-              end
-
-              file2.flock_shared
-              done.receive
-            end
-          end
-        end
-
-        it "#flock_exclusive soft blocking fiber" do
-          File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
-            File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
-              done = Channel(Nil).new
-              file1.flock_exclusive
-
-              spawn do
-                file1.flock_unlock
-                done.send nil
-              end
-
-              file2.flock_exclusive
-              done.receive
+              exc.os_error.should eq({% if flag?(:win32) %}WinError::ERROR_LOCK_VIOLATION{% else %}Errno::EWOULDBLOCK{% end %})
             end
           end
         end
       end
+
+      {true, false}.each do |blocking|
+        context "blocking: #{blocking}" do
+          it "#flock_shared" do
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+              File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+                file1.flock_shared do
+                  file2.flock_shared(blocking: false) { }
+                end
+              end
+            end
+          end
+
+          it "#flock_shared soft blocking fiber" do
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+              File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+                done = Channel(Nil).new
+                file1.flock_exclusive
+
+                spawn do
+                  file1.flock_unlock
+                  done.send nil
+                end
+
+                file2.flock_shared
+                done.receive
+              end
+            end
+          end
+
+          it "#flock_exclusive soft blocking fiber" do
+            File.open(datapath("test_file.txt"), blocking: blocking) do |file1|
+              File.open(datapath("test_file.txt"), blocking: blocking) do |file2|
+                done = Channel(Nil).new
+                file1.flock_exclusive
+
+                spawn do
+                  file1.flock_unlock
+                  done.send nil
+                end
+
+                file2.flock_exclusive
+                done.receive
+              end
+            end
+          end
+        end
+      end
     end
-  end
+  {% end %}
 
   it "reads at offset" do
     filename = datapath("test_file.txt")
@@ -1885,58 +1920,60 @@ describe "File" do
       end
     end
 
-    it "copies permissions" do
-      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        File.write(src_path, "foo")
-        File.chmod(src_path, 0o444)
+    {% unless flag?(:wasm32) %}
+      it "copies permissions" do
+        with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+          File.write(src_path, "foo")
+          File.chmod(src_path, 0o444)
 
-        File.copy(src_path, out_path)
+          File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
-        File.same_content?(src_path, out_path).should be_true
+          File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
+          File.same_content?(src_path, out_path).should be_true
+        end
       end
-    end
 
-    it "overwrites existing destination and permissions" do
-      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        File.write(src_path, "foo")
-        File.chmod(src_path, 0o444)
+      it "overwrites existing destination and permissions" do
+        with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+          File.write(src_path, "foo")
+          File.chmod(src_path, 0o444)
 
-        File.write(out_path, "bar")
-        File.chmod(out_path, 0o666)
+          File.write(out_path, "bar")
+          File.chmod(out_path, 0o666)
 
-        File.copy(src_path, out_path)
+          File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
-        File.same_content?(src_path, out_path).should be_true
+          File.info(out_path).permissions.should eq(File::Permissions.new(0o444))
+          File.same_content?(src_path, out_path).should be_true
+        end
       end
-    end
 
-    it "copies read-only permission" do
-      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        File.write(src_path, "foo")
-        File.chmod(src_path, 0o444)
+      it "copies read-only permission" do
+        with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+          File.write(src_path, "foo")
+          File.chmod(src_path, 0o444)
 
-        File.copy(src_path, out_path)
+          File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
-        File.same_content?(src_path, out_path).should be_true
+          File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+          File.same_content?(src_path, out_path).should be_true
+        end
       end
-    end
 
-    it "copies read-only permission over existing file" do
-      with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
-        File.write(src_path, "foo")
-        File.chmod(src_path, 0o444)
+      it "copies read-only permission over existing file" do
+        with_tempfile("cp-permissions-src.txt", "cp-permissions-out.txt") do |src_path, out_path|
+          File.write(src_path, "foo")
+          File.chmod(src_path, 0o444)
 
-        File.write(out_path, "bar")
+          File.write(out_path, "bar")
 
-        File.copy(src_path, out_path)
+          File.copy(src_path, out_path)
 
-        File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
-        File.same_content?(src_path, out_path).should be_true
+          File.info(out_path).permissions.should eq normalize_permissions(0o444, directory: false)
+          File.same_content?(src_path, out_path).should be_true
+        end
       end
-    end
+    {% end %}
   end
 
   describe File::Permissions do

@@ -1,3 +1,7 @@
+{% unless flag?(:wasip1) || flag?(:wasip2) %}
+  require "c/pthread"
+{% end %}
+
 module Crystal::System::Thread
   alias Handle = Nil
 

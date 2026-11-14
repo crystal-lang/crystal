@@ -1,6 +1,8 @@
 require "./spec_helper"
 require "../support/env"
 
+private NOT_CURRENT_DIR = {% if flag?(:wasm32) %} datapath("dir") {% else %} ".." {% end %}
+
 private def reset_tempdir(tmp_path = nil, &)
   {% if flag?(:windows) %}
     with_env("TMP": tmp_path, "TEMP": nil, "USERPROFILE": nil) { yield }
@@ -179,21 +181,23 @@ describe "Dir" do
     it "raises with symlink directory" do
       with_tempfile("delete-target-directory", "delete-symlink-directory") do |target_path, symlink_path|
         Dir.mkdir(target_path)
-        File.symlink(target_path, symlink_path)
+        File.symlink(symlink_target(target_path, symlink_path), symlink_path)
         expect_raises(File::Error) do
           Dir.delete(symlink_path)
         end
       end
     end
 
-    it "deletes a read-only directory" do
-      with_tempfile("delete-readonly-dir") do |path|
-        Dir.mkdir(path)
-        File.chmod(path, 0o000)
-        Dir.delete(path)
-        Dir.exists?(path).should be_false
+    {% unless flag?(:wasm32) %}
+      it "deletes a read-only directory" do
+        with_tempfile("delete-readonly-dir") do |path|
+          Dir.mkdir(path)
+          File.chmod(path, 0o000)
+          Dir.delete(path)
+          Dir.exists?(path).should be_false
+        end
       end
-    end
+    {% end %}
   end
 
   describe "glob" do
@@ -428,8 +432,8 @@ describe "Dir" do
         link = Path[path, "f1_link.txt"]
         non_link = Path[path, "non_link.txt"]
 
-        File.symlink(datapath("dir", "f1.txt"), link)
-        File.symlink(datapath("dir", "nonexisting"), non_link)
+        File.symlink(symlink_target(datapath("dir", "f1.txt"), link), link)
+        File.symlink(symlink_target(datapath("dir", "nonexisting"), non_link), non_link)
 
         Dir["#{Path[path].to_posix}/*_link.txt"].sort.should eq [
           link.to_s,
@@ -449,7 +453,7 @@ describe "Dir" do
         Dir.mkdir_p(target)
 
         File.write(non_link, "")
-        File.symlink(target, link_dir)
+        File.symlink(symlink_target(target.to_s, link_dir), link_dir)
 
         Dir.glob("#{Path[path].to_posix}/glob/*/a.txt").sort.should eq [] of String
         Dir.glob("#{Path[path].to_posix}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
@@ -605,7 +609,7 @@ describe "Dir" do
   describe "cd" do
     it "accepts string" do
       cwd = Dir.current
-      Dir.cd("..")
+      Dir.cd(NOT_CURRENT_DIR)
       Dir.current.should_not eq(cwd)
       Dir.cd(cwd)
       Dir.current.should eq(cwd)
@@ -613,7 +617,7 @@ describe "Dir" do
 
     it "accepts path" do
       cwd = Dir.current
-      Dir.cd(Path.new(".."))
+      Dir.cd(Path.new(NOT_CURRENT_DIR))
       Dir.current.should_not eq(cwd)
       Dir.cd(cwd)
       Dir.current.should eq(cwd)
@@ -628,7 +632,7 @@ describe "Dir" do
     it "accepts a block with path" do
       cwd = Dir.current
 
-      Dir.cd(Path.new("..")) do
+      Dir.cd(Path.new(NOT_CURRENT_DIR)) do
         Dir.current.should_not eq(cwd)
       end
 
@@ -638,7 +642,7 @@ describe "Dir" do
     it "accepts a block with string" do
       cwd = Dir.current
 
-      Dir.cd("..") do
+      Dir.cd(NOT_CURRENT_DIR) do
         Dir.current.should_not eq(cwd)
       end
 
@@ -648,7 +652,8 @@ describe "Dir" do
 
   describe ".current" do
     # can't use backtick in interpreted code (#12241)
-    pending_interpreted "matches shell" do
+    pending_wasm32 "matches shell" do
+      pending_interpreted!
       pwd = Process.capture(
         {% if flag?(:win32) %}
           ["cmd", "/c", "cd"]
@@ -660,7 +665,8 @@ describe "Dir" do
     end
 
     # Skip spec on Windows due to weak support for symlinks and $PWD.
-    {% unless flag?(:win32) %}
+    # WASI tracks the logical working directory without resolving symlinks.
+    {% unless flag?(:win32) || flag?(:wasm32) %}
       it "follows $PWD" do
         with_tempfile "current-pwd" do |path|
           Dir.mkdir_p path

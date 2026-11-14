@@ -9,11 +9,13 @@ describe IO::Stapled do
     writer.to_s.should eq "peter"
   end
 
-  it "loops back" do
-    io = IO::Stapled.new(*IO.pipe)
-    io.puts "linus"
-    io.gets.should eq "linus"
-  end
+  {% unless flag?(:wasip1) || flag?(:wasip2) %}
+    it "loops back" do
+      io = IO::Stapled.new(*IO.pipe)
+      io.puts "linus"
+      io.gets.should eq "linus"
+    end
+  {% end %}
 
   describe "#close" do
     it "does not close underlying IOs" do
@@ -92,37 +94,39 @@ describe IO::Stapled do
     io.peek.should eq Bytes.empty
   end
 
-  describe ".pipe" do
-    it "creates a bidirectional pipe" do
-      a, b = IO::Stapled.pipe
-      begin
-        a.sync_close?.should be_true
-        b.sync_close?.should be_true
-        a.puts "john"
-        b.gets.should eq "john"
-        b.puts "paul"
-        a.gets.should eq "paul"
-      ensure
-        a.close
-        b.close
+  {% unless flag?(:wasip1) || flag?(:wasip2) %}
+    describe ".pipe" do
+      it "creates a bidirectional pipe" do
+        a, b = IO::Stapled.pipe
+        begin
+          a.sync_close?.should be_true
+          b.sync_close?.should be_true
+          a.puts "john"
+          b.gets.should eq "john"
+          b.puts "paul"
+          a.gets.should eq "paul"
+        ensure
+          a.close
+          b.close
+        end
       end
-    end
 
-    it "with block creates a bidirectional pipe" do
-      ext_a, ext_b = nil, nil
-      IO::Stapled.pipe do |a, b|
-        ext_a, ext_b = a, b
-        a.sync_close?.should be_true
-        b.sync_close?.should be_true
-        a.puts "john"
-        b.gets.should eq "john"
-        b.puts "paul"
-        a.gets.should eq "paul"
-        a.sync_close = false
-        b.sync_close = false
+      it "with block creates a bidirectional pipe" do
+        ext_a, ext_b = nil, nil
+        IO::Stapled.pipe do |a, b|
+          ext_a, ext_b = a, b
+          a.sync_close?.should be_true
+          b.sync_close?.should be_true
+          a.puts "john"
+          b.gets.should eq "john"
+          b.puts "paul"
+          a.gets.should eq "paul"
+          a.sync_close = false
+          b.sync_close = false
+        end
+        ext_a.should_not(be_nil).closed?.should be_true
+        ext_b.should_not(be_nil).closed?.should be_true
       end
-      ext_a.should_not(be_nil).closed?.should be_true
-      ext_b.should_not(be_nil).closed?.should be_true
     end
-  end
+  {% end %}
 end

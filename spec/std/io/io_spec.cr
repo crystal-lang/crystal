@@ -4,7 +4,9 @@ require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
@@ -100,7 +102,8 @@ end
 
 describe IO do
   describe "partial read" do
-    it "doesn't block on first read.  blocks on 2nd read" do
+    # wasip1, wasip2: no pipe; wasip3: blocking event-loop
+    pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
         slice = Bytes.new 1024
@@ -427,7 +430,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -587,7 +590,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -852,7 +855,7 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
+        pending_wasm32 "gets ascii from socket (#9056)" do
           server = TCPServer.new "localhost", 0
           sock = TCPSocket.new "localhost", server.local_address.port
           begin
@@ -924,7 +927,7 @@ describe IO do
           slice.should eq("foo".encode("UCS-2LE"))
         end
 
-        it "prints big int" do
+        pending_wasm32 "prints big int" do
           io = SimpleIOMemory.new
           io.set_encoding("UCS-2LE")
           io.print 123_456.to_big_i
@@ -996,7 +999,8 @@ describe IO do
   {% end %}
 
   describe "#close" do
-    it "aborts 'read' in a different fiber" do
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'read' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
@@ -1017,7 +1021,8 @@ describe IO do
       end
     end
 
-    it "aborts 'write' in a different fiber" do
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'write' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|

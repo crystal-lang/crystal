@@ -25,32 +25,37 @@
 #   KIND, either express or implied.
 
 require "spec"
+require "../../support/wasm32"
 require "../../support/number"
 require "float/printer/ryu_printf"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "./ryu_printf_test_cases"
 
-struct BigFloat
-  def to_s_with_range(*, point_range : Range = -3..15)
-    to_s_impl(point_range: point_range, int_trailing_zeros: false)
+{% unless flag?(:wasm32) %}
+  struct BigFloat
+    def to_s_with_range(*, point_range : Range = -3..15)
+      to_s_impl(point_range: point_range, int_trailing_zeros: false)
+    end
+
+    def to_s_with_range(io : IO, *, point_range : Range = -3..15) : Nil
+      to_s_impl(io, point_range: point_range, int_trailing_zeros: false)
+    end
   end
 
-  def to_s_with_range(io : IO, *, point_range : Range = -3..15) : Nil
-    to_s_impl(io, point_range: point_range, int_trailing_zeros: false)
+  private def fixed_reference(value, precision)
+    if precision == 0
+      value.to_big_i.to_s
+    else
+      BigFloat.new(value, 4096).to_s_with_range(point_range: ..)
+    end
   end
-end
 
-private def fixed_reference(value, precision)
-  if precision == 0
-    value.to_big_i.to_s
-  else
-    BigFloat.new(value, 4096).to_s_with_range(point_range: ..)
+  private def exp_reference(value, precision)
+    BigFloat.new(value, 4096).to_s_with_range(point_range: 0...0)
   end
-end
-
-private def exp_reference(value, precision)
-  BigFloat.new(value, 4096).to_s_with_range(point_range: 0...0)
-end
+{% end %}
 
 private def ieee_parts_to_f64(sign, exponent, mantissa)
   ((sign ? 1_u64 << 63 : 0_u64) | (exponent.to_u64 << 52) | mantissa.to_u64).unsafe_as(Float64)
@@ -92,7 +97,7 @@ describe Float::Printer::RyuPrintf do
         "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368")
     end
 
-    it "AllPowersOfTen" do
+    pending_wasm32 "AllPowersOfTen" do
       {% for tc in ALL_POWERS_OF_TEN %}
         expect_fixed({{ tc[0] }}, {{ tc[1] }}, fixed_reference({{ tc[0] }}, {{ tc[1] }}))
       {% end %}
@@ -244,7 +249,7 @@ describe Float::Printer::RyuPrintf do
       expect_fixed(0.5, 0, "0")
     end
 
-    it "AllBinaryExponents" do
+    pending_wasm32 "AllBinaryExponents" do
       {% for tc in ALL_BINARY_EXPONENTS %}
         expect_fixed({{ tc[0] }}, {{ tc[1] }}, fixed_reference({{ tc[0] }}, {{ tc[1] }}))
       {% end %}
@@ -277,7 +282,7 @@ describe Float::Printer::RyuPrintf do
         "1.79769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368e+308")
     end
 
-    it "AllPowersOfTen" do
+    pending_wasm32 "AllPowersOfTen" do
       {% for tc in ALL_POWERS_OF_TEN %}
         expect_exp({{ tc[0] }}, {{ tc[2] }}, exp_reference({{ tc[0] }}, {{ tc[2] }}))
       {% end %}
@@ -425,7 +430,7 @@ describe Float::Printer::RyuPrintf do
       expect_exp(9.99e+100, 1, "1.0e+101")
     end
 
-    it "AllBinaryExponents" do
+    pending_wasm32 "AllBinaryExponents" do
       {% for tc in ALL_BINARY_EXPONENTS %}
         expect_exp({{ tc[0] }}, {{ tc[2] }}, exp_reference({{ tc[0] }}, {{ tc[2] }}))
       {% end %}

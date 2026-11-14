@@ -6,32 +6,41 @@ module Crystal::System::FileDescriptor
     if Crystal.stdio_closed?(fd)
       IO::FileDescriptor.new(closed: true)
     else
-      # TODO: WASI doesn't offer a way to detect if a 'fd' is a TTY.
-      IO::FileDescriptor.new(fd).tap(&.flush_on_newline=(true))
+      IO::FileDescriptor.new(fd).tap do |io|
+        if io.tty?
+          # Make prompts visible even when they don't end with a newline.
+          io.sync = true
+        else
+          io.flush_on_newline = true
+        end
+      end
     end
   end
 
-  def self.fcntl(fd, cmd, arg = 0)
-    FileDescriptor.fcntl(fd, cmd, arg)
-  end
+  {% if flag?(:wasip1) || flag?(:wasip2) %}
+    def self.get_blocking(fd : Handle)
+      raise NotImplementedError.new("Crystal::System::FileDescriptor.get_blocking requires wasip3 or later")
+    end
 
-  private def system_fcntl(cmd, arg = 0)
-    FileDescriptor.fcntl(fd, cmd, arg)
-  end
-
-  def self.get_blocking(fd : Handle)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor.get_blocking")
-  end
-
-  def self.set_blocking(fd : Handle, value : Bool)
-    raise NotImplementedError.new("Crystal::System::FileDescriptor.set_blocking")
-  end
+    def self.set_blocking(fd : Handle, value : Bool)
+      raise NotImplementedError.new("Crystal::System::FileDescriptor.set_blocking requires wasip3 or later")
+    end
+  {% end %}
 
   protected def system_blocking_init(blocking : Bool?)
   end
 
   private def system_reopen(other : IO::FileDescriptor)
-    raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen"
+    {% if flag?(:wasip1) %}
+      raise NotImplementedError.new "Crystal::System::FileDescriptor#system_reopen requires wasip2 or later"
+    {% else %}
+      if LibC.dup2(other.fd, fd) == -1
+        raise IO::Error.from_errno("Could not reopen file descriptor")
+      end
+
+      @closed = false
+      event_loop.reopened(self)
+    {% end %}
   end
 
   private def system_lock(blocking : Bool, exclusive : Bool) : Nil

@@ -1,8 +1,10 @@
 require "../spec_helper"
 require "json"
 require "yaml"
-require "big"
-require "big/json"
+{% unless flag?(:wasm32) %}
+  require "big"
+  require "big/json"
+{% end %}
 require "uuid"
 require "uuid/json"
 
@@ -1167,7 +1169,7 @@ describe "JSON::Serializable" do
     end
   end
 
-  describe "BigDecimal" do
+  pending_wasm32 describe: "BigDecimal" do
     it "parses json string with BigDecimal" do
       json = JSONAttrValue(BigDecimal).from_json(%({"value": "10.05"}))
       json.value.should eq(BigDecimal.new("10.05"))
