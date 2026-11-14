@@ -28,7 +28,14 @@ class Crystal::CodeGenVisitor
       # `self_type` is the lib type and merely serves to ensure that the
       # function does not have an automatic `%self` parameter.
       func = typed_fun?(@llvm_mod, mangled_name)
-      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+      func ||= codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+
+      if @program.has_flag?("wasm32") && (wasm_import_module = target_def.wasm_import_module)
+        func.func.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
+        func.func.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
+      end
+
+      func
     else
       self_type_mod = type_module(self_type).mod
       func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
@@ -107,7 +114,7 @@ class Crystal::CodeGenVisitor
 
       needs_body = !target_def.is_a?(External) || is_exported_fun
       if needs_body
-        emit_def_debug_metadata target_def unless @debug.none?
+        emit_def_debug_metadata target_def if @debug.line_numbers? || @debug.variables?
         set_current_debug_location target_def if @debug.line_numbers?
 
         {% if LibLLVM::IS_LT_150 %}
@@ -176,6 +183,10 @@ class Crystal::CodeGenVisitor
         context.return_type = target_def.type?
         context.return_phi = nil
 
+        if target_def.raises? && !target_def.naked? && !target_def.body.is_a?(Primitive)
+          shadow_stack_push(target_def.name, target_def.location)
+        end
+
         body = target_def.body
 
         # If the body is a primitive it means this is a function
@@ -197,9 +208,10 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
-        codegen_return target_def.body.type?, target_def
+        codegen_return target_def.body.type?, target_def, target_def.body.location
 
         br_from_alloca_to_entry
+        @shadow_stack_frames.delete(context.fun)
       end
 
       @last = llvm_nil

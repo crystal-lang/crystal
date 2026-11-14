@@ -1,8 +1,11 @@
 require "crystal/lru_cache"
 require "sync/exclusive"
 
+# Make callers observable to the WASM shadow stack even if they cannot raise.
+
 # Returns the current execution stack as an array containing strings
 # usually in the form file:line:column or file:line:column in 'method'.
+{% if flag?(:wasm32) %} @[Raises] {% end %}
 def caller : Array(String)
   Exception::CallStack.new.printable_backtrace
 end
@@ -50,9 +53,11 @@ struct Exception::CallStack
   end
 
   private def decode_backtrace
-    {% if flag?(:wasm32) %}
+    {% if !flag?(:debug) && flag?(:wasm32) %}
+      # stacktrace is always empty on WASM with --no-debug (no symbols)
       [] of String
     {% else %}
+      # other targets can still print symbols with --no-debug
       CallStack.load_debug_info
       show_full_info = ENV["CRYSTAL_CALLSTACK_FULL_INFO"]? == "1"
 
@@ -160,7 +165,11 @@ end
 {% elsif flag?(:win32) && !flag?(:gnu) %}
   require "./call_stack/stackwalk"
 {% elsif flag?(:wasm32) %}
-  require "./call_stack/null"
+  {% if flag?(:debug) %}
+    require "./call_stack/wasm"
+  {% else %}
+    require "./call_stack/null"
+  {% end %}
 {% else %}
   {% if flag?(:darwin) %}
     require "./call_stack/mach_o"

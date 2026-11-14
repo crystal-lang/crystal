@@ -181,6 +181,7 @@ module Crystal
       cond, phi, extract_value, switch, to: builder
 
     def ret
+      shadow_stack_pop unless builder.end
       builder.ret
     end
 
@@ -189,6 +190,7 @@ module Crystal
     end
 
     def ret(value)
+      shadow_stack_pop unless builder.end
       builder.ret value
     end
 

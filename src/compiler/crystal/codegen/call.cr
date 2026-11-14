@@ -215,7 +215,7 @@ class Crystal::CodeGenVisitor
       if arg.type.proc?
         # Try first with the def arg type (might be a proc pointer that return void,
         # while the argument's type a proc pointer that return something else)
-        call_arg = check_proc_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
+        call_arg = check_proc_is_not_closure(call_arg, def_arg.try(&.type) || arg.type, node.location)
       end
 
       abi_arg_type = abi_info.arg_types[i]
@@ -282,6 +282,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_call_with_block(node, block, self_type, call_args)
+    shadow_stack_location(node.location) if node.target_def.raises?
     set_current_debug_location node if @debug.line_numbers?
 
     with_cloned_context do |old_block_context|
@@ -524,7 +525,10 @@ class Crystal::CodeGenVisitor
     # `codegen_primitive_proc_call` and *node* is simply `Proc#call`'s "body";
     # in that case do not replace line numbers so that call stacks will continue
     # using the original invocation
-    set_current_debug_location node if @debug.line_numbers? && fun_type.nil?
+    if fun_type.nil?
+      shadow_stack_location(node.location) if raises && !target_def.try(&.llvm_intrinsic?)
+      set_current_debug_location node if @debug.line_numbers?
+    end
 
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"

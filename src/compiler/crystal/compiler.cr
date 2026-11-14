@@ -26,9 +26,18 @@ module Crystal
 
   @[Flags]
   enum Debug
+    # Debug info for backtraces (function, file, line, column).
     LineNumbers
+
+    # Debug info for types, vars, args, ...
     Variables
-    Default     = LineNumbers
+
+    # Use shadow-stack instead of DWARF on WASM targets (can't unwind).
+    WASMLineNumbers
+
+    Default = LineNumbers
+
+    Full = LineNumbers | Variables
   end
 
   enum FramePointers
@@ -509,8 +518,11 @@ module Crystal
         {linker, cmd, nil}
       elsif codegen_target.wasm?
         link_flags = @link_flags || ""
-        {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
-      elsif codegen_target.avr?
+        link_flags += " --strip-debug" unless debug.variables?
+        link_flags += " -lc"
+        ld = codegen_target.environment == "wasip1" ? "wasm-ld" : "wasm-component-ld"
+        {ld, %(#{ld} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
+      elsif program.has_flag? "avr"
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}

@@ -374,6 +374,8 @@ class Crystal::CodeGenVisitor
     builder.build_catch_ret catch_pad, catch_target
     position_at_end catch_target
 
+    shadow_stack_restore
+
     unwind_ex_obj
   end
 end
