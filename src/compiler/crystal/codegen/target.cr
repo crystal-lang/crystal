@@ -32,7 +32,10 @@ class Crystal::Codegen::Target
     when .starts_with?("arm")
       @architecture = "arm"
     when .starts_with?("wasm")
-      @environment = "wasip1" if @environment == "wasi"
+      if @environment == "wasi"
+        @environment = "wasip1"
+        @environment_parts[-1] = "wasip1"
+      end
     else
       # no need to tweak the architecture
     end
