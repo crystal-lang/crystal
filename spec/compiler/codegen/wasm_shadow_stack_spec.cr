@@ -86,6 +86,7 @@ describe "Code gen: WASM shadow stack" do
       end
       Intrinsics.sqrt(4.0)
       CRYSTAL
+
     ir.should contain("@llvm.sqrt.f64")
     ir.lines.count { |line| line.starts_with?("@shadow_stack_metadata") }.should eq(1)
   end
@@ -116,7 +117,7 @@ describe "Code gen: WASM shadow stack" do
     body.should contain("@__crystal_raise_overflow")
   end
 
-  it "keeps frames and call locations for explicitly raising methods" do
+  it "keeps frames for explicitly raising methods" do
     ir = wasm_shadow_ir(<<-CRYSTAL)
       @[Raises]
       @[NoInline]

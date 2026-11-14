@@ -24,11 +24,9 @@ private class ShadowInitialized
 end
 
 private def shadow_early_return
-  begin
-    return shadow_capture
-  ensure
-    shadow_capture
-  end
+  return shadow_capture
+ensure
+  shadow_capture
 end
 
 @[Raises]
@@ -106,13 +104,11 @@ else
     end
 
     it "keeps frames until potentially raising return conversions finish" do
-      begin
-        shadow_return_closure(1)
-        fail "expected a closure conversion error"
-      rescue ex
-        ex.backtrace.any?(&.includes?("in 'shadow_return_closure'")).should be_true
-        caller.none?(&.includes?("in 'shadow_return_closure'")).should be_true
-      end
+      shadow_return_closure(1)
+      fail "expected a closure conversion error"
+    rescue ex
+      ex.backtrace.any?(&.includes?("in 'shadow_return_closure'")).should be_true
+      caller.none?(&.includes?("in 'shadow_return_closure'")).should be_true
     end
 
     it "restores frames when ensure raises a new exception" do
