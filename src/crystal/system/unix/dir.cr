@@ -37,7 +37,7 @@ module Crystal::System::Dir
     end
   end
 
-  def self.rewind(dir) : Nil
+  def self.rewind(dir, path : String) : Nil
     LibC.rewinddir(dir)
   end
 

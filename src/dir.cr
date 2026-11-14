@@ -160,7 +160,7 @@ class Dir
 
   # Repositions this directory to the first entry.
   def rewind : self
-    Crystal::System::Dir.rewind(@dir)
+    Crystal::System::Dir.rewind(@dir, path)
     self
   end
 
