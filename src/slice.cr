@@ -902,6 +902,40 @@ struct Slice(T)
     end
   end
 
+  # Returns a pointer to the element at *index*.
+  #
+  # Negative indices can be used to start counting from the end of the slice.
+  # Raises `IndexError` if *index* is outside the slice's range.
+  #
+  # Writing through the returned pointer bypasses this slice's read-only guard.
+  #
+  # ```
+  # slice = Slice[10, 20, 30]
+  # pointer = slice.pointer_at(-1)
+  # pointer.value # => 30
+  # ```
+  def pointer_at(index : Int) : Pointer(T)
+    index = check_index_out_of_bounds(index)
+    @pointer + index
+  end
+
+  # Yields a pointer to each element in this slice, and returns `nil`.
+  #
+  # Writing through the yielded pointers bypasses this slice's read-only guard.
+  #
+  # ```
+  # slice = Slice[1, 2, 3]
+  # slice.each_pointer do |pointer|
+  #   pointer.value *= 2
+  # end
+  # slice # => Slice[2, 4, 6]
+  # ```
+  def each_pointer(& : T* -> _) : Nil
+    @size.times do |index|
+      yield @pointer + index
+    end
+  end
+
   # Returns this slice's pointer.
   #
   # ```
