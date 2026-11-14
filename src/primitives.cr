@@ -152,6 +152,13 @@ struct Struct
 end
 
 class Class
+  {% if compare_versions(Crystal::VERSION, "1.23.0-dev") >= 0 && !flag?(:interpreted) %}
+    # :nodoc:
+    @[Primitive(:class_crystal_instance_type_name)]
+    def crystal_instance_type_name : String
+    end
+  {% end %}
+
   # :nodoc:
   @[Primitive(:class_crystal_instance_type_id)]
   def crystal_instance_type_id : Int32

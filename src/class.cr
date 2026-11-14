@@ -111,9 +111,16 @@ class Class
   # ```
   # String.name # => "String"
   # ```
-  def name : String
-    {{ @type.name.stringify }}
-  end
+  {% if Class.has_method?(:crystal_instance_type_name) %}
+    @[AlwaysInline]
+    def name : String
+      crystal_instance_type_name
+    end
+  {% else %}
+    def name : String
+      \{{ @type.name.stringify }}
+    end
+  {% end %}
 
   # Casts *other* to this class.
   #
@@ -157,9 +164,15 @@ class Class
     {{ @type >= Nil }}
   end
 
-  def to_s(io : IO) : Nil
-    io << {{ @type.name.stringify }}
-  end
+  {% if Class.has_method?(:crystal_instance_type_name) %}
+    def to_s(io : IO) : Nil
+      io << crystal_instance_type_name
+    end
+  {% else %}
+    def to_s(io : IO) : Nil
+      io << \{{ @type.name.stringify }}
+    end
+  {% end %}
 
   def dup
     self
