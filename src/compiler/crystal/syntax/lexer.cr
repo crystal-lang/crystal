@@ -2570,7 +2570,7 @@ module Crystal
             when '0', '1', '2', '3', '4', '5', '6', '7'
               io.write_byte consume_octal_escape(char)
             when '\n'
-              incr_line_number nil
+              incr_line_number 0
               io << '\n'
             when '\0'
               raise "unterminated quoted symbol", line, column
@@ -2581,6 +2581,9 @@ module Crystal
             break
           when '\0'
             raise "unterminated quoted symbol", line, column
+          when '\n'
+            incr_line_number 0
+            io << char
           when '\r'
             raise "expecting '\\n' after '\\r'" unless peek_next_char == '\n'
             io << char

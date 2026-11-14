@@ -606,6 +606,32 @@ describe "Lexer" do
     token.value.should eq("\\")
   end
 
+  it "increments line number in multiline symbol (#13526)" do
+    lexer = Lexer.new %(:"foo\nbar" 1)
+    token = lexer.next_token
+    token.type.should eq(t :SYMBOL)
+    token.value.should eq("foo\nbar")
+
+    lexer.next_token.type.should eq(t :SPACE)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(2)
+    token.column_number.should eq(6)
+  end
+
+  it "increments line number in symbol with escaped newline" do
+    lexer = Lexer.new %(:"foo\\\nbar" 1)
+    token = lexer.next_token
+    token.type.should eq(t :SYMBOL)
+    token.value.should eq("foo\nbar")
+
+    lexer.next_token.type.should eq(t :SPACE)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(2)
+    token.column_number.should eq(6)
+  end
+
   it "lexes symbol followed by !=" do
     lexer = Lexer.new ":a!=:a"
     token = lexer.next_token
