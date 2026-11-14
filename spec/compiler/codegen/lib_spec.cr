@@ -113,7 +113,7 @@ describe "Code gen: lib" do
   end
 
   it "can use tuple as fun return" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         int x;
         int y;
@@ -129,7 +129,7 @@ describe "Code gen: lib" do
       end
 
       tuple = LibFoo.foo
-      tuple[0] + tuple[1]
+      tuple[0] &+ tuple[1]
       CRYSTAL
   end
 
