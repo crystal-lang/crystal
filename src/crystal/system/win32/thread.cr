@@ -119,8 +119,11 @@ module Crystal::System::Thread
   end
 
   private def system_close
-    LibC.CloseHandle(@semaphore) unless @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
     LibC.CloseHandle(@system_handle)
+  end
+
+  private def close_semaphore
+    LibC.CloseHandle(@semaphore) unless @semaphore == LibC::HANDLE.new(-1.to_u64!) # LibC::INVALID_HANDLE_VALUE
   end
 
   private def stack_address : Void*
