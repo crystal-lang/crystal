@@ -1811,7 +1811,7 @@ module Crystal
               end
             end
           when 'u'
-            if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
+            if !delimiter_state && whitespace && next_char == 'm' && peek_not_ident_part_or_end_next_char
               char = current_char
               nest += 1
               whitespace = true
@@ -2073,9 +2073,9 @@ module Crystal
       when 's'
         case next_char
         when 'e'
-          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && peek_not_ident_part_or_end_next_char
         when 't'
-          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char
         end
       when 'u'
         if next_char == 'n'
