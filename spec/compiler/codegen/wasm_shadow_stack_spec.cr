@@ -1,5 +1,8 @@
 require "../../spec_helper"
 
+{% skip_file unless LibLLVM::BUILT_TARGETS.includes?(:webassembly) %}
+{% skip_file if LibLLVM::IS_LT_150 %}
+
 private def wasm_shadow_ir(source, debug = Crystal::Debug::Default)
   program = Crystal::Program.new
   program.codegen_target = Crystal::Codegen::Target.new("wasm32-wasip1")
@@ -65,6 +68,7 @@ describe "Code gen: WASM shadow stack" do
 
       raise
       CRYSTAL
+
     ir.should_not contain("shadow_stack")
     ir.should contain("ret ptr null")
   end
