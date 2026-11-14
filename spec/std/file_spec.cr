@@ -114,7 +114,7 @@ describe "File" do
       File.write(filename, "hello")
 
       File.open(filename, "a") do |file|
-        {% if flag?(:wasip1) %}
+        {% if !flag?(:wasi) || flag?(:wasip1) %}
           file.tell.should eq(0)
         {% else %}
           file.tell.should eq(5)
@@ -438,9 +438,9 @@ describe "File" do
           expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
             File.readlink(symlink)
           end
+        ensure
+          File.chmod(path, File::Permissions::All)
         end
-      ensure
-        File.chmod(path, File::Permissions::All)
       end
     {% end %}
   end
@@ -484,9 +484,9 @@ describe "File" do
           expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
             File.readlink?(symlink)
           end
+        ensure
+          File.chmod(path, File::Permissions::All)
         end
-      ensure
-        File.chmod(path, File::Permissions::All)
       end
     {% end %}
   end
