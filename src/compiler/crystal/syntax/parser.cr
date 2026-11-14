@@ -1271,6 +1271,9 @@ module Crystal
     def check_type_declaration(&)
       if next_comes_colon_space?
         name = @token.value.to_s
+
+        check_local_var_type_declaration_name(name, @token.location)
+
         var = Var.new(name).at(@token.location).at_end(token_end_location)
         next_token
         unless @token.type.space?
@@ -1283,6 +1286,23 @@ module Crystal
       else
         yield
       end
+    end
+
+    # Keywords which can be used as local variable names, since they're
+    # only parsed as keywords in specific contexts.
+    KEYWORDS_VALID_AS_LOCAL_VAR_NAMES = %w[for of out super type uninitialized union verbatim]
+
+    INVALID_LOCAL_VAR_NAMES =
+      Keyword.values.map(&.to_s).to_set - KEYWORDS_VALID_AS_LOCAL_VAR_NAMES
+
+    # A type declaration named after a keyword is fine as a call argument,
+    # like `getter begin : Int32`, but a local variable with such name can't
+    # be referenced.
+    private def check_local_var_type_declaration_name(name, location)
+      return if @call_args_start_locations.includes?(location)
+      return unless name.in?(INVALID_LOCAL_VAR_NAMES)
+
+      raise "cannot use '#{name}' as a local variable name", location
     end
 
     def parse_type_declaration(var, is_const = false)
@@ -4563,6 +4583,8 @@ module Crystal
               unless name_followed_by_space
                 warnings.add_warning_at(@token.location, "space required before colon in type declaration (run `crystal tool format` to fix this)")
               end
+              check_local_var_type_declaration_name(name, location)
+
               declare_var = parse_type_declaration(Var.new(name).at(location).at_end(end_location))
               end_location = declare_var.end_location
 
