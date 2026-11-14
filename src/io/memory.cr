@@ -193,6 +193,7 @@ class IO::Memory < IO
   # :nodoc:
   def skip(bytes_count : Int) : Nil
     check_open
+    raise ArgumentError.new "Negative bytes_count" if bytes_count < 0
 
     available = @bytesize - @pos
     if available >= bytes_count

@@ -887,6 +887,7 @@ abstract class IO
 
   # Reads and discards exactly *bytes_count* bytes.
   # Raises `IO::EOFError` if there aren't at least *bytes_count* bytes.
+  # Raises `ArgumentError` if *bytes_count* is negative.
   #
   # ```
   # io = IO::Memory.new "hello world"
@@ -895,6 +896,8 @@ abstract class IO
   # io.skip(1) # raises IO::EOFError
   # ```
   def skip(bytes_count : Int) : Nil
+    raise ArgumentError.new "Negative bytes_count" if bytes_count < 0
+
     buffer = uninitialized UInt8[DEFAULT_BUFFER_SIZE]
     while bytes_count > 0
       read_count = read(buffer.to_slice[0, Math.min(bytes_count, buffer.size)])
