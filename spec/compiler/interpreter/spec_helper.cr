@@ -36,6 +36,24 @@ class Spec::CLI
       print repl.run_code(code)
       exit
     end
+    option_parser.on("", "--interpret-repl PRELUDE", "Execute interpreted code line by line like the REPL") do |prelude|
+      repl = Crystal::Repl.new
+      repl.prelude = prelude
+      repl.load_prelude
+
+      STDIN.each_line do |line|
+        line = line.chomp
+        next if line.blank?
+        result = repl.parse_and_interpret(line)
+        if value = result.value
+          puts value
+        else
+          puts "=> nil"
+        end
+        STDOUT.flush
+      end
+      exit
+    end
     option_parser
   end
 end

@@ -22,6 +22,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Build compiler with interpreter support
+        # The REPL PTY specs drive `.build/crystal i`; it must be built from
+        # the current sources with `interpreter=1` (the interpreter_spec
+        # target alone only builds the spec binary).
+        run: make interpreter=1
+
       - name: Test interpreter_spec
         run: make interpreter_spec junit_output=.junit/interpreter_spec.xml
 
