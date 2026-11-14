@@ -693,7 +693,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     end
 
     existed = !!enum_type
-    enum_type ||= EnumType.new(@program, scope, name, enum_base_type || @program.int32)
+    enum_type ||= EnumType.new(@program, scope, name, enum_base_type || @program.int32, node.location)
 
     enum_type.private = true if node.visibility.private?
 
