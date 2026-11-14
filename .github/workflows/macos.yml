@@ -10,7 +10,7 @@ concurrency:
 
 env:
   SPEC_SPLIT_DOTS: 160
-  CI_NIX_SHELL: true
+  TZ: America/New_York
 
 jobs:
   darwin-test:
@@ -40,17 +40,15 @@ jobs:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
+      - run: scripts/ci-nix-init.sh
 
       - name: Test
-        run: bin/ci build
+        run: scripts/ci-build.sh
+        shell: nix-shell --pure --run "bash {0}"
 
       - name: Test interpreter
-        run: bin/ci with_build_env 'make interpreter_spec'
+        run: make interpreter_spec
+        shell: nix-shell --pure --run "bash {0}"
 
   test-std:
     runs-on: macos-26
@@ -76,11 +74,10 @@ jobs:
           name: crystal-lang-ci
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
+      - run: scripts/ci-nix-init.sh
 
       - name: Test
-        run: bin/ci with_build_env 'CRYSTAL_WORKERS=${{ matrix.opts.workers || 1 }} make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"'
+        run: make std_spec threads=1 FLAGS="${{ matrix.opts.flags || '' }}"
+        shell: nix-shell --pure --run "bash {0}"
+        env:
+          CRYSTAL_WORKERS: ${{ matrix.opts.workers || 1 }}
