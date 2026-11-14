@@ -81,12 +81,6 @@ class Crystal::CodeGenVisitor
               cast_to_void_pointer void_ptr_throwinfo
             when "va_arg"
               codegen_va_arg call, node, target_def, call_args
-            when "shadow_stack_head"
-              if shadow_stack_enabled?
-                load(llvm_context.void_pointer, shadow_stack_head)
-              else
-                llvm_context.void_pointer.null
-              end
             else
               raise "BUG: unhandled primitive in codegen: #{node.name}"
             end

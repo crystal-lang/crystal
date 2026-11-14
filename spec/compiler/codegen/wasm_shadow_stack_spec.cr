@@ -55,24 +55,6 @@ describe "Code gen: WASM shadow stack" do
     ir.should_not contain("!DICompileUnit")
   end
 
-  it "disables shadow-stack access in raising methods with no debug information" do
-    ir = wasm_shadow_ir(<<-CRYSTAL, Crystal::Debug::None)
-      @[Primitive(:shadow_stack_head)]
-      def stack_head : Void*
-      end
-
-      @[Raises]
-      def raise
-        stack_head
-      end
-
-      raise
-      CRYSTAL
-
-    ir.should_not contain("shadow_stack")
-    ir.should contain("ret ptr null")
-  end
-
   it "emits both DWARF and frames in full debug mode" do
     ir = wasm_shadow_ir("1", Crystal::Debug::Full)
     ir.should contain("shadow_stack_frame")

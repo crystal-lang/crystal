@@ -1,3 +1,7 @@
+lib LibCrystal
+  $__crystal_shadow_stack_head : Void*
+end
+
 struct Exception::CallStack
   skip(__FILE__)
 
@@ -21,10 +25,6 @@ struct Exception::CallStack
     end
   end
 
-  @[Primitive(:shadow_stack_head)]
-  private def self.shadow_stack_head : Void*
-  end
-
   def self.load_debug_info_impl : Nil
   end
 
@@ -46,7 +46,7 @@ struct Exception::CallStack
 
   protected def self.unwind : Array(Void*)
     # Capture before allocating, so allocation's own frames are never included.
-    frame = shadow_stack_head.as(ShadowFrame*)
+    frame = LibCrystal.__crystal_shadow_stack_head.as(ShadowFrame*)
     result = [] of Void*
     until frame.null?
       result << frame.value.metadata
@@ -56,7 +56,7 @@ struct Exception::CallStack
   end
 
   def self.print_backtrace : Nil
-    frame = shadow_stack_head.as(ShadowFrame*)
+    frame = LibCrystal.__crystal_shadow_stack_head.as(ShadowFrame*)
     until frame.null?
       pc = frame.value.metadata
       print_frame_location(pc.as(ShadowMetadata*))
