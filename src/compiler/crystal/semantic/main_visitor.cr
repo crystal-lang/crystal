@@ -2789,8 +2789,7 @@ module Crystal
       # Try to resolve the node right now to a number literal
       # (useful for sizeof/alignof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type && !node.exp.is_a?(TypeOf) &&
-         !(type.module? || (type.abstract? && type.struct?))
+      if type && !node.exp.is_a?(TypeOf) && final_layout?(type)
         expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
@@ -2815,7 +2814,8 @@ module Crystal
       # Try to resolve the instance_sizeof right now to a number literal
       # (useful for instance_sizeof inside as a generic type argument, but also
       # to make it easier for LLVM to optimize things)
-      if type && type.devirtualize.class? && !type.metaclass? && !type.struct? && !node.exp.is_a?(TypeOf)
+      if type && type.devirtualize.class? && !type.metaclass? && !type.struct? && !node.exp.is_a?(TypeOf) &&
+         final_instance_layout?(type.devirtualize)
         expanded = NumberLiteral.new(yield(type).to_s, :i32)
         expanded.type = @program.int32
         node.expanded = expanded
@@ -2824,6 +2824,47 @@ module Crystal
       node.type = @program.int32
 
       false
+    end
+
+    # Returns `true` if the layout of *type* can't change anymore while the
+    # program is typed, so its size and alignment can be computed already.
+    # A module or an abstract struct grows with every new type that includes
+    # or inherits it, and so does every type holding one of them by value.
+    private def final_layout?(type : Type, visited = Set(Type).new) : Bool
+      case type
+      when .module?
+        false
+      when VirtualType
+        !type.struct?
+      when .abstract?
+        !type.struct?
+      when UnionType
+        type.union_types.all? { |union_type| final_layout?(union_type, visited) }
+      when TypeDefType
+        final_layout?(type.typedef, visited)
+      when TupleInstanceType
+        type.tuple_types.all? { |tuple_type| final_layout?(tuple_type, visited) }
+      when NamedTupleInstanceType
+        type.entries.all? { |entry| final_layout?(entry.type, visited) }
+      when StaticArrayInstanceType
+        final_layout?(type.element_type, visited)
+      when .struct?
+        !type.is_a?(InstanceVarContainer) || final_instance_layout?(type, visited)
+      else
+        true
+      end
+    end
+
+    # Returns `true` if the instance variables of *type* have a final layout,
+    # see `final_layout?`.
+    private def final_instance_layout?(type : Type, visited = Set(Type).new) : Bool
+      return true unless type.is_a?(InstanceVarContainer)
+      return true unless visited.add?(type)
+
+      type.all_instance_vars.each_value.all? do |ivar|
+        ivar_type = ivar.type?
+        ivar_type ? final_layout?(ivar_type, visited) : false
+      end
     end
 
     private def sizeof_description(node)
@@ -2870,17 +2911,28 @@ module Crystal
         node.offsetof_type.raise "type #{type} can't have instance variables neither is a Tuple"
       end
 
+      node.element_index = ivar_index.to_i32
+
+      # Resolve the offset right now to a number literal, unless the layout of
+      # the type can still change, which leaves it to codegen
       if type && (type.struct? || type.is_a?(TupleInstanceType))
-        offset = @program.offset_of(type.sizeof_type, ivar_index)
+        if final_layout?(type)
+          offset = @program.offset_of(type.sizeof_type, ivar_index)
+        end
       elsif type && type.instance_type.devirtualize.class?
-        offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
+        if final_instance_layout?(type.devirtualize)
+          offset = @program.instance_offset_of(type.sizeof_type, ivar_index)
+        end
       else
         node.offsetof_type.raise "#{type} is neither a class, a struct nor a Tuple, it's a #{type.type_desc}"
       end
 
-      expanded = NumberLiteral.new(offset.to_s, :i32)
-      expanded.type = @program.int32
-      node.expanded = expanded
+      if offset
+        expanded = NumberLiteral.new(offset.to_s, :i32)
+        expanded.type = @program.int32
+        node.expanded = expanded
+      end
+
       node.type = @program.int32
 
       false
