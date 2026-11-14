@@ -43,6 +43,7 @@ class Crystal::Command
 
       opts.on("--no-color", "Disable colored output") do
         @color = false
+        @diagnostic_color = false
       end
 
       opts.on("--show-backtrace", "Show backtrace on a bug (used only for debugging)") do

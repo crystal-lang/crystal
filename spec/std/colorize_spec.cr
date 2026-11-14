@@ -32,6 +32,24 @@ private class ColorizeTTY < IO
 end
 
 describe "colorize" do
+  it ".reset with an explicit setting" do
+    enabled = IO::Memory.new
+    Colorize.reset(enabled, enabled: true)
+    enabled.to_s.should eq("\e[0m")
+
+    disabled = IO::Memory.new
+    Colorize.reset(disabled, enabled: false)
+    disabled.to_s.should be_empty
+  end
+
+  it "reports whether an object is enabled" do
+    object = Colorize.with.toggle(false)
+    object.enabled?.should be_false
+
+    object.toggle(true)
+    object.enabled?.should be_true
+  end
+
   it ".default_enabled?" do
     io = IO::Memory.new
     tty = ColorizeTTY.new
