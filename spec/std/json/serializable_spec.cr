@@ -264,6 +264,60 @@ class JSONAttrWithNestedRoot
   property bar : Int32
 end
 
+module JSONAttrRootKeys
+  KEY  = "data"
+  ROOT = {KEY, "value"}
+  ONE  = {"one"}
+
+  def self.single
+    "single"
+  end
+end
+
+class JSONAttrWithRuntimeRoot
+  include JSON::Serializable
+
+  @[JSON::Field(root: JSONAttrRootKeys::ROOT)]
+  property foo : String
+
+  @[JSON::Field(root: JSONAttrRootKeys.single)]
+  property bar : Int32
+
+  @[JSON::Field(root: JSONAttrWithRuntimeRoot::NESTED_ROOT, emit_null: true)]
+  property baz : Int32?
+
+  @[JSON::Field(root: JSONAttrRootKeys::ONE, converter: JSONAttrRootConverter)]
+  property qux : String
+
+  NESTED_ROOT = {"a", "b", "c"}
+end
+
+module JSONAttrRootConverter
+  def self.from_json(pull : JSON::PullParser) : String
+    pull.read_int.to_s
+  end
+
+  def self.to_json(value : String, json : JSON::Builder) : Nil
+    json.number(value.to_i)
+  end
+end
+
+class JSONAttrWithEmptyRoot
+  include JSON::Serializable
+
+  @[JSON::Field(root: [] of String)]
+  property foo : Int32
+end
+
+class JSONAttrWithLocalConstantRoot
+  include JSON::Serializable
+
+  ROOT = {"data", "value"}
+
+  @[JSON::Field(root: ROOT)]
+  property foo : String
+end
+
 class JSONAttrWithRoot
   include JSON::Serializable
 
@@ -1024,6 +1078,30 @@ describe "JSON::Serializable" do
     obj = JSONAttrWithNestedRoot.from_json(%({"foo": {"data": {"value": "bar"}}, "bar": {"data": {"score": 42}}}))
     obj.to_json.should eq(%({"foo":{"data":{"value":"bar"}},"bar":{"data":{"score":42}}}))
   end
+
+  it "parses and serializes root properties evaluated at runtime" do
+    json = %({"foo":{"data":{"value":"bar"}},"bar":{"single":1},"baz":{"a":{"b":{"c":2}}},"qux":{"one":3}})
+    obj = JSONAttrWithRuntimeRoot.from_json(json)
+    obj.foo.should eq("bar")
+    obj.bar.should eq(1)
+    obj.baz.should eq(2)
+    obj.qux.should eq("3")
+    obj.to_json.should eq(json)
+
+    obj.baz = nil
+    obj.to_json.should eq(%({"foo":{"data":{"value":"bar"}},"bar":{"single":1},"baz":null,"qux":{"one":3}}))
+  end
+
+  it "parses and serializes an empty root as no root" do
+    json = %({"foo":1})
+    JSONAttrWithEmptyRoot.from_json(json).to_json.should eq(json)
+  end
+
+  it "parses root properties given as constants of the annotated type" do
+    obj = JSONAttrWithLocalConstantRoot.from_json(%({"foo":{"data":{"value":"bar"}}}))
+    obj.foo.should eq("bar")
+  end
+
   it "parses with root" do
     json = %({"result":{"heroes":[{"name":"Batman"}]}})
     result = JSONAttrWithRoot.from_json(json)

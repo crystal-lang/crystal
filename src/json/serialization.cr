@@ -63,7 +63,7 @@ module JSON
   # * **ignore_serialize**: If truthy, skip this field in serialization (default: `false`). The value can be any Crystal expression and is evaluated at runtime.
   # * **ignore_deserialize**: if `true` skip this field in deserialization (by default false)
   # * **key**: the value of the key in the json object (by default the name of the instance variable)
-  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
+  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`). An `Array` or `Tuple` literal of keys unwraps nested objects (see `JSON::PullParser#on_key!`). Any other value, such as a constant, is evaluated at runtime and must be a `String` or a `Tuple` of `String` keys (not an `Array`). Constants should be given by their full path (like `Foo::ROOT`), because the serialization methods are defined in `JSON::Serializable`.
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, JSON::Builder)`. Examples of converters are a `Time::Format` instance and `Time::EpochConverter` for `Time`.
   # * **presence**: if `true`, a `@{{key}}_present` instance variable will be generated when the key was present (even if it has a `null` value), `false` by default
   # * **emit_null**: if `true`, emits a `null` value for nilable property (by default nulls are not emitted)
@@ -233,10 +233,13 @@ module JSON
                       end
                     {% end %}
 
-                    {% roots = !value[:root] ? [] of ASTNode : value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
                     %var{name} =
-                      {% if !roots.empty? %}
-                        pull.on_key!({{roots.splat}}) do
+                      {% if (value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral)) && value[:root].empty? %}
+                        begin
+                      {% elsif value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                        pull.on_key!({{value[:root].is_a?(StringLiteral) ? value[:root] : value[:root].splat}}) do
+                      {% elsif value[:root] %}
+                        pull.on_key!(*::JSON::Serializable.__root_keys({{value[:root]}})) do
                       {% else %}
                         begin
                       {% end %}
@@ -273,6 +276,32 @@ module JSON
           {% end %}
         {% end %}
         after_initialize
+      end
+    end
+
+    # :nodoc:
+    def self.__root_keys(root : String)
+      {root}
+    end
+
+    # :nodoc:
+    def self.__root_keys(root : Tuple)
+      root
+    end
+
+    # :nodoc:
+    def self.__write_root(json : ::JSON::Builder, keys : Tuple(String), &) : Nil
+      json.object do
+        json.field(keys[0]) { yield }
+      end
+    end
+
+    # :nodoc:
+    def self.__write_root(json : ::JSON::Builder, keys : Tuple, &) : Nil
+      json.object do
+        json.field(keys[0]) do
+          __write_root(json, keys[1..]) { yield }
+        end
       end
     end
 
@@ -327,10 +356,13 @@ module JSON
                       else
                     {% end %}
 
-                    {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
-                    {% for root in roots %}
-                      json.object do
-                        json.field({{root}}) do
+                    {% if value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                      {% for root in value[:root].is_a?(StringLiteral) ? [value[:root]] : value[:root] %}
+                        json.object do
+                          json.field({{root}}) do
+                      {% end %}
+                    {% else %}
+                      ::JSON::Serializable.__write_root(json, ::JSON::Serializable.__root_keys({{value[:root]}})) do
                     {% end %}
                   {% end %}
 
@@ -345,9 +377,12 @@ module JSON
                   {% end %}
 
                   {% if value[:root] %}
-                    {% roots = value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) ? value[:root] : [value[:root]] %}
-                    {% for root in roots %}
+                    {% if value[:root].is_a?(ArrayLiteral) || value[:root].is_a?(TupleLiteral) || value[:root].is_a?(StringLiteral) %}
+                      {% for root in value[:root].is_a?(StringLiteral) ? [value[:root]] : value[:root] %}
+                          end
                         end
+                      {% end %}
+                    {% else %}
                       end
                     {% end %}
                     {% if value[:emit_null] %}
