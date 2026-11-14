@@ -71,4 +71,39 @@ describe "Code gen: op assign" do
       Global.value
       CRYSTAL
   end
+
+  it "evaluates index receiver before indices (#17921)" do
+    run(<<-CRYSTAL).to_i.should eq(11)
+      lib LibC
+        fun exit(status : Int32) : NoReturn
+      end
+
+      fun __crystal_raise_overflow : NoReturn
+        LibC.exit(1)
+      end
+
+      class Box
+        def initialize(@value : Int32)
+        end
+
+        def value
+          @value
+        end
+
+        def [](index)
+          @value
+        end
+
+        def []=(index, value)
+          @value = value
+        end
+      end
+
+      a = Box.new(10)
+      b = Box.new(30)
+      flag = false
+      (flag = !flag; flag ? a : b)[(flag = !flag) ? 1 : 0] += 1
+      a.value
+      CRYSTAL
+  end
 end
