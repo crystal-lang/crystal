@@ -11,6 +11,7 @@ describe URI::Punycode do
     {"パフィーdeルンバ", "de-jg4avhby1noc0d"},
     {"そのスピードで", "d9juau41awczczp"},
     {"Hello-Another-Way-それぞれ", "Hello-Another-Way--fc4qua97gba"},
+    {"-> $1.00 <-", "-> $1.00 <--"},
   ].each do |example|
     dec, enc = example
 
