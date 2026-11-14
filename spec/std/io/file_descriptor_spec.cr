@@ -52,22 +52,21 @@ describe IO::FileDescriptor do
   {% end %}
 
   describe "#finalize" do
-    {% unless flag?(:wasip1) || flag?(:wasip2) %}
-      pending_wasm32 "closes" do
-        pipes = [] of IO::FileDescriptor
-        assert_finalizes("fd") do
-          a, b = IO.pipe
-          pipes << b
-          a
-        end
+    # wasm targets don't have a garbage collector, yet
+    pending_wasm32 "closes" do
+      pipes = [] of IO::FileDescriptor
+      assert_finalizes("fd") do
+        a, b = IO.pipe
+        pipes << b
+        a
+      end
 
-        expect_raises(IO::Error) do
-          pipes.each do |p|
-            p.puts "123"
-          end
+      expect_raises(IO::Error) do
+        pipes.each do |p|
+          p.puts "123"
         end
       end
-    {% end %}
+    end
 
     it "does not flush" do
       with_tempfile "fd-finalize-flush" do |path|
@@ -186,14 +185,12 @@ describe IO::FileDescriptor do
         end
       end
 
-      {% unless flag?(:wasip1) || flag?(:wasip2) %}
-        it "is enabled by default (pipe)" do
-          IO::FileDescriptor.pipe.each do |fd|
-            fd.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
-            fd.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
-          end
+      it "is enabled by default (pipe)" do
+        IO::FileDescriptor.pipe.each do |fd|
+          fd.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
+          fd.close_on_exec?.should eq CLOSE_ON_EXEC_AVAILABLE
         end
-      {% end %}
+      end
 
       it "can be disabled and reenabled" do
         File.open(datapath("test_file.txt")) do |file|

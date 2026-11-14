@@ -432,8 +432,8 @@ describe "Dir" do
         link = Path[path, "f1_link.txt"]
         non_link = Path[path, "non_link.txt"]
 
-        File.symlink(symlink_target(File.expand_path(datapath("dir", "f1.txt")), link), link)
-        File.symlink(symlink_target(File.expand_path(datapath("dir", "nonexisting")), non_link), non_link)
+        File.symlink(symlink_target(datapath("dir", "f1.txt"), link), link)
+        File.symlink(symlink_target(datapath("dir", "nonexisting"), non_link), non_link)
 
         Dir["#{Path[path].to_posix}/*_link.txt"].sort.should eq [
           link.to_s,
@@ -665,9 +665,9 @@ describe "Dir" do
     end
 
     # Skip spec on Windows due to weak support for symlinks and $PWD.
-    {% unless flag?(:win32) %}
-      # WASI tracks the logical working directory without resolving symlinks.
-      pending_wasm32 "follows $PWD" do
+    # WASI tracks the logical working directory without resolving symlinks.
+    {% unless flag?(:win32) || flag?(:wasm32) %}
+      it "follows $PWD" do
         with_tempfile "current-pwd" do |path|
           Dir.mkdir_p path
           # Resolve any symbolic links in path caused by tmpdir being a link.
@@ -677,7 +677,7 @@ describe "Dir" do
           target_path = File.join(path, "target")
           link_path = File.join(path, "link")
           Dir.mkdir_p target_path
-          File.symlink(symlink_target(target_path, link_path), link_path)
+          File.symlink(target_path, link_path)
 
           Dir.cd(link_path) do
             with_env({"PWD" => nil}) do
