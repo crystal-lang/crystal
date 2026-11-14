@@ -569,6 +569,20 @@ class Socket < IO
     @closed
   end
 
+  # :nodoc:
+  #
+  # Detaches the system socket from this object without closing it, and
+  # returns it. The object is left closed and must not be used anymore. The
+  # caller becomes responsible for the returned handle (e.g. adopt it into
+  # another `Socket`).
+  #
+  # There must be no pending operation on the socket.
+  def release_handle : Handle
+    Crystal::EventLoop.remove(self)
+    @closed = true
+    fd
+  end
+
   def tty?
     system_tty?
   end
