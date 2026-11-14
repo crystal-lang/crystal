@@ -1001,7 +1001,7 @@ class Crystal::CodeGenVisitor
     if (type = context.type).is_a?(VirtualMetaclassType)
       codegen_primitive_class_crystal_instance_type_id_with_type(type, call_args[0])
     else
-      type_id(type.instance_type)
+      type_id(type.instance_type, remove_indirection: false)
     end
   end
 
