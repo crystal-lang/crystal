@@ -23,6 +23,10 @@ module LLVM::ValueMethods
     end
   end
 
+  def set_instruction_param_alignment(index : Int, alignment : Int)
+    LibLLVM.set_instr_param_alignment(self, index, alignment)
+  end
+
   private def attribute_ref(context, kind, type)
     if type.is_a?(Type) && Attribute.requires_type?(kind)
       {% if LibLLVM::IS_LT_120 %}

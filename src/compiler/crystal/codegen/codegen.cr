@@ -2559,7 +2559,7 @@ module Crystal
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
       res = call c_memset_fun, [pointer, value, size, int1(0)]
-      LibLLVM.set_instr_param_alignment(res, 1, 4)
+      res.set_instruction_param_alignment(1, 4)
 
       res
     end
@@ -2567,8 +2567,8 @@ module Crystal
     def memcpy(dest, src, len, align, volatile, *, src_align = align)
       res = call c_memcpy_fun, [dest, src, len, volatile]
 
-      LibLLVM.set_instr_param_alignment(res, 1, align)
-      LibLLVM.set_instr_param_alignment(res, 2, src_align)
+      res.set_instruction_param_alignment(1, align)
+      res.set_instruction_param_alignment(2, src_align)
 
       res
     end
