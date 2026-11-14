@@ -655,6 +655,36 @@ describe "Lexer macro" do
     token.line_number.should eq(2)
   end
 
+  [
+    %("\#{ "{" }"),
+    %("\#{ "}" }"),
+    %("\#{ "{}" }"),
+    %("\#{ "\#{1}" }"),
+    %("\#{ "\#{ "{" }" }"),
+    %("\#{ "\#{ "}" }" }"),
+    %("\#{ {1 => 2}[1] }"),
+    %("a\#{ "}" }b\#{ "{" }c"),
+  ].each do |code|
+    it "lexes macro with curly brace in string inside interpolation: #{code} (#17930)" do
+      lexer = Lexer.new("#{code} end")
+
+      literal = String.build do |io|
+        macro_state = Token::MacroState.default
+        loop do
+          token = lexer.next_macro_token(macro_state, false)
+          break if token.type.macro_end?
+
+          token.type.should eq(t :MACRO_LITERAL)
+          io << token.value
+          macro_state = token.macro_state
+        end
+        macro_state.nest.should eq(0)
+        macro_state.delimiter_state.should be_nil
+      end
+      literal.should eq("#{code} ")
+    end
+  end
+
   it "lexes macro with string interpolation and double curly brace" do
     lexer = Lexer.new(%("\#{{{1}}}"))
 
