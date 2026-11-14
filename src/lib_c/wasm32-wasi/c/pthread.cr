@@ -1,4 +1,4 @@
-{% if flag?(:wasip3) %}
+{% unless flag?(:wasip1) || flag?(:wasip2) %}
   # The wasm32-wasip3 sysroot introduced in wasi-sdk 34 requires LLVM 23+ and
   # the new TLS representation based on cooperative threading, regardless of
   # using threads or cooperative threading or none.

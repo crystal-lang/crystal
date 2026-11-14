@@ -31,7 +31,9 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
-    {% if flag?(:wasip3) %}
+    {% if flag?(:wasip1) || flag?(:wasip2) %}
+      raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
+    {% else %}
       r, w = System::FileDescriptor.system_pipe
       # Default to blocking until the event loop supports waiting for pipe I/O.
       System::FileDescriptor.set_blocking(r, false) if read_blocking == false
@@ -40,8 +42,6 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
         IO::FileDescriptor.new(handle: r),
         IO::FileDescriptor.new(handle: w),
       }
-    {% else %}
-      raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
     {% end %}
   end
 

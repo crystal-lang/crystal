@@ -1,4 +1,4 @@
-{% if flag?(:wasip3) %}
+{% unless flag?(:wasip1) || flag?(:wasip2) %}
   require "c/pthread"
 {% end %}
 
