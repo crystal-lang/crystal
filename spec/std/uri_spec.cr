@@ -157,6 +157,9 @@ describe "URI" do
 
     context "bad urls" do
       it { expect_raises(URI::Error) { URI.parse("http://some.com:8f80/path") } }
+      it { expect_raises(URI::Error) { URI.parse("http://some.com:99999999999/path") } }
+      it { expect_raises(URI::Error) { URI.parse("http://some.com:#{Int32::MAX.to_i64 + 1}/path") } }
+      it { URI.parse("http://some.com:#{Int32::MAX}/path").port.should eq Int32::MAX }
     end
   end
 
