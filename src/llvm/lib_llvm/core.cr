@@ -190,6 +190,9 @@ lib LibLLVM
   {% end %}
   fun metadata_as_value = LLVMMetadataAsValue(c : ContextRef, md : MetadataRef) : ValueRef
   fun value_as_metadata = LLVMValueAsMetadata(val : ValueRef) : MetadataRef
+  {% unless LibLLVM::IS_LT_240 %}
+    fun print_metadata_to_string = LLVMPrintMetadataToString(md : MetadataRef) : Char*
+  {% end %}
   fun get_md_node_num_operands = LLVMGetMDNodeNumOperands(v : ValueRef) : UInt
   fun get_md_node_operands = LLVMGetMDNodeOperands(v : ValueRef, dest : ValueRef*)
   fun md_string_in_context = LLVMMDStringInContext(c : ContextRef, str : Char*, s_len : UInt) : ValueRef

@@ -352,12 +352,17 @@ class LLVM::Builder
     LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
   end
 
-  def set_current_debug_location(metadata, context : LLVM::Context)
+  def set_current_debug_location(metadata : Metadata, context : Context)
     {% if LibLLVM::IS_LT_90 %}
-      LibLLVM.set_current_debug_location(self, LibLLVM.metadata_as_value(context, metadata))
+      LibLLVM.set_current_debug_location(self, context.metadata_to_value(metadata))
     {% else %}
       LibLLVM.set_current_debug_location2(self, metadata)
     {% end %}
+  end
+
+  @[Deprecated("Use a `LLVM::Metadata` for `metadata` instead")]
+  def set_current_debug_location(metadata, context : LLVM::Context)
+    set_current_debug_location(Metadata.new(metadata), context)
   end
 
   def clear_current_debug_location
@@ -374,6 +379,14 @@ class LLVM::Builder
 
   def current_debug_location
     Value.new LibLLVM.get_current_debug_location(self)
+  end
+
+  def current_debug_location_metadata : Metadata
+    {% if LibLLVM::IS_LT_90 %}
+      Metadata.new(LibLLVM.value_as_metadata(LibLLVM.get_current_debug_location(self)))
+    {% else %}
+      Metadata.new(LibLLVM.get_current_debug_location2(self))
+    {% end %}
   end
 
   def to_unsafe

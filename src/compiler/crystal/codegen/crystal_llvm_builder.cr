@@ -52,11 +52,7 @@ module Crystal
     end
 
     def current_debug_location_metadata
-      {% if LibLLVM::IS_LT_90 %}
-        LibLLVM.value_as_metadata LibLLVM.get_current_debug_location(@builder)
-      {% else %}
-        LibLLVM.get_current_debug_location2(@builder)
-      {% end %}
+      @builder.current_debug_location_metadata
     end
 
     def to_unsafe
