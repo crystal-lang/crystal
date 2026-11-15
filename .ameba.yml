@@ -52,6 +52,14 @@ Lint/SignalTrap:
     # Implements Process.on_terminate and restores individual signal handlers
     - src/crystal/system/unix/process.cr
 
+Lint/VoidOutsideLib:
+  Excluded:
+    # ABI tests and low-level Proc(Void) representations
+    - spec/compiler/macro/macro_expander_spec.cr
+    - src/compiler/crystal/interpreter/compiler.cr
+    - src/fiber.cr
+    - src/openssl/ssl/context.cr
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
