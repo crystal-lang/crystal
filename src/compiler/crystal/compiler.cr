@@ -444,10 +444,12 @@ module Crystal
       llvm_mod = unit.llvm_mod
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod, target_machine unless @optimization_mode.o0?
+        unit.compilation_time = Time.measure do
+          optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        emit_filename = emit_base_filename || output_filename
-        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
+          emit_filename = emit_base_filename || output_filename
+          unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
+        end
       end
 
       object_names = [output_filename]

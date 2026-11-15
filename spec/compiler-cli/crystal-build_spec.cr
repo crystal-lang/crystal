@@ -45,6 +45,18 @@ describe "`crystal build`" do
       .error.should(contain("Error: undefined method 'frobulate' for Int32"))
   end
 
+  it "reports nonzero codegen timings when cross-compiling" do
+    with_tempfile "cross_codegen_stats.cr", "cross_codegen_stats.o" do |source, output_path|
+      File.write source, "puts 1"
+
+      result = Process.capture_result(crystal, "build", "--cross-compile", "--stats", "-o", output_path, source)
+      result.should(be_success)
+      result.output.should(contain("Top 10 slowest modules:"))
+      timing = result.output.match(/ - ([\d:.]+) _main /).should_not be_nil
+      timing[1].should match(/[1-9]/)
+    end
+  end
+
   it "reports codegen timings with parallel compilation" do
     with_tempfile "codegen_stats.cr" do |source|
       File.write source, <<-CRYSTAL
