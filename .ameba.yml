@@ -28,6 +28,19 @@ Documentation/DocumentationAdmonition:
 Lint/AssignmentInCallArgument:
   Enabled: false
 
+Lint/DuplicateEnumValue:
+  Excluded:
+    # Explicit tests and intentional aliases (including upstream C constants)
+    - spec/std/enum_spec.cr
+    - src/colorize.cr
+    - src/compiler/crystal/command.cr
+    - src/lib_c/**/*
+    - src/llvm/enums.cr
+    - src/openssl/lib_ssl.cr
+    - src/regex/lib_pcre*.cr
+    - src/syscall/aarch64-linux.cr
+    - src/winerror.cr
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
