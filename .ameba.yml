@@ -60,6 +60,10 @@ Lint/VoidOutsideLib:
     - src/fiber.cr
     - src/openssl/ssl/context.cr
 
+# Disabled: Keep the macro whitespace produced by the Crystal formatter.
+Lint/WhitespaceAroundMacroExpression:
+  Enabled: false
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
