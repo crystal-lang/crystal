@@ -649,7 +649,7 @@ module Crystal
 
     private def mt_codegen(units, n_threads)
       if ENV["PROFILE_LARGE_FIRST"]? == "1"
-        units = units.sort_by do |unit|
+        units.sort_by! do |unit|
           weight = 0
           unit.llvm_mod.functions.each do |function|
             weight += function.basic_blocks.size
