@@ -1736,7 +1736,7 @@ module Crystal
       write_indent
       write "end"
       next_token
-    rescue ex : Crystal::SyntaxException
+    rescue Crystal::SyntaxException
       format_macro_body node
     end
 
@@ -2149,7 +2149,7 @@ module Crystal
         # Format the value and append 2 more spaces of indentation
         begin
           formatter, value = subformat(value)
-        rescue ex : Crystal::SyntaxException
+        rescue Crystal::SyntaxException
           raise Crystal::SyntaxException.new(
             ex.message,
             ex.line_number + macro_node_line,

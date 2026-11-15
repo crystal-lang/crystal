@@ -113,7 +113,7 @@ class Crystal::Call
 
   def lookup_matches
     lookup_matches(with_autocast: false)
-  rescue ex : RetryLookupWithLiterals
+  rescue RetryLookupWithLiterals
     lookup_matches(with_autocast: true)
   end
 
@@ -1023,7 +1023,7 @@ class Crystal::Call
           if !match.def.free_var?(output) && output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
               lookup_node_type(match.context, output).virtual_type
-            rescue ex : Crystal::CodeError
+            rescue Crystal::CodeError
               cant_infer_block_return_type
             end
           else

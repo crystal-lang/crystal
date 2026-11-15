@@ -338,7 +338,7 @@ module YAML::Schema::Core
 
     begin
       T.new(string, underscore: true, prefix: true, leading_zero_is_octal: true)
-    rescue ex : ArgumentError
+    rescue ArgumentError
       raise YAML::ParseException.new("Can't read #{T}", *node.location)
     end
   end

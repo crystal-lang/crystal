@@ -143,6 +143,12 @@ Lint/UnusedArgument:
 Lint/UnusedBlockArgument:
   Enabled: false
 
+Lint/UnusedRescueVariable:
+  Excluded:
+    # BUG: The exception is read after rescue or in ensure, outside the rescue body.
+    - src/crystal/main.cr
+    - src/crystal/once.cr
+
 Lint/UselessAssign:
   # BUG: https://github.com/crystal-ameba/ameba/issues/447
   # This setting is to avoid false positives from the common use of type
