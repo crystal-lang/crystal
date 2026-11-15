@@ -1095,6 +1095,8 @@ module Crystal
 
     # Deduplicates notification sources. Subscriptions persist across lookups
     # because receivers and arguments can depend on the same hierarchy.
+    # A call whose receiver narrows must still observe the wider hierarchy so
+    # new sibling subtypes cannot leave its dispatch table stale (#16947).
     private def subscribe_to_hierarchy(type : Type)
       return unless type.is_a?(SubclassObservable)
       observed = @observed_hierarchies ||= [] of Type
