@@ -648,7 +648,7 @@ module Crystal
     end
 
     private def mt_codegen(units, n_threads)
-      if ENV["PROFILE_LARGE_FIRST"]? == "1"
+      unless ENV["PROFILE_LARGE_FIRST"]? == "0"
         units.sort_by! do |unit|
           weight = 0
           unit.llvm_mod.functions.each do |function|
