@@ -14,13 +14,6 @@
 
 Version: "1.7.0"
 
-# Documentation
-# =========================
-
-# Disabled: What's the point in alerting about existing TODOs in code?
-Documentation/DocumentationAdmonition:
-  Enabled: false
-
 # Lint
 # =========================
 
@@ -214,13 +207,6 @@ Naming/VariableNames:
 Performance/AnyInsteadOfPresent:
   Excluded:
     # These specs explicitly test #any? implementations
-    - spec/std/bit_array_spec.cr
-    - spec/std/enumerable_spec.cr
-    - spec/std/hash_spec.cr
-
-Performance/AnyInsteadOfEmpty:
-  Excluded:
-    # These specs explicitly test `#any?` implementations
     - spec/std/bit_array_spec.cr
     - spec/std/enumerable_spec.cr
     - spec/std/hash_spec.cr

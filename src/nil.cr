@@ -124,7 +124,6 @@ struct Nil
   # config["missing"]?.presence # => nil
   # ```
   def presence : Nil
-    self # ameba:disable Lint/UnusedExpression
   end
 
   def clone
