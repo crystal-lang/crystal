@@ -269,7 +269,7 @@ module HTTP
         return false unless byte == ';'.ord
 
         bytes += 1 # consume ';'
-        bytes, bws = skip_whitespace(bytes)
+        bytes, _ = skip_whitespace(bytes)
 
         # chunk-ext-name = token
         name = read_token(bytes)
@@ -281,7 +281,7 @@ module HTTP
         next unless byte == '='.ord
 
         bytes += 1 # consume '='
-        bytes, bws = skip_whitespace(bytes)
+        bytes, _ = skip_whitespace(bytes)
         return false unless byte = bytes.first?
 
         # chunk-ext-val = token / quoted-string
