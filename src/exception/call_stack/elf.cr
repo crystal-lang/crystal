@@ -10,11 +10,13 @@ require "crystal/system/unix/elf"
 {% end %}
 
 struct Exception::CallStack
-  DEBUG_LINE_STR = ".debug_line_str"
-  DEBUG_STR      = ".debug_str"
-  DEBUG_LINE     = ".debug_line"
-  DEBUG_ABBREV   = ".debug_abbrev"
-  DEBUG_INFO     = ".debug_info"
+  DEBUG_LINE_STR    = ".debug_line_str"
+  DEBUG_STR         = ".debug_str"
+  DEBUG_LINE        = ".debug_line"
+  DEBUG_ABBREV      = ".debug_abbrev"
+  DEBUG_INFO        = ".debug_info"
+  DEBUG_ADDR        = ".debug_addr"
+  DEBUG_STR_OFFSETS = ".debug_str_offsets"
 
   @@base_address = LibC::Elf_Addr.zero
 
@@ -69,6 +71,6 @@ struct Exception::CallStack
   end
 
   protected def self.decode_address(ip)
-    ip.address &- @@base_address
+    ip.address &- @@base_address &- 1
   end
 end

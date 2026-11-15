@@ -590,6 +590,46 @@ describe "Code gen: closure" do
       CRYSTAL
   end
 
+  it "closures virtual self if class var is accessed via instance method (#11975)" do
+    run(<<-CRYSTAL, Int32).should eq(102)
+      class Foo
+        @@x = 1
+
+        def x
+          ->{ @@x }
+        end
+      end
+
+      class Bar < Foo
+        @@x = 2
+      end
+
+      foo = Foo.new.as(Foo)
+      bar = Bar.new.as(Foo)
+      foo.x.call &* 100 &+ bar.x.call
+      CRYSTAL
+  end
+
+  it "closures virtual self if class var is accessed via class method (#11975)" do
+    run(<<-CRYSTAL, Int32).should eq(102)
+      class Foo
+        @@x = 1
+
+        def self.x
+          ->{ @@x }
+        end
+      end
+
+      class Bar < Foo
+        @@x = 2
+      end
+
+      foo = Foo.as(Foo.class)
+      bar = Bar.as(Foo.class)
+      foo.x.call &* 100 &+ bar.x.call
+      CRYSTAL
+  end
+
   it "doesn't form a closure if invoking class method" do
     run(<<-CRYSTAL).to_b.should be_false
       require "prelude"
@@ -799,6 +839,118 @@ describe "Code gen: closure" do
       end
 
       fn.call.closure_data.address == Closure.atomic.address
+      CRYSTAL
+  end
+
+  it "reads a block-local closured var shadowed by a later closured var of the same name (#17779)" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      def bar
+        yield
+      end
+
+      def foo
+        x = 0
+        bar do
+          a = 42
+          f = ->{ a }
+          x = f.call
+        end
+        a = 7
+        g = ->{ a }
+        g.call
+        x
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  it "reads a block-local var in a captured block shadowed by a later captured var of the same name (#17779)" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      def bar
+        yield
+      end
+
+      def capture(&block : -> Int32)
+        block.call
+      end
+
+      def foo
+        x = 0
+        bar do
+          a = 42
+          x = capture { a }
+        end
+        a = 7
+        capture { a }
+        x
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  it "reads a block-local closured var shadowed by a later closured top-level var of the same name (#17779)" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      def bar
+        yield
+      end
+
+      x = 0
+      bar do
+        a = 42
+        f = ->{ a }
+        x = f.call
+      end
+      a = 7
+      g = ->{ a }
+      g.call
+      x
+      CRYSTAL
+  end
+
+  it "reads a block-local closured var of a different type than a later closured var of the same name (#17779)" do
+    run(<<-CRYSTAL).to_string.should eq("forty-two")
+      def bar
+        yield
+      end
+
+      def foo
+        s = ""
+        bar do
+          a = "forty-two"
+          f = ->{ a }
+          s = f.call
+        end
+        a = 7
+        g = ->{ a }
+        g.call
+        s
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  it "reads a closured block arg that shadows an earlier closured local of the same name (#17779)" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      def bar
+        yield 42
+      end
+
+      def foo
+        a = 7
+        g = ->{ a }
+        x = 0
+        bar do |a|
+          f = ->{ a }
+          x = f.call
+        end
+        g.call
+        x
+      end
+
+      foo
       CRYSTAL
   end
 end

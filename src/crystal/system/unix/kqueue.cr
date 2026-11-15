@@ -32,8 +32,8 @@ struct Crystal::System::Kqueue
   end
 
   # Helper to register multiple *changes*. Returns immediately.
-  def kevent(changes : Slice(LibC::Kevent), &) : Nil
-    ret = LibC.kevent(@kq, changes.to_unsafe, changes.size, nil, 0, nil)
+  def kevent(changes : Slice(LibC::Kevent), events : Slice(LibC::Kevent), &) : Nil
+    ret = LibC.kevent(@kq, changes.to_unsafe, changes.size, events.to_unsafe, events.size, nil)
     yield if ret == -1
   end
 

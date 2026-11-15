@@ -90,6 +90,17 @@ describe "Code gen: sizeof" do
     run("sizeof(NoReturn)").to_i.should eq(0)
   end
 
+  it "gets sizeof Void expression" do
+    # Same as the size of a byte, because doing
+    # `Pointer(Void).malloc` must work like `Pointer(UInt8).malloc`
+    run("sizeof(typeof((x = uninitialized Void)))").to_i.should eq(1)
+  end
+
+  it "gets sizeof NoReturn expression" do
+    # NoReturn can't hold anything
+    run("sizeof(typeof((x = uninitialized NoReturn)))").to_i.should eq(0)
+  end
+
   it "gets sizeof Nil (#7644)" do
     # Nil can't hold anything
     run("sizeof(Nil)").to_i.should eq(0)
@@ -290,6 +301,22 @@ describe "Code gen: sizeof" do
     it "alignof mixed union is not less than alignof its variant types" do
       # NOTE: `alignof(Int128) == 16` is not guaranteed
       run("alignof(Int32 | Int128) >= alignof(Int128)").to_b.should be_true
+    end
+
+    it "gets alignof Void" do
+      run("alignof(Void)").to_i.should eq(1)
+    end
+
+    it "gets alignof NoReturn" do
+      run("alignof(NoReturn)").to_i.should eq(1)
+    end
+
+    it "gets alignof Void expression" do
+      run("alignof(typeof((x = uninitialized Void)))").to_i.should eq(1)
+    end
+
+    it "gets alignof NoReturn expression" do
+      run("alignof(typeof((x = uninitialized NoReturn)))").to_i.should eq(1)
     end
   end
 

@@ -267,7 +267,7 @@ describe "Semantic: union" do
   end
 
   it "merges types in the same hierarchy with Union" do
-    assert_type(<<-CRYSTAL) { types["Foo"].virtual_type!.metaclass }
+    assert_type(<<-CRYSTAL) { types["Foo"].metaclass }
       class Foo; end
       class Bar < Foo; end
 

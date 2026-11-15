@@ -187,26 +187,38 @@ module HTTP
       end
 
       it "keeps content-length header in sync" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("GET", "/", body: "foo")
         req.body = IO::Memory.new("")
         req.method = "POST"
-        req.content_length.should eq 3_i64
+        req.content_length.should be_nil
         String.build do |io|
-          expect_raises(ArgumentError, "Content-Length header is 3 but body had 0 bytes") do
-            req.to_io(io)
-          end
-        end
+          req.to_io(io)
+        end.should eq "POST / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
       end
 
       it "keeps content-length header in sync" do
-        # BUG: The following specs all demonstrate incorrect behaviour.
         req = Request.new("PATCH", "/", body: "foo")
         req.body = nil
-        req.content_length.should eq 3_i64
+        req.content_length.should be_nil
         String.build do |io|
           req.to_io(io)
-        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 3\r\n\r\n"
+        end.should eq "PATCH / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+      end
+
+      it "serializes POST, PUT and PATCH without body with Content-Length: 0" do
+        {"POST", "PUT", "PATCH"}.each do |method|
+          String.build do |io|
+            Request.new(method, "/").to_io(io)
+          end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+        end
+      end
+
+      it "serializes POST and PUT without body with Content-Length: 0" do
+        {"POST", "PUT"}.each do |method|
+          String.build do |io|
+            Request.new(method, "/").to_io(io)
+          end.should eq "#{method} / HTTP/1.1\r\nContent-Length: 0\r\n\r\n"
+        end
       end
     end
 
@@ -551,6 +563,27 @@ module HTTP
           Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
+        it "rejects control whitespace before framing values" do
+          {"\v", "\f", "\r"}.each do |whitespace|
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: #{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:\t#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: #{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:\t#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+          end
+        end
+
+        it "accepts space and tab before framing values" do
+          io = IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: \t chunked\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Transfer-Encoding"].should eq "chunked"
+
+          io = IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: \t 1\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Content-Length"].should eq "1"
+        end
+
         it "doesn't raise on request with multiple Content-Length headers" do
           io = IO::Memory.new <<-HTTP
             GET / HTTP/1.1
@@ -629,7 +662,72 @@ module HTTP
       end
     end
 
+    it ".from_io does not automatically decompress" do
+      compressed = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("foobar"))
+      end
+
+      io = IO::Memory.new
+      io << <<-HTTP
+        POST / HTTP/1.1
+        Content-Encoding: gzip
+        Content-Length: #{compressed.bytesize}
+
+        #{compressed}
+
+        HTTP
+      io.rewind
+      request = HTTP::Request.from_io(io).should be_a(HTTP::Request)
+      request.headers["Content-Encoding"].should eq "gzip"
+      body = request.body.should_not be_nil
+      body.gets_to_end.should eq compressed
+    end
+
+    it ".from_io can decompress body on demand" do
+      compressed = String.build do |io|
+        Compress::Gzip::Writer.open(io, &.print("foobar"))
+      end
+
+      io = IO::Memory.new
+      io << <<-HTTP
+        POST / HTTP/1.1
+        Content-Encoding: gzip
+        Content-Length: #{compressed.bytesize}
+
+        #{compressed}
+
+        HTTP
+      io.rewind
+      request = HTTP::Request.from_io(io).should be_a(HTTP::Request)
+      request.headers["Content-Encoding"].should eq "gzip"
+      body = request.body.should_not be_nil
+      Compress::Gzip::Reader.open(body, &.gets_to_end).should eq "foobar"
+    end
+
     describe "#keep_alive?" do
+      it "gives close precedence in connection token lists" do
+        {"HTTP/1.0", "HTTP/1.1"}.each do |version|
+          {"close, keep-alive", "keep-alive, close", "keep-alive, \tClOsE \t"}.each do |value|
+            request = Request.new "GET", "/", headers: HTTP::Headers{"Connection" => value}, version: version
+            request.keep_alive?.should be_false
+          end
+
+          headers = HTTP::Headers{"Connection" => ["keep-alive", "close"]}
+          Request.new("GET", "/", headers: headers, version: version).keep_alive?.should be_false
+        end
+      end
+
+      it "recognizes complete connection tokens" do
+        headers = HTTP::Headers{"Connection" => "other, \tKeEp-AlIvE "}
+        Request.new("GET", "/", headers: headers, version: "HTTP/1.0").keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "x-close, close-extra"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_false
+      end
+
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
         request.keep_alive?.should be_false

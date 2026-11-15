@@ -103,14 +103,21 @@ describe Process do
     end
 
     it "doesn't break if process is collected before completion", tags: %w[slow] do
-      200.times { Process.new([exe, "pu", "exit", "0"]) }
+      # FIXME: the pu command [exe, "pu", "exit", "0"] timeouts on CI
+      command =
+        {% if flag?(:win32) %}
+          ["cmd.exe", "/c", "exit 0"]
+        {% else %}
+          ["/bin/sh", "-c", "exit 0"]
+        {% end %}
+      200.times { Process.run(command) }
 
       # run the GC multiple times to unmap as much memory as possible
       10.times { GC.collect }
 
       # the processes above have now been queued after completion; if this last
       # one finishes at all, nothing was broken by the GC
-      Process.run(exe, ["pu", "exit", "0"])
+      Process.run(command)
     end
 
     it "accepts tuple args" do

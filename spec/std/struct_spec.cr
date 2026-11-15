@@ -44,6 +44,11 @@ describe "Struct" do
     s.to_s.should eq(%(StructSpec::TestClass(@x=1, @y="hello")))
   end
 
+  it "does pretty_print" do
+    StructSpec::TestClass.new(1, "hello").pretty_inspect.should eq(%(StructSpec::TestClass(@x=1, @y="hello")))
+    StructSpec::TestClass.new(1, "foo" * 30).pretty_inspect.should eq(%(StructSpec::TestClass(\n @x=1,\n @y=\n  "#{"foo" * 30}")))
+  end
+
   it "does ==" do
     s = StructSpec::TestClass.new(1, "hello")
     s.should eq(s)

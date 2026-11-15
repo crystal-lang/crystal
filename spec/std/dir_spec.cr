@@ -141,6 +141,27 @@ describe "Dir" do
   end
 
   describe ".delete" do
+    it "deletes a directory with trailing separators" do
+      with_tempfile("delete-trailing-separators") do |path|
+        {"/", "///"}.each do |suffix|
+          Dir.mkdir(path)
+          Dir.delete(path + suffix)
+          Dir.exists?(path).should be_false
+        end
+      end
+    end
+
+    it "deletes a directory with trailing separators with delete?" do
+      with_tempfile("delete-missing-trailing-separators") do |path|
+        {"/", "///"}.each do |suffix|
+          Dir.mkdir(path)
+          Dir.delete?(path + suffix).should be_true
+          Dir.exists?(path).should be_false
+          Dir.delete?(path + suffix).should be_false
+        end
+      end
+    end
+
     it "raises with an nonexistent path" do
       with_tempfile("nonexistent") do |path|
         expect_raises(File::NotFoundError, "Unable to remove directory: '#{path.inspect_unquoted}'") do

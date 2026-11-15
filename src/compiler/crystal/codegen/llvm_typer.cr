@@ -10,7 +10,9 @@ module Crystal
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 
-    @@closure_counter = 0
+    # Closure counts per enclosing function, so closure type names are unique
+    # across modules (`copy_type` caches by name) and stable across builds.
+    @closure_counters = Hash(String, Int32).new(0)
 
     def initialize(@program : Program, @llvm_context : LLVM::Context)
       @cache = TypeCache.new
@@ -51,6 +53,8 @@ module Crystal
       @layout = machine.data_layout
       @landing_pad_type = @llvm_context.struct([@llvm_context.void_pointer, @llvm_context.int32], "landing_pad")
     end
+
+    getter llvm_context : LLVM::Context
 
     def type_id_pointer
       @llvm_context.int32.pointer
@@ -493,9 +497,9 @@ module Crystal
       LLVM::Type.function(arg_types, llvm_type(type.return_type))
     end
 
-    def closure_context_type(vars, parent_llvm_type, self_type)
-      @@closure_counter += 1
-      llvm_name = "closure_#{@@closure_counter}"
+    def closure_context_type(vars, parent_llvm_type, self_type, fun_name : String)
+      index = @closure_counters.update(fun_name) { |count| count + 1 }
+      llvm_name = "closure.#{fun_name}.#{index}"
 
       has_inner_pointers = !parent_llvm_type.nil?
       closure_type = @llvm_context.struct(llvm_name) do |a_struct|
@@ -584,11 +588,10 @@ module Crystal
     end
 
     def size_of(type)
-      if type.void?
-        0_u64
-      else
-        @layout.size_in_bytes type
-      end
+      # NOTE: this is identical to `#size_in_bytes` unless the LLVM type's
+      # natural size is not a multiple of its natural alignment, which can only
+      # occur in types like the 80-bit long double
+      @layout.abi_size(type)
     end
 
     def offset_of(type, element_index)
@@ -596,11 +599,7 @@ module Crystal
     end
 
     def align_of(type)
-      if type.void?
-        1_u32
-      else
-        @layout.abi_alignment(type)
-      end
+      @layout.abi_alignment(type)
     end
 
     def size_t

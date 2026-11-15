@@ -1,7 +1,21 @@
 require "spec"
 require "http/content"
 
+private class FragmentedChunkedIO < IO::Memory
+  def read(slice : Bytes) : Int32
+    super(slice[0, Math.min(slice.size, 1)])
+  end
+end
+
 describe HTTP::ChunkedContent do
+  it "reads chunk delimiters split across short reads" do
+    io = FragmentedChunkedIO.new("1\r\nA\r\n1\r\nB\r\n0\r\n\r\n")
+    content = HTTP::ChunkedContent.new(io)
+
+    content.gets_to_end.should eq "AB"
+    io.pos.should eq io.bytesize
+  end
+
   it "delays reading the next chunk as soon as one is consumed (#3270)" do
     mem = IO::Memory.new("4\r\n123\n\r\n0\r\n\r\n")
     content = HTTP::ChunkedContent.new(mem)
@@ -60,16 +74,6 @@ describe HTTP::ChunkedContent do
 
   it "#gets reads multiple chunks" do
     mem = IO::Memory.new("1\r\nA\r\n1\r\nB\r\n0\r\n\r\n")
-    content = HTTP::ChunkedContent.new(mem)
-
-    content.gets.should eq "AB"
-    mem.pos.should eq mem.bytesize
-  end
-
-  it "#gets reads multiple chunks with \n" do
-    # The RFC format requires CRLF, but several standard implementations also
-    # accept LF, so we should too.
-    mem = IO::Memory.new("1\nA\n1\nB\n0\n\n")
     content = HTTP::ChunkedContent.new(mem)
 
     content.gets.should eq "AB"
@@ -165,14 +169,104 @@ describe HTTP::ChunkedContent do
     end
   end
 
-  it "reads chunk extensions" do
+  it "skips chunk extensions" do
     mem = IO::Memory.new(%(1;progress=50;foo="bar"\r\nA\r\n1;progress=100\r\nB\r\n0\r\n\r\n"))
-
     chunked = HTTP::ChunkedContent.new(mem)
     chunked.gets(2).should eq "AB"
   end
 
+  it "accepts syntactically valid chunk extensions" do
+    escapable = ['\t'] + (' '..'~').to_a + ((0x80.chr)..(0xff.chr)).to_a
+    quotable = (escapable + ['!'] + ('#'..'[').to_a + (']'..'~').to_a).uniq
+    [
+      "",
+      ";foo",
+      ";foo;bar",
+      %(;0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      " \t ;  \t\tfoo",
+      ";foo=bar",
+      ";foo \t =  \t\tbar",
+      ";foo=bar;arg",
+      ";foo=bar\t ;\t arg",
+      %(;name=0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      %(;name \t =\t \t 0123456789abcdefghijklmnopqrstuvwxyz!#$%&'*+-.^_`|~),
+      %(;quoted=""),
+      %(;quoted \t=\t ""),
+      %(;name="\\""),
+      %(;name="#{quotable.map { |char| char.in?('"', '\\') ? "\\#{char}" : char }.join}"),
+      %(;name="#{escapable.map { |char| "\\#{char}" }.join}"),
+    ].each do |extension|
+      mem = IO::Memory.new("1#{extension}\r\nZ\r\n")
+      chunked = HTTP::ChunkedContent.new(mem)
+      chunked.gets(1).should eq("Z")
+    end
+  end
+
+  it "rejects syntactically invalid chunk extensions" do
+    [
+      " ",
+      "\t",
+      ";",
+      "; ",
+      ";\t",
+      "; =",
+      ";=\t",
+      ";=value",
+      ";key=",
+      ";key= ",
+      ";key= \t",
+      ";key=value;",
+      ";key=value; ",
+      ";key=value ",
+      ";key=value\t",
+      ";key value",
+      ";key=two words",
+      ";key=\"unterminated",
+      ";key=\"value\"junk",
+      ";key=\"bad\u0001\"",
+      ";key=\"bad\\\u007f\"",
+      ";key=;foo",
+    ].each do |extension|
+      mem = IO::Memory.new("1#{extension}\r\nA\r\n0\r\n\r\n")
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid chunk line") { chunked.gets(1) }
+    end
+  end
+
+  it "rejects lone LF/CR in chunk-line" do
+    [
+      "1\nA\r\n",
+      "1\rA\r\n",
+      "3;foo\nbar\r\nbaz\r\n",
+      "3;foo\rbar\r\nbaz\r\n",
+    ].each do |line|
+      chunked = HTTP::ChunkedContent.new(IO::Memory.new(line))
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid chunk line") { chunked.gets(1) }
+    end
+  end
+
   describe "trailing headers" do
+    it "rejects lone LF terminating an empty trailer part" do
+      mem = IO::Memory.new("0\r\n\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
+    it "rejects lone LF terminating a trailer header line" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\n\r\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
+    it "rejects lone LF terminating a nonempty trailer part" do
+      mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\n")
+
+      chunked = HTTP::ChunkedContent.new(mem)
+      expect_raises(IO::Error) { chunked.gets_to_end }
+    end
+
     it "reads chunked trailer part" do
       mem = IO::Memory.new("0\r\nAdditional-Header: Foo\r\n\r\n")
 
@@ -186,9 +280,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nAdditional-Header: Foo")
 
       chunked = HTTP::ChunkedContent.new(mem)
-      expect_raises IO::EOFError do
-        chunked.gets
-      end
+      expect_raises(IO::Error) { chunked.gets }
     end
 
     it "fails on invalid trailer" do
@@ -224,9 +316,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar Baz Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, "Trailing headers too long") do
-        chunked.gets
-      end
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid trailer") { chunked.gets }
       chunked.headers.should be_empty
     end
 
@@ -234,9 +324,7 @@ describe HTTP::ChunkedContent do
       mem = IO::Memory.new("0\r\nFoo: Bar\r\nBaz: Qux\r\n\r\n")
 
       chunked = HTTP::ChunkedContent.new(mem, max_headers_size: 12)
-      expect_raises(IO::Error, "Trailing headers too long") do
-        chunked.gets
-      end
+      expect_raises(IO::Error, "Invalid HTTP chunked content: invalid trailer") { chunked.gets }
       chunked.headers.should eq HTTP::Headers{"Foo" => "Bar"}
     end
   end
@@ -259,12 +347,49 @@ describe HTTP::ChunkedContent do
     end
   end
 
-  it "fails if invalid chunk size" do
-    mem = IO::Memory.new("G\r\n")
+  it "accepts valid chunk-size" do
+    [
+      "0",
+      "1",
+      "05",
+      "a",
+      "00b",
+      "5b",
+      "FF",
+      "Ab5C",
+    ].each do |size|
+      value = "." * size.to_i(16)
+      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size}\r\n#{value}\r\n0\r\n\r\n"))
+      content.gets_to_end.should eq(value)
+    end
 
-    chunked = HTTP::ChunkedContent.new(mem)
-    expect_raises IO::Error, "Invalid HTTP chunked content: invalid chunk size" do
-      chunked.gets
+    # expect EOF to skip allocating, streaming and comparing 2GB
+    content = HTTP::ChunkedContent.new(IO::Memory.new("7fffffff\r\n..."))
+    expect_raises(IO::EOFError) { content.gets_to_end }
+  end
+
+  it "rejects invalid chunk-size" do
+    ["+6", "-5", "-c", "+D", "-1", "+0", "-0", " 6", "6 ", "0x6", "6_0", "", "G"].each do |size|
+      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size}\r\n..."))
+      expect_raises IO::Error, "Invalid HTTP chunked content: invalid chunk line" do
+        content.gets
+      end
+    end
+  end
+
+  it "rejects chunk-size overflowing Int32" do
+    [
+      "80000000",
+      "80000001",
+      "8fffffff",
+      "ffffffff",
+      "100000000",
+      "10000000000000000",
+    ].each do |size|
+      content = HTTP::ChunkedContent.new(IO::Memory.new("#{size}\r\n\r\n"))
+      expect_raises IO::Error, "Invalid HTTP chunked content: invalid chunk line" do
+        content.read_byte
+      end
     end
   end
 

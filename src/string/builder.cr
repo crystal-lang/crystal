@@ -121,9 +121,9 @@ class String::Builder < IO
   end
 
   private def increase_capacity_by(count)
-    raise IO::EOFError.new if count >= Int32::MAX - real_bytesize
+    raise IO::EOFError.new if count >= Int32::MAX - real_bytesize - 1
 
-    new_bytesize = real_bytesize + count
+    new_bytesize = real_bytesize + count + 1
     return if new_bytesize <= @capacity
 
     new_capacity = calculate_new_capacity(new_bytesize)

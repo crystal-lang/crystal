@@ -736,6 +736,10 @@ module Crystal
         # In the case of an abstract struct we want to consider the union type
         # of all subtypes (if it's not abstract it's concrete and this will return self)
         virtual_type.remove_indirection
+      elsif void?
+        # Treat `Void` like `UInt8` so that methods like `Pointer(Void).malloc`
+        # behave like `Pointer(UInt8).malloc`
+        @program.uint8
       else
         devirtualize
       end

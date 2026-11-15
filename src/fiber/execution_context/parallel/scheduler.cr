@@ -20,6 +20,10 @@ module Fiber::ExecutionContext
         SPINNING
         WAITING
         PARKED
+
+        def idle?
+          none? || waiting? || parked?
+        end
       end
 
       getter name : String
@@ -45,7 +49,7 @@ module Fiber::ExecutionContext
       end
 
       protected def running! : Nil
-        @state = State::RUNNING
+        transition_to :running
       end
 
       protected def shutdown! : Nil
@@ -69,7 +73,15 @@ module Fiber::ExecutionContext
       protected def reschedule : Nil
         Crystal.trace :sched, "reschedule"
         if fiber = quick_dequeue?
-          resume fiber unless fiber == thread.current_fiber
+          unless fiber == thread.current_fiber
+            unless try_resume(fiber)
+              # failed to resume fiber in a timely manner, resume the main fiber
+              # to resolve any deadlock such as 2+ schedulers trying to resume
+              # the other scheduler's running fiber
+              enqueue fiber
+              resume main_fiber
+            end
+          end
         else
           # nothing to do: switch back to the main loop to spin/wait/park
           resume main_fiber
@@ -77,6 +89,12 @@ module Fiber::ExecutionContext
       end
 
       protected def resume(fiber : Fiber) : Nil
+        until try_resume(fiber)
+          Thread.yield
+        end
+      end
+
+      private def try_resume(fiber) : Bool
         Crystal.trace :sched, "resume", fiber: fiber
 
         # in a multithreaded environment the fiber may be dequeued before its
@@ -91,13 +109,19 @@ module Fiber::ExecutionContext
             raise "BUG: tried to resume dead fiber #{fiber} (#{inspect})"
           end
 
-          # OPTIMIZE: if the thread saving the fiber context has been preempted,
-          # this will block the current thread from progressing... shall we
-          # abort and reenqueue the fiber after MAX attempts?
+          if attempts == Thread::MAX_DELAY_ATTEMPTS_BEFORE_YIELD
+            # this is taking too long: maybe the thread saving the fiber
+            # context has been preempted, or we reached a deadlock where 2+
+            # schedulers quickly dequeued the other scheduler's running fiber
+            return false
+          end
+
           attempts = Thread.delay(attempts)
         end
 
         swapcontext(fiber)
+
+        true
       end
 
       private def quick_dequeue? : Fiber?
@@ -138,7 +162,7 @@ module Fiber::ExecutionContext
       end
 
       protected def run_loop : Nil
-        @state = State::RUNNING
+        transition_to :running
 
         Crystal.trace :sched, "started"
 
@@ -161,8 +185,18 @@ module Fiber::ExecutionContext
 
           if fiber = find_next_runnable
             spin_stop
-            @state = State::RUNNING
-            resume fiber
+            transition_to :running
+
+            unless try_resume(fiber)
+              # this is taking too long: maybe the thread saving the fiber
+              # context has been preempted, abort so we don't stop this
+              # scheduler from progressing
+              #
+              # OPTIMIZE: we re-enqueue the fiber so #find_next_runnable might
+              # just dequeue it again if it's the only fiber in the local queue,
+              # without looking up at the global queue or the event loop
+              enqueue(fiber)
+            end
           else
             # the event loop enqueued a fiber (or was interrupted) or the
             # scheduler was unparked: go for the next iteration
@@ -188,7 +222,7 @@ module Fiber::ExecutionContext
           return if @shutdown
 
           # usually empty but the scheduler may have been transferred to another
-          # thread with queued fibers
+          # thread with queued fibers, or a quick dequeue has been aborted
           yield @runnables.shift?
 
           yield @global_queue.grab?(@runnables, divisor: @execution_context.size)
@@ -202,7 +236,7 @@ module Fiber::ExecutionContext
 
         # wait on the event loop for events and timers to activate
         @event_loop.lock? do
-          @state = State::WAITING
+          transition_to :waiting
 
           # there is a time window between stop spinning and start waiting
           # during which another context may have enqueued a fiber, check again
@@ -231,14 +265,14 @@ module Fiber::ExecutionContext
           yield @global_queue.unsafe_grab?(@runnables, divisor: @execution_context.size)
           yield try_steal?
 
-          @state = State::PARKED
+          transition_to :parked
           nil
         end
 
         # immediately mark the scheduler as spinning (we just unparked); we
         # don't increment the number of spinning threads since
         # `Parallel#wake_scheduler` already did
-        @state = State::SPINNING
+        transition_to :spinning
       end
 
       private def run_evloop(blocking)
@@ -288,7 +322,7 @@ module Fiber::ExecutionContext
       private def spin_start : Nil
         return if @state.spinning?
 
-        @state = State::SPINNING
+        transition_to :spinning
         @execution_context.@spinning.add(1, :acquire_release)
       end
 
@@ -311,6 +345,17 @@ module Fiber::ExecutionContext
 
       protected def active? : Bool
         (@state.running? && !syscall_flag?) || @state.spinning?
+      end
+
+      protected def idle? : Bool
+        @state.idle?
+      end
+
+      private def transition_to(new_state : State)
+        if @state.idle? && !new_state.idle?
+          ExecutionContext.wake_monitor
+        end
+        @state = new_state
       end
 
       def status : String

@@ -172,7 +172,7 @@ module HTTP
     # ```
     # line = "Server: nginx"
     # name, value = line.split ':', 2
-    # {name, value.lstrip} # => {"Server", "nginx"}
+    # {name, value.lstrip(" \t")} # => {"Server", "nginx"}
     # ```
     #
     # except that it's faster because we only create 2 strings
@@ -186,9 +186,9 @@ module HTTP
     colon_index = slice.index(':'.ord.to_u8) || 0
     name = header_name(slice[0, colon_index])
 
-    # Get where the header value starts (skip space)
+    # Get where the header value starts (skip only HTTP optional whitespace)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].unsafe_chr.ascii_whitespace?
+    while middle_index < bytesize && cstr[middle_index].in?(' '.ord, '\t'.ord)
       middle_index += 1
     end
 
@@ -268,7 +268,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String) : Nil
+  def self.serialize_headers_and_body(io : IO, headers : HTTP::Headers, body : String?, body_io : IO?, version : String, *, expecting_body = false) : Nil
     if body
       serialize_headers_and_string_body(io, headers, body)
     elsif body_io
@@ -296,6 +296,11 @@ module HTTP
       end
     else
       headers.serialize(io)
+      if expecting_body && !headers.has_key?("Content-Length") && !headers.has_key?("Transfer-Encoding")
+        # A user agent should send Content-Length for a method that defines a
+        # meaning for content, even when it's empty (RFC 9110, section 8.6)
+        io << "Content-Length: 0\r\n"
+      end
       io << "\r\n"
     end
   end
@@ -332,7 +337,11 @@ module HTTP
     if length_headers.size > 1 && length_headers.any? { |header| header != first_header }
       raise ArgumentError.new("Multiple Content-Length headers received did not match: #{length_headers}")
     end
-    first_header.to_u64
+    unless first_header[0]?.in?('-', '+')
+      length = first_header.to_u64?(whitespace: false)
+    end
+    raise ArgumentError.new("Invalid Content-Length: #{first_header}") unless length
+    length
   end
 
   # :nodoc:
@@ -344,19 +353,20 @@ module HTTP
 
   # :nodoc:
   def self.keep_alive?(message) : Bool
-    case message.headers["Connection"]?.try &.downcase
-    when "keep-alive"
-      true
-    when "close", "upgrade"
-      false
-    else
-      case message.version
-      when "HTTP/1.0"
-        false
-      else
-        true
+    keep_alive = message.version != "HTTP/1.0"
+
+    message.headers.get?("Connection").try &.each do |value|
+      value.downcase.split(',') do |token|
+        case token.strip(" \t")
+        when "close", "upgrade"
+          return false
+        when "keep-alive"
+          keep_alive = true
+        end
       end
     end
+
+    keep_alive
   end
 
   def self.expect_continue?(headers : HTTP::Headers) : Bool

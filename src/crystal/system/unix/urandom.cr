@@ -15,7 +15,7 @@ module Crystal::System::Random
 
       # safety check: urandom can't be a regular disk file or anything, it must
       # be a character device; if not it's a system security issue
-      return unless FileDescriptor.system_info(fd).type.character_device?
+      next unless FileDescriptor.system_info(fd).type.character_device?
 
       @@urandom = fd
     end

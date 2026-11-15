@@ -11,11 +11,18 @@ struct LLVM::BasicBlockCollection
     BasicBlock.new LibLLVM.append_basic_block_in_context(context, @function, name)
   end
 
+  @[Deprecated]
   def append(name = "", &)
-    context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
+    builder =
+      {% if LibLLVM::IS_LT_240 %}
+        context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
+        # Builder.new(LibLLVM.create_builder_in_context(context), LLVM::Context.new(context, dispose_on_finalize: false))
+        Builder.new(LibLLVM.create_builder_in_context(context))
+      {% else %}
+        Builder.new(LibLLVM.create_builder_for_module(LibLLVM.get_global_parent(@function)))
+      {% end %}
+
     block = append name
-    # builder = Builder.new(LibLLVM.create_builder_in_context(context), LLVM::Context.new(context, dispose_on_finalize: false))
-    builder = Builder.new(LibLLVM.create_builder_in_context(context))
     builder.position_at_end block
     yield builder
     block

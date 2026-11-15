@@ -50,7 +50,8 @@ enum HTTP::Status
   EXPECTATION_FAILED              = 417
   IM_A_TEAPOT                     = 418
   MISDIRECTED_REQUEST             = 421
-  UNPROCESSABLE_ENTITY            = 422
+  UNPROCESSABLE_CONTENT           = 422
+  UNPROCESSABLE_ENTITY            = UNPROCESSABLE_CONTENT
   LOCKED                          = 423
   FAILED_DEPENDENCY               = 424
   UPGRADE_REQUIRED                = 426

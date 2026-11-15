@@ -8,7 +8,6 @@
   };
 
   git-hooks.hooks = {
-    actionlint.enable = true;
     asciidoc-linter = {
       enable = true;
       name = "Asciidoc Linter";

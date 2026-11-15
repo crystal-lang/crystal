@@ -94,8 +94,6 @@ module Crystal::System::FileDescriptor
       case error = WinError.value
       when .error_access_denied?
         raise IO::Error.new "File not open for writing", target: self
-      when .error_broken_pipe?
-        return 0_u32
       else
         raise IO::Error.from_os_error("Error writing file", error, target: self)
       end
@@ -276,7 +274,7 @@ module Crystal::System::FileDescriptor
         end
 
         ret, error =
-          {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+          {% if !flag?(:without_mt) %}
             ::Fiber.syscall do
               {LibC.LockFileEx(windows_handle, flags, 0, 0xFFFF_FFFF, 0xFFFF_FFFF, pointerof(overlapped)), WinError.value}
             end
@@ -477,7 +475,7 @@ private module ConsoleUtils
     @@buffer = appender.to_slice
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     private def self.read_console(handle : LibC::HANDLE, slice : Slice(UInt16)) : Int32
       units_read = LibC::DWORD.zero
 

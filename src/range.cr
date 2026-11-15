@@ -264,6 +264,35 @@ struct Range(B, E)
     @exclusive
   end
 
+  # Returns `true` if this range and *other* have at least one value in common.
+  #
+  # ```
+  # (1..5).overlaps?(5..10)  # => true
+  # (1...5).overlaps?(5..10) # => false
+  # (1...1).overlaps?(1..1)  # => false
+  # ```
+  def overlaps?(other : Range) : Bool
+    return false if empty_without_iterating?
+    return false if other.empty_without_iterating?
+
+    if (begin_value = @begin) && (other_end = other.end)
+      return false if other.exclusive? ? other_end <= begin_value : other_end < begin_value
+    end
+
+    if (end_value = @end) && (other_begin = other.begin)
+      return false if @exclusive ? end_value <= other_begin : end_value < other_begin
+    end
+
+    true
+  end
+
+  protected def empty_without_iterating? : Bool
+    return false unless begin_value = @begin
+    return false unless end_value = @end
+
+    @exclusive ? begin_value >= end_value : begin_value > end_value
+  end
+
   # Returns `true` if this range includes the given *value*.
   #
   # ```

@@ -69,7 +69,7 @@ module Spec
     end
 
     def negative_failure_message(actual_value)
-      "Expected: #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
+      "Expected: actual_value != #{@expected_value.pretty_inspect} (#{identify(@expected_value)})\n     got: #{actual_value.pretty_inspect} (#{identify(actual_value)})"
     end
 
     private def identify(value)
@@ -343,7 +343,9 @@ module Spec
       Spec::CloseExpectation.new(expected, delta)
     end
 
-    # Returns a factory to create a comparison `Expectation` that:
+    # Returns a factory to create a comparison `Expectation`.
+    #
+    # The created expectation:
     #
     # * passes if actual is lesser than *value*: `be < value`
     # * passes if actual is lesser than or equal *value*: `be <= value`
@@ -392,9 +394,9 @@ module Spec
     # If *message* is a regular expression, it is used to match the error message.
     #
     # It returns the rescued exception.
-    {% if flag?(:wasm32) %}
+    {% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
-        # TODO: Enable "expect_raises" for wasm32 after exceptions are working.
+        # NOTE: can only enable WASM exception handling with the LLVM C API 24+
       end
     {% else %}
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
@@ -413,7 +415,7 @@ module Spec
         exception_as_string = ex.to_s
         case message
         when Regex
-          unless exception_as_string =~ message
+          unless exception_as_string.matches?(message)
             expectation_failed_message = build_expectation_failed_message(klass, message, ex, exception_as_string)
             fail expectation_failed_message, file, line
           end

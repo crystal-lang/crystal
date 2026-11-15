@@ -718,11 +718,19 @@ module Crystal
         begin
           generic_instance_type = instance_type.as(GenericType)
           generic_type =
-            if generic_instance_type.is_a?(GenericUnionType) && inside_is_a?
-              # In the case of `exp.is_a?(Union(X, Y))` we make it work exactly
-              # like `exp.is_a?(X | Y)`, which won't resolve `X | Y` to the virtual
-              # parent type.
-              generic_instance_type.instantiate(type_vars_types, type_merge_union_of: true)
+            if generic_instance_type.is_a?(GenericUnionType)
+              if inside_is_a?
+                # In the case of `exp.is_a?(Union(X, Y))` we make it work exactly
+                # like `exp.is_a?(X | Y)`, which won't resolve `X | Y` to the virtual
+                # parent type.
+                generic_instance_type.instantiate(type_vars_types, type_merge_union_of: true)
+              else
+                # This makes `Union(X, Y)` in normal code behave exactly like
+                # `X | Y`, even when `X` and `Y` belong to the same class
+                # hierarchy, as `Union` merely names a single type in this
+                # context and does not imply any virtual dispatch
+                generic_instance_type.instantiate(type_vars_types).devirtualize
+              end
             else
               generic_instance_type.instantiate(type_vars_types)
             end

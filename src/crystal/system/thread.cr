@@ -92,7 +92,7 @@ class Thread
 
   getter name : String?
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% if !flag?(:without_mt) %}
     # :nodoc:
     getter! execution_context : Fiber::ExecutionContext
 
@@ -212,10 +212,12 @@ class Thread
     Crystal::System::Thread.sleep(time)
   end
 
+  MAX_DELAY_ATTEMPTS_BEFORE_YIELD = 7
+
   # Delays execution for a brief moment.
   @[NoInline]
   def self.delay(backoff : Int32) : Int32
-    if backoff < 7
+    if backoff < MAX_DELAY_ATTEMPTS_BEFORE_YIELD
       backoff.times { Intrinsics.pause }
       backoff &+ 1
     else
