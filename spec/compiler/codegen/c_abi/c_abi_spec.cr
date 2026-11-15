@@ -6,7 +6,7 @@ describe "Code gen: C ABI" do
   # use a vector type like `__m128i` on MSVC
   {% unless flag?(:msvc) %}
     it "passes 128-bit integer to lib fun" do
-      test_c(<<-C, <<-CRYSTAL, &.to_b.should be_true)
+      test_c(<<-C, <<-CRYSTAL, Bool).should be_true
         __int128 foo(__int128 x) {
           return x * x;
         }
