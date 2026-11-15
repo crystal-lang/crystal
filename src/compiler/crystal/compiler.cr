@@ -650,11 +650,11 @@ module Crystal
     private def mt_codegen(units, n_threads)
       if ENV["PROFILE_LARGE_FIRST"]? == "1"
         units = units.sort_by do |unit|
-          weight = 0_i64
+          weight = 0
           unit.llvm_mod.functions.each do |function|
-            weight += LibLLVM.count_basic_blocks(function)
+            weight += function.basic_blocks.size
           end
-          -weight.to_i64
+          -weight
         end
       end
       channel = Channel(CompilationUnit).new(n_threads * 2)

@@ -6,6 +6,10 @@ struct LLVM::BasicBlockCollection
   def initialize(@function : Function)
   end
 
+  def size
+    LibLLVM.count_basic_blocks(@function).to_i
+  end
+
   def append(name = "")
     context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
     BasicBlock.new LibLLVM.append_basic_block_in_context(context, @function, name)
