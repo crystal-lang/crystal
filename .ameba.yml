@@ -41,6 +41,12 @@ Lint/DuplicateEnumValue:
     - src/syscall/aarch64-linux.cr
     - src/winerror.cr
 
+Lint/EnumMemberNameConflict:
+  Excluded:
+    # Explicit tests and names from the Windows API
+    - spec/std/enum_spec.cr
+    - src/winerror.cr
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
