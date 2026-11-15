@@ -501,6 +501,71 @@ describe "Code gen: debug" do
     debug_line_of(str, type_check, /icmp eq i32/).should eq(25)
   end
 
+  it "attributes rescue clauses to their own lines, and exception plumbing to no line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      fun __crystal_personality : Int32
+        0
+      end
+
+      fun __crystal_raise(unwind_ex : Void*) : NoReturn
+        while true
+        end
+      end
+
+      fun __crystal_get_exception(unwind_ex : Void*) : UInt64
+        0_u64
+      end
+
+      lib LibFoo
+        @[Raises]
+        fun may_raise(value : Int32) : Int32
+      end
+
+      class FooError < Exception
+      end
+
+      def foo(foo_value : Int32)
+        begin
+          LibFoo.may_raise(foo_value)
+        rescue FooError
+          2
+        ensure
+          LibFoo.may_raise(foo_value)
+        end
+      end
+
+      def bar(bar_value : Int32)
+        begin
+          LibFoo.may_raise(bar_value)
+        rescue FooError
+        end
+      end
+
+      foo(1)
+      bar(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # `foo`, found by its parameter because symbol names are mangled on Windows
+    foo = str[/^define [^\n]+ %foo_value\).+?^}/m]
+    {% if flag?(:msvc) %}
+      debug_line_of(str, foo, / = catchpad /).should eq(0)
+    {% else %}
+      debug_line_of(str, foo, /call i64 @__crystal_get_exception/).should eq(0)
+    {% end %}
+    debug_line_of(str, foo, /icmp eq i32/).should eq(25)
+    debug_line_of(str, foo, /call void @(__crystal_raise|_CxxThrowException)/).should eq(0)
+
+    # The rescue body's block is the one that passes its value, 2, to the phi
+    rescue_body_block = foo[/\[ 2, %(\w+) \]/, 1]
+    rescue_body = foo[/^#{rescue_body_block}:.+?^$/m]
+    debug_line_of(str, rescue_body, /^\s+br /).should eq(26)
+
+    # An empty rescue body has no line, so the nil it returns doesn't either
+    bar = str[/^define [^\n]+ %bar_value\).+?^}/m]
+    debug_line_of(str, bar, /load i32, ptr @"Nil:type_id"/).should eq(0)
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
