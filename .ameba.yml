@@ -265,3 +265,6 @@ Style/VerboseBlock:
 
 Style/WhileTrue:
   Enabled: false
+
+Style/MultilineStringLiteral:
+  Enabled: false
