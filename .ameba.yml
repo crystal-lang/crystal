@@ -268,3 +268,6 @@ Style/WhileTrue:
 
 Style/MultilineStringLiteral:
   Enabled: false
+
+Style/RedundantNilInControlExpression:
+  Enabled: false
