@@ -2011,7 +2011,7 @@ module Crystal
         check :MACRO_CONTROL_START
         next_token_skip_space_or_newline
 
-        check_end
+        self.check_end
         next_token_skip_space_or_newline
         check :OP_PERCENT_RCURLY
 
@@ -2149,7 +2149,7 @@ module Crystal
         # Format the value and append 2 more spaces of indentation
         begin
           formatter, value = subformat(value)
-        rescue Crystal::SyntaxException
+        rescue ex : Crystal::SyntaxException
           raise Crystal::SyntaxException.new(
             ex.message,
             ex.line_number + macro_node_line,
