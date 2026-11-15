@@ -24,6 +24,10 @@ Documentation/DocumentationAdmonition:
 # Lint
 # =========================
 
+# Disabled: Assignments in call arguments are intentional and idiomatic here.
+Lint/AssignmentInCallArgument:
+  Enabled: false
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
