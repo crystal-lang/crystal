@@ -47,6 +47,11 @@ Lint/EnumMemberNameConflict:
     - spec/std/enum_spec.cr
     - src/winerror.cr
 
+Lint/SignalTrap:
+  Excluded:
+    # Implements Process.on_terminate and restores individual signal handlers
+    - src/crystal/system/unix/process.cr
+
 Lint/DebugCalls:
   Excluded:
     # Samples may legitimately use DebugCalls
