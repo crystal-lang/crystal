@@ -211,6 +211,13 @@ Naming/VariableNames:
 # Performance
 # =========================
 
+Performance/AnyInsteadOfPresent:
+  Excluded:
+    # These specs explicitly test #any? implementations
+    - spec/std/bit_array_spec.cr
+    - spec/std/enumerable_spec.cr
+    - spec/std/hash_spec.cr
+
 Performance/AnyInsteadOfEmpty:
   Excluded:
     # These specs explicitly test `#any?` implementations
