@@ -700,6 +700,24 @@ describe "Semantic: macro" do
       CRYSTAL
   end
 
+  it "gives precise location info when doing yield inside macro, after a multiline expression" do
+    assert_error(<<-CRYSTAL, "in line 9")
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        bar(
+          1,
+        )
+        baz
+      end
+
+      def bar(x)
+      end
+      CRYSTAL
+  end
+
   it "transforms with {{yield}} and call" do
     assert_type(<<-CRYSTAL) { int32 }
       macro foo
