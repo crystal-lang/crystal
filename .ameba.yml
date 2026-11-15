@@ -271,3 +271,6 @@ Style/MultilineStringLiteral:
 
 Style/RedundantNilInControlExpression:
   Enabled: false
+
+Style/VerboseNilType:
+  Enabled: false
