@@ -501,6 +501,42 @@ describe "Code gen: debug" do
     debug_line_of(str, type_check, /icmp eq i32/).should eq(25)
   end
 
+  describe "marker for inlined block calls and yields" do
+    code = <<-CRYSTAL
+      def twice(twice_value : Int32)
+        yield twice_value
+        yield twice_value
+      end
+
+      def sum(sum_value : Int32)
+        total = 0
+        twice(sum_value) do |x|
+          total &+= x
+        end
+        total
+      end
+
+      sum(1)
+      CRYSTAL
+
+    it "emits a nop on the line of each block call and yield without optimizations" do
+      str = codegen(code, debug: Crystal::Debug::LineNumbers, single_module: true).to_s
+      # `sum`, found by its parameter because symbol names are mangled on Windows
+      sum = str[/^define [^\n]+ %sum_value\).+?^}/m]
+      debug_lines_of(str, sum, /call void asm sideeffect "nop", ""\(\)/).should eq([8, 2, 3])
+    end
+
+    it "doesn't emit a nop with optimizations" do
+      str = codegen(code, debug: Crystal::Debug::LineNumbers, single_module: true, optimization_mode: Crystal::Compiler::OptimizationMode::O1).to_s
+      str.should_not contain(%(asm sideeffect "nop"))
+    end
+
+    it "doesn't emit a nop without debug info" do
+      str = codegen(code, single_module: true).to_s
+      str.should_not contain(%(asm sideeffect "nop"))
+    end
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
@@ -573,4 +609,13 @@ private def debug_line_of(ir, function, pattern)
   instruction = function.each_line.find!(&.matches?(pattern))
   dbg_id = instruction[/!dbg (![0-9]+)/, 1]
   ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
+end
+
+# Returns the line numbers of the debug locations attached to all instructions in *function* matching *pattern*, in order.
+# *ir* is the whole module.
+private def debug_lines_of(ir, function, pattern)
+  function.each_line.select(&.matches?(pattern)).map do |instruction|
+    dbg_id = instruction[/!dbg (![0-9]+)/, 1]
+    ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
+  end.to_a
 end
