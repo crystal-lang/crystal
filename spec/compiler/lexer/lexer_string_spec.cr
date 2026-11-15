@@ -285,7 +285,16 @@ describe "Lexer string" do
     tester.next_unicode_tokens_should_be([0xA5, 0xA6, 0x10FFFF])
   end
 
+  it "lexes string with six-digit unicode codepoint in curly followed by another one (#13527)" do
+    lexer = Lexer.new %("\\u{10FFFF 30 100000 A5}")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_unicode_tokens_should_be([0x10FFFF, 0x30, 0x100000, 0xA5])
+  end
+
   assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
+  assert_syntax_error "\"\\u{10FFFF0}\"", "expected '}' to close unicode escape"
   assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
   assert_syntax_error "\"\\uD800\"", "invalid unicode codepoint (surrogate half)"
@@ -377,5 +386,31 @@ describe "Lexer string" do
     tester.next_token_should_be(:NUMBER)
     tester.token_should_be_at(line: 2)
     tester.should_have_reached_eof
+  end
+
+  it "lexes string with backslash followed by multiple newlines (#13537)" do
+    lexer = Lexer.new(%("hello \\\n\n\n    world"1))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('"', '"')
+    tester.next_string_token_should_be("hello ")
+    tester.next_string_token_should_be("\n")
+    tester.next_string_token_should_be("\n")
+    tester.next_string_token_should_be("    world")
+    tester.string_should_end_correctly(eof: false)
+    tester.next_token_should_be(:NUMBER)
+    tester.token_should_be_at(line: 4)
+    tester.should_have_reached_eof
+  end
+
+  it "lexes string with backslash followed by CRLF and multiple newlines (#13537)" do
+    lexer = Lexer.new(%("hello \\\r\n\r\n    world"))
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_be_delimited_by('"', '"')
+    tester.next_string_token_should_be("hello ")
+    tester.next_string_token_should_be("\r\n")
+    tester.next_string_token_should_be("    world")
+    tester.string_should_end_correctly
   end
 end

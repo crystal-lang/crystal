@@ -8,6 +8,7 @@ class Crystal::Codegen::Target
   getter architecture : String
   getter vendor : String
   getter environment : String
+  getter environment_parts : Array(String)
 
   def initialize(target_triple : String)
     # Let LLVM convert the user-inputted target triple into at least a target
@@ -18,6 +19,7 @@ class Crystal::Codegen::Target
       raise Target::Error.new("Invalid target triple: #{target_triple}")
     end
     @architecture, @vendor, @environment = target_triple.split('-', 3)
+    @environment_parts = @environment.split('-')
 
     # Perform additional normalization and parsing
     case @architecture
@@ -39,14 +41,11 @@ class Crystal::Codegen::Target
         # Build string instead of setting it as "linux-gnu"
         # since "linux6E" & "linuxspe" are available.
         @environment = "#{@environment}-gnu"
+        @environment_parts << "gnu"
       else
         # no need to tweak the environment
       end
     end
-  end
-
-  def environment_parts
-    @environment.split('-')
   end
 
   def pointer_bit_width
@@ -106,9 +105,9 @@ class Crystal::Codegen::Target
 
   def object_extension
     case
-    when windows?                  then ".obj"
-    when @architecture == "wasm32" then ".wasm"
-    else                                ".o"
+    when windows? then ".obj"
+    when wasm?    then ".wasm"
+    else               ".o"
     end
   end
 
@@ -180,12 +179,32 @@ class Crystal::Codegen::Target
     windows? && environment_parts.includes?("msvc")
   end
 
+  def mingw?
+    windows? && gnu?
+  end
+
   def win32?
-    windows? && (msvc? || gnu?)
+    msvc? || mingw?
   end
 
   def armhf?
     environment_parts.any? &.in?("gnueabihf", "musleabihf")
+  end
+
+  def x86_64?
+    @architecture == "x86_64"
+  end
+
+  def x86?
+    @architecture.in?("x86_64", "i386")
+  end
+
+  def aarch64?
+    @architecture == "aarch64"
+  end
+
+  def wasm?
+    @architecture == "wasm32"
   end
 
   def avr?
@@ -210,7 +229,7 @@ class Crystal::Codegen::Target
       # CPU is defined (it will most certainly enable a better FPU) or
       # features contains a floating-point definition.
       if cpu.empty? && !features.includes?("fp") && armhf?
-        features += "+vfp2"
+        features += ",+vfp2"
       end
     when "avr"
       LLVM.init_avr
@@ -221,6 +240,13 @@ class Crystal::Codegen::Target
       end
     when "wasm32"
       LLVM.init_webassembly
+
+      {% unless LibLLVM::IS_LT_240 %}
+        disable_legacy_wasm_eh
+        features += ",+exception-handling" unless features.includes?("+exception-handling")
+        features += ",+multivalue" unless features.includes?("+multivalue")
+        features += ",+reference-types" unless features.includes?("+reference-types")
+      {% end %}
     else
       raise Target::Error.new("Unsupported architecture for target triple: #{self}")
     end
@@ -239,7 +265,9 @@ class Crystal::Codegen::Target
     end
 
     target = LLVM::Target.from_triple(self.to_s)
+    features = features.strip(',')
     machine = target.create_target_machine(self.to_s, cpu: cpu, features: features, opt_level: opt_level, reloc: reloc, code_model: code_model).not_nil!
+
     # FIXME: We need to disable global isel until https://reviews.llvm.org/D80898 is released,
     # or we fixed generating values for 0 sized types.
     # When removing this, also remove it from the ABI specs and jit compiler.
@@ -263,5 +291,13 @@ class Crystal::Codegen::Target
     end
 
     environment == other.environment
+  end
+
+  @@disable_legacy_wasm_eh = Atomic(Bool).new(false)
+
+  private def disable_legacy_wasm_eh : Nil
+    return if @@disable_legacy_wasm_eh.swap(true, :relaxed)
+
+    LLVM.parse_command_line_options %w[crystal -wasm-use-legacy-eh=false]
   end
 end

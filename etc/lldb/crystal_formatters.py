@@ -609,14 +609,44 @@ def CrystalRange_SummaryProvider(value, dict):
         return 'Range(...) (error: %s)' % str(e)
 
 
-def __lldb_init_module(debugger, dict):
-    debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalArraySyntheticProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalArray_SummaryProvider -x "^Array\(.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalUnionSyntheticProvider -x "^\(.+ \| .+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalUnion_SummaryProvider -x "^\(.+ \| .+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalString_SummaryProvider -x "^(String|\(String \| Nil\))(\s*\**)?$" -w Crystal')
-    debugger.HandleCommand(r'type synthetic add -l crystal_formatters.CrystalHashSyntheticProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -e -F crystal_formatters.CrystalHash_SummaryProvider -x "^Hash\(.+,.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalSet_SummaryProvider -x "^Set\(.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type summary add -F crystal_formatters.CrystalRange_SummaryProvider -x "^Range\(.+,.+\)(\s*\**)?" -w Crystal')
-    debugger.HandleCommand(r'type category enable Crystal')
+def __lldb_init_module(debugger, internal_dict):
+    """Register the Crystal type formatters via the LLDB Python API.
+
+    This uses the API (CreateCategory, AddTypeSynthetic, AddTypeSummary)
+    instead of debugger.HandleCommand() because `type` commands crash
+    lldb-dap on Windows. The options mirror the flags of
+    `type synthetic add` / `type summary add` commands: every formatter
+    cascades, and summaries without `-e` hide their children.
+    """
+    category = debugger.CreateCategory('Crystal')
+    if not category.IsValid():
+        return
+
+    # (type-name regex, synthetic provider, summary provider, expand summary)
+    formatters = [
+        (r'^Array\(.+\)(\s*\**)?', 'crystal_formatters.CrystalArraySyntheticProvider', 'crystal_formatters.CrystalArray_SummaryProvider', True),
+        (r'^\(.+ \| .+\)(\s*\**)?', 'crystal_formatters.CrystalUnionSyntheticProvider', 'crystal_formatters.CrystalUnion_SummaryProvider', False),
+        (r'^(String|\(String \| Nil\))(\s*\**)?$', None, 'crystal_formatters.CrystalString_SummaryProvider', True),
+        (r'^Hash\(.+,.+\)(\s*\**)?', 'crystal_formatters.CrystalHashSyntheticProvider', 'crystal_formatters.CrystalHash_SummaryProvider', True),
+        (r'^Set\(.+\)(\s*\**)?', None, 'crystal_formatters.CrystalSet_SummaryProvider', False),
+        (r'^Range\(.+,.+\)(\s*\**)?', None, 'crystal_formatters.CrystalRange_SummaryProvider', False),
+    ]
+
+    for pattern, synthetic_class, summary_func, expand in formatters:
+        specifier = lldb.SBTypeNameSpecifier(pattern, True)
+        if not specifier.IsValid():
+            continue
+
+        if synthetic_class:
+            synthetic = lldb.SBTypeSynthetic.CreateWithClassName(synthetic_class, lldb.eTypeOptionCascade)
+            if synthetic.IsValid():
+                category.AddTypeSynthetic(specifier, synthetic)
+
+        options = lldb.eTypeOptionCascade
+        if not expand:
+            options |= lldb.eTypeOptionHideChildren
+        summary = lldb.SBTypeSummary.CreateWithFunctionName(summary_func, options)
+        if summary.IsValid():
+            category.AddTypeSummary(specifier, summary)
+
+    category.SetEnabled(True)

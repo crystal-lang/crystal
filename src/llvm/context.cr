@@ -12,6 +12,7 @@ class LLVM::Context
     Module.new(LibLLVM.module_create_with_name_in_context(name, self), self)
   end
 
+  @[Deprecated("Use `LLVM::Module#new_builder` instead")]
   def new_builder : Builder
     # builder = Builder.new(LibLLVM.create_builder_in_context(self), self)
     builder = Builder.new(LibLLVM.create_builder_in_context(self))
@@ -75,6 +76,10 @@ class LLVM::Context
     Type.new LibLLVM.ppc_fp128_type_in_context(self)
   end
 
+  def token : Type
+    Type.new LibLLVM.token_type_in_context(self)
+  end
+
   def pointer(address_space = 0) : Type
     {% if LibLLVM::IS_LT_150 %}
       {% raise "Opaque pointers are only supported on LLVM 15.0 or above" %}
@@ -123,12 +128,45 @@ class LLVM::Context
     Value.new LibLLVM.const_struct_in_context(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size, packed ? 1 : 0)
   end
 
-  def md_string(value : String) : Value
-    LLVM::Value.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
+  def metadata_string(value : String) : Metadata
+    {% if LibLLVM::IS_LT_90 %}
+      Metadata.new LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(self, value, value.bytesize))
+    {% else %}
+      Metadata.new LibLLVM.md_string_in_context2(self, value, value.bytesize)
+    {% end %}
   end
 
+  @[Deprecated("Use `#metadata_string` instead")]
+  def md_string(value : String) : Value
+    {% if LibLLVM::IS_LT_90 %}
+      LLVM::Value.new LibLLVM.md_string_in_context(self, value, value.bytesize)
+    {% else %}
+      metadata = LibLLVM.md_string_in_context2(self, value, value.bytesize)
+      LLVM::Value.new LibLLVM.metadata_as_value(self, metadata)
+    {% end %}
+  end
+
+  def metadata_node(values : Array(Metadata)) : Metadata
+    {% if LibLLVM::IS_LT_90 %}
+      value = LibLLVM.md_node_in_context(self, values.map { |v| LibLLVM.metadata_as_value(self, v) }, values.size)
+      Metadata.new LibLLVM.value_as_metadata(value)
+    {% else %}
+      Metadata.new LibLLVM.md_node_in_context2(self, values.to_unsafe.as(LibLLVM::MetadataRef*), values.size)
+    {% end %}
+  end
+
+  @[Deprecated("Use `#metadata_node` instead")]
   def md_node(values : Array(Value)) : Value
-    Value.new LibLLVM.md_node_in_context2(self, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
+    {% if LibLLVM::IS_LT_90 %}
+      Value.new LibLLVM.md_node_in_context(self, values.to_unsafe.as(LibLLVM::ValueRef*), values.size)
+    {% else %}
+      metadata = LibLLVM.md_node_in_context2(self, values.map { |value| LibLLVM.value_as_metadata(value) }, values.size)
+      Value.new LibLLVM.metadata_as_value(self, metadata)
+    {% end %}
+  end
+
+  def metadata_to_value(metadata : Metadata) : Value
+    Value.new(LibLLVM.metadata_as_value(self, metadata))
   end
 
   def parse_ir(buf : MemoryBuffer)

@@ -79,6 +79,57 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
+  it "#overlaps?" do
+    (1..5).overlaps?(4..8).should be_true
+    (4..8).overlaps?(1..5).should be_true
+
+    (1..5).overlaps?(5..10).should be_true
+    (1...5).overlaps?(5..10).should be_false
+    (1..5).overlaps?(6..10).should be_false
+    (-5...1).overlaps?(1..5).should be_false
+    (-5..1).overlaps?(1..5).should be_true
+
+    (1...1).overlaps?(1..1).should be_false
+    (2..1).overlaps?(1..2).should be_false
+    (2...1).overlaps?(1..2).should be_false
+    (1..2).overlaps?(2...2).should be_false
+
+    (..5).overlaps?(5..).should be_true
+    (...5).overlaps?(5..).should be_false
+    (..5).overlaps?(6..).should be_false
+    (..5).overlaps?(4..).should be_true
+    (...5).overlaps?(4..).should be_true
+    (..5).overlaps?(..4).should be_true
+    (...5).overlaps?(..4).should be_true
+    (..5).overlaps?(..6).should be_true
+    (...5).overlaps?(..6).should be_true
+    (5..).overlaps?(4..).should be_true
+    (5..).overlaps?(6..).should be_true
+    (..).overlaps?(1..2).should be_true
+    (..).overlaps?(2...2).should be_false
+
+    (1.0..5.5).overlaps?(3.2..7.8).should be_true
+    (1.0..2.5).overlaps?(3.0..4.0).should be_false
+
+    ('a'..'e').overlaps?('c'..'g').should be_true
+    ('a'..'c').overlaps?('d'..'f').should be_false
+
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).overlaps?(t2..t4).should be_true
+    (t1..t2).overlaps?(t3..t4).should be_false
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5))
+      .overlaps?(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7))
+      .should be_true
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5))
+      .overlaps?(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7))
+      .should be_false
+  end
+
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")
@@ -673,6 +724,21 @@ describe "Range" do
         [RangeSpecIntWrapper.new(Int32::MAX - 2)],
         (RangeSpecIntWrapper.new(Int32::MAX - 2)..RangeSpecIntWrapper.new(Int32::MAX - 1)).step(by: 2)
     end
+
+    it "raises on invalid step size" do
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        (1..5).step(0)
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0) { }
+      end
+      expect_raises(ArgumentError, "Zero step size") do
+        ("a".."c").step(0)
+      end
+    end
   end
 
   describe "map" do
@@ -716,6 +782,11 @@ describe "Range" do
       it { (Int32::MAX...Int32::MAX).size.should eq(0) }
       it { (-Int32::MAX..-Int32::MAX).size.should eq(1) }
       it { (-Int32::MAX...-Int32::MAX).size.should eq(0) }
+
+      it { (0...Int32::MAX).size.should eq(Int32::MAX) }
+      it { expect_raises(OverflowError) { (0..Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN...Int32::MAX).size } }
+      it { expect_raises(OverflowError) { (Int32::MIN..Int32::MAX).size } }
 
       it { (5_u8..12_u8).size.should eq(8) }
       it { (5_u8...12_u8).size.should eq(7) }

@@ -1,14 +1,12 @@
 # Helper for `#pretty_print` implementation. It describes the type.
 private def pp_type(pp, left, right, &) : Nil
-  pp.text left
-  pp.group_sub do
+  pp.group(0, left, right) do
     pp.nest(2) do
       pp.breakable ""
       yield
     end
     pp.breakable ""
   end
-  pp.text right
 end
 
 # Helper for `#pretty_print` to emit optional properties.
@@ -96,12 +94,26 @@ module Crystal
     def doc=(doc)
     end
 
+    def name_size
+      return 0 unless self.responds_to?(:name) && (name = self.name)
+
+      case name
+      when ASTNode
+        name.name_size
+      else
+        name.to_s.size
+      end
+    end
+
     def name_location
       nil
     end
 
-    def name_size
-      0
+    def name_end_location
+      return unless loc = self.name_location
+      return unless (name_size = self.name_size).positive?
+
+      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     def visibility=(visibility : Visibility)
@@ -391,10 +403,29 @@ module Crystal
       in .f64?  then number.to_f64
       end
     end
+
+    def cast!(number) : Number::Primitive
+      case self
+      in .i8?   then number.to_i8!
+      in .i16?  then number.to_i16!
+      in .i32?  then number.to_i32!
+      in .i64?  then number.to_i64!
+      in .i128? then number.to_i128!
+      in .u8?   then number.to_u8!
+      in .u16?  then number.to_u16!
+      in .u32?  then number.to_u32!
+      in .u64?  then number.to_u64!
+      in .u128? then number.to_u128!
+      in .f32?  then number.to_f32!
+      in .f64?  then number.to_f64!
+      end
+    end
   end
 
   # Any number literal.
   class NumberLiteral < ASTNode
+    include Comparable(self)
+
     property value : String
     property kind : NumberKind
 
@@ -414,7 +445,7 @@ module Crystal
         raise "BUG: called 'integer_value' for non-integer literal"
       end
 
-      kind.cast(value)
+      kind.cast(value).as(Int)
     end
 
     # Returns true if this literal is representable in the *other_type*. Used to
@@ -433,6 +464,22 @@ module Crystal
         true
       else
         false
+      end
+    end
+
+    def <=>(other : self)
+      if (kind.signed_int? || kind.unsigned_int?) && (other.kind.signed_int? || other.kind.unsigned_int?)
+        integer_value <=> other.integer_value
+      else
+        value.to_f64 <=> other.value.to_f64
+      end
+    end
+
+    def succ : self
+      if kind.signed_int? || kind.unsigned_int?
+        NumberLiteral.new(integer_value.succ.to_s, kind)
+      else
+        raise "BUG: called 'succ' for non-integer literal"
       end
     end
 
@@ -457,6 +504,8 @@ module Crystal
   #     "'" \w "'"
   #
   class CharLiteral < ASTNode
+    include Comparable(self)
+
     property value : Char
 
     def initialize(@value : Char)
@@ -467,6 +516,14 @@ module Crystal
     end
 
     def_equals_and_hash value
+
+    def <=>(other : self)
+      value <=> other.value
+    end
+
+    def succ : self
+      CharLiteral.new(value.succ)
+    end
 
     def pretty_print(pp) : Nil
       pp_type(pp, "CharLiteral[", "]") do
@@ -766,10 +823,6 @@ module Crystal
     def initialize(@name : String)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       Var.new(@name)
     end
@@ -912,13 +965,6 @@ module Crystal
       clone.name_size = name_size
       clone.expansion = expansion?
       clone
-    end
-
-    def name_end_location
-      loc = @name_location
-      return unless loc
-
-      Location.new(loc.filename, loc.line_number, loc.column_number + name_size - 1)
     end
 
     # Returns `true` if this call has any arguments.
@@ -1198,10 +1244,6 @@ module Crystal
     def initialize(@name)
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       InstanceVar.new(@name)
     end
@@ -1265,10 +1307,6 @@ module Crystal
     property name : String
 
     def initialize(@name)
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -1344,6 +1382,12 @@ module Crystal
     property doc : String?
     property parsed_annotations : Array(Annotation)?
 
+    # The location of the internal name, which differs from `#location`
+    # if the parameter has an external name (i.e. `baz` in `bar baz`).
+    # For instance/class variable parameters it points past the prefix
+    # (i.e. `baz` in `bar @baz`).
+    property name_location : Location?
+
     def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @parsed_annotations : Array(Annotation)? = nil)
       @external_name = external_name || @name
     end
@@ -1353,12 +1397,10 @@ module Crystal
       @restriction.try &.accept visitor
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg = Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone, @parsed_annotations.clone
+      arg.name_location = name_location
+      arg
     end
 
     def_equals_and_hash name, default_value, restriction, external_name, parsed_annotations
@@ -1457,10 +1499,6 @@ module Crystal
       @body.accept visitor
     end
 
-    def name_size
-      name.size
-    end
-
     def clone_without_location
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @block_arity, @abstract, @splat_index, @double_splat.clone, @free_vars)
       a_def.calls_super = calls_super?
@@ -1522,10 +1560,6 @@ module Crystal
       @body.accept visitor
       @double_splat.try &.accept visitor
       @block_arg.try &.accept visitor
-    end
-
-    def name_size
-      name.size
     end
 
     def clone_without_location
@@ -2193,6 +2227,8 @@ module Crystal
         var.name.size
       when Global
         var.name.size
+      when Path
+        var.name_size
       else
         raise "can't happen"
       end
@@ -2648,10 +2684,6 @@ module Crystal
       clone = FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
       clone.name_location = name_location
       clone
-    end
-
-    def name_size
-      @name.size
     end
 
     def has_any_args?

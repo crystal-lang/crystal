@@ -9,4 +9,13 @@ lib LibC
 
   fun if_nametoindex(ifname : Char*) : UInt
   fun if_indextoname(ifindex : UInt, ifname : LibC::Char*) : LibC::Char*
+
+  alias NET_IFINDEX = ULong
+  alias NET_LUID = UInt64
+
+  fun ConvertInterfaceLuidToIndex(interfaceLuid : NET_LUID*, interfaceIndex : NET_IFINDEX*) : DWORD
+  fun ConvertInterfaceIndexToLuid(interfaceIndex : NET_IFINDEX, interfaceLuid : NET_LUID*) : DWORD
+
+  fun ConvertInterfaceLuidToNameW(interfaceLuid : NET_LUID*, interfaceName : LPWSTR, length : SizeT) : DWORD
+  fun ConvertInterfaceNameToLuidW(interfaceName : LPWSTR, interfaceLuid : NET_LUID*) : DWORD
 end

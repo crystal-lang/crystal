@@ -186,6 +186,7 @@ lib LibXML
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int
   fun xmlNodeGetContent(node : Node*) : UInt8*
+  fun xmlGetLineNo(node : Node*) : LibC::Long
   fun xmlNodeSetContent(node : Node*, content : UInt8*)
   fun xmlNodeSetName(node : Node*, name : UInt8*)
   fun xmlUnlinkNode(node : Node*)

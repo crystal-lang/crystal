@@ -6,13 +6,13 @@ Spec.around_each do |example|
   done = Channel(Exception?).new
 
   {% begin %}
-  spawn({% if flag?(:preview_mt) && !flag?(:execution_context) %}same_thread: true{% end %}) do
-    example.run
-  rescue e
-    done.send(e)
-  else
-    done.send(nil)
-  end
+    spawn do
+      example.run
+    rescue e
+      done.send(e)
+    else
+      done.send(nil)
+    end
   {% end %}
 
   timeout = SPEC_TIMEOUT

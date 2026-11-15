@@ -47,7 +47,9 @@ struct Exception::CallStack
            {% else %}
              Pointer(Void).new(LibUnwind.get_ip(context))
            {% end %}
-      bt << ip
+      # the last IP is often a NULL pointer on linux-gnu, or maybe it's
+      # libunwind; in any case it's invalid, so we we skip it
+      bt << ip unless ip.null?
 
       {% if flag?(:gnu) && flag?(:i386) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
@@ -111,13 +113,17 @@ struct Exception::CallStack
   private def self.print_frame_location(repeated_frame)
     {% if flag?(:debug) %}
       if @@loaded
-        pc = CallStack.decode_address(repeated_frame.ip)
-        if name = decode_function_name(pc)
-          file, line, column = Exception::CallStack.decode_line_number(pc)
-          if file && file != "??"
-            Crystal::System.print_error "%s at %s:%d:%d", name, file, line, column
-            return
+        pc = decode_address(repeated_frame.ip)
+
+        if (fname = lookup_function_name?(pc)) && (ln = lookup_line_number?(pc))
+          directory, file, line, column = ln
+          Crystal::System.print_error "%s at ", fname
+          unless directory.empty?
+            Crystal::System.print_error directory
+            Crystal::System.print_error Path::Kind.native.windows? ? "\\" : "/"
           end
+          Crystal::System.print_error "%s:%d:%d", file, line, column
+          return
         end
       end
     {% end %}
@@ -221,7 +227,7 @@ struct Exception::CallStack
         return unless found_address
 
         func_name_ordinals = (hmodule + exports.addressOfNameOrdinals).as(LibC::WORD*).to_slice(exports.numberOfNames)
-        if ordinal_index = func_name_ordinals.index(&.== found_index)
+        if ordinal_index = func_name_ordinals.index(found_index)
           symbol = (hmodule + (hmodule + exports.addressOfNames).as(LibC::DWORD*)[ordinal_index]).as(UInt8*)
           {symbol, found_address}
         end

@@ -23,7 +23,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     true
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # Creates a global IOCP instance, then forwards the completion events to their
     # original instance (through a dedicated thread), because:
     #
@@ -95,7 +95,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def create_completion_port(handle : LibC::HANDLE) : LibC::HANDLE
     iocp_handle =
-      {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+      {% if !flag?(:without_mt) %}
         @@global.handle
       {% else %}
         @iocp.handle
@@ -126,10 +126,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     enqueued
   end
 
-  {% if !flag?(:without_mt) && !flag?(:preview_mt) || flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      run_impl(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      run_impl(blocking) { |fiber| yield fiber }
     end
 
     # the evloop has a single IOCP instance for the context and only one
@@ -227,10 +227,9 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     in .sleep?, .timeout?
       timer.value.timed_out!
     in .select_timeout?
-      return unless select_action = fiber.timeout_select_action
-      fiber.timeout_select_action = nil
+      return unless select_action = timer.value.timeout_select_action
       return unless select_action.time_expired?
-      fiber.@timeout_event.as(FiberEvent).clear
+      timer.value.wake_at = nil
     end
 
     yield fiber
@@ -595,12 +594,18 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     # can't send more than 2,147,483,646 bytes at once
     len = LibC::DWORD.new(count.clamp(..(Int32::MAX - 1)))
 
+    file_handle = LibC::HANDLE.new(fd)
+
+    # store the current file pointer because TransmitFile may advance the file
+    # pointer in some cases (e.g. offset == file.pos).
+    LibC.SetFilePointerEx(file_handle, 0, out original_pos, IO::Seek::Current)
+
     Crystal::System::IOCP::WSAOverlappedOperation.run(@iocp.handle, socket.fd) do |operation|
       operation.@overlapped.union.offset.offset = LibC::DWORD.new!(offset)
       operation.@overlapped.union.offset.offsetHigh = LibC::DWORD.new!(offset >> 32)
 
       ret = Crystal::System::Socket.transmit_file
-        .call(socket.fd, LibC::HANDLE.new(fd), len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
+        .call(socket.fd, file_handle, len, LibC::DWORD.new(0), operation.to_unsafe, Pointer(Void).null, LibC::DWORD.new(flags))
       return len.to_i64 if ret == 1
 
       error = WinError.wsa_value
@@ -617,6 +622,8 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
           raise IO::Error.from_os_error("TransmitFile", error, target: socket)
         end
       end
+    ensure
+      LibC.SetFilePointerEx(file_handle, original_pos, nil, IO::Seek::Set)
     end.to_i64
   end
 

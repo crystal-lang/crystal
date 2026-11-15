@@ -30,7 +30,7 @@ module Crystal::System
         set = buffer.to_slice[0, len]
 
         if LibC.cpuset_getaffinity(LibC::CPU_LEVEL_WHICH, LibC::CPU_WHICH_PID, -1, len, set) == 0
-          return set.sum(&.popcount)
+          return set.sum(0, &.popcount)
         end
       end
     {% elsif flag?(:netbsd) || flag?(:openbsd) %}

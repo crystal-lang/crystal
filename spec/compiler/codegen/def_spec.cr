@@ -568,4 +568,36 @@ describe "Code gen: def" do
       foo { |a, b| }
       CRYSTAL
   end
+
+  it "does not access owner type in dispatch if it is the top level" do
+    mod = codegen(<<-CRYSTAL)
+      def foo(x : Int32)
+      end
+
+      def foo(x : String)
+      end
+
+      foo(1 || "a")
+      CRYSTAL
+
+    mod.to_s.should_not match(/(?<!Int32|String):type_id/)
+  end
+
+  it "does not access owner type in dispatch if it is a file-private scope" do
+    mod = codegen(<<-CRYSTAL)
+      def foo(x : Int32)
+      end
+
+      def foo(x : String)
+      end
+
+      private def bar(x)
+        foo(x)
+      end
+
+      bar(1 || "a")
+      CRYSTAL
+
+    mod.to_s.should_not match(/(?<!Int32|String):type_id/)
+  end
 end

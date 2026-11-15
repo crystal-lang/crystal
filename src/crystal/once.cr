@@ -14,18 +14,43 @@ require "crystal/spin_lock"
 module Crystal
   # :nodoc:
   module Once
+    struct Waiter
+      include PointerLinkedList::Node
+
+      def initialize(@object : Fiber | Thread)
+      end
+
+      def suspend : Nil
+        case object = @object
+        in Fiber
+          Fiber.suspend
+        in Thread
+          object.wait
+        end
+      end
+
+      def enqueue : Nil
+        case object = @object
+        in Fiber
+          object.enqueue
+        in Thread
+          object.wake
+        end
+      end
+    end
+
     struct Operation
       include PointerLinkedList::Node
 
       getter fiber : Fiber
       getter flag : Bool*
 
-      def initialize(@flag : Bool*, @fiber : Fiber)
-        @waiting = PointerLinkedList(Fiber::PointerLinkedListNode).new
+      def initialize(@flag, @fiber)
+        @waiting = PointerLinkedList(Waiter).new
       end
 
-      def add_waiter(node) : Nil
-        @waiting.push(node)
+      def add_waiter(waiter : Pointer(Waiter)) : Nil
+        @waiting.push(waiter)
       end
 
       def resume_all : Nil
@@ -75,10 +100,27 @@ module Crystal
     end
 
     private def self.wait_initializer(operation)
-      waiting = Fiber::PointerLinkedListNode.new(Fiber.current)
-      operation.value.add_waiter(pointerof(waiting))
+      fiber = Fiber.current
+
+      waiter =
+        {% if !flag?(:without_mt) %}
+          if fiber.execution_context?
+            Waiter.new(fiber)
+          else
+            # the fiber is a bare thread's main fiber, either never associated
+            # to an execution context, or the thread got detached (thread pool),
+            # and there is no scheduler to suspend/enqueue the fiber; instead we
+            # suspend/resume the thread
+            Waiter.new(Thread.current)
+          end
+        {% else %}
+          Waiter.new(fiber)
+        {% end %}
+
+      operation.value.add_waiter(pointerof(waiter))
       @@spin.unlock
-      Fiber.suspend
+
+      waiter.suspend
     end
 
     private def self.run_initializer(flag, &)
@@ -86,14 +128,20 @@ module Crystal
       @@operations.push pointerof(operation)
       @@spin.unlock
 
-      yield
+      begin
+        yield
+      rescue ex
+        # capture ex
+      ensure
+        # always cleanup (no dangling pointers)
+        @@spin.lock
+        flag.value = true unless ex
+        @@operations.delete pointerof(operation)
+        @@spin.unlock
+        operation.resume_all unless ex
+      end
 
-      @@spin.lock
-      flag.value = true
-      @@operations.delete pointerof(operation)
-      @@spin.unlock
-
-      operation.resume_all
+      raise ex if ex
     end
   end
 
@@ -107,17 +155,14 @@ module Crystal
   end
 
   # :nodoc:
-  #
-  # NOTE: should also never be inlined, but that would capture the block, which
-  # would be a breaking change when we use this method to protect class getter
-  # and class property macros with lazy initialization (the block may return or
-  # break).
-  #
-  # TODO: consider a compile time flag to enable/disable the capture? returning
-  # from the block is unexpected behavior: the returned value won't be saved in
-  # the class variable.
-  def self.once(flag : Bool*, &)
-    Once.exec(flag) { yield } unless flag.value
+  @[AlwaysInline]
+  def self.once(flag : Bool*, &block : ->)
+    once_impl(flag, &block) unless flag.value
+  end
+
+  @[NoInline]
+  private def self.once_impl(flag, &block)
+    Once.exec(flag, &block)
   end
 end
 

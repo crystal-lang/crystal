@@ -38,7 +38,12 @@ class Crystal::ABI::AVR < Crystal::ABI
   #
   # - <https://gcc.gnu.org/wiki/avr-gcc>
   # - <https://bugs.llvm.org/show_bug.cgi?id=46140>
-  def abi_info(atys : Array(LLVM::Type), rty : LLVM::Type, ret_def : Bool, context : LLVM::Context) : Crystal::ABI::FunctionType
+  def abi_info(args_types : Array(Type), return_type : Type, llvm_typer : LLVMTyper) : FunctionType
+    atys = args_types.map { |aty| llvm_typer.llvm_c_type(aty) }
+    rty = llvm_typer.llvm_c_return_type(return_type)
+    ret_def = !rty.void?
+    context = llvm_typer.llvm_context
+
     ret_ty = compute_return_type(rty, ret_def, context)
     arg_tys = compute_arg_types(atys, context)
     FunctionType.new(arg_tys, ret_ty)

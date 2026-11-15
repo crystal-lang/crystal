@@ -84,6 +84,14 @@ module Crystal
       int1(1)
     end
 
+    def and(value1 : LLVM::Value?, value2 : LLVM::Value)
+      value1 ? builder.and(value1, value2) : value2
+    end
+
+    def or(value1 : LLVM::Value?, value2 : LLVM::Value)
+      value1 ? builder.or(value1, value2) : value2
+    end
+
     def equal?(value1, value2)
       builder.icmp LLVM::IntPredicate::EQ, value1, value2
     end
@@ -168,7 +176,7 @@ module Crystal
       end
     end
 
-    delegate ptr2int, int2ptr, and, or, not, bit_cast,
+    delegate ptr2int, int2ptr, not, bit_cast,
       trunc, load, store, load_volatile, store_volatile, br, insert_block, position_at_end,
       cond, phi, extract_value, switch, to: builder
 
@@ -245,22 +253,6 @@ module Crystal
 
     def llvm_closure_type(type)
       llvm_typer.closure_type(type.as(ProcInstanceType))
-    end
-
-    def llvm_size(type)
-      llvm_type(type).size
-    end
-
-    def llvm_struct_size(type)
-      llvm_struct_type(type).size
-    end
-
-    def llvm_alignment(type)
-      llvm_type(type).alignment
-    end
-
-    def llvm_struct_alignment(type)
-      llvm_struct_type(type).alignment
     end
   end
 end

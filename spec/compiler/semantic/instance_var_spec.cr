@@ -4344,6 +4344,18 @@ describe "Semantic: instance var" do
     end
   end
 
+  it "errors if including a module with a guessed instance var in a primitive type" do
+    assert_error <<-CRYSTAL, "can't declare instance variables in Int32"
+      module Foo
+        @x = 1
+      end
+
+      struct Int32
+        include Foo
+      end
+      CRYSTAL
+  end
+
   it "errors if declaring instance variable in module included in Object" do
     assert_error <<-CRYSTAL, "can't declare instance variables in Object"
       module Moo

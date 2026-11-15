@@ -22,7 +22,7 @@ class HTTP::LogHandler
       res = context.response
 
       addr =
-        case remote_address = req.remote_address
+        case remote_address = context.remote_address
         when nil
           "-"
         when Socket::IPAddress

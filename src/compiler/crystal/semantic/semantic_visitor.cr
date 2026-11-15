@@ -96,6 +96,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       parsed_nodes.accept self
     rescue ex : CodeError
       node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex : SkipMacroCodeCoverageException
+      # Left for the macro code coverage tool to handle, see `SkipMacroCodeCoverageException`.
+      raise ex
     rescue ex
       raise Error.new "while requiring \"#{node.string}\"", ex
     end
@@ -105,7 +108,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
-    pushing_type(node.resolved_type) do
+    resolved_type = node.resolved_type?
+    node.raise "can't declare class dynamically" unless resolved_type
+    pushing_type(resolved_type) do
       node.hook_expansions.try &.each &.accept self
       node.body.accept self
     end

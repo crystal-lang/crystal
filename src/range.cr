@@ -214,6 +214,7 @@ struct Range(B, E)
     if current.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       current.step(to: @end, by: by, exclusive: @exclusive) do |x|
@@ -244,6 +245,7 @@ struct Range(B, E)
     if start.nil?
       raise ArgumentError.new("Can't step beginless range")
     end
+    raise ArgumentError.new("Zero step size") if by.zero?
 
     {% if B < Steppable %}
       start.step(to: @end, by: by, exclusive: @exclusive)
@@ -260,6 +262,35 @@ struct Range(B, E)
   # ```
   def excludes_end? : Bool
     @exclusive
+  end
+
+  # Returns `true` if this range and *other* have at least one value in common.
+  #
+  # ```
+  # (1..5).overlaps?(5..10)  # => true
+  # (1...5).overlaps?(5..10) # => false
+  # (1...1).overlaps?(1..1)  # => false
+  # ```
+  def overlaps?(other : Range) : Bool
+    return false if empty_without_iterating?
+    return false if other.empty_without_iterating?
+
+    if (begin_value = @begin) && (other_end = other.end)
+      return false if other.exclusive? ? other_end <= begin_value : other_end < begin_value
+    end
+
+    if (end_value = @end) && (other_begin = other.begin)
+      return false if @exclusive ? end_value <= other_begin : end_value < other_begin
+    end
+
+    true
+  end
+
+  protected def empty_without_iterating? : Bool
+    return false unless begin_value = @begin
+    return false unless end_value = @end
+
+    @exclusive ? begin_value >= end_value : begin_value > end_value
   end
 
   # Returns `true` if this range includes the given *value*.
@@ -495,14 +526,14 @@ struct Range(B, E)
     if b.is_a?(Int) && e.is_a?(Int)
       return 0 if e < b
 
-      # Convert `e` to `Int32` in order to ensure that `e &- b` doesn't get
+      # Convert `e` to `Int32` in order to ensure that `e - b` doesn't get
       # truncated due to the smaller type of `e`.
       if e.is_a?(UInt8 | Int8 | UInt16 | Int16)
         e = e.to_i32!
       end
 
-      diff = (e &- b).to_i32.abs
-      diff &+= 1 unless @exclusive
+      diff = (e - b).to_i32.abs
+      diff += 1 unless @exclusive
       diff
     else
       if b.nil? || e.nil?

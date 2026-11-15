@@ -1,16 +1,17 @@
 struct Char
-  # A `Char::Reader` allows iterating a `String` by Chars.
+  # A `Char::Reader` allows iterating a string by character.
   #
-  # As soon as you instantiate a `Char::Reader` it will decode the first
-  # char in the `String`, which can be accessed by invoking `current_char`.
-  # At this point `pos`, the current position in the string, will equal zero.
-  # Successive calls to `next_char` return the next chars in the string,
-  # advancing `pos`.
+  # The string can be a `String` instance or a `Bytes` slice pointing to a UTF-8
+  # encoded string which does not need to be null-terminated.
   #
-  # NOTE: The null character `'\0'` will be returned in `current_char` when
-  # the end is reached (as well as when the string is empty). Thus, `has_next?`
-  # will return `false` only when `pos` is equal to the string's bytesize, in which
-  # case `current_char` will always be `'\0'`.
+  # `Char::Reader.new` decodes the first character (or last in case of `at_end`),
+  # which can be accessed by invoking `current_char`.  At this point, `pos`, the
+  # current position in the string, equals zero.  Successive calls to
+  # `next_char` return the next chars in the string, advancing `pos`.
+  #
+  # When the end is reached (i.e. `pos` equals the string's bytesize),
+  # `#current_char` returns the null character `'\0'` and `has_next?` returns
+  # `false`.
   #
   # NOTE: For performance reasons, `Char::Reader` has value semantics, so care
   # must be taken when a reader is declared as a local variable and passed to
@@ -36,8 +37,10 @@ struct Char
   struct Reader
     include Enumerable(Char)
 
-    # Returns the reader's String.
-    getter string : String
+    # Returns the reader's `String` value.
+    #
+    # Not available if the reader was constructed to operate on `Bytes`.
+    getter! string : String
 
     # Returns the current character, or `'\0'` if the reader is at the end of
     # the string.
@@ -50,7 +53,7 @@ struct Char
     # reader.next_char
     # reader.current_char # => '\0'
     # ```
-    getter current_char : Char
+    getter current_char : Char = '\0'
 
     # Returns the size of the `#current_char` (in bytes) as if it were encoded in UTF-8.
     #
@@ -60,7 +63,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width : Int32
+    getter current_char_width : Int32 = 0
 
     # Returns the byte position of the current character.
     #
@@ -78,22 +81,30 @@ struct Char
     # out of bounds. Otherwise returns `nil`.
     getter error : UInt8?
 
-    # Creates a reader with the specified *string* positioned at
-    # byte index *pos*.
+    # Creates a reader with the specified *string* positioned at byte index
+    # *pos*.
     def initialize(@string : String, pos = 0)
-      @pos = pos.to_i
-      @current_char = '\0'
-      @current_char_width = 0
-      decode_current_char
+      initialize(string.to_slice, pos.to_i)
     end
 
-    # Creates a reader that will be positioned at the last char
-    # of the given string.
+    # Creates a reader that will be positioned at the last char of the given
+    # string.
     def initialize(*, at_end @string : String)
-      @pos = @string.bytesize
-      @current_char = '\0'
-      @current_char_width = 0
-      decode_previous_char
+      initialize(at_end: string.to_slice)
+    end
+
+    # Creates a reader with the specified *slice* of UTF-8 encoded string,
+    # positioned at byte index *pos*.
+    def initialize(@slice : Bytes, pos : Int32 = 0)
+      @pos = 0
+      self.pos = pos.to_i
+    end
+
+    # Creates a reader that will be positioned at the last char of the given
+    # slice of UTF-8 encoded string.
+    def initialize(*, at_end @slice : Bytes)
+      @pos = @slice.size
+      decode_previous_char unless @slice.empty?
     end
 
     # Returns the current character.
@@ -120,7 +131,7 @@ struct Char
     # reader.has_next? # => false
     # ```
     def has_next? : Bool
-      @pos < @string.bytesize
+      @pos < @slice.bytesize
     end
 
     # Tries to read the next character in the string.
@@ -136,11 +147,13 @@ struct Char
     # reader.current_char # => '\0'
     # ```
     def next_char? : Char?
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
+      @pos &+= @current_char_width
+      if has_next?
         decode_current_char
-        current_char?
+      else
+        @current_char_width = 0
+        @current_char = '\0'
+        nil
       end
     end
 
@@ -158,13 +171,9 @@ struct Char
     # reader.next_char # raise IndexError
     # ```
     def next_char : Char
-      next_pos = @pos + @current_char_width
-      if next_pos <= @string.bytesize
-        @pos = next_pos
-        decode_current_char
-      else
-        raise IndexError.new
-      end
+      raise IndexError.new unless has_next?
+
+      next_char? || '\0'
     end
 
     # Returns the next character in the `#string` without incrementing `#pos`.
@@ -178,11 +187,13 @@ struct Char
     # reader.current_char   # => 'a'
     # ```
     def peek_next_char : Char
-      next_pos = @pos + @current_char_width
-
-      if next_pos > @string.bytesize
+      if @current_char_width.zero?
         raise IndexError.new
       end
+
+      next_pos = @pos &+ @current_char_width
+
+      return '\0' if next_pos == @slice.bytesize
 
       decode_char_at(next_pos) do |code_point|
         code_point.unsafe_chr
@@ -227,7 +238,7 @@ struct Char
         raise IndexError.new
       end
 
-      decode_previous_char.as(Char)
+      decode_previous_char
     end
 
     # Sets `#pos` to *pos*.
@@ -240,12 +251,12 @@ struct Char
     # reader.current_char # => 'a'
     # ```
     def pos=(pos)
-      if pos > @string.bytesize
+      unless 0 <= pos <= @slice.bytesize
         raise IndexError.new
       end
 
       @pos = pos
-      decode_current_char
+      decode_current_char unless @slice.empty?
       pos
     end
 
@@ -424,8 +435,6 @@ struct Char
 
     @[AlwaysInline]
     private def decode_previous_char
-      return nil if @pos == 0
-
       decode_char_before(@pos) do |code_point, width, error|
         @current_char_width = width
         @pos -= width
@@ -435,7 +444,7 @@ struct Char
     end
 
     private def byte_at(i)
-      @string.to_unsafe[i].to_u32
+      @slice.to_unsafe[i].to_u32
     end
   end
 end

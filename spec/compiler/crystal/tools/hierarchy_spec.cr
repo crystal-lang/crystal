@@ -74,6 +74,10 @@ describe Crystal::TextHierarchyPrinter do
         end
       end
 
+      @[Primitive(:ReferenceStorageType)]
+      struct MyReferenceStorage(T) < Value
+      end
+
       class Foo(T)
         @a = uninitialized T*
         @b = uninitialized T
@@ -87,6 +91,7 @@ describe Crystal::TextHierarchyPrinter do
         @j = uninitialized Bar2(T)
         @k = uninitialized Bar3(T)
         @l = uninitialized Bar4(T)
+        @m = uninitialized MyReferenceStorage(T)
       end
       CRYSTAL
       - class Object (4 bytes)
@@ -105,7 +110,8 @@ describe Crystal::TextHierarchyPrinter do
                   @i : Bar1(T)
                   @j : Bar2(T)               ( 8 bytes)
                   @k : Bar3(T)
-                  @l : Bar4(T)               ( 8 bytes)\n
+                  @l : Bar4(T)               ( 8 bytes)
+                  @m : MyReferenceStorage(T)\n
       EOS
   end
 
@@ -183,6 +189,21 @@ describe Crystal::TextHierarchyPrinter do
               +- union Lib::Foo (8 bytes)
                      @x : Int32   (4 bytes)
                      @y : Float64 (8 bytes)\n
+      EOS
+  end
+
+  it "shows ReferenceStorage" do
+    assert_text_hierarchy <<-CRYSTAL, "MyReferenceStorage", <<-EOS
+      @[Primitive(:ReferenceStorageType)]
+      struct MyReferenceStorage(T) < Value
+      end
+      CRYSTAL
+      - class Object (4 bytes)
+        |
+        +- struct Value (0 bytes)
+           |
+           +- struct MyReferenceStorage(T)
+                  @type_id : Int32 (4 bytes)\n
       EOS
   end
 end

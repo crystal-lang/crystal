@@ -46,7 +46,7 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.resolve("example.org", "http", type: Socket::Type::STREAM, protocol: Socket::Protocol::TCP)
     # ```
-    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil) : Array(Addrinfo)
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout : Time::Span? = nil) : Array(Addrinfo)
       addrinfos = [] of Addrinfo
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
@@ -54,6 +54,12 @@ class Socket
       end
 
       addrinfos
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.resolve(String, _, Family?, Type, Protocol, Time::Span?)` instead.")]
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout : Number = 0) : Array(Addrinfo)
+      resolve(domain, service, family, type, protocol, timeout.seconds)
     end
 
     # Resolves a domain that best matches the given options.
@@ -69,7 +75,7 @@ class Socket
     #
     # The iteration will be stopped once the block returns something that isn't
     # an `Exception` (e.g. a `Socket` or `nil`).
-    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout = nil, &)
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout : Time::Span? = nil, &)
       exception = nil
 
       getaddrinfo(domain, service, family, type, protocol, timeout) do |addrinfo|
@@ -93,6 +99,12 @@ class Socket
 
         raise exception
       end
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.resolve(String, _, Family?, Type, Protocol, Time::Span?, &)` instead.")]
+    def self.resolve(domain : String, service, family : Family? = nil, type : Type = nil, protocol : Protocol = Protocol::IP, timeout : Number = 0, &)
+      resolve(domain, service, family, type, protocol, timeout.seconds) { |addrinfo| yield addrinfo }
     end
 
     class Error < Socket::Error
@@ -168,14 +180,26 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.tcp("example.org", 80)
     # ```
-    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout : Time::Span? = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP, timeout)
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.tcp(String, _, _, Time::Span?)` instead.")]
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout : Number = 0) : Array(Addrinfo)
+      tcp(domain, service, family, timeout.seconds)
     end
 
     # Resolves a domain for the TCP protocol with STREAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
-    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout : Time::Span? = nil, &)
       resolve(domain, service, family, Type::STREAM, Protocol::TCP, timeout) { |addrinfo| yield addrinfo }
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.tcp(String, _, _, Time::Span?, &)` instead.")]
+    def self.tcp(domain : String, service, family = Family::UNSPEC, timeout : Number = 0, &)
+      tcp(domain, service, family, timeout.seconds) { |addrinfo| yield addrinfo }
     end
 
     # Resolves *domain* for the UDP protocol and returns an `Array` of possible
@@ -187,14 +211,26 @@ class Socket
     #
     # addrinfos = Socket::Addrinfo.udp("example.org", 53)
     # ```
-    def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil) : Array(Addrinfo)
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout : Time::Span? = nil) : Array(Addrinfo)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP, timeout)
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.udp(String, _, _, Time::Span?)` instead.")]
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout : Number = 0) : Array(Addrinfo)
+      udp(domain, service, family, timeout.seconds)
     end
 
     # Resolves a domain for the UDP protocol with DGRAM type, and yields each
     # possible `Addrinfo`. See `#resolve` for details.
-    def self.udp(domain : String, service, family = Family::UNSPEC, timeout = nil, &)
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout : Time::Span? = nil, &)
       resolve(domain, service, family, Type::DGRAM, Protocol::UDP, timeout) { |addrinfo| yield addrinfo }
+    end
+
+    # :ditto:
+    @[Deprecated("Use `.udp(String, _, _, Time::Span?, &)` instead.")]
+    def self.udp(domain : String, service, family = Family::UNSPEC, timeout : Number = 0, &)
+      udp(domain, service, family, timeout.seconds) { |addrinfo| yield addrinfo }
     end
 
     # Returns an `IPAddress` matching this addrinfo.

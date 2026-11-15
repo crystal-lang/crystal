@@ -295,7 +295,9 @@ module Crystal
       program.flags << "release" if release?
       program.flags << "debug" unless debug.none?
       program.flags << "static" if static?
+      program.user_flags.concat @flags
       program.flags.concat @flags
+      program.define_crystal_constants
       program.wants_doc = wants_doc?
       program.color = color?
       program.stdout = stdout
@@ -351,7 +353,7 @@ module Crystal
 
     private def codegen(program, node : ASTNode, sources, output_filename)
       {% if LibLLVM::IS_LT_130 %}
-        if @codegen_target.architecture == "aarch64"
+        if @codegen_target.aarch64?
           stderr.puts "Error: Target #{@codegen_target} requires a Crystal compiler built with LLVM 13 or a later version."
           exit 1
         end
@@ -375,7 +377,7 @@ module Crystal
 
       {% if LibLLVM::IS_LT_170 %}
         # initialize the legacy pass manager once in the main thread/process
-        # before we start codegen in threads (MT) or processes (fork)
+        # before we start codegen in threads (MT)
         init_llvm_legacy_pass_manager unless optimization_mode.o0?
       {% end %}
 
@@ -444,10 +446,10 @@ module Crystal
       @progress_tracker.stage("Codegen (bc+obj)") do
         optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        unit.emit(@emit_targets, emit_base_filename || output_filename)
-
-        target_machine.emit_obj_to_file llvm_mod, output_filename
+        emit_filename = emit_base_filename || output_filename
+        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
       end
+
       object_names = [output_filename]
       output_filename = output_filename.rchop(unit.object_extension)
       _, command, args = linker_command(program, object_names, output_filename, nil)
@@ -459,7 +461,9 @@ module Crystal
     end
 
     private def linker_command(program : Program, object_names, output_filename, output_dir, expand = false)
-      if program.has_flag? "msvc"
+      codegen_target = program.codegen_target
+
+      if codegen_target.msvc?
         lib_flags = program.lib_flags(@cross_compile)
         lib_flags = expand_lib_flags(lib_flags) if expand
 
@@ -503,14 +507,14 @@ module Crystal
         end
 
         {linker, cmd, nil}
-      elsif program.has_flag? "wasm32"
+      elsif codegen_target.wasm?
         link_flags = @link_flags || ""
         {"wasm-ld", %(wasm-ld "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} -lc #{program.lib_flags(@cross_compile)}), object_names}
-      elsif program.has_flag? "avr"
+      elsif codegen_target.avr?
         link_flags = @link_flags || ""
         link_flags += " --target=avr-unknown-unknown -mmcu=#{@mcpu} -Wl,--gc-sections"
         {DEFAULT_LINKER, %(#{DEFAULT_LINKER} "${@}" -o #{Process.quote_posix(output_filename)} #{link_flags} #{program.lib_flags(@cross_compile)}), object_names}
-      elsif program.has_flag?("win32") && program.has_flag?("gnu")
+      elsif codegen_target.mingw?
         link_flags = @link_flags || ""
         link_flags += " -Wl,--stack,0x800000"
         link_flags = use_modern_linker(link_flags)
@@ -538,7 +542,7 @@ module Crystal
         link_flags = @link_flags || ""
         link_flags += " -rdynamic"
 
-        if program.has_flag?("freebsd") || program.has_flag?("openbsd")
+        if codegen_target.freebsd? || codegen_target.openbsd?
           # pkgs are installed to usr/local/lib but it's not in LIBRARY_PATH by
           # default; we declare it to ease linking on these platforms:
           link_flags += " -L/usr/local/lib"
@@ -638,10 +642,8 @@ module Crystal
       {% if !flag?(:without_mt) %}
         raise "LLVM isn't multithreaded and cannot fork compiler in multithread mode." unless LLVM.multithreaded?
         mt_codegen(units, n_threads)
-      {% elsif LibC.has_method?("fork") %}
-        fork_codegen(units, n_threads)
       {% else %}
-        raise "Cannot fork compiler. `Crystal::System::Process.fork` is not implemented on this system."
+        sequential_codegen(units)
       {% end %}
     end
 
@@ -676,124 +678,6 @@ module Crystal
       channel.close
 
       wg.wait
-    end
-
-    private def fork_codegen(units, n_threads)
-      workers = fork_workers(n_threads) do |input, output|
-        while i = input.gets(chomp: true).presence.try(&.to_i)
-          unit = units[i]
-          unit.compile
-          result = {
-            index:  i,
-            reused: unit.reused_previous_compilation?,
-            time:   unit.compilation_time.total_seconds,
-          }
-          output.puts result.to_json
-        end
-      rescue ex
-        result = {exception: {name: ex.class.name, message: ex.message, backtrace: ex.backtrace}}
-        output.puts result.to_json
-      end
-
-      overqueue = 1
-      indexes = Atomic(Int32).new(0)
-      channel = Channel(String).new(n_threads)
-      completed = Channel(Nil).new(n_threads)
-
-      workers.each do |pid, input, output|
-        spawn do
-          overqueued = 0
-
-          overqueue.times do
-            if (index = indexes.add(1)) < units.size
-              input.puts index
-              overqueued += 1
-            end
-          end
-
-          while (index = indexes.add(1)) < units.size
-            input.puts index
-
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          overqueued.times do
-            if response = output.gets(chomp: true)
-              channel.send response
-            else
-              Crystal::System.print_error "\nBUG: a codegen process failed\n"
-              exit 1
-            end
-          end
-
-          input << '\n'
-          input.close
-          output.close
-
-          Process.new(Crystal::System::Process.new(pid)).wait
-          completed.send(nil)
-        end
-      end
-
-      spawn do
-        n_threads.times { completed.receive }
-        channel.close
-      end
-
-      while response = channel.receive?
-        result = JSON.parse(response)
-
-        if ex = result["exception"]?
-          Crystal::System.print_error "\nBUG: a codegen process failed: %s (%s)\n", ex["message"].as_s, ex["name"].as_s
-          ex["backtrace"].as_a?.try(&.each { |frame| Crystal::System.print_error "  from %s\n", frame })
-          exit 1
-        end
-
-        if @progress_tracker.stats?
-          unit = units[result["index"].as_i]
-          unit.compilation_time = result["time"].as_f.seconds
-
-          if result["reused"].as_bool
-            unit.reused_previous_compilation = true
-          end
-        end
-        @progress_tracker.stage_progress += 1
-      end
-    end
-
-    private def fork_workers(n_threads, &)
-      workers = [] of {Int32, IO::FileDescriptor, IO::FileDescriptor}
-
-      n_threads.times do
-        iread, iwrite = IO.pipe
-        oread, owrite = IO.pipe
-
-        iwrite.flush_on_newline = true
-        owrite.flush_on_newline = true
-
-        pid = Crystal::System::Process.fork do
-          iwrite.close
-          oread.close
-
-          yield iread, owrite
-
-          iread.close
-          owrite.close
-          exit 0
-        end
-
-        iread.close
-        owrite.close
-
-        workers << {pid, iwrite, oread}
-      end
-
-      workers
     end
 
     private def print_macro_run_stats(program)
@@ -1078,31 +962,53 @@ module Crystal
         memory_buffer.dispose
       end
 
-      private def compile_to_object
+      private def compile_to_object(file_name = object_name, *, optimize = true)
         temporary_object_name = self.temporary_object_name
         target_machine = compiler.create_target_machine
-        compiler.optimize llvm_mod, target_machine unless compiler.optimization_mode.o0?
+        compiler.optimize llvm_mod, target_machine if optimize && !compiler.optimization_mode.o0?
         target_machine.emit_obj_to_file llvm_mod, temporary_object_name
-        File.rename(temporary_object_name, object_name)
+        FileUtils.mv(temporary_object_name, file_name)
       end
 
       private def dump_llvm_ir
         llvm_mod.print_to_file ll_name if compiler.dump_ll?
       end
 
-      def emit(emit_targets : EmitTarget, output_filename)
+      def emit(emit_targets : EmitTarget, output_filename, *, from_cache = true)
+        filename = output_filename
+
         if emit_targets.asm?
-          compiler.target_machine.emit_asm_to_file llvm_mod, "#{output_filename}.s"
+          filename = "#{output_filename}.s"
+          compiler.target_machine.emit_asm_to_file llvm_mod, filename
         end
+
         if emit_targets.llvm_bc?
-          FileUtils.cp(bc_name, "#{output_filename}.bc")
+          filename = "#{output_filename}.bc"
+          if from_cache
+            FileUtils.cp(bc_name, filename)
+          else
+            llvm_mod.write_bitcode_to_file(filename)
+          end
         end
+
         if emit_targets.llvm_ir?
-          llvm_mod.print_to_file "#{output_filename}.ll"
+          filename = "#{output_filename}.ll"
+          llvm_mod.print_to_file filename
         end
+
         if emit_targets.obj?
-          FileUtils.cp(object_name, output_filename + @object_extension)
+          filename = "#{output_filename}#{@object_extension}"
+          if from_cache
+            FileUtils.cp(object_name, filename)
+          else
+            compile_to_object(filename, optimize: false)
+          end
         end
+      rescue ex
+        # LLVM reports file system errors (eg. a missing output directory)
+        # as a plain error string; rewrap it so it surfaces as a proper
+        # error message instead of a compiler bug report.
+        raise CompilerError.new("Could not write output file '#{filename}': #{ex.message}", :FAILURE)
       end
 
       def object_name

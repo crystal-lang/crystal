@@ -64,6 +64,13 @@ class Crystal::CodeGenVisitor
       if obj.type.passed_as_self? || obj.target_const
         request_value(obj)
       end
+    when Var
+      # Do not request the self argument for non-generic metaclasses. This
+      # avoids loading its type ID and, in the case of module metaclasses,
+      # possibly allocating a new ID.
+      if obj.type.passed_as_self? || obj.name != "self"
+        request_value(obj)
+      end
     when ASTNode
       # Always accept obj: even if it's not passed as self this might
       # involve intermediate calls with side effects.
@@ -171,7 +178,7 @@ class Crystal::CodeGenVisitor
           call_arg = context.vars[exp.name].pointer
         when InstanceVar
           # Just get a pointer to the instance variable
-          call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
+          call_arg = instance_var_ptr(context.type, exp.name, llvm_self_ptr)
         when Underscore
           # Allocate stack memory, but discard the value
           call_arg = alloca(llvm_type(arg.type))
@@ -216,7 +223,7 @@ class Crystal::CodeGenVisitor
       in .direct?
         call_arg = codegen_direct_abi_call(arg.type, call_arg, abi_arg_type) unless arg.type.nil_type?
       in .indirect?
-        call_arg = codegen_indirect_abi_call(call_arg, abi_arg_type) unless arg.type.nil_type?
+        call_arg = codegen_indirect_abi_call(arg.type, call_arg, abi_arg_type) unless arg.type.nil_type?
       in .ignore?
         # Ignore
         next
@@ -259,13 +266,18 @@ class Crystal::CodeGenVisitor
 
   # For an indirect argument we need to make a copy of the value in the stack
   # and *replace* the call argument by a pointer to the allocated memory
-  def codegen_indirect_abi_call(call_arg, abi_arg_type)
+  def codegen_indirect_abi_call(call_arg_type, call_arg, abi_arg_type)
     final_value = alloca abi_arg_type.type
-    final_value_casted = cast_to_void_pointer final_value
-    call_arg_casted = cast_to_void_pointer call_arg
-    size = @abi.size(abi_arg_type.type)
-    align = @abi.align(abi_arg_type.type)
-    memcpy(final_value_casted, call_arg_casted, size_t(size), align, int1(0))
+    if call_arg_type.passed_by_value?
+      final_value_casted = cast_to_void_pointer final_value
+      call_arg_casted = cast_to_void_pointer call_arg
+      size = @abi.size(abi_arg_type.type)
+      align = @abi.align(abi_arg_type.type)
+      memcpy(final_value_casted, call_arg_casted, size_t(size), align, int1(0))
+    else
+      # For types like i128 on MinGW-w64 the call argument isn't a pointer
+      store call_arg, final_value
+    end
     final_value
   end
 
@@ -343,9 +355,9 @@ class Crystal::CodeGenVisitor
       obj_type_id = context.vars["%scope"].pointer
     else
       owner = node.scope
-      obj_type_id = llvm_self
+      obj_type_id = llvm_self if owner.passed_as_self?
     end
-    obj_type_id = type_id(obj_type_id, owner)
+    obj_type_id = type_id(obj_type_id, owner) if obj_type_id
 
     # Create self var if available
     if node_obj
@@ -361,6 +373,9 @@ class Crystal::CodeGenVisitor
       new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
       type_id(@last, arg.type)
     end
+
+    # The type checks belong to this call, not to the code before it
+    set_current_debug_location node if @debug.line_numbers?
 
     # Reuse this call for each dispatch branch
     call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}").as(ASTNode) }, node.block).at(node)
@@ -381,12 +396,13 @@ class Crystal::CodeGenVisitor
       Phi.open(self, node, old_needs_value) do |phi|
         # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
-          if is_super
-            # A super call always matches the obj type
-            result = int1(1)
-          else
+          result = nil
+          if obj_type_id && !is_super
+            # If owner is not passed then it cannot possibly affect dispatch,
+            # while a super call always matches the obj type
             result = match_type_id(owner, a_def.owner, obj_type_id)
           end
+
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
             if node_arg.supports_autocast?(!@program.has_flag?("no_number_autocast"))
@@ -403,7 +419,7 @@ class Crystal::CodeGenVisitor
           end
 
           current_def_label, next_def_label = new_blocks "current_def", "next_def"
-          cond result, current_def_label, next_def_label
+          cond result.not_nil!, current_def_label, next_def_label
 
           position_at_end current_def_label
 
@@ -433,6 +449,11 @@ class Crystal::CodeGenVisitor
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
 
+    # Inlined calls and primitives don't go through `codegen_call_or_invoke`,
+    # so their instructions need the call's debug location set here,
+    # otherwise they are attributed to whatever line was last emitted
+    set_current_debug_location node if @debug.line_numbers?
+
     # Try to inline the call
     if try_inline_call(target_def, body, self_type, call_args)
       return
@@ -440,6 +461,8 @@ class Crystal::CodeGenVisitor
 
     # We also always inline primitives
     if body.is_a?(Primitive)
+      set_current_debug_location node if @debug.line_numbers?
+
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
@@ -544,13 +567,18 @@ class Crystal::CodeGenVisitor
           if cast = abi_return.cast
             cast1 = alloca cast
             store @last, cast1
-            cast2 = cast_to_void_pointer(cast1)
-            final_value = alloca abi_return.type
-            final_value_casted = cast_to_void_pointer final_value
-            size = @abi.size(abi_return.type)
-            align = @abi.align(abi_return.type)
-            memcpy(final_value_casted, cast2, size_t(size), align, int1(0))
-            @last = final_value
+
+            if type.passed_by_value?
+              cast2 = cast_to_void_pointer(cast1)
+              final_value = alloca abi_return.type
+              final_value_casted = cast_to_void_pointer final_value
+              size = @abi.size(abi_return.type)
+              align = @abi.align(abi_return.type)
+              memcpy(final_value_casted, cast2, size_t(size), align, int1(0))
+              @last = final_value
+            else
+              @last = load abi_return.type, pointer_cast(cast1, abi_return.type.pointer)
+            end
           end
         in .indirect?
           @last = @sret_value.not_nil!

@@ -3,8 +3,7 @@
 #
 # Here we count the number of NumberLiterals in a program.
 
-# Use `require "compiler/crystal/syntax"` in your programs
-require "../../src/compiler/crystal/syntax"
+require "compiler/crystal/syntax"
 
 class Counter < Crystal::Visitor
   getter count

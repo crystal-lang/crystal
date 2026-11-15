@@ -534,6 +534,16 @@ describe "Semantic: def" do
       CRYSTAL
   end
 
+  it "can't use self in private toplevel method (#13899)" do
+    assert_error <<-CRYSTAL, "there's no self in this scope"
+      private def foo
+        self
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "points error at name (#6937)" do
     ex = assert_error <<-CRYSTAL,
       1.

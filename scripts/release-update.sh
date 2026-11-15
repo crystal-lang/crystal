@@ -31,19 +31,29 @@ sed -i -E "s/version: .*/version: $(cat src/VERSION)/" shard.yml
 rm -f src/SOURCE_DATE_EPOCH
 
 ##
-## 2. Add previous release to forward compatibility tests (if new minor branch)
+## 2. Add previous release to forward compatibility tests and drop oldest
+##    release to keep restricted compatibility window (if new minor branch)
 ##
 
 previous_release=$(grep -o -P '(?<=\$\{CRYSTAL_BOOTSTRAP_VERSION:=).*(?=\})' bin/ci)
 if [ "${minor_branch}" != "${previous_release%.*}" ]; then
-  sed -i -E "/crystal_bootstrap_version:/ s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/" .github/workflows/forward-compatibility.yml
+  min_forward_compat_version=$(grep -o -P '(?<=crystal_bootstrap_version: \[)[0-9.]+(?=,)' .github/workflows/forward-compatibility.yml)
+  sed -i -E "s/CRYSTAL_BOOTSTRAP_VERSION: [0-9.]+/CRYSTAL_BOOTSTRAP_VERSION: ${min_forward_compat_version}/" .github/workflows/linux.yml
+
+  sed -i -E "/crystal_bootstrap_version:/ {
+      s/\[[0-9.]+, /[/
+      s/(, ${previous_release%.*}\.[0-9]*)?\]\$/, $previous_release]/
+    }" .github/workflows/forward-compatibility.yml
+
+  sed -i -E "s/min_compiler_version = \"[0-9.]+\"/min_compiler_version = \"${min_forward_compat_version%.*}.0\"/" src/prelude.cr
+  sed -i -E "s/crystal: \">= [0-9.]+\"/crystal: \">= ${min_forward_compat_version%.*}.0\"/" shard.yml
 fi
 
 ##
 ## 3. Update CI and build scripts to use latest release as bootstrap version
 ##
 
-# Edit PREVIOUS_CRYSTAL_BASE_URL in .circleci/config.yml
+# Edit previous_crystal_base_url parameter in .circleci/config.yml
 sed -i -E "s|[0-9.]+/crystal-[0-9.]+-[0-9]|$CRYSTAL_VERSION/crystal-$CRYSTAL_VERSION-1|g" .circleci/config.yml
 
 # Edit DOCKER_TEST_PREFIX in bin/ci
@@ -53,7 +63,7 @@ sed -i -E 's|\$\{CRYSTAL_BOOTSTRAP_VERSION:=.*\}|\${CRYSTAL_BOOTSTRAP_VERSION:='
 sed -i -E "s|crystallang/crystal:[0-9.]+|crystallang/crystal:$CRYSTAL_VERSION|g" .github/workflows/*.yml
 
 # Edit .github/workflows/*.yml to update version for install-crystal action
-sed -i -E "s|crystal: \"[0-9.]+\"|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
+sed -i -E "s|crystal: \"?[0-9.]+\"?|crystal: \"$CRYSTAL_VERSION\"|g" .github/workflows/*.yml
 
 # Edit shell.nix latestCrystalBinary using nix-prefetch-url --unpack <url>
 update_shell_nix_release() {

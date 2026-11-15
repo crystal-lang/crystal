@@ -283,8 +283,6 @@ module Crystal
       types["Experimental"] = @experimental_annotation = AnnotationType.new self, self, "Experimental"
       types["TargetFeature"] = @target_feature_annotation = AnnotationType.new self, self, "TargetFeature"
 
-      define_crystal_constants
-
       # definition in `macros/types.cr`
       define_macro_types
     end
@@ -309,7 +307,7 @@ module Crystal
     getter(nil_var) { Var.new("<nil_var>", nil_type) }
 
     # Defines a predefined constant in the Crystal module, such as BUILD_DATE and VERSION.
-    private def define_crystal_constants
+    def define_crystal_constants
       if build_commit = Crystal::Config.build_commit
         build_commit_const = define_crystal_string_constant "BUILD_COMMIT", build_commit
       else
@@ -356,13 +354,33 @@ module Crystal
       define_crystal_string_constant "HOST_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
         The LLVM target triple of the host system (the machine that the compiler runs on).
         MD
-      define_crystal_string_constant "TARGET_TRIPLE", Crystal::Config.host_target.to_s, <<-MD
+      define_crystal_string_constant "TARGET_TRIPLE", codegen_target.to_s, <<-MD
         The LLVM target triple of the target system (the machine that the compiler builds for).
+        MD
+      define_string_array_constant "USER_FLAGS", user_flags, <<-MD
+        The flags provided by the user via the `-D` command line argument.
+        MD
+      define_string_array_constant "ALL_FLAGS", flags, <<-MD
+        The combined flags of the user and the program, including the target triple and the user flags.
         MD
     end
 
     private def define_crystal_string_constant(name, value, doc = nil)
       define_crystal_constant name, StringLiteral.new(value).tap(&.set_type(string)), doc
+    end
+
+    private def define_constant(name, value, doc = nil) : Const
+      crystal.types[name] = const = Const.new self, crystal, name, value
+      const.doc = doc
+      const
+    end
+
+    private def define_string_array_constant(name, ary, doc = nil) : Const
+      node = ArrayLiteral.map(ary) { |item| StringLiteral.new(item) }
+      if ary.empty?
+        node.of = Path.global("String")
+      end
+      define_constant(name, node, doc: doc)
     end
 
     private def define_crystal_nil_constant(name, doc = nil)
@@ -381,7 +399,6 @@ module Crystal
     property(target_machine : LLVM::TargetMachine) { codegen_target.to_target_machine }
 
     def codegen_target=(@codegen_target : Codegen::Target) : Codegen::Target
-      crystal.types["TARGET_TRIPLE"].as(Const).value.as(StringLiteral).value = codegen_target.to_s
       @codegen_target
     end
 

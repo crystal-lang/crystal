@@ -348,7 +348,7 @@ class Time::Location
       end
 
       {% if flag?(:android) %}
-        if location = load_android(name, Crystal::System::Time.android_tzdata_sources)
+        if location = load_android(name, Crystal::System::Time.android_tzdata_sources) { |source| yield source }
           return location
         end
       {% end %}

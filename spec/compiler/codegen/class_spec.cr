@@ -1351,6 +1351,21 @@ describe "Code gen: class" do
       CRYSTAL
   end
 
+  it "runs instance variable initializer using a class variable assignment (#9886)" do
+    run(<<-CRYSTAL).to_i.should eq(3)
+      class Foo
+        @@id = 0
+        @id : Int32 = (@@id &+= 1)
+
+        def id
+          @id
+        end
+      end
+
+      Foo.new.id &+ Foo.new.id
+      CRYSTAL
+  end
+
   it "runs instance variable initializer at the class level, for generic type" do
     run(<<-CRYSTAL).to_i.should eq(42)
       class Foo(T)
@@ -1469,5 +1484,39 @@ describe "Code gen: class" do
       x = Bar(Int32)
       x.name
       CRYSTAL
+  end
+
+  it "does not request self on class method even with self as receiver, non-generic" do
+    mod = codegen(<<-CRYSTAL)
+      class Foo
+        def self.foo
+          self.bar
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      CRYSTAL
+
+    mod.to_s.should_not contain("Foo.class:type_id")
+  end
+
+  it "does not request self on class method even with self as receiver, uninstantiated generic" do
+    mod = codegen(<<-CRYSTAL)
+      class Foo(T)
+        def self.foo
+          self.bar
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      CRYSTAL
+
+    mod.to_s.should_not contain("Foo(T).class:type_id")
   end
 end

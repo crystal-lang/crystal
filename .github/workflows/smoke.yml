@@ -17,7 +17,6 @@
 # wasm32-wasi
 # x86_64-darwin
 # x86_64-dragonfly
-# x86_64-freebsd
 # x86_64-linux-gnu
 # x86_64-linux-musl
 # x86_64-netbsd
@@ -34,11 +33,13 @@ on:
     paths:
       - 'src/lib_c/**'
       - 'src/crystal/system/**'
+      - 'src/compiler/crystal/codegen/**'
       - '.github/workflows/smoke.yml'
   pull_request:
     paths:
       - 'src/lib_c/**'
       - 'src/crystal/system/**'
+      - 'src/compiler/crystal/codegen/**'
       - '.github/workflows/smoke.yml'
   schedule:
     - cron: '0 3 * * *'
@@ -70,7 +71,6 @@ jobs:
           - i386-linux-gnu
           - i386-linux-musl
           - x86_64-dragonfly
-          - x86_64-freebsd
           - x86_64-netbsd
           - x86_64-openbsd
           - x86_64-solaris
