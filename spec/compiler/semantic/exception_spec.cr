@@ -1,6 +1,16 @@
 require "../../spec_helper"
 
 describe "Semantic: exception" do
+  it "prints an unknown location for a macro without a source location" do
+    error = Crystal::TypeException.new("error")
+    filename = Crystal::VirtualFile.new(Crystal::Macro.new("foo"), "", nil)
+    io = IO::Memory.new
+
+    error.append_macro_definition_location(io, filename)
+
+    io.to_s.should eq("unknown location")
+  end
+
   it "type is union of main and rescue blocks" do
     assert_type(<<-CRYSTAL) { union_of(int32, char) }
       begin
