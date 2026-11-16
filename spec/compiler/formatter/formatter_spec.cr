@@ -1192,7 +1192,7 @@ describe Crystal::Formatter do
   assert_format %("foo \\\n  \#{bar}")
   assert_format %("\#{foo} \\\n\#{bar}")
   assert_format %("foo \\\n\#{__DIR__}")
-  assert_format %(foo(\n  "bar \\\n\#{baz}"\n))
+  assert_format %(foo(\n  "bar \\\n\#{baz}"\n)), %(foo(\n  "bar \\\n\#{baz}",\n))
 
   assert_format "%w(one   two  three)", "%w(one two three)"
   assert_format "%i(one   two  three)", "%i(one two three)"
@@ -2377,7 +2377,7 @@ describe Crystal::Formatter do
 
   # comment before the first argument
   assert_format "foo( # bar\n  1,\n  2,\n)"
-  assert_format "foo( # bar\n  1\n)"
+  assert_format "foo( # bar\n  1\n)", "foo( # bar\n  1,\n)"
   assert_format "foo( # bar\n  # baz\n  1,\n)"
   assert_format "foo( # bar\n  a: 1,\n)"
   assert_format "foo( # bar\n  1,\n  a: 2,\n)"
@@ -2387,7 +2387,7 @@ describe Crystal::Formatter do
   assert_format "foo[\\\n1]", "foo[ \\\n  1]"
   assert_format "def a\n  b(\n    1, # x\n    # y\n    2\n  )\nend", "def a\n  b(\n    1, # x\n    # y\n    2,\n  )\nend"
   assert_format "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2\n  )\nend", "def a\n  b(\n    a: 1, # x\n    # y\n    b: 2,\n  )\nend"
-  assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend"
+  assert_format "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2 # z\n  )\nend", "def a\n  b(\n    1, # x\n    # y\n    a: 1, # x\n    # y\n    b: 2, # z\n  )\nend"
 
   # #14609
   assert_format "foo(\n  a: 1,\n  # b: 2\n) do\nend"
