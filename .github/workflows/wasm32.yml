@@ -12,7 +12,7 @@ env:
   SPEC_SPLIT_DOTS: "160"
 
 jobs:
-  wasm32-test:
+  build-compiler:
     runs-on: ubuntu-26.04
     steps:
       - name: "Download Crystal source"
@@ -31,8 +31,32 @@ jobs:
           sudo apt-add-repository -y deb http://apt.llvm.org/resolute/ llvm-toolchain-resolute main
           sudo apt-get install -qy llvm-24-dev
 
+      # TODO: can't link statically because libLLVM depends on libz3.a (not distributed by libz3-dev)
       - name: "Build Crystal with LLVM 24"
         run: make crystal LLVM_CONFIG=llvm-config-24
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: compiler
+          path: .build/crystal
+          retention-days: 1
+
+  test-std:
+    needs:
+      - build-compiler
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - wasm32-wasip1
+          - wasm32-wasip2
+          - wasm32-wasip3
+    runs-on: ubuntu-26.04
+    steps:
+      - name: "Download Crystal source"
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: "Install WASI SDK"
         uses: bytecodealliance/setup-wasi-sdk-action@77d09f3df1e8da344d8403cf8631af8977938b4c # v1.0.0
@@ -55,18 +79,31 @@ jobs:
             -DPCRE2_BUILD_TESTS=OFF
           cmake --build build --parallel
         env:
-          CFLAGS: "--target=wasm32-wasip1"
+          CFLAGS: "--target=${{ matrix.target }}"
 
       - name: "Install wasmtime"
         uses: bytecodealliance/actions/wasmtime/setup@9152e710e9f7182e4c29ad218e4f335a7b203613 # v1.1.3
         with:
           version: 50.0.0
 
+      # TODO: not needed if compiler was statically linked (or uses runner LLVM)
+      - name: "Install LLVM 24"
+        run: |
+          curl -sL https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          sudo apt-add-repository -y deb http://apt.llvm.org/resolute/ llvm-toolchain-resolute main
+          sudo apt-get install -qy llvm-24-dev
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: compiler
+          path: .build/
+      - run: chmod +x .build/crystal
+
       - name: "Build spec/wasm32_std_spec.cr"
         run: |
-          bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target wasm32-wasi --link-flags="-z stack-size=8388608" -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_mt
+          bin/crystal build spec/wasm32_std_spec.cr -o wasm32_std_spec.wasm --target ${{ matrix.target }} --link-flags="-z stack-size=8388608" -Dwithout_iconv -Dwithout_openssl -Dwithout_zlib -Dwithout_mt
         env:
-          CRYSTAL_LIBRARY_PATH: "${{ steps.wasi-sdk.outputs.sysroot-path }}/lib/wasm32-wasip1:/tmp/pcre2/build"
+          CRYSTAL_LIBRARY_PATH: "${{ steps.wasi-sdk.outputs.sysroot-path }}/lib/${{ matrix.target }}:/tmp/pcre2/build"
 
       - name: "Run wasm32_std_spec.wasm"
         run: |
