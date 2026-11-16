@@ -3909,10 +3909,11 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          # The body (possibly holding the assignments of instance and class
-          # variable parameters) is located at the `end`. Note that a single
-          # assignment is the body itself, so it gets this location as well.
-          body = Expressions.from(extra_assigns).at(@token.location).at_end(end_location)
+          # The body is located at the `end`. Assignments of instance and class
+          # variable parameters are always wrapped in `Expressions` (even if
+          # there's only one) so they keep the location of their parameters.
+          body = extra_assigns.empty? ? Nop.new : Expressions.new(extra_assigns)
+          body.at(@token.location).at_end(end_location)
           next_token_skip_space
         else
           body = parse_expressions
