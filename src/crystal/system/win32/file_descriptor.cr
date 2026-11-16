@@ -161,6 +161,8 @@ module Crystal::System::FileDescriptor
       case error = WinError.value
       when .error_invalid_handle?
         return true
+      when .error_success?
+        return false
       else
         raise IO::Error.from_os_error("Unable to get info", error, target: self)
       end
