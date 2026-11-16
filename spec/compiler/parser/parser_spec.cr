@@ -4587,6 +4587,60 @@ module Crystal
       node_source(source, node.exp).should eq(".")
     end
 
+    it "sets correct location of call chains and operators on implicit object in `when` of case" do
+      source = "case foo\nwhen .bar(1).baz, .qux * 2 + 3, .x.as(T).y?, .z && w, .!.v\nend"
+      conds = Parser.parse(source).as(Case).whens.first.conds
+
+      call = conds[0].as(Call)
+      node_source(source, call).should eq(".bar(1).baz")
+      bar = call.obj.as(Call)
+      node_source(source, bar).should eq(".bar(1)")
+      node_source(source, bar.obj.should_not be_nil).should eq(".")
+
+      add = conds[1].as(Call)
+      node_source(source, add).should eq(".qux * 2 + 3")
+      mul = add.obj.as(Call)
+      node_source(source, mul).should eq(".qux * 2")
+      qux = mul.obj.as(Call)
+      node_source(source, qux).should eq(".qux")
+      node_source(source, qux.obj.should_not be_nil).should eq(".")
+
+      call = conds[2].as(Call)
+      node_source(source, call).should eq(".x.as(T).y?")
+      cast = call.obj.as(Cast)
+      node_source(source, cast).should eq(".x.as(T)")
+      x = cast.obj.as(Call)
+      node_source(source, x).should eq(".x")
+      node_source(source, x.obj.should_not be_nil).should eq(".")
+
+      node = conds[3].as(And)
+      node_source(source, node).should eq(".z && w")
+      z = node.left.as(Call)
+      node_source(source, z).should eq(".z")
+      node_source(source, z.obj.should_not be_nil).should eq(".")
+
+      call = conds[4].as(Call)
+      node_source(source, call).should eq(".!.v")
+      node = call.obj.as(Not)
+      node_source(source, node).should eq(".!")
+      node_source(source, node.exp).should eq(".")
+    end
+
+    it "sets correct location of call chains on implicit object in tuple `when` of case" do
+      source = "case {foo, bar}\nwhen {.a.b, .c > 1}\nend"
+      tuple = Parser.parse(source).as(Case).whens.first.conds.first.as(TupleLiteral)
+
+      call = tuple.elements[0].as(Call)
+      node_source(source, call).should eq(".a.b")
+      node_source(source, call.obj.should_not be_nil).should eq(".a")
+
+      call = tuple.elements[1].as(Call)
+      node_source(source, call).should eq(".c > 1")
+      c = call.obj.as(Call)
+      node_source(source, c).should eq(".c")
+      node_source(source, c.obj.should_not be_nil).should eq(".")
+    end
+
     it "sets correct location of annotation in enum" do
       source = "enum X; @[Foo]; end"
       node = Parser.parse(source).as(EnumDef).members.first
