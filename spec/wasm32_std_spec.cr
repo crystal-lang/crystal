@@ -217,7 +217,7 @@ require "./std/random/secure_spec.cr"
 require "./std/random_spec.cr"
 require "./std/range_spec.cr"
 require "./std/record_spec.cr"
-# require "./std/reference_spec.cr" (failed to run)
+require "./std/reference_spec.cr"
 require "./std/regex/match_data_spec.cr"
 require "./std/regex_spec.cr"
 require "./std/semantic_version_spec.cr"
@@ -249,7 +249,7 @@ require "./std/string/utf16_spec.cr"
 require "./std/string_builder_spec.cr"
 require "./std/string_pool_spec.cr"
 require "./std/string_scanner_spec.cr"
-# require "./std/string_spec.cr" (failed to run)
+require "./std/string_spec.cr"
 require "./std/struct_spec.cr"
 require "./std/symbol_spec.cr"
 # require "./std/sync/condition_variable_spec.cr" (failed to run)
