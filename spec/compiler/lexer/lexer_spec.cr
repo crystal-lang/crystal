@@ -519,6 +519,9 @@ describe "Lexer" do
   assert_syntax_error "/foo", "Unterminated regular expression"
   assert_syntax_error "/\\", "Unterminated regular expression"
   assert_syntax_error ":\"foo", "unterminated quoted symbol"
+  assert_syntax_error ":\"foo\rbar\"", "expecting '\\n' after '\\r'"
+
+  it_lexes ":\"foo\r\nbar\"", :SYMBOL, "foo\r\nbar"
 
   it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"
@@ -603,6 +606,32 @@ describe "Lexer" do
     token.value.should eq("\\")
   end
 
+  it "increments line number in multiline symbol (#13526)" do
+    lexer = Lexer.new %(:"foo\nbar" 1)
+    token = lexer.next_token
+    token.type.should eq(t :SYMBOL)
+    token.value.should eq("foo\nbar")
+
+    lexer.next_token.type.should eq(t :SPACE)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(2)
+    token.column_number.should eq(6)
+  end
+
+  it "increments line number in symbol with escaped newline" do
+    lexer = Lexer.new %(:"foo\\\nbar" 1)
+    token = lexer.next_token
+    token.type.should eq(t :SYMBOL)
+    token.value.should eq("foo\nbar")
+
+    lexer.next_token.type.should eq(t :SPACE)
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+    token.line_number.should eq(2)
+    token.column_number.should eq(6)
+  end
+
   it "lexes symbol followed by !=" do
     lexer = Lexer.new ":a!=:a"
     token = lexer.next_token
@@ -653,6 +682,7 @@ describe "Lexer" do
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
   assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
+  assert_syntax_error "'\\u{10FFFF 30}'", "expected '}' to close unicode escape"
   assert_syntax_error "'\\uD800'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error "'\\uDFFF'", "invalid unicode codepoint (surrogate half)"
   assert_syntax_error "'\\u{D800}'", "invalid unicode codepoint (surrogate half)"
@@ -674,6 +704,9 @@ describe "Lexer" do
   it_lexes_string %("\\4"), String.new(Bytes[4])
   it_lexes_string %("\\10"), String.new(Bytes[8])
   it_lexes_string %("\\110"), String.new(Bytes[72])
+  it_lexes_string %("\\377"), String.new(Bytes[255])
+  it_lexes_string %("\\0002"), String.new(Bytes[0]) # (#13520)
+  it_lexes_string %("\\1111"), String.new(Bytes[73])
   it_lexes_string %("\\8"), "8"
   assert_syntax_error %("\\400"), "octal value too big"
 

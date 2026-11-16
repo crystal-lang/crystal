@@ -319,6 +319,9 @@ describe "String" do
     it { "5".to_i(prefix: true).should eq(5) }
     it { "0".to_i(prefix: true).should eq(0) }
     it { "00".to_i(prefix: true).should eq(0) }
+    it { "0".to_i(leading_zero_is_octal: true).should eq(0) }
+    it { "0".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
+    it { "-0".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
     it { "123hello".to_i(strict: false).should eq(123) }
@@ -335,7 +338,6 @@ describe "String" do
     it { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "000o89a".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "123hello".to_i } }
-    it { expect_raises(ArgumentError) { "0".to_i(leading_zero_is_octal: true) } }
     it { expect_raises(ArgumentError) { "0o755".to_i(leading_zero_is_octal: true) } }
     it { "z".to_i(36).should eq(35) }
     it { "Z".to_i(36).should eq(35) }
@@ -368,6 +370,7 @@ describe "String" do
     describe "to_u8" do
       it { "255".to_u8.should eq(255) }
       it { "0".to_u8.should eq(0) }
+      it { "0".to_u8(leading_zero_is_octal: true).should eq(0) }
       it { expect_raises(ArgumentError) { "256".to_u8 } }
       it { expect_raises(ArgumentError) { "-1".to_u8 } }
 
@@ -2967,20 +2970,25 @@ describe "String" do
         bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
 
-      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
-        it "flushes the shift state (#11992)" do
-          "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
-          "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
-        end
-      {% end %}
+      {% if !flag?(:use_libiconv) && flag?(:darwin) %}
+        # #17701
+        pending "flushes the shift state (#11992)"
+      {% else %}
+        {% if flag?(:use_libiconv) || !(flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
+          it "flushes the shift state (#11992)" do
+            "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+            "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+          end
+        {% end %}
 
-      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
-      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
-        it "flushes the shift state (#11992)" do
-          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
-          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
-        end
+        # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+        # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+        {% if !flag?(:use_libiconv) && (flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
+          it "flushes the shift state (#11992)" do
+            "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+            "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+          end
+        {% end %}
       {% end %}
 
       it "raises if wrong encoding" do
@@ -3020,7 +3028,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+      {% if flag?(:use_libiconv) || !(flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:darwin)) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -3029,7 +3037,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+      {% if !flag?(:use_libiconv) && (flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
@@ -3037,6 +3045,8 @@ describe "String" do
       {% end %}
 
       it "decodes with skip" do
+        pending! if {{ flag?(:darwin) && !flag?(:use_libiconv) }} # #17701
+
         bytes = Bytes[186, 195, 255, 202, 199]
         String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end

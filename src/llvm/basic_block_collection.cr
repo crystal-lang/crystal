@@ -11,6 +11,7 @@ struct LLVM::BasicBlockCollection
     BasicBlock.new LibLLVM.append_basic_block_in_context(context, @function, name)
   end
 
+  @[Deprecated]
   def append(name = "", &)
     builder =
       {% if LibLLVM::IS_LT_240 %}

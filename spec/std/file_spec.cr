@@ -228,8 +228,12 @@ describe "File" do
     end
 
     describe "follow_symlinks: false" do
-      it "gives true" do
+      it "gives true for a file" do
         File.exists?(datapath("test_file.txt"), follow_symlinks: false).should be_true
+      end
+
+      it "gives true for a directory" do
+        File.exists?(datapath("dir"), follow_symlinks: false).should be_true
       end
 
       it "gives false" do
@@ -425,6 +429,8 @@ describe "File" do
         expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
           File.readlink(symlink)
         end
+      ensure
+        File.chmod(path, File::Permissions::All)
       end
     end
   end
@@ -467,6 +473,8 @@ describe "File" do
         expect_raises File::AccessDeniedError, "Cannot read link: '#{symlink.inspect_unquoted}'" do
           File.readlink?(symlink)
         end
+      ensure
+        File.chmod(path, File::Permissions::All)
       end
     end
   end

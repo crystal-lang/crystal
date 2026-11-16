@@ -1010,7 +1010,7 @@ class Crystal::Call
     Call.full_name(owner, def_name)
   end
 
-  def self.full_name(owner, method_name = name)
+  def self.full_name(owner, method_name)
     case owner
     when Program, Nil
       method_name
@@ -1018,7 +1018,7 @@ class Crystal::Call
       # Class's instance_type is Object, not Class, so we cannot treat it like
       # other metaclasses
       "#{owner}##{method_name}"
-    when .metaclass?
+    when .metaclass?, LibType
       "#{owner.instance_type}.#{method_name}"
     else
       "#{owner}##{method_name}"

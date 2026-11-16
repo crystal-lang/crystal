@@ -563,6 +563,27 @@ module HTTP
           Request.from_io(IO::Memory.new("GET / HTTP/1.1\r\nX-Test-Header: \u{0}\r\n")).should eq HTTP::Status::BAD_REQUEST
         end
 
+        it "rejects control whitespace before framing values" do
+          {"\v", "\f", "\r"}.each do |whitespace|
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: #{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding:\t#{whitespace}chunked\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: #{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+            Request.from_io(IO::Memory.new("POST / HTTP/1.1\r\nContent-Length:\t#{whitespace}1\r\n\r\n")).should eq HTTP::Status::BAD_REQUEST
+          end
+        end
+
+        it "accepts space and tab before framing values" do
+          io = IO::Memory.new("POST / HTTP/1.1\r\nTransfer-Encoding: \t chunked\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Transfer-Encoding"].should eq "chunked"
+
+          io = IO::Memory.new("POST / HTTP/1.1\r\nContent-Length: \t 1\r\n\r\n")
+          request = Request.from_io(io).should be_a(Request)
+          request.headers["Content-Length"].should eq "1"
+        end
+
         it "doesn't raise on request with multiple Content-Length headers" do
           io = IO::Memory.new <<-HTTP
             GET / HTTP/1.1
@@ -684,6 +705,29 @@ module HTTP
     end
 
     describe "#keep_alive?" do
+      it "gives close precedence in connection token lists" do
+        {"HTTP/1.0", "HTTP/1.1"}.each do |version|
+          {"close, keep-alive", "keep-alive, close", "keep-alive, \tClOsE \t"}.each do |value|
+            request = Request.new "GET", "/", headers: HTTP::Headers{"Connection" => value}, version: version
+            request.keep_alive?.should be_false
+          end
+
+          headers = HTTP::Headers{"Connection" => ["keep-alive", "close"]}
+          Request.new("GET", "/", headers: headers, version: version).keep_alive?.should be_false
+        end
+      end
+
+      it "recognizes complete connection tokens" do
+        headers = HTTP::Headers{"Connection" => "other, \tKeEp-AlIvE "}
+        Request.new("GET", "/", headers: headers, version: "HTTP/1.0").keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "x-close, close-extra"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_true
+
+        headers = HTTP::Headers{"Connection" => "keep-alive, Upgrade"}
+        Request.new("GET", "/", headers: headers).keep_alive?.should be_false
+      end
+
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
         request.keep_alive?.should be_false

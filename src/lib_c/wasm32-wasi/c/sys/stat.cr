@@ -49,4 +49,6 @@ lib LibC
   fun lstat(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun utimensat(fd : Int, path : Char*, times : Timespec*, flags : Int) : Int
+  fun futimens(fd : Int, times : Timespec*) : Int
 end

@@ -7,11 +7,11 @@
 
 == Name
 
-crystal-doc - Generate API docs for Crystal code
+crystal-docs - Generate API docs for Crystal code
 
 == Synopsis
 
-*crystal build* [options] [programfile] [--] [arguments]
+*crystal docs* [options] [files...]
 
 == Description
 

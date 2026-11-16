@@ -332,10 +332,55 @@ describe "Semantic: exception" do
     end
   end
 
-  it "marks proc literal as raises" do
+  it "marks proc calls as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
     call = result.node.as(Expressions).last.as(Call)
     call.target_def.raises?.should be_true
+  end
+
+  it "marks a proc definition calling a raising method as raises" do
+    result = assert_type(<<-CRYSTAL) { proc_of(int32) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      -> { raising }
+      CRYSTAL
+    proc = result.node.as(Expressions).last.as(ProcLiteral)
+    proc.def.raises?.should be_true
+  end
+
+  it "does not mark a method returning a raising proc as raises" do
+    result = assert_type(<<-CRYSTAL) { proc_of(int32) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      def foo
+        -> { raising }
+      end
+
+      foo
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_false
+    a_def.body.as(ProcLiteral).def.raises?.should be_true
+  end
+
+  it "does not mark an outer proc as raises when returning a raising proc" do
+    result = assert_type(<<-CRYSTAL) { proc_of(proc_of(int32)) }
+      @[Raises]
+      def raising
+        1
+      end
+
+      -> { -> { raising } }
+      CRYSTAL
+    proc = result.node.as(Expressions).last.as(ProcLiteral)
+    proc.def.raises?.should be_false
+    proc.def.body.as(ProcLiteral).def.raises?.should be_true
   end
 
   it "shadows local variable (1)" do

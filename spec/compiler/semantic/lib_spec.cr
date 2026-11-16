@@ -15,7 +15,7 @@ describe "Semantic: lib" do
   end
 
   it "raises wrong number of arguments" do
-    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC.foo' (given 1, expected 0)"
       lib LibC
         fun foo : Int32
       end
@@ -25,7 +25,7 @@ describe "Semantic: lib" do
   end
 
   it "raises wrong number of arguments for variadic fun" do
-    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC#foo' (given 1, expected 2+)"
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibC.foo' (given 1, expected 2+)"
       lib LibC
         fun foo(x : Int32, y : Int32, ...)
       end
@@ -35,7 +35,7 @@ describe "Semantic: lib" do
   end
 
   it "raises wrong argument type" do
-    assert_error <<-CRYSTAL, "argument 'x' of 'LibC#foo' must be Int32, not Char"
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibC.foo' must be Int32, not Char"
       lib LibC
         fun foo(x : Int32) : Int32
       end
@@ -66,7 +66,7 @@ describe "Semantic: lib" do
   end
 
   it "reports error when changing instance var type and something breaks" do
-    assert_error <<-CRYSTAL, "argument 'c' of 'Lib#bar' must be Char"
+    assert_error <<-CRYSTAL, "argument 'c' of 'Lib.bar' must be Char"
       lib Lib
         fun bar(c : Char)
       end
@@ -219,7 +219,7 @@ describe "Semantic: lib" do
   end
 
   it "error if passing type to LibC with to_unsafe but type doesn't match" do
-    assert_error <<-CRYSTAL, "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibC.foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
       lib LibC
         fun foo(x : Int32) : Int32
       end
@@ -235,7 +235,7 @@ describe "Semantic: lib" do
   end
 
   it "error if passing non primitive type as varargs" do
-    assert_error <<-CRYSTAL, "argument #2 of 'LibC#foo' is not a primitive type and no Foo#to_unsafe method found"
+    assert_error <<-CRYSTAL, "argument #2 of 'LibC.foo' is not a primitive type and no Foo#to_unsafe method found"
       lib LibC
         fun foo(x : Int32, ...)
       end
@@ -464,7 +464,7 @@ describe "Semantic: lib" do
   end
 
   it "disallows passing nil or pointer to arg expecting pointer" do
-    assert_error <<-CRYSTAL, "argument 'x' of 'Foo#foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
+    assert_error <<-CRYSTAL, "argument 'x' of 'Foo.foo' must be Pointer(Int32), not (Pointer(Int32) | Nil)", inject_primitives: true
       lib Foo
         fun foo(x : Int32*) : Int64
       end
@@ -618,7 +618,7 @@ describe "Semantic: lib" do
   end
 
   it "doesn't try to invoke unsafe for c struct/union (#1362)" do
-    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo.foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
       lib LibFoo
         struct Bar
         end
