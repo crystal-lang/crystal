@@ -546,24 +546,17 @@ describe "Code gen: debug" do
       CRYSTAL
 
     str = mod.to_s
-    # `foo`, found by its parameter because symbol names are mangled on Windows
+    # Functions are found by their parameters because symbol names are mangled on Windows
     foo = str[/^define [^\n]+ %foo_value\).+?^}/m]
-    {% if flag?(:msvc) %}
-      debug_line_of(str, foo, / = catchpad /).should eq(0)
-    {% else %}
-      debug_line_of(str, foo, /call i64 @__crystal_get_exception/).should eq(0)
-    {% end %}
-    debug_line_of(str, foo, /icmp eq i32/).should eq(25)
-    debug_line_of(str, foo, /call void @(__crystal_raise|_CxxThrowException)/).should eq(0)
-
-    # The rescue body's block is the one that passes its value, 2, to the phi
-    rescue_body_block = foo[/\[ 2, %(\w+) \]/, 1]
-    rescue_body = foo[/^#{rescue_body_block}:.+?^$/m]
-    debug_line_of(str, rescue_body, /^\s+br /).should eq(26)
-
-    # An empty rescue body has no line, so the nil it returns doesn't either
     bar = str[/^define [^\n]+ %bar_value\).+?^}/m]
-    debug_line_of(str, bar, /load i32, ptr @"Nil:type_id"/).should eq(0)
+
+    # The `rescue` clauses (25, 35) and the non-empty rescue body (26) have their own lines, while the `begin` lines (23, 33) have none
+    debug_lines_of(str, foo).should eq([0, 22, 24, 25, 26, 28])
+    debug_lines_of(str, bar).should eq([0, 32, 34, 35])
+
+    # Catching the exception (the landing pad or catch switch starting the `rescue` block) and re-raising it belong to no line
+    debug_line_of(str, foo[/^rescue:.+/m], /!dbg/).should eq(0)
+    debug_line_of(str, foo, /call void @(__crystal_raise|_CxxThrowException)/).should eq(0)
   end
 
   {% unless LibLLVM::IS_LT_210 %}
@@ -638,4 +631,13 @@ private def debug_line_of(ir, function, pattern)
   instruction = function.each_line.find!(&.matches?(pattern))
   dbg_id = instruction[/!dbg (![0-9]+)/, 1]
   ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
+end
+
+# Returns the sorted, distinct line numbers of the debug locations attached to the instructions in *function*,
+# *ir* is the whole module.
+private def debug_lines_of(ir, function)
+  # The function's own `!dbg` is a `DISubprogram`, not a `DILocation`, so it is skipped
+  function.scan(/!dbg (![0-9]+)/).compact_map do |match|
+    ir[/^#{match[1]} = !DILocation\(line: ([0-9]+)/m, 1]?.try(&.to_i)
+  end.uniq!.sort!
 end
