@@ -811,7 +811,7 @@ describe "FileUtils" do
           paths.each { |path| FileUtils.touch(path) }
           FileUtils.mkdir(dir_path)
           {% if flag?(:wasm32) %}
-            FileUtils.ln_s(paths.map { |path| symlink_target(path, File.join(dir_path, File.basename(path))) }, dir_arg)
+            FileUtils.ln_s(paths.map { |path| symlink_target(path, File.join(dir_path, "foo")) }, dir_arg)
           {% else %}
             FileUtils.ln_s(paths, dir_arg)
           {% end %}

@@ -453,7 +453,7 @@ describe "Dir" do
         Dir.mkdir_p(target)
 
         File.write(non_link, "")
-        File.symlink(symlink_target(target.to_s, link_dir), link_dir)
+        File.symlink(symlink_target(target, link_dir), link_dir)
 
         Dir.glob("#{Path[path].to_posix}/glob/*/a.txt").sort.should eq [] of String
         Dir.glob("#{Path[path].to_posix}/glob/*/a.txt", follow_symlinks: true).sort.should eq [
