@@ -82,7 +82,7 @@ describe "Normalize: case" do
   end
 
   it "doesn't replace implicit obj of nested case in arguments" do
-    assert_expand "case x; when .foo(case y; when .bar; 1; end) > 2; 3; end", "__temp_1 = x\nif (__temp_1.foo(case y\nwhen .bar\n  1\nend)) > 2\n  3\nend"
+    assert_expand "case x; when .foo(case y; when .bar; 1; end) > 2; 3; end", "__temp_1 = x\nif __temp_1.foo(case y\nwhen .bar\n  1\nend) > 2\n  3\nend"
   end
 
   it "normalizes case with assignment" do
