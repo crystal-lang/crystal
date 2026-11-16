@@ -6,7 +6,7 @@
 
 set -eu
 
-: "${CRYSTAL_BOOTSTRAP_VERSION:=1.22.2}"
+: "${CRYSTAL_BOOTSTRAP_VERSION:=1.22.3}"
 
 if [ "$#" -ge 2 ]; then
   image_suffix="$1"
