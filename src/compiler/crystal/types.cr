@@ -2861,11 +2861,11 @@ module Crystal
     getter base_type : IntegerType
     property? flags = false
 
-    def initialize(program, namespace, name, @base_type)
+    def initialize(program, namespace, name, @base_type, location : Location? = nil)
       super(program, namespace, name)
 
-      add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type))
-      metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", restriction: Path.global(@base_type.to_s))], Primitive.new("enum_new", self))
+      add_def Def.new("value", [] of Arg, Primitive.new("enum_value", @base_type).at(location)).at(location)
+      metaclass.as(ModuleType).add_def Def.new("new", [Arg.new("value", restriction: Path.global(@base_type.to_s))], Primitive.new("enum_new", self).at(location)).at(location)
       program.enum.add_subclass self
     end
 

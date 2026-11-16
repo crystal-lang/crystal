@@ -1265,8 +1265,7 @@ module Crystal
     end
 
     def visit_if_or_unless(node, keyword : Keyword)
-      if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless
+      if suffix_if_or_unless?(node)
         accept node.then
         write_keyword " ", keyword, " "
         inside_cond do
@@ -1279,6 +1278,16 @@ module Crystal
       format_if_at_cond node, keyword
 
       false
+    end
+
+    # Returns `true` for a suffix `if`/`unless`, whose `then` branch starts at
+    # the node's own location. The current token alone can't tell the forms
+    # apart, as in `if a; b; end if c`.
+    private def suffix_if_or_unless?(node)
+      return false unless node.else.is_a?(Nop)
+      return false unless location = node.location
+
+      node.then.location == location
     end
 
     def format_if_at_cond(node, keyword : Keyword, check_end = true)
@@ -2559,6 +2568,10 @@ module Crystal
             end
 
             return false
+          elsif @token.type.op_lsquare_rsquare_question?
+            write "[]?"
+            next_token
+            return false
           end
 
           write " " if needs_space && !passed_backslash_newline
@@ -3005,7 +3018,9 @@ module Crystal
 
       if @token.type.op_comma?
         next_token
-        next_token if @token.type.space?
+        while @token.type.space? || @token.type.newline?
+          next_token
+        end
         if @token.type.comment?
           write ","
           needs_comma = false
@@ -3055,7 +3070,11 @@ module Crystal
       else
         # It's foo &.bar
         write "," if needs_comma
-        write " " if needs_space
+        if comma_before_comment
+          write_indent(@indent + 2)
+        elsif needs_space
+          write " "
+        end
         write_token :OP_AMP
         skip_space_or_newline
         write "."
@@ -4281,8 +4300,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space_or_newline
-        write @token.value
-        next_token_skip_space_or_newline
+        if @token.type.delimiter_start?
+          indent(@column, StringLiteral.new(node.real_name.not_nil!))
+          skip_space_or_newline
+        else
+          write @token.value
+          next_token_skip_space_or_newline
+        end
       end
 
       write_token " ", :OP_COLON, " "

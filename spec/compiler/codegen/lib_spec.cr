@@ -60,15 +60,28 @@ describe "Code gen: lib" do
 
   it "allows setting/getting external variable as function pointer" do
     codegen(<<-CRYSTAL)
-      require "prelude"
-
       lib LibC
+        fun abort : NoReturn
         $x : ->
       end
+      def raise(message : String) : NoReturn; LibC.abort; end
 
       LibC.x = ->{}
       LibC.x.call
       CRYSTAL
+  end
+
+  it "uses quoted real name of external variable (#14210)" do
+    mod = codegen(<<-CRYSTAL)
+      lib LibFoo
+        $foo = "llvm.foo" : Int32
+      end
+
+      LibFoo.foo
+      CRYSTAL
+
+    mod.globals["llvm.foo"]?.should_not be_nil
+    mod.globals["foo"]?.should be_nil
   end
 
   it "can use enum as fun argument" do
@@ -100,7 +113,7 @@ describe "Code gen: lib" do
   end
 
   it "can use tuple as fun return" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         int x;
         int y;
@@ -116,21 +129,23 @@ describe "Code gen: lib" do
       end
 
       tuple = LibFoo.foo
-      tuple[0] + tuple[1]
+      tuple[0] &+ tuple[1]
       CRYSTAL
   end
 
   it "get fun field from struct (#672)" do
     run(<<-CRYSTAL).to_i.should eq(10)
-      require "prelude"
-
       lib Moo
+        fun abort : NoReturn
         struct Type
           func : (Type*) -> Int32
         end
       end
+      # Supply the C-closure guard without loading the full exception runtime.
+      def raise(message : String) : NoReturn; Moo.abort; end
 
-      p = Pointer(Moo::Type).malloc(1)
+      value = uninitialized Moo::Type
+      p = pointerof(value)
       p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
       CRYSTAL
@@ -138,15 +153,16 @@ describe "Code gen: lib" do
 
   it "get fun field from union (#672)" do
     run(<<-CRYSTAL).to_i.should eq(10)
-      require "prelude"
-
       lib Moo
+        fun abort : NoReturn
         union Type
           func : (Type*) -> Int32
         end
       end
+      def raise(message : String) : NoReturn; Moo.abort; end
 
-      p = Pointer(Moo::Type).malloc(1)
+      value = uninitialized Moo::Type
+      p = pointerof(value)
       p.value.func = -> (t: Moo::Type*) { 10 }
       p.value.func.call(p)
       CRYSTAL
@@ -194,6 +210,16 @@ describe "Code gen: lib" do
       end
 
       LibFoo.foo 1234.5
+      CRYSTAL
+  end
+
+  it "passes int literal to int128" do
+    codegen(<<-CRYSTAL)
+      lib LibFoo
+        fun foo(x : Int128)
+      end
+
+      LibFoo.foo(1)
       CRYSTAL
   end
 

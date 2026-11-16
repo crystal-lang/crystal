@@ -14,6 +14,9 @@ struct Exception::CallStack
     nil
   end
 
+  def self.print_backtrace : Nil
+  end
+
   protected def self.decode_frame(pc)
     nil
   end

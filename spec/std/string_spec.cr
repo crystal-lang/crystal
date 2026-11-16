@@ -319,6 +319,9 @@ describe "String" do
     it { "5".to_i(prefix: true).should eq(5) }
     it { "0".to_i(prefix: true).should eq(0) }
     it { "00".to_i(prefix: true).should eq(0) }
+    it { "0".to_i(leading_zero_is_octal: true).should eq(0) }
+    it { "0".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
+    it { "-0".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
     it { "123hello".to_i(strict: false).should eq(123) }
@@ -335,7 +338,6 @@ describe "String" do
     it { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "000o89a".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "123hello".to_i } }
-    it { expect_raises(ArgumentError) { "0".to_i(leading_zero_is_octal: true) } }
     it { expect_raises(ArgumentError) { "0o755".to_i(leading_zero_is_octal: true) } }
     it { "z".to_i(36).should eq(35) }
     it { "Z".to_i(36).should eq(35) }
@@ -368,6 +370,7 @@ describe "String" do
     describe "to_u8" do
       it { "255".to_u8.should eq(255) }
       it { "0".to_u8.should eq(0) }
+      it { "0".to_u8(leading_zero_is_octal: true).should eq(0) }
       it { expect_raises(ArgumentError) { "256".to_u8 } }
       it { expect_raises(ArgumentError) { "-1".to_u8 } }
 

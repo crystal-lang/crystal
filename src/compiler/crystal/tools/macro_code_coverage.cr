@@ -29,6 +29,10 @@ module Crystal
     @hits = Hash(String, Hash(Int32, Int32 | String)).new { |hash, key| hash[key] = Hash(Int32, Int32 | String).new(0) }
     @conditional_hit_cache = Hash(String, Hash(Int32, Set({ASTNode, Bool}))).new { |hash, key| hash[key] = Hash(Int32, Set({ASTNode, Bool})).new { |h, k| h[k] = Set({ASTNode, Bool}).new } }
 
+    # Cached per filename, as every collected node is checked, but they come from comparatively few files.
+    @matched_paths = Hash(String, Bool).new
+    @relative_filenames = Hash(String, String).new
+
     @covered_macro_nodes = Array({ASTNode, Location, Bool}).new
     @collected_covered_macro_nodes = Array(Array({ASTNode, Location, Bool})).new
     getter coverage_interrupt_exception : ::Exception? = nil
@@ -76,6 +80,7 @@ module Crystal
 
     def process : Nil
       @hits.clear
+      @matched_paths.clear
 
       self.compute_coverage
 
@@ -273,17 +278,21 @@ module Crystal
     end
 
     private def normalize_location(location : Location) : Location
+      filename = location.filename.as(String)
+
       Location.new(
-        ::Path[location.filename.as(String)].relative_to(CURRENT_DIR).to_s,
+        @relative_filenames.put_if_absent(filename) { ::Path[filename].relative_to(CURRENT_DIR).to_s },
         location.line_number,
         location.column_number
       )
     end
 
     private def match_path?(path)
-      paths = ::Path[path].parents << ::Path[path]
+      @matched_paths.put_if_absent(path) do
+        paths = ::Path[path].parents << ::Path[path]
 
-      match_any_pattern?(includes, paths) || !match_any_pattern?(excludes, paths)
+        match_any_pattern?(includes, paths) || !match_any_pattern?(excludes, paths)
+      end
     end
 
     private def match_any_pattern?(patterns, paths)

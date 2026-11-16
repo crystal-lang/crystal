@@ -475,6 +475,19 @@ describe "implementations" do
   end
 
   it "find implementation on def with no location" do
+    _, result = processed_implementation_visitor <<-CRYSTAL, Location.new(".", 4, 5)
+      class Foo
+      end
+
+      Foo.allocate
+      CRYSTAL
+
+    result.implementations.should_not(be_nil).map do |e|
+      Location.new(e.filename, e.line, e.column).to_s
+    end.should eq ["<unknown>:0:0"]
+  end
+
+  it "find implementation on enum .new (#15275)" do
     _, result = processed_implementation_visitor <<-CRYSTAL, Location.new(".", 5, 5)
       enum Foo
         FOO
@@ -485,6 +498,6 @@ describe "implementations" do
 
     result.implementations.should_not(be_nil).map do |e|
       Location.new(e.filename, e.line, e.column).to_s
-    end.should eq ["<unknown>:0:0"]
+    end.should eq [".:1:1"]
   end
 end
