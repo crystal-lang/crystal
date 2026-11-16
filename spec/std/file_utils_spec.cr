@@ -6,17 +6,19 @@ private def test_with_string_and_path(*paths, &)
   yield *paths.map { |path| Path[path] }
 end
 
-private NOT_CURRENT_DIR = {% if flag?(:wasm32) %} datapath("dir") {% else %} ".." {% end %}
-
 describe "FileUtils" do
   describe ".cd" do
     it "should work" do
       cwd = Dir.current
-      test_with_string_and_path(cwd) do |arg|
-        FileUtils.cd(NOT_CURRENT_DIR)
-        Dir.current.should_not eq(cwd)
-        FileUtils.cd(arg)
-        Dir.current.should eq(cwd)
+
+      with_tempdir(chdir: false) do |another_dir|
+        test_with_string_and_path(cwd) do |arg|
+          FileUtils.cd(another_dir)
+          Dir.current.should_not eq(cwd)
+
+          FileUtils.cd(arg)
+          Dir.current.should eq(cwd)
+        end
       end
     end
 
@@ -30,12 +32,15 @@ describe "FileUtils" do
 
     it "accepts a block" do
       cwd = Dir.current
-      test_with_string_and_path(NOT_CURRENT_DIR) do |arg|
-        FileUtils.cd(arg) do
-          Dir.current.should_not eq(cwd)
-        end
 
-        Dir.current.should eq(cwd)
+      with_tempdir(chdir: false) do |another_dir|
+        test_with_string_and_path(another_dir) do |arg|
+          FileUtils.cd(arg) do
+            Dir.current.should_not eq(cwd)
+          end
+
+          Dir.current.should eq(cwd)
+        end
       end
     end
   end

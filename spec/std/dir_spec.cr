@@ -1,8 +1,6 @@
 require "./spec_helper"
 require "../support/env"
 
-private NOT_CURRENT_DIR = {% if flag?(:wasm32) %} datapath("dir") {% else %} ".." {% end %}
-
 private def reset_tempdir(tmp_path = nil, &)
   {% if flag?(:windows) %}
     with_env("TMP": tmp_path, "TEMP": nil, "USERPROFILE": nil) { yield }
@@ -609,18 +607,26 @@ describe "Dir" do
   describe "cd" do
     it "accepts string" do
       cwd = Dir.current
-      Dir.cd(NOT_CURRENT_DIR)
-      Dir.current.should_not eq(cwd)
-      Dir.cd(cwd)
-      Dir.current.should eq(cwd)
+
+      with_tempdir(chdir: false) do |another_dir|
+        Dir.cd(another_dir)
+        Dir.current.should_not eq(cwd)
+
+        Dir.cd(cwd)
+        Dir.current.should eq(cwd)
+      end
     end
 
     it "accepts path" do
       cwd = Dir.current
-      Dir.cd(Path.new(NOT_CURRENT_DIR))
-      Dir.current.should_not eq(cwd)
-      Dir.cd(cwd)
-      Dir.current.should eq(cwd)
+
+      with_tempdir(chdir: false) do |another_dir|
+        Dir.cd(Path.new(another_dir))
+        Dir.current.should_not eq(cwd)
+
+        Dir.cd(cwd)
+        Dir.current.should eq(cwd)
+      end
     end
 
     it "raises" do
@@ -632,21 +638,25 @@ describe "Dir" do
     it "accepts a block with path" do
       cwd = Dir.current
 
-      Dir.cd(Path.new(NOT_CURRENT_DIR)) do
-        Dir.current.should_not eq(cwd)
-      end
+      with_tempdir(chdir: false) do |another_dir|
+        Dir.cd(Path.new(another_dir)) do
+          Dir.current.should_not eq(cwd)
+        end
 
-      Dir.current.should eq(cwd)
+        Dir.current.should eq(cwd)
+      end
     end
 
     it "accepts a block with string" do
       cwd = Dir.current
 
-      Dir.cd(NOT_CURRENT_DIR) do
-        Dir.current.should_not eq(cwd)
-      end
+      with_tempdir(chdir: false) do |another_dir|
+        Dir.cd(another_dir) do
+          Dir.current.should_not eq(cwd)
+        end
 
-      Dir.current.should eq(cwd)
+        Dir.current.should eq(cwd)
+      end
     end
   end
 
