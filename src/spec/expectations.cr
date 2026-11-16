@@ -388,17 +388,23 @@ module Spec
       ::Spec::BeAExpectation({{type}}).new
     end
 
-    # Runs the block and passes if it raises an exception of type *klass* and the error message matches.
-    #
-    # If *message* is a string, it matches if the exception's error message contains that string.
-    # If *message* is a regular expression, it is used to match the error message.
-    #
-    # It returns the rescued exception.
     {% if flag?(:wasm32) && compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
+      # Runs the block and passes if it raises an exception of type `T` and the error message matches.
+      #
+      # If *message* is a string, it matches if the exception's error message contains that string.
+      # If *message* is a regular expression, it is used to match the error message.
+      #
+      # It returns the rescued exception.
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
         # NOTE: can only enable WASM exception handling with the LLVM C API 24+
       end
     {% else %}
+      # Runs the block and passes if it raises an exception of type `T` and the error message matches.
+      #
+      # If *message* is a string, it matches if the exception's error message contains that string.
+      # If *message* is a regular expression, it is used to match the error message.
+      #
+      # It returns the rescued exception.
       def expect_raises(klass : T.class, message : String | Regex | Nil = nil, file = __FILE__, line = __LINE__, &) forall T
         yield
       rescue ex : T

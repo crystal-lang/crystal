@@ -7,6 +7,9 @@ require "random"
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 #
 # NOTE: To use `BigInt`, you must explicitly import it with `require "big"`
+#
+# NOTE: Deserializing a `BigInt` from JSON or YAML requires `require "big/json"`
+# or `require "big/yaml"`, respectively.
 struct BigInt < Int
   include Comparable(Int::Signed)
   include Comparable(Int::Unsigned)

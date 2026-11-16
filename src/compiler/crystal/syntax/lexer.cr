@@ -1841,9 +1841,17 @@ module Crystal
             delimiter_state = heredocs.shift
           end
 
-          if delimiter_state && delimiter_state.kind.heredoc? && check_heredoc_end(delimiter_state)
-            char = current_char
-            delimiter_state = heredocs.try &.shift?
+          if delimiter_state && delimiter_state.kind.heredoc?
+            # `check_heredoc_end` resets the token's column number (as needed
+            # by string tokens), which would move the start of this macro literal
+            token_column_number = @token.column_number
+            reached_heredoc_end = check_heredoc_end(delimiter_state)
+            @token.column_number = token_column_number
+
+            if reached_heredoc_end
+              char = current_char
+              delimiter_state = heredocs.try &.shift?
+            end
           end
 
           next
@@ -2570,7 +2578,7 @@ module Crystal
             when '0', '1', '2', '3', '4', '5', '6', '7'
               io.write_byte consume_octal_escape(char)
             when '\n'
-              incr_line_number nil
+              incr_line_number 0
               io << '\n'
             when '\0'
               raise "unterminated quoted symbol", line, column
@@ -2581,6 +2589,9 @@ module Crystal
             break
           when '\0'
             raise "unterminated quoted symbol", line, column
+          when '\n'
+            incr_line_number 0
+            io << char
           when '\r'
             raise "expecting '\\n' after '\\r'" unless peek_next_char == '\n'
             io << char

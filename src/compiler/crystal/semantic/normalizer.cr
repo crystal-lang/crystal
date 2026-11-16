@@ -476,7 +476,9 @@ module Crystal
       body = node.body
       case body
       when Nop
-        node.body = Expressions.new(extra_expressions).at(node.body)
+        # There's no body to take the end location from, so the generated
+        # one ends with the block (not at the unpacked block parameters)
+        node.body = Expressions.new(extra_expressions).at(node.body).at_end(node.end_location)
       when Expressions
         body.expressions = extra_expressions + body.expressions
       else
