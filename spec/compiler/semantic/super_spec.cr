@@ -551,4 +551,39 @@ describe "Semantic: super" do
       Bar.new.foo(3)
       CRYSTAL
   end
+
+  it "does not consider `::super` as superclass method call" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def super
+        1
+      end
+
+      class Foo
+        def foo
+          ::super
+        end
+      end
+
+      Foo.new.foo
+      CRYSTAL
+  end
+
+  it "does not consider `::super` as initializing base class's ivars" do
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
+      def super
+      end
+
+      class Foo
+        def initialize
+          @x = ""
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          ::super
+        end
+      end
+      CRYSTAL
+  end
 end

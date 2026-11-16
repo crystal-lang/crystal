@@ -4527,15 +4527,17 @@ module Crystal
         @wants_regex = !is_var
       end
 
-      case name
-      when "super"
-        @calls_super = true
-      when "initialize"
-        @calls_initialize = true
-      when "previous_def"
-        @calls_previous_def = true
-      else
-        # Not a special call
+      unless global
+        case name
+        when "super"
+          @calls_super = true
+        when "initialize"
+          @calls_initialize = true
+        when "previous_def"
+          @calls_previous_def = true
+        else
+          # Not a special call
+        end
       end
 
       call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }
