@@ -85,7 +85,10 @@ def with_temp_c_object_file(c_code, *, filename = "temp_c", file = __FILE__, &)
         end
       end
 
-      `#{cl} /nologo /c /MD #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
+      # the `/GS-` is to avoid undefined references to the Microsoft CRT's
+      # buffer security check functions when running JIT'ed codegen specs:
+      # https://learn.microsoft.com/en-us/cpp/build/reference/gs-buffer-security-check
+      `#{cl} /nologo /c /MD /GS- #{Process.quote(c_filename)} #{Process.quote("/Fo#{o_filename}")}`.should be_truthy
     {% else %}
       `#{ENV["CC"]? || "cc"} #{Process.quote(c_filename)} -c -o #{Process.quote(o_filename)}`.should be_truthy
     {% end %}

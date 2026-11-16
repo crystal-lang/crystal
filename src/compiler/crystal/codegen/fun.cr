@@ -197,6 +197,7 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
+        set_artificial_debug_location if @debug.line_numbers?
         codegen_return target_def.body.type?, target_def
 
         br_from_alloca_to_entry
@@ -415,17 +416,17 @@ class Crystal::CodeGenVisitor
   def abi_info(external : Def)
     external.abi_info = true
 
-    llvm_args_types = external.args.map { |arg| llvm_c_type(arg.type) }
-    llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
+    args_types = external.args.map(&.type)
+    return_type = external.type
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def abi_info(external : Def, node : Call)
-    llvm_args_types = node.args.map_with_index do |arg, i|
-      llvm_c_type((external.args[i]? || arg).type)
+    args_types = node.args.map_with_index do |arg, i|
+      (external.args[i]? || arg).type
     end
-    llvm_return_type = llvm_c_return_type(external.type)
-    @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?, llvm_context)
+    return_type = external.type
+    @abi.abi_info(args_types, return_type, llvm_typer)
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
@@ -462,10 +463,10 @@ class Crystal::CodeGenVisitor
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
   end
 
-  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr)
+  def setup_closure_vars(target_def, closure_vars, context, closure_type, closure_ptr, seen = Set(String).new)
     if context.closure_skip_parent
       parent_context = context.closure_parent_context.not_nil!
-      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr)
+      setup_closure_vars(target_def, parent_context.closure_vars.not_nil!, parent_context, closure_type, closure_ptr, seen)
     else
       def_vars = target_def.vars
       closure_vars.each_with_index do |var, i|
@@ -475,6 +476,12 @@ class Crystal::CodeGenVisitor
         # consider the local var as closured.
         def_var = def_vars.try &.[var.name]?
         next if def_var && !def_var.closured?
+
+        # A closured var in this context might have the same name as
+        # a closured var in a parent context, for example a block var
+        # that shadows an outer var. The innermost one wins, so skip
+        # a name that was already bound.
+        next unless seen.add?(var.name)
 
         if context.fun.naked?
           debug_variable_created = false
@@ -491,7 +498,7 @@ class Crystal::CodeGenVisitor
         parent_closure_type = llvm_typer.copy_type(closure_parent_context.closure_type.not_nil!)
         parent_closure_ptr = gep(closure_type, closure_ptr, 0, closure_vars.size, "parent_ptr")
         parent_closure = load(parent_closure_type.pointer, parent_closure_ptr, "parent")
-        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure)
+        setup_closure_vars(target_def, parent_vars, closure_parent_context, parent_closure_type, parent_closure, seen)
       elsif closure_self = context.closure_self
         self_index = closure_vars.size + (context.closure_parent_context ? 1 : 0)
         if context.fun.naked?
@@ -562,13 +569,16 @@ class Crystal::CodeGenVisitor
       end
     else
       abi_info = target_def.abi_info? ? abi_info(target_def) : nil
-      sret = abi_info && sret?(abi_info)
 
-      # If it's an extern struct on a def that must be codegened with C ABI
+      # If an argument is a Proc inside a C function, we need to cast it to Proc
+      fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
+
+      # If it's a type on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
-      if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
+      if target_def.c_calling_convention? && abi_info && !fun_proc && !context.fun.attributes(index + 1).by_val?
         # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
-        if abi_info.try &.arg_types[index - (sret ? 1 : 0)].kind.indirect?
+        sret = sret?(abi_info)
+        if abi_info.arg_types[index - (sret ? 1 : 0)].kind.indirect?
           value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(value, var_type)
         else
@@ -584,9 +594,6 @@ class Crystal::CodeGenVisitor
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
-        # If an argument is a Proc inside a C function, we need to cast it to Proc
-        fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
-
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
         needs_copy = target_def_var.try &.assigned_to?

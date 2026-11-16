@@ -218,6 +218,7 @@ struct LLVM::Type
     Value.new value
   end
 
+  @[Deprecated]
   def context : Context
     Context.new(LibLLVM.get_type_context(self), dispose_on_finalize: false)
   end

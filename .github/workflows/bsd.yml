@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: vmactions/freebsd-vm@f0552d3b69211736abd97f02ff3d4674c56b73b1 # v1.5.5
+      - uses: vmactions/freebsd-vm@811efaaac0668df8bfb8308c3ec997b5ab50037b # v1.6.0
         with:
           mem: 8192
           release: ${{ matrix.os_release }}

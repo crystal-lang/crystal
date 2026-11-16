@@ -313,6 +313,22 @@ describe JSON::PullParser do
       end
     end
 
+    it "finds nested key with bang" do
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": {"baz": 2, "qux": {"quux": 3, "corge": 4}}}))
+
+      pull.on_key!("bar", "qux", "corge", &.read_int).should eq(4)
+      pull.kind.should eq(JSON::PullParser::Kind::EOF)
+    end
+
+    it "doesn't find nested key with bang" do
+      pull = JSON::PullParser.new(%({"foo": 1, "bar": {"baz": 2}}))
+
+      expect_raises Exception, "JSON key not found: qux" do
+        pull.on_key!("bar", "qux") do
+        end
+      end
+    end
+
     it "reads float when it is an int" do
       pull = JSON::PullParser.new(%(1))
       f = pull.read_float

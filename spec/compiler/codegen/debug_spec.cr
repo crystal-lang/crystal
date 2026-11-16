@@ -382,6 +382,125 @@ describe "Code gen: debug" do
       CRYSTAL
   end
 
+  it "attributes branches to their body, and merges and def epilogue to no line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      lib LibC
+        fun exit(status : Int32) : NoReturn
+      end
+
+      struct Int32
+        def ===(other : Int32)
+          self == other
+        end
+      end
+
+      class Foo
+        @status = 1
+
+        def foo(value : Int32)
+          case value
+          when 1
+            10
+          when 2
+            20
+          else
+            LibC.exit(@status)
+          end
+        end
+      end
+
+      Foo.new.foo(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # `Foo#foo`, found by its parameters because symbol names are mangled on Windows
+    foo = str[/^define [^\n]+ %self, i32 %value\).+?^}/m]
+    debug_line_of(str, foo, / = phi /).should eq(0)
+    debug_line_of(str, foo, /^\s+ret /).should eq(0)
+    debug_line_of(str, foo, /^\s+br label %exit, /).should eq(17)
+    debug_line_of(str, foo, /^\s+br label %exit3, /).should eq(19)
+    debug_line_of(str, foo, /getelementptr inbounds %Foo,/).should eq(21)
+    debug_line_of(str, foo, /call void @exit/).should eq(21)
+  end
+
+  it "attributes the type checks of a dispatch to the call" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      class Bar
+        def bar
+          2
+        end
+      end
+
+      class Baz
+        @value : Foo | Bar = Foo.new
+
+        def baz(index : Int32)
+          @value.bar
+        end
+      end
+
+      Baz.new.baz(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # `Baz#baz`, found by its parameters because symbol names are mangled on Windows
+    baz = str[/^define [^\n]+ %self, i32 %index\).+?^}/m]
+    debug_line_of(str, baz, /icmp eq i32/).should eq(17)
+  end
+
+  it "attributes primitive calls, casts and type checks to their own line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      fun __crystal_raise_cast_failed(from_type : Void*, to_type : Void*, location : Void*) : NoReturn
+        while true
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def add(add_value : Int32)
+        add_value &+ 1
+      end
+
+      def cast(cast_value : Foo)
+        cast_value.as(Bar)
+      end
+
+      def nilable_cast(nilable_cast_value : Foo)
+        nilable_cast_value.as?(Bar)
+      end
+
+      def type_check(type_check_value : Foo)
+        type_check_value.is_a?(Bar)
+      end
+
+      add(1)
+      cast(Bar.new.as(Foo))
+      nilable_cast(Bar.new.as(Foo))
+      type_check(Bar.new.as(Foo))
+      CRYSTAL
+
+    str = mod.to_s
+    # Functions are found by their parameters because symbol names are mangled on Windows
+    add = str[/^define [^\n]+ %add_value\).+?^}/m]
+    debug_line_of(str, add, / = add i32 /).should eq(13)
+    cast = str[/^define [^\n]+ %cast_value\).+?^}/m]
+    debug_line_of(str, cast, /icmp eq i32/).should eq(17)
+    nilable_cast = str[/^define [^\n]+ %nilable_cast_value\).+?^}/m]
+    debug_line_of(str, nilable_cast, /icmp eq i32/).should eq(21)
+    type_check = str[/^define [^\n]+ %type_check_value\).+?^}/m]
+    debug_line_of(str, type_check, /icmp eq i32/).should eq(25)
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))

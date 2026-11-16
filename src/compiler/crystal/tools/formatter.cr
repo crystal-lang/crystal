@@ -360,7 +360,7 @@ module Crystal
       when Arg
         exp.name.size
       when VisibilityModifier
-        assign_length exp.exp
+        visibility_modifier_length(exp) + assign_length(exp.exp)
       when Path
         exp.names.first.size
       else
@@ -521,7 +521,7 @@ module Crystal
           next_string_token
         when .interpolation_start?
           # This is the case of #{__DIR__}
-          write "\#{"
+          write @token.raw
           next_token_skip_space_or_newline
           indent(@column, node)
           skip_space_or_newline
@@ -623,7 +623,7 @@ module Crystal
         if exp.is_a?(StringLiteral)
           # It might be #{__DIR__}, for example
           if @token.type.interpolation_start?
-            write "\#{"
+            write @token.raw
             delimiter_state = @token.delimiter_state
             next_token_skip_space_or_newline
             indent(@column, exp)
@@ -651,7 +651,8 @@ module Crystal
 
     private def visit_interpolation(exp)
       check :INTERPOLATION_START
-      write "\#{"
+      # The raw token includes a preceding line continuation, if any
+      write @token.raw
       delimiter_state = @token.delimiter_state
 
       wrote_comment = next_token_skip_space
@@ -1264,8 +1265,7 @@ module Crystal
     end
 
     def visit_if_or_unless(node, keyword : Keyword)
-      if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless
+      if suffix_if_or_unless?(node)
         accept node.then
         write_keyword " ", keyword, " "
         inside_cond do
@@ -1278,6 +1278,16 @@ module Crystal
       format_if_at_cond node, keyword
 
       false
+    end
+
+    # Returns `true` for a suffix `if`/`unless`, whose `then` branch starts at
+    # the node's own location. The current token alone can't tell the forms
+    # apart, as in `if a; b; end if c`.
+    private def suffix_if_or_unless?(node)
+      return false unless node.else.is_a?(Nop)
+      return false unless location = node.location
+
+      node.then.location == location
     end
 
     def format_if_at_cond(node, keyword : Keyword, check_end = true)
@@ -2403,11 +2413,14 @@ module Crystal
     end
 
     def visit(node : ReadInstanceVar)
-      accept node.obj
+      # Consider the case of `&.@foo.bar`
+      unless node.obj.is_a?(Nop)
+        accept node.obj
 
-      skip_space_or_newline
-      write_token :OP_PERIOD
-      skip_space_or_newline
+        skip_space_or_newline
+        write_token :OP_PERIOD
+        skip_space_or_newline
+      end
       write node.name
       next_token
 
@@ -2486,13 +2499,16 @@ module Crystal
           # It's an operator
           if @token.type.op_lsquare?
             write "["
-            next_token_skip_space
+            next_token
 
             args = node.args
 
             if node.name == "[]="
               last_arg = args.pop
             end
+
+            # A comment before the first argument is handled by `format_args`
+            skip_space if args.empty? || @token.passed_backslash_newline
 
             has_newlines, _, _, trailing_comma_written =
               format_args args, true, node.named_args
@@ -2553,6 +2569,10 @@ module Crystal
               end
             end
 
+            return false
+          elsif @token.type.op_lsquare_rsquare_question?
+            write "[]?"
+            next_token
             return false
           end
 
@@ -2797,13 +2817,16 @@ module Crystal
         has_newlines, found_comment, needed_indent = format_args_simple(args, needed_indent, do_consume_newlines)
       end
 
+      # Newlines in any part make the whole argument list multiline
       if named_args
-        has_newlines, named_args_found_comment, needed_indent, _ = format_named_args(args, named_args, needed_indent)
+        named_args_has_newlines, named_args_found_comment, needed_indent, _ = format_named_args(args, named_args, needed_indent)
+        has_newlines ||= named_args_has_newlines
         found_comment = true if args.empty? && named_args_found_comment
       end
 
       if block_arg
-        has_newlines = format_block_arg(block_arg, needed_indent)
+        block_arg_has_newlines = format_block_arg(block_arg, needed_indent)
+        has_newlines ||= block_arg_has_newlines
       elsif has_parentheses && has_newlines
         # Don't use `skip_space` here because that would consume
         # trailing comment and newline
@@ -2834,7 +2857,12 @@ module Crystal
       has_newlines = false
       found_comment = false
 
-      if @token.type.newline?
+      # A comment before the first argument also writes the newline after it.
+      # A backslash-newline is left to `skip_space_or_newline` below.
+      if !@token.passed_backslash_newline && skip_space(needed_indent)
+        next_needs_indent = true
+        has_newlines = true
+      elsif @token.type.newline?
         if do_consume_newlines
           indent(needed_indent) { consume_newlines }
           skip_space_or_newline
@@ -2890,12 +2918,14 @@ module Crystal
     end
 
     def format_named_args(args, named_args, needed_indent)
-      skip_space(needed_indent)
-
       named_args_column = needed_indent
 
+      # Without positional arguments, a comment before the first named
+      # argument is handled by `format_args`
       if args.empty?
+        skip_space(needed_indent) if @token.passed_backslash_newline
       else
+        skip_space(needed_indent)
         write_token :OP_COMMA
         found_comment = skip_space(needed_indent)
         if found_comment || @token.type.newline?
@@ -3010,7 +3040,9 @@ module Crystal
 
       if @token.type.op_comma?
         next_token
-        next_token if @token.type.space?
+        while @token.type.space? || @token.type.newline?
+          next_token
+        end
         if @token.type.comment?
           write ","
           needs_comma = false
@@ -3060,7 +3092,11 @@ module Crystal
       else
         # It's foo &.bar
         write "," if needs_comma
-        write " " if needs_space
+        if comma_before_comment
+          write_indent(@indent + 2)
+        elsif needs_space
+          write " "
+        end
         write_token :OP_AMP
         skip_space_or_newline
         write "."
@@ -3171,6 +3207,12 @@ module Crystal
           node.exp = Nop.new
         else
           clear_object(node.exp)
+        end
+      when ReadInstanceVar
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
         end
       end
     end
@@ -3341,6 +3383,10 @@ module Crystal
 
     def visit(node : OpAssign)
       accept node.target
+      # The target is followed by an operator like `/=` or `//=`, never by a
+      # regex. A previous `slash_is_regex!` might still be in effect if the
+      # target was already lexed by then (e.g. after a comment).
+      slash_is_not_regex!
       skip_space_or_newline
 
       slash_is_regex!
@@ -3412,9 +3458,25 @@ module Crystal
       when .public?
         # no keyword needed
       end
+
+      # The keyword was already written, so only the rest is left to align
+      if assign_length = @assign_length
+        @assign_length = assign_length - visibility_modifier_length(node)
+      end
+
       accept node.exp
 
       false
+    end
+
+    # Returns the size of the keyword written for *node* including the
+    # trailing space, if any.
+    private def visibility_modifier_length(node : VisibilityModifier)
+      case node.modifier
+      in .private?   then "private ".size
+      in .protected? then "protected ".size
+      in .public?    then 0
+      end
     end
 
     def visit(node : MagicConstant)
@@ -4260,8 +4322,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space_or_newline
-        write @token.value
-        next_token_skip_space_or_newline
+        if @token.type.delimiter_start?
+          indent(@column, StringLiteral.new(node.real_name.not_nil!))
+          skip_space_or_newline
+        else
+          write @token.value
+          next_token_skip_space_or_newline
+        end
       end
 
       write_token " ", :OP_COLON, " "

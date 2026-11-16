@@ -18,7 +18,7 @@ class Class
     crystal_type_id == other.crystal_type_id
   end
 
-  # Returns whether this class inherits or includes *other*.
+  # Returns whether this class inherits or includes `T`.
   #
   # ```
   # Int32 < Number  # => true
@@ -32,8 +32,8 @@ class Class
     other._gt(self)
   end
 
-  # Returns whether this class inherits or includes *other*, or
-  # is equal to *other*.
+  # Returns whether this class inherits or includes `T`, or
+  # is equal to `T`.
   #
   # ```
   # Int32 < Number  # => true
@@ -47,7 +47,7 @@ class Class
     other._gte(self)
   end
 
-  # Returns whether *other* inherits or includes `self`.
+  # Returns whether `T` inherits or includes `self`.
   #
   # ```
   # Number > Int32  # => true
@@ -60,7 +60,7 @@ class Class
     other._lt(self)
   end
 
-  # Returns whether *other* inherits or includes `self`, or is equal
+  # Returns whether `T` inherits or includes `self`, or is equal
   # to `self`.
   #
   # ```
@@ -132,7 +132,7 @@ class Class
     other.as(self)
   end
 
-  # Returns the union type of `self` and *other*.
+  # Returns the union type of `self` and `U`.
   #
   # ```
   # Int32 | Char # => (Int32 | Char)
