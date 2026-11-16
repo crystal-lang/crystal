@@ -1652,14 +1652,13 @@ module Crystal
     def next_macro_token(macro_state, skip_whitespace)
       reset_token
 
-      nest = macro_state.nest
+      scopes = macro_state.scopes
       control_nest = macro_state.control_nest
       whitespace = macro_state.whitespace
       delimiter_state = macro_state.delimiter_state
       beginning_of_line = macro_state.beginning_of_line
       comment = macro_state.comment
       heredocs = macro_state.heredocs
-      lib_body_nest = macro_state.lib_body_nest
       yields = false
 
       if skip_whitespace
@@ -1685,33 +1684,35 @@ module Crystal
           while (char = next_char_check_line).ascii_whitespace?
           end
 
-          delta =
-            case char
-            when 'e'
-              -1 if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
-            when 'f'
-              1 if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
-            when 'i'
-              1 if next_char == 'f' && !ident_part_or_end?(peek_next_char)
-            when 'u'
-              1 if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
-            else
-              # no nesting
+          case char
+          when 'e'
+            if char_sequence?('n', 'd') && !ident_part_or_end?(peek_next_char)
+              next_char
+              scopes = pop_macro_scope(scopes)
             end
-
-          if delta
-            next_char
-            # An escaped macro control doesn't leave the lib body it's in,
-            # so the lib body level moves along with it
-            lib_body_nest = nest + delta if nest == lib_body_nest
-            nest += delta
-            lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
+          when 'f'
+            if char_sequence?('o', 'r') && !ident_part_or_end?(peek_next_char)
+              next_char
+              scopes = push_macro_scope(scopes, :escaped_control)
+            end
+          when 'i'
+            if next_char == 'f' && !ident_part_or_end?(peek_next_char)
+              next_char
+              scopes = push_macro_scope(scopes, :escaped_control)
+            end
+          when 'u'
+            if char_sequence?('n', 'l', 'e', 's', 's') && !ident_part_or_end?(peek_next_char)
+              next_char
+              scopes = push_macro_scope(scopes, :escaped_control)
+            end
+          else
+            # no nesting
           end
         end
 
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+        @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1721,7 +1722,7 @@ module Crystal
         next_char
         next_char :MACRO_LITERAL
         @token.value = "%"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+        @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         @token.raw = "\\%"
         return @token
       end
@@ -1731,12 +1732,12 @@ module Crystal
         when '{'
           beginning_of_line = false
           next_char :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+          @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         when '%'
           beginning_of_line = false
           next_char :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+          @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
           # Make sure to decrease the '}' count if inside an interpolation
@@ -1775,7 +1776,7 @@ module Crystal
         end
         @token.type = :MACRO_LITERAL
         @token.value = string_range(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+        @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         set_token_raw_from_start(start)
         return @token
       end
@@ -1789,7 +1790,7 @@ module Crystal
         beginning_of_line = false
         @token.type = :MACRO_VAR
         @token.value = string_range_from_pool(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+        @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
         return @token
       end
 
@@ -1799,13 +1800,12 @@ module Crystal
           case next_char
           when 'd'
             if whitespace && !ident_part_or_end?(peek_next_char) && peek_next_char != ':'
-              if nest == 0 && control_nest == 0
+              if scopes.empty? && control_nest == 0
                 next_char :MACRO_END
                 @token.macro_state = Token::MacroState.default
                 return @token
               else
-                nest -= 1
-                lib_body_nest = nil if lib_body_nest && nest < lib_body_nest
+                scopes = pop_macro_scope(scopes)
                 whitespace = current_char.ascii_whitespace?
                 next_char
               end
@@ -1813,7 +1813,7 @@ module Crystal
           when 'u'
             if !delimiter_state && whitespace && next_char == 'm' && !ident_part_or_end?(next_char)
               char = current_char
-              nest += 1
+              scopes = push_macro_scope(scopes, :block)
               whitespace = true
             end
           else
@@ -1934,11 +1934,14 @@ module Crystal
               yields = true
               char = current_char
               beginning_of_line = false
-            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line, lib_body: nest == lib_body_nest) }
+            elsif keyword = lookahead { macro_starts_with_keyword?(beginning_of_line, lib_body: macro_lib_body?(scopes)) }
               char = current_char
 
-              nest += 1 unless keyword.abstract_def?
-              lib_body_nest = nest if keyword.lib?
+              case keyword
+              in .abstract_def? then # no body, so no nesting
+              in .lib?          then scopes = push_macro_scope(scopes, :lib)
+              in .other?        then scopes = push_macro_scope(scopes, :block)
+              end
               beginning_of_line = false
               next
             end
@@ -1960,7 +1963,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs, lib_body_nest)
+      @token.macro_state = Token::MacroState.new(whitespace, scopes, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
       set_token_raw_from_start(start)
 
       @token
@@ -2017,6 +2020,26 @@ module Crystal
       else
         ""
       end
+    end
+
+    # Macro scope stacks are shared between macro states, so they're never
+    # mutated in place.
+    private def push_macro_scope(scopes, scope : Token::MacroScope)
+      scopes.dup << scope
+    end
+
+    private def pop_macro_scope(scopes)
+      scopes.empty? ? scopes : scopes[0, scopes.size - 1]
+    end
+
+    # Returns `true` if the innermost scope is a `lib` body. Escaped macro
+    # controls are transparent, so `lib Foo; \{% if x %} union Bar` is still
+    # directly inside the `lib` body.
+    private def macro_lib_body?(scopes)
+      scopes.reverse_each do |scope|
+        return scope.lib? unless scope.escaped_control?
+      end
+      false
     end
 
     enum MacroKeywordState
