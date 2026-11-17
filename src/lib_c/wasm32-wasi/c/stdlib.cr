@@ -17,6 +17,7 @@ lib LibC
   fun malloc(size : SizeT) : Void*
   fun putenv(x0 : Char*) : Int
   fun realloc(ptr : Void*, size : SizeT) : Void*
+  fun realpath(path : Char*, resolved : Char*) : Char*
   fun setenv(x0 : Char*, x1 : Char*, x2 : Int) : Int
   fun strtod(x0 : Char*, x1 : Char**) : Double
   fun strtof(x0 : Char*, x1 : Char**) : Float

@@ -139,7 +139,7 @@ describe "Semantic: closure" do
   end
 
   it "marks method as self closured if instance var is read" do
-    result = assert_type(<<-CRYSTAL) { int32 }
+    result = semantic(<<-CRYSTAL)
       class Foo
         @x : Int32?
 
@@ -149,15 +149,14 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      1
       CRYSTAL
     node = result.node.as(Expressions)
-    call = node.expressions[-2].as(Call)
+    call = node.expressions.last.as(Call)
     call.target_def.self_closured?.should be_true
   end
 
   it "marks method as self closured if instance var is written" do
-    result = assert_type(<<-CRYSTAL) { int32 }
+    result = semantic(<<-CRYSTAL)
       class Foo
         def foo
           -> { @x = 1 }
@@ -165,11 +164,240 @@ describe "Semantic: closure" do
       end
 
       Foo.new.foo
-      1
       CRYSTAL
     node = result.node.as(Expressions)
-    call = node.expressions[-2].as(Call)
+    call = node.expressions.last.as(Call)
     call.target_def.self_closured?.should be_true
+  end
+
+  it "marks instance method as self closured if class var is read via virtual class (#17051)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def foo
+          -> { @@x }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.as(Foo).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks instance method as self closured if class var is written via virtual class (#17051)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def foo
+          -> { @@x = 1 }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.as(Foo).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "doesn't mark instance method as self closured if class var is read via non-virtual class" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def foo
+          -> { @@x }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.foo
+      Bar.new.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    calls = node.expressions[-2..].map(&.as(Call))
+    calls[0].target_def.self_closured?.should be_false
+    calls[1].target_def.self_closured?.should be_false
+  end
+
+  it "doesn't mark instance method as self closured if class var is written via non-virtual class" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def foo
+          -> { @@x = 1 }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.foo
+      Bar.new.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    calls = node.expressions[-2..].map(&.as(Call))
+    calls[0].target_def.self_closured?.should be_false
+    calls[1].target_def.self_closured?.should be_false
+  end
+
+  it "marks class method as self closured if class var is read via virtual metaclass (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def self.foo
+          -> { @@x }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.as(Foo.class).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "marks class method as self closured if class var is written via virtual metaclass (#11975)" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def self.foo
+          -> { @@x = 1 }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.as(Foo.class).foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
+    call.target_def.self_closured?.should be_true
+  end
+
+  it "doesn't mark class method as self closured if class var is read via non-virtual metaclass" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        @@x : Int32?
+
+        def self.foo
+          -> { @@x }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.foo
+      Bar.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    calls = node.expressions[-2..].map(&.as(Call))
+    calls[0].target_def.self_closured?.should be_false
+    calls[1].target_def.self_closured?.should be_false
+  end
+
+  it "doesn't mark class method as self closured if class var is written via non-virtual metaclass" do
+    result = semantic(<<-CRYSTAL)
+      class Foo
+        def self.foo
+          -> { @@x = 1 }
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.foo
+      Bar.foo
+      CRYSTAL
+    node = result.node.as(Expressions)
+    calls = node.expressions[-2..].map(&.as(Call))
+    calls[0].target_def.self_closured?.should be_false
+    calls[1].target_def.self_closured?.should be_false
+  end
+
+  it "errors if sending proc pointer to C and class variable is accessed via virtual class" do
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
+      lib LibC
+        fun foo(callback : -> Int32)
+      end
+
+      class Foo
+        @@x = 1
+
+        def bar
+          LibC.foo(-> { @@x })
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.as(Foo).bar
+      CRYSTAL
+  end
+
+  it "errors if sending proc pointer to C and class variable is accessed via virtual metaclass" do
+    assert_error <<-CRYSTAL, "can't send closure to C function (closured vars: self)"
+      lib LibC
+        fun foo(callback : -> Int32)
+      end
+
+      class Foo
+        @@x = 1
+
+        def self.bar
+          LibC.foo(-> { @@x })
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.as(Foo.class).bar
+      CRYSTAL
+  end
+
+  it "doesn't error if sending proc pointer to C and class variable is accessed non-virtually" do
+    assert_no_errors <<-CRYSTAL
+      lib LibC
+        fun foo(callback : -> Int32)
+      end
+
+      class Foo
+        @@x = 1
+
+        def bar
+          LibC.foo(-> { @@x })
+        end
+
+        def self.bar
+          LibC.foo(-> { @@x })
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.bar
+      Bar.new.bar
+      Foo.bar
+      Bar.bar
+      CRYSTAL
   end
 
   it "marks method as self closured if explicit self call is made" do

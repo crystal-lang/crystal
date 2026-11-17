@@ -31,6 +31,23 @@ private class ReverseResponseOutput < IO
   end
 end
 
+private class WriteByteSpyOutput < IO
+  getter byte_writes = 0
+  getter slice_writes = 0
+
+  def write(slice : Bytes) : Nil
+    @slice_writes += 1
+  end
+
+  def write_byte(byte : UInt8) : Nil
+    @byte_writes += 1
+  end
+
+  def read(slice : Bytes)
+    raise "Not implemented"
+  end
+end
+
 describe HTTP::Server::Response do
   it "closes" do
     io = IO::Memory.new
@@ -274,6 +291,15 @@ describe HTTP::Server::Response do
     response.print("1234")
     response.close
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n4321")
+  end
+
+  it "forwards write_byte to output" do
+    response = Response.new(IO::Memory.new)
+    output = WriteByteSpyOutput.new
+    response.output = output
+    response.write_byte 'a'.ord.to_u8
+    output.byte_writes.should eq(1)
+    output.slice_writes.should eq(0)
   end
 
   it "writes and flushes with HTTP 1.0" do

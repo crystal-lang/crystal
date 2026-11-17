@@ -2,7 +2,7 @@ module Crystal
   class CrystalLLVMBuilder
     property end : Bool
 
-    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper, @printf : LLVMTypedFunction)
+    def initialize(@builder : LLVM::Builder, @llvm_typer : LLVMTyper)
       @end = false
     end
 
@@ -38,20 +38,6 @@ module Crystal
       value
     end
 
-    def printf(format, args = [] of LLVM::Value, catch_pad = nil)
-      if catch_pad
-        funclet = build_operand_bundle_def("funclet", [catch_pad])
-      else
-        funclet = LLVM::OperandBundleDef.null
-      end
-
-      begin
-        call @printf, [global_string_pointer(format)] + args, bundle: funclet
-      ensure
-        funclet.dispose
-      end
-    end
-
     def position_at_end(block)
       @builder.position_at_end block
       @end = false
@@ -66,11 +52,7 @@ module Crystal
     end
 
     def current_debug_location_metadata
-      {% if LibLLVM::IS_LT_90 %}
-        LibLLVM.value_as_metadata LibLLVM.get_current_debug_location(@builder)
-      {% else %}
-        LibLLVM.get_current_debug_location2(@builder)
-      {% end %}
+      @builder.current_debug_location_metadata
     end
 
     def to_unsafe

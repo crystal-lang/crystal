@@ -107,6 +107,11 @@ class HTTP::Server
       @output.write(slice)
     end
 
+    # See `IO#write_byte`.
+    def write_byte(byte : UInt8) : Nil
+      @output.write_byte(byte)
+    end
+
     # Convenience method to set cookies, see `HTTP::Cookies`.
     def cookies : HTTP::Cookies
       @cookies ||= HTTP::Cookies.new

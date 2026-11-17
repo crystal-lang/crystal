@@ -647,4 +647,38 @@ describe "Code gen: module" do
       CRYSTAL
     output.should contain("GenericFoo(String)")
   end
+
+  it "does not request self on class method even with self as receiver, non-generic" do
+    mod = codegen(<<-CRYSTAL)
+      module Foo
+        def self.foo
+          self.bar
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      CRYSTAL
+
+    mod.to_s.should_not contain("Foo:Module:type_id")
+  end
+
+  it "does not request self on class method even with self as receiver, uninstantiated generic" do
+    mod = codegen(<<-CRYSTAL)
+      module Foo(T)
+        def self.foo
+          self.bar
+        end
+
+        def self.bar
+        end
+      end
+
+      Foo.foo
+      CRYSTAL
+
+    mod.to_s.should_not contain("Foo(T):Module:type_id")
+  end
 end

@@ -1,9 +1,8 @@
-require "./lib_wasi"
+require "c/stdlib"
 
 module Crystal::System::Random
   def self.random_bytes(buf : Bytes) : Nil
-    err = LibWasi.random_get(buf, buf.size)
-    raise RuntimeError.from_os_error("random_get", err) unless err.success?
+    LibC.arc4random_buf(buf, buf.size)
   end
 
   def self.next_u : UInt8

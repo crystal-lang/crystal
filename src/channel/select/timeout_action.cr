@@ -22,6 +22,7 @@ class Channel(T)
     # Total amount of time to wait
     @timeout : Time::Span
     @select_context : SelectContext(Nil)?
+    @timeout_event : Crystal::EventLoop::Event?
 
     def initialize(@timeout : Time::Span)
     end
@@ -36,7 +37,9 @@ class Channel(T)
 
     def wait(context : SelectContext(Nil)) : Nil
       @select_context = context
-      Fiber.timeout(@timeout, self)
+      event = Crystal::EventLoop.current.create_timeout_event(Fiber.current)
+      @timeout_event = event
+      event.add(@timeout, self)
     end
 
     def wait_result_impl(context : SelectContext(Nil))
@@ -44,7 +47,8 @@ class Channel(T)
     end
 
     def unwait_impl(context : SelectContext(Nil))
-      Fiber.cancel_timeout
+      @timeout_event.try &.delete
+      @timeout_event = nil
     end
 
     def lock_object_id : UInt64

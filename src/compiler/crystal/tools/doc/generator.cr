@@ -359,7 +359,7 @@ class Crystal::Doc::Generator
     flag_regexp = /^ ?(#{FLAGS.join('|')}):?/
     String.build do |io|
       string.each_line(chomp: false).join(io) do |line, io|
-        if line =~ flag_regexp
+        if line.matches?(flag_regexp)
           io << '\n' << line
         else
           io << line

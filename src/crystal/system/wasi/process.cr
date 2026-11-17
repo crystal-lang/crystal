@@ -80,7 +80,15 @@ struct Crystal::System::Process
     raise NotImplementedError.new("Process.times")
   end
 
-  def self.spawn(command, args, shell, env, clear_env, input, output, error, chdir)
+  def self.prepare_args(command : String, args : Enumerable(String)?, shell : Bool) : {String, LibC::Char**}
+    raise NotImplementedError.new("Process.prepare_args(command, args, shell)")
+  end
+
+  def self.prepare_args(args : Enumerable(String)) : {String, LibC::Char**}
+    raise NotImplementedError.new("Process.prepare_args(args)")
+  end
+
+  def self.spawn(prepared_args, shell, env, clear_env, input, output, error, chdir)
     raise NotImplementedError.new("Process.spawn")
   end
 

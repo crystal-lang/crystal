@@ -1,37 +1,48 @@
 require "../../../spec_helper"
 include Crystal
 
-private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
+private def assert_coverage(code, expected_coverage, *, expected_error : String? = nil, required_code : String? = nil, focus : Bool = false, spec_file = __FILE__, spec_line = __LINE__)
   it focus: focus, file: spec_file, line: spec_line do
-    processor = MacroCoverageProcessor.new
-
-    compiler = Compiler.new
-    compiler.prelude = "empty"
-    compiler.no_codegen = true
-    compiler.compile_configure_program(Compiler::Source.new(".", code), "fake-no-build") do |program|
-      processor.configure program
-    end
-
-    processor.excludes << Path[Dir.current].to_posix.to_s
-    processor.includes << "."
-
-    hits = processor.compute_coverage
-
-    unless hits = hits["."]?
-      fail "Failed to generate coverage", file: spec_file, line: spec_line
-    end
-
-    coverage_exception = processor.coverage_interrupt_exception
-
-    if expected_error
-      err = coverage_exception.should_not be_nil, file: spec_file, line: spec_line
-      err.inspect_with_backtrace.should contain(expected_error), file: spec_file, line: spec_line
+    if required_code
+      with_tempdir do
+        File.write "required.cr", required_code
+        check_coverage code, expected_coverage, expected_error, spec_file, spec_line
+      end
     else
-      coverage_exception.should be_nil, file: spec_file, line: spec_line
+      check_coverage code, expected_coverage, expected_error, spec_file, spec_line
     end
-
-    hits.should eq(expected_coverage), file: spec_file, line: spec_line
   end
+end
+
+private def check_coverage(code, expected_coverage, expected_error, spec_file, spec_line)
+  processor = MacroCoverageProcessor.new
+
+  compiler = Compiler.new
+  compiler.prelude = "empty"
+  compiler.no_codegen = true
+  compiler.compile_configure_program(Compiler::Source.new(".", code), "fake-no-build") do |program|
+    processor.configure program
+  end
+
+  processor.excludes << Path[Dir.current].to_posix.to_s
+  processor.includes << "."
+
+  hits = processor.compute_coverage
+
+  unless hits = hits["."]?
+    fail "Failed to generate coverage", file: spec_file, line: spec_line
+  end
+
+  coverage_exception = processor.coverage_interrupt_exception
+
+  if expected_error
+    err = coverage_exception.should_not be_nil, file: spec_file, line: spec_line
+    err.inspect_with_backtrace.should contain(expected_error), file: spec_file, line: spec_line
+  else
+    coverage_exception.should be_nil, file: spec_file, line: spec_line
+  end
+
+  hits.should eq(expected_coverage), file: spec_file, line: spec_line
 end
 
 describe "macro_code_coverage" do
@@ -172,6 +183,32 @@ describe "macro_code_coverage" do
     {% raise "oh noes im an error" %}
     {{ 2 }}
     CRYSTAL
+
+  assert_coverage <<-'CRYSTAL', {2 => 1}, expected_error: "oh noes im an error"
+    class Foo
+      {% raise "oh noes im an error" %}
+      {{ 3 }}
+    end
+
+    {% raise "a later error" %}
+    CRYSTAL
+
+  assert_coverage <<-'CRYSTAL', {1 => 1}, expected_error: "oh noes im an error", required_code: <<-'REQUIRED'
+    {{ 1 }}
+    require "./required"
+    {% raise "a later error" %}
+    CRYSTAL
+    {% raise "oh noes im an error" %}
+    REQUIRED
+
+  assert_coverage <<-'CRYSTAL', {1 => 1, 3 => 1}, required_code: <<-'REQUIRED'
+    {{ 1 }}
+    require "./required"
+    {{ 3 }}
+    CRYSTAL
+    {% skip_file %}
+    {{ 2 }}
+    REQUIRED
 
   assert_coverage <<-'CRYSTAL', {1 => 1, 2 => "1/2", 3 => 1}
     {% 1 %}

@@ -1,5 +1,7 @@
 {% if flag?(:openbsd) %}
   @[Link("c++abi")]
+{% elsif flag?(:wasi) %}
+  @[Link("unwind")]
 {% end %}
 lib LibUnwind
   @[Flags]
@@ -127,7 +129,7 @@ lib LibUnwind
     fun get_language_specific_data = _Unwind_GetLanguageSpecificData(Context) : UInt8*
     fun get_region_start = _Unwind_GetRegionStart(Context) : LibC::SizeT
     fun get_ip = _Unwind_GetIP(context : Context) : LibC::SizeT
-    fun set_ip = _Unwind_SetIP(context : Context, ip : LibC::SizeT) : LibC::SizeT
+    fun set_ip = _Unwind_SetIP(context : Context, ip : LibC::SizeT) : Void
     fun set_gr = _Unwind_SetGR(context : Context, index : Int32, value : LibC::SizeT)
     fun raise_exception = _Unwind_RaiseException(ex : Exception*) : ReasonCode
   {% end %}

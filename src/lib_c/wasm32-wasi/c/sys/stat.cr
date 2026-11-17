@@ -5,7 +5,7 @@ lib LibC
   S_IFMT   = S_IFBLK | S_IFCHR | S_IFDIR | S_IFIFO | S_IFLNK | S_IFREG | S_IFSOCK
   S_IFBLK  = 0x6000
   S_IFCHR  = 0x2000
-  S_IFIFO  = 0xc000
+  S_IFIFO  = 0x1000
   S_IFREG  = 0x8000
   S_IFDIR  = 0x4000
   S_IFLNK  = 0xa000
@@ -49,4 +49,6 @@ lib LibC
   fun lstat(x0 : Char*, x1 : Stat*) : Int
   fun mkdir(x0 : Char*, x1 : ModeT) : Int
   fun stat(x0 : Char*, x1 : Stat*) : Int
+  fun utimensat(fd : Int, path : Char*, times : Timespec*, flags : Int) : Int
+  fun futimens(fd : Int, times : Timespec*) : Int
 end

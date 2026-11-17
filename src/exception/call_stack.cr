@@ -27,7 +27,7 @@ struct Exception::CallStack
   # :nodoc:
   def self.load_debug_info : Nil
     Crystal.once(pointerof(@@loaded)) do
-      return if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
+      next if ENV["CRYSTAL_LOAD_DEBUG_INFO"]? == "0"
 
       begin
         load_debug_info_impl
@@ -111,6 +111,17 @@ struct Exception::CallStack
       end
     end
   end
+
+  # Transforms the dynamic unwinded IP into a fixed PC.
+  #
+  # The IP may be subject to Address space layout randomization (ASLR)
+  # where the executable is loaded at a random address. See
+  # https://en.wikipedia.org/wiki/Address_space_layout_randomization
+  #
+  # The IP is the return address and thus points to the next instruction, that
+  # usually share the same context, but sometimes don't (e.g. noreturn). See
+  # DWARF § 6.4.4.
+  # private def self.decode_address(ip : Void*)
 
   private def self.function_or_symbol_name(ip, file, show_full_info, &)
     if show_full_info && (frame = decode_frame(ip))

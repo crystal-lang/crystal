@@ -41,6 +41,14 @@ class Fiber
       end
     end
 
+    # Removes and frees all the stacks from the pool, returning memory to the
+    # operating system.
+    def clear : Nil
+      while stack = shift?
+        Crystal::System::Fiber.free_stack(stack.pointer, stack.size)
+      end
+    end
+
     def collect_loop(every = 5.seconds) : Nil
       loop do
         sleep every
@@ -86,11 +94,9 @@ class Fiber
 
     private def pop?
       {% if !flag?(:without_mt) %}
-        {% if !flag?(:preview_mt) || flag?(:execution_context) %}
-          if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
-            return stack
-          end
-        {% end %}
+        if @reuse_dead_fiber_stack && (stack = Thread.current.dead_fiber_stack?) && stack.reusable?
+          return stack
+        end
         @lock.sync { @deque.pop? } unless @deque.empty?
       {% else %}
         @deque.pop?

@@ -479,14 +479,7 @@ struct NamedTuple
         {% if i > 0 %}
           pp.comma
         {% end %}
-        pp.group do
-          pp.text Symbol.quote_for_named_argument({{key.stringify}})
-          pp.text ": "
-          pp.nest do
-            pp.breakable ""
-            self[{{key.symbolize}}].pretty_print(pp)
-          end
-        end
+        pp.key_value Symbol.quote_for_named_argument({{key.stringify}}), ": ", self[{{key.symbolize}}]
       {% end %}
     end
   end

@@ -1,5 +1,5 @@
 {%
-  min_compiler_version = "1.13.0"
+  min_compiler_version = "1.15.0"
   if compare_versions(Crystal::VERSION, min_compiler_version) < 0
     @top_level.warning <<-TXT
       This compiler release at version #{Crystal::VERSION.id} is no longer supported.
@@ -9,6 +9,11 @@
       TXT
   end
 %}
+
+{% if flag?(:interpreted) %}
+  # The interpreter doesn't call `main`
+  Crystal.init_runtime
+{% end %}
 
 # Entries to this file should only be ordered if macros are involved -
 # macros need to be defined before they are used.
@@ -80,9 +85,7 @@ require "reference"
 require "reference_storage"
 require "regex"
 require "set"
-{% unless flag?(:wasm32) %}
-  require "signal"
-{% end %}
+require "signal"
 require "slice"
 require "static_array"
 require "struct"

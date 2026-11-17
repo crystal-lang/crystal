@@ -444,13 +444,13 @@ class Crystal::Repl::Context
     # The loader can't handle the static libgc.a usually shipped with crystal and loading as a shared library conflicts
     # with the compiler's own GC.
     # (Windows doesn't seem to have this issue)
-    unless program.has_flag?("win32") && program.has_flag?("gnu")
+    unless program.codegen_target.mingw?
       args.delete("-lgc")
     end
 
     # recreate the MSVC developer prompt environment, similar to how compiled
     # code does it in `Compiler#linker_command`
-    if program.has_flag?("msvc")
+    if program.codegen_target.msvc?
       _, link_args = program.msvc_compiler_and_flags
       args.concat(link_args)
     end

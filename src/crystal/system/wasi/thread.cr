@@ -1,3 +1,7 @@
+{% if flag?(:wasip3) %}
+  require "c/pthread"
+{% end %}
+
 module Crystal::System::Thread
   alias Handle = Nil
 
@@ -44,6 +48,9 @@ module Crystal::System::Thread
   end
 
   private def system_close
+  end
+
+  private def close_semaphore
   end
 
   private def stack_address : Void*

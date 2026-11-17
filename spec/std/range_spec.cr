@@ -79,6 +79,57 @@ describe "Range" do
     (1...5).includes?(5).should be_false
   end
 
+  it "#overlaps?" do
+    (1..5).overlaps?(4..8).should be_true
+    (4..8).overlaps?(1..5).should be_true
+
+    (1..5).overlaps?(5..10).should be_true
+    (1...5).overlaps?(5..10).should be_false
+    (1..5).overlaps?(6..10).should be_false
+    (-5...1).overlaps?(1..5).should be_false
+    (-5..1).overlaps?(1..5).should be_true
+
+    (1...1).overlaps?(1..1).should be_false
+    (2..1).overlaps?(1..2).should be_false
+    (2...1).overlaps?(1..2).should be_false
+    (1..2).overlaps?(2...2).should be_false
+
+    (..5).overlaps?(5..).should be_true
+    (...5).overlaps?(5..).should be_false
+    (..5).overlaps?(6..).should be_false
+    (..5).overlaps?(4..).should be_true
+    (...5).overlaps?(4..).should be_true
+    (..5).overlaps?(..4).should be_true
+    (...5).overlaps?(..4).should be_true
+    (..5).overlaps?(..6).should be_true
+    (...5).overlaps?(..6).should be_true
+    (5..).overlaps?(4..).should be_true
+    (5..).overlaps?(6..).should be_true
+    (..).overlaps?(1..2).should be_true
+    (..).overlaps?(2...2).should be_false
+
+    (1.0..5.5).overlaps?(3.2..7.8).should be_true
+    (1.0..2.5).overlaps?(3.0..4.0).should be_false
+
+    ('a'..'e').overlaps?('c'..'g').should be_true
+    ('a'..'c').overlaps?('d'..'f').should be_false
+
+    t1 = Time.local(2024, 10, 1)
+    t2 = Time.local(2024, 10, 5)
+    t3 = Time.local(2024, 10, 10)
+    t4 = Time.local(2024, 10, 15)
+    (t1..t3).overlaps?(t2..t4).should be_true
+    (t1..t2).overlaps?(t3..t4).should be_false
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5))
+      .overlaps?(RangeSpecIntWrapper.new(3)..RangeSpecIntWrapper.new(7))
+      .should be_true
+
+    (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(5))
+      .overlaps?(RangeSpecIntWrapper.new(6)..RangeSpecIntWrapper.new(7))
+      .should be_false
+  end
+
   it "does to_s" do
     (1...5).to_s.should eq("1...5")
     (1..5).to_s.should eq("1..5")

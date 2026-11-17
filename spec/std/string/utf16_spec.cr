@@ -66,7 +66,7 @@ describe "String UTF16" do
 
     it "handles null bytes" do
       slice = Slice[104_u16, 105_u16, 0_u16, 55296_u16, 56485_u16]
-      String.from_utf16(slice).should eq("hi\0000𐂥")
+      String.from_utf16(slice).should eq("hi\u0000𐂥")
       String.from_utf16(slice.to_unsafe).should eq({"hi", slice.to_unsafe + 3})
     end
 

@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
@@ -27,8 +26,6 @@ jobs:
   # We run a basic version of this test on every commit which covers only the earliest and latest supported versions in `linux.yml#x86_64-gnu-test`.
   x86_64-gnu-test-forward_compatibility:
     env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
       CRYSTAL_BOOTSTRAP_VERSION: ${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
@@ -37,7 +34,7 @@ jobs:
         # We ensure forward compatibility with the previous 8 releases.
         # Releases n-1 and n-8 are already covered in`linux.yml#x86_64-gnu-test`,
         # so we only need to test releases n-2 through n-7 here.
-        crystal_bootstrap_version: [1.15.1, 1.16.3, 1.17.1, 1.18.2, 1.19.2, 1.20.3]
+        crystal_bootstrap_version: [1.16.3, 1.17.1, 1.18.2, 1.19.2, 1.20.3, 1.21.0]
         env: [{}]
     steps:
       - name: Download Crystal source
@@ -45,12 +42,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
       - name: Test
-        run: bin/ci build
+        run: scripts/ci-docker-run.sh scripts/ci-build.sh
         env: ${{ matrix.env }}
