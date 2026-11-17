@@ -926,12 +926,14 @@ module Crystal
 
     # :nodoc:
     #
-    # Turns this call into its setter: `foo` becomes `foo=`.
+    # Turns this call into a setter assigning *value*: `foo` becomes `foo=(value)`
+    # and `foo[0]` becomes `foo.[]=(0, value)`.
     #
     # The `=` is a separate token, so it doesn't count towards `name_size`.
-    def make_setter : Nil
+    def make_setter(value : ASTNode) : Nil
       @name_size = name_size
       @name = "#{@name}="
+      @args << value
     end
 
     def accept_children(visitor)

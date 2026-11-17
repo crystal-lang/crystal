@@ -927,8 +927,7 @@ module Crystal
       end
 
       if target.is_a?(Call)
-        target.make_setter
-        target.args << value
+        target.make_setter(value)
         target
       else
         Assign.new(target, value).at(target)
