@@ -37,7 +37,7 @@ module Sync
           if name = fiber.name
             io << name << " "
           end
-          io << "0x("
+          io << "(0x"
           fiber.object_id.to_s(io, 16)
           io << ")"
         end
@@ -46,7 +46,7 @@ module Sync
       private def self.to_name(lock, i = nil)
         String.build do |io|
           lock.class.name.downcase(io)
-          io << i << " 0x("
+          io << i << " (0x"
           lock.object_id.to_s(io, 16)
           io << ")"
         end
