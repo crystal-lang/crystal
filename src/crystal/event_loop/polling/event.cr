@@ -45,19 +45,11 @@ struct Crystal::EventLoop::Polling::Event
   end
 
   def __poll_descriptor(&) : Nil
-    {% begin %}
-      # manual devirtualization of IO+ into concrete types
-      case io = @io
-      when IO::FileDescriptor
-        io.__poll_descriptor { |pd| yield pd }
-      {% if @top_level.has_constant?(:Socket) %}
-      when ::Socket
-        io.__poll_descriptor { |pd| yield pd }
-      {% end %}
-      else
-        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
-      end
-    {% end %}
+    io = @io
+
+    Reference.devirtualize(io, IO::FileDescriptor, ::Socket) do
+      io.__poll_descriptor { |pd| yield pd }
+    end
   end
 
   # Mark the IO event as timed out.
