@@ -55,6 +55,34 @@ describe Doc::Type do
   end
 
   describe "#node_to_html" do
+    it "renders a union with Nil in either position as a nilable type" do
+      program = semantic(<<-CRYSTAL).program
+        class Foo
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      [{"Nil".path, "Foo".path}, {"Foo".path, "Nil".path}, {"Nil".path(global: true), "Foo".path}].each do |left, right|
+        node = Crystal::Union.new([left, right] of ASTNode)
+        foo.node_to_html(node).should eq(%(<a href="Foo.html">Foo</a>?))
+      end
+    end
+
+    it "preserves non-nil unions and unresolved paths" do
+      program = semantic(<<-CRYSTAL).program
+        class Foo
+        end
+        class Bar
+        end
+        CRYSTAL
+
+      generator = Doc::Generator.new program, [""]
+      foo = generator.type(program.types["Foo"])
+      foo.node_to_html(Crystal::Union.new(["Foo".path, "Bar".path] of ASTNode)).should eq(%(<a href="Foo.html">Foo</a> | <a href="Bar.html">Bar</a>))
+      foo.node_to_html(Crystal::Union.new(["Foo".path, "Missing".path] of ASTNode)).should eq(%(<a href="Foo.html">Foo</a> | Missing))
+    end
+
     it "shows relative path" do
       program = semantic(<<-CRYSTAL).program
         class Foo
