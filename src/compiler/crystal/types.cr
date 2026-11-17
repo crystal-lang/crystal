@@ -1064,7 +1064,7 @@ module Crystal
   module HierarchyObserver
     include SubclassObserver
 
-    @observed_hierarchies : Array(Type)?
+    @observed_hierarchies : Type | Array(Type) | Nil
 
     # Subscribes to hierarchy dependencies through aliases and structural wrappers.
     # Tuple members participate in argument matching; arbitrary generic arguments do not.
@@ -1099,11 +1099,17 @@ module Crystal
     # new sibling subtypes cannot leave its dispatch table stale (#16947).
     private def subscribe_to_hierarchy(type : Type)
       return unless type.is_a?(SubclassObservable)
-      observed = @observed_hierarchies ||= [] of Type
-      unless observed.includes?(type)
+      case observed = @observed_hierarchies
+      when Nil
+        @observed_hierarchies = type
+      when Type
+        return if observed == type
+        @observed_hierarchies = [observed, type] of Type
+      when Array(Type)
+        return if observed.includes?(type)
         observed << type
-        type.add_subclass_observer(self)
       end
+      type.add_subclass_observer(self)
     end
   end
 
