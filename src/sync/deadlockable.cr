@@ -120,7 +120,7 @@ module Sync
             # deadlock! taint the other fiber, so both sides will raise an
             # exception
             owned_lock.tainted(owner, fiber, self)
-            raise Error.deadlock(fiber, owner, owned_lock, self)
+            raise Error::Deadlock.new(fiber, owner, owned_lock, self)
           elsif owner != locked_by?
             # the owner changed: abort (no deadlock)
             return
@@ -137,7 +137,7 @@ module Sync
           # the deadlock fail with a backtrace
           _, other_fiber, other_lock = result
           yield
-          raise Error.deadlock(fiber, other_fiber, other_lock, self)
+          raise Error::Deadlock.new(fiber, other_fiber, other_lock, self)
         end
       end
 

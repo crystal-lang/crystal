@@ -8,7 +8,7 @@ module Sync
 
   def self.expect_deadlock(ex, f1, f2, l1, l2)
     if ex.is_a?(Sync::Error::Deadlock)
-      ex.should eq Sync::Error.deadlock(f1, f2, l1, l2)
+      ex.should eq Sync::Error::Deadlock.new(f1, f2, l1, l2)
     else
       raise ex
     end

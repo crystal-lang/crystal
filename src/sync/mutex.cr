@@ -49,7 +49,7 @@ module Sync
 
     private def lock_slow : Nil
       if owns_lock?
-        raise Error.deadlock(Fiber.current, self) unless @type.reentrant?
+        raise Error::Deadlock.new(Fiber.current, self) unless @type.reentrant?
         @counter += 1
         return
       end
