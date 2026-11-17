@@ -885,18 +885,16 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-
-    # The size of this call's name as written in the source code, which isn't
-    # always the size of `name`: see `#make_setter` and index calls such as `a[1]`,
-    # whose name isn't contiguous and so has a size of zero.
-    property name_size : Int32 { name.size }
-
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
     property? args_in_brackets = false
     property? has_parentheses = false
+
+    # A sentinel instead of `nil` keeps the ivar from being a union, which would
+    # make every `Call` larger.
+    @name_size = -1
 
     def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
@@ -923,6 +921,16 @@ module Crystal
     def self.global(name, *args : ASTNode)
       new nil, name, *args, global: true
     end
+
+    # The size of this call's name as written in the source code, which isn't
+    # always the size of `name`: see `#make_setter` and index calls such as `a[1]`,
+    # whose name isn't contiguous and so has a size of zero.
+    def name_size : Int32
+      @name_size = name.size if @name_size == -1
+      @name_size
+    end
+
+    setter name_size : Int32
 
     # :nodoc:
     #
