@@ -186,6 +186,13 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
       unless existing.compatible_with?(external)
         external.raise "fun redefinition with different signature (was `#{existing}` at #{existing.location})"
       end
+      if existing.fun_def.body && !external.fun_def.body
+        # A declaration without a body (e.g. a `lib` fun) does not replace a
+        # declaration that already provides the body, which remains the one
+        # that defines the symbol.
+        external.dead = true
+        return
+      end
       existing.dead = true
     end
     @externals[external.real_name] = external
