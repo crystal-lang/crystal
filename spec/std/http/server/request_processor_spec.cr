@@ -14,12 +14,12 @@ private class IOWithAddresses < IO
   def initialize(@io : IO)
   end
 
-  def read(bytes : Bytes) : Int32
-    @io.read(bytes)
+  def read(slice : Bytes) : Int32
+    @io.read(slice)
   end
 
-  def write(bytes : Bytes) : Nil
-    @io.write(bytes)
+  def write(slice : Bytes) : Nil
+    @io.write(slice)
   end
 
   def close : Nil
