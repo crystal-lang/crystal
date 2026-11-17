@@ -505,15 +505,16 @@ class Crystal::Call
   private def check_argument_type_mismatch(def_arg, index_or_name, arg_type, match_context, arguments_type_mismatch)
     restricted = arg_type.restrict(def_arg, match_context)
 
-    arg_type = arg_type.remove_literal
-    return if restricted == arg_type
+    actual_arg_type = arg_type.remove_literal
+    return if restricted == actual_arg_type
+    return if restricted && arg_type.is_a?(AutocastType) && arg_type.compatible_with?(restricted)
 
     expected_type = compute_expected_type(def_arg, match_context)
 
     extra_types =
       if restricted
         # This was a partial match
-        compute_extra_types(arg_type, expected_type)
+        compute_extra_types(actual_arg_type, expected_type)
       else
         # This wasn't a match
         nil
@@ -522,7 +523,7 @@ class Crystal::Call
     arguments_type_mismatch << ArgumentTypeMismatch.new(
       index_or_name: index_or_name,
       expected_type: expected_type,
-      actual_type: arg_type.remove_literal,
+      actual_type: actual_arg_type,
       extra_types: extra_types,
     )
   end
