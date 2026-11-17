@@ -52,11 +52,19 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
   end
 
   private def process_io(epoll_event : LibC::EpollEvent*, &) : Nil
-    io = Pointer(Void).new(epoll_event.value.data.u64).as(IO)
-
-    Reference.devirtualize(io, IO::FileDescriptor, ::Socket) do
-      process_io_impl(io, epoll_event.value.events) { |fiber| yield fiber }
-    end
+    {% begin %}
+      # manual devirtualization of IO+ into concrete types
+      case io = Pointer(Void).new(epoll_event.value.data.u64).as(IO)
+      when IO::FileDescriptor
+        process_io_impl(io, epoll_event.value.events) { |fiber| yield fiber }
+      {% if @top_level.has_constant?(:Socket) %}
+      when ::Socket
+        process_io_impl(io, epoll_event.value.events) { |fiber| yield fiber }
+      {% end %}
+      else
+        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
+      end
+    {% end %}
   end
 
   private def process_io_impl(io, events, &)

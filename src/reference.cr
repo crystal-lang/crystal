@@ -212,27 +212,4 @@ class Reference
     end
     Pointer(Void).new(clone_object_id).as(self)
   end
-
-  # :nodoc:
-  #
-  # Manual devirtualization of a Foo+ virtual type into concrete individual
-  # types. Raises an ArgumentError when no type matches.
-  #
-  # For example:
-  #
-  # ```
-  # Reference.devirtualize(io, IO::FileDescriptor, Socket) do
-  #   typeof(io) # => IO::FileDescriptor or Socket
-  # end
-  # ```
-  macro devirtualize(io, *types, &)
-    case {{io}}
-    {% for type in types %}
-    when {{type}}
-      {{yield}}
-    {% end %}
-    else
-      raise ArgumentError.new("Expected {{types.join(", ").id}} but got #{io.class.name}")
-    end
-  end
 end
