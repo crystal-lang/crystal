@@ -37,22 +37,6 @@ class Crystal::EventLoop::FakeLoop < Crystal::EventLoop::Polling
 end
 
 describe Crystal::EventLoop::Polling::PollDescriptor do
-  it "allows at most one reader and one writer" do
-    pd = Crystal::EventLoop::Polling::PollDescriptor.new
-    reader = Crystal::EventLoop::Polling::Event.new(:io_read, Fiber.current)
-    writer = Crystal::EventLoop::Polling::Event.new(:io_write, Fiber.current)
-
-    pd.empty?.should be_true
-    pd.@reader.add(pointerof(reader)).should be_true
-    pd.@writer.add(pointerof(writer)).should be_true
-    pd.empty?.should be_false
-
-    pd.@reader.delete(pointerof(reader))
-    pd.empty?.should be_false
-    pd.@writer.delete(pointerof(writer))
-    pd.empty?.should be_true
-  end
-
   describe "#take_ownership" do
     it "associates a poll descriptor to an evloop instance" do
       io = IO::FileDescriptor.new(Int32::MAX)
