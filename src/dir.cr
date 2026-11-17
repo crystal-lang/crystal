@@ -251,8 +251,17 @@ class Dir
   # Dir.mkdir("testdir")
   # Dir.exists?("testdir") # => true
   # ```
-  def self.exists?(path : Path | String) : Bool
-    if info = File.info?(path)
+  #
+  # If *follow_symlinks* is `true`, a symbolic link to a directory counts as a
+  # directory. If it is `false`, a symbolic link is never a directory.
+  #
+  # ```
+  # File.symlink("testdir", "testlink")
+  # Dir.exists?("testlink")                         # => true
+  # Dir.exists?("testlink", follow_symlinks: false) # => false
+  # ```
+  def self.exists?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+    if info = File.info?(path, follow_symlinks)
       info.type.directory?
     else
       false

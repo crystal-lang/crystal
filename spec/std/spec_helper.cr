@@ -9,6 +9,15 @@ def datapath(*components)
   File.join("spec", "std", "data", *components)
 end
 
+# Creates a symbolic link to *target* in a temporary location and yields its
+# path to the block.
+def with_symlink(target, file = __FILE__, &)
+  with_tempfile("symlink", file: file) do |path|
+    File.symlink(File.expand_path(target), path)
+    yield path
+  end
+end
+
 private class Witness
   @checked = false
 
