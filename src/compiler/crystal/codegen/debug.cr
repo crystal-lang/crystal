@@ -464,7 +464,7 @@ module Crystal
     end
 
     def get_current_debug_scope(location)
-      if context.fun.name == MAIN_NAME
+      if context.fun.to_unsafe == @main.to_unsafe
         main_scopes = (@main_scopes ||= {} of {String, String} => LLVM::Metadata)
         file, dir = file_and_dir(location.filename)
         main_scope = main_scopes[{file, dir}] ||= begin
