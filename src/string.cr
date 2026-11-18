@@ -660,8 +660,6 @@ class String
         else
           if leading_zero_is_octal
             base = 8
-          else
-            base = 10
           end
           found_digit = true
         end
