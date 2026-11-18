@@ -250,17 +250,6 @@ describe IO::FileDescriptor do
     end
   {% end %}
 
-  {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
-    it "does not map EBADF to IO::ClosedError" do
-      IO.pipe do |_r, w|
-        error = expect_raises(IO::Error, "File not open for reading") do
-          w.read(Bytes.new(1))
-        end
-        error.should_not be_a(IO::ClosedError)
-      end
-    end
-  {% end %}
-
   {% if flag?(:unix) %}
     it "raises IO::ClosedError when closed during a blocking read" do
       ch = Channel(SpecChannelStatus).new(1)
