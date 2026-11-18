@@ -2,6 +2,10 @@ module Crystal::System::Addrinfo
   alias Handle = NoReturn
 
   protected def initialize(addrinfo : Handle)
+    @family = uninitialized Family
+    @type = uninitialized Type
+    @protocol = uninitialized Protocol
+    @size = uninitialized Int32
     raise NotImplementedError.new("Crystal::System::Addrinfo#initialize")
   end
 
