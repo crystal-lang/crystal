@@ -250,7 +250,8 @@ describe IO::FileDescriptor do
     end
   {% end %}
 
-  {% if flag?(:unix) %}
+  # wasip1, wasip2: no pipe; wasip3: no fibers
+  {% if flag?(:unix) && !flag?(:wasm32) %}
     it "raises IO::ClosedError when closed during a blocking read" do
       ch = Channel(SpecChannelStatus).new(1)
       failure = nil
