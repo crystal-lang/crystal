@@ -664,6 +664,9 @@ describe "Lexer macro" do
     %("\#{ "\#{ "}" }" }"),
     %("\#{ {1 => 2}[1] }"),
     %("a\#{ "}" }b\#{ "{" }c"),
+    %("\#{ %q{{}} }"),
+    %("\#{ %q{{}} + "}" }"),
+    %("\#{ %q{a{b}c} }"),
   ].each do |code|
     it "lexes macro with curly brace in string inside interpolation: #{code} (#17930)" do
       lexer = Lexer.new("#{code} end")

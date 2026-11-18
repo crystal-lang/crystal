@@ -1743,9 +1743,14 @@ module Crystal
           @token.macro_state = Token::MacroState.new(whitespace, nest, control_nest, delimiter_state, beginning_of_line, yields, comment, heredocs)
           return @token
         else
-          # Make sure to decrease the '}' count if inside an interpolation
-          # (but not if inside a literal, e.g. `"#{ "{" }"`)
-          @macro_curly_count += 1 if !delimiter_state && @macro_curly_count > 0
+          if delimiter_state
+            # Make sure to increase the open count if inside a literal
+            # delimited by curly braces, e.g. `%q{{}}`
+            delimiter_state = delimiter_state.with_open_count_delta(+1) if delimiter_state.nest == '{'
+          elsif @macro_curly_count > 0
+            # Make sure to decrease the '}' count if inside an interpolation
+            @macro_curly_count += 1
+          end
         end
       end
 
