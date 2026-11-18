@@ -3103,6 +3103,7 @@ module Crystal
 
       body_vars.each do |name, var|
         after_var = (after_vars[name] ||= new_meta_var(name))
+        after_var.nil_if_read = true if var.nil_if_read?
         after_var.bind_to(var)
       end
 

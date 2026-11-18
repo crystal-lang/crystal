@@ -597,6 +597,22 @@ describe "Semantic: exception" do
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
 
+  it "preserves nil-if-read from the body when rescue assigns the variable (#15760)" do
+    result = assert_type(<<-CRYSTAL) { nilable bool }
+      if true
+        x = false
+      end
+
+      begin
+      rescue
+        x = false
+      end
+
+      x
+      CRYSTAL
+    result.program.vars["x"].type.should eq(result.program.nilable(result.program.bool))
+  end
+
   it "drops previous nilability when both body and rescue assign the variable" do
     result = assert_type(<<-CRYSTAL) { bool }
       if true
