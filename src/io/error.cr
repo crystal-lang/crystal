@@ -32,11 +32,8 @@ class IO
   class TimeoutError < Error
   end
 
-  # Raised when an `IO` operation is attempted on a closed stream.
-  #
-  # Raised only from the stream's own closed-state bookkeeping, such as
-  # `IO#check_open` or `raise if @closed`. Errno values from the system layer,
-  # including `EBADF` and `ECONNRESET`, are not mapped to this exception.
+  # Raised when trying to interact with an `IO` instance after it was
+  # closed with a call to `IO#close`.
   #
   # `IO::ClosedError` subclasses `IO::Error`, not `IO::EOFError`.
   class ClosedError < Error
