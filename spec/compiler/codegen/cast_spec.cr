@@ -1,6 +1,15 @@
 require "../../spec_helper"
 
 describe "Code gen: cast" do
+  it "keeps a concrete proc through a union restriction" do
+    run(<<-CRYSTAL).to_i.should eq(42)
+      def invoke(proc : Proc(Nil) | Proc(Int32))
+        proc.call
+      end
+      invoke(->{ 42 })
+      CRYSTAL
+  end
+
   it "allows casting object to pointer and back" do
     run(<<-CRYSTAL).to_i.should eq(1)
       class Foo
