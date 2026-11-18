@@ -597,6 +597,23 @@ describe "Semantic: exception" do
     program.vars["foo"].type.should be(program.nilable program.int32)
   end
 
+  it "drops previous nilability when both body and rescue assign the variable" do
+    result = assert_type(<<-CRYSTAL) { bool }
+      if true
+        x = false
+      end
+
+      begin
+        x = true
+      rescue
+        x = false
+      end
+
+      x
+      CRYSTAL
+    result.program.vars["x"].type.should eq(result.program.bool)
+  end
+
   it "can't return from ensure (#4470)" do
     assert_error(<<-CRYSTAL, "can't return from ensure")
       def foo
@@ -832,8 +849,8 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue" do
-    assert_type(<<-CRYSTAL) { union_of [float64, int32, char, string, bool] of Type }
+  it "merges the final body and rescue assignments after begin rescue" do
+    assert_type(<<-CRYSTAL) { union_of(string, bool) }
       a = 1.5
       begin
         a = 2
@@ -846,7 +863,7 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+  it "types a var after begin rescue as having all possible types in begin and rescue" do
     assert_type(<<-CRYSTAL) { union_of [int32, char, string, nil_type] of Type }
       b = 2
       begin

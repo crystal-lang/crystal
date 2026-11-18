@@ -3009,8 +3009,7 @@ module Crystal
         if all_rescue_vars.empty?
           all_rescue_vars = nil
         else
-          # Otherwise, merge all types that resulted from all rescue/else blocks
-          merge_rescue_vars exception_handler_vars, all_rescue_vars
+          merge_rescue_vars after_exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
           with_block_kind :ensure do
