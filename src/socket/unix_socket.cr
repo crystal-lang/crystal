@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasi) %}
+
 # A local interprocess communication clientsocket.
 #
 # Available on UNIX-like operating systems, and Windows 10 Build 17063 or above.
