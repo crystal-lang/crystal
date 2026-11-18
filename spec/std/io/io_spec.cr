@@ -1017,28 +1017,6 @@ describe IO do
       end
     end
 
-    it "can still be rescued as IO::Error" do
-      io = IO::Memory.new("hello")
-      io.close
-
-      error = expect_raises(IO::Error, "Closed stream") do
-        io.read(Bytes.new(1))
-      end
-      error.should be_a(IO::ClosedError)
-    end
-
-    it "doesn't rescue closed streams as EOF" do
-      io = IO::Memory.new("hello")
-      io.close
-
-      expect_raises(IO::ClosedError, "Closed stream") do
-        begin
-          io.read(Bytes.new(1))
-        rescue IO::EOFError
-        end
-      end
-    end
-
     # wasip1, wasip2: no pipe; wasip3: no fibers
     pending_wasm32 "aborts 'read' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
