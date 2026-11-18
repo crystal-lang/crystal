@@ -75,7 +75,7 @@ describe Socket, tags: "network" do
     end
   end
 
-  pending_wasm32 "accept raises timeout error if read_timeout is specified" do
+  it "accept raises timeout error if read_timeout is specified" do
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
     port = unused_local_tcp_port
     server.bind("0.0.0.0", port)

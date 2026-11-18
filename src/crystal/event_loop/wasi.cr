@@ -1,13 +1,15 @@
+require "c/poll"
+
 # :nodoc:
-# Uses blocking I/O until WASI supports switching fibers.
-# I/O timeouts and readiness waits are not supported.
+# Uses synchronous I/O until WASI supports switching fibers.
+# Non-blocking sockets wait synchronously for readiness and support timeouts.
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def self.default_file_blocking?
     true
   end
 
   def self.default_socket_blocking?
-    true
+    false
   end
 
   def initialize(parallelism : Int32)
@@ -150,33 +152,53 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def read(socket : ::Socket, slice : Bytes) : Int32
+    deadline = to_deadline(socket.read_timeout)
     loop do
       bytes_read = LibC.recv(socket.fd, slice, slice.size, 0)
       return bytes_read.to_i32 unless bytes_read == -1
 
-      unless Errno.value == Errno::EINTR
-        raise IO::Error.from_errno("Error reading socket", target: socket)
+      case errno = Errno.value
+      when Errno::EAGAIN
+        wait(socket, LibC::POLLIN, deadline) do
+          raise IO::TimeoutError.new("Read timed out", target: socket)
+        end
+      when Errno::EINTR
+        next
+      else
+        raise IO::Error.from_os_error("Error reading socket", errno, target: socket)
       end
     end
   end
 
   def wait_readable(socket : ::Socket) : Nil
-    raise NotImplementedError.new("Crystal::EventLoop::Wasi#wait_readable")
+    wait(socket, LibC::POLLIN, to_deadline(socket.read_timeout)) do
+      raise IO::TimeoutError.new("Read timed out", target: socket)
+    end
   end
 
   def write(socket : ::Socket, slice : Bytes) : Int32
+    deadline = to_deadline(socket.write_timeout)
     loop do
       bytes_written = LibC.send(socket.fd, slice, slice.size, 0)
       return bytes_written.to_i32 unless bytes_written == -1
 
-      unless Errno.value == Errno::EINTR
-        raise IO::Error.from_errno("Error writing to socket", target: socket)
+      case errno = Errno.value
+      when Errno::EAGAIN
+        wait(socket, LibC::POLLOUT, deadline) do
+          raise IO::TimeoutError.new("Write timed out", target: socket)
+        end
+      when Errno::EINTR
+        next
+      else
+        raise IO::Error.from_os_error("Error writing to socket", errno, target: socket)
       end
     end
   end
 
   def wait_writable(socket : ::Socket) : Nil
-    raise NotImplementedError.new("Crystal::EventLoop::Wasi#wait_writable")
+    wait(socket, LibC::POLLOUT, to_deadline(socket.write_timeout)) do
+      raise IO::TimeoutError.new("Write timed out", target: socket)
+    end
   end
 
   def receive_from(socket : ::Socket, slice : Bytes) : Tuple(Int32, ::Socket::Address)
@@ -186,6 +208,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
       sockaddr = LibC::SockaddrStorage.new
       sockaddr.ss_family = socket.family.value
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrStorage))
+      deadline = to_deadline(socket.read_timeout)
 
       loop do
         bytes_read = LibC.recvfrom(socket.fd, slice, slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen))
@@ -194,8 +217,15 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
           return {bytes_read.to_i32, ::Socket::IPAddress.from(pointerof(sockaddr).as(LibC::Sockaddr*), addrlen)}
         end
 
-        unless Errno.value == Errno::EINTR
-          raise IO::Error.from_errno("Error receiving datagram", target: socket)
+        case errno = Errno.value
+        when Errno::EAGAIN
+          wait(socket, LibC::POLLIN, deadline) do
+            raise IO::TimeoutError.new("Read timed out", target: socket)
+          end
+        when Errno::EINTR
+          next
+        else
+          raise IO::Error.from_os_error("Error receiving datagram", errno, target: socket)
         end
       end
     {% end %}
@@ -205,12 +235,20 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     {% if flag?(:wasip1) %}
       raise NotImplementedError.new("Crystal::EventLoop::Wasi#send_to requires wasip2 or later")
     {% else %}
+      deadline = to_deadline(socket.write_timeout)
       loop do
         bytes_sent = LibC.sendto(socket.fd, slice, slice.size, 0, address, address.size)
         return bytes_sent.to_i32 unless bytes_sent == -1
 
-        unless Errno.value == Errno::EINTR
-          raise IO::Error.from_errno("Error sending datagram to #{address}", target: socket)
+        case errno = Errno.value
+        when Errno::EAGAIN
+          wait(socket, LibC::POLLOUT, deadline) do
+            raise IO::TimeoutError.new("Write timed out", target: socket)
+          end
+        when Errno::EINTR
+          next
+        else
+          raise IO::Error.from_os_error("Error sending datagram to #{address}", errno, target: socket)
         end
       end
     {% end %}
@@ -224,31 +262,62 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     {% if flag?(:wasip1) %}
       raise NotImplementedError.new("Crystal::EventLoop::Wasi#connect requires wasip2 or later")
     {% else %}
-      loop do
-        return if LibC.connect(socket.fd, address, address.size) == 0
+      return if LibC.connect(socket.fd, address, address.size) == 0
 
-        unless Errno.value == Errno::EINTR
-          return ::Socket::ConnectError.from_errno("connect")
+      errno = Errno.value
+      deadline = to_deadline(timeout)
+
+      loop do
+        case errno
+        when Errno::EINPROGRESS, Errno::EALREADY, Errno::EINTR
+          wait(socket, LibC::POLLOUT, deadline) do
+            return IO::TimeoutError.new("connect timed out", target: socket)
+          end
+
+          error = 0
+          size = LibC::SocklenT.new(sizeof(Int32))
+          if LibC.getsockopt(socket.fd, LibC::SOL_SOCKET, LibC::SO_ERROR, pointerof(error), pointerof(size)) == -1
+            return ::Socket::ConnectError.from_errno("connect")
+          end
+          return if error == 0
+          errno = Errno.new(error)
+        else
+          return ::Socket::ConnectError.from_os_error("connect", errno)
         end
       end
     {% end %}
   end
 
   def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
+    return if socket.closed?
+
+    deadline = to_deadline(socket.read_timeout)
+    blocking = System::Socket.get_blocking(socket.fd)
+    flags = LibC::SOCK_CLOEXEC
+    flags |= LibC::SOCK_NONBLOCK unless blocking
+
     loop do
       return if socket.closed?
 
-      client_fd = LibC.accept4(socket.fd, nil, nil, LibC::SOCK_CLOEXEC)
-      return {client_fd, true} unless client_fd == -1
+      client_fd = LibC.accept4(socket.fd, nil, nil, flags)
+      return {client_fd, blocking} unless client_fd == -1
 
-      unless Errno.value == Errno::EINTR
-        raise ::Socket::Error.from_errno("accept")
+      case errno = Errno.value
+      when Errno::EAGAIN
+        wait(socket, LibC::POLLIN, deadline) do
+          raise IO::TimeoutError.new("Accept timed out", target: socket)
+        end
+      when Errno::EINTR
+        next
+      else
+        raise ::Socket::Error.from_os_error("accept", errno)
       end
     end
   end
 
   def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
     buffer = uninitialized UInt8[IO::DEFAULT_BUFFER_SIZE]
+    deadline = to_deadline(socket.write_timeout)
 
     loop do
       bytes_read = LibC.pread(fd, buffer, count.clamp(..buffer.size), offset)
@@ -263,7 +332,14 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
         bytes_sent = LibC.send(socket.fd, slice, slice.size, 0)
 
         if bytes_sent == -1
-          return Errno.value unless Errno.value == Errno::EINTR
+          case errno = Errno.value
+          when Errno::EAGAIN
+            wait(socket, LibC::POLLOUT, deadline) { return Errno::ETIMEDOUT }
+          when Errno::EINTR
+            next
+          else
+            return errno
+          end
         else
           slice += bytes_sent
         end
@@ -279,6 +355,44 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
 
   def close(socket : ::Socket) : Nil
     socket.socket_close
+  end
+
+  private def wait(socket : ::Socket, events, deadline : Time::Instant?, &) : Nil
+    pollfd = LibC::Pollfd.new(fd: socket.fd, events: events)
+
+    loop do
+      raise IO::Error.new("Closed stream", target: socket) if socket.closed?
+
+      milliseconds =
+        if deadline
+          remaining = deadline - Time.instant
+          remaining.total_milliseconds.ceil.clamp(0, Int32::MAX).to_i
+        else
+          -1
+        end
+
+      ret = LibC.poll(pointerof(pollfd), 1, milliseconds)
+      if ret > 0
+        if pollfd.revents & LibC::POLLNVAL != 0
+          raise IO::Error.new("Closed stream", target: socket)
+        end
+        return
+      end
+
+      if ret == 0
+        next if deadline && Time.instant < deadline
+        yield
+        return
+      end
+
+      unless Errno.value == Errno::EINTR
+        raise IO::Error.from_errno("poll", target: socket)
+      end
+    end
+  end
+
+  private def to_deadline(timeout : Time::Span?)
+    Time.instant + timeout if timeout
   end
 end
 
