@@ -224,14 +224,14 @@ require "./std/semantic_version_spec.cr"
 require "./std/set_spec.cr"
 require "./std/signal_spec.cr"
 require "./std/slice_spec.cr"
-# require "./std/socket/address_spec.cr" (failed codegen)
-# require "./std/socket/addrinfo_spec.cr" (failed codegen)
-# require "./std/socket/socket_spec.cr" (failed codegen)
+require "./std/socket/address_spec.cr"
+require "./std/socket/addrinfo_spec.cr"
+require "./std/socket/socket_spec.cr"
 require "./std/socket/tcp_server_spec.cr"
 require "./std/socket/tcp_socket_spec.cr"
-# require "./std/socket/udp_socket_spec.cr" (failed codegen)
-# require "./std/socket/unix_server_spec.cr" (failed codegen)
-# require "./std/socket/unix_socket_spec.cr" (failed codegen)
+require "./std/socket/udp_socket_spec.cr"
+require "./std/socket/unix_server_spec.cr"
+require "./std/socket/unix_socket_spec.cr"
 require "./std/spec/context_spec.cr"
 require "./std/spec/expectations_spec.cr"
 require "./std/spec/filters_spec.cr"

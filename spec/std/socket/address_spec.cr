@@ -20,10 +20,12 @@ describe Socket::Address do
       address.should eq Socket::IPAddress.new("192.168.0.1", 8081)
     end
 
-    it "parses UNIX" do
-      address = Socket::Address.parse "unix://socket.sock"
-      address.should eq Socket::UNIXAddress.new("socket.sock")
-    end
+    {% unless flag?(:wasi) %}
+      it "parses UNIX" do
+        address = Socket::Address.parse "unix://socket.sock"
+        address.should eq Socket::UNIXAddress.new("socket.sock")
+      end
+    {% end %}
 
     it "fails with unknown scheme" do
       expect_raises(Socket::Error, "Unsupported address type: ssl") do
@@ -144,40 +146,57 @@ describe Socket::IPAddress do
       address.inspect.should eq "Socket::IPAddress([fe80::3333:4444%3]:8081)"
     end
 
-    it "looks up loopback interface index by name" do
-      # loopback interface is usually the first interface, but sometimes it's not
-      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
-        raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+    {% unless flag?(:wasi) %}
+      it "looks up loopback interface index by name" do
+        # loopback interface is usually the first interface, but sometimes it's not
+        zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
+          raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+        end
+
+        address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
+        address.address.should eq "fe80::1111"
+        address.zone_id.should eq zone_id
       end
 
-      address = Socket::IPAddress.new("fe80::1111%#{loopback_iface}", 0)
-      address.address.should eq "fe80::1111"
-      address.zone_id.should eq zone_id
-    end
+      it "looks up loopback interface name by index" do
+        # loopback interface is usually the first interface, but sometimes it's not
+        zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
+          raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+        end
 
-    it "looks up loopback interface name by index" do
-      # loopback interface is usually the first interface, but sometimes it's not
-      zone_id = Crystal::System::Socket.network_interface_to_index(loopback_iface) do |error|
-        raise RuntimeError.from_os_error("Failed to lookup #{loopback_iface} network interface", error)
+        address = Socket::IPAddress.new("fe80::1111%#{zone_id}", 0)
+        address.link_local_interface.should eq loopback_iface
       end
 
-      address = Socket::IPAddress.new("fe80::1111%#{zone_id}", 0)
-      address.link_local_interface.should eq loopback_iface
-    end
+      it "fails interface name lookup for non-existent interfaces" do
+        err = expect_raises(Socket::Error, "Failed to look up interface name for index 333") do
+          Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
+        end
 
-    it "fails interface name lookup for non-existent interfaces" do
-      err = expect_raises(Socket::Error, "Failed to look up interface name for index 333") do
-        Socket::IPAddress.new("fe80::d00d:1%333", 0).link_local_interface
+        {% if flag?(:win32) %}
+          err.os_error.should eq(WinError::ERROR_FILE_NOT_FOUND)
+        {% elsif flag?(:android) %}
+          err.os_error.should eq(Errno::ENODEV)
+        {% else %}
+          err.os_error.should eq(Errno::ENXIO)
+        {% end %}
       end
 
-      {% if flag?(:win32) %}
-        err.os_error.should eq(WinError::ERROR_FILE_NOT_FOUND)
-      {% elsif flag?(:android) %}
-        err.os_error.should eq(Errno::ENODEV)
-      {% else %}
-        err.os_error.should eq(Errno::ENXIO)
-      {% end %}
-    end
+      it "fails on non-existent link-local zone interface" do
+        # looking up an interface index obviously requires for said interface device to exist
+        err = expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
+          Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
+        end
+
+        {% if flag?(:win32) %}
+          err.os_error.should eq(WinError::ERROR_INVALID_NAME)
+        {% elsif flag?(:darwin) || flag?(:bsd) || flag?(:solaris) %}
+          err.os_error.should eq(Errno::ENXIO)
+        {% else %}
+          err.os_error.should eq(Errno::ENODEV)
+        {% end %}
+      end
+    {% end %}
 
     it "interface name lookup returns nil in unsupported cases" do
       Socket::IPAddress.new("fd03::3333", 0).link_local_interface.should be_nil
@@ -206,21 +225,6 @@ describe Socket::IPAddress do
       expect_raises(Socket::Error, "Invalid IPv6 link-local zone index '0' in address 'fe80::c0ff:ee%0'") do
         Socket::IPAddress.new("fe80::c0ff:ee%0", port: 0)
       end
-    end
-
-    it "fails on non-existent link-local zone interface" do
-      # looking up an interface index obviously requires for said interface device to exist
-      err = expect_raises(Socket::Error, "IPv6 link-local zone interface 'zzzzzzzzzzzzzzz' not found (in address 'fe80::0f0f:abcd%zzzzzzzzzzzzzzz')") do
-        Socket::IPAddress.new("fe80::0f0f:abcd%zzzzzzzzzzzzzzz", port: 0)
-      end
-
-      {% if flag?(:win32) %}
-        err.os_error.should eq(WinError::ERROR_INVALID_NAME)
-      {% elsif flag?(:darwin) || flag?(:bsd) || flag?(:solaris) %}
-        err.os_error.should eq(Errno::ENXIO)
-      {% else %}
-        err.os_error.should eq(Errno::ENODEV)
-      {% end %}
     end
   end
 
@@ -525,8 +529,8 @@ describe Socket::IPAddress do
   end
 end
 
-{% if flag?(:unix) %}
-  describe Socket::UNIXAddress do
+{% if flag?(:unix) && !flag?(:wasi) %}
+  describe "Socket::UNIXAddress" do
     it "transforms into a C struct and back" do
       path = "unix_address.sock"
 
@@ -615,14 +619,16 @@ describe Socket do
     Socket.ip?("::1:2:3:4:5:6:7").should be_true
   end
 
-  it "==" do
-    a = Socket::IPAddress.new("127.0.0.1", 8080)
-    b = Socket::UNIXAddress.new("some_path")
-    c = "some_path"
-    (a == a).should be_true
-    (b == b).should be_true
-    (a == b).should be_false
-    (a == c).should be_false
-    (b == c).should be_false
-  end
+  {% unless flag?(:wasm32) %}
+    it "==" do
+      a = Socket::IPAddress.new("127.0.0.1", 8080)
+      b = Socket::UNIXAddress.new("some_path")
+      c = "some_path"
+      (a == a).should be_true
+      (b == b).should be_true
+      (a == b).should be_false
+      (a == c).should be_false
+      (b == c).should be_false
+    end
+  {% end %}
 end

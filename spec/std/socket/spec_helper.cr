@@ -1,5 +1,6 @@
 require "spec"
 require "socket"
+require "../../support/wasm32"
 
 CLOSE_ON_EXEC_AVAILABLE = {{ !flag?(:win32) }}
 

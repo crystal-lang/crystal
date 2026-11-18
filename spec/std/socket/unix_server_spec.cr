@@ -1,4 +1,6 @@
-require "../spec_helper"
+{% skip_file if flag?(:wasm32) %}
+
+require "./spec_helper"
 require "socket"
 require "../../support/fibers"
 require "../../support/channel"
@@ -89,7 +91,7 @@ describe UNIXServer do
       end
     end
 
-    it "raises when server is closed" do
+    pending_wasm32 "raises when server is closed" do
       with_tempfile("unix_server-closed.sock") do |path|
         server = UNIXServer.new(path)
         ch = Channel(SpecChannelStatus).new(1)
@@ -133,7 +135,7 @@ describe UNIXServer do
       end
     end
 
-    it "returns nil when server is closed" do
+    pending_wasm32 "returns nil when server is closed" do
       with_tempfile("unix_server-accept2.sock") do |path|
         server = UNIXServer.new(path)
         ch = Channel(SpecChannelStatus).new(1)
