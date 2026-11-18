@@ -1892,10 +1892,11 @@ module Crystal
               # so we reset the delimiter state but save it in a stack
               @macro_curly_count += 1
               @delimiter_state_stack.push delimiter_state
-              delimiter_state = nil
 
-              # Like whitespace, '#{' may be followed by a keyword (e.g. `"#{begin ... end}"`)
-              whitespace = true
+              # Like whitespace, '#{' may be followed by a keyword (e.g. `"#{begin ... end}"`),
+              # but only if it's an actual interpolation (not in e.g. `%q(#{begin})`)
+              whitespace = delimiter_state.allow_escapes
+              delimiter_state = nil
             else
               whitespace = false
             end
@@ -2080,9 +2081,9 @@ module Crystal
       when 's'
         case next_char
         when 'e'
-          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('l', 'e', 'c', 't') && peek_not_ident_part_or_end_next_char
         when 't'
-          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && !ident_part_or_end?(peek_next_char) && next_char
+          MacroKeywordState::Other if char_sequence?('r', 'u', 'c', 't') && peek_not_ident_part_or_end_next_char
         end
       when 'u'
         if next_char == 'n'

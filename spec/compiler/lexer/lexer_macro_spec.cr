@@ -193,6 +193,13 @@ describe "Lexer macro" do
     %(foo{|x| begin; 1; end}),
     %("\#{begin; 1; end}"),
     %({begin: 1, end: 2}),
+    %({select: 1}),
+    %({struct: 1}),
+    %(x={select: 1}),
+    %(foo(select: 1)),
+    %(%q(\#{begin})),
+    %(%w(\#{begin})),
+    %(<<-'EOS'\n\#{begin}\nEOS\n),
   ].each do |code|
     it "lexes macro with keyword right after curly brace: #{code} (#17929)" do
       lexer = Lexer.new("#{code} end")
