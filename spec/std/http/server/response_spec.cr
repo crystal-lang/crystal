@@ -64,10 +64,9 @@ describe HTTP::Server::Response do
     response = Response.new(io)
     response.close
 
-    error = expect_raises(IO::ClosedError, "Closed stream") do
+    expect_raises(IO::ClosedError, "Closed stream") do
       response.status = :not_found
     end
-    error.should be_a(IO::Error)
   end
 
   it "does not automatically add the `content-length` header if the response is a 304" do
