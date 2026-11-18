@@ -34,8 +34,6 @@ class IO
 
   # Raised when trying to interact with an `IO` instance after it was
   # closed with a call to `IO#close`.
-  #
-  # `IO::ClosedError` subclasses `IO::Error`, not `IO::EOFError`.
   class ClosedError < Error
     def initialize(message = "Closed stream", cause : Exception? = nil, *, target = nil)
       super(message, cause: cause, target: target)
