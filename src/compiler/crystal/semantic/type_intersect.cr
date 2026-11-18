@@ -188,21 +188,23 @@ module Crystal
     def self.common_descendent(type1 : VirtualType, type2 : Type)
       base_type = type1.base_type
 
-      if type2.implements?(base_type)
+      if type2.is_a?(GenericClassType)
+        return type1 if base_type.implements?(type2)
+
+        # A generic subclass represents its concrete instances, not the
+        # uninstantiated class itself, even when it inherits from base_type.
+        types = type2.instantiated_types.compact_map do |instance|
+          next if instance.unbound? || instance.abstract?
+          instance.virtual_type if instance.implements?(base_type)
+        end
+        type1.program.type_merge_union_of types
+      elsif type2.implements?(base_type)
         type2.virtual_type
       elsif base_type.implements?(type2)
         type1
       elsif type2.module?
         types = base_type.subclasses.compact_map do |subclass|
           common_descendent(subclass.virtual_type, type2)
-        end
-        type1.program.type_merge_union_of types
-      elsif base_type.is_a?(GenericInstanceType) && type2.is_a?(GenericType)
-        # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
-        # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        types = type2.instantiated_types.compact_map do |instance|
-          next if instance.unbound? || instance.abstract?
-          instance.virtual_type if instance.implements?(base_type)
         end
         type1.program.type_merge_union_of types
       else

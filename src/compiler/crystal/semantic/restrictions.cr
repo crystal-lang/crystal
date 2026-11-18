@@ -1422,6 +1422,16 @@ module Crystal
       elsif other.is_a?(VirtualType)
         result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
         result ? result.virtual_type : nil
+      elsif other.is_a?(GenericClassType)
+        return self if base_type.implements?(other)
+
+        # A generic subclass represents its concrete instances, not the
+        # uninstantiated class itself, even when it inherits from base_type.
+        types = other.instantiated_types.compact_map do |instance|
+          next if instance.unbound? || instance.abstract?
+          instance.virtual_type if instance.implements?(base_type)
+        end
+        program.type_merge_union_of types
       elsif other.implements?(base_type)
         other.virtual_type
       elsif base_type.implements?(other)
@@ -1435,14 +1445,6 @@ module Crystal
           end
           program.type_merge_union_of types
         end
-      elsif base_type.is_a?(GenericInstanceType) && other.is_a?(GenericType)
-        # Consider the case of Foo(Int32) vs. Bar(T), with Bar(T) < Foo(T):
-        # we want to return Bar(Int32), so we search in Bar's generic instantiations
-        types = other.instantiated_types.compact_map do |instance|
-          next if instance.unbound? || instance.abstract?
-          instance.virtual_type if instance.implements?(base_type)
-        end
-        program.type_merge_union_of types
       else
         nil
       end

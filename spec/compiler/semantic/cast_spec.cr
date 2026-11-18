@@ -371,8 +371,8 @@ describe "Semantic: cast" do
       CRYSTAL
   end
 
-  it "casts uninstantiated generic class to itself (#10882)" do
-    assert_type(<<-CRYSTAL) { nilable types["Bar"] }
+  it "ignores an uninstantiated generic subclass from a cast (#10882)" do
+    assert_type(<<-CRYSTAL) { nil_type }
       class Foo
       end
 
@@ -383,6 +383,41 @@ describe "Semantic: cast" do
       if x.is_a?(Bar)
         x.as(Bar)
       end
+      CRYSTAL
+  end
+
+  it "casts a generic class narrowed from its superclass to itself (#10882)" do
+    assert_type(<<-CRYSTAL) { nilable generic_class("Bar", int32) }
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      Bar(Int32).new # instantiated before
+
+      x = Foo.new.as(Foo)
+      if x.is_a?(Bar)
+        x.as(Bar)
+      end
+      CRYSTAL
+  end
+
+  it "casts a generic class narrowed from its superclass to itself, instantiated afterwards (#10882)" do
+    assert_type(<<-CRYSTAL) { nilable generic_class("Bar", int32) }
+      class Foo
+      end
+
+      class Bar(T) < Foo
+      end
+
+      x = Foo.new.as(Foo)
+      v = if x.is_a?(Bar)
+            x.as(Bar)
+          end
+
+      Bar(Int32).new # instantiated after
+      v
       CRYSTAL
   end
 

@@ -2,6 +2,64 @@ require "../../spec_helper"
 
 describe "Code gen: hierarchy-dependent type filters" do
   {
+    "restriction" => "extract(value)",
+    "is_a?"       => "value.is_a?(Gen) ? 2 : 1",
+  }.each do |operation, expression|
+    it "retains an existing abstract generic hierarchy in #{operation}" do
+      run(<<-CRYSTAL).to_i.should eq(2)
+        abstract class Gen(T); end
+        class Child < Gen(Int32); end
+
+        def extract(value : Gen)
+          2
+        end
+
+        def dispatch(value : Gen(Int32))
+          #{expression}
+        end
+
+        dispatch(Child.new.as(Gen(Int32)))
+        CRYSTAL
+    end
+
+    it "handles an initially uninstantiated generic subclass in #{operation}" do
+      run(<<-CRYSTAL).to_i.should eq(1)
+        class Base; end
+        class Child < Base; end
+        class Gen(T) < Base; end
+
+        def extract(value : Base); 1; end
+        def extract(value : Gen); 2; end
+
+        def dispatch(value : Base)
+          #{expression}
+        end
+
+        dispatch(Base.new || Child.new)
+        CRYSTAL
+    end
+
+    it "handles an initially uninstantiated then instantiated generic subclass in #{operation}" do
+      run(<<-CRYSTAL).to_i.should eq(12)
+        class Base; end
+        class Child < Base; end
+        class Gen(T) < Base; end
+
+        def extract(value : Base); 1; end
+        def extract(value : Gen); 2; end
+
+        def dispatch(value : Base)
+          #{expression}
+        end
+
+        first = dispatch(Base.new || Child.new)
+        second = dispatch(Gen(Int32).new.as(Base))
+        (first &* 10) &+ second
+        CRYSTAL
+    end
+  end
+
+  {
     "is_a?"        => "if value.is_a?(Good); value.value; else; 0; end",
     "responds_to?" => "if value.responds_to?(:value); value.value; else; 0; end",
     "case"         => "case value; when Good; value.value; else; 0; end",
