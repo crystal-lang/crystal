@@ -2028,9 +2028,11 @@ module Crystal
       when 'a'
         case next_char
         when 'b'
-          if char_sequence?('s', 't', 'r', 'a', 'c', 't') && next_char.whitespace?
-            # Skip any further spaces between `abstract` and the next keyword
-            while (char = next_char).in?(' ', '\t')
+          if char_sequence?('s', 't', 'r', 'a', 'c', 't') && peek_next_char.ascii_whitespace?
+            # Skip any whitespace between `abstract` and the next keyword,
+            # keeping track of the line number when crossing newlines
+            while (char = next_char).ascii_whitespace?
+              incr_line_number 0 if char == '\n'
             end
 
             case char

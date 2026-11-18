@@ -187,7 +187,7 @@ describe "Lexer macro" do
     end
   end
 
-  ["  ", "\t", " \t "].each do |spaces|
+  ["  ", "\t", " \t ", "\n", "\n    ", " \n\t", "\r\n", "\n\n"].each do |spaces|
     it "lexes macro with nested abstract def separated by #{spaces.inspect} (#17928)" do
       lexer = Lexer.new(%(hello\n  abstract#{spaces}def foo\nend))
 
@@ -198,6 +198,7 @@ describe "Lexer macro" do
 
       token = lexer.next_macro_token(token.macro_state, false)
       token.type.should eq(t :MACRO_END)
+      token.line_number.should eq(3 + spaces.count('\n'))
     end
 
     {"class", "struct"}.each do |keyword|
@@ -215,6 +216,7 @@ describe "Lexer macro" do
 
         token = lexer.next_macro_token(token.macro_state, false)
         token.type.should eq(t :MACRO_END)
+        token.line_number.should eq(2 + spaces.count('\n'))
       end
     end
   end

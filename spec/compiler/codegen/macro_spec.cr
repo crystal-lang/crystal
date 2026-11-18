@@ -1242,6 +1242,20 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  ["", "    "].each do |indent|
+    it "keeps line numbers after macro with abstract followed by a newline (indent: #{indent.inspect}) (#17994)" do
+      run(<<-CRYSTAL, inject_primitives: false).to_i.should eq(7)
+        macro foo
+          abstract
+        #{indent}class A
+            end
+        end
+        foo
+        __LINE__
+        CRYSTAL
+    end
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
