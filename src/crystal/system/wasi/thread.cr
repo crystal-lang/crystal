@@ -1,3 +1,7 @@
+{% unless flag?(:wasip1) || flag?(:wasip2) %}
+  require "c/pthread"
+{% end %}
+
 module Crystal::System::Thread
   alias Handle = Nil
 
@@ -46,6 +50,9 @@ module Crystal::System::Thread
   private def system_close
   end
 
+  private def close_semaphore
+  end
+
   private def stack_address : Void*
     # TODO: Implement
     Pointer(Void).null
@@ -64,5 +71,16 @@ module Crystal::System::Thread
 
   private def system_resume : Nil
     raise NotImplementedError.new("Crystal::System::Thread.system_resume")
+  end
+
+  protected def init_semaphore : Nil
+  end
+
+  def wait : Nil
+    raise NotImplementedError.new("Crystal::System::Thread#wait")
+  end
+
+  def wake : Nil
+    raise NotImplementedError.new("Crystal::System::Thread#wake")
   end
 end

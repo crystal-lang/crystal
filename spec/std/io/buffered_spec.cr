@@ -486,6 +486,9 @@ describe "IO::Buffered" do
         end
 
         it "gets big EUC-JP string" do
+          {% if flag?(:darwin) && !flag?(:use_libiconv) %}
+            pending!
+          {% end %}
           str = ("好我是人\n" * 1000).encode("EUC-JP")
           base_io = IO::Memory.new(str)
           io = BufferedWrapper.new(base_io)

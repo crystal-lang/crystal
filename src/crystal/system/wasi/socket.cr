@@ -1,7 +1,6 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
 
 module Crystal::System::Socket
   alias Handle = Int32
@@ -203,5 +202,13 @@ module Crystal::System::Socket
 
   private def system_tcp_keepalive_count=(val : Int)
     raise NotImplementedError.new("Crystal::System::Socket#system_tcp_keepalive_count=")
+  end
+
+  def self.network_interface_to_index(name : String, & : WasiError ->) : Int
+    raise NotImplementedError.new("Crystal::System::Socket.network_interface_to_index")
+  end
+
+  def self.network_interface_from_index(index : Int, & : WasiError ->) : String
+    raise NotImplementedError.new("Crystal::System::Socket.network_interface_from_index")
   end
 end

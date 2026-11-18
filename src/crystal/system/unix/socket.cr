@@ -34,7 +34,7 @@ module Crystal::System::Socket
       len = LibC::OffT.new(count)
       ret = LibC.sendfile(fd, sockfd, offset, pointerof(len), nil, 0)
       sent_bytes = len.to_i64
-    {% elsif flag?(:dragonflybsd) || flag?(:freebsd) %}
+    {% elsif flag?(:dragonfly) || flag?(:freebsd) %}
       ret = LibC.sendfile(fd, sockfd, offset, LibC::SizeT.new(count), nil, out sbytes, flags)
       sent_bytes = sbytes.to_i64
     {% elsif flag?(:linux) || flag?(:solaris) %}
@@ -157,6 +157,13 @@ module Crystal::System::Socket
 
     setsockopt LibC::SO_LINGER, v
     val
+  end
+
+  def self.system_error(fd : Handle) : Errno?
+    optval = 0
+    optsize = LibC::SocklenT.new(sizeof(Int32))
+    ret = LibC.getsockopt(fd, LibC::SOL_SOCKET, LibC::SO_ERROR, pointerof(optval), pointerof(optsize))
+    ret == -1 ? Errno.value : Errno.new(optval)
   end
 
   private def system_getsockopt(optname, optval, level = LibC::SOL_SOCKET, &)
@@ -392,5 +399,21 @@ module Crystal::System::Socket
 
       ret.to_i64
     {% end %}
+  end
+
+  def self.network_interface_to_index(name : String, & : Errno ->) : Int
+    zone_id = LibC.if_nametoindex(name)
+    return zone_id if zone_id != 0
+
+    yield Errno.value
+  end
+
+  def self.network_interface_from_index(index : Int, & : Errno ->) : String
+    buf = uninitialized UInt8[LibC::IF_NAMESIZE]
+    if result = LibC.if_indextoname(index, buf)
+      return String.new(result)
+    end
+
+    yield Errno.value
   end
 end

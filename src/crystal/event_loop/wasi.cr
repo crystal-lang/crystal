@@ -1,7 +1,7 @@
 # :nodoc:
 class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def self.default_file_blocking?
-    false
+    true
   end
 
   def self.default_socket_blocking?
@@ -21,7 +21,8 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def sleep(duration : ::Time::Span) : Nil
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.sleep")
+    # block the single thread until we support fiber swapcontext
+    System::Thread.sleep(duration)
   end
 
   # Creates a timeout_event.
@@ -30,11 +31,26 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
-    raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
+    {% if flag?(:wasip1) || flag?(:wasip2) %}
+      raise NotImplementedError.new("Crystal::EventLoop::Wasi#pipe")
+    {% else %}
+      r, w = System::FileDescriptor.system_pipe
+      # Default to blocking until the event loop supports waiting for pipe I/O.
+      System::FileDescriptor.set_blocking(r, false) if read_blocking == false
+      System::FileDescriptor.set_blocking(w, false) if write_blocking == false
+      {
+        IO::FileDescriptor.new(handle: r),
+        IO::FileDescriptor.new(handle: w),
+      }
+    {% end %}
   end
 
   def open(path : String, flags : Int32, permissions : File::Permissions, blocking : Bool?) : {System::FileDescriptor::Handle, Bool} | Errno | WinError
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop#open")
+    fd = LibC.open(path.check_no_null_byte, flags, permissions)
+    return Errno.value if fd == -1
+
+    # WASI filesystem descriptors are always blocking
+    {fd, true}
   end
 
   # TODO: LibWasi.fd_read
@@ -48,6 +64,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     end
   end
 
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    evented_read(file_descriptor, "Error reading file_descriptor") do
+      LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+    end
+  end
+
   def wait_readable(file_descriptor : Crystal::System::FileDescriptor) : Nil
     evented_wait_readable(file_descriptor) do
       raise IO::TimeoutError.new("Read timed out")
@@ -58,6 +80,16 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   def write(file_descriptor : Crystal::System::FileDescriptor, slice : Bytes) : Int32
     evented_write(file_descriptor, "Error writing file_descriptor") do
       LibC.write(file_descriptor.fd, slice, slice.size).tap do |return_code|
+        {% if flag?(:wasip2) %}
+          # wasi-libc preview 2 reports EIO for writes to read-only files.
+          if return_code == -1 && Errno.value == Errno::EIO
+            flags = LibC.fcntl(file_descriptor.fd, LibC::F_GETFL)
+            if flags != -1 && (flags & LibC::O_RDWR) == LibC::O_RDONLY
+              raise IO::Error.new "File not open for writing", target: file_descriptor
+            end
+            Errno.value = Errno::EIO
+          end
+        {% end %}
         if return_code == -1 && Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing", target: file_descriptor
         end
@@ -72,7 +104,7 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   def reopened(file_descriptor : Crystal::System::FileDescriptor) : Nil
-    raise NotImplementedError.new("Crystal::EventLoop#reopened(FileDescriptor)")
+    # No events to update until the event loop supports waiting for file I/O.
   end
 
   # TODO: LibWasi.sock_shutdown
@@ -84,11 +116,11 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     file_descriptor.file_descriptor_close
   end
 
-  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol) : {::Socket::Handle, Bool}
+  def socket(family : ::Socket::Family, type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool | ::Nil) : {::Socket::Handle, Bool}
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#socket")
   end
 
-  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol, blocking : Bool) : {Handle, Handle}
+  def socketpair(type : ::Socket::Type, protocol : ::Socket::Protocol) : Tuple({::Socket::Handle, ::Socket::Handle}, Bool)
     raise NotImplementedError.new("Crystal::EventLoop::Wasi#socketpair")
   end
 
@@ -131,8 +163,12 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
   end
 
   # TODO: LibWasi.sock_accept
-  def accept(socket : ::Socket) : ::Socket::Handle?
+  def accept(socket : ::Socket) : {::Socket::Handle, Bool}?
     raise NotImplementedError.new "Crystal::Wasi::EventLoop#accept"
+  end
+
+  def sendfile(socket : ::Socket, fd : System::FileDescriptor::Handle, offset : Int64, count : Int64, flags : Int32) : Int64 | Errno | WinError
+    raise NotImplementedError.new "Crystal::Wasi::EventLoop#sendfile"
   end
 
   def shutdown(socket : ::Socket) : Nil
@@ -196,7 +232,7 @@ end
 struct Crystal::EventLoop::Wasi::Event
   include Crystal::EventLoop::Event
 
-  def add(timeout : Time::Span) : Nil
+  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
   end
 
   def add(timeout : Nil) : Nil

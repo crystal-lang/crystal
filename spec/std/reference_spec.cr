@@ -153,7 +153,7 @@ describe "Reference" do
       duplicate.x.should eq(original.x)
     end
 
-    it "calls #finalize on #dup'ed objects" do
+    pending_wasm32 "calls #finalize on #dup'ed objects" do
       obj = ReferenceSpec::TestClassWithFinalize.new
       assert_finalizes("dup") { obj.dup }
     end
@@ -191,6 +191,11 @@ describe "Reference" do
   it "pretty_print" do
     ReferenceSpec::TestClassBase.new.pretty_inspect.should match(/\A#<ReferenceSpec::TestClassBase:0x[0-9a-f]+>\Z/)
     ReferenceSpec::TestClass.new(42, "foo").pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+ @x=42, @y="foo">\Z/)
+    expect_empty_recursive_hashes
+  end
+
+  it "pretty_print breaks instance variables that don't fit" do
+    ReferenceSpec::TestClass.new(42, "foo" * 30).pretty_inspect.should match(/\A#<ReferenceSpec::TestClass:0x[0-9a-f]+\n @x=42,\n @y=\n  "#{"foo" * 30}">\Z/)
     expect_empty_recursive_hashes
   end
 end

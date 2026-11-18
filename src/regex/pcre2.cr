@@ -35,7 +35,7 @@ module Regex::PCRE2
     ret = LibPCRE2.jit_compile(@re, LibPCRE2::JIT_COMPLETE)
     if ret < 0
       case error = LibPCRE2::Error.new(ret)
-      when .jit_badoption?
+      when .jit_badoption?, .nomemory?
         # okay
         return false
       else

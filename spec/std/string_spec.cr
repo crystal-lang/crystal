@@ -311,6 +311,7 @@ describe "String" do
     it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
+    it { "0123".to_i(16, prefix: true).should eq(0x123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
     it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }
@@ -319,6 +320,9 @@ describe "String" do
     it { "5".to_i(prefix: true).should eq(5) }
     it { "0".to_i(prefix: true).should eq(0) }
     it { "00".to_i(prefix: true).should eq(0) }
+    it { "0".to_i(leading_zero_is_octal: true).should eq(0) }
+    it { "0".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
+    it { "-0".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(leading_zero_is_octal: true).should eq(0) }
     it { "00".to_i(prefix: true, leading_zero_is_octal: true).should eq(0) }
     it { "123hello".to_i(strict: false).should eq(123) }
@@ -335,7 +339,6 @@ describe "String" do
     it { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "000o89a".to_i(prefix: true) } }
     it { expect_raises(ArgumentError) { "123hello".to_i } }
-    it { expect_raises(ArgumentError) { "0".to_i(leading_zero_is_octal: true) } }
     it { expect_raises(ArgumentError) { "0o755".to_i(leading_zero_is_octal: true) } }
     it { "z".to_i(36).should eq(35) }
     it { "Z".to_i(36).should eq(35) }
@@ -368,6 +371,7 @@ describe "String" do
     describe "to_u8" do
       it { "255".to_u8.should eq(255) }
       it { "0".to_u8.should eq(0) }
+      it { "0".to_u8(leading_zero_is_octal: true).should eq(0) }
       it { expect_raises(ArgumentError) { "256".to_u8 } }
       it { expect_raises(ArgumentError) { "-1".to_u8 } }
 
@@ -751,6 +755,20 @@ describe "String" do
       "a\xA0b".titleize.should eq("A\xA0b")
       String.build { |io| "\xB5!\xE0\xC1\xB5?".titleize(io) }.should eq("\xB5!\xE0\xC1\xB5?".scrub)
       String.build { |io| "a\xA0b".titleize(io) }.should eq("A\xA0b".scrub)
+    end
+
+    it "handles consecutive spaces (#17199)" do
+      assert_prints "a  b".titleize, "A  B"
+      assert_prints "a  b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a _b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a_ b".titleize(underscore_to_space: true), "A  B"
+      assert_prints "a__b".titleize(underscore_to_space: true), "A  B"
+
+      assert_prints "á  é".titleize, "Á  É"
+      assert_prints "á  é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á _é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á_ é".titleize(underscore_to_space: true), "Á  É"
+      assert_prints "á__é".titleize(underscore_to_space: true), "Á  É"
     end
 
     describe "with IO" do
@@ -1469,6 +1487,9 @@ describe "String" do
       it { "foo".split(":-").should eq(["foo"]) }
       it { "foo".split("").should eq(["f", "o", "o"]) }
       it { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
+      it "splits by a multibyte separator" do
+        "a💥b💥c".split("💥").should eq(["a", "b", "c"])
+      end
       it { "foo,bar,baz,qux".split(",", 1).should eq(["foo,bar,baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
       it { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
@@ -2031,9 +2052,24 @@ describe "String" do
       "┬  7".gsub(/\B/, "-").should eq "-┬- - 7"
     end
 
+    it "empty match + advanced offset" do
+      "a  b".gsub(/(?= )/, "-").should eq "a- - b"
+      "┬  7".gsub(/(?= )/, "-").should eq "┬- - 7"
+      "a  ".gsub(/(?<= )/, "-").should eq "a - -"
+      "┬  ".gsub(/(?<= )/, "-").should eq "┬ - -"
+    end
+
     it "empty string" do
       "ab".gsub("", "-").should eq "-a-b-"
       "┬7".gsub("", "-").should eq "-┬-7-"
+    end
+
+    it "very long match with empty string" do
+      str = "a" * 0x40000
+      str.gsub(str, "").should eq ""
+
+      str = "┬7" * 0x20000
+      str.gsub(str, "").should eq ""
     end
   end
 
@@ -2736,6 +2772,8 @@ describe "String" do
   it_iterates "#each_line(chomp: false)", ["foo\n", "bar\r\n", "baz\r\n"], "foo\nbar\r\nbaz\r\n".each_line(chomp: false)
   it_iterates "#each_line(remove_empty: true)", ["foo", "bar", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true)
   it_iterates "#each_line(remove_empty: true, chomp: false)", ["foo\n", "bar\r\n", "baz"], "\nfoo\n\nbar\r\n\r\nbaz".each_line(remove_empty: true, chomp: false)
+  it_iterates "#each_line(remove_empty: true)", [] of String, "\n\n\n".each_line(remove_empty: true)
+  it_iterates "#each_line(remove_empty: true)", [] of String, ("\n" * 100_000).each_line(remove_empty: true)
 
   it_iterates "#each_codepoint", [97, 98, 9731], "ab☃".each_codepoint
 
@@ -2868,6 +2906,9 @@ describe "String" do
       "h".compare("zzz", case_insensitive: true).should eq(-1)
       "ä".compare("äA", case_insensitive: true).should eq(-1)
       "äÄ".compare("äÄ", case_insensitive: true).should eq(0)
+      "".compare("äbc", case_insensitive: true).should eq(-1)
+      "äbc".compare("", case_insensitive: true).should eq(1)
+      "".compare("", case_insensitive: true).should eq(0)
       "heIIo".compare("heııo", case_insensitive: true, options: Unicode::CaseOptions::Turkic).should eq(0)
       "".compare("abc", case_insensitive: true).should eq(-1)
       "abc".compare("", case_insensitive: true).should eq(1)
@@ -2876,13 +2917,25 @@ describe "String" do
 
     it "compares case-insensitive, multiple chars after case conversion (#4513)" do
       "ﬄ".compare("ffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄﬄﬄ".compare("fflfflffl", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "FFL".compare("ﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "ﬄ".compare("FFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬀﬀﬀ".compare("ﬀﬀﬀF", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "FFFL".compare("Fﬄ", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
+      "Fﬄ".compare("FFFL", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
       "sß".compare("ßs", case_insensitive: true, options: Unicode::CaseOptions::Fold).should eq(0)
     end
 
+    it "treats invalid code units as replacement char in an non-optimizable string" do
+      "ö\xC0".compare("ö\xE0", case_insensitive: true).should eq(-1)
+      "ö\xE0".compare("ö\xC0", case_insensitive: true).should eq(1)
+      "ö\xC0".compare("öa", case_insensitive: true).should eq(1)
+      "öa".compare("ö\xC0", case_insensitive: true).should eq(-1)
+    end
+
     it "treats invalid code units as replacement char in an otherwise ascii string" do
-      "\xC0".compare("\xE0", case_insensitive: true).should eq(0)
-      "\xE0".compare("\xC0", case_insensitive: true).should eq(0)
+      "\xC0".compare("\xE0", case_insensitive: true).should eq(-1)
+      "\xE0".compare("\xC0", case_insensitive: true).should eq(1)
       "\xC0".compare("a", case_insensitive: true).should eq(1)
       "a".compare("\xC0", case_insensitive: true).should eq(-1)
     end
@@ -2918,20 +2971,25 @@ describe "String" do
         bytes.should eq Bytes[72, 0, 101, 0, 108, 0, 108, 0, 111, 0]
       end
 
-      {% unless flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
-        it "flushes the shift state (#11992)" do
-          "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
-          "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
-        end
-      {% end %}
+      {% if !flag?(:use_libiconv) && flag?(:darwin) %}
+        # #17701
+        pending "flushes the shift state (#11992)"
+      {% else %}
+        {% if flag?(:use_libiconv) || !(flag?(:musl) || flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
+          it "flushes the shift state (#11992)" do
+            "\u{00CA}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+            "\u{00CA}\u{0304}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+          end
+        {% end %}
 
-      # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
-      # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
-        it "flushes the shift state (#11992)" do
-          "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
-          "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
-        end
+        # FreeBSD iconv encoder expects ISO/IEC 10646 compatibility code points,
+        # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
+        {% if !flag?(:use_libiconv) && (flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
+          it "flushes the shift state (#11992)" do
+            "\u{F329}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x66])
+            "\u{F325}".encode("BIG5-HKSCS").should eq(Bytes[0x88, 0x62])
+          end
+        {% end %}
       {% end %}
 
       it "raises if wrong encoding" do
@@ -2971,7 +3029,7 @@ describe "String" do
         String.new(bytes, "UTF-16LE").should eq("Hello")
       end
 
-      {% unless flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+      {% if flag?(:use_libiconv) || !(flag?(:solaris) || flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) || flag?(:darwin)) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{00CA}\u{0304}")
@@ -2980,7 +3038,7 @@ describe "String" do
 
       # FreeBSD iconv decoder returns ISO/IEC 10646-1:2000 code points,
       # see https://www.ccli.gov.hk/doc/e_hkscs_2008.pdf for details.
-      {% if flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd) %}
+      {% if !flag?(:use_libiconv) && (flag?(:freebsd) || flag?(:dragonfly) || flag?(:netbsd)) %}
         it "decodes with shift state" do
           String.new(Bytes[0x88, 0x66], "BIG5-HKSCS").should eq("\u{00CA}")
           String.new(Bytes[0x88, 0x62], "BIG5-HKSCS").should eq("\u{F325}")
@@ -2988,6 +3046,8 @@ describe "String" do
       {% end %}
 
       it "decodes with skip" do
+        pending! if {{ flag?(:darwin) && !flag?(:use_libiconv) }} # #17701
+
         bytes = Bytes[186, 195, 255, 202, 199]
         String.new(bytes, "EUC-JP", invalid: :skip).should eq("挫頁")
       end

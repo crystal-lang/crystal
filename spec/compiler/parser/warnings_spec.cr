@@ -36,6 +36,13 @@ describe "Parser warnings" do
     end
   end
 
+  it "warns on uppercase instance and class variables" do
+    assert_parser_warning "@Foo", "Warning: uppercase instance variables are deprecated"
+    assert_parser_warning "@@Bar", "Warning: uppercase class variables are deprecated"
+    assert_no_parser_warning "@foo"
+    assert_no_parser_warning "@@bar"
+  end
+
   describe "warns on missing space before colon" do
     it "in block param type restriction" do
       assert_parser_warning("def foo(&block: Foo)\nend", "warning in /test.cr:1\nWarning: space required before colon in type restriction (run `crystal tool format` to fix this)")

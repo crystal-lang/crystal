@@ -6,10 +6,6 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   INTERRUPT_IDENTIFIER =  9
   TIMER_IDENTIFIER     = 10
 
-  {% unless LibC.has_constant?(:EVFILT_USER) %}
-    @pipe = uninitialized LibC::Int[2]
-  {% end %}
-
   def initialize(parallelism : Int32)
     # the kqueue instance
     @kqueue = System::Kqueue.new
@@ -17,44 +13,11 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     # notification to interrupt a run
     @interrupted = Atomic(Bool).new(false)
 
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      @kqueue.kevent(
-        INTERRUPT_IDENTIFIER,
-        LibC::EVFILT_USER,
-        LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-    {% else %}
-      @pipe = System::FileDescriptor.system_pipe
-      @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-    {% end %}
+    @kqueue.kevent(
+      INTERRUPT_IDENTIFIER,
+      LibC::EVFILT_USER,
+      LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
   end
-
-  {% unless flag?(:preview_mt) %}
-    def after_fork : Nil
-      super
-
-      # kqueue isn't inherited by fork on darwin/dragonfly, but we still close
-      @kqueue.close
-      @kqueue = System::Kqueue.new
-
-      @interrupted.set(false, :relaxed)
-
-      {% if LibC.has_constant?(:EVFILT_USER) %}
-        @kqueue.kevent(
-          INTERRUPT_IDENTIFIER,
-          LibC::EVFILT_USER,
-          LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
-      {% else %}
-        @pipe.each { |fd| LibC.close(fd) }
-        @pipe = System::FileDescriptor.system_pipe
-        @kqueue.kevent(@pipe[0], LibC::EVFILT_READ, LibC::EV_ADD)
-      {% end %}
-
-      system_set_timer(@timers.next_ready?)
-
-      # re-add all registered fds
-      Polling.arena.each_index { |fd, index| system_add(fd, index) }
-    end
-  {% end %}
 
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     buffer = uninitialized LibC::Kevent[128]
@@ -84,20 +47,10 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def process_interrupt?(kevent)
-    {% if LibC.has_constant?(:EVFILT_USER) %}
-      if kevent.value.filter == LibC::EVFILT_USER
-        @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% else %}
-      if kevent.value.filter == LibC::EVFILT_READ && kevent.value.ident == @pipe[0]
-        ident = 0
-        ret = LibC.read(@pipe[0], pointerof(ident), sizeof(Int32))
-        raise RuntimeError.from_errno("read") if ret == -1
-        @interrupted.set(false, :relaxed) if ident == INTERRUPT_IDENTIFIER
-        return true
-      end
-    {% end %}
+    if kevent.value.filter == LibC::EVFILT_USER
+      @interrupted.set(false, :relaxed) if kevent.value.ident == INTERRUPT_IDENTIFIER
+      return true
+    end
     false
   end
 
@@ -142,24 +95,21 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   def interrupt : Nil
-    return if @interrupted.swap(true, :relaxed)
-
-    {% if LibC.has_constant?(:EVFILT_USER) %}
+    unless @interrupted.swap(true, :relaxed)
       @kqueue.kevent(INTERRUPT_IDENTIFIER, LibC::EVFILT_USER, 0, LibC::NOTE_TRIGGER)
-    {% else %}
-      ident = INTERRUPT_IDENTIFIER
-      ret = LibC.write(@pipe[1], pointerof(ident), sizeof(Int32))
-      raise RuntimeError.from_errno("write") if ret == -1
-    {% end %}
+    end
   end
 
-  protected def system_add(fd : Int32, index : Polling::Arena::Index) : Nil
+  @[NoInline]
+  protected def system_add(fd : Int32, index : Polling::Arena::Index) : RegisteredEvents
     Crystal.trace :evloop, "kevent", op: "add", fd: fd, index: index.to_i64
 
     # register both read and write events
-    kevents = uninitialized LibC::Kevent[2]
+    changes = uninitialized LibC::Kevent[2]
+    receipts = uninitialized LibC::Kevent[2]
+
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
-      kevent = kevents.to_unsafe + i
+      kevent = changes.to_unsafe + i
       udata =
         {% if flag?(:bits64) %}
           Pointer(Void).new(index.to_u64)
@@ -167,12 +117,18 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
           # assuming 32-bit target: pass the generation as udata (ident is the fd/index)
           Pointer(Void).new(index.generation)
         {% end %}
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR, udata: udata)
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_ADD | LibC::EV_CLEAR | LibC::EV_RECEIPT, udata: udata)
     end
 
-    @kqueue.kevent(kevents.to_slice) do
+    @kqueue.kevent(changes.to_slice, receipts.to_slice) do
       raise RuntimeError.from_errno("kevent")
     end
+
+    # check if kevent succeeded or failed to register an event
+    registered = RegisteredEvents::None
+    registered |= RegisteredEvents::READ if receipts[0].data == 0
+    registered |= RegisteredEvents::WRITE if receipts[1].data == 0
+    registered
   end
 
   protected def system_del(fd : Int32, closing = true) : Nil
@@ -187,41 +143,45 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     Crystal.trace :evloop, "kevent", op: "del", fd: fd
 
     # unregister both read and write events
-    kevents = uninitialized LibC::Kevent[2]
+    changes = uninitialized LibC::Kevent[2]
+    receipts = uninitialized LibC::Kevent[2]
+
     {LibC::EVFILT_READ, LibC::EVFILT_WRITE}.each_with_index do |filter, i|
-      kevent = kevents.to_unsafe + i
-      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE)
+      kevent = changes.to_unsafe + i
+      System::Kqueue.set(kevent, fd, filter, LibC::EV_DELETE | LibC::EV_RECEIPT)
     end
 
-    @kqueue.kevent(kevents.to_slice) do
-      raise RuntimeError.from_errno("kevent")
+    @kqueue.kevent(changes.to_slice, receipts.to_slice) do
+      raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
     end
   end
 
   private def system_set_timer(time : Time::Instant?) : Nil
+    fflags = 0_u32
+
     if time
       flags = LibC::EV_ADD | LibC::EV_ONESHOT | LibC::EV_CLEAR
 
       # Cannot use `::Time.instant` here because it could be mocked.
       t = time.duration_since(Crystal::System::Time.instant)
 
-      data = t.total_nanoseconds.to_i64!
-      {% unless LibC.has_constant?(:NOTE_NSECONDS) %}
+      data = t.to_nanoseconds.to_i64!
+      {% if LibC.has_constant?(:NOTE_NSECONDS) %}
+        fflags |= LibC::NOTE_NSECONDS
+      {% else %}
         # legacy BSD (and DragonFly) only have millisecond precision, so we
         # round up to the next millisecond.
         data = (data + 999_999) // 1_000_000
+      {% end %}
+
+      {% if flag?(:netbsd) %}
+        # timeout must be greater than zero on NetBSD
+        data = 1 if data == 0
       {% end %}
     else
       flags = LibC::EV_DELETE
       data = 0_u64
     end
-
-    fflags =
-      {% if LibC.has_constant?(:NOTE_NSECONDS) %}
-        LibC::NOTE_NSECONDS
-      {% else %}
-        0
-      {% end %}
 
     @kqueue.kevent(TIMER_IDENTIFIER, LibC::EVFILT_TIMER, flags, fflags, data) do
       raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT

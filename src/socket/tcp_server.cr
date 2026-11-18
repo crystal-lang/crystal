@@ -33,7 +33,7 @@ class TCPServer < TCPSocket
   end
 
   # Binds a socket to the *host* and *port* combination.
-  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout = nil, reuse_port : Bool = false)
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout : Time::Span? = nil, reuse_port : Bool = false)
     Addrinfo.tcp(host, port, timeout: dns_timeout) do |addrinfo|
       super(addrinfo.family, addrinfo.type, addrinfo.protocol)
 
@@ -50,6 +50,12 @@ class TCPServer < TCPSocket
         next errno
       end
     end
+  end
+
+  # :ditto:
+  @[Deprecated("Use `.new(String, Int, Int, Time::Span?, Bool)` instead.")]
+  def initialize(host : String, port : Int, backlog : Int = SOMAXCONN, dns_timeout : Number = 0, reuse_port : Bool = false)
+    initialize(host, port, backlog, dns_timeout.seconds, reuse_port)
   end
 
   # Creates a TCPServer from an existing system file descriptor or socket

@@ -1,17 +1,19 @@
-{% skip_file unless flag?(:preview_mt) %}
+{% skip_file if flag?(:without_mt) %}
 
 private SPEC_TIMEOUT = 15.seconds
 
 Spec.around_each do |example|
   done = Channel(Exception?).new
 
-  spawn(same_thread: !{{flag?(:execution_context)}}) do
-    example.run
-  rescue e
-    done.send(e)
-  else
-    done.send(nil)
-  end
+  {% begin %}
+    spawn do
+      example.run
+    rescue e
+      done.send(e)
+    else
+      done.send(nil)
+    end
+  {% end %}
 
   timeout = SPEC_TIMEOUT
   if example.example.all_tags.includes?("slow")

@@ -401,7 +401,6 @@ describe "Code gen: block" do
 
   it "returns from block with value" do
     run(<<-CRYSTAL).to_i.should eq(1)
-      require "prelude"
 
       def foo
         while true
@@ -416,7 +415,7 @@ describe "Code gen: block" do
         end
       end
 
-      bar.to_i
+      bar
       CRYSTAL
   end
 
@@ -1600,6 +1599,49 @@ describe "Code gen: block" do
         1
       end
       CRYSTAL
+  end
+
+  it "codegens proc forwarding from an unused yielded block value (#17125)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+
+      private record Foo,
+        proc : String ->
+
+      def bar(&proc : String ->)
+        baz(&proc)
+      end
+
+      def baz(&proc : String ->)
+      end
+
+      ([] of Foo).each do |foo|
+        bar(&foo.proc)
+      end
+
+      1
+      CRYSTAL
+  end
+
+  it "doesn't materialize an unused yield block value in debug builds (#12693)" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All)
+      def foo : Nil
+        yield Pointer(Bool).new(0).value
+        nil
+      end
+
+      def bar
+        x = 11111
+        foo do |y|
+          x = 22222 if y
+        end
+        x
+      end
+
+      bar
+      CRYSTAL
+
+    mod.to_s.should_not contain(%(alloca %"(Int32 | Nil)"))
   end
 
   it "doesn't crash if yield exp has no type (#12670)" do

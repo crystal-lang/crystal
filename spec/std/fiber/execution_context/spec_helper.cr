@@ -1,3 +1,4 @@
+{% skip_file unless Fiber.has_constant?(:ExecutionContext) %}
 require "../../spec_helper"
 require "../../../support/fibers"
 require "crystal/system/thread_wait_group"

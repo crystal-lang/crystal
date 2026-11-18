@@ -9,6 +9,7 @@ lib LibLLVM
   alias OrcSymbolPredicate = Void*, OrcSymbolStringPoolEntryRef -> Int
   alias OrcThreadSafeContextRef = Void*
   alias OrcThreadSafeModuleRef = Void*
+  alias OrcObjectLayerRef = Void*
 
   fun orc_create_dynamic_library_search_generator_for_process = LLVMOrcCreateDynamicLibrarySearchGeneratorForProcess(
     result : OrcDefinitionGeneratorRef*, global_prefx : Char,
@@ -27,4 +28,6 @@ lib LibLLVM
 
   fun orc_create_new_thread_safe_module = LLVMOrcCreateNewThreadSafeModule(m : ModuleRef, ts_ctx : OrcThreadSafeContextRef) : OrcThreadSafeModuleRef
   fun orc_dispose_thread_safe_module = LLVMOrcDisposeThreadSafeModule(tsm : OrcThreadSafeModuleRef)
+
+  fun orc_object_layer_add_object_file = LLVMOrcObjectLayerAddObjectFile(obj_layer : OrcObjectLayerRef, jd : OrcJITDylibRef, obj_buffer : MemoryBufferRef) : ErrorRef
 end

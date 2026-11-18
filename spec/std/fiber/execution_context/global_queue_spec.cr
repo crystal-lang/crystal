@@ -1,3 +1,4 @@
+{% skip_file unless Fiber.has_constant?(:ExecutionContext) %}
 require "./spec_helper"
 require "../../../support/thread"
 

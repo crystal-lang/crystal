@@ -63,6 +63,12 @@ module Fiber::ExecutionContext
       @mutex.synchronize { unsafe_grab?(runnables, divisor) }
     end
 
+    # Same as `grab?` but skips the mutex when the global queue looks empty
+    # (lazy check).
+    def lazy_grab?(runnables : Runnables, divisor : Int32) : Fiber?
+      grab?(runnables, divisor) unless @list.empty?
+    end
+
     # Try to grab a batch of fibers from the global runnable queue. Returns the
     # next runnable fiber or `nil` if the queue was empty. Assumes the lock is
     # currently held.

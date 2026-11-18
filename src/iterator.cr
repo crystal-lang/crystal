@@ -948,7 +948,7 @@ module Iterator(T)
   end
 
   # Returns an iterator that only returns elements
-  # that are **not** of the given *type*.
+  # that are **not** of type `U`.
   #
   # ```
   # iter = [1, false, 3, true].each.reject(Bool)
@@ -1008,7 +1008,7 @@ module Iterator(T)
   end
 
   # Returns an iterator that only returns elements
-  # of the given *type*.
+  # of type `U`.
   #
   # ```
   # iter = [1, false, 3, nil].each.select(Int32)

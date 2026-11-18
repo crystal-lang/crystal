@@ -55,6 +55,10 @@ require "base64"
 # this method. `YAML::Serializable` can be used to implement this method
 # for user types.
 #
+# NOTE: Some types in the standard library can only be deserialized from YAML
+# after requiring an additional file: `require "big/yaml"` for `BigInt`, `BigFloat`
+# and `BigDecimal`, `require "uri/yaml"` for `URI` and `require "uuid/yaml"` for `UUID`.
+#
 # ### Dumping with `YAML.dump` or `#to_yaml`
 #
 # `YAML.dump` generates the YAML representation for an object.

@@ -37,7 +37,7 @@ module Markd::HTMLEntities
         end
       else
         entities_key = chars[0..-1]
-        if resolved_entity = Markd::HTMLEntities::ENTITIES_MAPPINGS[entities_key]?
+        if (resolved_entity = Markd::HTMLEntities::ENTITIES_MAPPINGS[entities_key]?)
           return resolved_entity
         end
       end
@@ -48,7 +48,7 @@ module Markd::HTMLEntities
     def self.decode_codepoint(codepoint)
       return "\uFFFD" if codepoint >= 0xD800 && codepoint <= 0xDFFF || codepoint > 0x10FFF
 
-      if decoded = Markd::HTMLEntities::DECODE_MAPPINGS[codepoint]?
+      if (decoded = Markd::HTMLEntities::DECODE_MAPPINGS[codepoint]?)
         codepoint = decoded
       end
 

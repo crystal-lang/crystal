@@ -12,8 +12,7 @@ class LLVM::Module
     new(module_ref, context)
   end
 
-  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context)
-    @owned = false
+  def initialize(@unwrap : LibLLVM::ModuleRef, @context : Context, *, @dispose_on_finalize : Bool = true)
   end
 
   def name : String
@@ -33,6 +32,10 @@ class LLVM::Module
     LibLLVM.set_module_data_layout(self, data)
   end
 
+  def inline_asm=(assembly : String)
+    LibLLVM.set_module_inline_asm2(self, assembly, assembly.bytesize)
+  end
+
   def dump
     LibLLVM.dump_module(self)
   end
@@ -45,17 +48,40 @@ class LLVM::Module
     GlobalCollection.new(self)
   end
 
+  def new_builder : Builder
+    builder =
+      {% if LibLLVM::IS_LT_240 %}
+        Builder.new(LibLLVM.create_builder_in_context(@context))
+      {% else %}
+        Builder.new(LibLLVM.create_builder_for_module(self))
+      {% end %}
+
+    # FIXME: dispose in `LLVM::Module` itself (#13952), or simply let
+    # `Builder#finalize` do the work
+    @context.@builders << builder
+
+    builder
+  end
+
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
-    add_flag(module_flag, key, @context.int32.const_int(val))
+    add_flag(module_flag, key, @context.int32.const_int(val).to_metadata)
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : String)
+    add_flag(module_flag, key, @context.metadata_string(val))
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
+    add_flag(module_flag, key, val.to_metadata)
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Metadata)
     LibLLVM.add_module_flag(
       self,
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.value_as_metadata(val.to_unsafe)
+      val,
     )
   end
 
@@ -114,11 +140,22 @@ class LLVM::Module
     @unwrap
   end
 
+  def dispose : Nil
+    if @unwrap
+      LibLLVM.dispose_module(self)
+      @unwrap = Pointer(Void).null.as(LibLLVM::ModuleRef)
+    end
+  end
+
+  def finalize
+    dispose if @dispose_on_finalize
+  end
+
   def take_ownership(&)
-    if @owned
-      yield
+    if @dispose_on_finalize
+      @dispose_on_finalize = false
     else
-      @owned = true
+      yield
     end
   end
 end

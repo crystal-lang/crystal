@@ -65,4 +65,17 @@ describe "Lexer comments" do
     token = lexer.next_token
     token.type.should eq(t :EOF)
   end
+
+  it "lexes comment followed by \\r\\n" do
+    lexer = Lexer.new("# Hello\r\n1")
+
+    token = lexer.next_token
+    token.type.should eq(t :NEWLINE)
+
+    token = lexer.next_token
+    token.type.should eq(t :NUMBER)
+  end
+
+  assert_syntax_error "# Hello\r1", "expected '\\n' after '\\r'"
+  assert_syntax_error "1 # Hello\r1", "expected '\\n' after '\\r'"
 end

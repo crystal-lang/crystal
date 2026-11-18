@@ -2,6 +2,22 @@ require "../unix/file"
 
 # :nodoc:
 module Crystal::System::File
+  {% unless flag?(:wasip1) %}
+    def self.stat(path, stat)
+      # WASI libc's metadata hash for a symlink does not follow the link,
+      # even though the rest of stat's metadata does. Resolve the path first
+      # so st_ino identifies the target as well.
+      resolved = LibC.realpath(path, nil)
+      return -1 unless resolved
+
+      begin
+        LibC.stat(resolved, stat)
+      ensure
+        LibC.free(resolved.as(Void*))
+      end
+    end
+  {% end %}
+
   protected def system_init(mode : String, blocking : Bool) : Nil
   end
 
@@ -15,17 +31,5 @@ module Crystal::System::File
 
   private def system_chown(uid : Int, gid : Int)
     raise NotImplementedError.new "Crystal::System::File#system_chown"
-  end
-
-  def self.realpath(path)
-    raise NotImplementedError.new "Crystal::System::File.realpath"
-  end
-
-  def self.utime(atime : ::Time, mtime : ::Time, filename : String) : Nil
-    raise NotImplementedError.new "Crystal::System::File.utime"
-  end
-
-  def self.delete(path : String, *, raise_on_missing : Bool) : Bool
-    raise NotImplementedError.new "Crystal::System::File.delete"
   end
 end

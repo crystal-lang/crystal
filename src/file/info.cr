@@ -143,6 +143,18 @@ class File
       type.symlink?
     end
 
+    def inspect(io : IO) : Nil
+      io << "File::Info("
+      io << "type=" << type
+      io << ", size=" << size
+      io << ", permissions=" << permissions
+      io << ", flags=" << flags
+      io << ", modification_time=" << modification_time
+      io << ", owner_id=" << owner_id
+      io << ", group_id=" << group_id
+      io << ")"
+    end
+
     # Returns `true` if *path* is readable by the real user id of this process else returns `false`.
     #
     # ```
@@ -153,8 +165,8 @@ class File
     # This method returns the readable property as reported by the file system
     # which provides no indication of whether `File.read` would be a valid
     # operation because it applies to all file types, including directories.
-    def self.readable?(path : Path | String) : Bool
-      Crystal::System::File.readable?(path.to_s)
+    def self.readable?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+      Crystal::System::File.readable?(path.to_s, follow_symlinks: follow_symlinks)
     end
 
     # Returns `true` if *path* is writable by the real user id of this process else returns `false`.
@@ -167,8 +179,8 @@ class File
     # This method returns the readable property as reported by the file system
     # which provides no indication of whether `File.write` would be a valid
     # operation because it applies to all file types, including directories.
-    def self.writable?(path : Path | String) : Bool
-      Crystal::System::File.writable?(path.to_s)
+    def self.writable?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+      Crystal::System::File.writable?(path.to_s, follow_symlinks: follow_symlinks)
     end
 
     # Returns `true` if *path* is executable by the real user id of this process else returns `false`.
@@ -183,8 +195,10 @@ class File
     # operation because it applies to all file types, including directories
     # (which typically *are* executable to signal it's allowed to list their
     # contents).
-    def self.executable?(path : Path | String) : Bool
-      Crystal::System::File.executable?(path.to_s)
+    #
+    # NOTE: `follow_symlinks: false` is not implemented on Windows.
+    def self.executable?(path : Path | String, *, follow_symlinks : Bool = true) : Bool
+      Crystal::System::File.executable?(path.to_s, follow_symlinks: follow_symlinks)
     end
   end
 end

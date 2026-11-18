@@ -9,6 +9,16 @@ def datapath(*components)
   File.join("spec", "std", "data", *components)
 end
 
+def symlink_target(target, link)
+  {% if flag?(:wasm32) %}
+    # WASI rejects absolute symlinks that cross preopened directory boundaries.
+    base = Dir.current
+    Path[target].expand(base).relative_to(Path[link].expand(base).parent).to_s
+  {% else %}
+    target
+  {% end %}
+end
+
 private class Witness
   @checked = false
 
@@ -43,11 +53,13 @@ def spawn_and_check(before : Proc(_), file = __FILE__, line = __LINE__, &block :
 
     # This is a workaround to ensure the "before" fiber
     # is unscheduled. Otherwise it might stay alive running the event loop
-    spawn(same_thread: !{{flag?(:execution_context)}}) do
-      while x.get != 2
-        Fiber.yield
+    {% begin %}
+      spawn do
+        while x.get != 2
+          Fiber.yield
+        end
       end
-    end
+    {% end %}
 
     before.call
     x.set(2)
@@ -138,9 +150,13 @@ end
 def compile_and_run_file(source_file, flags = %w(), runtime_args = %w(), file = __FILE__)
   compile_file(source_file, flags: flags, file: file) do |executable_file|
     output, error = IO::Memory.new, IO::Memory.new
-    status = Process.run executable_file, args: runtime_args, output: output, error: error
+    {% if flag?(:wasm32) %}
+      pending! "Executing a process is not supported on this platform"
+    {% else %}
+      status = Process.run executable_file, args: runtime_args, output: output, error: error
 
-    {status, output.to_s, error.to_s}
+      {status, output.to_s, error.to_s}
+    {% end %}
   end
 end
 

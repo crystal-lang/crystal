@@ -506,7 +506,7 @@ describe "Semantic: proc" do
   end
 
   it "gives correct error message when proc return type is incorrect (#219)" do
-    assert_error <<-CRYSTAL, "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
+    assert_error <<-CRYSTAL, "argument 'f' of 'LibFoo.bar' must be a Proc returning Int32, not Float64"
       lib LibFoo
         fun bar(f : Int32 -> Int32)
       end
@@ -783,7 +783,7 @@ describe "Semantic: proc" do
   end
 
   it "errors if pointer to lib fun has incompatible parameter type" do
-    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+    assert_error <<-CRYSTAL, "argument 'x' of 'LibFoo.foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
       lib LibFoo
         fun foo(x : Int32)
       end
@@ -799,7 +799,7 @@ describe "Semantic: proc" do
   end
 
   it "errors if pointer to lib fun has incorrect number of parameters" do
-    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibFoo#foo' (given 1, expected 2)"
+    assert_error <<-CRYSTAL, "wrong number of arguments for 'LibFoo.foo' (given 1, expected 2)"
       lib LibFoo
         fun foo(x : Int32, y : Int32)
       end

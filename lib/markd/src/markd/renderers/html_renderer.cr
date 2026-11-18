@@ -5,21 +5,23 @@ module Markd
     @disable_tag = 0
     @last_output = "\n"
 
-    HEADINGS = %w(h1 h2 h3 h4 h5 h6)
+    @strong_stack = 0
 
-    def heading(node : Node, entering : Bool)
+    HEADINGS = %w[h1 h2 h3 h4 h5 h6]
+
+    def heading(node : Node, entering : Bool) : Nil
       tag_name = HEADINGS[node.data["level"].as(Int32) - 1]
       if entering
         newline
         tag(tag_name, attrs(node))
-        toc(node) if @options.toc
+        toc(node) if @options.toc?
       else
         tag(tag_name, end_tag: true)
         newline
       end
     end
 
-    def code(node : Node, entering : Bool)
+    def code(node : Node, entering : Bool) : Nil
       tag("code") do
         code_body(node)
       end
@@ -29,45 +31,29 @@ module Markd
       output(node.text)
     end
 
-    def code_block(node : Node, entering : Bool)
-      languages = node.fence_language ? node.fence_language.split : nil
-      code_tag_attrs = attrs(node)
-      pre_tag_attrs = if @options.prettyprint?
-                        {"class" => "prettyprint"}
-                      else
-                        nil
-                      end
-
-      lang = code_block_language(languages)
-      if lang
-        code_tag_attrs ||= {} of String => String
-        code_tag_attrs["class"] = "language-#{escape(lang)}"
-      end
-
-      newline
-      tag("pre", pre_tag_attrs) do
-        tag("code", code_tag_attrs) do
-          code_block_body(node, lang)
-        end
-      end
-      newline
+    def code_block(node : Node, entering : Bool, formatter : T?) : Nil forall T
+      {% if @top_level.has_constant?("Tartrazine") %}
+        render_code_block_use_tartrazine(node, formatter)
+      {% else %}
+        render_code_block_use_code_tag(node)
+      {% end %}
     end
 
     def code_block_language(languages)
       languages.try(&.first?).try(&.strip.presence)
     end
 
-    def code_block_body(node : Node, lang : String?)
+    def code_block_body(node : Node, lang : String?) : Nil
       output(node.text)
     end
 
-    def thematic_break(node : Node, entering : Bool)
+    def thematic_break(node : Node, entering : Bool) : Nil
       newline
       tag("hr", attrs(node), self_closing: true)
       newline
     end
 
-    def block_quote(node : Node, entering : Bool)
+    def block_quote(node : Node, entering : Bool) : Nil
       newline
       if entering
         tag("blockquote", attrs(node))
@@ -77,8 +63,76 @@ module Markd
       newline
     end
 
-    def list(node : Node, entering : Bool)
-      tag_name = node.data["type"] == "bullet" ? "ul" : "ol"
+    def alert(node : Node, entering : Bool) : Nil
+      newline
+      if entering
+        tag("div", {"class" => "alert alert-#{node.data["alert"].to_s.downcase}"})
+        tag("p", {"class" => "alert-title"}) do
+          output(node.data["title"].as(String))
+        end
+      else
+        tag("div", end_tag: true)
+      end
+      newline
+    end
+
+    def table(node : Node, entering : Bool) : Nil
+      has_body = node.data["has_body"]
+      newline
+      if entering
+        tag("table", attrs(node))
+      else
+        if has_body
+          tag("tbody", end_tag: true)
+          newline
+        end
+        tag("table", end_tag: true)
+      end
+      newline
+    end
+
+    def table_row(node : Node, entering : Bool) : Nil
+      newline
+      is_heading = node.data["heading"]
+      has_body = node.data["has_body"]
+      if entering
+        if is_heading
+          tag("thead")
+          newline
+        end
+        tag("tr", attrs(node))
+      else
+        tag("tr", end_tag: true)
+        newline
+        if is_heading
+          tag("thead", end_tag: true)
+          newline
+          if has_body
+            tag("tbody")
+            newline
+          end
+        end
+      end
+    end
+
+    def table_cell(node : Node, entering : Bool) : Nil
+      tag_name = node.data["heading"] ? "th" : "td"
+      if !node.data["align"].to_s.empty?
+        attrs = {"align" => node.data["align"]}
+      else
+        attrs = {} of String => String
+      end
+      if entering
+        newline
+        tag(tag_name, attrs)
+      else
+        tag(tag_name, end_tag: true)
+        newline
+      end
+    end
+
+    def list(node : Node, entering : Bool) : Nil
+      tag_name = node.data["type"] == "ordered" ? "ol" : "ul"
 
       newline
       if entering
@@ -96,16 +150,34 @@ module Markd
       newline
     end
 
-    def item(node : Node, entering : Bool)
+    def item(node : Node, entering : Bool) : Nil
       if entering
         tag("li", attrs(node))
+
+        if node.data["type"] == "checkbox"
+          if node.data["checked"]?
+            attributes = {
+              "checked"  => "",
+              "disabled" => "",
+              "type"     => "checkbox",
+            }
+          else
+            attributes = {
+              "disabled" => "",
+              "type"     => "checkbox",
+            }
+          end
+
+          tag("input", attributes)
+          literal(" ")
+        end
       else
         tag("li", end_tag: true)
         newline
       end
     end
 
-    def link(node : Node, entering : Bool)
+    def link(node : Node, entering : Bool) : Nil
       if entering
         attrs = attrs(node)
         destination = node.data["destination"].as(String)
@@ -137,7 +209,7 @@ module Markd
       base_url.resolve(uri).to_s
     end
 
-    def image(node : Node, entering : Bool)
+    def image(node : Node, entering : Bool) : Nil
       if entering
         if @disable_tag == 0
           destination = node.data["destination"].as(String)
@@ -160,19 +232,19 @@ module Markd
       end
     end
 
-    def html_block(node : Node, entering : Bool)
+    def html_block(node : Node, entering : Bool) : Nil
       newline
       content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       literal(content)
       newline
     end
 
-    def html_inline(node : Node, entering : Bool)
+    def html_inline(node : Node, entering : Bool) : Nil
       content = @options.safe? ? "<!-- raw HTML omitted -->" : node.text
       literal(content)
     end
 
-    def paragraph(node : Node, entering : Bool)
+    def paragraph(node : Node, entering : Bool) : Nil
       if (grand_parent = node.parent?.try &.parent?) && grand_parent.type.list?
         return if grand_parent.data["tight"]
       end
@@ -186,24 +258,41 @@ module Markd
       end
     end
 
-    def emphasis(node : Node, entering : Bool)
+    def emphasis(node : Node, entering : Bool) : Nil
+      if entering
+        node.data["strong_stack"] = @strong_stack
+        @strong_stack = 0
+      end
+
       tag("em", end_tag: !entering)
+
+      if !entering
+        @strong_stack = node.data["strong_stack"].as(Int32)
+      end
     end
 
-    def soft_break(node : Node, entering : Bool)
+    def soft_break(node : Node, entering : Bool) : Nil
       literal("\n")
     end
 
-    def line_break(node : Node, entering : Bool)
+    def line_break(node : Node, entering : Bool) : Nil
       tag("br", self_closing: true)
       newline
     end
 
-    def strong(node : Node, entering : Bool)
-      tag("strong", end_tag: !entering)
+    def strong(node : Node, entering : Bool) : Nil
+      @strong_stack -= 1 if @options.gfm? && !entering
+
+      tag("strong", end_tag: !entering) if @strong_stack == 0
+
+      @strong_stack += 1 if @options.gfm? && entering
     end
 
-    def text(node : Node, entering : Bool)
+    def strikethrough(node : Node, entering : Bool) : Nil
+      tag("del", end_tag: !entering)
+    end
+
+    def text(node : Node, entering : Bool) : Nil
       output(node.text)
     end
 
@@ -222,7 +311,7 @@ module Markd
       @last_output = ">"
     end
 
-    private def tag(name : String, attrs = nil)
+    private def tag(name : String, attrs = nil, &)
       tag(name, attrs)
       yield
       tag(name, end_tag: true)
@@ -235,7 +324,7 @@ module Markd
     private def toc(node : Node)
       return unless node.type.heading?
 
-      {% if Crystal::VERSION < "1.2.0" %}
+      {% if compare_versions(Crystal::VERSION, "1.2.0") < 0 %}
         title = URI.encode(node.first_child.text)
         @output_io << %(<a id="anchor-) << title << %(" class="anchor" href="#anchor-) << title << %("></a>)
       {% else %}
@@ -248,9 +337,55 @@ module Markd
     private def attrs(node : Node)
       if @options.source_pos? && (pos = node.source_pos)
         {"data-source-pos" => "#{pos[0][0]}:#{pos[0][1]}-#{pos[1][0]}:#{pos[1][1]}"}
-      else
-        nil
       end
+    end
+
+    private def render_code_block_use_tartrazine(node : Node, formatter : Tartrazine::Formatter?)
+      languages = node.fence_language ? node.fence_language.split : nil
+      lang = code_block_language(languages)
+
+      newline
+
+      if lang
+        lexer = Tartrazine.lexer(lang)
+
+        literal(formatter.format(node.text.chomp, lexer))
+      else
+        code_tag_attrs = attrs(node)
+        pre_tag_attrs = if @options.prettyprint?
+                          {"class" => "prettyprint"}
+                        end
+
+        tag("pre", pre_tag_attrs) do
+          tag("code", code_tag_attrs) do
+            code_block_body(node, lang)
+          end
+        end
+      end
+
+      newline
+    end
+
+    private def render_code_block_use_code_tag(node : Node)
+      languages = node.fence_language ? node.fence_language.split : nil
+      code_tag_attrs = attrs(node)
+      pre_tag_attrs = if @options.prettyprint?
+                        {"class" => "prettyprint"}
+                      end
+
+      lang = code_block_language(languages)
+      if lang
+        code_tag_attrs ||= {} of String => String
+        code_tag_attrs["class"] = "language-#{escape(lang)}"
+      end
+
+      newline
+      tag("pre", pre_tag_attrs) do
+        tag("code", code_tag_attrs) do
+          code_block_body(node, lang)
+        end
+      end
+      newline
     end
   end
 end

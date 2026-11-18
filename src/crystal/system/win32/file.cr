@@ -162,15 +162,17 @@ module Crystal::System::File
     accessible?(path, check_writable: false, follow_symlinks: follow_symlinks)
   end
 
-  def self.readable?(path) : Bool
-    accessible?(path, check_writable: false, follow_symlinks: true)
+  def self.readable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, check_writable: false, follow_symlinks: follow_symlinks)
   end
 
-  def self.writable?(path) : Bool
-    accessible?(path, check_writable: true, follow_symlinks: true)
+  def self.writable?(path, *, follow_symlinks = true) : Bool
+    accessible?(path, check_writable: true, follow_symlinks: follow_symlinks)
   end
 
-  def self.executable?(path) : Bool
+  def self.executable?(path, *, follow_symlinks = true) : Bool
+    raise NotImplementedError.new("File.executable?(follow_symlinks: false)") unless follow_symlinks
+
     # NOTE: this always follows symlinks:
     # https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getbinarytypew#remarks
     LibC.GetBinaryTypeW(System.to_wstr(path), out result) != 0
@@ -338,7 +340,8 @@ module Crystal::System::File
   def self.symlink(old_path : String, new_path : String) : Nil
     win_old_path = System.to_wstr(old_path.gsub('/', '\\'))
     win_new_path = System.to_wstr(new_path)
-    info = info?(old_path, true)
+    target_path = ::Path[old_path].expand(::Path[new_path].parent, expand_base: false).to_s
+    info = info?(target_path, true)
     flags = info.try(&.type.directory?) ? LibC::SYMBOLIC_LINK_FLAG_DIRECTORY : 0
 
     # Symlink on Windows required the SeCreateSymbolicLink privilege. But in the Windows 10

@@ -4,7 +4,9 @@ require "../../support/string"
 require "spec/helpers/iterate"
 
 require "socket"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "base64"
 
 # This is a non-optimized version of IO::Memory so we can test
@@ -100,7 +102,8 @@ end
 
 describe IO do
   describe "partial read" do
-    it "doesn't block on first read.  blocks on 2nd read" do
+    # wasip1, wasip2: no pipe; wasip3: blocking event-loop
+    pending_wasm32 "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
         slice = Bytes.new 1024
@@ -427,7 +430,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
       it "raises if trying to read to an IO not opened for reading" do
         IO.pipe do |r, w|
           expect_raises(IO::Error, "File not open for reading") do
@@ -587,7 +590,7 @@ describe IO do
 
     # pipe(2) returns bidirectional file descriptors on some platforms,
     # gate this test behind the platform flag.
-    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) %}
+    {% unless flag?(:freebsd) || flag?(:solaris) || flag?(:openbsd) || flag?(:dragonfly) || flag?(:wasip1) || flag?(:wasip2) %}
       it "raises if trying to write to an IO not opened for writing" do
         IO.pipe do |r, w|
           # unless sync is used the flush on close triggers the exception again
@@ -642,6 +645,9 @@ describe IO do
         end
 
         it "gets big EUC-JP string" do
+          {% if flag?(:darwin) && !flag?(:use_libiconv) %}
+            pending!
+          {% end %}
           2.times do
             str = ("好我是人\n" * 1000).encode("EUC-JP")
             io = SimpleIOMemory.new(str)
@@ -747,16 +753,21 @@ describe IO do
         it "says invalid byte sequence" do
           io = SimpleIOMemory.new(Slice.new(1, 255_u8))
           io.set_encoding("EUC-JP")
-          message =
-            {% if flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) %}
-              "Incomplete multibyte sequence"
-            {% else %}
-              "Invalid multibyte sequence"
-            {% end %}
-          expect_raises(ArgumentError, message) { io.read_char }
+          exception = expect_raises(ArgumentError) { io.read_char }
+
+          {% if flag?(:darwin) %}
+            # #17701
+            ["Incomplete multibyte sequence", "Invalid multibyte sequence"].should contain(exception.message)
+          {% elsif !flag?(:use_libiconv) && (flag?(:musl) || flag?(:freebsd) || flag?(:netbsd) || flag?(:dragonfly) || flag?(:darwin)) %}
+            exception.message.should eq("Incomplete multibyte sequence")
+          {% else %}
+            exception.message.should eq("Invalid multibyte sequence")
+          {% end %}
         end
 
         it "skips invalid byte sequences" do
+          pending! if {{ flag?(:darwin) && !flag?(:use_libiconv) }} # #17701
+
           string = String.build do |str|
             str.write "好".encode("EUC-JP")
             str.write_byte 255_u8
@@ -796,6 +807,19 @@ describe IO do
           io.encoding.should eq("UTF-8")
         end
 
+        it "handles long lines correctly with invalid: :skip" do
+          # Using both ASCII characters and a 26-byte Unicode characters to
+          # ensure we hit as many byte boundaries inside the Unicode characters
+          # as we can to get sufficient confidence in this test.
+          text = "test string 👩🏾‍🤝‍👨🏻" * 10240
+          io = IO::Memory.new
+          io.set_encoding "UTF-8", invalid: :skip
+          io << text
+
+          io.bytesize.should eq text.bytesize
+          io.to_slice.should eq text.to_slice
+        end
+
         it "does skips when converting to UTF-8" do
           io = SimpleIOMemory.new(Base64.decode_string("ey8qx+Tl8fwg7+Dw4Ozl8vD7IOLo5+jy4CovfQ=="))
           io.set_encoding("UTF-8", invalid: :skip)
@@ -831,7 +855,7 @@ describe IO do
           io.gets_to_end.should eq("\r\nFoo\nBar")
         end
 
-        it "gets ascii from socket (#9056)" do
+        pending_wasm32 "gets ascii from socket (#9056)" do
           server = TCPServer.new "localhost", 0
           sock = TCPSocket.new "localhost", server.local_address.port
           begin
@@ -903,7 +927,7 @@ describe IO do
           slice.should eq("foo".encode("UCS-2LE"))
         end
 
-        it "prints big int" do
+        pending_wasm32 "prints big int" do
           io = SimpleIOMemory.new
           io.set_encoding("UCS-2LE")
           io.print 123_456.to_big_i
@@ -1015,7 +1039,8 @@ describe IO do
       end
     end
 
-    it "aborts 'read' in a different fiber" do
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'read' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|
@@ -1036,7 +1061,8 @@ describe IO do
       end
     end
 
-    it "aborts 'write' in a different fiber" do
+    # wasip1, wasip2: no pipe; wasip3: no fibers
+    pending_wasm32 "aborts 'write' in a different fiber" do
       ch = Channel(SpecChannelStatus).new(1)
 
       IO.pipe do |read, write|

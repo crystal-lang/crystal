@@ -402,6 +402,26 @@ class JSON::PullParser
     value
   end
 
+  # Reads nested objects following the path of *key*, *subkey* and *subkeys*,
+  # and yields when the innermost key is found. If any key along the path is
+  # not found, raises an `Exception`.
+  #
+  # All the other object keys are skipped.
+  #
+  # Returns the return value of the block.
+  #
+  # ```
+  # require "json"
+  #
+  # pull = JSON::PullParser.new(%({"data": {"user": {"name": "Alice"}}}))
+  # pull.on_key!("data", "user", "name", &.read_string) # => "Alice"
+  # ```
+  def on_key!(key, subkey, *subkeys, & : self -> _)
+    on_key!(key) do
+      on_key!(subkey, *subkeys) { |pull| yield pull }
+    end
+  end
+
   # Reads the next lexer's token.
   #
   # Contrary to `read_raw`, it does not read a full value.

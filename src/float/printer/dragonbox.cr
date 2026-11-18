@@ -31,38 +31,13 @@ module Float::Printer::Dragonbox
 
   # Utilities for wide unsigned integer arithmetic.
   private module WUInt
-    # TODO: use built-in integer type
-    record UInt128, high : UInt64, low : UInt64 do
-      def unsafe_add!(n : UInt64) : self
-        sum = @low &+ n
-        @high &+= (sum < @low ? 1 : 0)
-        @low = sum
-        self
-      end
-    end
-
     def self.umul64(x : UInt32, y : UInt32) : UInt64
       x.to_u64 &* y
     end
 
     # Get 128-bit result of multiplication of two 64-bit unsigned integers.
     def self.umul128(x : UInt64, y : UInt64) : UInt128
-      a = (x >> 32).to_u32!
-      b = x.to_u32!
-      c = (y >> 32).to_u32!
-      d = y.to_u32!
-
-      ac = umul64(a, c)
-      bc = umul64(b, c)
-      ad = umul64(a, d)
-      bd = umul64(b, d)
-
-      intermediate = (bd >> 32) &+ ad.to_u32! &+ bc.to_u32!
-
-      UInt128.new(
-        high: ac &+ (intermediate >> 32) &+ (ad >> 32) &+ (bc >> 32),
-        low: (intermediate << 32) &+ bd.to_u32!,
-      )
+      x.to_u128! &* y
     end
 
     def self.umul128_upper64(x : UInt64, y : UInt64) : UInt64
@@ -82,9 +57,8 @@ module Float::Printer::Dragonbox
 
     # Get upper 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
     def self.umul192_upper128(x : UInt64, y : UInt128) : UInt128
-      r = umul128(x, y.high)
-      r.unsafe_add!(umul128_upper64(x, y.low))
-      r
+      r = x.to_u128! &* (y >> 64)
+      r &+ umul128_upper64(x, y.to_u64!)
     end
 
     # Get upper 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
@@ -100,12 +74,7 @@ module Float::Printer::Dragonbox
 
     # Get lower 128-bits of multiplication of a 64-bit unsigned integer and a 128-bit unsigned integer.
     def self.umul192_lower128(x : UInt64, y : UInt128) : UInt128
-      high = x &* y.high
-      high_low = umul128(x, y.low)
-      UInt128.new(
-        high: high &+ high_low.high,
-        low: high_low.low,
-      )
+      y &* x
     end
 
     # Get lower 64-bits of multiplication of a 32-bit unsigned integer and a 64-bit unsigned integer.
@@ -442,17 +411,15 @@ module Float::Printer::Dragonbox
       {% else %}
         # F == Float64
         r = WUInt.umul192_upper128(u, cache)
-        {r.high, r.low == 0}
+        {
+          ImplInfo::CarrierUInt.new!(r >> 64),
+          ImplInfo::CarrierUInt.new!(r) == 0,
+        }
       {% end %}
     end
 
     def self.compute_delta(cache, beta) : UInt32
-      {% if F == Float32 %}
-        (cache >> (ImplInfo::CACHE_BITS - 1 - beta)).to_u32!
-      {% else %}
-        # F == Float64
-        (cache.high >> (ImplInfo::CARRIER_BITS - 1 - beta)).to_u32!
-      {% end %}
+      (cache >> (ImplInfo::CACHE_BITS - 1 - beta)).to_u32!
     end
 
     def self.compute_mul_parity(two_f, cache, beta) # : {parity: Bool, is_integer: Bool}
@@ -466,8 +433,8 @@ module Float::Printer::Dragonbox
         # F == Float64
         r = WUInt.umul192_lower128(two_f, cache)
         {
-          ((r.high >> (64 - beta)) & 1) != 0,
-          (r.high << beta) | (r.low >> (64 - beta)) == 0,
+          ((r >> (128 - beta)) & 1) != 0,
+          UInt64.new!(r >> (64 - beta)) == 0,
         }
       {% end %}
     end
@@ -476,12 +443,7 @@ module Float::Printer::Dragonbox
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
-        {% if F == Float32 %}
-          (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
-        {% else %}
-          # F == Float64
-          (cache.high - (cache.high >> (significand_bits + 2))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
-        {% end %}
+        (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
       )
     end
 
@@ -489,24 +451,14 @@ module Float::Printer::Dragonbox
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
-        {% if F == Float32 %}
-          (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
-        {% else %}
-          # F == Float64
-          (cache.high + (cache.high >> (significand_bits + 1))) >> (ImplInfo::CARRIER_BITS - significand_bits - 1 - beta)
-        {% end %}
+        (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
       )
     end
 
     def self.compute_round_up_for_shorter_interval_case(cache, beta)
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
-      {% if F == Float32 %}
-        (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta)) + 1) // 2
-      {% else %}
-        # F == Float64
-        ((cache.high >> (ImplInfo::CARRIER_BITS - significand_bits - 2 - beta)) + 1) // 2
-      {% end %}
+      (ImplInfo::CarrierUInt.new!(cache >> (ImplInfo::CACHE_BITS - significand_bits - 2 - beta)) + 1) // 2
     end
 
     def self.is_left_endpoint_integer_shorter_interval?(exponent)

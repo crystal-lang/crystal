@@ -108,33 +108,20 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   @timers_lock = SpinLock.new
   @timers = Timers(Event).new
 
-  {% unless flag?(:preview_mt) %}
-    # no parallelism issues, but let's clean-up anyway
-    def after_fork : Nil
-      @timers_lock = SpinLock.new
-    end
-  {% end %}
-
   # thread unsafe
   def run(blocking : Bool) : Bool
-    system_run(blocking) do |fiber|
-      {% if flag?(:execution_context) %}
-        fiber.execution_context.enqueue(fiber)
-      {% else %}
-        Crystal::Scheduler.enqueue(fiber)
-      {% end %}
-    end
+    system_run(blocking, &.enqueue)
     true
   end
 
-  {% if flag?(:execution_context) %}
+  {% unless flag?(:without_mt) %}
     # the evloop has a single poll instance for the context and only one
     # scheduler must wait on the evloop at any time
     include EventLoop::Lock
 
     # thread unsafe
-    def run(queue : Fiber::List*, blocking : Bool) : Nil
-      system_run(blocking) { |fiber| queue.value.push(fiber) }
+    def run(blocking : Bool, & : Fiber ->) : Nil
+      system_run(blocking) { |fiber| yield fiber }
     end
   {% end %}
 
@@ -201,6 +188,20 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       end
     else
       size.to_i32
+    end
+  end
+
+  def pread(file_descriptor : System::FileDescriptor, slice : Bytes, offset : Int64) : Int32
+    loop do
+      size = LibC.pread(file_descriptor.fd, slice, slice.size, offset)
+      return size.to_i32 unless size == -1
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable(file_descriptor, file_descriptor.@read_timeout)
+        check_open(file_descriptor)
+      else
+        raise IO::Error.from_errno("pread", target: file_descriptor)
+      end
     end
   end
 
@@ -321,19 +322,21 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   def connect(socket : ::Socket, address : ::Socket::Addrinfo | ::Socket::Address, timeout : Time::Span?) : IO::Error?
-    loop do
-      ret = LibC.connect(socket.fd, address, address.size)
-      return unless ret == -1
+    ret = LibC.connect(socket.fd, address, address.size)
+    return unless ret == -1
 
-      case Errno.value
-      when Errno::EISCONN
-        return
+    errno = Errno.value
+
+    loop do
+      case errno
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(socket, timeout) do
           return IO::TimeoutError.new("Connect timed out")
         end
+        errno = Crystal::System::Socket.system_error(socket.fd)
+        return if errno.none?
       else
-        return ::Socket::ConnectError.from_errno("connect")
+        return ::Socket::ConnectError.from_os_error("connect", errno)
       end
     end
   end
@@ -465,23 +468,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
     Polling.arena.free(index) do |pd|
       pd.value.@readers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.@writers.ready_all do |event|
-        pd.value.@event_loop.try(&.unsafe_resume_io(event) do |fiber|
-          {% if flag?(:execution_context) %}
-            fiber.execution_context.enqueue(fiber)
-          {% else %}
-            Crystal::Scheduler.enqueue(fiber)
-          {% end %}
-        end)
+        pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
       pd.value.remove(io.fd)
@@ -660,12 +651,11 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       Polling.arena.get?(event.value.index) { |pd| pd.value.@writers.delete(event) }
       event.value.timed_out!
     when .select_timeout?
-      # always dequeue the event but only enqueue the fiber if we win the
-      # atomic CAS
-      return unless select_action = fiber.timeout_select_action
-      fiber.timeout_select_action = nil
+      # The action belongs to this timer registration. The fiber may already
+      # have started another select while this timer was being processed.
+      return unless select_action = event.value.timeout_select_action
       return unless select_action.time_expired?
-      fiber.@timeout_event.as(FiberEvent).clear
+      event.value.wake_at = nil
     when .sleep?
       event.value.timed_out!
     else
@@ -687,8 +677,14 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # from the system event's user data.
   private abstract def system_run(blocking : Bool, & : Fiber ->) : Nil
 
+  @[Flags]
+  enum RegisteredEvents
+    READ
+    WRITE
+  end
+
   # Add *fd* to the polling system, setting *index* as user data.
-  protected abstract def system_add(fd : Int32, index : Arena::Index) : Nil
+  protected abstract def system_add(fd : Int32, index : Arena::Index) : RegisteredEvents
 
   # Remove *fd* from the polling system. Must raise a `RuntimeError` on error.
   #

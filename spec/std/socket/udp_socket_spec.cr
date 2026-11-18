@@ -18,23 +18,27 @@ describe UDPSocket, tags: "network" do
     socket.close
   end
 
-  it "supports IPv6 dual stack" do
-    socket = UDPSocket.new(:inet6)
+  # DragonFly no longer implement ipv6<>ipv4 mappings.
+  # FreeBSD neither, but we can still set the IPV6_V6ONLY flag.
+  {% unless flag?(:dragonfly) %}
+    it "supports IPv6 dual stack" do
+      socket = UDPSocket.new(:inet6)
 
-    socket.ipv6_only = false
-    socket.ipv6_only?.should be_false
-
-    socket.ipv6_only = true
-    socket.ipv6_only?.should be_true
-
-    socket = UDPSocket.new
-    expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
-      socket.ipv6_only?
-    end
-    expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
       socket.ipv6_only = false
+      socket.ipv6_only?.should be_false
+
+      socket.ipv6_only = true
+      socket.ipv6_only?.should be_true
+
+      socket = UDPSocket.new
+      expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
+        socket.ipv6_only?
+      end
+      expect_raises(Socket::Error, "Unsupported IP address family: INET. For use with IPv6 only") do
+        socket.ipv6_only = false
+      end
     end
-  end
+  {% end %}
 
   each_ip_family do |family, address, unspecified_address|
     it "#bind" do

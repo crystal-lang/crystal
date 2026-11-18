@@ -71,7 +71,7 @@ describe String::Builder do
 
         1023.times { str << mbstring }
 
-        str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE)]
+        str.write mbstring.to_slice[0..(-4 - String::HEADER_SIZE - 1)]
         str << "a"
         expect_raises(IO::EOFError) do
           str << "a"
@@ -79,4 +79,10 @@ describe String::Builder do
       end
     end
   {% end %}
+
+  it "grows considering space for trailing zero byte" do
+    builder = String::Builder.new
+    65.times { builder << 'x' }
+    builder.capacity.should eq 128
+  end
 end

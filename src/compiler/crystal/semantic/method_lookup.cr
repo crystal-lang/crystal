@@ -476,9 +476,15 @@ module Crystal
 
                 # On a generic instance type, we must add the macro method to the
                 # generic type, not the instance (this will make it so that the method
-                # is found on any generic instance type)
+                # is found on any generic instance type). The same goes for the metaclass
+                # of a generic instance, whose defs are those of the generic type's
+                # metaclass: otherwise the copy is never found, and every lookup copies
+                # and types the method again.
                 change_owner = subtype_lookup
-                change_owner = change_owner.generic_type if change_owner.is_a?(GenericInstanceType)
+                case change_owner
+                when GenericInstanceType, GenericClassInstanceMetaclassType, GenericModuleInstanceMetaclassType
+                  change_owner = change_owner.generic_type
+                end
 
                 if change_owner.is_a?(ModuleType)
                   changes << Change.new(change_owner, cloned_def)

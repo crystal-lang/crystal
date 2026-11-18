@@ -160,7 +160,7 @@ class Dir
 
   # Repositions this directory to the first entry.
   def rewind : self
-    Crystal::System::Dir.rewind(@dir)
+    Crystal::System::Dir.rewind(@dir, path)
     self
   end
 
@@ -284,6 +284,8 @@ class Dir
   # Dir.mkdir("testdir")
   # Dir.exists?("testdir") # => true
   # ```
+  #
+  # Raises `File::AlreadyExistsError` if the directory already exists.
   def self.mkdir(path : Path | String, mode : Int32 = 0o777) : Nil
     Crystal::System::Dir.create(path.to_s, mode)
   end
@@ -291,6 +293,8 @@ class Dir
   # Creates a new directory at the given path, including any non-existing
   # intermediate directories. The linux-style permission mode can be specified,
   # with a default of 777 (0o777).
+  #
+  # Does nothing if a directory already exists.
   def self.mkdir_p(path : Path | String, mode : Int32 = 0o777) : Nil
     return if Dir.exists?(path)
 

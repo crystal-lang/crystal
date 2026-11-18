@@ -419,7 +419,7 @@ module Crystal
       end
     end
 
-    describe "string methods" do
+    describe StringLiteral do
       it "executes string == string" do
         assert_macro %({{"foo" == "foo"}}), %(true)
         assert_macro %({{"foo" == "bar"}}), %(false)
@@ -478,6 +478,11 @@ module Crystal
 
       it "executes size" do
         assert_macro %({{"hello".size}}), "5"
+      end
+
+      it "executes bytesize" do
+        assert_macro %({{"hello".bytesize}}), "5"
+        assert_macro %({{"hellö".bytesize}}), "6"
       end
 
       it "executes count" do
@@ -631,8 +636,8 @@ module Crystal
       end
 
       it "executes to_utf16" do
-        assert_macro %({{"hello".to_utf16}}), "(::Slice(::UInt16).literal(104_u16, 101_u16, 108_u16, 108_u16, 111_u16, 0_u16))[0, 5]"
-        assert_macro %({{"TEST 😐🐙 ±∀ の".to_utf16}}), "(::Slice(::UInt16).literal(84_u16, 69_u16, 83_u16, 84_u16, 32_u16, 55357_u16, 56848_u16, 55357_u16, 56345_u16, 32_u16, 177_u16, 8704_u16, 32_u16, 12398_u16, 0_u16))[0, 14]"
+        assert_macro %({{"hello".to_utf16}}), "::Slice(::UInt16).literal(104_u16, 101_u16, 108_u16, 108_u16, 111_u16, 0_u16)[0, 5]"
+        assert_macro %({{"TEST 😐🐙 ±∀ の".to_utf16}}), "::Slice(::UInt16).literal(84_u16, 69_u16, 83_u16, 84_u16, 32_u16, 55357_u16, 56848_u16, 55357_u16, 56345_u16, 32_u16, 177_u16, 8704_u16, 32_u16, 12398_u16, 0_u16)[0, 14]"
       end
 
       it "executes to_i" do
@@ -3467,9 +3472,16 @@ module Crystal
         assert_macro %({{x.excludes_end?}}), "true", {x: RangeLiteral.new(1.int32, 2.int32, true)}
       end
 
-      it "executes map" do
-        assert_macro %({{x.map(&.stringify)}}), %(["1", "2", "3"]), {x: RangeLiteral.new(1.int32, 3.int32, false)}
-        assert_macro %({{x.map(&.stringify)}}), %(["1", "2"]), {x: RangeLiteral.new(1.int32, 3.int32, true)}
+      describe "#map" do
+        it "with NumberLiteral" do
+          assert_macro %({{x.map(&.stringify)}}), %(["1", "2", "3"]), {x: RangeLiteral.new(1.int32, 3.int32, false)}
+          assert_macro %({{x.map(&.stringify)}}), %(["1", "2"]), {x: RangeLiteral.new(1.int32, 3.int32, true)}
+        end
+
+        it "with CharLiteral" do
+          assert_macro %({{x.map(&.stringify)}}), %(["'a'", "'b'", "'c'"]), {x: RangeLiteral.new(CharLiteral.new('a'), CharLiteral.new('c'), false)}
+          assert_macro %({{x.map(&.stringify)}}), %(["'a'", "'b'"]), {x: RangeLiteral.new(CharLiteral.new('a'), CharLiteral.new('c'), true)}
+        end
       end
 
       it "executes to_a" do
@@ -3557,6 +3569,14 @@ module Crystal
           x: Annotation.new(Path.new("Foo"), [] of ASTNode),
           y: true.bool,
         }
+      end
+    end
+
+    describe NumberLiteral do
+      describe "#chr" do
+        it "executes chr" do
+          assert_macro %({{x.chr}}), %('a'), {x: 97.int32}
+        end
       end
     end
 

@@ -533,6 +533,11 @@ class Crystal::Call
       restriction = def_arg.restriction
       if restriction
         expected_type = match_context.instantiated_type.lookup_type?(restriction, free_vars: match_context.bound_free_vars)
+
+        # mismatch restriction applies on the union of descendant types, not the virtualized type
+        if restriction.is_a?(Union) && expected_type.is_a?(VirtualType | VirtualMetaclassType)
+          expected_type = restriction
+        end
       end
     end
     expected_type ||= def_arg.restriction.not_nil!
@@ -1005,7 +1010,7 @@ class Crystal::Call
     Call.full_name(owner, def_name)
   end
 
-  def self.full_name(owner, method_name = name)
+  def self.full_name(owner, method_name)
     case owner
     when Program, Nil
       method_name
@@ -1013,7 +1018,7 @@ class Crystal::Call
       # Class's instance_type is Object, not Class, so we cannot treat it like
       # other metaclasses
       "#{owner}##{method_name}"
-    when .metaclass?
+    when .metaclass?, LibType
       "#{owner.instance_type}.#{method_name}"
     else
       "#{owner}##{method_name}"

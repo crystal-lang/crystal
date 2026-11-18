@@ -19,13 +19,13 @@
 # $ nix-shell --pure --arg musl true
 #
 
-{llvm ? 16, musl ? false, system ? builtins.currentSystem}:
+{llvm ? 22, musl ? false, system ? builtins.currentSystem}:
 
 let
   nixpkgs = import (builtins.fetchTarball {
-    name = "nixpkgs-23.05";
-    url = "https://github.com/NixOS/nixpkgs/archive/23.05.tar.gz";
-    sha256 = "10wn0l08j9lgqcw8177nh2ljrnxdrpri7bp0g7nvrsn9rkawvlbf";
+    name = "nixpkgs-26.05";
+    url = "https://github.com/NixOS/nixpkgs/archive/26.05.tar.gz";
+    sha256 = "sha256:0am8xx09fx5yf2p0wb001v0jx1g5hrfb76h4r37xph378jgk7pcr";
   }) {
     inherit system;
   };
@@ -58,23 +58,23 @@ let
   # Hashes obtained using `nix-prefetch-url --unpack <url>`
   latestCrystalBinary = genericBinary ({
     x86_64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:1k57jpy1qjiampby6wz1p8745743npny9p01wlr6ck66l3xz2lai";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.22.3/crystal-1.22.3-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1wa09cfcwn7wq8j0z3671m46mx8zidb4fjjbyvcbnjfj9jvs023b";
     };
 
     aarch64-darwin = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1-darwin-universal.tar.gz";
-      sha256 = "sha256:1k57jpy1qjiampby6wz1p8745743npny9p01wlr6ck66l3xz2lai";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.22.3/crystal-1.22.3-1-darwin-universal.tar.gz";
+      sha256 = "sha256:1wa09cfcwn7wq8j0z3671m46mx8zidb4fjjbyvcbnjfj9jvs023b";
     };
 
     x86_64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1-linux-x86_64.tar.gz";
-      sha256 = "sha256:0y3nikn7r46grx0r622067x3xmqkqy2kyxrhyjx7wdyhli6nf8qa";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.22.3/crystal-1.22.3-1-linux-x86_64.tar.gz";
+      sha256 = "sha256:0a9gbxnnxk37603fbgwa64xbwa0rnx5p7wl9dryid0li6fpv0122";
     };
 
     aarch64-linux = {
-      url = "https://github.com/crystal-lang/crystal/releases/download/1.20.2/crystal-1.20.2-1-linux-aarch64.tar.gz";
-      sha256 = "sha256:0cxzd2dwargh5l3pldlm4i5qhyyzajr9yycb249zrfadr8rqafh3";
+      url = "https://github.com/crystal-lang/crystal/releases/download/1.22.3/crystal-1.22.3-1-linux-aarch64.tar.gz";
+      sha256 = "sha256:1nyhi6fqqwal9gp3ylysacw63rnrra50ydq1pd7mv2qzbp7812pk";
     };
   }.${pkgs.stdenv.system});
 

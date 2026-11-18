@@ -100,11 +100,16 @@ class OpenSSL::BIO
                 socket = bio.socket
                 is_tx = num != 0
 
-                KTLS.enable(socket)
+                # can't start Kernel TLS on RX with leftover data in the read buffer
+                if is_tx || !socket.read_buffering? || socket.@in_buffer_rem.empty?
+                  KTLS.enable(socket)
 
-                if KTLS.start(socket, ptr, is_tx)
-                  LibCrypto.BIO_set_flags(b, is_tx ? LibCrypto::BIO_FLAGS_KTLS_TX : LibCrypto::BIO_FLAGS_KTLS_RX)
-                  1
+                  if KTLS.start(socket, ptr, is_tx)
+                    LibCrypto.BIO_set_flags(b, is_tx ? LibCrypto::BIO_FLAGS_KTLS_TX : LibCrypto::BIO_FLAGS_KTLS_RX)
+                    1
+                  else
+                    0
+                  end
                 else
                   0
                 end

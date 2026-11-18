@@ -21,7 +21,7 @@ class File::PReader < IO
     count = Math.min(count, @bytesize - @pos)
 
     bytes_read = @file.@fd_lock.reference do
-      Crystal::System::FileDescriptor.pread(@file, slice[0, count], @offset + @pos)
+      @file.system_pread(slice[0, count], @offset + @pos)
     end
 
     @pos += bytes_read

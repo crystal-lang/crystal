@@ -1,4 +1,4 @@
-{% skip_file unless flag?(:execution_context) %}
+{% skip_file unless Fiber.has_constant?(:ExecutionContext) %}
 require "spec"
 require "wait_group"
 

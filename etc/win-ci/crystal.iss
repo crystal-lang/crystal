@@ -6,7 +6,7 @@
 #define MyAppPublisher "Manas Technology Solutions"
 #define MyAppURL "https://crystal-lang.org/"
 #define MyAppExeName "crystal.exe"
-#define MyAppCopyright GetFileCopyright("portable\" + MyAppExeName)
+#define MyAppCopyright GetFileCopyrightString("portable\" + MyAppExeName)
 #define MyAppAssocName MyAppName + " Source File"
 #define MyAppAssocExt ".cr"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
@@ -15,9 +15,28 @@
 #define MinorNum 0
 #expr UnpackVersionComponents(StrToVersion(MyAppVersionNum), MajorNum, MinorNum, null, null)
 
+#ifndef cpu
+  #define PROCESSOR_ARCHITECTURE ReadReg(HKEY_LOCAL_MACHINE, "SYSTEM\CurrentControlSet\Control\Session Manager\Environment", "PROCESSOR_ARCHITECTURE")
+  #if PROCESSOR_ARCHITECTURE == "AMD64"
+    #define cpu "x86_64"
+  #elif PROCESSOR_ARCHITECTURE == "ARM64"
+    #define cpu "aarch64"
+  #else
+    #error "Failed to detect host architecture, use -dcpu=... to specify the target architecture"
+  #endif
+#endif
+
+#if cpu == "x86_64"
+  #define MyAppId "{{7C307DDF-447E-46C5-BB3B-47A6F652D7C8}"
+  #define ArchitecturesAllowed "x64os"
+#elif cpu == "aarch64"
+  #define MyAppId "{{3B35E2F7-6BB2-43B1-8AC9-55B598AC82E4}"
+  #define ArchitecturesAllowed "arm64"
+#endif
+
 [Setup]
-AppId={{7C307DDF-447E-46C5-BB3B-47A6F652D7C8}
-AppName={#MyAppName} x86_64-windows-msvc
+AppId={#MyAppId}
+AppName={#MyAppName} {#cpu}-windows-msvc
 AppVersion={#MyAppVersion}
 AppCopyright={#MyAppCopyright}
 VersionInfoVersion={#MyAppVersionNum}
@@ -25,8 +44,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed={#ArchitecturesAllowed}
 DefaultDirName={autopf}\{#MyAppName}
 OutputBaseFilename=crystal-setup
 LicenseFile=portable\LICENSE.txt
@@ -135,11 +153,6 @@ type
     function EnumInstances(out enumInstances: IEnumSetupInstances): HResult;
   end;
 
-  IClassFactory = interface(IUnknown) '{00000001-0000-0000-C000-000000000046}'
-    function CreateInstance(unkOuter: IUnknown; riid: TGUID; out object: IUnknown): HResult;
-    procedure LockServer;
-  end;
-
 function HasMSVC: Boolean;
 var
   config: ISetupConfiguration;
@@ -147,6 +160,7 @@ var
   count: DWord;
   setup: ISetupInstance;
   setupPath: WideString;
+  compilerPath: WideString;
   msvcVersion: AnsiString;
   hresult: HResult;
 begin
@@ -165,12 +179,18 @@ begin
     OleCheck(hresult);
     if hresult = 1 then
       Break;
+
     hresult := setup.GetInstallationPath(setupPath);
     if hresult <> 0 then
       Continue;
+    if IsArm64 then
+      compilerPath := '\bin\Hostarm64\arm64\cl.exe'
+    else
+      compilerPath := '\bin\Hostx64\x64\cl.exe';
+
     if not LoadStringFromFile(setupPath + '\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt', msvcVersion) then
       Continue;
-    if not FileExists(setupPath + '\VC\Tools\MSVC\' + TrimRight(msvcVersion) + '\bin\Hostx64\x64\cl.exe') then
+    if not FileExists(setupPath + '\VC\Tools\MSVC\' + TrimRight(msvcVersion) + compilerPath) then
       Continue;
     Log('MSVC location: ' + setupPath + '\VC\Tools\MSVC\' + TrimRight(msvcVersion));
     result := True;
@@ -204,9 +224,14 @@ end;
 function HasVCRedist: Boolean;
 var
   regValue: Cardinal;
+  arch: String;
 begin
+  if IsArm64 then
+    arch := 'arm64'
+  else
+    arch := 'x64';
   result := False;
-  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\X64', 'Installed', regValue) then
+  if RegQueryDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\' + arch, 'Installed', regValue) then
     if regValue <> 0 then
       result := True;
 end;
@@ -292,6 +317,9 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   uninstallString: String;
   exitCode: Integer;
+  url: String;
+  exe: String;
+  cmdArgs: String;
 begin
   case CurStep of
   ssInstall:
@@ -306,61 +334,74 @@ begin
     end;
   ssPostInstall:
     begin
+      if IsArm64 then
+      begin
+        url := 'https://aka.ms/vc14/vc_redist.ARM64.exe';
+        exe := 'VC_redist.ARM64.exe';
+      end
+      else
+      begin
+        url := 'https://aka.ms/vc14/vc_redist.x64.exe';
+        exe := 'VC_redist.x64.exe';
+      end;
+      cmdArgs := '/passive /norestart';
+
       if (not HasVCRedist) and (IDYES = SuppressibleTaskDialogMsgBox(
         'Install Visual C++ Redistributable',
-        'Setup is unable to detect a copy of the Visual C++ 2015 Redistributable (x64) or newer on this machine. ' +
+        'Setup is unable to detect a copy of the Visual C++ v14 Redistributable on this machine. ' +
           'The runtime libraries are needed by dynamically linked executables, including the compiler itself. ' +
           'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
-          'https://aka.ms/vs/17/release/vc_redist.x64.exe'#13#10#13#10 +
-          'and then run:'#13#10#13#10 +
-          'VC_redist.x64.exe /passive /norestart'#13#10#13#10 +
-          'Would you like to install the Visual C++ Redistributable now?',
+          url +
+          (#13#10#13#10'and then run:'#13#10#13#10) +
+          exe + ' ' + cmdArgs +
+          (#13#10#13#10'Would you like to install the Visual C++ Redistributable now?'),
         mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
       begin
-        DownloadTemporaryFile('https://aka.ms/vs/17/release/vc_redist.x64.exe', 'VC_redist.x64.exe', '', nil);
-        if not Exec(ExpandConstant('{tmp}\VC_redist.x64.exe'), '/passive /norestart', '', SW_SHOW, ewWaitUntilTerminated, exitCode) then
+        DownloadTemporaryFile(url, exe, '', nil);
+        if not Exec(ExpandConstant('{tmp}\' + exe), cmdArgs, '', SW_SHOW, ewWaitUntilTerminated, exitCode) then
           SuppressibleMsgBox('Failed to install the Visual C++ Redistributable.', mbError, MB_OK, IDOK);
       end;
+
+      url := 'https://aka.ms/vs/stable/vs_buildtools.exe';
+      exe := 'vs_BuildTools.exe';
+      if IsArm64 then
+        cmdArgs := '--passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64'
+      else
+        cmdArgs := '--passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64';
 
       if (not HasMSVC) and (IDYES = SuppressibleTaskDialogMsgBox(
         'Install MSVC Build Tools',
         'Setup is unable to detect a copy of the Build Tools for Visual Studio 2017 or newer on this machine. ' +
           'The MSVC Build Tools are required to link Crystal programs into Windows executables. ' +
           'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
-          'https://aka.ms/vs/17/release/vs_BuildTools.exe'#13#10#13#10 +
-          'and then run:'#13#10#13#10 +
-          'vs_BuildTools.exe --passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64'#13#10#13#10 +
-          'Would you like to install the MSVC Build Tools now? ' +
+          url +
+          (#13#10#13#10'and then run:'#13#10#13#10) +
+          exe + ' ' + cmdArgs +
+          (#13#10#13#10'Would you like to install the MSVC Build Tools now? ') +
           'Note that you may modify your installation later using the Visual Studio Installer.',
         mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
       begin
-        DownloadTemporaryFile('https://aka.ms/vs/17/release/vs_BuildTools.exe', 'vs_BuildTools.exe', '', nil);
-        if not Exec(
-          ExpandConstant('{tmp}\vs_BuildTools.exe'),
-          '--passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
-          '', SW_SHOW, ewWaitUntilTerminated, exitCode
-        ) then
+        DownloadTemporaryFile(url, exe, '', nil);
+        if not Exec(ExpandConstant('{tmp}\' + exe), cmdArgs, '', SW_SHOW, ewWaitUntilTerminated, exitCode) then
           SuppressibleMsgBox('Failed to install the Build Tools for Visual Studio.', mbError, MB_OK, IDOK);
       end;
+
+      cmdArgs := '--passive --norestart --wait --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.Windows11SDK.22621';
 
       if (not HasWinSDK) and (IDYES = SuppressibleTaskDialogMsgBox(
         'Install Windows SDK',
         'Setup is unable to detect a copy of the Windows 10 SDK or newer on this machine. ' +
           'The Crystal runtime and standard library rely on the Win32 libraries to interface with the Windows system. ' +
           'If you select "Agree", the installer will proceed to download: '#13#10#13#10 +
-          'https://aka.ms/vs/17/release/vs_BuildTools.exe'#13#10#13#10 +
-          'and then run:'#13#10#13#10 +
-          'vs_BuildTools.exe --passive --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.22621'#13#10#13#10 +
-          'Would you like to install the Windows SDK now? ' +
+          url +
+          (#13#10#13#10'and then run:'#13#10#13#10) +
+          exe + ' ' + cmdArgs +
+          (#13#10#13#10'Would you like to install the Windows SDK now? ') +
           'Note that you may modify your installation later using the Visual Studio Installer.',
         mbInformation, MB_YESNO, ['Agree', 'Decline'], IDYES, IDYES)) then
       begin
-        DownloadTemporaryFile('https://aka.ms/vs/17/release/vs_BuildTools.exe', 'vs_BuildTools.exe', '', nil);
-        if not Exec(
-          ExpandConstant('{tmp}\vs_BuildTools.exe'),
-          '--passive --norestart --wait --add Microsoft.VisualStudio.Component.Windows11SDK.22621',
-          '', SW_SHOW, ewWaitUntilTerminated, exitCode
-        ) then
+        DownloadTemporaryFile(url, exe, '', nil);
+        if not Exec(ExpandConstant('{tmp}\' + exe), cmdArgs, '', SW_SHOW, ewWaitUntilTerminated, exitCode) then
           SuppressibleMsgBox('Failed to install the Windows SDK.', mbError, MB_OK, IDOK);
       end;
 

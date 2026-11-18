@@ -85,7 +85,7 @@ module Crystal::System::Socket
     socket
   end
 
-  private def initialize_handle(handle, blocking = nil)
+  protected def initialize_handle(handle, blocking = nil)
     @blocking = blocking unless blocking.nil?
 
     unless @family.unix?
@@ -132,38 +132,6 @@ module Crystal::System::Socket
     end
   end
 
-  # :nodoc:
-  def overlapped_connect(socket, method, timeout, &)
-    IOCP::WSAOverlappedOperation.run(socket) do |operation|
-      result = yield operation
-
-      if result == 0
-        case error = WinError.wsa_value
-        when .wsa_io_pending?
-          # the operation is running asynchronously; do nothing
-        when .wsaeaddrnotavail?
-          return ::Socket::ConnectError.from_os_error("ConnectEx", error)
-        else
-          return ::Socket::Error.from_os_error("ConnectEx", error)
-        end
-      else
-        return nil
-      end
-
-      operation.wait_for_result(timeout) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaeconnrefused?
-          return ::Socket::ConnectError.from_os_error(method, error)
-        when .error_operation_aborted?
-          # FIXME: Not sure why this is necessary
-          return ::Socket::ConnectError.from_os_error(method, error)
-        end
-      end
-
-      nil
-    end
-  end
-
   private def system_connect_connectionless(addr, timeout)
     ret = LibC.connect(fd, addr, addr.size)
     if ret == LibC::SOCKET_ERROR
@@ -185,51 +153,6 @@ module Crystal::System::Socket
 
   private def system_accept : {Handle, Bool}?
     event_loop.accept(self)
-  end
-
-  def system_accept(& : Handle -> Bool) : {Handle, Bool}?
-    client_socket, blocking = Crystal::EventLoop.current.socket(family, type, protocol, nil)
-    initialize_handle(client_socket)
-
-    if yield client_socket
-      {client_socket, blocking}
-    else
-      LibC.closesocket(client_socket)
-
-      nil
-    end
-  end
-
-  def overlapped_accept(socket, method, &)
-    IOCP::WSAOverlappedOperation.run(socket) do |operation|
-      result = yield operation
-
-      if result == 0
-        case WinError.wsa_value
-        when .wsa_io_pending?
-          # the operation is running asynchronously; do nothing
-        else
-          return false
-        end
-      else
-        return true
-      end
-
-      operation.wait_for_result(read_timeout) do |error|
-        case error
-        when .wsa_io_incomplete?, .wsaenotsock?
-          return false
-        when .error_operation_aborted?
-          # if the socket is closed then accept was aborted by an explicit
-          # shutdown before close, otherwise we manually canceled because of a
-          # timeout
-          return false if closed?
-          raise IO::TimeoutError.new("#{method} timed out (overlapped_accept)")
-        end
-      end
-
-      true
-    end
   end
 
   private def system_close_read
@@ -483,5 +406,30 @@ module Crystal::System::Socket
     return 0_i64 if count == 0
 
     event_loop.sendfile(self, file.fd, offset, count, 0)
+  end
+
+  def self.network_interface_to_index(name : String, & : WinError ->) : Int
+    err = LibC.ConvertInterfaceNameToLuidW(System.to_wstr(name), out luid)
+    if err == 0
+      err = LibC.ConvertInterfaceLuidToIndex(pointerof(luid), out index)
+      if err == 0
+        return index
+      end
+    end
+
+    yield WinError.new(err)
+  end
+
+  def self.network_interface_from_index(index : Int, & : WinError ->) : String
+    err = LibC.ConvertInterfaceIndexToLuid(index, out luid)
+    if err == 0
+      buf = uninitialized LibC::WCHAR[LibC::IF_NAMESIZE]
+      err = LibC.ConvertInterfaceLuidToNameW(pointerof(luid), buf, buf.size)
+      if err == 0
+        return String.from_utf16(buf.to_slice, truncate_at_null: true)
+      end
+    end
+
+    yield WinError.new(err)
   end
 end

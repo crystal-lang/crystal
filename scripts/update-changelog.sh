@@ -37,6 +37,7 @@ current_changelog="CHANGELOG.$VERSION.md"
 
 echo "Generating $current_changelog..."
 scripts/github-changelog.cr "$VERSION" >"$current_changelog"
+echo >>"$current_changelog"
 
 echo "Switching to branch $branch"
 git switch "$branch" 2>/dev/null || git switch -c "$branch"
@@ -64,14 +65,14 @@ if [ ! -f "$changelog_path" ]; then
   git add "doc/changelogs/README.md"
 fi
 
-printf '\n' >>"$current_changelog"
-
 if grep --silent -E "^## \[$VERSION\]" "$changelog_path"; then
   echo "Replacing section in $changelog_path"
   sed -i -E "/^## \[$VERSION\]/,/^## /{
 
     /^## \[$VERSION\]/s/.*/cat $current_changelog/e; /^## /!d
   }" "$changelog_path"
+
+  sed -i -z 's/\n*$/\n/' "$changelog_path"
 
   git add "$changelog_path"
   git commit -m "Update changelog for $VERSION"
@@ -80,6 +81,8 @@ else
   echo "Adding new section to $changelog_path"
 
   sed -i -E "2r $current_changelog" "$changelog_path"
+
+  sed -i -z 's/\n*$/\n/' "$changelog_path"
 
   git add "$changelog_path"
   git commit -m "Add changelog for $VERSION"

@@ -154,10 +154,28 @@ class Crystal::Command
         crystal_exec_path = Crystal::Config.exec_path
         path = [crystal_exec_path, ENV["PATH"]?].compact!.join(Process::PATH_DELIMITER)
 
-        Process.exec(external_command, options, env: {
-          "PATH"              => path,
-          "CRYSTAL_EXEC_PATH" => crystal_exec_path,
-        })
+        {% if flag?(:win32) %}
+          # FIXME: `Process.exec` doesn't work as expected on Windows, see https://github.com/crystal-lang/crystal/issues/14422
+          options.unshift external_command
+          exit_status, _ = Process.run(options, env: {
+            "PATH"              => path,
+            "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+          }, input: :inherit, output: :inherit, error: :inherit) do |process|
+            # FIXME: There's a race condition between creating the sub-process and
+            # registering the `on_terminate` callback.
+            # Should be fixed with https://github.com/crystal-lang/crystal/issues/14422
+
+            Process.on_terminate do
+              process.terminate
+            end
+          end
+          ::exit exit_status
+        {% else %}
+          Process.exec(external_command, options, env: {
+            "PATH"              => path,
+            "CRYSTAL_EXEC_PATH" => crystal_exec_path,
+          })
+        {% end %}
       else
         abort! "unknown command: #{command}", :USAGE_ERROR
       end

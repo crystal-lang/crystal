@@ -22,6 +22,10 @@ private macro def_string_methods(klass)
   def +(other : StringLiteral | CharLiteral) : {{klass}}
   end
 
+  # Similar to `String#bytesize`.
+  def bytesize : NumberLiteral
+  end
+
   # Similar to `String#camelcase`.
   def camelcase(*, lower : BoolLiteral = false) : {{klass}}
   end
@@ -650,6 +654,10 @@ module Crystal::Macros
 
     # Same as `Number#~`
     def ~ : NumberLiteral
+    end
+
+    # Same as `Int#chr`
+    def chr : CharLiteral
     end
 
     # The type of the literal: `:i32`, `:u16`, `:f32`, `:f64`, etc.

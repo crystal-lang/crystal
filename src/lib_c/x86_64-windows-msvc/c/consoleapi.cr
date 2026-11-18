@@ -1,6 +1,10 @@
 require "c/winnt"
 
 lib LibC
+  ATTACH_PARENT_PROCESS = 0xFFFFFFFF_u32
+
+  fun AttachConsole(dwProcessId : DWORD) : BOOL
+
   ENABLE_PROCESSED_INPUT        = 0x0001
   ENABLE_LINE_INPUT             = 0x0002
   ENABLE_ECHO_INPUT             = 0x0004

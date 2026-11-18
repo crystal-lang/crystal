@@ -8,7 +8,6 @@
   };
 
   git-hooks.hooks = {
-    actionlint.enable = true;
     asciidoc-linter = {
       enable = true;
       name = "Asciidoc Linter";
@@ -35,7 +34,6 @@
       files = "^Makefile(\.win)?$";
       pass_filenames = true;
     };
-    markdownlint.enable = true;
     mbake = {
       enable = true;
       name = "Mbake";
@@ -43,6 +41,7 @@
       files = "Makefile|.*\\.Makefile|Makefile\\..*|.*\\.mk";
       pass_filenames = true;
     };
+    rumdl.enable = true;
     shellcheck = {
       enable = true;
       excludes = [

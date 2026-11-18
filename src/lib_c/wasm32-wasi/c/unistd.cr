@@ -3,16 +3,19 @@ require "./stdint"
 
 lib LibC
   F_OK                =  0
-  R_OK                =  1
+  R_OK                =  4
   W_OK                =  2
-  X_OK                =  4
+  X_OK                =  1
   SC_CLK_TCK          =  2
   SC_NPROCESSORS_ONLN = 84
 
   fun access(x0 : Char*, x1 : Int) : Int
+  fun faccessat(Int, Char*, Int, Int) : Int
   fun chdir(x0 : Char*) : Int
-  fun fchown(x0 : Int, x1 : UidT, x2 : GidT) : Int
   fun close(fd : Int) : Int
+  {% unless flag?(:wasip1) %}
+    fun dup2(fd : Int, fd2 : Int) : Int
+  {% end %}
   fun _exit(x0 : Int) : NoReturn
   fun fdatasync(x0 : Int) : Int
   fun fsync(x0 : Int) : Int
@@ -21,6 +24,10 @@ lib LibC
   fun isatty(x0 : Int) : Int
   fun link(x0 : Char*, x1 : Char*) : Int
   fun lseek(x0 : Int, x1 : OffT, x2 : Int) : OffT
+  {% unless flag?(:wasip1) || flag?(:wasip2) %}
+    fun pipe(fds : Int[2]) : Int
+    fun pipe2(fds : Int[2], flags : Int) : Int
+  {% end %}
   fun read(x0 : Int, x1 : Void*, x2 : SizeT) : SSizeT
   fun pread(x0 : Int, x1 : Void*, x2 : SizeT, x3 : OffT) : SSizeT
   fun readlink(x0 : Char*, x1 : Char*, x2 : SizeT) : SSizeT

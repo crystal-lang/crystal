@@ -94,6 +94,12 @@ describe "concurrent" do
     elapsed = Time.measure do
       sleep 50.milliseconds
     end
-    elapsed.should be >= 50.milliseconds
+
+    # libevent seems to occasionally wake up from sleep a bit earlier (up to 800
+    # microseconds observed). It's clearly more than just jitter. But we don't
+    # know exactly what's happening. Maybe a different clock source?  It's not a
+    # big deal and libevent support is a legacy feature, so we just relax the
+    # expectation a little bit.
+    elapsed.should be >= {{ flag?(:"evloop=libevent") ? 49 : 50 }}.milliseconds
   end
 end

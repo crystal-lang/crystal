@@ -1,11 +1,73 @@
-require "process/executable_path" # Process::PATH_DELIMITER
-
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
 module Crystal
+  {% if flag?(:win32) %}
+    # On Windows, if a program is compiled for the Windows subsystem (either
+    # `/SUBSYSTEM:WINDOWS` or `-mwindows` depending on the compiler), then it
+    # will not have a console at all, meaning the standard streams are all
+    # invalid handles, unless redirected to a file.
+    #
+    # Instead, during runtime initialization, we attempt to attach the current
+    # process to the parent process's console, if it has one. This makes the
+    # standard stream behavior more consistent with non-Windows platforms, in
+    # particular when invoking `crystal run` on a source file.
+
+    # :nodoc:
+    private def self.init_stdio : Nil
+      # No error handling needed; `ERROR_ACCESS_DENIED` is when the current
+      # process already has a console, for any other error value the standard
+      # streams are as good as being closed
+      LibC.AttachConsole(LibC::ATTACH_PARENT_PROCESS)
+    end
+
+    # :nodoc:
+    def self.stdio_closed?(fd)
+      file_type = LibC.GetFileType(LibC::HANDLE.new(fd))
+      file_type == LibC::FILE_TYPE_UNKNOWN && LibC.GetLastError != 0
+    end
+  {% else %}
+    # On POSIX targets, any closed fd can be recycled, and that includes fd 0, 1
+    # and 2 that only have special meaning, not special treatment. If stdout is
+    # closed, then the next call to open or socket will recycle fd 1.
+    #
+    # If such a case happens before we define STDIN, STDOUT and STDERR, then we
+    # can miss that the standard stream is actually closed, and mistake the newly
+    # opened fd to be the standard stream.
+    #
+    # For example, under some configuration (e.g. USE_MMAP=1 + USE_MMAP_ANON=0)
+    # the BDW GC will open /dev/zero and reuse any of 0, 1 or 2 for it if any
+    # stream is closed. The same can happen for crystal/tracing with
+    # CRYSTAL_TRACE_FILE.
+    #
+    # We thus store the state ASAP when the program starts, then use it to
+    # create the STDIN, ORIGINAL_STDIN, and others, as closed IO objects.
+    @@stdio_closed = uninitialized {Bool, Bool, Bool}
+
+    # :nodoc:
+    private def self.init_stdio : Nil
+      # check for closed stdio fds
+      closed_stdin = LibC.fcntl(0, LibC::F_GETFL) == -1
+      closed_stdout = LibC.fcntl(1, LibC::F_GETFL) == -1
+      closed_stderr = LibC.fcntl(2, LibC::F_GETFL) == -1
+
+      # reopen closed fds (guaranteed to be the smallest number)
+      LibC.open("/dev/null", LibC::O_RDONLY | LibC::O_CLOEXEC, 0) if closed_stdin
+      LibC.open("/dev/null", LibC::O_WRONLY | LibC::O_CLOEXEC, 0) if closed_stdout
+      LibC.open("/dev/null", LibC::O_WRONLY | LibC::O_CLOEXEC, 0) if closed_stderr
+
+      # save the closed state for when we create the IO objects
+      @@stdio_closed = {closed_stdin, closed_stdout, closed_stderr}
+    end
+
+    # :nodoc:
+    def self.stdio_closed?(fd)
+      @@stdio_closed[fd]
+    end
+  {% end %}
+
   # Defines the main routine run by normal Crystal programs:
   #
   # - Initializes runtime requirements (GC, ...)
@@ -34,6 +96,7 @@ module Crystal
   # same can be accomplished with `at_exit`. But in some cases
   # redefinition of C's main is needed.
   def self.main(&block)
+    init_stdio
     {% if flag?(:tracing) %} Crystal::Tracing.init {% end %}
     GC.init
 
@@ -56,6 +119,7 @@ module Crystal
     # so we explicitly initialize their class vars, then init crystal/once
     Thread.init
     Fiber.init
+    Thread.current # define main thread & main fiber
     Crystal::Once.init
   end
 
@@ -130,24 +194,26 @@ module Crystal
   end
 end
 
-# Main function that acts as C's main function.
-# Invokes `Crystal.main`.
-#
-# Can be redefined. See `Crystal.main` for examples.
-#
-# On Windows the actual entry point is `wmain`, but there is no need to redefine
-# that. See the file required below for details.
-fun main(argc : Int32, argv : UInt8**) : Int32
-  Crystal.main(argc, argv)
-end
+{% unless flag?(:without_main) %}
+  # Main function that acts as C's main function.
+  # Invokes `Crystal.main`.
+  #
+  # Can be redefined. See `Crystal.main` for examples.
+  #
+  # On Windows the actual entry point is `wmain`, but there is no need to redefine
+  # that. See the file required below for details.
+  fun main(argc : Int32, argv : UInt8**) : Int32
+    Crystal.main(argc, argv)
+  end
 
-{% if flag?(:interpreted) %}
-  # the interpreter doesn't call Crystal.main(&)
-  Crystal.init_runtime
-{% elsif flag?(:win32) %}
-  require "./system/win32/wmain"
-{% elsif flag?(:wasi) %}
-  require "./system/wasi/main"
-{% else %}
-  require "./system/unix/main"
+  {% if flag?(:interpreted) %}
+    # the interpreter doesn't call Crystal.main(&),
+    # the prelude calls Crystal.init_runtime already
+  {% elsif flag?(:win32) %}
+    require "./system/win32/wmain"
+  {% elsif flag?(:wasi) %}
+    require "./system/wasi/main"
+  {% else %}
+    require "./system/unix/main"
+  {% end %}
 {% end %}

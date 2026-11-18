@@ -130,8 +130,7 @@ class HTTP::Client
       pieces = line.split(3)
       raise "Invalid HTTP response" if pieces.size < 2
 
-      http_version = pieces[0]
-      raise "Unsupported HTTP version: #{http_version}" unless HTTP::SUPPORTED_VERSIONS.includes?(http_version)
+      http_version = HTTP.validate_version(pieces[0])
 
       status_code = pieces[1].to_i?
 

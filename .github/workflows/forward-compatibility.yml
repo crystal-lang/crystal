@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  TRAVIS_OS_NAME: linux
   SPEC_SPLIT_DOTS: 160
 
 jobs:
@@ -27,49 +26,22 @@ jobs:
   # We run a basic version of this test on every commit which covers only the earliest and latest supported versions in `linux.yml#x86_64-gnu-test`.
   x86_64-gnu-test-forward_compatibility:
     env:
-      ARCH: x86_64
-      ARCH_CMD: linux64
       CRYSTAL_BOOTSTRAP_VERSION: ${{ matrix.crystal_bootstrap_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        crystal_bootstrap_version: [1.7.3, 1.8.2, 1.9.2, 1.10.1, 1.11.2, 1.12.2, 1.13.3, 1.14.1, 1.15.1, 1.16.3, 1.17.1, 1.18.2, 1.19.2]
+        # We ensure forward compatibility with the previous 8 releases.
+        # Releases n-1 and n-8 are already covered in`linux.yml#x86_64-gnu-test`,
+        # so we only need to test releases n-2 through n-7 here.
+        crystal_bootstrap_version: [1.16.3, 1.17.1, 1.18.2, 1.19.2, 1.20.3, 1.21.0]
         env: [{}]
-        include:
-          # libffi is only available starting from the 1.2.2 build images
-          # pcre2 is only available starting from the 1.7.0 build images
-          - crystal_bootstrap_version: 1.1.1
-            env:
-              FLAGS: -Dwithout_ffi
-              USE_PCRE1: true
-          - crystal_bootstrap_version: 1.2.2
-            env:
-              USE_PCRE1: true
-          - crystal_bootstrap_version: 1.3.2
-            env:
-              USE_PCRE1: true
-          - crystal_bootstrap_version: 1.4.1
-            env:
-              USE_PCRE1: true
-          - crystal_bootstrap_version: 1.5.1
-            env:
-              USE_PCRE1: true
-          - crystal_bootstrap_version: 1.6.2
-            env:
-              USE_PCRE1: true
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Prepare System
-        run: bin/ci prepare_system
-
-      - name: Prepare Build
-        run: bin/ci prepare_build
-
       - name: Test
-        run: bin/ci build
+        run: scripts/ci-docker-run.sh scripts/ci-build.sh
         env: ${{ matrix.env }}

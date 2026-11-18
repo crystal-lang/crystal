@@ -53,7 +53,7 @@ class Fiber
         vstmdb sp!, {d8-d15}          // push FPU registers
         {% end %}
         str    sp, [r0, #0]           // current_context.stack_top = sp
-        {% if flag?(:execution_context) %}
+        {% unless flag?(:without_mt) %}
         mov    r4, #0                 // barrier: ensure registers are stored
         mcr    p15, #0, r4, c7, c10, #5
         {% end %}
@@ -87,7 +87,7 @@ class Fiber
         vstmdb sp!, {d8-d15}          // push FPU registers
         {% end %}
         str    sp, [$0, #0]           // current_context.stack_top = sp
-        {% if flag?(:execution_context) %}
+        {% unless flag?(:without_mt) %}
         mov    r4, #0                 // barrier: ensure registers are stored
         mcr    p15, #0, r4, c7, c10, #5
         {% end %}

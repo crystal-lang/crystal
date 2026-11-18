@@ -53,6 +53,19 @@ describe TCPSocket, tags: "network" do
         {% end %})
       end
 
+      it "raises when port is out of range" do
+        error = expect_raises(Socket::Addrinfo::Error) do
+          TCPSocket.new(address, UInt16::MAX.to_i + 1)
+        end
+        error.os_error.should eq({% if flag?(:win32) %}
+          WinError::WSATYPE_NOT_FOUND
+        {% elsif (flag?(:linux) && !flag?(:android)) || flag?(:openbsd) %}
+          Errno.new(LibC::EAI_SERVICE)
+        {% else %}
+          Errno.new(LibC::EAI_NONAME)
+        {% end %})
+      end
+
       {% if flag?(:dragonfly) %}
         # FIXME: this spec regularly hangs in a vagrant/libvirt VM
         pending "raises when port is zero"
@@ -85,6 +98,8 @@ describe TCPSocket, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}
@@ -99,6 +114,8 @@ describe TCPSocket, tags: "network" do
           [WinError::WSAHOST_NOT_FOUND, WinError::WSATRY_AGAIN].should contain err.os_error
         {% elsif flag?(:android) || flag?(:netbsd) || flag?(:openbsd) %}
           err.os_error.should eq(Errno.new(LibC::EAI_NODATA))
+        {% elsif flag?(:freebsd) %}
+          err.os_error.should eq(Errno.new(LibC::EAI_ADDRFAMILY))
         {% else %}
           [Errno.new(LibC::EAI_NONAME), Errno.new(LibC::EAI_NODATA), Errno.new(LibC::EAI_AGAIN)].should contain err.os_error
         {% end %}

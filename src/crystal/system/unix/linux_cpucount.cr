@@ -11,7 +11,7 @@ module Crystal::System
       set = uninitialized UInt8[8192] # allows up to 65536 logical cpus
       byte_count = Syscall.sched_getaffinity(0, LibC::SizeT.new(8192), set.to_unsafe)
       if byte_count > 0
-        count = set.to_slice[0, byte_count].sum(&.popcount)
+        count = set.to_slice[0, byte_count].sum(0, &.popcount)
         return count if count > 0
       end
     {% end %}
