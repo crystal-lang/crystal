@@ -24,6 +24,8 @@ lib LibC
     sin_family : SaFamilyT
     sin_port : InPortT
     sin_addr : InAddr
+    # wasi-libc rounds socket address sizes to a 16-byte boundary.
+    __padding : UInt8[8]
   end
 
   struct SockaddrIn6
@@ -32,6 +34,7 @@ lib LibC
     sin6_flowinfo : UInt
     sin6_addr : In6Addr
     sin6_scope_id : UInt
+    __padding : UInt8[4]
   end
 
   IP_MULTICAST_IF   = 32
