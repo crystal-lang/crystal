@@ -634,4 +634,19 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # Arm a timer to interrupt a run at *time*. Set to `nil` to disarm the timer.
   private abstract def system_set_timer(time : Time::Instant?) : Nil
+
+  # :nodoc:
+  # manual devirtualization of IO+ into concrete types
+  macro devirtualize(io, &)
+    case {{io}}
+    when IO::FileDescriptor
+      {{yield}}
+    {% if @top_level.has_constant?(:Socket) %}
+    when ::Socket
+      {{yield}}
+    {% end %}
+    else
+      raise "BUG: expected IO::FileDescriptor or Socket but got #{ {{io}}.class.name }"
+    end
+  end
 end

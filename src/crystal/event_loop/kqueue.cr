@@ -55,19 +55,11 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
   end
 
   private def process_io(kevent : LibC::Kevent*, &) : Nil
-    {% begin %}
-      # manual devirtualization of IO+ into concrete types
-      case io = kevent.value.udata.as(IO)
-      when IO::FileDescriptor
-        process_io_impl(io, kevent) { |fiber| yield fiber }
-      {% if @top_level.has_constant?(:Socket) %}
-      when ::Socket
-        process_io_impl(io, kevent) { |fiber| yield fiber }
-      {% end %}
-      else
-        raise "BUG: expected IO::FileDescriptor or Socket but got #{io.class.name}"
-      end
-    {% end %}
+    io = kevent.value.udata.as(IO)
+
+    Polling.devirtualize(io) do
+      process_io_impl(io, kevent) { |fiber| yield fiber }
+    end
   end
 
   private def process_io_impl(io, kevent, &)
