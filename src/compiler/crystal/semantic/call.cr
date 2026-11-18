@@ -711,7 +711,7 @@ class Crystal::Call
     previous = previous_item.def
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
-    context = MatchContext.new(scope, scope, def_free_vars: previous.free_vars)
+    context = MatchContext.new(scope, parent_visitor.path_lookup || scope, def_free_vars: previous.free_vars)
     match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
