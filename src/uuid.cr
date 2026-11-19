@@ -47,7 +47,7 @@ struct UUID
     V5 = 5
     # Reordered date-time and NodeID address, for improved DB locality.
     V6 = 6
-    # Prefixed with a Unix timestamp and a sub-millisecond fraction, filled in with randomness.
+    # Prefixed with a UNIX timestamp and a sub-millisecond fraction, filled in with randomness.
     V7 = 7
     # Custom format for experimental or vendor-specific use cases.
     V8 = 8
