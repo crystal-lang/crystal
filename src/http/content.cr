@@ -268,8 +268,8 @@ module HTTP
       while byte = bytes.first?
         return false unless byte == ';'.ord
 
-        bytes += 1 # consume ';'
-        bytes, _ = skip_whitespace(bytes)
+        bytes += 1                          # consume ';'
+        bytes, bws = skip_whitespace(bytes) # ameba:disable Lint/UselessAssign
 
         # chunk-ext-name = token
         name = read_token(bytes)
@@ -280,8 +280,8 @@ module HTTP
         break unless byte = bytes.first?
         next unless byte == '='.ord
 
-        bytes += 1 # consume '='
-        bytes, _ = skip_whitespace(bytes)
+        bytes += 1                          # consume '='
+        bytes, bws = skip_whitespace(bytes) # ameba:disable Lint/UselessAssign
         return false unless byte = bytes.first?
 
         # chunk-ext-val = token / quoted-string
