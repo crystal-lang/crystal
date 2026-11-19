@@ -3,6 +3,16 @@ require "uuid"
 require "spec/helpers/string"
 require "../support/wasm32"
 
+struct UUID
+  def self.v1_at(time : Time) : self
+    v1(time, clock_seq: 0_u16, node_id: MAC.new(0_u8))
+  end
+
+  def self.v6_at(time : Time) : self
+    v6(time, clock_seq: 0_u16, node_id: MAC.new(0_u8))
+  end
+end
+
 describe "UUID" do
   describe "#==" do
     it "matches identical UUIDs" do
@@ -164,6 +174,11 @@ describe "UUID" do
   end
 
   describe "v1" do
+    it "preserves 100 ns timestamp ticks" do
+      time = Time.unix_ns(1_750_000_000_000_000_100_i64)
+      UUID.v1_at(time).to_s.should eq "57130001-49fa-11f0-8000-000000000000"
+    end
+
     it "returns true if UUID is v1, false otherwise" do
       uuid = UUID.v1
       uuid.v1?.should be_true
@@ -272,6 +287,11 @@ describe "UUID" do
   end
 
   describe "v6" do
+    it "preserves 100 ns timestamp ticks" do
+      time = Time.unix_ns(1_750_000_000_000_000_100_i64)
+      UUID.v6_at(time).to_s.should eq "1f049fa5-7130-6001-8000-000000000000"
+    end
+
     it "generates a v6 UUID" do
       uuid = UUID.v6
       uuid.v6?.should be_true

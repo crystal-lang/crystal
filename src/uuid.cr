@@ -235,9 +235,12 @@ struct UUID
   # are used. In case the traditional MAC address based approach should be taken the
   # `node_id` can be provided. Otherwise secure random is used.
   def self.v1(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
-    tl = Time.local
-    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000
-    seq = ((clock_seq || (tl.nanosecond/1000000).to_u16) & 0x3fff) | 0x8000
+    v1(Time.local, clock_seq: clock_seq, node_id: node_id)
+  end
+
+  private def self.v1(time : Time, *, clock_seq : UInt16?, node_id : MAC?) : self
+    now = (time.to_unix_ns // 100).to_u64 + 122192928000000000_u64
+    seq = ((clock_seq || (time.nanosecond / 1000000).to_u16) & 0x3fff) | 0x8000
 
     time_low = UInt32.new(now & 0xffffffff)
     time_mid = UInt16.new((now >> 32) & 0xffff)
@@ -341,9 +344,12 @@ struct UUID
   # pseudo-random node ID is generated with the multicast bit set as
   # recommended by RFC 4122 section 4.5.
   def self.v6(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
-    tl = Time.local
-    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000_u64
-    seq = ((clock_seq || (tl.nanosecond / 1000000).to_u16) & 0x3fff_u16) | 0x8000_u16
+    v6(Time.local, clock_seq: clock_seq, node_id: node_id)
+  end
+
+  private def self.v6(time : Time, *, clock_seq : UInt16?, node_id : MAC?) : self
+    now = (time.to_unix_ns // 100).to_u64 + 122192928000000000_u64
+    seq = ((clock_seq || (time.nanosecond / 1000000).to_u16) & 0x3fff_u16) | 0x8000_u16
 
     # Unlike v1, v6 stores the 60-bit timestamp most-significant-bits first:
     # bytes 0-3: T[59:28], bytes 4-5: T[27:12], bytes 6-7: ver(4) | T[11:0]
