@@ -128,10 +128,10 @@ module Crystal
       @@operations.push pointerof(operation)
       @@spin.unlock
 
+      # Capture the exception for cleanup and re-raise it below.
       begin
         yield
-      rescue ex
-        # capture ex
+      rescue ex # ameba:disable Lint/UnusedRescueVariable
       ensure
         # always cleanup (no dangling pointers)
         @@spin.lock

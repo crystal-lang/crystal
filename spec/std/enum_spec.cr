@@ -46,7 +46,7 @@ end
 
 private enum SpecEnumWithCaseSensitiveMembers
   FOO = 1
-  Foo = 2
+  Foo = 2 # ameba:disable Lint/EnumMemberNameConflict
 end
 
 describe Enum do

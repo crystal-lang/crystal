@@ -41,12 +41,6 @@ Lint/DuplicateEnumValue:
 Lint/ElseNil:
   Enabled: false
 
-Lint/EnumMemberNameConflict:
-  Excluded:
-    # Explicit tests and names from the Windows API
-    - spec/std/enum_spec.cr
-    - src/winerror.cr
-
 # Disabled: We have an explicit CI job for testing the formatter (both latest
 # and head). No reason to run it through ameba.
 Lint/Formatting:
@@ -66,11 +60,6 @@ Lint/LiteralsComparison:
 Lint/NotNil:
   Enabled: false
 
-Lint/RandZero:
-  Excluded:
-    # Explicit tests
-    - spec/std/random_spec.cr
-
 # FIXME: Resolve shadowing.
 Lint/ShadowingOuterLocalVar:
   Enabled: false
@@ -85,12 +74,6 @@ Lint/SpecFilename:
     - spec/llvm-ir/**/*
     - spec/std/float_printer/ryu_printf_test_cases.cr
 
-# BUG: https://github.com/crystal-ameba/ameba/issues/612
-Lint/TopLevelOperatorDefinition:
-  Excluded:
-    # Implements the backtick command literal.
-    - src/process.cr
-
 # TODO: Investigate unused arguments.
 Lint/UnusedArgument:
   Enabled: false
@@ -99,25 +82,11 @@ Lint/UnusedArgument:
 Lint/UnusedBlockArgument:
   Enabled: false
 
-Lint/UnusedRescueVariable:
-  Excluded:
-    # BUG: The exception is read after rescue or in ensure, outside the rescue body.
-    - src/crystal/main.cr
-    - src/crystal/once.cr
-
 Lint/UselessAssign:
   Excluded:
     - spec/debug/**/*
-    - samples/mt_gc_test.cr
     # Generators assign top-level variables to pass to ECR templates
     - scripts/generate_*
-
-Lint/VoidOutsideLib:
-  Excluded:
-    # ABI tests and low-level Proc(Void) representations
-    - spec/compiler/macro/macro_expander_spec.cr
-    - src/compiler/crystal/interpreter/compiler.cr
-    - src/openssl/ssl/context.cr
 
 # Disabled: Keep the macro whitespace produced by the Crystal formatter.
 Lint/WhitespaceAroundMacroExpression:

@@ -106,7 +106,7 @@ module Crystal
       begin
         yield
         0
-      rescue ex
+      rescue ex # ameba:disable Lint/UnusedRescueVariable
         1
       end
 
