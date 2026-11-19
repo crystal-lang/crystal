@@ -74,6 +74,9 @@ class Crystal::FixMissingTypes < Crystal::Visitor
       block.type = @program.no_return
     end
 
+    # A captured block's proc literal isn't one of the call's children
+    block.try &.fun_literal.try &.accept self
+
     node.target_defs.try &.each do |target_def|
       if @fixed.add?(target_def)
         target_def.type = @program.no_return unless target_def.type?

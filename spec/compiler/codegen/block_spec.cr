@@ -1093,6 +1093,24 @@ describe "Code gen: block" do
       CRYSTAL
   end
 
+  it "codegens captured block whose body is a call with a NoReturn argument (#17504)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      def foo(x : Int32)
+        x
+      end
+
+      def bar(&block : -> Int32)
+        block.call
+      rescue
+        2
+      end
+
+      bar { foo(raise "") }
+      CRYSTAL
+  end
+
   it "codegens bug with yield not_nil! that is never not nil" do
     run(<<-CRYSTAL).to_i.should eq(1)
       lib LibC
