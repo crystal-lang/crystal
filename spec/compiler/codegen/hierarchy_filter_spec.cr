@@ -39,6 +39,23 @@ describe "Code gen: hierarchy-dependent type filters" do
         CRYSTAL
     end
 
+    it "retains concrete descendants of an abstract generic subclass in #{operation}" do
+      run(<<-CRYSTAL).to_i.should eq(2)
+        class Base; end
+        abstract class Gen(T) < Base; end
+        class Child < Gen(Int32); end
+
+        def extract(value : Base); 1; end
+        def extract(value : Gen); 2; end
+
+        def dispatch(value : Base)
+          #{expression}
+        end
+
+        dispatch(Child.new.as(Base))
+        CRYSTAL
+    end
+
     it "handles an initially uninstantiated then instantiated generic subclass in #{operation}" do
       run(<<-CRYSTAL).to_i.should eq(12)
         class Base; end

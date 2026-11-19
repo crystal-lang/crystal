@@ -194,7 +194,7 @@ module Crystal
         # A generic subclass represents its concrete instances, not the
         # uninstantiated class itself, even when it inherits from base_type.
         types = type2.instantiated_types.compact_map do |instance|
-          next if instance.unbound? || instance.abstract?
+          next if instance.unbound? || instance.abstract_leaf?
           instance.virtual_type if instance.implements?(base_type)
         end
         type1.program.type_merge_union_of types
