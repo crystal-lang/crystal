@@ -3,16 +3,6 @@ require "uuid"
 require "spec/helpers/string"
 require "../support/wasm32"
 
-struct UUID
-  def self.v1_at(time : Time) : self
-    v1(time, clock_seq: 0_u16, node_id: MAC.new(0_u8))
-  end
-
-  def self.v6_at(time : Time) : self
-    v6(time, clock_seq: 0_u16, node_id: MAC.new(0_u8))
-  end
-end
-
 describe "UUID" do
   describe "#==" do
     it "matches identical UUIDs" do
@@ -176,7 +166,7 @@ describe "UUID" do
   describe "v1" do
     it "preserves 100 ns timestamp ticks" do
       time = Time.unix_ns(1_750_000_000_000_000_100_i64)
-      UUID.v1_at(time).to_s.should eq "57130001-49fa-11f0-8000-000000000000"
+      UUID.v1(time: time, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "57130001-49fa-11f0-8000-000000000000"
     end
 
     it "returns true if UUID is v1, false otherwise" do
@@ -289,7 +279,7 @@ describe "UUID" do
   describe "v6" do
     it "preserves 100 ns timestamp ticks" do
       time = Time.unix_ns(1_750_000_000_000_000_100_i64)
-      UUID.v6_at(time).to_s.should eq "1f049fa5-7130-6001-8000-000000000000"
+      UUID.v6(time: time, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "1f049fa5-7130-6001-8000-000000000000"
     end
 
     it "generates a v6 UUID" do
@@ -323,6 +313,26 @@ describe "UUID" do
     end
   end
 
+  describe "Gregorian timestamps for v1 and v6" do
+    first = Time.utc(1582, 10, 15)
+    last = Time.utc(5236, 3, 31, 21, 21, 0, nanosecond: 684_697_599)
+    node = UUID::MAC.new(0_u8)
+
+    it "encodes the first and last representable timestamps" do
+      UUID.v1(time: first, clock_seq: 0_u16, node_id: node).to_s.should eq "00000000-0000-1000-8000-000000000000"
+      UUID.v6(time: first, clock_seq: 0_u16, node_id: node).to_s.should eq "00000000-0000-6000-8000-000000000000"
+      UUID.v1(time: last, clock_seq: 0_u16, node_id: node).to_s.should eq "ffffffff-ffff-1fff-8000-000000000000"
+      UUID.v6(time: last, clock_seq: 0_u16, node_id: node).to_s.should eq "ffffffff-ffff-6fff-8000-000000000000"
+    end
+
+    it "rejects times outside the timestamp range" do
+      {first - 1.nanosecond, last + 1.nanosecond}.each do |time|
+        expect_raises(ArgumentError) { UUID.v1(time: time) }
+        expect_raises(ArgumentError) { UUID.v6(time: time) }
+      end
+    end
+  end
+
   describe "v7" do
     it "generates a v7 UUID" do
       uuid = UUID.v7
@@ -330,13 +340,27 @@ describe "UUID" do
       uuid.variant.rfc9562?.should be_true
     end
 
-    pending_wasm32 "generates UUIDs that are sortable with 1ms precision" do
-      uuids = Array.new(10) do
-        sleep 1.millisecond
-        UUID.v7
-      end
+    it "encodes and sorts sub-millisecond timestamps" do
+      epoch = Time::UNIX_EPOCH
+      offsets = [0.nanoseconds, 500.microseconds, 999_999.nanoseconds, 1.millisecond]
+      uuids = offsets.map { |offset| UUID.v7(time: epoch + offset) }
 
+      uuids.map { |uuid| uuid.to_s[0, 18] }.should eq %w(
+        00000000-0000-7000 00000000-0000-7800 00000000-0000-7fff 00000000-0001-7000
+      )
       uuids.should eq uuids.sort
+    end
+
+    it "encodes the latest Crystal time and rejects pre-Unix times" do
+      time = Time.utc(9999, 12, 31, 23, 59, 59, nanosecond: 999_999_999)
+      UUID.v7(time: time).to_s.should start_with "e677d21f-dbff-7fff-"
+      expect_raises(ArgumentError) { UUID.v7(time: Time::UNIX_EPOCH - 1.nanosecond) }
+    end
+
+    it "preserves all 62 random bits after the variant" do
+      expected = Random.new(6).random_bytes(8)
+      expected[0] = (expected[0] & 0x3f) | 0x80
+      UUID.v7(Random.new(6), time: Time::UNIX_EPOCH).bytes.to_slice[8..].should eq expected
     end
   end
 
