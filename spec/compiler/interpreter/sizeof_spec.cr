@@ -24,6 +24,32 @@ describe Crystal::Repl::Interpreter do
     end
   end
 
+  context "offsetof" do
+    it "interprets offsetof that is left to the interpreter" do
+      interpret(<<-CRYSTAL).should be_true
+        abstract struct Base
+        end
+
+        struct Foo(T) < Base
+          def initialize(@x : T)
+          end
+        end
+
+        struct Holder
+          def initialize(@base : Base, @x : Int32)
+          end
+        end
+
+        z = offsetof(Holder, @x)
+
+        Foo({Int32, Int32, Int32, Int32})
+
+        holder = uninitialized Holder
+        z == pointerof(holder.@x).address &- pointerof(holder).address
+        CRYSTAL
+    end
+  end
+
   context "instance_sizeof" do
     it "interprets instance_sizeof typeof" do
       interpret(<<-CRYSTAL).should eq(16)
