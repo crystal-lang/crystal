@@ -1148,11 +1148,37 @@ module Crystal
         from_vars.each do |name, block_var|
           unless ignored.try &.find { |arg| arg.name == name }
             to_var = to_vars[name]?
-            if to_var && !to_var.same?(block_var)
-              to_var.try &.bind_to(block_var)
+            if to_var && !forwards_bound_var?(block_var, to_var)
+              to_var.bind_to(block_var)
             end
           end
         end
+      end
+    end
+
+    # A nested call can leave a chain of copies of an unchanged local.
+    # Binding such a copy back to its source creates a cycle that retains
+    # the old type when the source narrows.
+    private def forwards_bound_var?(from : MetaVar, to : MetaVar)
+      # Uses Floyd's cycle-finding with 2 cursors: current advances on every
+      # iteration, slow advances every other iteration; there's a cycle if the
+      # cursors meet after advancing.
+      slow = current = from
+      advance_slow = false
+
+      loop do
+        return true if current.same?(to) || to.dependencies.any? &.same?(current)
+        return false if current.nil_if_read? || current.freeze_type || current.dependencies.size != 1
+
+        source = current.dependencies.first
+        return false unless source.is_a?(MetaVar)
+
+        # cycle detection
+        current = source
+        slow = slow.dependencies.first.as(MetaVar) if advance_slow
+        return false if current.same?(slow)
+
+        advance_slow = !advance_slow
       end
     end
 
