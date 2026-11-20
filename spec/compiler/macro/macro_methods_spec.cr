@@ -2059,6 +2059,42 @@ module Crystal
         end
       end
 
+      it "executes superclass on instances of built-in generics (#17948)" do
+        assert_macro("{{x.superclass}}", %(Value)) do |program|
+          {x: TypeNode.new(program.pointer_of(program.int32))}
+        end
+        assert_macro("{{x.superclass}}", %(Value)) do |program|
+          {x: TypeNode.new(program.static_array_of(program.int32, 1))}
+        end
+        assert_macro("{{x.superclass}}", %(Value)) do |program|
+          {x: TypeNode.new(program.proc_of([program.int32, program.nil_type]))}
+        end
+        assert_macro("{{x.superclass}}", %(Value)) do |program|
+          {x: TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.superclass}}", %(Value)) do |program|
+          {x: TypeNode.new(program.named_tuple_of({"a" => program.int32}))}
+        end
+      end
+
+      it "executes ancestors and <= on instances of built-in generics (#17948)" do
+        assert_macro("{{x.ancestors}}", %([Value, Object])) do |program|
+          {x: TypeNode.new(program.pointer_of(program.int32))}
+        end
+        assert_macro("{{x <= Value}}", %(true)) do |program|
+          {x: TypeNode.new(program.static_array_of(program.int32, 1))}
+        end
+        assert_macro("{{x <= Value}}", %(true)) do |program|
+          {x: TypeNode.new(program.proc_of([program.int32, program.nil_type]))}
+        end
+        assert_macro("{{x <= Struct}}", %(false)) do |program|
+          {x: TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x <= Struct}}", %(false)) do |program|
+          {x: TypeNode.new(program.named_tuple_of({"a" => program.int32}))}
+        end
+      end
+
       it "executes size of tuple" do
         assert_macro("{{x.size}}", "2") do |program|
           {x: TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))}

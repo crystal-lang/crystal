@@ -2282,7 +2282,7 @@ module Crystal
   # The non-instantiated Pointer(T) type.
   class PointerType < GenericClassType
     def new_generic_instance(program, generic_type, type_vars)
-      PointerInstanceType.new program, generic_type, program.struct, type_vars
+      PointerInstanceType.new program, generic_type, program.value, type_vars
     end
 
     def type_desc
@@ -2325,7 +2325,7 @@ module Crystal
         end
       end
 
-      StaticArrayInstanceType.new program, generic_type, program.struct, type_vars
+      StaticArrayInstanceType.new program, generic_type, program.value, type_vars
     end
   end
 
@@ -2399,7 +2399,7 @@ module Crystal
       r_var = Var.new("R", @return_type)
       r_var.bind_to r_var
 
-      super(program, program.proc, program.struct, {"T" => t_var, "R" => r_var} of String => ASTNode)
+      super(program, program.proc, program.value, {"T" => t_var, "R" => r_var} of String => ASTNode)
     end
 
     def struct?
@@ -2471,7 +2471,7 @@ module Crystal
       generic_nest = 1 + (@tuple_types.empty? ? 0 : @tuple_types.max_of(&.generic_nest))
       var = Var.new("T", self)
       var.bind_to var
-      super(program, program.tuple, program.struct,
+      super(program, program.tuple, program.value,
         {"T" => var} of String => ASTNode, generic_nest)
     end
 
@@ -2591,7 +2591,7 @@ module Crystal
       generic_nest = 1 + (@entries.empty? ? 0 : @entries.max_of(&.type.generic_nest))
       var = Var.new("T", self)
       var.bind_to var
-      super(program, program.named_tuple, program.struct,
+      super(program, program.named_tuple, program.value,
         {"T" => var} of String => ASTNode, generic_nest)
     end
 

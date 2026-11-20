@@ -226,4 +226,24 @@ describe "Semantic: struct" do
     mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("10", :i32))).should be_true
     mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("9", :i32))).should be_false
   end
+
+  it "registers instances of built-in generics under Value, not Struct (#17948)" do
+    mod = semantic(<<-CRYSTAL).program
+      Pointer(Int32)
+      StaticArray(Int32, 1)
+      Tuple(Int32)
+      Proc(Int32, Nil)
+      NamedTuple(a: Int32)
+      nil
+      CRYSTAL
+
+    value_subclasses = mod.types["Value"].subclasses
+    struct_subclasses = mod.types["Struct"].subclasses
+
+    value_subclasses.should contain mod.pointer_of(mod.int32)
+    value_subclasses.should contain mod.static_array_of(mod.int32, 1)
+    value_subclasses.should contain mod.tuple_of([mod.int32] of TypeVar)
+    value_subclasses.should contain mod.proc_of([mod.int32, mod.nil_type])
+    struct_subclasses.should eq [mod.types["Range"], mod.types["Slice"]]
+  end
 end
