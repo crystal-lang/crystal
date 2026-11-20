@@ -151,6 +151,67 @@ describe "Semantic: virtual metaclass" do
       CRYSTAL
   end
 
+  it "includes uninstantiated generic subclass in virtual metaclass dispatch (#11134)" do
+    assert_type(<<-CRYSTAL) { union_of(int32, float64, char) }
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo
+        def self.foo
+          1.5
+        end
+      end
+
+      class Baz < Foo
+        def self.foo
+          'a'
+        end
+      end
+
+      Bar.as(Foo.class).foo
+      CRYSTAL
+  end
+
+  it "includes uninstantiated generic subclass with no non-generic sibling (#11134)" do
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo
+        def self.foo
+          1.5
+        end
+      end
+
+      Bar.as(Foo.class).foo
+      CRYSTAL
+  end
+
+  it "prefers instantiations over the uninstantiated generic in virtual metaclass dispatch (#11134)" do
+    assert_type(<<-CRYSTAL) { union_of(int32, float64) }
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar(T) < Foo
+        def self.foo
+          1.5
+        end
+      end
+
+      Bar(Int32).new
+      Bar(Int32).as(Foo.class).foo
+      CRYSTAL
+  end
+
   it "restricts virtual metaclass to Class (#11376)" do
     assert_type(<<-CRYSTAL) { nilable types["Foo"].virtual_type.metaclass }
       class Foo
