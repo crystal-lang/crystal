@@ -71,4 +71,31 @@ describe "Code gen: op assign" do
       Global.value
       CRYSTAL
   end
+
+  it "evaluates index receiver before indices (#17921)" do
+    run(<<-CRYSTAL).to_i.should eq(192)
+      class Box
+        def initialize
+          @value = 1
+        end
+
+        def value
+          @value
+        end
+
+        def [](index)
+          @value &* index
+        end
+
+        def []=(index, value)
+          @value = index &* value
+        end
+      end
+
+      a = Box.new
+      b = 10
+      (b &+= 2; a)[b] &+= 4
+      a.value
+      CRYSTAL
+  end
 end
