@@ -245,6 +245,24 @@ class Crystal::Call
       matches = owner.virtual_type.lookup_matches(signature, analyze_all: with_autocast)
     end
 
+    # A union has no defs of its own, so look the call up in each of its types
+    # instead. The union takes the call over from the enclosing scope only when
+    # every one of its types responds, just as a call with an explicit receiver
+    # of a union type needs every type to respond. When none of them responds
+    # the call belongs to the enclosing scope, and when only some of them do
+    # the call is reported as an error.
+    if matches.empty? && (union_type = owner).is_a?(UnionType)
+      types = union_type.union_types
+      without_match = types.reject &.lookup_matches(signature, analyze_all: with_autocast).cover_all?
+
+      if without_match.empty?
+        @uses_with_scope = true
+        return lookup_matches_in owner, arg_types, named_args_types, with_autocast: with_autocast
+      elsif without_match.size < types.size
+        raise "undefined method '#{name}' for #{without_match.join(", ")} (with ... yield), every type in #{owner} must define it"
+      end
+    end
+
     if matches.empty?
       @uses_with_scope = false
       return lookup_matches_in scope, arg_types, named_args_types, with_autocast: with_autocast
