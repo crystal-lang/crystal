@@ -2089,6 +2089,15 @@ module Crystal
           generic_class.splat_index = 0
           {x: TypeNode.new(generic_class.instantiate([] of TypeVar))}
         end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Int32", "String"])) do |program|
+          {x: TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %(["Int32", "String"])) do |program|
+          {x: TypeNode.new(program.named_tuple_of({"a" => program.int32, "b" => program.string}))}
+        end
+        assert_macro("{{x.type_vars.map &.stringify}}", %([])) do |program|
+          {x: TypeNode.new(program.named_tuple_of({} of String => Crystal::Type))}
+        end
       end
 
       it "executes class" do
