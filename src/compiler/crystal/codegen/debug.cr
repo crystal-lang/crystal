@@ -516,6 +516,22 @@ module Crystal
       builder.set_current_debug_location(di_builder.create_debug_location(0, 0, scope), di_builder.context)
     end
 
+    # If the last expression of a def has no code on its own line, like a literal or local variable, set it to the epilogue's location.
+    # Otherwise there is no location to use.
+    def set_epilogue_debug_location(body : ASTNode)
+      last_expression = body
+      while last_expression.is_a?(Expressions) && (expression = last_expression.expressions.last?)
+        last_expression = expression
+      end
+
+      case last_expression
+      when NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral, Var, InstanceVar
+        return set_current_debug_location(last_expression) if last_expression.location
+      end
+
+      set_artificial_debug_location
+    end
+
     def clear_current_debug_location
       @current_debug_location = nil
 

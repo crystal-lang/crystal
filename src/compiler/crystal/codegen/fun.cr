@@ -204,7 +204,7 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
-        set_artificial_debug_location if @debug.line_numbers?
+        set_epilogue_debug_location target_def.body if @debug.line_numbers?
         codegen_return target_def.body.type?, target_def
 
         br_from_alloca_to_entry

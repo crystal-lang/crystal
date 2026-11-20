@@ -423,6 +423,60 @@ describe "Code gen: debug" do
     debug_line_of(str, foo, /call void @exit/).should eq(21)
   end
 
+  it "attributes a def's epilogue to its last expression if that has no code on its own line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      class Foo
+        @value = 1
+
+        def literal(literal_value : Int32)
+          @value = literal_value
+          "done"
+        end
+
+        def var(var_value : Int32)
+          total = var_value &+ 1
+          @value = total
+          total
+        end
+
+        def me(me_value : Int32)
+          @value = me_value
+          self
+        end
+
+        def ivar(ivar_value : Int32)
+          @value = ivar_value
+          @value
+        end
+
+        def call(call_value : Int32)
+          @value = call_value
+          @value &+ 1
+        end
+      end
+
+      foo = Foo.new
+      foo.literal(1)
+      foo.var(1)
+      foo.me(1)
+      foo.ivar(1)
+      foo.call(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # Functions are found by their parameters because symbol names are mangled on Windows
+    literal = str[/^define [^\n]+ %literal_value\).+?^}/m]
+    debug_line_of(str, literal, /^\s+ret /).should eq(6)
+    var = str[/^define [^\n]+ %var_value\).+?^}/m]
+    debug_line_of(str, var, /^\s+ret /).should eq(12)
+    me = str[/^define [^\n]+ %me_value\).+?^}/m]
+    debug_line_of(str, me, /^\s+ret /).should eq(17)
+    ivar = str[/^define [^\n]+ %ivar_value\).+?^}/m]
+    debug_line_of(str, ivar, /^\s+ret /).should eq(22)
+    call = str[/^define [^\n]+ %call_value\).+?^}/m]
+    debug_line_of(str, call, /^\s+ret /).should eq(0)
+  end
+
   it "attributes the type checks of a dispatch to the call" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
       class Foo
