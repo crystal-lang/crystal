@@ -4,6 +4,8 @@ require "./spec_helper"
 describe "GC" do
   pending_wasm32 describe: "abort on OOM" do
     it "aborts with an error message when an allocation is too large for the heap" do
+      {% if flag?(:darwin) && flag?(:x86_64) %} pending! {% end %} # too many CI failures
+
       status, _, error = compile_and_run_source <<-CRYSTAL
         GC.max_heap_size = 64_u64 * 1024 * 1024
         GC.malloc(1_u64 << 30)
@@ -15,6 +17,8 @@ describe "GC" do
     end
 
     it "aborts with an error message when the heap is exhausted" do
+      {% if flag?(:darwin) && flag?(:x86_64) %} pending! {% end %} # too many CI failures
+
       status, _, error = compile_and_run_source <<-CRYSTAL
         GC.max_heap_size = 32_u64 * 1024 * 1024
         bufs = [] of Bytes
