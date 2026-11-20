@@ -131,7 +131,7 @@ describe "Semantic: double splat" do
   end
 
   it "uses restriction on double splat, means all types must be that type" do
-    assert_error <<-CRYSTAL, "no overload matches"
+    assert_error <<-CRYSTAL, "expected argument 'y' to 'foo' to be Int32, not Char"
       def foo(**options : Int32)
       end
 
