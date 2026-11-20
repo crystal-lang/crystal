@@ -75,7 +75,9 @@ class Crystal::ReplReader < Reply::Reader
   end
 
   def format(expression : String) : String?
-    Crystal.format(expression).chomp rescue nil
+    {% unless flag?(:without_tools) %}
+      Crystal.format(expression).chomp rescue nil
+    {% end %}
   end
 
   def indentation_level(expression_before_cursor : String) : Int32?

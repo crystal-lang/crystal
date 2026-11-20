@@ -213,7 +213,11 @@ module Crystal
     # Whether to link statically
     property? static = false
 
-    property dependency_printer : DependencyPrinter? = nil
+    {% if flag?(:without_tools) %}
+      getter dependency_printer : Nil = nil
+    {% else %}
+      property dependency_printer : DependencyPrinter? = nil
+    {% end %}
 
     # Program that was created for the last compilation.
     property! program : Program
