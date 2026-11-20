@@ -23,6 +23,88 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "downcasts a named tuple to one with narrower element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = {x: 'b', y: pick(true)}
+        a = {x: 'c', y: 3}
+        a[:y]
+      CRYSTAL
+    end
+
+    it "downcasts a union to a named tuple with narrower element types than its member" do
+      interpret(<<-CRYSTAL).should eq(3)
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = 1 > 0 ? {x: 'b', y: pick(true)} : 5
+        a = {x: 'c', y: 3}
+        a[:y]
+      CRYSTAL
+    end
+
+    it "downcasts a union to a smaller union with a named tuple with narrower element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = 1 > 2 ? 5 : (1 > 0 ? {x: pick(true)} : nil)
+        a = 1 > 0 ? {x: 3} : nil
+        if a
+          a[:x]
+        else
+          0
+        end
+      CRYSTAL
+    end
+
+    it "calls a method on a variable that holds a named tuple with wider element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        struct NamedTuple
+          def foo
+            self[:x]
+          end
+        end
+
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = {x: pick(true)}
+        a = {x: 3}
+        a.foo
+      CRYSTAL
+    end
+
+    it "calls a method on a union variable that holds a named tuple with wider element types" do
+      interpret(<<-CRYSTAL).should eq(3)
+        struct NamedTuple
+          def foo
+            self[:x]
+          end
+        end
+
+        struct Nil
+          def foo
+            0
+          end
+        end
+
+        def pick(flag : Bool) : Int32 | Char
+          flag ? 1 : 'a'
+        end
+
+        a = 1 > 0 ? {x: pick(true)} : nil
+        a = 1 > 0 ? {x: 3} : nil
+        a.foo
+      CRYSTAL
+    end
+
     it "discards named tuple (#12383)" do
       interpret(<<-CRYSTAL).should eq(3)
         1 + ({a: 1, b: 2, c: 3, d: 4}; 2)
