@@ -86,6 +86,44 @@ module Crystal
       @vars[name] = value
     end
 
+    def invoke_proc(proc : ProcLiteral, args : Array(ASTNode)) : ASTNode
+      old_vars, @vars = @vars, {} of String => ASTNode
+
+      begin
+        proc.def.args.each_with_index do |param, i|
+          arg = args[i]
+
+          if restriction = param.restriction
+            macro_type = @program.lookup_macro_type(restriction)
+            unless arg.macro_is_a?(macro_type)
+              arg.raise "expected argument ##{i + 1} to 'ProcLiteral#call' to be #{restriction}, not #{arg.class_desc}"
+            end
+          end
+
+          @vars[param.name] = arg
+        end
+
+        return_value = accept(proc.def.body)
+
+        if return_type = proc.def.return_type
+          case macro_type = @program.lookup_macro_type(return_type)
+          when @program.macro_nil_literal
+            return_value = NilLiteral.new
+          when @program.macro_nop
+            return_value = Nop.new
+          else
+            unless return_value.macro_is_a?(macro_type)
+              proc.raise "expected ProcLiteral to return #{return_type}, not #{return_value.class_desc}:\n\n#{return_value}"
+            end
+          end
+        end
+
+        return_value
+      ensure
+        @vars = old_vars
+      end
+    end
+
     # Calls the program's `interpreted_node_hook` hook with the macro ASTNode that was interpreted.
     def interpreted_hook(node : ASTNode, *, location custom_location : Location? = nil) : ASTNode
       @program.interpreted_node_hook.try &.call(node, false, false, custom_location)
@@ -362,7 +400,7 @@ module Crystal
     end
 
     def visit(node : MultiAssign)
-      @program.literal_expander.expand(node).accept(self)
+      (node.expanded ||= @program.literal_expander.expand(node)).accept(self)
       false
     end
 
