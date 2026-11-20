@@ -1816,6 +1816,36 @@ module Crystal
     it_parses "case 1\nwhen .as(T)\n2\nend", Case.new(1.int32, [When.new([Cast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
     it_parses "case 1\nwhen .as?(T)\n2\nend", Case.new(1.int32, [When.new([NilableCast.new(ImplicitObj.new, "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
     it_parses "case 1\nwhen .!()\n2\nend", Case.new(1.int32, [When.new([Not.new(ImplicitObj.new)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo.bar\n2\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), "bar")] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo[0]\n2\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), "[]", 0.int32)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo.is_a?(T)\n2\nend", Case.new(1.int32, [When.new([IsA.new(Call.new(ImplicitObj.new, "foo"), "T".path)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo.!\n2\nend", Case.new(1.int32, [When.new([Not.new(Call.new(ImplicitObj.new, "foo"))] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .!.foo\n2\nend", Case.new(1.int32, [When.new([Call.new(Not.new(ImplicitObj.new), "foo")] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo > 2\n3\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), ">", 2.int32)] of ASTNode, 3.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo + 2 * 3\n4\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), "+", Call.new(2.int32, "*", 3.int32))] of ASTNode, 4.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo * 2 + 3\n4\nend", Case.new(1.int32, [When.new([Call.new(Call.new(Call.new(ImplicitObj.new, "foo"), "*", 2.int32), "+", 3.int32)] of ASTNode, 4.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo && bar\n2\nend", Case.new(1.int32, [When.new([And.new(Call.new(ImplicitObj.new, "foo"), "bar".call)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo || bar\n2\nend", Case.new(1.int32, [When.new([Or.new(Call.new(ImplicitObj.new, "foo"), "bar".call)] of ASTNode, 2.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo > 2, .bar < 3\n4\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), ">", 2.int32), Call.new(Call.new(ImplicitObj.new, "bar"), "<", 3.int32)] of ASTNode, 4.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .foo > 2 then 3\nend", Case.new(1.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), ">", 2.int32)] of ASTNode, 3.int32)], else: nil, exhaustive: false)
+    it_parses "case 1\nwhen .> 2\n3\nend", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, ">", 2.int32)] of ASTNode, 3.int32)], else: nil, exhaustive: false)
+    it_parses "foo = 1\ncase 2\nwhen .foo + 3\n4\nend", [Assign.new("foo".var, 1.int32), Case.new(2.int32, [When.new([Call.new(Call.new(ImplicitObj.new, "foo"), "+", 3.int32)] of ASTNode, 4.int32)], else: nil, exhaustive: false)] of ASTNode
+    it_parses "case {1, 2}\nwhen {.foo.bar, .baz > 3}\n4\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(Call.new(ImplicitObj.new, "foo"), "bar"), Call.new(Call.new(ImplicitObj.new, "baz"), ">", 3.int32)] of ASTNode)] of ASTNode, 4.int32)], else: nil, exhaustive: false)
+    it_parses "foo = 1\n[2].map &.foo + 3", [Assign.new("foo".var, 1.int32), Call.new(Call.new(([2.int32] of ASTNode).array, "map", block: Block.new(["__arg0".var], Call.new("__arg0".var, "foo"))), "+", 3.int32)] of ASTNode
+    assert_syntax_error "case 1\nwhen .foo.bar += 2\n3\nend", "expected a call on the implicit object of the case expression"
+    assert_syntax_error "case 1\nwhen .foo : Int32\n2\nend", "expected a call on the implicit object of the case expression"
+    assert_syntax_error "case 1\nwhen .foo = 2\n3\nend", "expecting ',', ';' or '\\n'"
+    assert_syntax_error "case 1\nwhen .foo..2\n3\nend", "expecting ',', ';' or '\\n'"
+    assert_syntax_error "case 1\nwhen .foo ? 2 : 3\n4\nend", "expecting ',', ';' or '\\n'"
+    assert_syntax_error "case 1\nwhen .foo > .bar\n2\nend", "unexpected token: \".\""
+    assert_syntax_error "case 1\nwhen .foo(.bar)\n2\nend", "unterminated call"
+    assert_syntax_error "case 1\nin .foo.bar?; 2; end", "expression of exhaustive case (case ... in) must be a constant"
+    assert_syntax_error "case 1\nin .foo? && bar; 2; end", "expression of exhaustive case (case ... in) must be a constant"
+    assert_syntax_error "case {1, 2}\nin .foo.bar?; 3; end", "expression of exhaustive case (case ... in) must be a constant"
+    assert_syntax_error "case {1, 2}\nin {.foo.bar?, Int32}; 3; end", "expression of exhaustive case (case ... in) must be a constant"
+    it_parses "case {1, 2}\nin .foo; 3; end", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 3.int32)], else: nil, exhaustive: true)
+    it_parses "case {1, 2}\nin .nil?; 3; end", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([IsA.new(ImplicitObj.new, Path.global("Nil"), nil_check: true)] of ASTNode, 3.int32)], else: nil, exhaustive: true)
+    it_parses "case a\nwhen .b\n/ /\nelse\n/ /\nend", Case.new("a".call, [When.new([Call.new(ImplicitObj.new, "b")] of ASTNode, RegexLiteral.new(StringLiteral.new(" ")))], RegexLiteral.new(StringLiteral.new(" ")), exhaustive: false)
     it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false)
     it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)], else: nil, exhaustive: false)
     it_parses "case {1, 2}\nwhen {3, 4}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode)] of ASTNode, 5.int32)], else: nil, exhaustive: false)
@@ -4568,6 +4598,60 @@ module Crystal
 
       node = conds[2].as(Not)
       node_source(source, node.exp).should eq(".")
+    end
+
+    it "sets correct location of call chains and operators on implicit object in `when` of case" do
+      source = "case foo\nwhen .bar(1).baz, .qux * 2 + 3, .x.as(T).y?, .z && w, .!.v\nend"
+      conds = Parser.parse(source).as(Case).whens.first.conds
+
+      call = conds[0].as(Call)
+      node_source(source, call).should eq(".bar(1).baz")
+      bar = call.obj.as(Call)
+      node_source(source, bar).should eq(".bar(1)")
+      node_source(source, bar.obj.should_not be_nil).should eq(".")
+
+      add = conds[1].as(Call)
+      node_source(source, add).should eq(".qux * 2 + 3")
+      mul = add.obj.as(Call)
+      node_source(source, mul).should eq(".qux * 2")
+      qux = mul.obj.as(Call)
+      node_source(source, qux).should eq(".qux")
+      node_source(source, qux.obj.should_not be_nil).should eq(".")
+
+      call = conds[2].as(Call)
+      node_source(source, call).should eq(".x.as(T).y?")
+      cast = call.obj.as(Cast)
+      node_source(source, cast).should eq(".x.as(T)")
+      x = cast.obj.as(Call)
+      node_source(source, x).should eq(".x")
+      node_source(source, x.obj.should_not be_nil).should eq(".")
+
+      node = conds[3].as(And)
+      node_source(source, node).should eq(".z && w")
+      z = node.left.as(Call)
+      node_source(source, z).should eq(".z")
+      node_source(source, z.obj.should_not be_nil).should eq(".")
+
+      call = conds[4].as(Call)
+      node_source(source, call).should eq(".!.v")
+      node = call.obj.as(Not)
+      node_source(source, node).should eq(".!")
+      node_source(source, node.exp).should eq(".")
+    end
+
+    it "sets correct location of call chains on implicit object in tuple `when` of case" do
+      source = "case {foo, bar}\nwhen {.a.b, .c > 1}\nend"
+      tuple = Parser.parse(source).as(Case).whens.first.conds.first.as(TupleLiteral)
+
+      call = tuple.elements[0].as(Call)
+      node_source(source, call).should eq(".a.b")
+      node_source(source, call.obj.should_not be_nil).should eq(".a")
+
+      call = tuple.elements[1].as(Call)
+      node_source(source, call).should eq(".c > 1")
+      c = call.obj.as(Call)
+      node_source(source, c).should eq(".c")
+      node_source(source, c.obj.should_not be_nil).should eq(".")
     end
 
     it "sets correct location of annotation in enum" do

@@ -940,12 +940,18 @@ module Crystal
 
       right_side = temp_var.clone
 
-      check_implicit_obj Call
-      check_implicit_obj RespondsTo
-      check_implicit_obj IsA
-      check_implicit_obj Cast
-      check_implicit_obj NilableCast
-      check_implicit_obj Not
+      if cond.implicit_obj_parent
+        implicit_call = cond.clone
+
+        case parent = implicit_call.implicit_obj_parent
+        when Not
+          parent.exp = temp_var.clone
+        when Call, RespondsTo, IsA, Cast, NilableCast
+          parent.obj = temp_var.clone
+        end
+
+        return implicit_call
+      end
 
       case cond
       when NilLiteral
@@ -971,21 +977,6 @@ module Crystal
       end
 
       Call.new(cond, "===", right_side)
-    end
-
-    macro check_implicit_obj(type)
-      if cond.is_a?({{type}})
-        cond_obj = cond.is_a?(Not) ? cond.exp : cond.obj
-        if cond_obj.is_a?(ImplicitObj)
-          implicit_call = cond.clone.as({{type}})
-          if implicit_call.is_a?(Not)
-            implicit_call.exp = temp_var.clone
-          else
-            implicit_call.obj = temp_var.clone
-          end
-          return implicit_call
-        end
-      end
     end
 
     # Expand this:

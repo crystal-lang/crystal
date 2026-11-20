@@ -13,6 +13,68 @@ describe "Code gen: case" do
     run("require \"prelude\"; case 1; when 0; 2; else; 3; end").to_i.should eq(3)
   end
 
+  it "codegens case with binary operator on implicit call" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+      case "abc"
+      when .size > 5 then 1
+      when .size > 2 then 2
+      else                3
+      end
+      CRYSTAL
+  end
+
+  it "codegens case with chained calls on implicit obj" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+      case "abc"
+      when .upcase.empty?     then 1
+      when .upcase.size.even? then 3
+      when .upcase.size.odd?  then 2
+      else                         4
+      end
+      CRYSTAL
+  end
+
+  it "evaluates case expression once with implicit call chain" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+      count = 0
+      case (count += 1; "abc")
+      when .size > 5, .size > 4
+      when .upcase.size > 3
+      end
+      count
+      CRYSTAL
+  end
+
+  it "codegens case with implicit call chain with local var of the same name" do
+    run(<<-CRYSTAL).to_i.should eq(4)
+      require "prelude"
+      size = 100
+      case "abc"
+      when .size + 1 > size then 3
+      else                       4
+      end
+      CRYSTAL
+  end
+
+  it "preserves evaluation order of implicit call chain through a macro" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      require "prelude"
+      macro identity(node)
+        {{ node }}
+      end
+
+      identity(
+        case 5
+        when .itself.+(1) * 2 == 12 then 1
+        else                             2
+        end
+      )
+      CRYSTAL
+  end
+
   it "codegens case without whens but else" do
     run("require \"prelude\"; case 1; else; 2; end").to_i.should eq(2)
   end
