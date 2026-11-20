@@ -355,4 +355,68 @@ describe "Code gen: named tuple" do
       x = {a: 1}
       CRYSTAL
   end
+
+  it "codegens named tuple metaclass indexer for class with subclass (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def NamedTuple.foo
+        self[:x].new
+      end
+
+      NamedTuple(x: Foo).foo.crystal_type_id == Foo.crystal_instance_type_id
+      CRYSTAL
+  end
+
+  it "codegens named tuple metaclass indexer for generic class with subclass of another specialization (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo(T)
+      end
+
+      class Bar < Foo(String)
+      end
+
+      def NamedTuple.foo
+        self[:x].new
+      end
+
+      NamedTuple(x: Foo(Int32)).foo.crystal_type_id == Foo(Int32).crystal_instance_type_id
+      CRYSTAL
+  end
+
+  it "codegens named tuple metaclass indexer with string key for class with subclass (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def NamedTuple.foo
+        self["x"].new
+      end
+
+      NamedTuple(x: Foo).foo.crystal_type_id == Foo.crystal_instance_type_id
+      CRYSTAL
+  end
+
+  it "codegens named tuple metaclass nilable indexer for class with subclass (#15181)" do
+    run(<<-CRYSTAL).to_b.should be_true
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def NamedTuple.foo
+        self[:x]?.new
+      end
+
+      NamedTuple(x: Foo).foo.crystal_type_id == Foo.crystal_instance_type_id
+      CRYSTAL
+  end
 end
