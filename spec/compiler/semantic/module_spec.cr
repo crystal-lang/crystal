@@ -1001,6 +1001,54 @@ describe "Semantic: module" do
       CRYSTAL
   end
 
+  describe "implicit-namespace upgrade (#8685, #16918)" do
+    it "upgrades a namespace created by `module Foo::Bar` to a class when later declared `class Foo`" do
+      assert_type(<<-CRYSTAL) { types["Foo"] }
+        module Foo::Bar
+        end
+
+        class Foo
+        end
+
+        Foo.new
+        CRYSTAL
+    end
+
+    it "upgrades to a struct" do
+      assert_type(<<-CRYSTAL) { types["Foo"] }
+        module Foo::Bar
+        end
+
+        struct Foo
+        end
+
+        Foo.new
+        CRYSTAL
+    end
+
+    it "preserves the inner namespaced type after upgrade" do
+      assert_type(<<-CRYSTAL) { types["Foo"].types["Bar"].metaclass }
+        module Foo::Bar
+        end
+
+        class Foo
+        end
+
+        Foo::Bar
+        CRYSTAL
+    end
+
+    it "still rejects redefinition when the namespace was explicitly declared as a module" do
+      assert_error <<-CRYSTAL, "Foo is not a class, it's a module"
+        module Foo
+        end
+
+        class Foo
+        end
+        CRYSTAL
+    end
+  end
+
   it "errors if reopening non-generic module as generic" do
     assert_error <<-CRYSTAL, "Foo is not a generic module"
       module Foo
