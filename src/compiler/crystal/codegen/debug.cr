@@ -522,6 +522,16 @@ module Crystal
       builder.clear_current_debug_location
     end
 
+    # Emits a `nop` at the current debug location for un-optimized debug builds.
+    def emit_debug_marker
+      return unless @debug.line_numbers? && @program.optimization_mode.o0?
+      return unless @current_debug_location
+
+      fun_type = LLVM::Type.function([] of LLVM::Type, llvm_context.void)
+      value = fun_type.inline_asm("nop", "", has_side_effects: true)
+      call LLVMTypedFunction.new(fun_type, LLVM::Function.from_value(value))
+    end
+
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LLVM::Metadata, is_optimized = false)
       filename = location.try(&.original_filename) || "??"
       line_number = location.try(&.line_number) || 0
