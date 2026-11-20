@@ -1222,6 +1222,20 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with keywords as named arguments (#17927)" do
+    run(<<-'CRYSTAL').to_i.should eq(123)
+      def bar(select s, struct t, enum e)
+        s &* 100 &+ t &* 10 &+ e
+      end
+
+      macro foo
+        bar(select: 1, struct: 2, enum: 3)
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
