@@ -159,6 +159,33 @@ module Crystal
         end
       end
 
+      # Compare block_arg restrictions only when positional args haven't already
+      # determined ordering. This prevents incompatible block restrictions from
+      # making otherwise comparable overloads ambiguous.
+      if self_stricter && other_stricter
+        self_block_restriction = self.def.block_arg.try &.restriction
+        other_block_restriction = other.def.block_arg.try &.restriction
+
+        case {self_block_restriction, other_block_restriction}
+        when {nil, nil}
+          # No change to strictness
+        when {nil, _}
+          self_is_not_stricter
+        when {_, nil}
+          other_is_not_stricter
+        else
+          # Use try/rescue to gracefully handle cases where restriction comparison
+          # triggers type lookup that fails (e.g., for forward-declared types not
+          # yet fully defined when defs are being added).
+          begin
+            self_is_not_stricter unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+            other_is_not_stricter unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          rescue Crystal::CodeError
+            # Treat as not comparable; falls back to other ordering criteria.
+          end
+        end
+      end
+
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
@@ -355,6 +382,34 @@ module Crystal
     def compare_strictness_old(other : DefWithMetadata, self_owner, *, other_owner = self_owner)
       self_stricter = old_restriction_of?(other, self_owner)
       other_stricter = other.old_restriction_of?(self, other_owner)
+
+      # When the signatures appear equivalent, use block_arg restrictions as a
+      # tiebreaker. Otherwise two defs differing only by block return type would
+      # override each other, losing one overload.
+      if self_stricter && other_stricter
+        self_block_restriction = self.def.block_arg.try &.restriction
+        other_block_restriction = other.def.block_arg.try &.restriction
+
+        case {self_block_restriction, other_block_restriction}
+        when {nil, nil}
+          # No change
+        when {nil, _}
+          self_stricter = false
+        when {_, nil}
+          other_stricter = false
+        else
+          # Use try/rescue to gracefully handle cases where restriction comparison
+          # triggers type lookup that fails (e.g., for forward-declared types not
+          # yet fully defined when defs are being added).
+          begin
+            self_stricter = false unless self_block_restriction.restriction_of?(other_block_restriction, self_owner)
+            other_stricter = false unless other_block_restriction.restriction_of?(self_block_restriction, other_owner)
+          rescue Crystal::CodeError
+            # Treat as not comparable; falls back to other ordering criteria.
+          end
+        end
+      end
+
       stricter_pair_to_num(self_stricter, other_stricter)
     end
 
@@ -798,6 +853,42 @@ module Crystal
       end
 
       super
+    end
+  end
+
+  class ProcNotation
+    def restriction_of?(other : ProcNotation, owner, self_free_vars = nil, other_free_vars = nil)
+      # Compare input types
+      self_inputs = @inputs || [] of ASTNode
+      other_inputs = other.inputs || [] of ASTNode
+      return false unless self_inputs.size == other_inputs.size
+
+      self_inputs.zip(other_inputs) do |self_input, other_input|
+        return false unless self_input.restriction_of?(other_input, owner, self_free_vars, other_free_vars)
+      end
+
+      # Compare output types
+      self_output = @output
+      other_output = other.output
+
+      case {self_output, other_output}
+      when {nil, nil}
+        true
+      when {nil, _}
+        false
+      when {_, nil}
+        true
+      else
+        self_output.restriction_of?(other_output, owner, self_free_vars, other_free_vars)
+      end
+    end
+
+    def restriction_of?(other : ASTNode, owner, self_free_vars = nil, other_free_vars = nil)
+      false
+    end
+
+    def restriction_of?(other : Underscore, owner, self_free_vars = nil, other_free_vars = nil)
+      true
     end
   end
 
