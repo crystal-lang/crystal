@@ -121,7 +121,7 @@ abstract class Crystal::EventLoop
   abstract def sleep(duration : Time::Span) : Nil
 
   # Suspends the current fiber until the absolute *time* is reached (as per the
-  # monotonic clock). Must resolve the timeout using `Fiber.resolve_timer?` and
+  # monotonic clock). Must resolve the timeout using `Fiber.try_cancel?` and
   # *token* before resuming the fiber.
   #
   # Returns true if the timer expired, false if it was canceled.

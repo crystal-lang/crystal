@@ -457,7 +457,7 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
         next unless select_action.time_expired?
         event.value.wake_at = nil
       when .timeout?
-        next unless fiber.resolve_timer?(event.value.cancelation_token)
+        next unless fiber.try_cancel?(event.value.cancelation_token)
         event.value.timed_out = true
       when .sleep?
         event.value.timed_out = true

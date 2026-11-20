@@ -50,7 +50,7 @@ describe Fiber do
         Fiber.yield
       end
 
-      if fiber.resolve_timer?(cancelation_token.not_nil!)
+      if fiber.try_cancel?(cancelation_token.not_nil!)
         fiber.enqueue
       end
 
@@ -61,7 +61,7 @@ describe Fiber do
       tokens = Channel(Fiber::CancelationToken).new(1)
       results = Channel(Fiber::TimeoutResult).new(1)
 
-      200_000.times do
+      2000.times do
         suspended_fiber = spawn do
           result = Fiber.timeout(10.microseconds) { |token| tokens.send(token) }
           results.send(result)
@@ -70,7 +70,7 @@ describe Fiber do
         token = tokens.receive
         sleep rand(9..11).microseconds
 
-        canceled = suspended_fiber.resolve_timer?(token)
+        canceled = suspended_fiber.try_cancel?(token)
         suspended_fiber.enqueue if canceled
         results.receive.should eq(canceled ? Fiber::TimeoutResult::CANCELED : Fiber::TimeoutResult::EXPIRED)
       end

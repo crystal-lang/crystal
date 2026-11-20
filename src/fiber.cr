@@ -265,6 +265,7 @@ class Fiber
     @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
 
+  # :nodoc:
   struct CancelationToken
     # :nodoc:
     getter value : UInt32
@@ -273,6 +274,7 @@ class Fiber
     end
   end
 
+  # :nodoc:
   enum TimeoutResult
     EXPIRED
     CANCELED
@@ -282,11 +284,13 @@ class Fiber
   private TIMEOUT_COUNTER = 2_u32 # bits 2..32 is a counter to avoid ABA issues
   @timer = Atomic(UInt32).new(0_u32)
 
+  # :nodoc:
+  #
   # Suspends the current `Fiber` for *duration*.
   #
   # Yields a `CancelationToken` before suspending the fiber. The token can be
   # used to manually cancel the timer before *duration* expires to resume the
-  # fiber before *duration*. See `#resolve_timer?` for details.
+  # fiber before *duration*. See `#try_cancel?` for details.
   #
   # The fiber will be resumed once, either because the timer expired (*duration*
   # has elapsed) or because the timer has been canceled. The returned
@@ -302,10 +306,14 @@ class Fiber
   #   dequeue_waiter(Fiber.current)
   # end
   # ```
+  #
+  # WARNING: Yielding the fiber for the duration of the block is undefined behavior.
   def self.timeout(duration : Time::Span, & : CancelationToken ->) : TimeoutResult
     timeout(until: Time.instant + duration) { |token| yield token }
   end
 
+  # :nodoc:
+  #
   # Identical to `.timeout` but suspends the fiber until an absolute time, as
   # per the monotonic clock, is reached.
   #
@@ -319,6 +327,8 @@ class Fiber
   #   raise "timeout" if result.expired?
   # end
   # ```
+  #
+  # WARNING: Yielding the fiber for the duration of the block is undefined behavior.
   def self.timeout(*, until time : Time::Instant, & : CancelationToken ->) : TimeoutResult
     token = Fiber.current.new_cancelation_token
     yield token
@@ -326,6 +336,8 @@ class Fiber
     result ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
   end
 
+  # :nodoc:
+  #
   # Sets the timeout flag and increments the counter to avoid ABA issues with
   # parallel threads trying to resolve the timer while the timer was unset then
   # set again (new timer). Since the current fiber is the only one that can set
@@ -336,6 +348,8 @@ class Fiber
     CancelationToken.new(value)
   end
 
+  # :nodoc:
+  #
   # Tries to resolve the timeout previously set on `Fiber` using the cancelation
   # *token*. See `Fiber.timeout` for details on setting the timeout.
   #
@@ -366,7 +380,7 @@ class Fiber
   #   sleep rand(4..6).seconds
   #
   #   # let's try to cancel
-  #   if suspended_fiber.resolve_timer?(cancelation_token.not_nil!)
+  #   if suspended_fiber.try_cancel?(cancelation_token.not_nil!)
   #     # canceled: we must enqueue the fiber
   #     suspended_fiber.enqueue
   #   else
@@ -374,7 +388,7 @@ class Fiber
   #   end
   # end
   # ```
-  def resolve_timer?(token : CancelationToken) : Bool
+  def try_cancel?(token : CancelationToken) : Bool
     _, success = @timer.compare_and_set(token.value, token.value & ~TIMEOUT_FLAG, :relaxed, :relaxed)
     success
   end

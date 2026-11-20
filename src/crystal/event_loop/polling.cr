@@ -609,7 +609,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       return unless select_action.time_expired?
       event.value.wake_at = nil
     when .timeout?
-      return unless fiber.resolve_timer?(event.value.cancelation_token)
+      return unless fiber.try_cancel?(event.value.cancelation_token)
       event.value.timed_out!
     when .sleep?
       event.value.timed_out!

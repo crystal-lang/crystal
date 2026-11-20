@@ -69,7 +69,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     event = event_base.new_event(-1, LibEvent2::EventFlags::None, arg) do |s, flags, data|
       d = data.as(TimeoutData)
       f = d.fiber
-      if f.resolve_timer?(d.cancelation_token)
+      if f.try_cancel?(d.cancelation_token)
         d.expired = true
         {% if !flag?(:without_mt) %}
           event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)

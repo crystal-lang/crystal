@@ -227,7 +227,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     in .sleep?
       timer.value.timed_out!
     in .timeout?
-      return unless fiber.resolve_timer?(timer.value.cancelation_token)
+      return unless fiber.try_cancel?(timer.value.cancelation_token)
       timer.value.timed_out!
     in .select_timeout?
       return unless select_action = timer.value.timeout_select_action
