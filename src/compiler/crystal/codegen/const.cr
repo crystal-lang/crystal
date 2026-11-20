@@ -82,7 +82,7 @@ class Crystal::CodeGenVisitor
       file: file_metadata,
       line: location.line_number,
       type: debug_type,
-      local_to_unit: @single_module
+      local_to_unit: @single_module,
     )
 
     global.global_set_metadata("dbg", gv_expr)

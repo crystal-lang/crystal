@@ -181,7 +181,7 @@ describe Crystal::FFI::CallInterface do
           j: 8,
           f: 9.0,
           d: 10.0,
-          p: pointerof(pointer_value).as(Void*)
+          p: pointerof(pointer_value).as(Void*),
         )).as(Void*),
         Pointer(Void).null,
       ]

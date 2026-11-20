@@ -681,7 +681,7 @@ describe HTTP::WebSocket do
             address.address,
             port: address.port,
             path: "/",
-            protocols: ["chat"]
+            protocols: ["chat"],
           )
         end
       end
@@ -706,7 +706,7 @@ describe HTTP::WebSocket do
             address.address,
             port: address.port,
             path: "/",
-            protocols: ["chat"]
+            protocols: ["chat"],
           )
         end
       end
@@ -730,7 +730,7 @@ describe HTTP::WebSocket do
           address.address,
           port: address.port,
           path: "/",
-          protocols: ["chat", "video"]
+          protocols: ["chat", "video"],
         )
         ws.protocol.should eq("chat")
       end
@@ -752,7 +752,7 @@ describe HTTP::WebSocket do
         HTTP::WebSocket::Protocol.new(
           address.address,
           port: address.port,
-          path: "/"
+          path: "/",
         )
       end
     end

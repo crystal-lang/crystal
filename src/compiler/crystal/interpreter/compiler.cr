@@ -2065,7 +2065,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
         call_interface: FFI::CallInterface.variadic(
           external.type.ffi_type,
           args_ffi_types,
-          fixed_args: external.args.size
+          fixed_args: external.args.size,
         ),
         args_bytesizes: args_bytesizes,
         return_bytesize: return_bytesize,
@@ -2077,7 +2077,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
           symbol: symbol,
           call_interface: FFI::CallInterface.new(
             external.type.ffi_type,
-            args_ffi_types
+            args_ffi_types,
           ),
           args_bytesizes: args_bytesizes,
           return_bytesize: return_bytesize,

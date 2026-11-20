@@ -68,8 +68,8 @@ class Crystal::CodeGenVisitor
     ret(
       and(
         builder.icmp(LLVM::IntPredicate::SGE, type_id, int(min)),
-        builder.icmp(LLVM::IntPredicate::SLE, type_id, int(max))
-      )
+        builder.icmp(LLVM::IntPredicate::SLE, type_id, int(max)),
+      ),
     )
   end
 
