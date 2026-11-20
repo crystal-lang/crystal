@@ -467,6 +467,19 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "upcasts mixed union with tuple smaller than the union to mixed union with compatible tuple" do
+      interpret(<<-CRYSTAL).should eq(2)
+        a = 1 > 0 ? {x: 2_i64} : {1_i64, 1_i64}
+        b = 1 > 2 ? {x: 1} : a
+        if b.is_a?(NamedTuple(x: Int32 | Int64))
+          x = b[:x]
+          x.is_a?(Int64) ? x.to_i32! : 3
+        else
+          4
+        end
+      CRYSTAL
+    end
+
     it "upcasts in nilable cast (#12532)" do
       interpret(<<-CRYSTAL).should eq(2)
         struct Nil
