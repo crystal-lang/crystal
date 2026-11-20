@@ -132,7 +132,7 @@ enum Process::ExitReason
 end
 
 # The status of a terminated process. Returned by `Process#wait`.
-class Process::Status
+struct Process::Status
   # Platform-specific exit status code, which usually contains either the exit code or a termination signal.
   # The other `Process::Status` methods extract the values from `exit_status`.
   @[Deprecated("Use `#exit_reason`, `#exit_code`, or `#system_exit_status` instead")]
