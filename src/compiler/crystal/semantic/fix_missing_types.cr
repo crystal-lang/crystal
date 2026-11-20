@@ -41,6 +41,16 @@ class Crystal::FixMissingTypes < Crystal::Visitor
     false
   end
 
+  def visit(node : Block)
+    # A captured block's proc literal shares the block's body, so visit
+    # only the literal to avoid walking that body twice
+    if fun_literal = node.fun_literal
+      fun_literal.accept self
+      return false
+    end
+    true
+  end
+
   def visit(node : ProcPointer)
     if expanded = node.expanded
       expanded.accept(self)
