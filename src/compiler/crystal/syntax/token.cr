@@ -277,9 +277,24 @@ module Crystal
     property start : Int32
     property invalid_escape : Bool
 
+    # The kind of construct a macro body is nested in, as tracked by the lexer
+    # to know which `end` closes the macro and how to read some keywords.
+    enum MacroScope
+      # A construct closed by `end` (`def`, `class`, `if`, `do`, ...)
+      Block
+      # A `lib` body, where `union` is a keyword (elsewhere it's a regular
+      # identifier) and a `fun` is a declaration without a body
+      Lib
+      # An escaped macro control (`\{% if %}` ... `\{% end %}`), which is
+      # transparent: it doesn't change how its contents are read
+      EscapedControl
+    end
+
     record MacroState,
       whitespace : Bool,
-      nest : Int32,
+      # The stack of constructs the lexer is currently nested in, innermost
+      # last. It's never mutated in place, so it can be shared between states.
+      scopes : Array(MacroScope),
       control_nest : Int32,
       delimiter_state : DelimiterState?,
       beginning_of_line : Bool,
@@ -287,7 +302,11 @@ module Crystal
       comment : Bool,
       heredocs : Array(DelimiterState)? do
       def self.default
-        MacroState.new(true, 0, 0, nil, true, false, false, nil)
+        MacroState.new(true, [] of MacroScope, 0, nil, true, false, false, nil)
+      end
+
+      def nest : Int32
+        scopes.size
       end
 
       setter whitespace
