@@ -1222,6 +1222,34 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro expression after escaped hash inside string (#17935)" do
+    run(<<-'CRYSTAL').to_string.should eq(%(\#1))
+      macro foo(x)
+        "\#{{ x }}"
+      end
+
+      foo(1)
+      CRYSTAL
+  end
+
+  it "expands macro with escaped hash and curly brace inside string (#17932)" do
+    run(<<-'CRYSTAL').to_string.should eq(%(\#{))
+      macro foo
+        "\#{"
+      end
+
+      foo
+      CRYSTAL
+  end
+
+  it "expands macro expression after escaped hash inside string in begin body (#17935)" do
+    run(<<-'CRYSTAL').to_string.should eq(%(\#1))
+      {% begin %}
+        "\#{{ 1 }}"
+      {% end %}
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
