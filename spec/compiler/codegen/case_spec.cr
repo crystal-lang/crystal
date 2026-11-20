@@ -129,4 +129,94 @@ describe "Code gen: case" do
       end
       CRYSTAL
   end
+
+  it "does case when with a type union, doesn't resolve to virtual type (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+      class Bang < Foo; end
+
+      x = Bang.new || Bar.new
+      case x
+      when Bar | Baz
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
+
+  it "does case when with a union alias, doesn't resolve to virtual type (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+      class Bang < Foo; end
+
+      alias BarBaz = Bar | Baz
+
+      x = Bang.new || Bar.new
+      case x
+      when BarBaz
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
+
+  it "does case when with a type union, matches a member (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+
+      x = Bar.new || Baz.new
+      case x
+      when Bar | Baz
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
+
+  it "does case when with a flags enum union keeps value semantics (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      @[Flags]
+      enum Color
+        Red
+        Green
+        Blue
+      end
+
+      x = Color::Green
+      case x
+      when Color::Red | Color::Blue
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
+
+  it "does case when with a numeric constant union keeps value semantics (#9665)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      require "prelude"
+
+      A = 1
+      B = 2
+
+      x = 4
+      case x
+      when A | B
+        1
+      else
+        2
+      end
+      CRYSTAL
+  end
 end

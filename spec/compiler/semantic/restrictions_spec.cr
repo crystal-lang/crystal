@@ -1000,6 +1000,54 @@ describe "Restrictions" do
       CRYSTAL
   end
 
+  it "restricts against an alias of a union by its members, not their ancestor (#9665)" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo, not Quux"
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+      class Quux < Foo; end
+
+      alias BarBaz = Bar | Baz
+
+      def foo(x : BarBaz)
+      end
+
+      foo(Quux.new)
+      CRYSTAL
+  end
+
+  it "restricts against an alias of Union(X, Y) by its members, not their ancestor (#9665)" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Foo, not Quux"
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+      class Quux < Foo; end
+
+      alias BarBaz = Union(Bar, Baz)
+
+      def foo(x : BarBaz)
+      end
+
+      foo(Quux.new)
+      CRYSTAL
+  end
+
+  it "matches a member against an alias of a union restriction (#9665)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      class Foo; end
+      class Bar < Foo; end
+      class Baz < Foo; end
+
+      alias BarBaz = Bar | Baz
+
+      def foo(x : BarBaz)
+        1
+      end
+
+      foo(Bar.new)
+      CRYSTAL
+  end
+
   it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
     assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be GenericBase(Child), not GenericChild(Base)"
       class Base
