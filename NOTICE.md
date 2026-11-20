@@ -45,7 +45,7 @@ Crystal standard library uses the following libraries, which have their own lice
 - [GMP][] - [LGPLv3][]
 
 <!-- licenses -->
-[Apache-2.0]: https://www.openssl.org/source/apache-license-2.0.txt
+[Apache-2.0]: https://openssl-library.org/source/license/apache-license-2.0.txt
 [Apache-2.0 with LLVM exceptions]: https://raw.githubusercontent.com/llvm/llvm-project/main/llvm/LICENSE.TXT
 [BSD-3]: https://opensource.org/licenses/BSD-3-Clause
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.en.html
