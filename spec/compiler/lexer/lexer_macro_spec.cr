@@ -4,6 +4,32 @@ private def t(kind : Crystal::Token::Kind)
   kind
 end
 
+# Lexes a macro body until its end, returning the macro variables
+# found and the concatenated literal contents
+private def lex_macro_body(source)
+  lexer = Lexer.new(source)
+  macro_vars = [] of String
+  literal = String::Builder.new
+  macro_state = Token::MacroState.default
+
+  while true
+    token = lexer.next_macro_token(macro_state, false)
+    case token.type
+    when .macro_literal?
+      literal << token.value.to_s
+    when .macro_var?
+      macro_vars << token.value.to_s
+    when .macro_end?
+      break
+    else
+      fail "unexpected token: #{token.type}"
+    end
+    macro_state = token.macro_state
+  end
+
+  {macro_vars, literal.to_s}
+end
+
 describe "Lexer macro" do
   it "lexes simple macro" do
     lexer = Lexer.new(%(hello end))
@@ -317,6 +343,32 @@ describe "Lexer macro" do
       token = lexer.next_macro_token(token.macro_state, false)
       token.type.should eq(t :MACRO_END)
     end
+  end
+
+  [{"{", "}"}, {"<", ">"}, {"(", ")"}, {"[", "]"}].each do |(left, right)|
+    it "lexes macro with nested #{left}#{right} in embedded string with %#{left} (#16159)" do
+      lex_macro_body("good %#{left} %a #{left}#{right} %b #{left}x#{right} %c #{right} %d end").should eq({
+        ["d"], "good %#{left} %a #{left}#{right} %b #{left}x#{right} %c #{right}  ",
+      })
+    end
+  end
+
+  ["q", "Q", "w"].each do |prefix|
+    it "lexes macro with nested {} in embedded string with %#{prefix}{ (#16159)" do
+      lex_macro_body("good %#{prefix}{ %a {} %b } %c end").should eq({["c"], "good %#{prefix}{ %a {} %b }  "})
+    end
+  end
+
+  it "lexes macro with } inside string inside interpolation" do
+    lex_macro_body(%(good "\#{ "}" } %a" %b end)).should eq({["b"], %(good "\#{ "}" } %a"  )})
+  end
+
+  it "lexes macro with { inside string inside interpolation" do
+    lex_macro_body(%(good "\#{ "{" } %a" %b end)).should eq({["b"], %(good "\#{ "{" } %a"  )})
+  end
+
+  it "lexes macro with nested %{} inside interpolation" do
+    lex_macro_body(%(good "\#{ %{x{y}z} } %a" %b end)).should eq({["b"], %(good "\#{ %{x{y}z} } %a"  )})
   end
 
   it "lexes macro with nested embedded string with %(" do
