@@ -186,6 +186,80 @@ describe "Semantic: yield with scope" do
       CRYSTAL
   end
 
+  it "yields module type (#17393)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Base
+      end
+
+      class Foo < Base
+        include Moo
+      end
+
+      class Bar < Base
+        include Moo
+      end
+
+      def foo(x : Base, &)
+        with x.as(Moo) yield
+      end
+
+      foo(Foo.new) { moo }
+      CRYSTAL
+  end
+
+  it "yields module type with a single including type (#17393)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Moo
+        def moo
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      def foo(x : Moo, &)
+        with x yield
+      end
+
+      foo(Foo.new.as(Moo)) { moo }
+      CRYSTAL
+  end
+
+  it "uses method of enclosing scope if module yield scope has no match (#17393)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      def foo(x : Moo, &)
+        with x yield
+      end
+
+      class Bar
+        def bar
+          foo(Foo.new.as(Moo)) { baz }
+        end
+
+        def baz
+          1
+        end
+      end
+
+      Bar.new.bar
+      CRYSTAL
+  end
+
   it "mentions with yield scope and current scope in error" do
     assert_error <<-CRYSTAL, "undefined local variable or method 'baz' for Int32 (with ... yield) and Foo (current scope)"
       def foo

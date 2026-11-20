@@ -221,4 +221,60 @@ describe "Semantic: yield with scope" do
       foo { method }
       CRYSTAL
   end
+
+  it "yields module type dispatching to the including type's override (#17393)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      module Moo
+        def method
+          1
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+
+        def method
+          2
+        end
+      end
+
+      def foo(x : Moo, &)
+        with x yield
+      end
+
+      foo(Bar.new.as(Moo)) { method }
+      CRYSTAL
+  end
+
+  it "yields generic module type dispatching to the including type's override (#17393)" do
+    run(<<-CRYSTAL).to_i.should eq(2)
+      module Moo(T)
+        def method
+          1
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      class Bar
+        include Moo(Int32)
+
+        def method
+          2
+        end
+      end
+
+      def foo(x : Moo(Int32), &)
+        with x yield
+      end
+
+      foo(Bar.new.as(Moo(Int32))) { method }
+      CRYSTAL
+  end
 end
