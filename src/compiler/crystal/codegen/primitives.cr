@@ -55,6 +55,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_object_id node, target_def, call_args
             when "object_crystal_type_id"
               codegen_primitive_object_crystal_type_id node, target_def, call_args
+            when "class_crystal_instance_type_name"
+              codegen_primitive_class_crystal_instance_type_name node, target_def, call_args
             when "class_crystal_instance_type_id"
               codegen_primitive_class_crystal_instance_type_id node, target_def, call_args
             when "symbol_to_s"
@@ -995,6 +997,11 @@ class Crystal::CodeGenVisitor
     else
       type_id(call_args[0], type)
     end
+  end
+
+  def codegen_primitive_class_crystal_instance_type_name(node, target_def, call_args)
+    type_id = codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
+    type_id_to_class_name(type_id)
   end
 
   def codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
