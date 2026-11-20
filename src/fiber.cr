@@ -330,8 +330,16 @@ class Fiber
   #
   # WARNING: Yielding the fiber for the duration of the block is undefined behavior.
   def self.timeout(*, until time : Time::Instant, & : CancelationToken ->) : TimeoutResult
-    token = Fiber.current.new_cancelation_token
-    yield token
+    fiber = Fiber.current
+    token = fiber.new_cancelation_token
+
+    begin
+      yield token
+    rescue ex
+      Fiber.suspend unless fiber.try_cancel?(token)
+      raise ex
+    end
+
     result = Crystal::EventLoop.current.timeout(time, token)
     result ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
   end

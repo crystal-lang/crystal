@@ -75,5 +75,40 @@ describe Fiber do
         results.receive.should eq(canceled ? Fiber::TimeoutResult::CANCELED : Fiber::TimeoutResult::EXPIRED)
       end
     end
+
+    it "invalidates the token if setup raises" do
+      cancelation_token = nil
+
+      expect_raises(Exception, "setup failed") do
+        Fiber.timeout(1.second) do |token|
+          cancelation_token = token
+          raise "setup failed"
+        end
+      end
+
+      Fiber.current.try_cancel?(cancelation_token.not_nil!).should be_false
+    end
+
+    it "waits for a claimed cancelation wakeup if setup raises" do
+      fiber = Fiber.current
+      resumed_setup = false
+      enqueued = false
+
+      expect_raises(Exception, "setup failed") do
+        Fiber.timeout(1.second) do |token|
+          fiber.try_cancel?(token).should be_true
+          spawn do
+            unless resumed_setup
+              enqueued = true
+              fiber.enqueue
+            end
+          end
+          raise "setup failed"
+        end
+      end
+
+      resumed_setup = true
+      enqueued.should be_true
+    end
   end
 end
