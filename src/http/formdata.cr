@@ -47,8 +47,9 @@ require "mime/multipart"
 # /tmp/upload.Yxn7cc
 # ```
 #
-# Another common case is sending formdata to a server using HTTP::Client. Here
-# is an example showing how to upload a file to the server above in crystal.
+# Another common case is sending formdata to a server using `HTTP::Client`. See
+# `.build` for a basic in-memory example; the example below streams a file
+# upload to the server above using `IO.pipe`:
 #
 # ```
 # require "http"
@@ -183,6 +184,24 @@ module HTTP::FormData
   #   builder.field("foo", "bar")
   # end
   # io.to_s # => "--boundary\r\nContent-Disposition: form-data; name=\"foo\"\r\n\r\nbar\r\n--boundary--"
+  # ```
+  #
+  # To send the built form-data using `HTTP::Client`, assign the `Content-Type`
+  # header from `Builder#content_type` and call `#rewind` on seekable buffers:
+  #
+  # ```
+  # require "http"
+  #
+  # io = IO::Memory.new
+  # headers = HTTP::Headers.new
+  #
+  # HTTP::FormData.build(io) do |builder|
+  #   headers["Content-Type"] = builder.content_type
+  #   builder.field("name", "foo")
+  # end
+  #
+  # io.rewind
+  # response = HTTP::Client.post("http://localhost:8085/", headers: headers, body: io)
   # ```
   #
   # See: `FormData::Builder`
