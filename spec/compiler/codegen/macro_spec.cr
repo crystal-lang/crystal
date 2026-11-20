@@ -1222,6 +1222,16 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with backslash in raw string literal (#17933)" do
+    run(<<-'CRYSTAL').to_string.should eq(%(\\))
+      macro foo
+        %q(\)
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
