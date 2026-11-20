@@ -1222,6 +1222,19 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with identifiers starting with en (#17926)" do
+    run(<<-'CRYSTAL').to_i.should eq(6)
+      macro foo
+        endo = 1
+        encase = 2
+        enend = 3
+        endo &+ encase &+ enend
+      end
+
+      foo
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
