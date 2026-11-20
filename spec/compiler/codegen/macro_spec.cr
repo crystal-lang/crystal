@@ -1222,6 +1222,20 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with keyword right after curly brace (#17929)" do
+    run(<<-'CRYSTAL').to_i.should eq(3)
+      def foo(&)
+        yield
+      end
+
+      macro bar
+        foo{begin; 1; end} &+ foo{case; when true; 2; else; 0; end}
+      end
+
+      bar
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
