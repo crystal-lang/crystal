@@ -58,10 +58,13 @@ describe Fiber do
     end
 
     it "expires or is canceled" do
+      # libevent is 100 times slower than the custom event loops
+      iterations = {{ flag?(:"evloop=libevent") ? 200 : 20_000 }}
+
       tokens = Channel(Fiber::CancelationToken).new(1)
       results = Channel(Fiber::TimeoutResult).new(1)
 
-      2000.times do
+      iterations.times do
         suspended_fiber = spawn do
           result = Fiber.timeout(10.microseconds) { |token| tokens.send(token) }
           results.send(result)
