@@ -1070,7 +1070,7 @@ module Crystal
         # If we restrict `T` against `T | U forall U`, then `U` can be any type;
         # the smallest type satisfying the restriction is Union() or NoReturn,
         # but we don't want that, so we make this a substitution failure.
-        if discarded.size == self.union_types
+        if discarded.size == self.union_types.size
           return nil
         end
 

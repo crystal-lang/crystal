@@ -62,8 +62,9 @@ module Crystal::System::Dir
     Entry.new(name, dir, native_hidden, os_hidden)
   end
 
-  def self.rewind(dir : DirHandle) : Nil
-    close(dir)
+  def self.rewind(dir : DirHandle, path : String) : Nil
+    close_iter(dir.iter_handle, path)
+    dir.iter_handle = dir.file_handle = LibC::INVALID_HANDLE_VALUE
   end
 
   def self.info(dir : DirHandle, path) : ::File::Info

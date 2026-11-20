@@ -28,7 +28,14 @@ class Crystal::CodeGenVisitor
       # `self_type` is the lib type and merely serves to ensure that the
       # function does not have an automatic `%self` parameter.
       func = typed_fun?(@llvm_mod, mangled_name)
-      func || codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+      func ||= codegen_fun(mangled_name, target_def, self_type, fun_module_info: ModuleInfo.new(@llvm_mod, @llvm_typer, @builder))
+
+      if @program.has_flag?("wasm32") && (wasm_import_module = target_def.wasm_import_module)
+        func.func.add_target_dependent_attribute("wasm-import-name", target_def.real_name)
+        func.func.add_target_dependent_attribute("wasm-import-module", wasm_import_module)
+      end
+
+      func
     else
       self_type_mod = type_module(self_type).mod
       func = typed_fun?(self_type_mod, mangled_name) || codegen_fun(mangled_name, target_def, self_type)
@@ -197,6 +204,7 @@ class Crystal::CodeGenVisitor
           accept target_def.body
         end
 
+        set_artificial_debug_location if @debug.line_numbers?
         codegen_return target_def.body.type?, target_def
 
         br_from_alloca_to_entry
@@ -568,13 +576,16 @@ class Crystal::CodeGenVisitor
       end
     else
       abi_info = target_def.abi_info? ? abi_info(target_def) : nil
-      sret = abi_info && sret?(abi_info)
 
-      # If it's an extern struct on a def that must be codegened with C ABI
+      # If an argument is a Proc inside a C function, we need to cast it to Proc
+      fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
+
+      # If it's a type on a def that must be codegened with C ABI
       # compatibility, and it's not passed byval, we must cast the value
-      if target_def.c_calling_convention? && arg.type.extern? && !context.fun.attributes(index + 1).by_val?
+      if target_def.c_calling_convention? && abi_info && !fun_proc && !context.fun.attributes(index + 1).by_val?
         # ... unless it's passed indirectly (ie. as a pointer to memory allocated by the caller)
-        if abi_info.try &.arg_types[index - (sret ? 1 : 0)].kind.indirect?
+        sret = sret?(abi_info)
+        if abi_info.arg_types[index - (sret ? 1 : 0)].kind.indirect?
           value = declare_debug_for_function_argument(arg.name, var_type, index + 1, value, location) unless target_def.naked?
           context.vars[arg.name] = LLVMVar.new(value, var_type)
         else
@@ -590,9 +601,6 @@ class Crystal::CodeGenVisitor
         context.vars[arg.name] = LLVMVar.new(value, var_type)
         return
       else
-        # If an argument is a Proc inside a C function, we need to cast it to Proc
-        fun_proc = var_type.is_a?(ProcInstanceType) && target_def.is_a?(External)
-
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
         needs_copy = target_def_var.try &.assigned_to?

@@ -1,7 +1,6 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-require "io/evented"
 
 module Crystal::System::Socket
   alias Handle = Int32

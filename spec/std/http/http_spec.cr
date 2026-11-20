@@ -11,6 +11,32 @@ private def http_quote_string(string)
 end
 
 describe HTTP do
+  describe ".content_length" do
+    it "returns nil without a Content-Length header" do
+      HTTP.content_length(HTTP::Headers.new).should be_nil
+    end
+
+    it "accepts decimal digits" do
+      {"0" => 0_u64, "1" => 1_u64, "001" => 1_u64, UInt64::MAX.to_s => UInt64::MAX}.each do |value, expected|
+        HTTP.content_length(HTTP::Headers{"Content-Length" => value}).should eq expected
+      end
+    end
+
+    it "rejects empty values and non-decimal characters" do
+      ["", "+1", "-1", "+0", "-0", " 1", "1 ", "1\t", "1_0", "0x1", "d", "D", "1d", "1D", "1.0", "1,1", "١"].each do |value|
+        expect_raises(ArgumentError, "Invalid Content-Length: #{value}") do
+          HTTP.content_length(HTTP::Headers{"Content-Length" => value})
+        end
+      end
+    end
+
+    it "rejects overflow" do
+      expect_raises(ArgumentError) do
+        HTTP.content_length(HTTP::Headers{"Content-Length" => "18446744073709551616"})
+      end
+    end
+  end
+
   describe ".parse_time" do
     it "parses RFC 1123" do
       time = Time.utc(1994, 11, 6, 8, 49, 37)

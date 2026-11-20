@@ -1095,6 +1095,9 @@ describe Crystal::Formatter do
   assert_format "foo(1 &- 2)"
 
   assert_format "foo[]", "foo[]"
+  assert_format "foo[]?", "foo[]?"
+  assert_format "foo[]?.bar", "foo[]?.bar"
+  assert_format "foo[]?[]?", "foo[]?[]?"
   assert_format "foo[ 1 , 2 ]", "foo[1, 2]"
   assert_format "foo[ 1,  2 ]?", "foo[1, 2]?"
   assert_format "foo[] =1", "foo[] = 1"
@@ -1452,6 +1455,18 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  {{ 1 + 2 }}\\\n 1\n end", "macro foo\n  {{ 1 + 2 }}\\\n 1\n end"
   assert_format "macro foo\n  {%1 + 2%}\\\nend", "macro foo\n  {% 1 + 2 %}\\\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% end %}\nend"
+
+  it "validates the closing keyword of a macro conditional" do
+    # Parse valid source first so the parser does not reject the wrong keyword
+    # before the formatter's own validation can run.
+    nodes = Crystal::Parser.new("{% if true %}1{% end %}").parse
+    formatter = Crystal::Formatter.new("{% if true %}1{% foo %}")
+
+    expect_raises(Exception, "expecting keyword end, not `IDENT, foo`") do
+      nodes.accept formatter
+    end
+  end
+
   assert_format "macro foo\n  {% unless 1 %} 2 {% end %}\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% else %} 3 {% end %}\nend"
   assert_format "macro foo\n  {% if 1 %}\\ 2 {% else %}\\ 3 {% end %}\\\nend"
@@ -1602,6 +1617,8 @@ describe Crystal::Formatter do
     CRYSTAL
   assert_format "lib Foo\n  $foo  :  Int32 \nend", "lib Foo\n  $foo : Int32\nend"
   assert_format "lib Foo\n  $foo = hello  :  Int32 \nend", "lib Foo\n  $foo = hello : Int32\nend"
+  assert_format "lib Foo\n  $foo  =  \"llvm.hello\"  :  Int32 \nend", "lib Foo\n  $foo = \"llvm.hello\" : Int32\nend"
+  assert_format "lib Foo\n  $foo =\n    \"llvm.hello\" : Int32\nend", "lib Foo\n  $foo = \"llvm.hello\" : Int32\nend"
   assert_format "lib Foo\nalias  Foo  =  Bar -> \n$a : Int32\nend", "lib Foo\n  alias Foo = Bar ->\n  $a : Int32\nend"
   assert_format "lib Foo\nstruct Foo\nend\nend", "lib Foo\n  struct Foo\n  end\nend"
   assert_format "lib Foo\nstruct Foo\nx  :  Int32\nend\nend", "lib Foo\n  struct Foo\n    x : Int32\n  end\nend"
@@ -1817,6 +1834,12 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 2\n\n#comment\nend", "case 1\nwhen 2\n  # comment\nend"
   assert_format "1 if 2\n# foo", "1 if 2\n# foo"
   assert_format "1 if 2\n# foo\n3"
+
+  # #6742
+  assert_format "if a = 0\n  a\nend if true"
+  assert_format "unless a\n  b\nend unless c"
+  assert_format "if a\n  b\nelse\n  c\nend if d"
+  assert_format "if a\n  b\nend if c if d"
   assert_format "1\n2\n# foo"
   assert_format "1\n2  \n  # foo", "1\n2\n# foo"
   assert_format "if 1\n2\n3\n# foo\nend", "if 1\n  2\n  3\n  # foo\nend"
