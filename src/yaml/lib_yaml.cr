@@ -137,6 +137,7 @@ lib LibYAML
   fun yaml_emitter_initialize(emitter : Emitter*) : Int
   fun yaml_emitter_set_output(emitter : Emitter*, handler : WriteHandler, data : Void*)
   fun yaml_emitter_open(emitter : Emitter*) : Int
+  fun yaml_emitter_set_width(emitter : Emitter*, width : Int)
   fun yaml_stream_start_event_initialize(event : Event*, encoding : Encoding) : Int
   fun yaml_stream_end_event_initialize(event : Event*) : Int
   fun yaml_document_start_event_initialize(event : Event*, version : VersionDirective*, tag_start : TagDirective*, tag_end : TagDirective*, implicit : Int) : Int
