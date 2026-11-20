@@ -848,7 +848,7 @@ class Crystal::Call
       end
 
       yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
-        Var.new("var#{i}", input)
+        Var.new("var#{i}", input.virtual_type)
       end
       output = block_arg_restriction_type.return_type
       output_type = output
