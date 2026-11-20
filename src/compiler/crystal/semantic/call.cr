@@ -881,10 +881,10 @@ class Crystal::Call
       # Create the arguments of the function literal
       if yield_vars
         if auto_unpack_needed
-          fun_args = [Arg.new(program.new_temp_var_name, type: yield_vars.first.type)]
+          fun_args = [Arg.new(program.new_temp_var_name(block), type: yield_vars.first.type)]
         else
           fun_args = yield_vars.map_with_index do |var, i|
-            arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
+            arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name(block)
             Arg.new(arg_name, type: var.type)
           end
         end

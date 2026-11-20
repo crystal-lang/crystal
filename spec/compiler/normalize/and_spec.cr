@@ -28,4 +28,9 @@ describe "Normalize: and" do
   it "normalizes and with assignment" do
     assert_expand "(a = 1) && b", "if a = 1\n  b\nelse\n  a\nend"
   end
+
+  it "normalizes with filename" do
+    assert_expand "a && b", "if __temp_cd6ae5dd_1 = a\n  b\nelse\n  __temp_cd6ae5dd_1\nend", filename: "foo.cr"
+    assert_expand "a && b", "if __temp_fbcf3d84_1 = a\n  b\nelse\n  __temp_fbcf3d84_1\nend", filename: "bar.cr"
+  end
 end

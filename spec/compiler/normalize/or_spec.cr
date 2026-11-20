@@ -24,4 +24,9 @@ describe "Normalize: or" do
   it "normalizes or with ! on var.is_a?(...)" do
     assert_expand "a = 1; !a.is_a?(Int32) || b", "if !a.is_a?(Int32)\n  !a.is_a?(Int32)\nelse\n  b\nend"
   end
+
+  it "normalizes with filename" do
+    assert_expand "a || b", "if __temp_cd6ae5dd_1 = a\n  __temp_cd6ae5dd_1\nelse\n  b\nend", filename: "foo.cr"
+    assert_expand "a || b", "if __temp_fbcf3d84_1 = a\n  __temp_fbcf3d84_1\nelse\n  b\nend", filename: "bar.cr"
+  end
 end

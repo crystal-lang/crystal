@@ -132,4 +132,9 @@ describe "Normalize: case" do
   it "normalizes case with Path.class to is_a? (in)" do
     assert_expand "x = 1; case x; in Foo.class; 'b'; end", "if x.is_a?(Foo.class)\n  'b'\nelse\n  raise \"unreachable\"\nend"
   end
+
+  it "normalizes with filename" do
+    assert_expand "case x; when 1; 'b'; end", "__temp_cd6ae5dd_1 = x\nif 1 === __temp_cd6ae5dd_1\n  'b'\nend", filename: "foo.cr"
+    assert_expand "case x; when 1; 'b'; end", "__temp_fbcf3d84_1 = x\nif 1 === __temp_fbcf3d84_1\n  'b'\nend", filename: "bar.cr"
+  end
 end
