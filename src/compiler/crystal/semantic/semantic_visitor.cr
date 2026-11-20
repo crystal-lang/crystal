@@ -344,6 +344,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   end
 
   def expand_macro(the_macro, node, mode = nil, *, visibility : Visibility, accept = true, &)
+    @program.check_macro_expansion_depth(node)
+
     expanded_macro, macro_expansion_pragmas =
       eval_macro(node) do
         yield
@@ -375,7 +377,9 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
       generated_nodes.accept PropagateDocVisitor.new(node_doc)
     end
 
-    generated_nodes.accept self if accept
+    if accept
+      @program.nest_macro_expansion { generated_nodes.accept self }
+    end
     generated_nodes
   end
 

@@ -139,4 +139,18 @@ describe "Semantic: method_missing" do
       end
       CRYSTAL
   end
+
+  it "errors on a method_missing whose method calls another missing method (#9413)" do
+    assert_error(<<-CRYSTAL, "macro expansion nested more than 300 levels deep")
+      class Foo
+        macro method_missing(call)
+          def {{call.name.id}}
+            {{call.name.id}}x
+          end
+        end
+      end
+
+      Foo.new.a
+      CRYSTAL
+  end
 end
