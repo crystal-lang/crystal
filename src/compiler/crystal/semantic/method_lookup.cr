@@ -491,7 +491,7 @@ module Crystal
                 end
 
                 new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.bound_free_vars), full_subtype_match.named_arg_types)
+                new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_virtual_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.bound_free_vars), full_subtype_match.named_arg_types)
               end
 
               # Reset the `self` restriction override
