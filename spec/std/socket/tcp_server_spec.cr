@@ -1,4 +1,4 @@
-{% skip_file if flag?(:wasm32) %}
+{% skip_file if flag?(:wasip1) %}
 
 require "./spec_helper"
 
@@ -50,37 +50,39 @@ describe TCPServer, tags: "network" do
         {% end %})
       end
 
-      describe "reuse_port" do
-        it "raises when port is in use" do
-          TCPServer.open(address, 0) do |server|
-            expect_raises(Socket::BindError, "Could not bind to '#{address}:#{server.local_address.port}': ") do
-              TCPServer.open(address, server.local_address.port) { }
+      {% unless flag?(:wasi) %}
+        describe "reuse_port" do
+          it "raises when port is in use" do
+            TCPServer.open(address, 0) do |server|
+              expect_raises(Socket::BindError, "Could not bind to '#{address}:#{server.local_address.port}': ") do
+                TCPServer.open(address, server.local_address.port) { }
+              end
             end
           end
-        end
 
-        it "raises when not binding with reuse_port" do
-          TCPServer.open(address, 0, reuse_port: true) do |server|
-            expect_raises(Socket::BindError) do
-              TCPServer.open(address, server.local_address.port) { }
+          it "raises when not binding with reuse_port" do
+            TCPServer.open(address, 0, reuse_port: true) do |server|
+              expect_raises(Socket::BindError) do
+                TCPServer.open(address, server.local_address.port) { }
+              end
             end
           end
-        end
 
-        it "raises when port is not ready to be reused" do
-          TCPServer.open(address, 0) do |server|
-            expect_raises(Socket::BindError) do
+          it "raises when port is not ready to be reused" do
+            TCPServer.open(address, 0) do |server|
+              expect_raises(Socket::BindError) do
+                TCPServer.open(address, server.local_address.port, reuse_port: true) { }
+              end
+            end
+          end
+
+          it "binds to used port with reuse_port = true" do
+            TCPServer.open(address, 0, reuse_port: true) do |server|
               TCPServer.open(address, server.local_address.port, reuse_port: true) { }
             end
           end
         end
-
-        it "binds to used port with reuse_port = true" do
-          TCPServer.open(address, 0, reuse_port: true) do |server|
-            TCPServer.open(address, server.local_address.port, reuse_port: true) { }
-          end
-        end
-      end
+      {% end %}
     end
 
     describe "address resolution" do
@@ -136,7 +138,12 @@ describe TCPServer, tags: "network" do
     it "settings" do
       TCPServer.open("::", unused_local_tcp_port) do |server|
         (server.recv_buffer_size = 42).should eq 42
-        server.recv_buffer_size.should eq 42
+        # WASI forwards buffer sizes to the host, which may enforce a minimum.
+        {% if flag?(:wasi) %}
+          server.recv_buffer_size.should be >= 42
+        {% else %}
+          server.recv_buffer_size.should eq 42
+        {% end %}
       end
     end
   {% end %}
@@ -153,7 +160,7 @@ describe TCPServer, tags: "network" do
     end
 
     # FreeBSD and DragonFly no longer implement ipv6<>ipv4 mappings.
-    {% unless flag?(:dragonfly) || flag?(:freebsd) %}
+    {% unless flag?(:dragonfly) || flag?(:freebsd) || flag?(:wasi) %}
       it "supports IPv6 dual stack" do
         server = TCPServer.new(:inet6)
         server.ipv6_only = false

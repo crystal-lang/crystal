@@ -25,9 +25,9 @@ module Crystal::System::Addrinfo
   end
 end
 
-{% if flag?(:wasi) %}
+{% if flag?(:wasip1) %}
   require "./wasi/addrinfo"
-{% elsif flag?(:unix) %}
+{% elsif flag?(:unix) || flag?(:wasi) %}
   require "./unix/addrinfo"
 {% elsif flag?(:win32) %}
   {% if flag?(:win7) %}

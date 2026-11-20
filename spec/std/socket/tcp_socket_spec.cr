@@ -1,4 +1,4 @@
-{% skip_file if flag?(:wasm32) %}
+{% skip_file if flag?(:wasip1) %}
 
 require "./spec_helper"
 require "../../support/win32"
@@ -210,7 +210,7 @@ describe TCPSocket, tags: "network" do
       end
     end
 
-    it "sends and receives messages (fibers & channels)" do
+    pending_wasm32 "sends and receives messages (fibers & channels)" do
       port = unused_local_tcp_port
 
       channel = Channel(Exception?).new
