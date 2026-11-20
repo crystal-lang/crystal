@@ -68,8 +68,8 @@ struct Crystal::MathInterpreter
         when "&+" then left &+ right
         when "&-" then left &- right
         when "&*" then left &* right
-          # MathInterpreter only works with Integer and left / right : Float
-          # when "/"  then left / right
+        # MathInterpreter only works with Integer and left / right : Float
+        # when "/"  then left / right
         when "//" then left // right
         when "&"  then left & right
         when "|"  then left | right
