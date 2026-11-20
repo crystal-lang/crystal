@@ -477,6 +477,46 @@ describe "Lexer macro" do
     token.type.should eq(t :MACRO_END)
   end
 
+  it "lexes macro with if as suffix after line continuation (#17934)" do
+    lexer = Lexer.new("foo \\\n  if bar end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("foo \\\n  if bar ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with if as suffix after line continuation with CRLF (#17934)" do
+    lexer = Lexer.new("foo \\\r\n  if bar end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("foo \\\r\n  if bar ")
+    token.macro_state.nest.should eq(0)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
+  it "lexes macro with if after assign and line continuation" do
+    lexer = Lexer.new("x = \\\n  if 1; 2; end; end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("x = \\\n  if 1; 2; ")
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_LITERAL)
+    token.value.should eq("end; ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(t :MACRO_END)
+  end
+
   it "lexes macro with semicolon before end" do
     lexer = Lexer.new(";end")
 

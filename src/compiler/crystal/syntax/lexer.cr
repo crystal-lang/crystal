@@ -1834,6 +1834,7 @@ module Crystal
       end
 
       char = current_char
+      line_continuation = false
 
       until char.in?('{', '\0') ||
             (char == '\\' && peek_next_char.in?('{', '%')) ||
@@ -1842,7 +1843,9 @@ module Crystal
         when '\n'
           incr_line_number 0
           whitespace = true
-          beginning_of_line = true
+          # A newline escaped with a backslash doesn't start a new line
+          beginning_of_line = true unless line_continuation
+          line_continuation = false
           char = next_char
 
           if !delimiter_state && heredocs && !heredocs.empty?
@@ -1875,6 +1878,7 @@ module Crystal
             whitespace = false
           else
             whitespace = false
+            line_continuation = char == '\n' || (char == '\r' && peek_next_char == '\n')
           end
           next
         when '\'', '"'

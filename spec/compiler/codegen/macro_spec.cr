@@ -1222,6 +1222,19 @@ describe "Code gen: macro" do
       CRYSTAL
   end
 
+  it "expands macro with suffix if after line continuation (#17934)" do
+    run(<<-'CRYSTAL').to_i.should eq(1)
+      macro foo(x)
+        a = 0
+        a = 1 \
+          if {{ x }}
+        a
+      end
+
+      foo(true)
+      CRYSTAL
+  end
+
   it "expands macro def with return (#1040)" do
     run(<<-CRYSTAL).to_i.should eq(123)
       class Foo
