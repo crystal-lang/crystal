@@ -714,6 +714,8 @@ module Crystal
     end
 
     def visit(node : Assign)
+      check_type_declaration_value node.value
+
       type_assign node.target, node.value, node
 
       if @is_initialize && !@found_self_in_initialize_call
@@ -723,6 +725,26 @@ module Crystal
         end
       end
       false
+    end
+
+    # A type declaration without a value, like `a : Int32`, has no meaningful
+    # value, so it can't be used where one is expected (e.g. `b = a : Int32`).
+    # Parenthesized and `begin` expressions are checked through their last
+    # expression, which is their value.
+    #
+    # This is checked here and not in the parser because a macro call can
+    # give such a declaration any meaning (e.g. `property foo = bar : Int32`).
+    def check_type_declaration_value(exp)
+      case exp
+      when TypeDeclaration
+        unless exp.value
+          exp.raise "type declaration without a value can't be used as a value"
+        end
+      when Expressions
+        if last = exp.expressions.last?
+          check_type_declaration_value last
+        end
+      end
     end
 
     def type_assign(target : Var, value, node, restriction = nil)
@@ -1342,6 +1364,9 @@ module Crystal
 
         return false
       end
+
+      node.args.each { |arg| check_type_declaration_value arg }
+      node.named_args.try &.each { |named_arg| check_type_declaration_value named_arg.value }
 
       # If the call has splats or double splats, and any of them are
       # not variables, instance variables or global variables,

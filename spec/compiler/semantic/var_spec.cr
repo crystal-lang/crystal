@@ -145,4 +145,121 @@ describe "Semantic: var" do
       x : Foo
       CRYSTAL
   end
+
+  it "errors if type declaration without a value is assigned to a local variable (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = a : Bool
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned in parentheses (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = (a : Bool)
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned as the last expression of a begin (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = begin
+        a : Bool
+      end
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned as the last of several expressions (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = (x = 1; a : Bool)
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned in a chained assignment (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = c = a : Bool
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned to a constant (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      B = a : Bool
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned to an instance variable (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      class Foo
+        def foo
+          @b = a : Bool
+        end
+      end
+
+      Foo.new.foo
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned with ||= (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b = true
+      b ||= a : Bool
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned with += (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value", inject_primitives: true
+      b = 1
+      b += a : Int32
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned with []= (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      class Foo
+        def []=(index, value)
+        end
+      end
+
+      Foo.new[0] = a : Int32
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is assigned in a multiple assignment (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      b, c = 1, a : Bool
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is passed as a positional argument (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      def foo(x)
+      end
+
+      foo(a : Int32)
+      CRYSTAL
+  end
+
+  it "errors if type declaration without a value is passed as a named argument (#5700)" do
+    assert_error <<-CRYSTAL, "type declaration without a value can't be used as a value"
+      def foo(x)
+      end
+
+      foo(x: a : Int32)
+      CRYSTAL
+  end
+
+  it "allows type declaration with a value as a value (#5700)" do
+    assert_type(<<-CRYSTAL) { bool }
+      b = a : Bool = true
+      b
+      CRYSTAL
+  end
+
+  it "allows type declaration without a value as a macro argument (#5700)" do
+    assert_type(<<-CRYSTAL) { int32 }
+      macro foo(assign)
+        {{ assign.target }} = {{ assign.value.var }} = 1
+      end
+
+      foo b = a : Int32
+      b
+      CRYSTAL
+  end
 end
