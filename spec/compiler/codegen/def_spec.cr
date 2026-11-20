@@ -600,4 +600,46 @@ describe "Code gen: def" do
 
     mod.to_s.should_not match(/(?<!Int32|String):type_id/)
   end
+
+  it "codegens recursive def whose tuple return restriction holds a virtual generic instance (#17507)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Gen(T)
+      end
+
+      class Sub < Gen(Int32)
+      end
+
+      def f(g : Gen(String), n : Int32) : {Int32, Gen(String)}
+        while n > 0
+          if 1
+            _, g = f(g, n &- 1)
+          end
+          n &-= 1
+        end
+        {1, Gen(String).new}
+      end
+
+      f(Gen(String).new, 2)[0]
+      CRYSTAL
+  end
+
+  it "types recursive def whose tuple return restriction holds a virtual generic instance, without if (#17507)" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      class Gen(T)
+      end
+
+      class Sub < Gen(Int32)
+      end
+
+      def f(g : Gen(String), n : Int32) : {Int32, Gen(String)}
+        while n > 0
+          _, g = f(g, n &- 1)
+          n &-= 1
+        end
+        {1, Gen(String).new}
+      end
+
+      f(Gen(String).new, 2)[0]
+      CRYSTAL
+  end
 end
