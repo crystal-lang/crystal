@@ -2282,6 +2282,17 @@ module Crystal
 
     it_parses "if (\ntrue\n)\n1\nend", If.new(Expressions.new([true.bool] of ASTNode), 1.int32)
 
+    # #15504
+    it_parses "if(2) (3) else(4)end", If.new(Expressions.new([2.int32] of ASTNode), Expressions.new([3.int32] of ASTNode), Expressions.new([4.int32] of ASTNode))
+    it_parses "if (2) (3) else (4) end", If.new(Expressions.new([2.int32] of ASTNode), Expressions.new([3.int32] of ASTNode), Expressions.new([4.int32] of ASTNode))
+    it_parses "unless (2) (3) else (4) end", Unless.new(Expressions.new([2.int32] of ASTNode), Expressions.new([3.int32] of ASTNode), Expressions.new([4.int32] of ASTNode))
+    it_parses "while (2) (3) end", While.new(Expressions.new([2.int32] of ASTNode), Expressions.new([3.int32] of ASTNode))
+
+    assert_syntax_error "if (2)(3) end", %|unexpected token: "("|
+    assert_syntax_error "(2)(3)", %|unexpected token: "("|
+    assert_syntax_error "(2) (3)"
+    assert_syntax_error "x = (2) (3)"
+
     it_parses "my_def def foo\nloop do\nend\nend", Call.new("my_def", Def.new("foo", body: Call.new("loop", block: Block.new)))
 
     it_parses "foo(*{1})", Call.new("foo", Splat.new(TupleLiteral.new([1.int32] of ASTNode)))
