@@ -369,6 +369,50 @@ describe "Code gen: pointer" do
       CRYSTAL
   end
 
+  it "does pointerof read instance var of self in class (#16647)" do
+    run(<<-CRYSTAL).to_i.should eq(123)
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def set_x
+          pointerof(self.@x).value = 123
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.set_x
+      foo.x
+      CRYSTAL
+  end
+
+  it "does pointerof read instance var of self in struct (#16647)" do
+    run(<<-CRYSTAL).to_i.should eq(123)
+      struct Foo
+        def initialize
+          @x = 1
+        end
+
+        def set_x
+          pointerof(self.@x).value = 123
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.set_x
+      foo.x
+      CRYSTAL
+  end
+
   it "can assign nil to void pointer" do
     codegen(<<-CRYSTAL)
       ptr = Pointer(Void).malloc(1_u64)
