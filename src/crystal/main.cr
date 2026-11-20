@@ -102,6 +102,10 @@ module Crystal
 
     init_runtime
 
+    fls = Crystal::FiberLocalStorage.new
+    Crystal::FiberLocalStorage.fls = pointerof(fls).as(Void*)
+    Fiber.current.fls = pointerof(fls).as(Void*)
+
     status =
       begin
         yield
