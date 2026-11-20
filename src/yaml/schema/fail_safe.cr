@@ -3,13 +3,25 @@
 # where all scalar values are considered strings.
 module YAML::Schema::FailSafe
   # Deserializes a YAML document.
-  def self.parse(data : String | IO) : Any
-    Parser.new data, &.parse
+  def self.parse(data : String | IO, options : Options = Options.new) : Any
+    Parser.new data, options, &.parse
+  end
+
+  # Same as `.parse(String | IO, Options)` but passing options as keyword
+  # arguments.
+  def self.parse(data : String | IO, **options) : YAML::Any
+    Parser.new data, Options.new(**options), &.parse
   end
 
   # Deserializes multiple YAML documents.
-  def self.parse_all(data : String | IO) : Array(Any)
-    Parser.new data, &.parse_all
+  def self.parse_all(data : String | IO, options : Options = Options.new) : Array(Any)
+    Parser.new data, options, &.parse_all
+  end
+
+  # Same as `.parse_all(String | IO, Options)` but passing options as keyword
+  # arguments.
+  def self.parse_all(data : String | IO, **options) : Array(YAML::Any)
+    Parser.new data, Options.new(**options), &.parse_all
   end
 
   # :nodoc:
