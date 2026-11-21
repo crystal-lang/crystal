@@ -41,6 +41,7 @@ module Crystal
     OFFSETOF
     OUT
     POINTEROF
+    PREPEND
     PRIVATE
     PROTECTED
     REQUIRE
