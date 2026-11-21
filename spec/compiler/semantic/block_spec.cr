@@ -1468,6 +1468,32 @@ describe "Block inference" do
       CRYSTAL
   end
 
+  ["break", "next"].each do |transfer|
+    it "keeps unpacked parameters local on early #{transfer}" do
+      assert_type(<<-CRYSTAL) { tuple_of [union_of(int32, char), bool] }
+        def invoke
+          yield({1})
+        end
+
+        def joined(flag : Bool)
+          value = 1
+          shadow = false
+          invoke do |(shadow)|
+            if flag
+              value = 'a'
+              shadow = 1.5
+              #{transfer} :done
+            end
+            value = 2
+          end
+          {value, shadow}
+        end
+
+        joined(true)
+        CRYSTAL
+    end
+  end
+
   it "correctly types unpacked tuple block arg after block (#3339)" do
     assert_type(<<-CRYSTAL) { int32 }
       def foo
