@@ -75,7 +75,7 @@ struct Crystal::System::Process
 
   @[Deprecated("Use `#on_terminate` instead")]
   def self.on_interrupt(&handler : ->) : Nil
-    ::Signal::INT.trap { |_signal| handler.call }
+    ::Signal::INT.trap { |_signal| handler.call } # ameba:disable Lint/SignalTrap
   end
 
   def self.on_terminate(&handler : ::Process::ExitReason ->) : Nil
@@ -97,9 +97,9 @@ struct Crystal::System::Process
       signal.ignore
       Process.on_terminate &handler
     end
-    ::Signal::INT.trap &sig_handler
-    ::Signal::HUP.trap &sig_handler
-    ::Signal::TERM.trap &sig_handler
+    ::Signal::INT.trap &sig_handler  # ameba:disable Lint/SignalTrap
+    ::Signal::HUP.trap &sig_handler  # ameba:disable Lint/SignalTrap
+    ::Signal::TERM.trap &sig_handler # ameba:disable Lint/SignalTrap
   end
 
   def self.ignore_interrupts! : Nil

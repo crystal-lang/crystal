@@ -64,9 +64,9 @@ class Context
     # allocate a bunch of objects in the stack
     # some should be released fast
     10.times do
-      foo = Foo.new
+      foo = Foo.new # ameba:disable Lint/UselessAssign
     end
-    foo = Foo.new
+    foo = Foo.new # ameba:disable Lint/UselessAssign
 
     # increase/decrease stack depending on the expected_depth
     # when reached, notify and yield control

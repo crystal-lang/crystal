@@ -1,5 +1,16 @@
 { pkgs, lib, config, inputs, ... }:
-
+let
+  # The locked nixpkgs still packages Ameba 1.6.4 with Crystal 1.17.
+  ameba = (pkgs.ameba.override { crystal_1_17 = pkgs.crystal_1_19; }).overrideAttrs (_: rec {
+    version = "1.7.0";
+    src = pkgs.fetchFromGitHub {
+      owner = "crystal-ameba";
+      repo = "ameba";
+      tag = "v${version}";
+      hash = "sha256-P2XirYKxq3Y6cjK5O013fPzag9uWR9jdetlLxX70ji4=";
+    };
+  });
+in
 {
   dotenv.enable = true;
 
@@ -18,7 +29,7 @@
     ameba = {
       enable = true;
       name = "Ameba";
-      entry = "${pkgs.ameba}/bin/ameba --fix";
+      entry = "${ameba}/bin/ameba --fix";
       files = "\\.cr$";
       excludes = ["^lib/"];
       pass_filenames = true;

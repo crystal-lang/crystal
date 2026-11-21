@@ -128,7 +128,7 @@ class Fiber
 
   # :nodoc:
   def initialize(stack : Void*, thread)
-    @proc = Proc(Void).new { }
+    @proc = Proc(Nil).new { }
 
     # TODO: should creating a new context for the main fiber also be platform specific?
     # It's the same for all platforms except for the interpreted mode.

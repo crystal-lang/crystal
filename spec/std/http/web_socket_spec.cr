@@ -658,7 +658,7 @@ describe HTTP::WebSocket do
       client.receive?.should eq "hello".to_slice
 
       # The WebSocket is closed after sending the above messages
-      client.receive?.should eq nil
+      client.receive?.should be_nil
     end
   end
 

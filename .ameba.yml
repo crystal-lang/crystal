@@ -12,29 +12,30 @@
 # * `FIXME`: The rule seems useful, but requires some effort to resolve. That's deferred for later.
 # * `TODO`: The rule might be useful, but we need to investigate whether we want to use it or not.
 
-Version: "1.7.0-dev"
-
-# Documentation
-# =========================
-
-# Disabled: What's the point in alerting about existing TODOs in code?
-Documentation/DocumentationAdmonition:
-  Enabled: false
+Version: "1.7.0"
 
 # Lint
 # =========================
 
+# Disabled: Assignments in call arguments are intentional and idiomatic here.
+Lint/AssignmentInCallArgument:
+  Enabled: false
+
 Lint/DebugCalls:
   Excluded:
-  # Samples may legitimately use DebugCalls
-  - samples/**/*
-  # Explicit tests
-  - spec/std/pp_spec.cr
+    # Samples may legitimately use DebugCalls
+    - samples/**/*
+    # Explicit tests
+    - spec/std/pp_spec.cr
 
 Lint/DebuggerStatement:
   Excluded:
-  # Explicit tests
-  - spec/debug/**/*
+    # Explicit tests
+    - spec/debug/**/*
+
+# Disabled: Intentional aliases are common, including in upstream C constants.
+Lint/DuplicateEnumValue:
+  Enabled: false
 
 # Disabled: `else nil` can be useful to explicitly show the consequence of the else branch
 Lint/ElseNil:
@@ -47,30 +48,17 @@ Lint/Formatting:
 
 Lint/LiteralInCondition:
   Excluded:
-  # Samples may legitimately use literals in conditions
-  - samples/**/*
-
-Lint/LiteralInInterpolation:
-  Excluded:
-  - spec/std/random_spec.cr # BUG: https://github.com/crystal-ameba/ameba/issues/611
+    # Samples may legitimately use literals in conditions
+    - samples/**/*
 
 Lint/LiteralsComparison:
   Excluded:
-  # Explicit tests for case equality on literals
-  - spec/std/{array,char,int,number,regex,string,symbol,tuple,uint}_spec.cr
+    # Explicit tests for case equality on literals
+    - spec/std/{array,char,int,number,regex,string,symbol,tuple,uint}_spec.cr
 
 # TODO: Investigate if some `not_nil!` calls can be avoided.
 Lint/NotNil:
   Enabled: false
-
-# BUG: https://github.com/crystal-ameba/ameba/issues/605
-Lint/SpecFocus:
-  Enabled: false
-
-Lint/RandZero:
-  Excluded:
-  # Explicit tests
-  - spec/std/random_spec.cr
 
 # FIXME: Resolve shadowing.
 Lint/ShadowingOuterLocalVar:
@@ -78,22 +66,13 @@ Lint/ShadowingOuterLocalVar:
 
 Lint/SpecFilename:
   Excluded:
-  - spec/compiler/data/**/*
-  - spec/compiler/lexer/lexer_objects/strings.cr
-  - spec/compiler-cli/fixtures/**/*
-  - spec/compiler-cli/support/**/*
-  - spec/debug/**/*
-  - spec/llvm-ir/**/*
-  - spec/std/float_printer/ryu_printf_test_cases.cr
-
-# BUG: https://github.com/crystal-ameba/ameba/issues/612
-Lint/TopLevelOperatorDefinition:
-  Enabled: false
-
-# Disabled: We have an explicit CI job for `typos`. No reason to run it through
-# ameba.
-Lint/Typos:
-  Enabled: false
+    - spec/compiler/data/**/*
+    - spec/compiler/lexer/lexer_objects/strings.cr
+    - spec/compiler-cli/fixtures/**/*
+    - spec/compiler-cli/support/**/*
+    - spec/debug/**/*
+    - spec/llvm-ir/**/*
+    - spec/std/float_printer/ryu_printf_test_cases.cr
 
 # TODO: Investigate unused arguments.
 Lint/UnusedArgument:
@@ -104,19 +83,14 @@ Lint/UnusedBlockArgument:
   Enabled: false
 
 Lint/UselessAssign:
-  # BUG: https://github.com/crystal-ameba/ameba/issues/447
-  # This setting is to avoid false positives from the common use of type
-  # declarations in macro arguments.
-  ExcludeTypeDeclarations: true
   Excluded:
     - spec/debug/**/*
-    - samples/mt_gc_test.cr
-    # BUG: https://github.com/crystal-ameba/ameba/issues/624
-    - spec/std/concurrent/select_spec.cr
     # Generators assign top-level variables to pass to ECR templates
     - scripts/generate_*
-    # BUG: https://github.com/crystal-ameba/ameba/issues/623
-    - scripts/github-changelog.cr
+
+# Disabled: Keep the macro whitespace produced by the Crystal formatter.
+Lint/WhitespaceAroundMacroExpression:
+  Enabled: false
 
 # Metrics
 # =========================
@@ -165,12 +139,12 @@ Naming/VariableNames:
 # Performance
 # =========================
 
-Performance/AnyInsteadOfEmpty:
+Performance/AnyInsteadOfPresent:
   Excluded:
-  # These specs explicitly test `#any?` implementations
-  - spec/std/bit_array_spec.cr
-  - spec/std/enumerable_spec.cr
-  - spec/std/hash_spec.cr
+    # These specs explicitly test #any? implementations
+    - spec/std/bit_array_spec.cr
+    - spec/std/enumerable_spec.cr
+    - spec/std/hash_spec.cr
 
 # Style
 # =========================
@@ -184,6 +158,9 @@ Style/HeredocIndent:
   Enabled: false
 
 Style/MultilineCurlyBlock:
+  Enabled: false
+
+Style/MultilineStringLiteral:
   Enabled: false
 
 # Disabled: This rule seems too strict when any negation inside a complex condition is
@@ -201,6 +178,9 @@ Style/PercentLiteralDelimiters:
 Style/RedundantNext:
   Enabled: false
 
+Style/RedundantNilInControlExpression:
+  Enabled: false
+
 Style/RedundantReturn:
   Enabled: false
 
@@ -208,6 +188,9 @@ Style/RedundantSelf:
   Enabled: false
 
 Style/VerboseBlock:
+  Enabled: false
+
+Style/VerboseNilType:
   Enabled: false
 
 Style/WhileTrue:

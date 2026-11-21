@@ -183,7 +183,7 @@ module Crystal
           type = parser.parse_bare_proc_type
           parser.check :EOF
           @last = type
-        rescue ex : Crystal::SyntaxException
+        rescue Crystal::SyntaxException
           arg.raise "Invalid type name: #{type_name.inspect}"
         end
       end

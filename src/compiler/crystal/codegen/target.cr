@@ -210,10 +210,6 @@ class Crystal::Codegen::Target
     @architecture == "aarch64"
   end
 
-  def wasm?
-    @architecture == "wasm32"
-  end
-
   def avr?
     @architecture == "avr"
   end

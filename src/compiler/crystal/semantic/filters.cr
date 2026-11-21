@@ -173,7 +173,7 @@ module Crystal
         when UnionType
           types = types.union_types
         when Array
-          types
+          # Already an array of types.
         else
           types = [types] of Type
         end

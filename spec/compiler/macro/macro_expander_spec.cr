@@ -1,7 +1,8 @@
 require "../../spec_helper"
 
 private STABLE_ABI_TYPES = [
-  Nil, Void, Int32, Float32, Bool, Char, Symbol, Pointer(Void),           # primitive scalars
+  # primitive scalars
+  Nil, Void, Int32, Float32, Bool, Char, Symbol, Pointer(Void),           # ameba:disable Lint/VoidOutsideLib
   StaticArray(Int32, 1), Tuple(Int32), NamedTuple(x: Int32), Proc(Int32), # primitive aggregates
   Reference, String,
   Union(Int32, Char), Union(Int32, String), Union(Nil, String), Union(Nil, String, Regex), Union(Nil, Proc(Int32)), # unions
