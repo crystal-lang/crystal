@@ -642,6 +642,13 @@ module Crystal
     property freeze_type : Type?
     property? visited = false
 
+    # Overrides args when unpacking introduces additional block-local parameters.
+    setter vars_to_ignore : Array(Var)?
+
+    def vars_to_ignore : Array(Var)
+      @vars_to_ignore || args
+    end
+
     getter(:break) { Var.new("%break") }
   end
 

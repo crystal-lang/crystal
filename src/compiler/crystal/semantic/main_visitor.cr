@@ -43,8 +43,6 @@ module Crystal
     property! untyped_def : Def
     setter untyped_def
     getter block : Block?
-    # Overrides block.args when unpacking adds parameter names that must not escape.
-    setter block_vars_to_ignore : Array(Var)?
     property call : Call?
     property path_lookup
     property fun_literal_context : Def | Program | Nil
@@ -1036,13 +1034,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      # Variables that we don't want to get their type merged
-      # with local variables before the block occurrence:
-      # mainly block arguments (locally override vars), but
-      # also block arguments that result from tuple unpacking
-      # that the parser currently generated as local assignments.
-      ignored_vars_after_block = nil
-
       meta_vars = @meta_vars.dup
 
       node.args.each do |arg|
@@ -1068,6 +1059,7 @@ module Crystal
         unpacks.each_value do |unpack|
           handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
         end
+        node.vars_to_ignore = ignored_vars_after_block
       end
 
       @block_nest += 1
@@ -1089,7 +1081,6 @@ module Crystal
       block_visitor.scope = block_scope
 
       block_visitor.block = node
-      block_visitor.block_vars_to_ignore = ignored_vars_after_block
       block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
 
@@ -1101,9 +1092,8 @@ module Crystal
       @block_nest -= 1
 
       # Check re-assigned variables and bind them.
-      ignored_vars_after_block ||= node.args
-      bind_vars block_visitor.vars, node.vars, ignored_vars_after_block
-      bind_vars block_visitor.vars, node.after_vars, ignored_vars_after_block
+      bind_vars block_visitor.vars, node.vars, node.vars_to_ignore
+      bind_vars block_visitor.vars, node.after_vars, node.vars_to_ignore
 
       # Special vars, even if only assigned inside a block,
       # must be inside the def's metavars.
@@ -2379,7 +2369,7 @@ module Crystal
 
         block.break.bind_to(node_exp_or_nil_literal(node))
 
-        bind_vars @vars, block.after_vars, @block_vars_to_ignore || block.args
+        bind_vars @vars, block.after_vars, block.vars_to_ignore
       elsif target_while = @while_stack.last?
         node.target = target_while
 
@@ -2410,7 +2400,7 @@ module Crystal
         block.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.vars
-        bind_vars @vars, block.after_vars, @block_vars_to_ignore || block.args
+        bind_vars @vars, block.after_vars, block.vars_to_ignore
       elsif target_while = @while_stack.last?
         node.target = target_while
 
