@@ -181,13 +181,6 @@ class Crystal::Repl::Interpreter
     if !compiled_def || in_pry
       migrate_local_vars(@local_vars, meta_vars) if @local_vars.block_level == 0
 
-      # TODO: is it okay to assume this is always the program? Probably not.
-      # Check if we need a local variable for the closure context
-      if !in_pry && @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
-        # The closure context is always a pointer to some memory
-        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
-      end
-
       meta_vars.each do |name, meta_var|
         meta_var_type = meta_var.type?
 
@@ -212,6 +205,13 @@ class Crystal::Repl::Interpreter
         else
           @local_vars.declare(name, meta_var_type)
         end
+      end
+
+      # TODO: is it okay to assume this is always the program? Probably not.
+      # Check if we need a local variable for the closure context
+      if !in_pry && @context.program.vars.try &.any? { |name, var| var.type? && var.closure_in?(@context.program) }
+        # The closure context is always a pointer to some memory
+        @local_vars.declare(Closure::VAR_NAME, @context.program.pointer_of(@context.program.void))
       end
     end
 
