@@ -173,6 +173,21 @@ class OpenSSL::Cipher
     tag
   end
 
+  # Sets additional authenticated data (AAD) for an AEAD cipher (e.g. AES-GCM).
+  #
+  # The data is authenticated by the tag but not encrypted. Must be called
+  # after `#key=` and `#iv=` and before the first `#update`, with the same data
+  # during encryption and decryption. Can be called several times, which
+  # appends the data.
+  def auth_data=(data : Bytes | String) : Bytes | String
+    raise Error.new("Cipher is not authenticated") unless authenticated?
+    slice = data.to_slice
+    if LibCrypto.evp_cipherupdate(@ctx, nil, out _, slice, slice.size) != 1
+      raise Error.new "EVP_CipherUpdate"
+    end
+    data
+  end
+
   # Sets the authentication tag for an AEAD cipher (e.g. AES-GCM).
   # Must be called before `#final` during decryption.
   # Raises `Error` if the cipher is not authenticated.
