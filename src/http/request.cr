@@ -324,14 +324,14 @@ class HTTP::Request
 
     if header.starts_with?('[')
       # unwrap IPv6 literal
-      close_index = header.index(']') || return
+      close_index = header.byte_index(']') || return
       host = header.byte_slice(1, close_index - 1)
       if close_index + 1 < header.bytesize
         port_index = close_index + 1
         return unless header.byte_at(port_index) === ':'
       end
     else
-      port_index = header.index(':')
+      port_index = header.byte_index(':')
       if port_index
         host = header.byte_slice(0, port_index)
         return if host.index(':') # invalid host with multiple colons
