@@ -167,7 +167,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       superclass = node.struct? ? program.struct : program.reference
     end
 
-    if node.superclass && !created_new_type && type.superclass != superclass
+    # The existing superclass may have been resolved before a class type
+    # argument gained subclasses; see `Program#revirtualize_generic_ancestors`.
+    if node.superclass && !created_new_type && type.superclass.try(&.revirtualized) != superclass
       node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
     end
 
