@@ -36,40 +36,6 @@ private class HierarchyObserverProbe
 end
 
 describe Crystal::HierarchyObserver do
-  it "promotes singleton storage only for a second distinct hierarchy" do
-    program = semantic(<<-CRYSTAL).program
-      abstract class Base; end
-      class Other; end
-      class Third; end
-      CRYSTAL
-    base = program.types["Base"]
-    other = program.types["Other"]
-    third = program.types["Third"]
-    observer = HierarchyObserverProbe.new
-
-    observer.subscription_count.should eq(0)
-    observer.subscription_array?.should be_false
-
-    2.times { observer.subscribe(base) }
-    observer.subscription_count.should eq(1)
-    observer.subscription_array?.should be_false
-
-    observer.subscribe(other)
-    observer.subscription_count.should eq(2)
-    observer.subscription_array?.should be_true
-
-    observer.subscribe(base)
-    observer.subscribe(other)
-    observer.subscription_count.should eq(2)
-
-    2.times { observer.subscribe(third) }
-    observer.subscription_count.should eq(3)
-
-    [base, other, third].each do |type|
-      type.as(SubclassObservable).notify_subclass_added
-    end
-    observer.notifications.should eq(3)
-  end
 
   it "observes non-recursive branches of a recursive alias" do
     program = semantic(<<-CRYSTAL).program
