@@ -58,7 +58,14 @@ class Log
     private def write_logs
       while msg = @channel.receive?
         entry, backend = msg
-        backend.write(entry)
+        begin
+          backend.write(entry)
+        rescue ex
+          # This fiber must keep receiving entries, or every `#dispatch` blocks
+          # once the channel is full. Report the failure without going through
+          # the event loop, in case the failing backend writes to STDERR.
+          Crystal.print_error_buffered("Error writing log entry", exception: ex)
+        end
       end
 
       @done.send nil
