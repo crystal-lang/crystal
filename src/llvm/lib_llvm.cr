@@ -38,6 +38,8 @@
       {% llvm_targets = "ARM" %}
     {% elsif flag?(:aarch64) %}
       {% llvm_targets = "AArch64" %}
+    {% elsif flag?(:ppc) || flag?(:ppcle) || flag?(:ppc64) || flag?(:ppc64le) %}
+      {% llvm_targets = "PowerPC" %}
     {% elsif flag?(:wasm32) %}
       {% llvm_targets = "WebAssembly" %}
     {% elsif flag?(:avr) %}
