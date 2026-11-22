@@ -108,6 +108,10 @@ lib LibGC
   fun register_finalizer_ignore_self = GC_register_finalizer_ignore_self(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int
 
+  # The unsynchronized getters, for callers that already hold the allocation lock
+  fun get_heap_size = GC_get_heap_size : SizeT
+  fun get_free_bytes = GC_get_free_bytes : SizeT
+
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : Word*, free_bytes : Word*, unmapped_bytes : Word*, bytes_since_gc : Word*, total_bytes : Word*)
   fun set_max_heap_size = GC_set_max_heap_size(Word)
 
@@ -183,6 +187,10 @@ lib LibGC
 
   alias FnType = Void* -> Void*
   fun do_blocking = GC_do_blocking(FnType, Void*) : Void*
+  fun call_with_alloc_lock = GC_call_with_alloc_lock(FnType, Void*) : Void*
+
+  alias ReachableObjectProc = Void*, SizeT, Void* ->
+  fun enumerate_reachable_objects_inner = GC_enumerate_reachable_objects_inner(ReachableObjectProc, Void*)
 end
 
 module GC

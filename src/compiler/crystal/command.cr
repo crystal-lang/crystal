@@ -572,6 +572,10 @@ class Crystal::Command
         @progress_tracker.stats = true
       end
 
+      opts.on("--gc-stats", "Enable statistics output including each garbage collection") do
+        @progress_tracker.gc_stats = true
+      end
+
       opts.on("-p", "--progress", "Enable progress output") do
         @progress_tracker.progress = true
       end
@@ -720,6 +724,9 @@ class Crystal::Command
     end
     opts.on("-s", "--stats", "Enable statistics output") do
       compiler.progress_tracker.stats = true
+    end
+    opts.on("--gc-stats", "Enable statistics output including each garbage collection") do
+      compiler.progress_tracker.gc_stats = true
     end
     opts.on("-p", "--progress", "Enable progress output") do
       compiler.progress_tracker.progress = true

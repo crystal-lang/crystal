@@ -91,7 +91,12 @@ crystal-build - Compile a Crystal program
   Compile in release mode. Equivalent to *-O3 --single-module*
 *-s*, *--stats*::
   Print statistics about the different compiler stages for the current build.
-  Output time and used memory for each compiler process.
+  Output the time, the GC heap in use, the GC heap size and the memory of the
+  compiler process for each stage.
+*--gc-stats*::
+  Print the statistics of *--stats*, and before each stage's line one line for
+  each garbage collection during it: its duration, the heap in use before it,
+  the live data after it and the share of the heap it freed.
 *-p*, *--progress*::
   Print statistics about the progress for the current build.
 *-t*, *--time*::
