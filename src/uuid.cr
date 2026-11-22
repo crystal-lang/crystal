@@ -222,6 +222,9 @@ struct UUID
 
   # Generates RFC 4122 v1 UUID.
   #
+  # *time* defaults to the current time. Raises `ArgumentError` if *time* is
+  # outside the range of the 60-bit Gregorian timestamp in 100 ns units.
+  #
   # The traditional method for generating a `node_id` involves using the machine’s MAC address.
   # However, this approach is only effective if there is only one process running on the machine
   # and if privacy is not a concern. In modern languages, the default is to prioritize security
@@ -231,17 +234,15 @@ struct UUID
   # The sequence number `clock_seq` is used to generate the UUID. This number should be
   # monotonically increasing, with only 14 bits of the clock sequence being used effectively.
   # The clock sequence should be stored in a stable location, such as a file. If it is not
-  # stored, a random value is used by default. If not provided the current time milliseconds
-  # are used. In case the traditional MAC address based approach should be taken the
+  # supplied, the millisecond sub-second value of *time* is used.
+  # In case the traditional MAC address based approach should be taken the
   # `node_id` can be provided. Otherwise secure random is used.
-  def self.v1(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
-    tl = Time.local
-    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000
-    seq = ((clock_seq || (tl.nanosecond/1000000).to_u16) & 0x3fff) | 0x8000
+  def self.v1(*, time : Time = Time.local, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
+    timestamp, seq = gregorian_timestamp_ticks_and_seq(time, clock_seq)
 
-    time_low = UInt32.new(now & 0xffffffff)
-    time_mid = UInt16.new((now >> 32) & 0xffff)
-    time_hi = UInt16.new((now >> 48) & 0x0fff)
+    time_low = UInt32.new(timestamp & 0xffffffff)
+    time_mid = UInt16.new((timestamp >> 32) & 0xffff)
+    time_hi = UInt16.new((timestamp >> 48) & 0x0fff)
     time_hi |= 0x1000 # Version 1
 
     uuid = uninitialized UInt8[16]
@@ -333,23 +334,24 @@ struct UUID
   #
   # UUIDv6 is a field-compatible version of UUIDv1 with the timestamp bits
   # reordered to be most-significant-first, making the UUID lexicographically
-  # sortable by creation time.
+  # sortable by *time*.
+  #
+  # *time* defaults to the current time. Raises `ArgumentError` if *time* is
+  # outside the range of the 60-bit Gregorian timestamp in 100 ns units.
   #
   # The sequence number *clock_seq* should be monotonically increasing across
-  # invocations; only 14 bits are used. If not provided, the current
-  # millisecond sub-second value is used. If *node_id* is not provided, a
+  # invocations; only 14 bits are used. If not provided, the millisecond
+  # sub-second value of *time* is used. If *node_id* is not provided, a
   # pseudo-random node ID is generated with the multicast bit set as
   # recommended by RFC 4122 section 4.5.
-  def self.v6(*, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
-    tl = Time.local
-    now = (tl.to_unix_ns / 100).to_u64 + 122192928000000000_u64
-    seq = ((clock_seq || (tl.nanosecond / 1000000).to_u16) & 0x3fff_u16) | 0x8000_u16
+  def self.v6(*, time : Time = Time.local, clock_seq : UInt16? = nil, node_id : MAC? = nil) : self
+    timestamp, seq = gregorian_timestamp_ticks_and_seq(time, clock_seq)
 
     # Unlike v1, v6 stores the 60-bit timestamp most-significant-bits first:
     # bytes 0-3: T[59:28], bytes 4-5: T[27:12], bytes 6-7: ver(4) | T[11:0]
-    time_high = UInt32.new((now >> 28) & 0xffffffff_u64)
-    time_mid = UInt16.new((now >> 12) & 0xffff_u64)
-    time_low_and_version = UInt16.new(0x6000_u16 | (now & 0x0fff_u64).to_u16)
+    time_high = UInt32.new((timestamp >> 28) & 0xffffffff_u64)
+    time_mid = UInt16.new((timestamp >> 12) & 0xffff_u64)
+    time_low_and_version = UInt16.new(0x6000_u16 | (timestamp & 0x0fff_u64).to_u16)
 
     uuid = uninitialized UInt8[16]
     IO::ByteFormat::BigEndian.encode(time_high, uuid.to_slice[0..3])
@@ -369,10 +371,26 @@ struct UUID
     new(uuid, version: UUID::Version::V6, variant: UUID::Variant::RFC4122)
   end
 
+  private def self.gregorian_timestamp_ticks_and_seq(time : Time, clock_seq : UInt16? = nil) : {UInt64, UInt16}
+    timestamp = (time.to_unix_ns / 100) + 122_192_928_000_000_000_i64
+    unless 0 <= timestamp < (1_i64 << 60)
+      raise ArgumentError.new("Time is outside the UUID Gregorian timestamp range")
+    end
+
+    seq = ((clock_seq || (time.nanosecond / 1_000_000).to_u16) & 0x3fff_u16) | 0x8000_u16
+
+    {timestamp.to_u64, seq}
+  end
+
   # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
   # chronologically (with 1ms precision) by their raw or hexstring
   # representation.
-  def self.v7(random r : Random = Random::Secure)
+  def self.v7(random r : Random = Random::Secure, *, time : Time = Time.utc)
+    milliseconds = time.to_unix_ms
+    if milliseconds < 0
+      raise ArgumentError.new("Time is outside the UUID Unix timestamp range")
+    end
+
     buffer = uninitialized UInt8[18]
     value = buffer.to_slice
 
@@ -380,7 +398,7 @@ struct UUID
     # allocated enough room for a 64-bit timestamp to accommodate the
     # NetworkEndian.encode call here, but we only need 48 bits of it so we chop
     # off the first 2 bytes.
-    IO::ByteFormat::NetworkEndian.encode Time.utc.to_unix_ms, value
+    IO::ByteFormat::NetworkEndian.encode milliseconds, value
     value = value[2..]
 
     # Fill in the rest with random bytes
