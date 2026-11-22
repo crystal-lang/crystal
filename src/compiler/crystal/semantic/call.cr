@@ -823,15 +823,7 @@ class Crystal::Call
           end
         end
 
-        if splat_index = block.splat_index
-          if yield_types.size < block.args.size - 1
-            block.raise "too many block parameters (given #{block.args.size - 1}+, expected maximum #{yield_types.size})"
-          end
-          splat_range = (splat_index..splat_index - block.args.size)
-          yield_types[splat_range] = program.tuple_of(yield_types[splat_range])
-        end
-
-        yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
+        proc_arg_types = yield_types
       end
       output = block_arg_restriction.output
     elsif block_arg_restriction
@@ -847,12 +839,19 @@ class Crystal::Call
         return nil, nil
       end
 
-      yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
-        Var.new("var#{i}", input)
-      end
+      proc_arg_types = block_arg_restriction_type.arg_types
       output = block_arg_restriction_type.return_type
       output_type = output
       output_type = program.nil if output_type.void?
+    end
+
+    if proc_arg_types
+      # A block splat parameter (`|*args|`) receives the corresponding
+      # arguments as a tuple
+      yield_types = proc_arg_types.dup
+      block.pack_splat_types(yield_types, program)
+
+      yield_vars = yield_types.map_with_index { |type, i| Var.new("var#{i}", type) }
     end
 
     if yield_vars
@@ -879,9 +878,15 @@ class Crystal::Call
     # If the block is used, we convert it to a function pointer
     if match.def.uses_block_arg?
       # Create the arguments of the function literal
-      if yield_vars
+      if proc_arg_types && yield_vars
         if auto_unpack_needed
           fun_args = [Arg.new(program.new_temp_var_name, type: yield_vars.first.type)]
+        elsif block.splat_index
+          # The proc keeps the original parameters, and the block parameters
+          # are assigned from them at the beginning of the body
+          fun_args = proc_arg_types.map do |type|
+            Arg.new(program.new_temp_var_name, type: type)
+          end
         else
           fun_args = yield_vars.map_with_index do |var, i|
             arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
@@ -930,19 +935,30 @@ class Crystal::Call
               end
             end
 
-            case old_body = block.body
-            when Nop
-              # do nothing
-              new_body = old_body
-            when Expressions
-              # multiple statements
-              new_body = old_body
-              new_body.expressions[0...0] = unpack_exps
-            else
-              # single statement
-              unpack_exps << old_body
-              new_body = Expressions.new(unpack_exps)
+            new_body = prepend_block_body(block.body, unpack_exps)
+
+            a_def = Def.new("->", fun_args, new_body).at(block)
+            a_def.captured_block = true
+          elsif splat_index = block.splat_index
+            splat_size = fun_args.size - (block.args.size - 1)
+
+            unpack_exps = [] of ASTNode
+            block.args.each_with_index do |arg, i|
+              next if arg.name == "_"
+
+              value =
+                if i < splat_index
+                  Var.new(fun_args[i].name)
+                elsif i == splat_index
+                  splat_args = fun_args[splat_index, splat_size]
+                  TupleLiteral.new(splat_args.map { |fun_arg| Var.new(fun_arg.name).as(ASTNode) })
+                else
+                  Var.new(fun_args[i - 1 + splat_size].name)
+                end
+              unpack_exps << Assign.new(Var.new(arg.name).at(arg), value.at(arg)).at(arg)
             end
+
+            new_body = prepend_block_body(block.body, unpack_exps)
 
             a_def = Def.new("->", fun_args, new_body).at(block)
             a_def.captured_block = true
@@ -958,6 +974,7 @@ class Crystal::Call
           fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
           fun_literal.from_block = true
+          fun_literal.block_param_names = block_param_names(block)
           fun_literal.force_nil = true unless output
           fun_literal.accept parent_visitor
         end
@@ -1063,6 +1080,43 @@ class Crystal::Call
     end
 
     {yield_vars, block_arg_type}
+  end
+
+  private def block_param_names(block)
+    names = block.args.map(&.name)
+    block.unpacks.try &.each_value do |unpack|
+      collect_unpacked_block_param_names(unpack, names)
+    end
+    names
+  end
+
+  private def collect_unpacked_block_param_names(node, names)
+    case node
+    when Var
+      names << node.name
+    when Splat
+      collect_unpacked_block_param_names(node.exp, names)
+    when Expressions
+      node.expressions.each do |exp|
+        collect_unpacked_block_param_names(exp, names)
+      end
+    end
+  end
+
+  private def prepend_block_body(body, exps)
+    case body
+    when Nop
+      # do nothing
+      body
+    when Expressions
+      # multiple statements
+      body.expressions[0...0] = exps
+      body
+    else
+      # single statement
+      exps << body
+      Expressions.new(exps)
+    end
   end
 
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
