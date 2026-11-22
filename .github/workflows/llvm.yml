@@ -76,6 +76,9 @@ jobs:
       - name: Build libllvm_ext
         run: make -B deps
 
+      - name: Check LLVM source files
+        run: bin/crystal scripts/generate_llvm_attribute_kind.cr
+
       - name: Test compiler_spec
         run: |
           # patch for ubuntu-22.04 whose PCRE2 doesn't support binary Unicode properties

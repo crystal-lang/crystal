@@ -1,0 +1,70 @@
+{% skip_file unless LibLLVM::VERSION_MAJOR == 10 %}
+
+module LLVM
+  {%
+    ATTRIBUTE_KIND_VALUES["Alignment"] = 1                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["AllocSize"] = 2                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["AlwaysInline"] = 3                 # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ArgMemOnly"] = 4                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Builtin"] = 5                      # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ByVal"] = 6                        # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Cold"] = 7                         # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Convergent"] = 8                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Dereferenceable"] = 9              # EnumAttr
+    ATTRIBUTE_KIND_VALUES["DereferenceableOrNull"] = 10       # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ImmArg"] = 11                      # EnumAttr
+    ATTRIBUTE_KIND_VALUES["InAlloca"] = 12                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["InReg"] = 13                       # EnumAttr
+    ATTRIBUTE_KIND_VALUES["InaccessibleMemOnly"] = 14         # EnumAttr
+    ATTRIBUTE_KIND_VALUES["InaccessibleMemOrArgMemOnly"] = 15 # EnumAttr
+    ATTRIBUTE_KIND_VALUES["InlineHint"] = 16                  # EnumAttr
+    ATTRIBUTE_KIND_VALUES["JumpTable"] = 17                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["MinSize"] = 18                     # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Naked"] = 19                       # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Nest"] = 20                        # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoAlias"] = 21                     # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoBuiltin"] = 22                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoCapture"] = 23                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoCfCheck"] = 24                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoDuplicate"] = 25                 # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoFree"] = 26                      # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoImplicitFloat"] = 27             # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoInline"] = 28                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoRecurse"] = 29                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoRedZone"] = 30                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoReturn"] = 31                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoSync"] = 32                      # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NoUnwind"] = 33                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NonLazyBind"] = 34                 # EnumAttr
+    ATTRIBUTE_KIND_VALUES["NonNull"] = 35                     # EnumAttr
+    ATTRIBUTE_KIND_VALUES["OptForFuzzing"] = 36               # EnumAttr
+    ATTRIBUTE_KIND_VALUES["OptimizeForSize"] = 37             # EnumAttr
+    ATTRIBUTE_KIND_VALUES["OptimizeNone"] = 38                # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ReadNone"] = 39                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ReadOnly"] = 40                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Returned"] = 41                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ReturnsTwice"] = 42                # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SExt"] = 43                        # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SafeStack"] = 44                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SanitizeAddress"] = 45             # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SanitizeHWAddress"] = 46           # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SanitizeMemTag"] = 47              # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SanitizeMemory"] = 48              # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SanitizeThread"] = 49              # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ShadowCallStack"] = 50             # EnumAttr
+    ATTRIBUTE_KIND_VALUES["Speculatable"] = 51                # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SpeculativeLoadHardening"] = 52    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StackAlignment"] = 53              # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StackProtect"] = 54                # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StackProtectReq"] = 55             # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StackProtectStrong"] = 56          # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StrictFP"] = 57                    # EnumAttr
+    ATTRIBUTE_KIND_VALUES["StructRet"] = 58                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SwiftError"] = 59                  # EnumAttr
+    ATTRIBUTE_KIND_VALUES["SwiftSelf"] = 60                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["UWTable"] = 61                     # EnumAttr
+    ATTRIBUTE_KIND_VALUES["WillReturn"] = 62                  # EnumAttr
+    ATTRIBUTE_KIND_VALUES["WriteOnly"] = 63                   # EnumAttr
+    ATTRIBUTE_KIND_VALUES["ZExt"] = 64                        # EnumAttr
+  %}
+end
