@@ -727,4 +727,46 @@ describe "Semantic: automatic cast" do
       CRYSTAL
       "can't autocast :bar to Foo: no matching enum member"
   end
+
+  it "doesn't say argument error for correctly autocasted enum member (#15166)" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Char, not String"
+      enum Foo
+        A
+      end
+
+      def foo(x : Foo, y : Char)
+      end
+
+      foo(:a, "")
+      CRYSTAL
+  end
+
+  it "doesn't say argument error for correctly autocasted integer literal" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Char, not String"
+      def foo(x : Int8, y : Char)
+      end
+
+      foo(1_i32, "")
+      CRYSTAL
+  end
+
+  it "doesn't say argument error for correctly autocasted integer variable" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Char, not String"
+      def foo(x : Int64, y : Char)
+      end
+
+      x = 1_i32
+      foo(x, "")
+      CRYSTAL
+  end
+
+  it "still says argument error for integer variable if autocasting is disabled" do
+    assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be Int64, not Int32", flags: "no_number_autocast"
+      def foo(x : Int64, y : Char)
+      end
+
+      x = 1_i32
+      foo(x, "")
+      CRYSTAL
+  end
 end

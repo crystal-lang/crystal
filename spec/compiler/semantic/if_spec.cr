@@ -50,9 +50,24 @@ describe "Semantic: if" do
       CRYSTAL
   end
 
-  it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
+  it "correctly filters type of variable if there's a no-return call with an interpolation that can't be typed" do
     assert_type(<<-CRYSTAL) { int32 }
-      require "prelude"
+      class String
+        def self.interpolation(*parts)
+          ""
+        end
+      end
+
+      struct Int32
+        def +(other : Int32)
+          self
+        end
+      end
+
+      def noreturn(*args) : NoReturn
+        x = uninitialized NoReturn
+        x
+      end
 
       def bar
         bar
@@ -61,7 +76,7 @@ describe "Semantic: if" do
       def foo
         a = 1 || nil
         unless a
-          raise "Oh no \#{bar}"
+          noreturn "Oh no \#{bar}"
         end
         a + 2
       end

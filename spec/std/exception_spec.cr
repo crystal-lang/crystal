@@ -33,7 +33,7 @@ describe "Exception" do
     ex.inspect_with_backtrace.should contain("inner")
   end
 
-  it "collect memory within ensure block", tags: %w[slow] do
+  pending_wasm32 "collect memory within ensure block", tags: %w[slow] do
     sample = datapath("collect_within_ensure")
 
     _, output, error = compile_and_run_file(sample, ["--release"])

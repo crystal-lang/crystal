@@ -6,7 +6,7 @@ describe "Code gen: C ABI" do
   # use a vector type like `__m128i` on MSVC
   {% unless flag?(:msvc) %}
     it "passes 128-bit integer to lib fun" do
-      test_c(<<-C, <<-CRYSTAL, &.to_b.should be_true)
+      test_c(<<-C, <<-CRYSTAL, Bool).should be_true
         __int128 foo(__int128 x) {
           return x * x;
         }
@@ -31,7 +31,7 @@ describe "Code gen: C ABI" do
   {% end %}
 
   it "passes struct less than 64 bits (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         char x;
         short y;
@@ -56,7 +56,7 @@ describe "Code gen: C ABI" do
   end
 
   it "passes struct between 64 and 128 bits (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         long long x;
         short y;
@@ -81,7 +81,7 @@ describe "Code gen: C ABI" do
   end
 
   it "passes struct bigger than 128 bits (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(6)
       struct s {
         long long x;
         long long y;
@@ -108,7 +108,7 @@ describe "Code gen: C ABI" do
   end
 
   it "passes struct after many other args (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_string.should eq("28"))
+    test_c(<<-C, <<-CRYSTAL, Int64).should eq(28)
       struct s {
         long long x, y;
       };
@@ -132,7 +132,7 @@ describe "Code gen: C ABI" do
   end
 
   it "passes struct after many other args when returning a large struct (sret return type)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_string.should eq("[6, 7, 10]"))
+    test_c(<<-C, <<-CRYSTAL, Tuple(Int64, Int64, Int64)).should eq({6_i64, 7_i64, 10_i64})
       struct s {
         long long x, y;
       };
@@ -160,12 +160,12 @@ describe "Code gen: C ABI" do
 
       v = LibFoo::S.new(x: 6, y: 7)
       w = LibFoo.foo(1, 2, 3, 4, v)
-      [w.x, w.y, w.z]
+      {w.x, w.y, w.z}
       CRYSTAL
   end
 
   it "returns struct less than 64 bits (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         char x;
         short y;
@@ -186,12 +186,12 @@ describe "Code gen: C ABI" do
       end
 
       str = LibFoo.foo
-      str.x.to_i + str.y.to_i
+      str.x.to_i &+ str.y.to_i
       CRYSTAL
   end
 
   it "returns struct between 64 and 128 bits (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(3))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(3)
       struct s {
         long long x;
         short y;
@@ -212,12 +212,12 @@ describe "Code gen: C ABI" do
       end
 
       str = LibFoo.foo
-      (str.x + str.y).to_i32
+      (str.x &+ str.y).to_i32!
       CRYSTAL
   end
 
   it "returns struct bigger than 128 bits with sret" do
-    test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(6))
+    test_c(<<-C, <<-CRYSTAL, Int32).should eq(6)
       struct s {
         long long x;
         long long y;
@@ -240,12 +240,12 @@ describe "Code gen: C ABI" do
       end
 
       str = LibFoo.foo(3)
-      (str.x + str.y + str.z).to_i32
+      (str.x &+ str.y &+ str.z).to_i32!
       CRYSTAL
   end
 
   it "accepts large struct in a callback (for real)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_string.should eq("6"))
+    test_c(<<-C, <<-CRYSTAL, Int64).should eq(6)
       struct s {
           long long x, y, z;
       };
@@ -266,11 +266,23 @@ describe "Code gen: C ABI" do
       end
 
       module Global
-        class_property x = 0i64
+        @@x = 0i64
+
+        def self.x
+          @@x
+        end
+
+        def self.x=(@@x)
+        end
       end
 
       fun callback(v : LibFoo::S)
         Global.x = v.x &+ v.y &+ v.z
+      end
+
+      def raise(msg)
+        x = uninitialized NoReturn
+        x
       end
 
       LibFoo.ccaller(->callback)
@@ -280,7 +292,7 @@ describe "Code gen: C ABI" do
   end
 
   it "promotes variadic args (float to double)" do
-    test_c(<<-C, <<-CRYSTAL, &.to_f64.should eq(1.0))
+    test_c(<<-C, <<-CRYSTAL, Float64).should eq(1.0)
       #include <stdarg.h>
 
       double foo(int n, ...) {
@@ -303,7 +315,7 @@ describe "Code gen: C ABI" do
    {"u16", 65535},
   ].each do |int_kind, int_value|
     it "promotes variadic args (#{int_kind} to i32) (#9742)" do
-      test_c(<<-C, <<-CRYSTAL, &.to_i.should eq(int_value))
+      test_c(<<-C, <<-CRYSTAL, Int32).should eq(int_value)
         #include <stdarg.h>
 
         int foo(int n, ...) {

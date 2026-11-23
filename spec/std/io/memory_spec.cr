@@ -545,7 +545,7 @@ describe IO::Memory do
     end
   {% end %}
 
-  it "allocates for > 1 GB", tags: %w[slow] do
+  pending_wasm32 "allocates for > 1 GB", tags: %w[slow] do
     io = IO::Memory.new
     mbstring = "a" * 1024 * 1024
     1024.times { io << mbstring }

@@ -34,6 +34,7 @@ module Crystal
       @next_id = 0
       assign_id(program.object)
       assign_id_to_metaclass(program.object)
+      assign_id_to_metaclass(program.class_type, program.class_type)
     end
 
     def type_id(type : TypeDefType)

@@ -55,6 +55,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_object_id node, target_def, call_args
             when "object_crystal_type_id"
               codegen_primitive_object_crystal_type_id node, target_def, call_args
+            when "class_crystal_instance_type_name"
+              codegen_primitive_class_crystal_instance_type_name node, target_def, call_args
             when "class_crystal_instance_type_id"
               codegen_primitive_class_crystal_instance_type_id node, target_def, call_args
             when "symbol_to_s"
@@ -997,11 +999,21 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def codegen_primitive_class_crystal_instance_type_name(node, target_def, call_args)
+    type_id = codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
+    type_id_to_class_name(type_id)
+  end
+
   def codegen_primitive_class_crystal_instance_type_id(node, target_def, call_args)
     if (type = context.type).is_a?(VirtualMetaclassType)
       codegen_primitive_class_crystal_instance_type_id_with_type(type, call_args[0])
+    elsif type == @program.class_type
+      # consider Class to be its own instance type here, so that things like
+      # `Class.name` work correctly
+      # TODO: do this in semantic (#11112)
+      type_id(@program.class_type)
     else
-      type_id(type.instance_type)
+      type_id(type.instance_type, remove_indirection: false)
     end
   end
 

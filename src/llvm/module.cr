@@ -64,30 +64,24 @@ class LLVM::Module
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Int32)
-    add_flag(module_flag, key, @context.int32.const_int(val))
+    add_flag(module_flag, key, @context.int32.const_int(val).to_metadata)
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : String)
-    LibLLVM.add_module_flag(
-      self,
-      module_flag,
-      key,
-      key.bytesize,
-      {% if LibLLVM::IS_LT_90 %}
-        LibLLVM.value_as_metadata(LibLLVM.md_string_in_context(@context, val, val.bytesize))
-      {% else %}
-        LibLLVM.md_string_in_context2(@context, val, val.bytesize)
-      {% end %},
-    )
+    add_flag(module_flag, key, @context.metadata_string(val))
   end
 
   def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Value)
+    add_flag(module_flag, key, val.to_metadata)
+  end
+
+  def add_flag(module_flag : LibLLVM::ModuleFlagBehavior, key : String, val : Metadata)
     LibLLVM.add_module_flag(
       self,
       module_flag,
       key,
       key.bytesize,
-      LibLLVM.value_as_metadata(val.to_unsafe)
+      val,
     )
   end
 

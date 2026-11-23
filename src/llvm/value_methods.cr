@@ -23,6 +23,10 @@ module LLVM::ValueMethods
     end
   end
 
+  def set_instruction_param_alignment(index : Int, alignment : Int)
+    LibLLVM.set_instr_param_alignment(self, index, alignment)
+  end
+
   private def attribute_ref(context, kind, type)
     if type.is_a?(Type) && Attribute.requires_type?(kind)
       {% if LibLLVM::IS_LT_120 %}
@@ -92,13 +96,18 @@ module LLVM::ValueMethods
     init ? LLVM::Value.new(init) : nil
   end
 
-  def global_set_metadata(kind : String, metadata)
+  def global_set_metadata(kind : String, metadata : Metadata)
     kind = LibLLVM.get_md_kind_id_in_context(LibLLVM.get_type_context(type), kind, kind.bytesize)
     global_set_metadata(kind, metadata)
   end
 
-  def global_set_metadata(kind, metadata)
+  def global_set_metadata(kind, metadata : Metadata)
     LibLLVM.global_set_metadata(self, kind, metadata)
+  end
+
+  @[Deprecated("Use a `LLVM::Metadata` for `metadata` instead")]
+  def global_set_metadata(kind, metadata)
+    global_set_metadata(kind, Metadata.new(metadata))
   end
 
   def volatile=(volatile)
@@ -123,6 +132,10 @@ module LLVM::ValueMethods
 
   def to_value
     LLVM::Value.new @unwrap
+  end
+
+  def to_metadata : Metadata
+    Metadata.new(LibLLVM.value_as_metadata(self))
   end
 
   def dump

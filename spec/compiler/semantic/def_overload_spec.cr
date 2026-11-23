@@ -1122,6 +1122,22 @@ describe "Semantic: def overload" do
       CRYSTAL
   end
 
+  it "rejects a union restriction when concrete members leave no type for the free variable" do
+    each_union_variant("Int32 | String", "U") do |restriction|
+      assert_type(<<-CRYSTAL) { char }
+        def foo(x)
+          'a'
+        end
+
+        def foo(x : #{restriction}) forall U
+          1
+        end
+
+        foo(1 || "")
+        CRYSTAL
+    end
+  end
+
   it "matches a generic module argument" do
     assert_type(<<-CRYSTAL) { int32 }
       module Bar(T)

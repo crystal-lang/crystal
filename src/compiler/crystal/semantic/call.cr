@@ -190,9 +190,9 @@ class Crystal::Call
   def lookup_matches_without_splat(arg_types, named_args_types, with_autocast)
     if obj = @obj
       lookup_matches_in(obj.type, arg_types, named_args_types, with_autocast: with_autocast)
-    elsif name == "super"
+    elsif super?
       lookup_super_matches(arg_types, named_args_types, with_autocast: with_autocast)
-    elsif name == "previous_def"
+    elsif previous_def?
       lookup_previous_def_matches(arg_types, named_args_types, with_autocast: with_autocast)
     elsif with_scope = @with_scope
       lookup_matches_with_scope_in with_scope, arg_types, named_args_types, with_autocast: with_autocast
@@ -848,7 +848,7 @@ class Crystal::Call
       end
 
       yield_vars = block_arg_restriction_type.arg_types.map_with_index do |input, i|
-        Var.new("var#{i}", input)
+        Var.new("var#{i}", input.virtual_type)
       end
       output = block_arg_restriction_type.return_type
       output_type = output
@@ -1272,10 +1272,10 @@ class Crystal::Call
   end
 
   def super?
-    !obj && name == "super"
+    !obj && !global? && name == "super"
   end
 
   def previous_def?
-    !obj && name == "previous_def"
+    !obj && !global? && name == "previous_def"
   end
 end

@@ -456,6 +456,12 @@ module Math
   end
 
   # :ditto:
+  def besselj(order : Int, value)
+    besselj(order.to_i32, value.to_f)
+  end
+
+  # :ditto:
+  @[Deprecated("`order` must be an integer.")]
   def besselj(order, value)
     besselj(order.to_i32, value.to_f)
   end
@@ -513,6 +519,12 @@ module Math
   end
 
   # :ditto:
+  def bessely(order : Int, value)
+    bessely(order.to_i32, value.to_f)
+  end
+
+  # :ditto:
+  @[Deprecated("`order` must be an integer.")]
   def bessely(order, value)
     bessely(order.to_i32, value.to_f)
   end
@@ -644,6 +656,12 @@ module Math
   end
 
   # :ditto:
+  def ldexp(value, exp : Int)
+    ldexp(value.to_f, exp.to_i32)
+  end
+
+  # :ditto:
+  @[Deprecated("`exp` must be an integer.")]
   def ldexp(value, exp)
     ldexp(value.to_f, exp.to_i32)
   end
@@ -661,6 +679,12 @@ module Math
   end
 
   # :ditto:
+  def scalbn(value, exp : Int)
+    scalbn(value.to_f, exp.to_i32)
+  end
+
+  # :ditto:
+  @[Deprecated("`exp` must be an integer.")]
   def scalbn(value, exp)
     scalbn(value.to_f, exp.to_i32)
   end
@@ -676,6 +700,12 @@ module Math
   end
 
   # :ditto:
+  def scalbln(value, exp : Int) : Float64
+    scalbln(value.to_f, exp.to_i64)
+  end
+
+  # :ditto:
+  @[Deprecated("`exp` must be an integer.")]
   def scalbln(value, exp) : Float64
     scalbln(value.to_f, exp.to_i64)
   end

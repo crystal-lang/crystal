@@ -113,6 +113,9 @@ class Crystal::CodeGenVisitor
       # If no rescue block is entered, the ensure block is ran then the exception is re-raised.
       position_at_end rescue_block
 
+      # Catching the exception belongs to no single line; each `rescue` clause sets its own location below
+      set_artificial_debug_location if @debug.line_numbers?
+
       old_catch_pad = @catch_pad
 
       if funclet_eh
@@ -168,7 +171,6 @@ class Crystal::CodeGenVisitor
         get_exception_arg_type = get_exception_fun.type.params_types.first # Void* or LibUnwind::Exception*
         get_exception_arg = pointer_cast(unwind_ex_obj, get_exception_arg_type)
 
-        set_current_debug_location node if @debug.line_numbers?
         caught_exception_ptr = call get_exception_fun, [get_exception_arg]
         caught_exception = int2ptr caught_exception_ptr, llvm_typer.type_id_pointer
       end
@@ -189,6 +191,7 @@ class Crystal::CodeGenVisitor
           # `this_rescue_block` if the exception type is covered by the type restriction, or
           # branches to `next_rescue_block` if the restriction doesn't match.
           this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
+          set_current_debug_location a_rescue if @debug.line_numbers?
           if a_rescue_types = a_rescue.types
             cond = nil
             a_rescue_types.each do |type|
@@ -229,6 +232,13 @@ class Crystal::CodeGenVisitor
               assign var.pointer, var.type, a_rescue.type, cast_caught_exception
             end
 
+            if @debug.line_numbers?
+              if a_rescue.body.location
+                set_current_debug_location a_rescue.body
+              else
+                set_artificial_debug_location
+              end
+            end
             accept a_rescue.body
           end
           phi.add @last, a_rescue.body.type?
@@ -255,12 +265,13 @@ class Crystal::CodeGenVisitor
       accept node_ensure if node_ensure
 
       # ensure finished, re-raise the current exception.
-      codegen_re_raise(node, unwind_ex_obj)
+      codegen_re_raise(unwind_ex_obj)
 
       # This is the block in which all exceptions raised in any `rescue` block end up.
       # We want to run the ensure and re-raise.
       if node_ensure && rescue_ensure_block
         position_at_end rescue_ensure_block
+        set_artificial_debug_location if @debug.line_numbers?
 
         # Codegen catchswitch+pad or landing pad as described above.
         # This code is simpler because we never need to extract the exception type
@@ -285,7 +296,7 @@ class Crystal::CodeGenVisitor
 
         # Codegen ensure, then make sure we re-raise the exception.
         accept node_ensure
-        codegen_re_raise(node, unwind_ex_obj)
+        codegen_re_raise(unwind_ex_obj)
       end
 
       # We are no longer inside the catch pad
@@ -303,7 +314,10 @@ class Crystal::CodeGenVisitor
     false
   end
 
-  def codegen_re_raise(node, unwind_ex_obj)
+  def codegen_re_raise(unwind_ex_obj)
+    # The re-raise belongs to no single line
+    set_artificial_debug_location if @debug.line_numbers?
+
     if @program.codegen_target.msvc?
       # On the MSVC C++ ABI we can re-raise by calling _CxxThrowException with two null arguments
       call windows_throw_fun, [llvm_context.void_pointer.null, llvm_context.void_pointer.null]
@@ -314,7 +328,16 @@ class Crystal::CodeGenVisitor
       raise_fun = main_fun(RAISE_NAME)
       raise_fun_arg_type = raise_fun.func.params.first.type # Void* or LibUnwind::Exception*
       raise_fun_arg = pointer_cast(unwind_ex_obj.not_nil!, raise_fun_arg_type)
-      codegen_call_or_invoke(node, nil, nil, raise_fun, [raise_fun_arg], true, @program.no_return)
+
+      if rescue_block = @rescue_block
+        invoke_out_block = new_block "invoke_out"
+        invoke raise_fun, [raise_fun_arg], invoke_out_block, rescue_block
+        position_at_end invoke_out_block
+      else
+        call raise_fun, [raise_fun_arg]
+      end
+
+      unreachable
     end
   end
 
