@@ -3,7 +3,7 @@ require "crystal/pointer_pairing_heap"
 # Information about the event that a `Fiber` is waiting on.
 #
 # The event can be waiting for `IO` with or without a timeout, or be a timed
-# event such as sleep or a select timeout (without IO).
+# event such as sleep or a cancelable timeout (without IO).
 #
 # The events can be registered in `Timers` and/or `Waiter` depending on their
 # type.
@@ -12,7 +12,6 @@ struct Crystal::EventLoop::Polling::Event
     IoRead
     IoWrite
     Sleep
-    SelectTimeout
     Timeout
   end
 
@@ -23,7 +22,7 @@ struct Crystal::EventLoop::Polling::Event
   getter fiber : Fiber
 
   # The IO::FileDescriptor or Socket instance when processing an IO event.
-  # Nil for timed events (sleep, select timeout).
+  # Nil for timed events (sleep, cancelable timeout).
   @io : IO?
 
   # The absolute time, against the monotonic clock, at which a timed event shall
@@ -33,7 +32,6 @@ struct Crystal::EventLoop::Polling::Event
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
   property! cancelation_token : Fiber::CancelationToken
-  property timeout_select_action : Channel::TimeoutAction?
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
@@ -58,9 +56,7 @@ struct Crystal::EventLoop::Polling::Event
     @timed_out = true
   end
 
-  # Manually set the absolute time (against the monotonic clock). This is meant
-  # for `FiberEvent` to set and cancel its inner sleep or select timeout; these
-  # objects are allocated once per `Fiber`.
+  # Manually set the absolute time against the monotonic clock.
   #
   # NOTE: musn't be changed after registering the event into `Timers`!
   def wake_at=(@wake_at)

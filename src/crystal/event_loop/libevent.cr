@@ -106,24 +106,6 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
   end
 
-  # Creates a timeout event (timeout action of select expression).
-  def create_timeout_event(fiber) : Crystal::EventLoop::LibEvent::Event
-    data = Crystal::EventLoop::LibEvent::SelectTimeoutData.new(fiber)
-    event_base.new_event(-1, LibEvent2::EventFlags::None, data) do |s, flags, data|
-      timeout_data = data.as(Crystal::EventLoop::LibEvent::SelectTimeoutData)
-      if select_action = timeout_data.timeout_select_action
-        if select_action.time_expired?
-          {% if !flag?(:without_mt) %}
-            event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
-            event_loop.callback_enqueue(timeout_data.fiber)
-          {% else %}
-            timeout_data.fiber.enqueue
-          {% end %}
-        end
-      end
-    end
-  end
-
   # Creates a write event for a file descriptor.
   def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
     flags = LibEvent2::EventFlags::Write

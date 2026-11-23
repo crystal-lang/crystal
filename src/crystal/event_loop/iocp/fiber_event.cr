@@ -7,15 +7,14 @@ class Crystal::EventLoop::IOCP::FiberEvent
     @timer = Timer.new(type, fiber)
   end
 
-  # io timeout, sleep, or select timeout
-  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
+  # I/O timeout or sleep
+  def add(timeout : Time::Span) : Nil
     now = Crystal::System::Time.instant
     @timer.wake_at = now + timeout
-    @timer.timeout_select_action = timeout_select_action
     EventLoop.current.add_timer(pointerof(@timer))
   end
 
-  # select timeout has been cancelled
+  # Cancel the timer.
   def delete : Nil
     return unless @timer.wake_at?
     EventLoop.current.delete_timer(pointerof(@timer))

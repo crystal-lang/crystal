@@ -229,10 +229,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     in .timeout?
       return unless fiber.try_cancel?(timer.value.cancelation_token)
       timer.value.timed_out!
-    in .select_timeout?
-      return unless select_action = timer.value.timeout_select_action
-      return unless select_action.time_expired?
-      timer.value.wake_at = nil
     end
 
     yield fiber
@@ -330,10 +326,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
   def create_resume_event(fiber : Fiber) : EventLoop::Event
     FiberEvent.new(:sleep, fiber)
-  end
-
-  def create_timeout_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:select_timeout, fiber)
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}

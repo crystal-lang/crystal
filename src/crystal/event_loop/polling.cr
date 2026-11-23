@@ -122,10 +122,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     event.value.timed_out?
   end
 
-  def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:select_timeout, fiber)
-  end
-
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
@@ -602,12 +598,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
       event.value.__poll_descriptor { |pd| pd.value.@writer.delete(event) }
       event.value.timed_out!
-    when .select_timeout?
-      # The action belongs to this timer registration. The fiber may already
-      # have started another select while this timer was being processed.
-      return unless select_action = event.value.timeout_select_action
-      return unless select_action.time_expired?
-      event.value.wake_at = nil
     when .timeout?
       return unless fiber.try_cancel?(event.value.cancelation_token)
       event.value.timed_out!

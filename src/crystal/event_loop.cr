@@ -134,15 +134,12 @@ abstract class Crystal::EventLoop
     raise NotImplementedError.new("#{self.class.name}#create_resume_event(fiber)")
   end
 
-  # Creates a timeout_event.
-  abstract def create_timeout_event(fiber : Fiber) : Event
-
   module Event
     # Frees the event.
     abstract def free : Nil
 
     # Adds a new timeout to this event.
-    abstract def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
+    abstract def add(timeout : Time::Span) : Nil
   end
 end
 

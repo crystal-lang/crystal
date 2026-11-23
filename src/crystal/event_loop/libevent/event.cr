@@ -6,14 +6,6 @@ require "./lib_event2"
 
 # :nodoc:
 class Crystal::EventLoop::LibEvent < Crystal::EventLoop
-  class SelectTimeoutData
-    getter fiber : Fiber
-    property timeout_select_action : Channel::TimeoutAction?
-
-    def initialize(@fiber)
-    end
-  end
-
   class Event
     include Crystal::EventLoop::Event
 
@@ -23,12 +15,11 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       block
     end
 
-    def initialize(@event : LibEvent2::Event, @select_timeout_data : SelectTimeoutData?)
+    def initialize(@event : LibEvent2::Event)
       @freed = false
     end
 
-    def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
-      @select_timeout_data.try &.timeout_select_action=(timeout_select_action)
+    def add(timeout : Time::Span) : Nil
       timeval = LibC::Timeval.new(
         tv_sec: LibC::TimeT.new(timeout.to_seconds),
         tv_usec: timeout.nanoseconds // 1_000
@@ -65,7 +56,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
       def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
         event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-        LibEvent::Event.new(event, data.as?(LibEvent::SelectTimeoutData))
+        LibEvent::Event.new(event)
       end
 
       # NOTE: may return `true` even if no event has been triggered (e.g.
