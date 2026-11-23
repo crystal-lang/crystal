@@ -38,19 +38,18 @@ f = IO::Memory.new
 f.puts <<-CRYSTAL
   {% skip_file unless LibLLVM::VERSION_MAJOR == #{llvm_version_major} %}
 
-  module LLVM
-    {%
+  # WARNING: This enum is marked as unstable by LLVM. The following members are
+  # valid for LLVM #{llvm_version_major}. Refer to `src/llvm/enums/attribute_kind/llvm_*.cr` to see
+  # if a particular member was added or removed.
+  enum LLVM::AttributeKind : UInt32
   CRYSTAL
 
 kind_ids.sort_by! &.[1]
 kind_ids.each do |attr, kind_id, attr_type|
-  f.puts "    ATTRIBUTE_KIND_VALUES[#{attr.inspect}] = #{kind_id} # #{attr_type}"
+  f.puts "  #{attr} = #{kind_id} # #{attr_type}"
 end
 
-f.puts <<-CRYSTAL
-    %}
-  end
-  CRYSTAL
+f.puts "end"
 
 f.rewind
 cr = Process.capture("crystal", "tool", "format", "-", input: f)
