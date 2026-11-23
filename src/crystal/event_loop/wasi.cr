@@ -227,19 +227,3 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     # nothing to do (yet)
   end
 end
-
-struct Crystal::EventLoop::Wasi::Event
-  include Crystal::EventLoop::Event
-
-  def add(timeout : Time::Span) : Nil
-  end
-
-  def add(timeout : Nil) : Nil
-  end
-
-  def free : Nil
-  end
-
-  def delete
-  end
-end

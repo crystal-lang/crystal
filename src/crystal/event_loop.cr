@@ -126,21 +126,6 @@ abstract class Crystal::EventLoop
   #
   # Returns true if the timer expired, false if it was canceled.
   abstract def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
-
-  # Create a new resume event for a fiber.
-  #
-  # NOTE: optional.
-  def create_resume_event(fiber : Fiber) : Event
-    raise NotImplementedError.new("#{self.class.name}#create_resume_event(fiber)")
-  end
-
-  module Event
-    # Frees the event.
-    abstract def free : Nil
-
-    # Adds a new timeout to this event.
-    abstract def add(timeout : Time::Span) : Nil
-  end
 end
 
 require "./event_loop/file_descriptor"

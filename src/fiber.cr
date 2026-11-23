@@ -58,7 +58,6 @@ class Fiber
 
   @context : Context
   @stack : Stack
-  @resume_event : Crystal::EventLoop::Event?
 
   # The name of the fiber, used as internal reference.
   property name : String?
@@ -167,9 +166,6 @@ class Fiber
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
 
-    # Delete the resume event if it was used by `yield` or `sleep`
-    @resume_event.try &.free
-
     # Additional cleanup (avoid stale references)
     @exec_recursive_hash = nil
     @exec_recursive_clone_hash = nil
@@ -258,11 +254,6 @@ class Fiber
     {% else %}
       Crystal::Scheduler.enqueue(self)
     {% end %}
-  end
-
-  # :nodoc:
-  def resume_event : Crystal::EventLoop::Event
-    @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
   end
 
   # :nodoc:
