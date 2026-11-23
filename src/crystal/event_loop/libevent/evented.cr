@@ -53,7 +53,7 @@ module Crystal::EventLoop::LibEvent::Evented
 
   private def add_read_event(timeout = @read_timeout) : Nil
     unless event = @read_event.get(:relaxed)
-      event = Crystal::EventLoop.current.create_fd_read_event(self)
+      event = Crystal::EventLoop.current.as(LibEvent).create_fd_read_event(self)
       @read_event.set(event, :relaxed)
     end
     event.add timeout
@@ -75,7 +75,7 @@ module Crystal::EventLoop::LibEvent::Evented
 
   private def add_write_event(timeout = @write_timeout) : Nil
     unless event = @write_event.get(:relaxed)
-      event = Crystal::EventLoop.current.create_fd_write_event(self)
+      event = Crystal::EventLoop.current.as(LibEvent).create_fd_write_event(self)
       @write_event.set(event, :relaxed)
     end
     event.add timeout

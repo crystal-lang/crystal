@@ -50,8 +50,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   def sleep(duration : ::Time::Span) : Nil
-    Fiber.current.resume_event.add(duration)
-    Fiber.suspend
+    Fiber.timeout(duration, Fiber.current.arm_cancelation)
   end
 
   class TimeoutData
@@ -93,21 +92,8 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     arg.expired?
   end
 
-  # Create a new resume event for a fiber (sleep).
-  def create_resume_event(fiber : Fiber) : Crystal::EventLoop::LibEvent::Event
-    event_base.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      f = data.as(Fiber)
-      {% if !flag?(:without_mt) %}
-        event_loop = Crystal::EventLoop.current.as(Crystal::EventLoop::LibEvent)
-        event_loop.callback_enqueue(f)
-      {% else %}
-        f.enqueue
-      {% end %}
-    end
-  end
-
   # Creates a write event for a file descriptor.
-  def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_write_event(io : Evented, edge_triggered : Bool = false) : Event
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
@@ -122,7 +108,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   end
 
   # Creates a read event for a file descriptor.
-  def create_fd_read_event(io : Evented, edge_triggered : Bool = false) : Crystal::EventLoop::Event
+  def create_fd_read_event(io : Evented, edge_triggered : Bool = false) : Event
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
 
