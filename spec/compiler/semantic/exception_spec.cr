@@ -563,6 +563,30 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
+  it "types a var introduced in an if inside ensure as nilable" do
+    assert_type(<<-CRYSTAL) { nilable int32 }
+      begin
+      ensure
+        if false
+          a = 1
+        end
+      end
+      a
+      CRYSTAL
+  end
+
+  it "types a var introduced in a while inside ensure as nilable" do
+    assert_type(<<-CRYSTAL) { nilable int32 }
+      begin
+      ensure
+        while false
+          a = 1
+        end
+      end
+      a
+      CRYSTAL
+  end
+
   it "doesn't infect type to variable before handler (#4002)" do
     assert_type(<<-CRYSTAL) { int32 }
       a = 1
