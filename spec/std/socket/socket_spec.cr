@@ -1,39 +1,43 @@
+{% skip_file if flag?(:wasip1) %}
+
 require "./spec_helper"
 require "../spec_helper"
 require "../../support/tempfile"
 require "../../support/win32"
 
 describe Socket, tags: "network" do
-  describe ".unix" do
-    it "creates a unix socket" do
-      sock = Socket.unix
-      sock.should be_a(Socket)
-      sock.family.should eq(Socket::Family::UNIX)
-      sock.type.should eq(Socket::Type::STREAM)
+  {% unless flag?(:wasi) %}
+    describe ".unix" do
+      it "creates a unix socket" do
+        sock = Socket.unix
+        sock.should be_a(Socket)
+        sock.family.should eq(Socket::Family::UNIX)
+        sock.type.should eq(Socket::Type::STREAM)
 
-      # Datagram socket type is not supported on Windows yet:
-      # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
-      # https://github.com/microsoft/WSL/issues/5272
-      {% unless flag?(:win32) %}
-        sock = Socket.unix(Socket::Type::DGRAM)
-        sock.type.should eq(Socket::Type::DGRAM)
-      {% end %}
+        # Datagram socket type is not supported on Windows yet:
+        # https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/#unsupportedunavailable
+        # https://github.com/microsoft/WSL/issues/5272
+        {% unless flag?(:win32) %}
+          sock = Socket.unix(Socket::Type::DGRAM)
+          sock.type.should eq(Socket::Type::DGRAM)
+        {% end %}
 
-      {% unless flag?(:freebsd) %}
-        # for some reason this doesn't fail on freebsd
-        error = expect_raises(Socket::Error) do
-          TCPSocket.new(family: :unix)
-        end
-        error.os_error.should eq({% if flag?(:win32) %}
-          WinError::WSAEPROTONOSUPPORT
-        {% elsif flag?(:wasi) %}
-          WasiError::PROTONOSUPPORT
-        {% else %}
-          Errno.new(LibC::EPROTONOSUPPORT)
-        {% end %})
-      {% end %}
+        {% unless flag?(:freebsd) %}
+          # for some reason this doesn't fail on freebsd
+          error = expect_raises(Socket::Error) do
+            TCPSocket.new(family: :unix)
+          end
+          error.os_error.should eq({% if flag?(:win32) %}
+            WinError::WSAEPROTONOSUPPORT
+          {% elsif flag?(:wasi) %}
+            WasiError::PROTONOSUPPORT
+          {% else %}
+            Errno.new(LibC::EPROTONOSUPPORT)
+          {% end %})
+        {% end %}
+      end
     end
-  end
+  {% end %}
 
   describe "#tty?" do
     it "with non TTY" do
@@ -41,7 +45,7 @@ describe Socket, tags: "network" do
     end
   end
 
-  it ".accept" do
+  pending_wasm32 ".accept" do
     client_done = Channel(Nil).new
     server = Socket.new(Socket::Family::INET, Socket::Type::STREAM, Socket::Protocol::TCP)
 
@@ -84,7 +88,7 @@ describe Socket, tags: "network" do
     server.try &.close
   end
 
-  it "sends messages" do
+  pending_wasm32 "sends messages" do
     port = unused_local_tcp_port
     server = Socket.tcp(Socket::Family::INET)
     server.bind("127.0.0.1", port)
@@ -107,7 +111,7 @@ describe Socket, tags: "network" do
   end
 
   # Datagram socket type is not supported on Windows yet
-  {% unless flag?(:win32) %}
+  {% unless flag?(:win32) || flag?(:wasi) %}
     it "sends datagram over unix socket" do
       with_tempfile("datagram_unix") do |path|
         server = Socket.unix(Socket::Type::DGRAM)
@@ -192,7 +196,7 @@ describe Socket, tags: "network" do
   end
 
   describe "#finalize" do
-    it "does not flush" do
+    pending_wasm32 "does not flush" do
       port = unused_local_tcp_port
       server = Socket.tcp(Socket::Family::INET)
       server.bind("127.0.0.1", port)
@@ -219,7 +223,7 @@ describe Socket, tags: "network" do
     end
   end
 
-  describe "#sendfile" do
+  pending_wasm32 describe: "#sendfile" do
     sendfile_test = ->(file : File, offset : Int32, count : Int32, expected : Int64) {
       begin
         port = unused_local_tcp_port

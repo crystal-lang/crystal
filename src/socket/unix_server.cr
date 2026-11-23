@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasi) %}
+
 require "./unix_socket"
 
 # A local interprocess communication server socket.

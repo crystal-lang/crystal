@@ -108,4 +108,4 @@ jobs:
       - name: "Run wasm32_std_spec.wasm"
         run: |
           mkdir -p tmp
-          wasmtime run --dir . --env TMPDIR=./tmp wasm32_std_spec.wasm
+          wasmtime run -S inherit-network=y -S allow-ip-name-lookup=y --dir . --env TMPDIR=./tmp wasm32_std_spec.wasm

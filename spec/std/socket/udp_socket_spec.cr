@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasip1) %}
+
 require "./spec_helper"
 require "socket"
 
@@ -20,7 +22,7 @@ describe UDPSocket, tags: "network" do
 
   # DragonFly no longer implement ipv6<>ipv4 mappings.
   # FreeBSD neither, but we can still set the IPV6_V6ONLY flag.
-  {% unless flag?(:dragonfly) %}
+  {% unless flag?(:dragonfly) || flag?(:wasi) %}
     it "supports IPv6 dual stack" do
       socket = UDPSocket.new(:inet6)
 
@@ -96,7 +98,7 @@ describe UDPSocket, tags: "network" do
       server.close
     end
 
-    if {{ flag?(:darwin) }}
+    if {{ flag?(:darwin) || flag?(:wasi) }}
       # Darwin is failing to join IPv6 multicast groups on older versions.
       # However this is known to work on macOS Mojave with Darwin 18.2.0.
       # Darwin also has a bug that prevents selecting the "default" interface.
@@ -208,7 +210,7 @@ describe UDPSocket, tags: "network" do
     end
   end
 
-  {% if flag?(:darwin) %}
+  {% if flag?(:darwin) || flag?(:wasi) %}
     # Fails since macOS Sequoia (version 15) with EHOSTUNREACH. The ability to
     # send UDP broadcasts might need extra requirements.
     pending "sends broadcast message"

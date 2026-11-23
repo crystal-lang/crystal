@@ -1,3 +1,5 @@
+{% skip_file if flag?(:wasip1) %}
+
 require "spec"
 require "socket"
 

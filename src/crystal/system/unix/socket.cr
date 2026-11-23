@@ -1,7 +1,7 @@
 require "c/netdb"
 require "c/netinet/tcp"
 require "c/sys/socket"
-{% unless flag?(:netbsd) || flag?(:openbsd) %}
+{% unless flag?(:netbsd) || flag?(:openbsd) || flag?(:wasi) %}
   require "c/sys/sendfile"
 {% end %}
 
