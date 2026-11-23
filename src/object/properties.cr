@@ -4,6 +4,8 @@
 #
 # DO NOT EDIT
 
+require "crystal/lock"
+
 class Object
   # Defines getter methods to access instance variables.
   #
@@ -334,10 +336,14 @@ class Object
         {% type = nil %}
       {% end %}
 
+      {% if block %} @@__{{var_name}}_lock = Crystal::Lock.new {% end %}
+
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@__{{var_name}}_lock.rlock { @@{{var_name}} }).nil?
+            @@__{{var_name}}_lock
+              .lock { @@{{var_name}} ||= {{yield}} }
+              {% unless type %}.as(typeof({{yield}})){% end %}
           else
             %value
           end
@@ -389,10 +395,14 @@ class Object
         {% type = nil %}
       {% end %}
 
+      {% if block %} @@__{{var_name}}_lock = Crystal::Lock.new {% end %}
+
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@__{{var_name}}_lock.rlock { @@{{var_name}} }).nil?
+            @@__{{var_name}}_lock
+              .lock { @@{{var_name}} ||= {{yield}} }
+              {% unless type %}.as(typeof({{yield}})){% end %}
           else
             %value
           end
@@ -528,10 +538,14 @@ class Object
         {% type = nil %}
       {% end %}
 
+      {% if block %} @@__{{var_name}}_lock = Crystal::Lock.new {% end %}
+
       def self.{{var_name}} {% if type %} : {{type}} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@__{{var_name}}_lock.rlock { @@{{var_name}} }).nil?
+            @@__{{var_name}}_lock
+              .lock { @@{{var_name}} ||= {{yield}} }
+              {% unless type %}.as(typeof({{yield}})){% end %}
           else
             %value
           end
@@ -569,10 +583,14 @@ class Object
         {% type = nil %}
       {% end %}
 
+      {% if block %} @@__{{var_name}}_lock = Crystal::Lock.new {% end %}
+
       def self.{{var_name}}? {% if type %} : {{type}} {% end %}
         {% if block %}
-          if (%value = @@{{var_name}}).nil?
-            @@{{var_name}} = {{yield}}
+          if (%value = @@__{{var_name}}_lock.rlock { @@{{var_name}} }).nil?
+            @@__{{var_name}}_lock
+              .lock { @@{{var_name}} ||= {{yield}} }
+              {% unless type %}.as(typeof({{yield}})){% end %}
           else
             %value
           end
