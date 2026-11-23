@@ -143,8 +143,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
-    events = uninitialized FiberEvent[64]
-    size = 0
 
     removed = @iocp.wait_queued_completions(overlapped_entries.to_slice, run_timeout(blocking))
 
@@ -152,21 +150,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       overlapped_entry = overlapped_entries.to_unsafe + i
       next unless fiber = handle_event(overlapped_entry)
 
-      if (event = fiber.@resume_event) && event.wake_at?
-        events[size] = event
-        size += 1
-      end
-
       yield fiber
     end
 
     @timers_mutex.synchronize do
-      # cancel the timeout of completed operations
-      events.to_slice[0...size].each do |event|
-        @timers.delete(pointerof(event.@timer))
-        event.clear
-      end
-
       # run expired timers
       @timers.dequeue_ready do |timer|
         process_timer(timer) { |fiber| yield fiber }
@@ -186,8 +173,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
       Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
 
-      operation.done!
-      operation.@fiber
+      operation.complete
     else
       # other kind of completion event
       completion_key = ptr.as(System::IOCP::CompletionKey)
@@ -302,30 +288,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
     delete_timer(timer) unless timer.value.timed_out?
     timer.value.timed_out?
-  end
-
-  # Suspend the current fiber for *duration* and returns true if the timer
-  # expired and false if the fiber was resumed early.
-  #
-  # Specific to IOCP to handle IO timeouts.
-  #
-  # FIXME: use timeout(time, token) instead
-  def timeout(duration : Time::Span) : Bool
-    event = Fiber.current.resume_event
-    event.add(duration)
-
-    Fiber.suspend
-
-    if event.timed_out?
-      true
-    else
-      event.delete
-      false
-    end
-  end
-
-  def create_resume_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:sleep, fiber)
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
