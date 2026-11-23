@@ -103,7 +103,10 @@ module Crystal::System::Thread
   {% end %}
 
   def self.sleep(time : ::Time::Span) : Nil
-    milliseconds = time.to_milliseconds.to_i.clamp(1..)
+    # *time* must be finite, so it cannot be `LibC::INFINITE`, which is also
+    # equal to `LibC::DWORD::MAX` (about 49.71 days)
+    milliseconds = time.to_milliseconds.clamp(1_u32..LibC::INFINITE - 1).to_u32!
+
     GC.syscall do
       LibC.Sleep(milliseconds)
     end

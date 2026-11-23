@@ -44,7 +44,7 @@ lib LibC
   fun FreeEnvironmentStringsW(lpszEnvironmentBlock : LPWCH) : BOOL
   fun SetEnvironmentVariableW(lpName : LPWSTR, lpValue : LPWSTR) : BOOL
 
-  INFINITE = 0xFFFFFFFF
+  INFINITE = 0xFFFFFFFF_u32
 
   WAIT_OBJECT_0      = 0x00000000_u32
   WAIT_IO_COMPLETION = 0x000000C0_u32
