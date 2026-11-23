@@ -3044,9 +3044,16 @@ module Crystal
 
           # Keep assignments to variables already present on entry to ensure.
           exception_handler_vars.each do |name, var|
-            if (before_var = before_ensure_vars[name]?) && !var.same?(before_var)
-              @vars[name] = var
-            end
+            before_var = before_ensure_vars[name]?
+            next unless before_var
+            next if var.same?(before_var)
+
+            # A while wraps incoming variables in fresh MetaVars for loop
+            # inference. An entry bound only to its original value is still
+            # the incoming value, so keep the normal-completion type.
+            next if var.dependencies.size == 1 && var.dependencies.first.same?(before_var)
+
+            @vars[name] = var
           end
 
           # However, those previous variables can't be nil afterwards:

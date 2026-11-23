@@ -214,6 +214,34 @@ describe "Semantic: ssa" do
       CRYSTAL
   end
 
+  it "keeps the last type from begin when a loop in ensure leaves the var alone" do
+    assert_type(<<-CRYSTAL) { char }
+      begin
+        a = 2
+        a = 'a'
+      ensure
+        while false
+        end
+      end
+      a
+      CRYSTAL
+  end
+
+  it "uses the type assigned before a break in a loop inside ensure" do
+    assert_type(<<-CRYSTAL) { string }
+      begin
+        a = 2
+        a = 'a'
+      ensure
+        while true
+          a = "cleanup"
+          break
+        end
+      end
+      a
+      CRYSTAL
+  end
+
   it "doesn't change type to nilable inside if" do
     assert_type(<<-CRYSTAL, inject_primitives: true) { int32 }
       def foo
