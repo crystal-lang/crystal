@@ -62,7 +62,7 @@ module Regex::PCRE2
   end
 
   private def pcre2_compile_options(options)
-    flag = 0
+    flag = 0_u32
     Regex::CompileOptions.each do |option|
       if options.includes?(option)
         flag |= case option
@@ -97,7 +97,7 @@ module Regex::PCRE2
   end
 
   private def pcre2_match_options(options)
-    flag = 0
+    flag = 0_u32
     Regex::Options.each do |option|
       if options.includes?(option)
         flag |= case option
@@ -126,7 +126,7 @@ module Regex::PCRE2
   end
 
   private def pcre2_match_options(options : Regex::MatchOptions)
-    flag = 0
+    flag = 0_u32
     Regex::MatchOptions.each do |option|
       if options.includes?(option)
         flag |= case option
