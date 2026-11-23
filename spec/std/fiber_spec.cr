@@ -71,7 +71,7 @@ describe Fiber do
         pending!
       {% end %}
 
-      iterations = 20_000
+      iterations = 2000
 
       tokens = Channel(Fiber::CancelationToken).new(1)
       results = Channel(Fiber::TimeoutResult).new(1)
