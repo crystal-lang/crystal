@@ -25,6 +25,18 @@ describe Fiber do
   end
 
   describe "cancelation" do
+    it "rejects an unarmed token" do
+      fiber = Fiber.new { }
+      unarmed = Fiber::CancelationToken.unarmed
+      unarmed.unarmed?.should be_true
+      fiber.try_cancel?(unarmed).should be_false
+
+      armed = fiber.arm_cancelation
+      armed.unarmed?.should be_false
+      fiber.try_cancel?(unarmed).should be_false
+      fiber.try_cancel?(armed).should be_true
+    end
+
     it "creates a new token and cancels once" do
       fiber = Fiber.new { }
       token = fiber.arm_cancelation
@@ -45,6 +57,12 @@ describe Fiber do
   end
 
   describe ".timeout" do
+    it "rejects an unarmed token" do
+      expect_raises(ArgumentError, "Timeout requires an armed cancelation token") do
+        Fiber.timeout(0.seconds, Fiber::CancelationToken.unarmed)
+      end
+    end
+
     it "expires" do
       fiber = Fiber.current
       token = fiber.arm_cancelation

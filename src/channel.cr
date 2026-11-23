@@ -39,14 +39,10 @@ class Channel(T)
   end
 
   private module SenderReceiverCloseAction
-    property cancelation_token : Fiber::CancelationToken?
+    property cancelation_token : Fiber::CancelationToken = Fiber::CancelationToken.unarmed
 
     def claim? : Bool
-      if token = @cancelation_token
-        fiber.try_cancel?(token)
-      else
-        true
-      end
+      fiber.try_cancel?(@cancelation_token)
     end
 
     def close

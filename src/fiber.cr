@@ -258,10 +258,18 @@ class Fiber
 
   # :nodoc:
   struct CancelationToken
-    # :nodoc:
-    getter value : UInt32
+    protected getter value : UInt32
 
-    def initialize(@value : UInt32)
+    protected def initialize(@value : UInt32)
+    end
+
+    # Can be used to avoid a nilable token. It will never resolve.
+    def self.unarmed : self
+      new(0_u32)
+    end
+
+    def unarmed? : Bool
+      @value.zero?
     end
   end
 
@@ -278,6 +286,8 @@ class Fiber
 
   # :nodoc:
   def self.timeout(deadline : Time::Instant, token : CancelationToken) : TimeoutResult
+    raise ArgumentError.new("Timeout requires an armed cancelation token") if token.unarmed?
+
     expired = Crystal::EventLoop.current.timeout(deadline, token)
     expired ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
   end
@@ -311,6 +321,8 @@ class Fiber
   # Returns `false` on failure; the caller must skip the fiber. Trying to
   # enqueue the fiber would lead to resume the fiber twice!
   def try_cancel?(token : CancelationToken) : Bool
+    return false if token.unarmed?
+
     _, success = @cancelation.compare_and_set(token.value, token.value & ~CANCELATION_FLAG, :relaxed, :relaxed)
     success
   end
