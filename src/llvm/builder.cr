@@ -1,7 +1,10 @@
 class LLVM::Builder
   @disposed = false
 
-  def initialize(@unwrap : LibLLVM::BuilderRef)
+  # keep a reference to the parent context / module so that this builder will be
+  # disposed before the parent
+
+  def initialize(@unwrap : LibLLVM::BuilderRef, @parent : Context | Module)
   end
 
   def position_at_end(block)

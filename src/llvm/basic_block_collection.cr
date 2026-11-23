@@ -13,13 +13,14 @@ struct LLVM::BasicBlockCollection
 
   @[Deprecated]
   def append(name = "", &)
+    mod = LibLLVM.get_global_parent(@function)
+    context = LLVM::Context.new(LibLLVM.get_module_context(mod), dispose_on_finalize: false)
+
     builder =
       {% if LibLLVM::IS_LT_240 %}
-        context = LibLLVM.get_module_context(LibLLVM.get_global_parent(@function))
-        # Builder.new(LibLLVM.create_builder_in_context(context), LLVM::Context.new(context, dispose_on_finalize: false))
-        Builder.new(LibLLVM.create_builder_in_context(context))
+        Builder.new(LibLLVM.create_builder_in_context(context), context)
       {% else %}
-        Builder.new(LibLLVM.create_builder_for_module(LibLLVM.get_global_parent(@function)))
+        Builder.new(LibLLVM.create_builder_for_module(mod), LLVM::Module.new(mod, context, dispose_on_finalize: false))
       {% end %}
 
     block = append name
