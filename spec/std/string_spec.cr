@@ -311,6 +311,7 @@ describe "String" do
     it { "0B1101".to_i(prefix: true).should eq(13) }
     it { "0b001101".to_i(prefix: true).should eq(13) }
     it { "0123".to_i(prefix: true).should eq(123) }
+    it { "0123".to_i(16, prefix: true).should eq(0x123) }
     it { "0o123".to_i(prefix: true).should eq(83) }
     it { "0O123".to_i(prefix: true).should eq(83) }
     it { "0123".to_i(leading_zero_is_octal: true).should eq(83) }

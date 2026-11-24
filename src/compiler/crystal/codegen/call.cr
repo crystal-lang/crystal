@@ -635,7 +635,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  # This is for function pointer calls and exception handler re-raise
+  # This is for function pointer calls
   def set_call_attributes(node, target_def, self_type, is_closure, fun_type)
     if target_def && target_def.abi_info?
       abi_info = abi_info(target_def)

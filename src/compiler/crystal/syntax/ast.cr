@@ -907,13 +907,16 @@ module Crystal
     property block_arg : ASTNode?
     property named_args : Array(NamedArgument)?
     property name_location : Location?
-    @name_size = -1
     property doc : String?
     property visibility = Visibility::Public
     property? global : Bool
     property? expansion = false
     property? args_in_brackets = false
     property? has_parentheses = false
+
+    # A sentinel instead of `nil` keeps the ivar from being a union, which would
+    # make every `Call` larger.
+    @name_size = -1
 
     def initialize(@obj : ASTNode?, @name : String, @args : Array(ASTNode) = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global : Bool = false)
       if block = @block
@@ -941,14 +944,27 @@ module Crystal
       new nil, name, *args, global: true
     end
 
-    def name_size
-      if @name_size == -1
-        @name_size = name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.size - 1 : name.size
-      end
+    # The size of this call's name as written in the source code, which isn't
+    # always the size of `name`: see `#make_setter` and index calls such as `a[1]`,
+    # whose name isn't contiguous and so has a size of zero.
+    def name_size : Int32
+      @name_size = name.size if @name_size == -1
       @name_size
     end
 
-    setter name_size
+    setter name_size : Int32
+
+    # :nodoc:
+    #
+    # Turns this call into a setter assigning *value*: `foo` becomes `foo=(value)`
+    # and `foo[0]` becomes `foo.[]=(0, value)`.
+    #
+    # The `=` is a separate token, so it doesn't count towards `name_size`.
+    def make_setter(value : ASTNode) : Nil
+      @name_size = name_size
+      @name = "#{@name}="
+      @args << value
+    end
 
     def accept_children(visitor)
       @obj.try &.accept visitor

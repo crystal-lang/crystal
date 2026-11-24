@@ -291,3 +291,17 @@ describe "Normalize: multi assign" do
       CRYSTAL
   end
 end
+
+describe "Normalize: multi assign name size" do
+  it "keeps the size of the written name in setter targets" do
+    assert_expand Parser.parse("a.foo, b = 1, 2") do |node|
+      node.as(Expressions).expressions[2].as(Call).name_size.should eq(3)
+    end
+  end
+
+  it "keeps the size of index targets" do
+    assert_expand Parser.parse("a[0], b = 1, 2") do |node|
+      node.as(Expressions).expressions[2].as(Call).name_size.should eq(0)
+    end
+  end
+end

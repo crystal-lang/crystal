@@ -774,8 +774,7 @@ module Crystal
               end
 
               atomic.at(location).at_end(end_location)
-              atomic.name = "#{name}="
-              atomic.args = [arg] of ASTNode
+              atomic.make_setter(arg)
               atomic.name_location = name_location
               next
             when .assignment_operator?
@@ -1685,8 +1684,7 @@ module Crystal
         if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
           next_token_skip_space
           exp = parse_op_assign
-          call.name = "#{call.name}="
-          call.args << exp
+          call.make_setter(exp)
           call.at_end(exp)
         end
       else
@@ -1714,14 +1712,12 @@ module Crystal
             exp = parse_op_assign
             check :OP_RPAREN
             next_token_skip_space
-            call.name = "#{call.name}="
-            call.args = [exp] of ASTNode
+            call.make_setter(exp)
             call = parse_atomic_method_suffix call, location
           else
             skip_space
             exp = parse_op_assign
-            call.name = "#{call.name}="
-            call.args = [exp] of ASTNode
+            call.make_setter(exp)
           end
 
           call.at_end(exp)
@@ -1731,8 +1727,7 @@ module Crystal
           if @token.type.op_eq? && call.is_a?(Call) && can_be_assigned?(call)
             next_token_skip_space
             exp = parse_op_assign
-            call.name = "#{call.name}="
-            call.args << exp
+            call.make_setter(exp)
             call.at_end(exp)
           end
         end
@@ -3909,10 +3904,9 @@ module Crystal
         end_location = token_end_location
 
         if @token.keyword?(:end)
-          # The body (possibly holding the assignments of instance and class
-          # variable parameters) is located at the `end`. Note that a single
-          # assignment is the body itself, so it gets this location as well.
-          body = Expressions.from(extra_assigns).at(@token.location).at_end(end_location)
+          # Unlike `Expressions.from`, this also wraps a single `@var = var` assignment,
+          # so that the body's location doesn't replace the assignment's
+          body = (extra_assigns.empty? ? Nop.new : Expressions.new(extra_assigns)).at(@token.location).at_end(end_location)
           next_token_skip_space
         else
           body = parse_expressions
@@ -4527,15 +4521,17 @@ module Crystal
         @wants_regex = !is_var
       end
 
-      case name
-      when "super"
-        @calls_super = true
-      when "initialize"
-        @calls_initialize = true
-      when "previous_def"
-        @calls_previous_def = true
-      else
-        # Not a special call
+      unless global
+        case name
+        when "super"
+          @calls_super = true
+        when "initialize"
+          @calls_initialize = true
+        when "previous_def"
+          @calls_previous_def = true
+        else
+          # Not a special call
+        end
       end
 
       call_args = preserve_stop_on_do(@stop_on_do) { parse_call_args stop_on_do_after_space: @stop_on_do }

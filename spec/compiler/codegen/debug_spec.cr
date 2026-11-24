@@ -423,6 +423,60 @@ describe "Code gen: debug" do
     debug_line_of(str, foo, /call void @exit/).should eq(21)
   end
 
+  it "attributes a def's epilogue to its last expression if that has no code on its own line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      class Foo
+        @value = 1
+
+        def literal(literal_value : Int32)
+          @value = literal_value
+          "done"
+        end
+
+        def var(var_value : Int32)
+          total = var_value &+ 1
+          @value = total
+          total
+        end
+
+        def me(me_value : Int32)
+          @value = me_value
+          self
+        end
+
+        def ivar(ivar_value : Int32)
+          @value = ivar_value
+          @value
+        end
+
+        def call(call_value : Int32)
+          @value = call_value
+          @value &+ 1
+        end
+      end
+
+      foo = Foo.new
+      foo.literal(1)
+      foo.var(1)
+      foo.me(1)
+      foo.ivar(1)
+      foo.call(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # Functions are found by their parameters because symbol names are mangled on Windows
+    literal = str[/^define [^\n]+ %literal_value\).+?^}/m]
+    debug_line_of(str, literal, /^\s+ret /).should eq(6)
+    var = str[/^define [^\n]+ %var_value\).+?^}/m]
+    debug_line_of(str, var, /^\s+ret /).should eq(12)
+    me = str[/^define [^\n]+ %me_value\).+?^}/m]
+    debug_line_of(str, me, /^\s+ret /).should eq(17)
+    ivar = str[/^define [^\n]+ %ivar_value\).+?^}/m]
+    debug_line_of(str, ivar, /^\s+ret /).should eq(22)
+    call = str[/^define [^\n]+ %call_value\).+?^}/m]
+    debug_line_of(str, call, /^\s+ret /).should eq(0)
+  end
+
   it "attributes the type checks of a dispatch to the call" do
     mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
       class Foo
@@ -501,6 +555,64 @@ describe "Code gen: debug" do
     debug_line_of(str, type_check, /icmp eq i32/).should eq(25)
   end
 
+  it "attributes rescue clauses to their own lines, and exception plumbing to no line" do
+    mod = codegen(<<-CRYSTAL, debug: Crystal::Debug::All, single_module: true)
+      fun __crystal_personality : Int32
+        0
+      end
+
+      fun __crystal_raise(unwind_ex : Void*) : NoReturn
+        while true
+        end
+      end
+
+      fun __crystal_get_exception(unwind_ex : Void*) : UInt64
+        0_u64
+      end
+
+      lib LibFoo
+        @[Raises]
+        fun may_raise(value : Int32) : Int32
+      end
+
+      class FooError < Exception
+      end
+
+      def foo(foo_value : Int32)
+        begin
+          LibFoo.may_raise(foo_value)
+        rescue FooError
+          2
+        ensure
+          LibFoo.may_raise(foo_value)
+        end
+      end
+
+      def bar(bar_value : Int32)
+        begin
+          LibFoo.may_raise(bar_value)
+        rescue FooError
+        end
+      end
+
+      foo(1)
+      bar(1)
+      CRYSTAL
+
+    str = mod.to_s
+    # Functions are found by their parameters because symbol names are mangled on Windows
+    foo = str[/^define [^\n]+ %foo_value\).+?^}/m]
+    bar = str[/^define [^\n]+ %bar_value\).+?^}/m]
+
+    # The `rescue` clauses (25, 35) and the non-empty rescue body (26) have their own lines, while the `begin` lines (23, 33) have none
+    debug_lines_of(str, foo).should eq([0, 22, 24, 25, 26, 28])
+    debug_lines_of(str, bar).should eq([0, 32, 34, 35])
+
+    # Catching the exception (the landing pad or catch switch starting the `rescue` block) and re-raising it belong to no line
+    debug_line_of(str, foo[/^rescue:.+/m], /!dbg/).should eq(0)
+    debug_line_of(str, foo, /call void @(__crystal_raise|_CxxThrowException)/).should eq(0)
+  end
+
   {% unless LibLLVM::IS_LT_210 %}
     it "supports 128-bit enumerators" do
       codegen(<<-CRYSTAL, debug: Crystal::Debug::All).to_s.should contain(%(!DIEnumerator(name: "X", value: 1002003004005006007008009)))
@@ -573,4 +685,13 @@ private def debug_line_of(ir, function, pattern)
   instruction = function.each_line.find!(&.matches?(pattern))
   dbg_id = instruction[/!dbg (![0-9]+)/, 1]
   ir[/^#{dbg_id} = !DILocation\(line: ([0-9]+)/m, 1].to_i
+end
+
+# Returns the sorted, distinct line numbers of the debug locations attached to the instructions in *function*,
+# *ir* is the whole module.
+private def debug_lines_of(ir, function)
+  # The function's own `!dbg` is a `DISubprogram`, not a `DILocation`, so it is skipped
+  function.scan(/!dbg (![0-9]+)/).compact_map do |match|
+    ir[/^#{match[1]} = !DILocation\(line: ([0-9]+)/m, 1]?.try(&.to_i)
+  end.uniq!.sort!
 end

@@ -1,6 +1,9 @@
 require "spec"
+require "../support/wasm32"
 require "spec/helpers/string"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 private LENGTH_UNITS = ->(magnitude : Int32, number : Float64) do
   case magnitude
@@ -96,29 +99,29 @@ describe Number do
     it { assert_prints (-Float64::INFINITY).format, "-Infinity" }
     it { assert_prints Float64::NAN.format, "NaN" }
 
-    it { assert_prints "12345678.90123".to_big_f.format, "12,345,678.90123" }
-    it { assert_prints "12345678.90123".to_big_f.format(decimal_places: 10), "12,345,678.9012300000" }
-    it { assert_prints "12345678.90123".to_big_f.format(decimal_places: -4), "12,350,000" }
+    pending_wasm32 { assert_prints "12345678.90123".to_big_f.format, "12,345,678.90123" }
+    pending_wasm32 { assert_prints "12345678.90123".to_big_f.format(decimal_places: 10), "12,345,678.9012300000" }
+    pending_wasm32 { assert_prints "12345678.90123".to_big_f.format(decimal_places: -4), "12,350,000" }
 
-    it { assert_prints (2.to_big_f ** 58).format, "288,230,376,151,711,744.0" }
-    it { assert_prints (2.to_big_f ** 58).format(decimal_places: 10), "288,230,376,151,711,744.0000000000" }
-    it { assert_prints (2.to_big_f ** 58).format(decimal_places: -5), "288,230,376,151,700,000" }
+    pending_wasm32 { assert_prints (2.to_big_f ** 58).format, "288,230,376,151,711,744.0" }
+    pending_wasm32 { assert_prints (2.to_big_f ** 58).format(decimal_places: 10), "288,230,376,151,711,744.0000000000" }
+    pending_wasm32 { assert_prints (2.to_big_f ** 58).format(decimal_places: -5), "288,230,376,151,700,000" }
 
-    it { assert_prints (2.to_big_f ** -16).format, "0.0000152587890625" }
-    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 20), "0.00001525878906250000" }
-    it { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.0000152588" }
+    pending_wasm32 { assert_prints (2.to_big_f ** -16).format, "0.0000152587890625" }
+    pending_wasm32 { assert_prints (2.to_big_f ** -16).format(decimal_places: 20), "0.00001525878906250000" }
+    pending_wasm32 { assert_prints (2.to_big_f ** -16).format(decimal_places: 10), "0.0000152588" }
 
-    it { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
-    it { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: 10), "12,345.6789012346" }
-    it { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: -2), "12,300" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345".to_big_d.format, "12,345.67890123456789012345" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: 10), "12,345.6789012346" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345".to_big_d.format(decimal_places: -2), "12,300" }
 
-    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format, "1,234,567,890,123,456,789,012,345.0" }
-    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: 10), "1,234,567,890,123,456,789,012,345.0000000000" }
-    it { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: -20), "1,234,600,000,000,000,000,000,000" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e+20".to_big_d.format, "1,234,567,890,123,456,789,012,345.0" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: 10), "1,234,567,890,123,456,789,012,345.0000000000" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e+20".to_big_d.format(decimal_places: -20), "1,234,600,000,000,000,000,000,000" }
 
-    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format, "0.000001234567890123456789012345" }
-    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 40), "0.0000012345678901234567890123450000000000" }
-    it { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 10), "0.0000012346" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e-10".to_big_d.format, "0.000001234567890123456789012345" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 40), "0.0000012345678901234567890123450000000000" }
+    pending_wasm32 { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 10), "0.0000012346" }
 
     it "extracts integer part correctly (#12997)" do
       assert_prints 1.9999998.format, "1.9999998"

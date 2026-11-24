@@ -1,56 +1,53 @@
-# Information related to the evloop for a fd, such as the read and write queues
+# Information related to the evloop for a fd, such as the read and write waiters
 # (waiting `Event`), as well as which evloop instance currently owns the fd.
 #
-# Thread-unsafe: parallel mutations must be protected with a lock.
+# Thread safety: all accesses must lock the poll descriptor.
 struct Crystal::EventLoop::Polling::PollDescriptor
+  @mutex = Thread::Mutex.new
   @event_loop : Polling?
-  @readers = Waiters.new
-  @writers = Waiters.new
+  @reader = Waiter.new
+  @writer = Waiter.new
 
-  def owned_by?(event_loop) : Bool
-    @event_loop == event_loop
+  def lock(&) : Nil
+    @mutex.synchronize { yield }
   end
 
-  # Makes *event_loop* the new owner of *fd*.
-  # Removes *fd* from the current event loop (if any).
-  def take_ownership(event_loop : EventLoop, fd : Int32, index : Arena::Index) : Nil
+  # Makes *event_loop* the new owner of *io* (unless already).
+  # Removes *io* from the current event loop (if any).
+  def take_ownership(event_loop : EventLoop, io) : Nil
     current = @event_loop
+    return if event_loop == current
 
-    if event_loop == current
-      raise "BUG: evloop already owns the poll-descriptor for fd=#{fd}"
-    end
-
-    # ensure we can't have cross enqueues after we transfer the fd, so we
+    # ensure we can't have cross enqueues after we transfer the io, so we
     # can optimize (all enqueues are local) and we don't end up with a timer
     # from evloop A to cancel an event from evloop B (currently unsafe)
     if current && !empty?
-      raise RuntimeError.new("Can't transfer fd=#{fd} to another polling event loop with pending reader/writer fibers")
+      raise RuntimeError.new("Can't transfer fd=#{io.fd} to another polling event loop with pending reader/writer fibers")
     end
 
     @event_loop = event_loop
 
-    registered = event_loop.system_add(fd, index)
-    @readers.ready_all { } unless registered.read?
-    @writers.ready_all { } unless registered.write?
+    registered = event_loop.system_add(io)
+    @reader.ready_all { } unless registered.read?
+    @writer.ready_all { } unless registered.write?
 
-    current.try(&.system_del(fd, closing: false))
+    current.try(&.system_del(io, closing: false))
   end
 
-  # Removes *fd* from its owner event loop. Raises on errors.
-  def remove(fd : Int32) : Nil
+  # Removes *io* from its owner event loop. Raises on errors.
+  def remove(io) : Nil
     current, @event_loop = @event_loop, nil
-    current.try(&.system_del(fd))
+    current.try(&.system_del(io))
   end
 
   # Same as `#remove` but yields on errors.
-  def remove(fd : Int32, &) : Nil
+  def remove(io, &) : Nil
     current, @event_loop = @event_loop, nil
-    current.try(&.system_del(fd) { yield })
+    current.try(&.system_del(io) { yield })
   end
 
-  # Returns true when there is at least one reader or writer. Returns false
-  # otherwise.
+  # Returns true when there are no waiters.
   def empty? : Bool
-    @readers.@list.empty? && @writers.@list.empty?
+    @reader.empty? && @writer.empty?
   end
 end

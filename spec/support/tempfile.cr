@@ -46,12 +46,16 @@ end
 # (`File.tempname`).
 #
 # The lifetime of the temporary directory is the same was for `.with_tempfile`.
-def with_tempdir(name : String? = nil, *, file = __FILE__, &)
+def with_tempdir(name : String? = nil, *, chdir = true, file = __FILE__, &)
   name ||= File.tempname(dir: ".")
+
   with_tempfile(name, file: file) do |path|
     Dir.mkdir_p(path)
-    Dir.cd(path) do
-      yield
+
+    if chdir
+      Dir.cd(path) { yield path }
+    else
+      yield path
     end
   end
 end

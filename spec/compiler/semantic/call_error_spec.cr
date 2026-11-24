@@ -117,6 +117,51 @@ describe "Call errors" do
       CRYSTAL
   end
 
+  it "says type mismatch if method has single splat parameter" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not String"
+      def foo(x, y : Int32, *args : Int32)
+      end
+
+      foo(1, "", 3)
+      CRYSTAL
+  end
+
+  it "says type mismatch if method has empty splat parameter" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not String"
+      def foo(x, y : Int32, *, z)
+      end
+
+      foo(1, "", z: 3)
+      CRYSTAL
+  end
+
+  it "says type mismatch if method has double splat parameter" do
+    assert_error <<-CRYSTAL, "expected argument #2 to 'foo' to be Int32, not String"
+      def foo(x, y : Int32, **opts : Int32)
+      end
+
+      foo(1, "", z: 3)
+      CRYSTAL
+  end
+
+  it "says type mismatch for single splat parameter" do
+    assert_error <<-CRYSTAL, "expected argument #5 to 'foo' to be Int32, not String"
+      def foo(x, y, *args : Int32)
+      end
+
+      foo(1, 2, 3, 4, "", 6)
+      CRYSTAL
+  end
+
+  it "says type mismatch for double splat parameter" do
+    assert_error <<-CRYSTAL, "expected argument 'z' to 'foo' to be Int32, not String"
+      def foo(x, y, **opts : Int32)
+      end
+
+      foo(1, 2, z: "", w: 4)
+      CRYSTAL
+  end
+
   it "says type mismatch for union restriction of types with a common parent" do
     assert_error <<-CRYSTAL, "expected argument #1 to 'foo' to be A | B, not C"
       class Base; end

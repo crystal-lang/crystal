@@ -285,7 +285,7 @@ describe "Semantic: named args" do
   end
 
   it "gives correct error message with external names (#3934)" do
-    assert_error <<-CRYSTAL, "no overload matches"
+    assert_error <<-CRYSTAL, "expected argument 'arg' to 'foo' to be String, not Int32"
       def foo(*, arg a : String)
         a
       end

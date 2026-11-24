@@ -468,10 +468,10 @@ module Crystal
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
-      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], Expressions.new([Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], Expressions.new([Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], Expressions.new([Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], Expressions.new([Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode))
 
       assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
@@ -569,13 +569,13 @@ module Crystal
     it_parses "def foo; with a yield; end", Def.new("foo", body: Yield.new(scope: "a".call), block_arity: 1)
     it_parses "def foo; with a yield 1; end", Def.new("foo", body: Yield.new([1.int32] of ASTNode, "a".call), block_arity: 1)
     it_parses "def foo; a = 1; with a yield a; end", Def.new("foo", body: [Assign.new("a".var, 1.int32), Yield.new(["a".var] of ASTNode, "a".var)] of ASTNode, block_arity: 1)
-    it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+    it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
     it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
     it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
-    it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+    it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], Expressions.new([Assign.new("@@var".class_var, "var".var)] of ASTNode))
     it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
     it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
-    it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), block_arity: 0)
+    it_parses "def foo(&@block); end", Def.new("foo", body: Expressions.new([Assign.new("@block".instance_var, "block".var)] of ASTNode), block_arg: Arg.new("block"), block_arity: 0)
 
     # Defs with annotated parameters
     it_parses "def foo(@[Foo] var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
@@ -583,10 +583,10 @@ module Crystal
     it_parses "def foo(@[Foo]  var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
     it_parses "def foo(a, @[Foo] var); end", Def.new("foo", ["a".arg, "var".arg(annotations: ["Foo".ann])])
     it_parses "def foo(a, @[Foo] &block); end", Def.new("foo", ["a".arg], block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
-    it_parses "def foo(@[Foo] @var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+    it_parses "def foo(@[Foo] @var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
     it_parses "def foo(@[Foo] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann])])
     it_parses "def foo(@[Foo] @[Bar] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann, "Bar".ann])])
-    it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
+    it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Expressions.new([Assign.new("@block".instance_var, "block".var)] of ASTNode), block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
     it_parses "def foo(@[Foo] *args); end", Def.new("foo", args: ["args".arg(annotations: ["Foo".ann])], splat_index: 0)
     it_parses "def foo(@[Foo] **args); end", Def.new("foo", double_splat: "args".arg(annotations: ["Foo".ann]))
     it_parses <<-CRYSTAL, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
@@ -625,8 +625,8 @@ module Crystal
     assert_syntax_error "def foo(**args, *x); end", "only block parameter is allowed after double splat"
 
     it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
-    it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
-    it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+    it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
+    it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], Expressions.new([Assign.new("@@var".class_var, "var".var)] of ASTNode))
     assert_syntax_error "def foo(_ y); y; end"
     assert_syntax_error "def foo(\"\" y); y; end", "external parameter name cannot be empty"
 
@@ -3496,6 +3496,16 @@ module Crystal
       loc.line_number.should eq(2)
     end
 
+    it "gets correct location of instance variable parameter assignment inside empty def" do
+      parser = Parser.new("def foo(@bar)\nend")
+      body = parser.parse.as(Def).body.should be_a(Expressions)
+      body.location.should_not(be_nil).line_number.should eq(2)
+
+      loc = body.expressions.first.location.should_not be_nil
+      loc.line_number.should eq(1)
+      loc.column_number.should eq(9)
+    end
+
     it "sets location of +=" do
       parser = Parser.new("a = 1; a += 2")
       node = parser.parse.as(Expressions).expressions[1]
@@ -4062,6 +4072,52 @@ module Crystal
       source_between(source, node.name_location, node.name_end_location).should eq("bar")
     end
 
+    {
+      "a < b"       => "<",
+      "a <= b"      => "<=",
+      "a >= b"      => ">=",
+      "a == b"      => "==",
+      "a != b"      => "!=",
+      "a === b"     => "===",
+      "a =~ b"      => "=~",
+      "a <=> b"     => "<=>",
+      "a.<=(b)"     => "<=",
+      "a.==(b)"     => "==",
+      "a.[](1)"     => "[]",
+      "a.[]=(1, 2)" => "[]=",
+      "a.foo = 1"   => "foo",
+      "a.foo=(1)"   => "foo",
+      "-a"          => "-",
+    }.each do |source, name|
+      it "sets correct location of call name in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq(name)
+      end
+    end
+
+    it "sets correct location of call name in setter with implicit object" do
+      ["foo &.bar = 1", "foo &.bar=(1)"].each do |source|
+        node = Parser.parse(source).as(Call).block.should_not(be_nil).body.as(Call)
+        node.name.should eq("bar=")
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+    end
+
+    ["a[1]", "a[1]?", "a[1] = 2", "foo &.[1] = 2", "foo &.bar[1] = 2"].each do |source|
+      it "doesn't set name size of index call in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        node = node.block.should_not(be_nil).body.as(Call) if node.block
+        node.name_size.should eq(0)
+        node.name_end_location.should be_nil
+      end
+    end
+
+    it "retains name size when cloning a call" do
+      Parser.parse("a == b").clone.name_size.should eq(2)
+      Parser.parse("a.foo = 1").clone.name_size.should eq(3)
+      Parser.parse("a[1]").clone.name_size.should eq(0)
+    end
+
     it "sets correct location of element in array literal" do
       source = "%i(foo bar)"
       elements = Parser.new(source).parse.as(ArrayLiteral).elements
@@ -4362,10 +4418,13 @@ module Crystal
 
     it "sets correct location of instance and class variable parameter assignments in def" do
       source = "def foo(@a); end"
-      body = Parser.parse(source).as(Def).body.as(Assign)
-      # TODO: A single assignment is the body itself, so it's located at the
-      # `end` like the body of a def without one. This might need refinement.
+      body = Parser.parse(source).as(Def).body.as(Expressions)
       node_source(source, body).should eq("end")
+
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
 
       source = "def foo(@a, @@b); end"
       body = Parser.parse(source).as(Def).body.as(Expressions)
