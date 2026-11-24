@@ -29,7 +29,7 @@ class Thread
       ret, error = 0, WinError::ERROR_SUCCESS
       timeout = time.to_milliseconds
 
-      GC.syscall(pointerof(ret), pointerof(errno), self, mutex, timeout) do |ret_ptr, error_ptr, self_, mutex_, timeout_|
+      GC.syscall(pointerof(ret), pointerof(error), self, mutex, timeout) do |ret_ptr, error_ptr, self_, mutex_, timeout_|
         ret_ptr.value = LibC.SleepConditionVariableCS(self_, mutex_, timeout_)
         error_ptr.value = WinError.value
       end
