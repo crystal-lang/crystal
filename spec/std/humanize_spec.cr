@@ -123,6 +123,16 @@ describe Number do
     pending_wasm32 { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 40), "0.0000012345678901234567890123450000000000" }
     pending_wasm32 { assert_prints "12345.67890123456789012345e-10".to_big_d.format(decimal_places: 10), "0.0000012346" }
 
+    it { assert_prints Int64::MAX.format(decimal_places: 2), "9,223,372,036,854,775,807.00" }
+    it { assert_prints UInt64::MAX.format(decimal_places: 0), "18,446,744,073,709,551,615" }
+    it { assert_prints 9_007_199_254_740_993_i64.format(decimal_places: 1), "9,007,199,254,740,993.0" }
+
+    pending_wasm32 { assert_prints 2315.to_big_i.format(decimal_places: 2), "2,315.00" }
+    pending_wasm32 { assert_prints (-2315).to_big_i.format(decimal_places: 2), "-2,315.00" }
+    pending_wasm32 { assert_prints (10.to_big_i ** 30 + 1).format(decimal_places: 1), "1,000,000,000,000,000,000,000,000,000,001.0" }
+    pending_wasm32 { assert_prints (10.to_big_i ** 30 + 1).format(decimal_places: -2), "1,000,000,000,000,000,000,000,000,000,000" }
+    pending_wasm32 { assert_prints 123_456_789.to_big_i.format(decimal_places: -3), "123,457,000" }
+
     it "extracts integer part correctly (#12997)" do
       assert_prints 1.9999998.format, "1.9999998"
       assert_prints 1111111.999999998.format, "1,111,111.999999998"
