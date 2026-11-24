@@ -12,7 +12,7 @@
 # * `FIXME`: The rule seems useful, but requires some effort to resolve. That's deferred for later.
 # * `TODO`: The rule might be useful, but we need to investigate whether we want to use it or not.
 
-Version: "1.7.0-dev"
+Version: "1.6.4"
 
 # Documentation
 # =========================
