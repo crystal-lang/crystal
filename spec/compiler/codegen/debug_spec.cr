@@ -635,7 +635,7 @@ describe "Code gen: debug" do
       str = codegen(code, debug: Crystal::Debug::LineNumbers, single_module: true).to_s
       # `sum`, found by its parameter because symbol names are mangled on Windows
       sum = str[/^define [^\n]+ %sum_value\).+?^}/m]
-      debug_lines_of(str, sum, /store volatile i8 0, ptr %debug_marker/).should eq([8, 2, 3])
+      debug_lines_of(str, sum, /store volatile i8 0, .+ %debug_marker/).should eq([8, 2, 3])
     end
 
     it "doesn't emit a marker with optimizations" do
