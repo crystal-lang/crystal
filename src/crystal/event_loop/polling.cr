@@ -113,6 +113,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     event.wake_at = time
     event.cancelation_token = token
     timeout_impl(pointerof(event))
+    event.timed_out?
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -497,25 +498,27 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       error = true # ameba:disable Lint/UselessAssign
 
       begin
-        error = timeout_impl(pointerof(event))
+        timeout_impl(pointerof(event))
+        error = event.timed_out?
       ensure
-        return false unless error
-
-        # either the timeout expired or we failed to add the event,
-        # in both cases: clear the waiter before returning
-        io.__poll_descriptor do |pd|
-          if type.io_read?
-            pd.value.@reader.delete(pointerof(event))
-          else
-            pd.value.@writer.delete(pointerof(event))
+        if error
+          # either the timeout expired or we failed to add the event,
+          # in both cases: clear the waiter before returning
+          io.__poll_descriptor do |pd|
+            if type.io_read?
+              pd.value.@reader.delete(pointerof(event))
+            else
+              pd.value.@writer.delete(pointerof(event))
+            end
           end
         end
       end
+
+      event.timed_out?
     else
       Fiber.suspend
+      false
     end
-
-    false
   end
 
   private def check_open(io : IO)
@@ -524,13 +527,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # internals: timers
 
-  private def timeout_impl(event : Event*) : Bool
+  private def timeout_impl(event : Event*) : Nil
     add_timer(event)
 
     Fiber.suspend
 
     delete_timer(event) unless event.value.timed_out?
-    event.value.timed_out?
   end
 
   protected def add_timer(event : Event*)
