@@ -676,6 +676,44 @@ describe "Semantic: doc" do
     end
   end
 
+  it "doesn't emit doc comment in the middle of a line in macro expansion (#18011)" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      def foo(a, b = 0)
+        {a, b}
+      end
+
+      macro m(&block)
+        foo {{ block.body }}, 2
+      end
+
+      m do
+        # doc
+        y = 1
+      end
+      CRYSTAL
+    program = result.program
+    result.node.type.should eq(program.tuple_of([program.int32, program.int32] of Type))
+  end
+
+  it "keeps doc for nodes at the start of a line in macro expansion" do
+    result = semantic <<-CRYSTAL, wants_doc: true
+      class Foo
+        macro m(node)
+          {{ node }}
+        end
+
+        m(
+          # Hello
+          def bar
+          end
+        )
+      end
+      CRYSTAL
+    program = result.program
+    foo = program.types["Foo"]
+    foo.lookup_defs("bar").first.doc.should eq("Hello")
+  end
+
   it "expands record macro with comments (#16074)" do
     result = semantic <<-CRYSTAL, wants_doc: true
       require "macros"

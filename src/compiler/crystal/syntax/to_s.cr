@@ -31,13 +31,63 @@ module Crystal
       BLOCK_ARG
     end
 
-    def initialize(@str = IO::Memory.new, @macro_expansion_pragmas = nil, @emit_doc = false, @emit_location_pragmas : Bool = false)
+    # Wraps the output when doc comments are emitted and keeps track of whether
+    # only whitespace has been written on the current line. A doc comment must
+    # not be written in the middle of a line, because it would comment out the
+    # rest of that line.
+    private class LineStartTracker < IO
+      getter? at_line_start : Bool
+
+      def initialize(@io : IO)
+        @at_line_start = true
+
+        # The output might already contain text, for example the expansion of a
+        # macro written so far.
+        if io.is_a?(IO::Memory)
+          written = io.to_slice
+          written[0, Math.min(io.pos, written.size)].reverse_each do |byte|
+            next if byte === ' ' || byte === '\t'
+            @at_line_start = byte === '\n'
+            break
+          end
+        end
+      end
+
+      def read(slice : Bytes) : NoReturn
+        raise IO::Error.new("Can't read from LineStartTracker")
+      end
+
+      def write(slice : Bytes) : Nil
+        slice.each do |byte|
+          if byte === '\n'
+            @at_line_start = true
+          elsif !(byte === ' ' || byte === '\t')
+            @at_line_start = false
+          end
+        end
+        @io.write(slice)
+      end
+
+      def pos
+        @io.pos
+      end
+    end
+
+    # Only set when doc comments are emitted.
+    @line_start_tracker : LineStartTracker?
+
+    def initialize(str : IO = IO::Memory.new, @macro_expansion_pragmas = nil, emit_doc = false, @emit_location_pragmas : Bool = false)
+      if emit_doc
+        @str = @line_start_tracker = LineStartTracker.new(str)
+      else
+        @str = str
+      end
       @indent = 0
       @inside_macro = 0
     end
 
     def visit_any(node)
-      if @emit_doc && (doc = node.doc) && !doc.empty?
+      if (tracker = @line_start_tracker) && tracker.at_line_start? && (doc = node.doc) && !doc.empty?
         doc.each_line(chomp: true) do |line|
           @str << "# "
           @str << line
