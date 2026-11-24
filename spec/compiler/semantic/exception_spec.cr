@@ -393,6 +393,30 @@ describe "Semantic: exception" do
     proc.def.body.as(ProcLiteral).def.raises?.should be_true
   end
 
+  it "marks `#as` as raises" do
+    result = assert_type(<<-CRYSTAL) { string }
+      def foo(x)
+        x.as(String)
+      end
+
+      foo(1 || "")
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_true
+  end
+
+  it "does not mark `#as?` as raises" do
+    result = assert_type(<<-CRYSTAL) { nilable string }
+      def foo(x)
+        x.as?(String)
+      end
+
+      foo(1 || "")
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_false
+  end
+
   it "shadows local variable (1)" do
     assert_type(<<-CRYSTAL) { union_of(int32, types["Exception"].virtual_type) }
       require "prelude"

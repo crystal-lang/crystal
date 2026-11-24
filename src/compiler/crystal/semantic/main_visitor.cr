@@ -1933,7 +1933,7 @@ module Crystal
     def visit(node : Cast | NilableCast)
       # If there's an `x.as(T)` inside a method, that method
       # has a chance to raise, so we must mark it as such
-      if typed_def = @typed_def
+      if node.is_a?(Cast) && (typed_def = @typed_def)
         typed_def.raises = true
       end
 
