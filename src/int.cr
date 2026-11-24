@@ -1106,7 +1106,7 @@ struct Int8
   # 0b01001101_u8.rotate_right(-1) # => 0b10011010
   # ```
   def rotate_right(n : Int) : self
-    Intrinsics.fshr8(to_u8, to_u8, n.to_u8!).to_i8!
+    Intrinsics.fshr8(to_u8!, to_u8!, n.to_u8!).to_i8!
   end
 
   def clone
