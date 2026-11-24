@@ -86,7 +86,7 @@ module Crystal
 
     def after_transform(node)
       case node
-      when And, Or, If, RespondsTo, IsA, Assign
+      when And, Or, If, RespondsTo, IsA, Assign, Expressions
         # Nothing
       when BoolLiteral
         if node.value
