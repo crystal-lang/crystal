@@ -644,42 +644,42 @@ describe StringScanner do
 
   describe "#matched?" do
     s = StringScanner.new("sphinx of black quartz, judge my vow")
-    s.matched?.should eq(false)
+    s.matched?.should be_false
 
     s.check(1000)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.check(10)
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     s.check(/Sphinx/)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.check(/sphinx/)
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     s.skip("nonsense")
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.skip("sphinx ")
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     s.skip(1000)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.skip(3)
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     s.scan(/\d+/)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.scan(/\w+/)
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     s.scan('b')
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.scan(' ')
-    s.matched?.should eq(true)
+    s.matched?.should be_true
 
     # unaffected by #peek
     s.scan(1000)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
     s.peek(10)
-    s.matched?.should eq(false)
+    s.matched?.should be_false
   end
 end

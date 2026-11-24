@@ -41,7 +41,7 @@ describe Crystal::FdLock do
       lock.try_close? { }
       expect_raises(IO::Error, "Closed") { lock.read { called = true; Fiber.yield } }
 
-      called.should eq(false)
+      called.should be_false
     end
   end
 
@@ -83,7 +83,7 @@ describe Crystal::FdLock do
       lock.try_close? { }
       expect_raises(IO::Error, "Closed") { lock.read { called = true } }
 
-      called.should eq(false)
+      called.should be_false
     end
   end
 
@@ -240,7 +240,7 @@ describe Crystal::FdLock do
       end
 
       # close, then wait for the fibers to be resumed (and fail)
-      lock.try_close? { }.should eq(true)
+      lock.try_close? { }.should be_true
       running.wait
       exceptions.close
 
@@ -274,6 +274,6 @@ describe Crystal::FdLock do
     lock = Crystal::FdLock.new
     lock.try_close? { }
     lock.reset
-    lock.try_close? { }.should eq(true)
+    lock.try_close? { }.should be_true
   end
 end

@@ -65,8 +65,6 @@ module Steppable
         current += step
       end
     end
-
-    self
   end
 
   # :ditto:

@@ -1869,8 +1869,8 @@ enum WinError : UInt32
   WSASYSCALLFAILURE                                             = (WSABASEERR + 107)
   WSASERVICE_NOT_FOUND                                          = (WSABASEERR + 108)
   WSATYPE_NOT_FOUND                                             = (WSABASEERR + 109)
-  WSA_E_NO_MORE                                                 = (WSABASEERR + 110)
-  WSA_E_CANCELLED                                               = (WSABASEERR + 111)
+  WSA_E_NO_MORE                                                 = (WSABASEERR + 110) # ameba:disable Lint/EnumMemberNameConflict
+  WSA_E_CANCELLED                                               = (WSABASEERR + 111) # ameba:disable Lint/EnumMemberNameConflict
   WSAEREFUSED                                                   = (WSABASEERR + 112)
   WSAHOST_NOT_FOUND                                             = (WSABASEERR + 1001)
   WSATRY_AGAIN                                                  = (WSABASEERR + 1002)

@@ -38,7 +38,7 @@ private RNG_DATA_128 = [make_tu(1101449320907785530u128, 6979810955129606772u128
 
 describe "Random" do
   it "limited number" do
-    rand(1).should eq(0)
+    rand(1).should eq(0) # ameba:disable Lint/RandZero
 
     x = rand(2)
     x.should be >= 0
@@ -87,7 +87,7 @@ describe "Random" do
 
   it "raises on invalid number" do
     expect_raises ArgumentError, "Invalid bound for rand: 0" do
-      rand(0)
+      rand(0) # ameba:disable Lint/RandZero
     end
     expect_raises ArgumentError, "Invalid bound for rand: -1" do
       rand(-1)
@@ -223,7 +223,7 @@ describe "Random" do
 
   it "generates by truncation" do
     rng = TestRNG.new([31541451u32, 0u32, 1u32, 234u32, 342475672u32])
-    rng.rand(1).should eq 0
+    rng.rand(1).should eq 0 # ameba:disable Lint/RandZero
     rng.rand(10).should eq 0
     rng.rand(2).should eq 1
     rng.rand(256u64).should eq 234

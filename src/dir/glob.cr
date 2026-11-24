@@ -410,7 +410,7 @@ class Dir
           yield entry
         end
       end
-    rescue exc : File::NotFoundError
+    rescue File::NotFoundError
     end
 
     private def read_entry(dir)

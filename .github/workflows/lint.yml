@@ -29,8 +29,10 @@ jobs:
         id: test_full_run
         if: ${{ github.event_name != 'workflow_dispatch' }}
         run: |
-          # Trigger full run if devenv.lock or this workflow file changed
-          if git diff --quiet "origin/${TARGET_BRANCH}" HEAD -- devenv.lock .github/workflows/lint.yml; then
+          # Trigger full run if the lint environment or configuration changed
+          if git diff --quiet "origin/${TARGET_BRANCH}" HEAD -- devenv.lock \
+            ':(top,glob)*.nix' ':(top,glob)*.toml' ':(top,glob)*.yaml' ':(top,glob)*.yml' \
+            ':(top,glob).github/*.yaml' ':(top,glob).github/*.yml' .github/workflows/lint.yml; then
             echo "test_full_run=false" >> "$GITHUB_OUTPUT"
           else
             echo "test_full_run=true" >> "$GITHUB_OUTPUT"

@@ -1736,7 +1736,7 @@ module Crystal
       write_indent
       write "end"
       next_token
-    rescue ex : Crystal::SyntaxException
+    rescue Crystal::SyntaxException
       format_macro_body node
     end
 

@@ -120,7 +120,7 @@ module Crystal::Playground
 
     def send(message)
       @ws.send(message)
-    rescue ex : IO::Error
+    rescue IO::Error
       Log.warn { "Unable to send message (session=#{@session_key})." }
     end
 

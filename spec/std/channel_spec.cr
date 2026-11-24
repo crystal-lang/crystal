@@ -775,7 +775,7 @@ describe "unbuffered" do
     Sync::CONCURRENT.spawn do
       state = :ready
       ch.send 1
-    rescue ex
+    rescue
       state = :raised
     else
       state = :done
@@ -904,7 +904,7 @@ describe "buffered" do
       ch.send 1
       state = :ready
       ch.send 2
-    rescue ex
+    rescue
       state = :raised
     else
       state = :done

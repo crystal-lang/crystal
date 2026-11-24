@@ -41,7 +41,8 @@ module Crystal::Repl::Disassembler
     io.print ip.to_s.rjust(4, '0')
     io.print ' '
 
-    node = instructions.nodes[ip]?
+    # Used by the disassembly expressions expanded from Instructions below.
+    node = instructions.nodes[ip]? # ameba:disable Lint/UselessAssign
     op_code, ip = next_instruction instructions, ip, OpCode
 
     {% begin %}
