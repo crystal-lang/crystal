@@ -149,7 +149,7 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
     end
 
     @kqueue.kevent(changes.to_slice, receipts.to_slice) do
-      raise RuntimeError.from_errno("kevent") unless Errno.value == Errno::ENOENT
+      yield unless Errno.value == Errno::ENOENT
     end
   end
 
