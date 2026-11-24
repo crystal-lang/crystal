@@ -251,6 +251,7 @@ module Fiber::ExecutionContext
       begin
         @event_loop.try(&.unregister(self))
       ensure
+        @event_loop.try(&.close)
         ExecutionContext.execution_contexts.delete(self)
       end
     end
