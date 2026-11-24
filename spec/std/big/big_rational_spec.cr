@@ -508,6 +508,11 @@ describe BigRational do
     br(1234567, 890123).format(".", " ").should eq("1 234 567/890 123")
     br(1234567, 890123).format(".", " ", group: 2).should eq("1 23 45 67/89 01 23")
     br(1234567, 890123).format(",", ".", group: 4).should eq("123.4567/89.0123")
+    br(2315, 4687).format(decimal_places: 0).should eq("2,315/4,687")
+    br(2315, 4687).format(decimal_places: 2).should eq("2,315.00/4,687.00")
+    br(-2315, 4687).format(decimal_places: 1).should eq("-2,315.0/4,687.0")
+    br(1234567, 890123).format(",", ".", decimal_places: 1).should eq("1.234.567,0/890.123,0")
+    br(123456789, 1000).format(decimal_places: -3).should eq("123,457,000/1,000")
   end
 end
 
