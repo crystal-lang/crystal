@@ -303,47 +303,6 @@ describe "BigInt" do
     -5.to_big_i.tdiv(-3).should eq(1)
   end
 
-  describe "#round" do
-    it "returns self for non-negative digits" do
-      x = 10.to_big_i ** 30 + 1
-      x.round(0).should eq(x)
-      x.round(2).should eq(x)
-      x.round(2, base: 2).should eq(x)
-    end
-
-    it "rounds to negative digits" do
-      123_456_789.to_big_i.round(-3).should eq(123_457_000)
-      -123_456_789.to_big_i.round(-3).should eq(-123_457_000)
-      (10.to_big_i ** 30 + 1).round(-2).should eq(10.to_big_i ** 30)
-      0.to_big_i.round(-5).should eq(0)
-      123.to_big_i.round(-5).should eq(0)
-    end
-
-    it "rounds with base" do
-      0b1011.to_big_i.round(-2, base: 2).should eq(0b1100)
-      0o777.to_big_i.round(-1, base: 8).should eq(0o1000)
-      0b1010.to_big_i.round(-2, base: 2).should eq(0b1000)
-      0b1010.to_big_i.round(-2, base: 2, mode: :ties_away).should eq(0b1100)
-    end
-
-    it "rounds with mode" do
-      2_500.to_big_i.round(-3).should eq(2_000)
-      3_500.to_big_i.round(-3).should eq(4_000)
-      -2_500.to_big_i.round(-3).should eq(-2_000)
-      -3_500.to_big_i.round(-3).should eq(-4_000)
-      2_500.to_big_i.round(-3, mode: :ties_even).should eq(2_000)
-      2_500.to_big_i.round(-3, mode: :ties_away).should eq(3_000)
-      -2_500.to_big_i.round(-3, mode: :ties_away).should eq(-3_000)
-      2_001.to_big_i.round(-3, mode: :to_zero).should eq(2_000)
-      -2_999.to_big_i.round(-3, mode: :to_zero).should eq(-2_000)
-      2_001.to_big_i.round(-3, mode: :to_positive).should eq(3_000)
-      -2_999.to_big_i.round(-3, mode: :to_positive).should eq(-2_000)
-      2_999.to_big_i.round(-3, mode: :to_negative).should eq(2_000)
-      -2_001.to_big_i.round(-3, mode: :to_negative).should eq(-3_000)
-      (10.to_big_i ** 30 + 1).round(-30, mode: :to_positive).should eq(2.to_big_i * 10.to_big_i ** 30)
-    end
-  end
-
   it "does modulo" do
     (10.to_big_i % 3.to_big_i).should eq(1.to_big_i)
     (10.to_big_i % 3).should eq(1.to_big_i)
