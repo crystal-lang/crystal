@@ -21,33 +21,21 @@ struct Crystal::EventLoop::Polling::Event
   # resume.
   getter fiber : Fiber
 
-  # The IO::FileDescriptor or Socket instance when processing an IO event.
-  # Nil for timed events (sleep, cancelable timeout).
-  @io : IO?
-
   # The absolute time, against the monotonic clock, at which a timed event shall
   # trigger. Nil for IO events without a timeout.
   getter! wake_at : Time::Instant
 
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
-  property! cancelation_token : Fiber::CancelationToken
+  property cancelation_token : Fiber::CancelationToken = Fiber::CancelationToken.unarmed
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node
 
-  def initialize(@type : Type, @fiber, @io = nil, timeout : Time::Span? = nil)
+  def initialize(@type : Type, @fiber, timeout : Time::Span? = nil)
     if timeout
       now = Crystal::System::Time.instant
       @wake_at = now + timeout
-    end
-  end
-
-  def __poll_descriptor(&) : Nil
-    io = @io
-
-    Polling.devirtualize(io) do
-      io.__poll_descriptor { |pd| yield pd }
     end
   end
 
