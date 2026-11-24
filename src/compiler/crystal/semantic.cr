@@ -41,7 +41,6 @@ class Crystal::Program
 
     @progress_tracker.stage("Semantic (cleanup)") do
       cleanup_types
-      cleanup_files
     end
 
     @progress_tracker.stage("Semantic (recursive struct check)") do

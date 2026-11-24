@@ -48,12 +48,6 @@ module Crystal
         initializer.value = initializer.value.transform(transformer)
       end
     end
-
-    def cleanup_files
-      tempfiles.each do |tempfile|
-        File.delete?(tempfile)
-      end
-    end
   end
 
   # This visitor runs at the end and does some simplifications to the resulting AST node.
