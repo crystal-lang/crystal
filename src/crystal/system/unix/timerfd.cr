@@ -38,6 +38,9 @@ struct Crystal::System::TimerFD
   end
 
   def close
-    LibC.close(@fd)
+    return if (fd = @fd) == -1
+    return unless Atomic::Ops.cmpxchg(pointerof(@fd), fd, -1, :acquire, :monotonic).last
+
+    LibC.close(fd)
   end
 end

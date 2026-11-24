@@ -19,6 +19,10 @@ class Crystal::EventLoop::Kqueue < Crystal::EventLoop::Polling
       LibC::EV_ADD | LibC::EV_ENABLE | LibC::EV_CLEAR)
   end
 
+  def close : Nil
+    @kqueue.close
+  end
+
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     buffer = uninitialized LibC::Kevent[128]
 

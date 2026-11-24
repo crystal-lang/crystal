@@ -26,6 +26,9 @@ struct Crystal::System::EventFD
   end
 
   def close : Nil
-    LibC.close(@fd)
+    return if (fd = @fd) == -1
+    return unless Atomic::Ops.cmpxchg(pointerof(@fd), fd, -1, :acquire, :monotonic).last
+
+    LibC.close(fd)
   end
 end

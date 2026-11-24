@@ -19,6 +19,12 @@ class Crystal::EventLoop::Epoll < Crystal::EventLoop::Polling
     @epoll.add(@timerfd.fd, LibC::EPOLLIN, u64: @timerfd.fd.to_u64!)
   end
 
+  def close : Nil
+    @timerfd.close
+    @eventfd.close
+    @epoll.close
+  end
+
   private def system_run(blocking : Bool, & : Fiber ->) : Nil
     Crystal.trace :evloop, "run", blocking: blocking
 
