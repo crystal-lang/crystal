@@ -65,6 +65,7 @@ jobs:
           - arm-linux-gnueabihf
           - i386-linux-gnu
           - i386-linux-musl
+          - x86_64-darwin
           - x86_64-dragonfly
           - x86_64-netbsd
           - x86_64-openbsd
