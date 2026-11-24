@@ -30,8 +30,8 @@ class Thread
 
     def wait(mutex : Thread::Mutex) : Nil
       ret = 0
-      GC.syscall do
-        ret = LibC.pthread_cond_wait(self, mutex)
+      GC.syscall(pointerof(ret), self, mutex) do |ret_ptr, self_, mutex_|
+        ret_ptr.value = LibC.pthread_cond_wait(self_, mutex_)
       end
       raise RuntimeError.from_os_error("pthread_cond_wait", Errno.new(ret)) unless ret == 0
     end
@@ -44,8 +44,8 @@ class Thread
         ts.tv_sec = time.to_i
         ts.tv_nsec = time.nanoseconds
 
-        GC.syscall do
-          ret = LibC.pthread_cond_timedwait_relative_np(self, mutex, pointerof(ts))
+        GC.syscall(pointerof(ret), self, mutex, pointerof(ts)) do |ret_ptr, self_, mutex_, ts_ptr|
+          ret_ptr.value = LibC.pthread_cond_timedwait_relative_np(self_, mutex_, ts_ptr)
         end
       {% else %}
         LibC.clock_gettime(LibC::CLOCK_MONOTONIC, out ts)
@@ -57,8 +57,8 @@ class Thread
           ts.tv_nsec -= 1_000_000_000
         end
 
-        GC.syscall do
-          ret = LibC.pthread_cond_timedwait(self, mutex, pointerof(ts))
+        GC.syscall(pointerof(ret), self, mutex, pointerof(ts)) do |ret_ptr, self_, mutex_, ts_ptr|
+          ret_ptr.value = LibC.pthread_cond_timedwait(self_, mutex_, ts_ptr)
         end
       {% end %}
 

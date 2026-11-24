@@ -104,8 +104,8 @@ module Crystal::System::Thread
 
   def self.sleep(time : ::Time::Span) : Nil
     milliseconds = time.to_milliseconds.to_i.clamp(1..)
-    GC.syscall do
-      LibC.Sleep(milliseconds)
+    GC.syscall(milliseconds) do |milliseconds_|
+      LibC.Sleep(milliseconds_)
     end
   end
 

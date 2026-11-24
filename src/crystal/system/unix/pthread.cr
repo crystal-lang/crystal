@@ -119,9 +119,9 @@ module Crystal::System::Thread
     while true
       ret, errno = 0, Errno::NONE
 
-      GC.syscall do
-        ret = LibC.nanosleep(pointerof(req), pointerof(rem))
-        errno = Errno.value
+      GC.syscall(pointerof(ret), pointerof(errno), pointerof(req), pointerof(rem)) do |ret_ptr, errno_ptr, req_ptr, rem_ptr|
+        ret_ptr.value = LibC.nanosleep(req_ptr, rem_ptr)
+        errno_ptr.value = Errno.value
       end
       return if ret == 0
 
