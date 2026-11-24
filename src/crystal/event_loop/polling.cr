@@ -109,17 +109,15 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
-    # allocate *event* in GC HEAP as it may outlive this function
-    event = Pointer(Event).malloc
-    event.value.initialize(:timeout, Fiber.current)
-    event.value.wake_at = time
-    event.value.cancelation_token = token
-    add_timer(event)
+    event = Event.new(:timeout, Fiber.current)
+    event.wake_at = time
+    event.cancelation_token = token
+    add_timer(pointerof(event))
 
     Fiber.suspend
 
-    delete_timer(event) unless event.value.timed_out?
-    event.value.timed_out?
+    delete_timer(pointerof(event)) unless event.timed_out?
+    event.timed_out?
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -560,29 +558,60 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   # have succeeded shall already have been removed from `@timers` otherwise the
   # fiber could be resumed twice!
   private def process_timers(timer_triggered : Bool, &) : Nil
-    # collect ready timers before processing them —this is safe— to avoids a
+    # Collect ready IO timers before processing them —this is safe— to avoid a
     # deadlock situation when another thread tries to process a ready IO event
-    # (in poll descriptor waiters) with a timeout (same event* in timers)
-    buffer = uninitialized StaticArray(Pointer(Event), 128)
+    # (in poll descriptor waiters) with a timeout (same event* in timers).
+    #
+    # Resolve timeout events while holding the lock to extend the lifetime of
+    # its stack allocated Event; this isn't needed for sleep but there's no
+    # reason to delay either.
+    buffer = uninitialized StaticArray(Fiber | Event*, 128)
     size = 0
+
+    # bound the maximum number of dequeued timers
+    batch_count = 0
 
     @timers_lock.sync do
       @timers.dequeue_ready do |event|
-        buffer.to_unsafe[size] = event
-        break if (size &+= 1) == buffer.size
+        batch_count += 1
+
+        case event.value.type
+        in .io_read?, .io_write?
+          buffer.to_unsafe[size] = event
+          break if (size &+= 1) == buffer.size
+        in .sleep?
+          fiber = event.value.fiber
+          event.value.timed_out!
+          buffer.to_unsafe[size] = fiber
+          break if (size &+= 1) == buffer.size
+        in .timeout?
+          fiber = event.value.fiber
+          if fiber.try_cancel?(event.value.cancelation_token)
+            event.value.timed_out!
+            buffer.to_unsafe[size] = fiber
+            break if (size &+= 1) == buffer.size
+          end
+        end
+
+        break if batch_count == buffer.size
       end
 
-      if size > 0 || timer_triggered
+      if batch_count > 0 || timer_triggered
         system_set_timer(@timers.next_ready?)
       end
     end
 
-    buffer.to_slice[0, size].each do |event|
-      process_timer(event) { |fiber| yield fiber }
+    buffer.to_slice[0, size].each do |entry|
+      case entry
+      in Pointer(Event)
+        process_io_timeout(entry) { |fiber| yield fiber }
+      in Fiber
+        yield entry
+      end
     end
   end
 
-  private def process_timer(event : Event*, &)
+  private def process_io_timeout(event : Event*, &)
     # we dequeued the event from timers, and by rule we own it, so event* can
     # safely be dereferenced:
     fiber = event.value.fiber
@@ -598,13 +627,6 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       # even in case of conflict with #unsafe_resume_io we must resume the fiber
       event.value.__poll_descriptor { |pd| pd.value.@writer.delete(event) }
       event.value.timed_out!
-    when .timeout?
-      return unless fiber.try_cancel?(event.value.cancelation_token)
-      event.value.timed_out!
-    when .sleep?
-      event.value.timed_out!
-    else
-      raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
     end
 
     yield fiber
