@@ -42,7 +42,7 @@ class Channel(T)
     property cancelation_token : Fiber::CancelationToken = Fiber::CancelationToken.unarmed
 
     def claim? : Bool
-      fiber.try_cancel?(@cancelation_token)
+      @cancelation_token.unarmed? || fiber.try_cancel?(@cancelation_token)
     end
 
     def close
