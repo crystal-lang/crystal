@@ -469,6 +469,7 @@ class Crystal::CodeGenVisitor
       context.type = self_type
       codegen_primitive(node, body, target_def, call_args)
       context.type = old_type
+      unreachable if target_def.type.no_return?
       return true
     end
 
@@ -635,7 +636,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  # This is for function pointer calls and exception handler re-raise
+  # This is for function pointer calls
   def set_call_attributes(node, target_def, self_type, is_closure, fun_type)
     if target_def && target_def.abi_info?
       abi_info = abi_info(target_def)

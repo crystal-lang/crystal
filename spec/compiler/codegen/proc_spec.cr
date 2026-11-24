@@ -819,6 +819,32 @@ describe "Code gen: proc" do
       CRYSTAL
   end
 
+  it "uses alias of proc with virtual type (2)" do
+    run(<<-CRYSTAL, Int32).should eq(2)
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      alias Callback = Foo -> Int32
+
+      {% Callback %} # forces immediate resolution of `Callback`
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      def capture(&block : Callback)
+        block
+      end
+
+      capture(&.foo).call(Bar.new)
+      CRYSTAL
+  end
+
   it "doesn't crash on #2196" do
     run(<<-CRYSTAL).to_i.should eq(42)
       x = 42

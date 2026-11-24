@@ -468,10 +468,10 @@ module Crystal
       assert_syntax_error "def foo(#{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 9
       assert_syntax_error "def foo(foo #{kw}); end", "cannot use '#{kw}' as a parameter name", 1, 13
       it_parses "def foo(#{kw} foo); end", Def.new("foo", [Arg.new("foo", external_name: kw.to_s)])
-      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode)
-      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], [Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode)
+      it_parses "def foo(@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], Expressions.new([Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(@@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: kw.to_s)], Expressions.new([Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(x @#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], Expressions.new([Assign.new("@#{kw}".instance_var, "__arg0".var)] of ASTNode))
+      it_parses "def foo(x @@#{kw}); end", Def.new("foo", [Arg.new("__arg0", external_name: "x")], Expressions.new([Assign.new("@@#{kw}".class_var, "__arg0".var)] of ASTNode))
 
       assert_syntax_error "foo { |#{kw}| }", "cannot use '#{kw}' as a block parameter name", 1, 8
       assert_syntax_error "foo { |(#{kw})| }", "cannot use '#{kw}' as a block parameter name", 1, 9
@@ -569,13 +569,13 @@ module Crystal
     it_parses "def foo; with a yield; end", Def.new("foo", body: Yield.new(scope: "a".call), block_arity: 1)
     it_parses "def foo; with a yield 1; end", Def.new("foo", body: Yield.new([1.int32] of ASTNode, "a".call), block_arity: 1)
     it_parses "def foo; a = 1; with a yield a; end", Def.new("foo", body: [Assign.new("a".var, 1.int32), Yield.new(["a".var] of ASTNode, "a".var)] of ASTNode, block_arity: 1)
-    it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+    it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
     it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
     it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
-    it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+    it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], Expressions.new([Assign.new("@@var".class_var, "var".var)] of ASTNode))
     it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
     it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
-    it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), block_arity: 0)
+    it_parses "def foo(&@block); end", Def.new("foo", body: Expressions.new([Assign.new("@block".instance_var, "block".var)] of ASTNode), block_arg: Arg.new("block"), block_arity: 0)
 
     # Defs with annotated parameters
     it_parses "def foo(@[Foo] var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
@@ -583,10 +583,10 @@ module Crystal
     it_parses "def foo(@[Foo]  var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])])
     it_parses "def foo(a, @[Foo] var); end", Def.new("foo", ["a".arg, "var".arg(annotations: ["Foo".ann])])
     it_parses "def foo(a, @[Foo] &block); end", Def.new("foo", ["a".arg], block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
-    it_parses "def foo(@[Foo] @var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+    it_parses "def foo(@[Foo] @var); end", Def.new("foo", ["var".arg(annotations: ["Foo".ann])], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
     it_parses "def foo(@[Foo] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann])])
     it_parses "def foo(@[Foo] @[Bar] var : Int32); end", Def.new("foo", ["var".arg(restriction: "Int32".path, annotations: ["Foo".ann, "Bar".ann])])
-    it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
+    it_parses "def foo(@[Foo] &@block); end", Def.new("foo", body: Expressions.new([Assign.new("@block".instance_var, "block".var)] of ASTNode), block_arg: "block".arg(annotations: ["Foo".ann]), block_arity: 0)
     it_parses "def foo(@[Foo] *args); end", Def.new("foo", args: ["args".arg(annotations: ["Foo".ann])], splat_index: 0)
     it_parses "def foo(@[Foo] **args); end", Def.new("foo", double_splat: "args".arg(annotations: ["Foo".ann]))
     it_parses <<-CRYSTAL, Def.new("foo", ["id".arg(restriction: "Int32".path, annotations: ["Foo".ann]), "name".arg(restriction: "String".path, annotations: ["Bar".ann])])
@@ -625,8 +625,8 @@ module Crystal
     assert_syntax_error "def foo(**args, *x); end", "only block parameter is allowed after double splat"
 
     it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
-    it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
-    it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+    it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], Expressions.new([Assign.new("@var".instance_var, "var".var)] of ASTNode))
+    it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], Expressions.new([Assign.new("@@var".class_var, "var".var)] of ASTNode))
     assert_syntax_error "def foo(_ y); y; end"
     assert_syntax_error "def foo(\"\" y); y; end", "external parameter name cannot be empty"
 
@@ -2801,6 +2801,9 @@ module Crystal
       assert_end_location "[] of Int32"
       assert_end_location "{a: 1}"
       assert_end_location "{} of Int32 => String"
+      assert_end_location "[] of Int32 | (String -> Bool)"
+      assert_end_location "{} of Int32 => (String -> Bool)"
+      assert_end_location "x : Int32 -> ( String -> Bool )"
       assert_end_location "1..3"
       assert_end_location "/foo/"
       assert_end_location "{1, 2}"
@@ -3493,6 +3496,16 @@ module Crystal
       loc.line_number.should eq(2)
     end
 
+    it "gets correct location of instance variable parameter assignment inside empty def" do
+      parser = Parser.new("def foo(@bar)\nend")
+      body = parser.parse.as(Def).body.should be_a(Expressions)
+      body.location.should_not(be_nil).line_number.should eq(2)
+
+      loc = body.expressions.first.location.should_not be_nil
+      loc.line_number.should eq(1)
+      loc.column_number.should eq(9)
+    end
+
     it "sets location of +=" do
       parser = Parser.new("a = 1; a += 2")
       node = parser.parse.as(Expressions).expressions[1]
@@ -4059,6 +4072,52 @@ module Crystal
       source_between(source, node.name_location, node.name_end_location).should eq("bar")
     end
 
+    {
+      "a < b"       => "<",
+      "a <= b"      => "<=",
+      "a >= b"      => ">=",
+      "a == b"      => "==",
+      "a != b"      => "!=",
+      "a === b"     => "===",
+      "a =~ b"      => "=~",
+      "a <=> b"     => "<=>",
+      "a.<=(b)"     => "<=",
+      "a.==(b)"     => "==",
+      "a.[](1)"     => "[]",
+      "a.[]=(1, 2)" => "[]=",
+      "a.foo = 1"   => "foo",
+      "a.foo=(1)"   => "foo",
+      "-a"          => "-",
+    }.each do |source, name|
+      it "sets correct location of call name in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        source_between(source, node.name_location, node.name_end_location).should eq(name)
+      end
+    end
+
+    it "sets correct location of call name in setter with implicit object" do
+      ["foo &.bar = 1", "foo &.bar=(1)"].each do |source|
+        node = Parser.parse(source).as(Call).block.should_not(be_nil).body.as(Call)
+        node.name.should eq("bar=")
+        source_between(source, node.name_location, node.name_end_location).should eq("bar")
+      end
+    end
+
+    ["a[1]", "a[1]?", "a[1] = 2", "foo &.[1] = 2", "foo &.bar[1] = 2"].each do |source|
+      it "doesn't set name size of index call in #{source.inspect}" do
+        node = Parser.parse(source).as(Call)
+        node = node.block.should_not(be_nil).body.as(Call) if node.block
+        node.name_size.should eq(0)
+        node.name_end_location.should be_nil
+      end
+    end
+
+    it "retains name size when cloning a call" do
+      Parser.parse("a == b").clone.name_size.should eq(2)
+      Parser.parse("a.foo = 1").clone.name_size.should eq(3)
+      Parser.parse("a[1]").clone.name_size.should eq(0)
+    end
+
     it "sets correct location of element in array literal" do
       source = "%i(foo bar)"
       elements = Parser.new(source).parse.as(ArrayLiteral).elements
@@ -4082,11 +4141,53 @@ module Crystal
       node_source(source, node).should eq("begin")
     end
 
+    it "sets correct location of offset in offsetof" do
+      source = "offsetof(Foo, @bar)"
+      node = Parser.parse(source).as(OffsetOf)
+      node_source(source, node.offset).should eq("@bar")
+
+      source = "offsetof(Foo, 12)"
+      node = Parser.parse(source).as(OffsetOf)
+      node_source(source, node.offset).should eq("12")
+    end
+
     it "sets correct location of var in proc pointer" do
       source = "foo : Foo; ->foo.bar"
       expressions = Parser.new(source).parse.as(Expressions).expressions
       node = expressions[1].as(ProcPointer).obj.should_not be_nil
       node_source(source, node).should eq("foo")
+    end
+
+    it "sets correct location of block parameters" do
+      source = "foo { |a, *b, _| }"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node.args[0]).should eq("a")
+      node_source(source, node.args[1]).should eq("b")
+      node_source(source, node.args[2]).should eq("_")
+    end
+
+    it "sets correct location of unpacked block parameters" do
+      source = "foo do |a, (b, *(c, _), (d, *_))| end"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node.args[0]).should eq("a")
+      node_source(source, node.args[1]).should eq("(b, *(c, _), (d, *_))")
+
+      unpack = node.unpacks.should_not(be_nil)[1]
+      node_source(source, unpack).should eq("(b, *(c, _), (d, *_))")
+      node_source(source, unpack.expressions[0]).should eq("b")
+
+      splat = unpack.expressions[1].as(Splat)
+      node_source(source, splat).should eq("*(c, _)")
+
+      nested = splat.exp.as(Expressions)
+      node_source(source, nested).should eq("(c, _)")
+      node_source(source, nested.expressions[0]).should eq("c")
+      node_source(source, nested.expressions[1]).should eq("_")
+
+      nested = unpack.expressions[2].as(Expressions)
+      node_source(source, nested).should eq("(d, *_)")
+      node_source(source, nested.expressions[1]).should eq("*_")
+      node_source(source, nested.expressions[1].as(Splat).exp).should eq("_")
     end
 
     it "sets correct location of var in macro for loop" do
@@ -4096,10 +4197,39 @@ module Crystal
       node_source(source, node.vars[1]).should eq("bar")
     end
 
+    it "sets correct location of macro control nodes inside macro body" do
+      source = <<-CRYSTAL
+        macro foo
+          {% for x in y %}{{ x }}{% end %}
+          {% verbatim do %}{{ z }}{% end %}
+          {% begin %}a{% end %}
+          {% if a %}b{% end %}
+        end
+        CRYSTAL
+
+      expressions = Parser.parse(source).as(Macro).body.as(Expressions).expressions
+      node_source(source, expressions[1].as(MacroFor)).should eq("{% for x in y %}{{ x }}{% end %}")
+      node_source(source, expressions[3].as(MacroVerbatim)).should eq("{% verbatim do %}{{ z }}{% end %}")
+      node_source(source, expressions[5].as(MacroIf)).should eq("{% begin %}a{% end %}")
+      node_source(source, expressions[7].as(MacroIf)).should eq("{% if a %}b{% end %}")
+    end
+
     it "sets correct location of receiver var in method def" do
       source = "def foo.bar; end"
       node = Parser.new(source).parse.as(Def).receiver.should_not be_nil
       node_source(source, node).should eq("foo")
+    end
+
+    it "sets correct location of rescue with empty body" do
+      source = "begin\n  1\nrescue Foo\nrescue e : Bar | Baz\nrescue e\nelse\n  2\nend"
+      rescues = Parser.parse(source).as(ExceptionHandler).rescues.should_not be_nil
+      node_source(source, rescues[0]).should eq("rescue Foo")
+      node_source(source, rescues[1]).should eq("rescue e : Bar | Baz")
+      node_source(source, rescues[2]).should eq("rescue e")
+
+      source = "def foo\n  1\nrescue\nensure\n  2\nend"
+      rescues = Parser.parse(source).as(Def).body.as(ExceptionHandler).rescues.should_not be_nil
+      node_source(source, rescues[0]).should eq("rescue")
     end
 
     it "sets correct location of vars in C struct" do
@@ -4120,6 +4250,46 @@ module Crystal
       inner_union = union.types.first.should be_a Union
       node_source(source, inner_union)
         .should eq("(String | Nil)")
+    end
+
+    it "sets correct location of a parenthesized proc notation" do
+      source = "foo : Foo | (A, B -> C)"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      union = node.declared_type.should be_a Union
+      node_source(source, union)
+        .should eq("Foo | (A, B -> C)")
+
+      inner_union = union.types.last.should be_a Union
+      node_source(source, inner_union)
+        .should eq("(A, B -> C)")
+
+      proc_notation = inner_union.types.first.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("A, B -> C")
+    end
+
+    it "sets correct location of a proc notation with nested proc notation input" do
+      source = "foo : (A, B -> C) -> D"
+      node = Parser.new(source).parse.as(TypeDeclaration)
+
+      proc_notation = node.declared_type.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("(A, B -> C) -> D")
+
+      inputs = proc_notation.inputs.should be_a(Array(ASTNode))
+      input = inputs.first.should be_a ProcNotation
+      node_source(source, input)
+        .should eq("A, B -> C")
+    end
+
+    it "sets correct location of a proc notation with nested proc notation input in generic" do
+      source = "Foo((A -> B) -> C)"
+      node = Parser.new(source).parse.as(Generic)
+
+      proc_notation = node.type_vars.first.should be_a ProcNotation
+      node_source(source, proc_notation)
+        .should eq("(A -> B) -> C")
     end
 
     it "doesn't override yield with macro yield" do
@@ -4150,11 +4320,44 @@ module Crystal
       node_source(source, node).should eq("fun foo(x : Int32)")
     end
 
+    it "sets correct location of class variable in enum" do
+      source = "enum X\n  A\n  @@foo = nil.as(Int32?)\nend"
+      node = Parser.parse(source).as(EnumDef).members[1].as(Assign)
+      node_source(source, node).should eq("@@foo = nil.as(Int32?)")
+      node_source(source, node.target).should eq("@@foo")
+    end
+
     it "sets correct location for fun def with return type" do
       source = "lib LibFoo; fun foo(x : Int32) : Void; end"
       node = Parser.new(source).parse.as(LibDef).body
 
       node_source(source, node).should eq("fun foo(x : Int32) : Void")
+    end
+
+    it "sets correct location for fun def with generic return type" do
+      source = "lib Foo\n  fun foo : Pointer(Int32)\n  fun bar = \"bar\" : Int32*\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0]).should eq("fun foo : Pointer(Int32)")
+      node_source(source, body.expressions[1]).should eq("fun bar = \"bar\" : Int32*")
+    end
+
+    it "sets correct location for fun def without parameters and return type" do
+      source = "lib Foo\n  fun foo\n  fun bar = baz\n  fun qux = \"qux\"\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0]).should eq("fun foo")
+      node_source(source, body.expressions[1]).should eq("fun bar = baz")
+      node_source(source, body.expressions[2]).should eq("fun qux = \"qux\"")
+    end
+
+    it "sets correct location of type def and external variable in lib" do
+      source = "lib Foo\n  type Bar = Int32 -> Void\n  $baz = Qux : Int32*\nend"
+      body = Parser.new(source).parse.as(LibDef).body.as(Expressions)
+
+      node_source(source, body.expressions[0].as(TypeDef)).should eq("type Bar = Int32 -> Void")
+      node_source(source, body.expressions[1].as(ExternalVar)).should eq("$baz = Qux : Int32*")
+      node_source(source, body).should eq("type Bar = Int32 -> Void\n  $baz = Qux : Int32*")
     end
 
     it "sets correct location for fun def on multiple lines" do
@@ -4164,11 +4367,121 @@ module Crystal
       node_source(source, node).should eq("fun foo(\n    x : Int32\n  )")
     end
 
+    it "sets correct location of macro literal with heredoc" do
+      source = "x\n{% if a %}\n  foo <<-X\n    bar\n    X\n  baz\n{% end %}"
+      node = Parser.parse(source).as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.then).should eq("\n  foo <<-X\n    bar\n    X\n  baz\n")
+
+      source = "macro foo\n  {% if a %}\n    bar <<-'X'\n      baz\n      X\n  {% end %}\nend"
+      node = Parser.parse(source).as(Macro).body.as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.then).should eq("\n    bar <<-'X'\n      baz\n      X\n  ")
+    end
+
     it "sets correct location for fun def with body" do
       source = "fun foo(x : Int32) : Void\nend"
       node = Parser.new(source).parse.as(FunDef)
 
       node_source(source, node).should eq("fun foo(x : Int32) : Void\nend")
+    end
+
+    it "sets correct location of parameters in def" do
+      source = "def foo(a, b : Int32, e f, @g, @@h, c = 1, d : Int32 = 2, j = __LINE__, *i, **k : Int32, &l : Int32 ->); end"
+      a_def = Parser.parse(source).as(Def)
+      args = a_def.args
+      node_source(source, args[0]).should eq("a")
+      node_source(source, args[1]).should eq("b : Int32")
+      node_source(source, args[2]).should eq("e f")
+      node_source(source, args[3]).should eq("@g")
+      node_source(source, args[4]).should eq("@@h")
+      node_source(source, args[5]).should eq("c = 1")
+      node_source(source, args[6]).should eq("d : Int32 = 2")
+      node_source(source, args[7]).should eq("j = __LINE__")
+      node_source(source, args[8]).should eq("i")
+      node_source(source, a_def.double_splat.should_not be_nil).should eq("k : Int32")
+      node_source(source, a_def.block_arg.should_not be_nil).should eq("l : Int32 ->")
+    end
+
+    it "sets correct location of anonymous parameters in def" do
+      source = "def foo(*, a, &); end"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("*")
+      node_source(source, a_def.args[1]).should eq("a")
+    end
+
+    it "sets correct location of splat restriction of parameter in def" do
+      source = "def foo(*a : *T, **b : **U); end"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("a : *T")
+      node_source(source, a_def.args[0].restriction.should_not be_nil).should eq("*T")
+      node_source(source, a_def.double_splat.should_not be_nil).should eq("b : **U")
+    end
+
+    it "sets correct location of instance and class variable parameter assignments in def" do
+      source = "def foo(@a); end"
+      body = Parser.parse(source).as(Def).body.as(Expressions)
+      node_source(source, body).should eq("end")
+
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
+
+      source = "def foo(@a, @@b); end"
+      body = Parser.parse(source).as(Def).body.as(Expressions)
+      node_source(source, body).should eq("end")
+
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
+
+      assign = body.expressions[1].as(Assign)
+      node_source(source, assign).should eq("@@b")
+      node_source(source, assign.target).should eq("@@b")
+      node_source(source, assign.value).should eq("@@b")
+    end
+
+    it "sets correct location of instance and class variable parameter assignments with external name in def" do
+      source = "def foo(x @a, y @@b)\n  1\nend"
+      a_def = Parser.parse(source).as(Def)
+      node_source(source, a_def.args[0]).should eq("x @a")
+      node_source(source, a_def.args[1]).should eq("y @@b")
+
+      body = a_def.body.as(Expressions)
+      assign = body.expressions[0].as(Assign)
+      node_source(source, assign).should eq("@a")
+      node_source(source, assign.target).should eq("@a")
+      node_source(source, assign.value).should eq("@a")
+
+      assign = body.expressions[1].as(Assign)
+      node_source(source, assign).should eq("@@b")
+      node_source(source, assign.target).should eq("@@b")
+      node_source(source, assign.value).should eq("@@b")
+    end
+
+    it "sets correct location of parameters in macro" do
+      source = "macro foo(a, b = 1, *c, &d); end"
+      a_macro = Parser.parse(source).as(Macro)
+      node_source(source, a_macro.args[0]).should eq("a")
+      node_source(source, a_macro.args[1]).should eq("b = 1")
+      node_source(source, a_macro.args[2]).should eq("c")
+      node_source(source, a_macro.block_arg.should_not be_nil).should eq("d")
+    end
+
+    it "sets correct location of parameters in fun def" do
+      source = "lib Foo\n  fun foo(a : Int32, b : Int32 -> Int32)\nend"
+      fun_def = Parser.parse(source).as(LibDef).body.as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("a : Int32")
+      node_source(source, fun_def.args[1]).should eq("b : Int32 -> Int32")
+
+      source = "lib Foo\n  fun foo(Int32, Int32*)\nend"
+      fun_def = Parser.parse(source).as(LibDef).body.as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("Int32")
+      node_source(source, fun_def.args[1]).should eq("Int32*")
+
+      source = "fun foo(a : Int32)\nend"
+      fun_def = Parser.parse(source).as(FunDef)
+      node_source(source, fun_def.args[0]).should eq("a : Int32")
     end
 
     it "sets correct location of parameter in proc literal" do
@@ -4194,16 +4507,48 @@ module Crystal
       node_source(source, node).should eq("{Foo, Bar}")
     end
 
+    it "sets correct location of double pointer type" do
+      source = "x : Foo**"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node).should eq("Foo**")
+
+      node = node.type_vars.first.as(Generic)
+      node_source(source, node).should eq("Foo*")
+
+      node = node.type_vars.first
+      node_source(source, node).should eq("Foo")
+    end
+
     it "sets correct location of named tuple type" do
       source = "x : {foo: Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type
       node_source(source, node).should eq("{foo: Bar}")
     end
 
+    it "sets correct location of number in type arguments" do
+      source = "x : Foo(1_u8, Int32)"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node.type_vars[0]).should eq("1_u8")
+
+      source = "x : Int32[16]"
+      node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic)
+      node_source(source, node).should eq("Int32[16]")
+      node_source(source, node.type_vars[1]).should eq("16")
+    end
+
     it "sets correct location of argument in named tuple type" do
       source = "x : {foo: Bar}"
       node = Parser.parse(source).as(TypeDeclaration).declared_type.as(Generic).named_args.should_not(be_nil).first
       node_source(source, node).should eq("foo: Bar")
+    end
+
+    it "sets correct location of tuple in `when` of case" do
+      source = "case {a, b}\nwhen {1, _}, {_, 2} then 3\nend"
+      node = Parser.parse(source).as(Case)
+      a_when = node.whens.first
+      node_source(source, a_when).should eq("when {1, _}, {_, 2}")
+      node_source(source, a_when.conds[0]).should eq("{1, _}")
+      node_source(source, a_when.conds[1]).should eq("{_, 2}")
     end
 
     it "sets correct location of instance variable in proc pointer" do
@@ -4218,10 +4563,35 @@ module Crystal
       node_source(source, node).should eq("@@foo")
     end
 
+    it "sets correct location of asm operands" do
+      source = %(asm("nop" : "=r"(foo), "=r"( bar ) : "r"(1)))
+      node = Parser.parse(source).as(Asm)
+      outputs = node.outputs.should_not be_nil
+      node_source(source, outputs[0]).should eq(%("=r"(foo)))
+      node_source(source, outputs[1]).should eq(%("=r"( bar )))
+
+      inputs = node.inputs.should_not be_nil
+      node_source(source, inputs[0]).should eq(%("r"(1)))
+    end
+
     it "sets correct location of annotation on method parameter" do
       source = "def x(@[Foo] y) end"
       node = Parser.parse(source).as(Def).args.first.parsed_annotations.should_not(be_nil).first
       node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of regex match data reference" do
+      source = "$12"
+      node = Parser.parse(source).as(Call)
+      node_source(source, node).should eq("$12")
+      node_source(source, node.obj.should_not be_nil).should eq("$")
+      node_source(source, node.args[0]).should eq("12")
+
+      source = "$1?"
+      node = Parser.parse(source).as(Call)
+      node_source(source, node).should eq("$1?")
+      node_source(source, node.obj.should_not be_nil).should eq("$")
+      node_source(source, node.args[0]).should eq("1")
     end
 
     it "sets correct location of annotation in lib" do
@@ -4230,10 +4600,40 @@ module Crystal
       node_source(source, node).should eq("@[Foo]")
     end
 
+    it "sets correct location of implicit object in `when` of case" do
+      source = "case foo\nwhen .bar?, .is_a?(Baz), .!\nend"
+      conds = Parser.parse(source).as(Case).whens.first.conds
+
+      call = conds[0].as(Call)
+      node_source(source, call).should eq(".bar?")
+      node_source(source, call.obj.should_not be_nil).should eq(".")
+
+      is_a = conds[1].as(IsA)
+      node_source(source, is_a).should eq(".is_a?(Baz)")
+      node_source(source, is_a.obj).should eq(".")
+
+      node = conds[2].as(Not)
+      node_source(source, node.exp).should eq(".")
+    end
+
     it "sets correct location of annotation in enum" do
       source = "enum X; @[Foo]; end"
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("@[Foo]")
+    end
+
+    it "sets correct location of call target in operator assignment" do
+      source = "foo.bar += 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("foo.bar")
+
+      source = "@foo.bar ||= 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("@foo.bar")
+
+      source = "foo(1).bar &&= 1"
+      node = Parser.parse(source).as(OpAssign).target
+      node_source(source, node).should eq("foo(1).bar")
     end
 
     it "sets correct location of private method in enum" do
@@ -4242,16 +4642,84 @@ module Crystal
       node_source(source, node).should eq("private def foo; end")
     end
 
+    it "sets correct location of self type" do
+      source = "x : self"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : self")
+      node_source(source, node.declared_type).should eq("self")
+
+      source = "def foo : self.class; end"
+      node = Parser.parse(source).as(Def).return_type.as(Metaclass)
+      node_source(source, node).should eq("self.class")
+      node_source(source, node.name).should eq("self")
+    end
+
+    it "sets correct location of self superclass" do
+      source = "class Foo < self; end"
+      node = Parser.parse(source).as(ClassDef).superclass.should_not be_nil
+      node_source(source, node).should eq("self")
+    end
+
+    it "sets correct location of nilable self type" do
+      source = "x : self?"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : self?")
+
+      union = node.declared_type.as(Union)
+      node_source(source, union).should eq("self?")
+      node_source(source, union.types[0]).should eq("self")
+    end
+
+    it "sets correct location of underscore type" do
+      source = "x : _"
+      node = Parser.parse(source).as(TypeDeclaration)
+      node_source(source, node).should eq("x : _")
+      node_source(source, node.declared_type).should eq("_")
+
+      source = "def foo(x : _ | Int32); end"
+      node = Parser.parse(source).as(Def).args[0].restriction.as(Union)
+      node_source(source, node).should eq("_ | Int32")
+      node_source(source, node.types[0]).should eq("_")
+    end
+
     it "sets correct location of protected macro in enum" do
       source = "enum X; protected macro foo; end; end"
       node = Parser.parse(source).as(EnumDef).members.first
       node_source(source, node).should eq("protected macro foo; end")
     end
 
+    it "sets correct location of `elsif` in macro if" do
+      source = "{% if a %}1{% elsif b %}2{% elsif c %}3{% else %}{% if d %}4{% end %}{% end %}"
+      node = Parser.parse(source).as(MacroIf)
+      node_source(source, node).should eq(source)
+
+      elsif_node = node.else.as(MacroIf)
+      node_source(source, elsif_node).should eq("elsif b %}2{% elsif c %}3{% else %}{% if d %}4{% end %}{% end %}")
+
+      elsif_node = elsif_node.else.as(MacroIf)
+      node_source(source, elsif_node).should eq("elsif c %}3{% else %}{% if d %}4{% end %}{% end %}")
+
+      node = elsif_node.else.as(MacroIf)
+      node_source(source, node).should eq("{% if d %}4{% end %}")
+    end
+
+    it "sets correct location of `elsif` in macro if inside macro body" do
+      source = "macro foo\n  {% if a %}1{% elsif b %}2{% end %}\nend"
+      node = Parser.parse(source).as(Macro).body.as(Expressions).expressions[1].as(MacroIf)
+      node_source(source, node.else).should eq("elsif b %}2{% end %}")
+    end
+
     it "sets correct location of global path in class def" do
       source = "class ::Foo; end"
       node = Parser.parse(source).as(ClassDef).name
       node_source(source, node).should eq("::Foo")
+    end
+
+    it "sets correct location of `when` in select" do
+      source = "select\nwhen foo = bar.receive\n  1\nwhen baz.receive then 2\nend"
+      node = Parser.parse(source).as(Select)
+      node_source(source, node.whens[0]).should eq("when foo = bar.receive")
+      node_source(source, node.whens[1]).should eq("when baz.receive")
     end
 
     it "sets correct location of global path in annotation" do
@@ -4282,6 +4750,20 @@ module Crystal
       parser = Parser.new("begin; 1; rescue; 2; end ensure 3")
       node = parser.parse.as(ExceptionHandler)
       node.suffix.should be_false
+    end
+
+    it "sets correct location of short block" do
+      source = "foo &.bar.baz"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.bar.baz")
+
+      source = "foo(&.[0] = 1)"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.[0] = 1")
+
+      source = "foo(&.as(Int32))"
+      node = Parser.parse(source).as(Call).block.should_not be_nil
+      node_source(source, node).should eq("&.as(Int32)")
     end
 
     it "sets args_in_brackets to false for `a.b`" do

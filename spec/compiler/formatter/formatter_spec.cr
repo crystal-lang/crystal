@@ -1455,6 +1455,18 @@ describe Crystal::Formatter do
   assert_format "macro foo\n  {{ 1 + 2 }}\\\n 1\n end", "macro foo\n  {{ 1 + 2 }}\\\n 1\n end"
   assert_format "macro foo\n  {%1 + 2%}\\\nend", "macro foo\n  {% 1 + 2 %}\\\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% end %}\nend"
+
+  it "validates the closing keyword of a macro conditional" do
+    # Parse valid source first so the parser does not reject the wrong keyword
+    # before the formatter's own validation can run.
+    nodes = Crystal::Parser.new("{% if true %}1{% end %}").parse
+    formatter = Crystal::Formatter.new("{% if true %}1{% foo %}")
+
+    expect_raises(Exception, "expecting keyword end, not `IDENT, foo`") do
+      nodes.accept formatter
+    end
+  end
+
   assert_format "macro foo\n  {% unless 1 %} 2 {% end %}\nend"
   assert_format "macro foo\n  {% if 1 %} 2 {% else %} 3 {% end %}\nend"
   assert_format "macro foo\n  {% if 1 %}\\ 2 {% else %}\\ 3 {% end %}\\\nend"
@@ -1662,6 +1674,15 @@ describe Crystal::Formatter do
   assert_format "-> : Int32 {}", "-> : Int32 { }"
   assert_format "->do\nend", "-> do\nend"
   assert_format "-> : Int32 {}", "-> : Int32 { }"
+
+  # comment after the opening `{` or `do`
+  assert_format "-> { # foo\n  x\n  y # bar\n}"
+  assert_format "-> do # foo\n  x\n  y # bar\nend"
+  assert_format "-> { # foo\n}"
+  assert_format "foo(-> { # foo\n  x\n  y # bar\n})"
+  assert_format "foo { # foo\n  x\n  y # bar\n}"
+  assert_format "foo { |x| # foo\n  x\n  y # bar\n}"
+  assert_format "foo { # foo\n}"
 
   # Allows whitespace around proc literal, but doesn't enforce them
   assert_format "-> { }"

@@ -464,7 +464,7 @@ module Crystal
     end
 
     def get_current_debug_scope(location)
-      if context.fun.name == MAIN_NAME
+      if context.fun.to_unsafe == @main.to_unsafe
         main_scopes = (@main_scopes ||= {} of {String, String} => LLVM::Metadata)
         file, dir = file_and_dir(location.filename)
         main_scope = main_scopes[{file, dir}] ||= begin
@@ -516,20 +516,35 @@ module Crystal
       builder.set_current_debug_location(di_builder.create_debug_location(0, 0, scope), di_builder.context)
     end
 
+    # If the last expression of a def has no code on its own line, like a literal or local variable, set it to the epilogue's location.
+    # Otherwise there is no location to use.
+    def set_epilogue_debug_location(body : ASTNode)
+      last_expression = body
+      while last_expression.is_a?(Expressions) && (expression = last_expression.expressions.last?)
+        last_expression = expression
+      end
+
+      case last_expression
+      when NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral, Var, InstanceVar
+        return set_current_debug_location(last_expression) if last_expression.location
+      end
+
+      set_artificial_debug_location
+    end
+
     def clear_current_debug_location
       @current_debug_location = nil
 
       builder.clear_current_debug_location
     end
 
-    # Emits a `nop` at the current debug location for un-optimized debug builds.
+    # Emits an instruction at the current debug location for un-optimized debug builds,
+    # so that the location has an address of its own even where it has no code otherwise.
     def emit_debug_marker
       return unless @debug.line_numbers? && @program.optimization_mode.o0?
       return unless @current_debug_location
 
-      fun_type = LLVM::Type.function([] of LLVM::Type, llvm_context.void)
-      value = fun_type.inline_asm("nop", "", has_side_effects: true)
-      call LLVMTypedFunction.new(fun_type, LLVM::Function.from_value(value))
+      builder.store(int8(0), alloca(llvm_context.int8, "debug_marker")).volatile = true
     end
 
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LLVM::Metadata, is_optimized = false)

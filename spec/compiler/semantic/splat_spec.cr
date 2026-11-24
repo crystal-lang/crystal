@@ -109,7 +109,7 @@ describe "Semantic: splat" do
   end
 
   it "errors if doesn't match splat with type restriction" do
-    assert_error <<-CRYSTAL, "no overload matches"
+    assert_error <<-CRYSTAL, "expected argument #4 to 'foo' to be Int32, not Char"
       def foo(*args : Int32)
       end
 

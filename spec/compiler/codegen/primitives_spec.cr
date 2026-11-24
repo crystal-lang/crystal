@@ -331,6 +331,12 @@ describe "Code gen: primitives" do
       CRYSTAL
   end
 
+  it "gets crystal class instance type id of `Class`" do
+    run(<<-CRYSTAL).to_b.should be_true
+      Class.crystal_instance_type_id == Class.crystal_type_id
+      CRYSTAL
+  end
+
   it "gets `#crystal_instance_type_id` on a virtual metaclass" do
     run(<<-CRYSTAL, Bool).should be_true
       class Foo
