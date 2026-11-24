@@ -135,5 +135,9 @@ module Sync
     protected def wait(cv : Pointer(CV)) : Nil
       lock.wait(cv)
     end
+
+    protected def wait(cv : Pointer(CV), deadline : Time::Instant) : Bool
+      lock.wait(cv, deadline)
+    end
   end
 end

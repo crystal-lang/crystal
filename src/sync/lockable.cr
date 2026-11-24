@@ -4,5 +4,6 @@ module Sync
   # `Sync::ConditionVariable`.
   module Lockable
     protected abstract def wait(cv : Pointer(CV)) : Nil
+    protected abstract def wait(cv : Pointer(CV), deadline : Time::Instant) : Bool
   end
 end
