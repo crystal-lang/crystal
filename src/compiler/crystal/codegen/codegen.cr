@@ -2575,10 +2575,7 @@ module Crystal
 
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
-      res = call c_memset_fun, [pointer, value, size, int1(0)]
-      res.set_instruction_param_alignment(1, 4)
-
-      res
+      call c_memset_fun, [pointer, value, size, int1(0)]
     end
 
     def memcpy(dest, src, len, align, volatile, *, src_align = align)
