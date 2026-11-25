@@ -156,9 +156,9 @@ module Enumerable(T)
     struct Accumulator(T, U)
       @data : Array(T)
       @reuse : Bool
+      @key : U | Nil = nil
 
       def initialize(reuse = false)
-        @key = uninitialized U
         @initialized = false
 
         if reuse
@@ -192,7 +192,11 @@ module Enumerable(T)
 
       def fetch
         if @initialized
-          {@key, @data}.tap { @initialized = false }
+          key = @key
+          {% unless Nil < U %}
+            key = key.not_nil!
+          {% end %}
+          {key, @data}.tap { @initialized = false }
         end
       end
 

@@ -253,6 +253,10 @@ describe "Enumerable" do
       c.should eq({3, [3, 3]})
       c[1].should be(a[1])
     end
+
+    it "iterator inspection is safe (#17653)" do
+      [1].chunk(&.to_s)
+    end
   end
 
   describe "chunks" do
