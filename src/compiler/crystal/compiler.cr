@@ -444,10 +444,12 @@ module Crystal
       llvm_mod = unit.llvm_mod
 
       @progress_tracker.stage("Codegen (bc+obj)") do
-        optimize llvm_mod, target_machine unless @optimization_mode.o0?
+        unit.compilation_time = Time.measure do
+          optimize llvm_mod, target_machine unless @optimization_mode.o0?
 
-        emit_filename = emit_base_filename || output_filename
-        unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
+          emit_filename = emit_base_filename || output_filename
+          unit.emit(@emit_targets | EmitTarget::OBJ, emit_filename, from_cache: false)
+        end
       end
 
       object_names = [output_filename]
@@ -706,6 +708,7 @@ module Crystal
       return unless units
 
       reused = units.count(&.reused_previous_compilation?)
+      units.sort_by! { |unit| -unit.compilation_time }
 
       puts
       puts "Codegen (bc+obj):"
@@ -714,13 +717,18 @@ module Crystal
         puts " - all previous .o files were reused"
       when .zero?
         puts " - no previous .o files were reused"
+        puts
+        puts "Top 10 slowest modules:"
+        units.first(10).each do |unit|
+          puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
+        end
       else
         puts " - #{reused}/#{units.size} .o files were reused"
         puts
         puts "These modules were not reused:"
         units.each do |unit|
           next if unit.reused_previous_compilation?
-          puts " - #{unit.original_name} (#{unit.name}.bc)"
+          puts " - #{unit.compilation_time} #{unit.original_name} (#{unit.name}.bc)"
         end
       end
     end
@@ -853,6 +861,7 @@ module Crystal
       getter llvm_mod
       property? reused_previous_compilation = false
       getter object_extension : String
+      property compilation_time : Time::Span = Time::Span::ZERO
       @memory_buffer : LLVM::MemoryBuffer?
       @object_name : String?
       @bc_name : String?
@@ -910,7 +919,9 @@ module Crystal
         if must_compile?
           isolate_module_context if isolate_context
           update_bitcode_cache
-          compile_to_object
+          @compilation_time = Time.measure do
+            compile_to_object
+          end
         else
           @reused_previous_compilation = true
         end
