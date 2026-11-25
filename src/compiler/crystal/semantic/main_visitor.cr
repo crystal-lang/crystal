@@ -3057,13 +3057,21 @@ module Crystal
             node_ensure.accept self
           end
 
+          after_ensure_vars = @vars
           @vars = after_handler_vars
 
-          # Variables declared or overwritten inside the ensure block
-          # must remain after the exception handler
+          # Keep assignments to variables already present on entry to ensure.
           exception_handler_vars.each do |name, var|
             before_var = before_ensure_vars[name]?
-            @vars[name] = var unless var.same?(before_var)
+            next unless before_var
+            next if var.same?(before_var)
+
+            # A while wraps incoming variables in fresh MetaVars for loop
+            # inference. An entry bound only to its original value is still
+            # the incoming value, so keep the normal-completion type.
+            next if var.dependencies.size == 1 && var.dependencies.first.same?(before_var)
+
+            @vars[name] = var
           end
 
           # However, those previous variables can't be nil afterwards:
@@ -3079,6 +3087,13 @@ module Crystal
                 var.nil_if_read = false
               end
             end
+          end
+
+          # Branches and loops can replace the variable map during ensure.
+          # For locals introduced there, keep the final state, including whether
+          # an assignment may have been skipped.
+          after_ensure_vars.each do |name, var|
+            @vars[name] = var unless before_ensure_vars.has_key?(name)
           end
         else
           # If there's no ensure, because all rescue/else end with unreachable
