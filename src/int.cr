@@ -258,7 +258,8 @@ struct Int
   # Returns the result of shifting this number's bits *count* positions to the right.
   # Also known as arithmetic right shift.
   #
-  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is greater than or equal to the number of bits of this integer,
+  #   returns -1 if this integer is negative, and 0 otherwise
   # * If *count* is negative, a left shift is performed
   #
   # ```
@@ -267,13 +268,16 @@ struct Int
   # 8000 >> 32 # => 0
   # 8000 >> -1 # => 16000
   #
-  # -8000 >> 1 # => -4000
+  # -8000 >> 1  # => -4000
+  # -8000 >> 32 # => -1
   # ```
   def >>(count : Int)
     if count < 0
       self << count.abs
     elsif count < sizeof(self) * 8
       self.unsafe_shr(count)
+    elsif self < 0
+      self.class.new(-1)
     else
       self.class.zero
     end
@@ -281,7 +285,7 @@ struct Int
 
   # Returns the result of shifting this number's bits *count* positions to the left.
   #
-  # * If *count* is greater than the number of bits of this integer, returns 0
+  # * If *count* is greater than or equal to the number of bits of this integer, returns 0
   # * If *count* is negative, a right shift is performed
   #
   # ```
