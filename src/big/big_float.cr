@@ -6,6 +6,9 @@ require "big"
 # It is implemented under the hood with [GMP](https://gmplib.org/).
 #
 # NOTE: To use `BigFloat`, you must explicitly import it with `require "big"`
+#
+# NOTE: Deserializing a `BigFloat` from JSON or YAML requires `require "big/json"`
+# or `require "big/yaml"`, respectively.
 struct BigFloat < Float
   include Comparable(Int)
   include Comparable(BigFloat)

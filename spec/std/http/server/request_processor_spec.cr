@@ -14,12 +14,12 @@ private class IOWithAddresses < IO
   def initialize(@io : IO)
   end
 
-  def read(bytes : Bytes) : Int32
-    @io.read(bytes)
+  def read(slice : Bytes) : Int32
+    @io.read(slice)
   end
 
-  def write(bytes : Bytes) : Nil
-    @io.write(bytes)
+  def write(slice : Bytes) : Nil
+    @io.write(slice)
   end
 
   def close : Nil
@@ -166,6 +166,16 @@ describe HTTP::Server::RequestProcessor do
         400 Bad Request\\n
         HTTP
       ).gsub("\\n", "\n"))
+    end
+
+    it "does not process another request after a close token" do
+      requests = 0
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        requests += 1
+      end
+      input = IO::Memory.new("GET / HTTP/1.1\r\nConnection: close, keep-alive\r\n\r\nGET / HTTP/1.1\r\n\r\n")
+      processor.process(input, IO::Memory.new)
+      requests.should eq 1
     end
 
     it "closes connection when Connection: close" do

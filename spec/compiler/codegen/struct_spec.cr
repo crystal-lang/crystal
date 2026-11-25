@@ -1,6 +1,29 @@
 require "../../spec_helper"
 
 describe "Code gen: struct" do
+  it "keeps virtual receivers when copying macro methods to abstract structs" do
+    run(<<-CRYSTAL).to_b.should be_true
+      require "prelude"
+
+      abstract struct A
+        def type_name
+          {{ @type.stringify }}
+        end
+      end
+
+      abstract struct B < A
+      end
+
+      struct X < B
+      end
+
+      struct Y < B
+      end
+
+      X.new.as(A).type_name == "X" && Y.new.as(A).type_name == "Y"
+      CRYSTAL
+  end
+
   it "creates structs" do
     run(<<-CRYSTAL).to_i.should eq(1)
       struct Foo

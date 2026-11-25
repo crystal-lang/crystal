@@ -1,6 +1,8 @@
 require "spec"
 require "../spec_helper"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 
 struct Crystal::Hasher
   def self.for_test
@@ -246,15 +248,15 @@ describe "Crystal::Hasher" do
       1_i32.hash.should eq(1_f64.hash)
     end
 
-    it "should 1_f32 and 1.to_big_f hashes equal" do
+    pending_wasm32 "should 1_f32 and 1.to_big_f hashes equal" do
       1_f32.hash.should eq(1.to_big_f.hash)
     end
 
-    it "should 1_f32 and 1.to_big_r hashes equal" do
+    pending_wasm32 "should 1_f32 and 1.to_big_r hashes equal" do
       1_f32.hash.should eq(1.to_big_r.hash)
     end
 
-    it "should 1_f32 and 1.to_big_i hashes equal" do
+    pending_wasm32 "should 1_f32 and 1.to_big_i hashes equal" do
       1_f32.hash.should eq(1.to_big_i.hash)
     end
   end
@@ -303,7 +305,7 @@ describe "Crystal::Hasher" do
       Crystal::Hasher.reduce_num(Float64::MAX).should eq(0x1F00_FFFF_FFFF_FFFF_u64)
     end
 
-    it "reduces BigInt" do
+    pending_wasm32 "reduces BigInt" do
       Crystal::Hasher.reduce_num(0.to_big_i).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_i).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_i).should eq(UInt64::MAX)
@@ -314,7 +316,7 @@ describe "Crystal::Hasher" do
       end
     end
 
-    it "reduces BigFloat" do
+    pending_wasm32 "reduces BigFloat" do
       Crystal::Hasher.reduce_num(0.to_big_f).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_f).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_f).should eq(UInt64::MAX)
@@ -329,7 +331,7 @@ describe "Crystal::Hasher" do
       end
     end
 
-    it "reduces BigDecimal" do
+    pending_wasm32 "reduces BigDecimal" do
       Crystal::Hasher.reduce_num(0.to_big_d).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_d).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_d).should eq(UInt64::MAX)
@@ -366,7 +368,7 @@ describe "Crystal::Hasher" do
       end
     end
 
-    it "reduces BigRational" do
+    pending_wasm32 "reduces BigRational" do
       Crystal::Hasher.reduce_num(0.to_big_r).should eq(0_u64)
       Crystal::Hasher.reduce_num(1.to_big_r).should eq(1_u64)
       Crystal::Hasher.reduce_num((-1).to_big_r).should eq(UInt64::MAX)

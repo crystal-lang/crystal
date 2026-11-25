@@ -2152,7 +2152,7 @@ class Crystal::Repl::Compiler < Crystal::Visitor
 
     # If the block is captured there's an extra argument
     if block && block.fun_literal
-      args_bytesize += sizeof(Proc(Void))
+      args_bytesize += sizeof(Proc(Nil))
     end
 
     # See line 19 in codegen call

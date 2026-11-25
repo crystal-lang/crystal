@@ -7,17 +7,20 @@ require "./llvm_builder_helper"
 require "./abi/*"
 
 module Crystal
-  MAIN_NAME              = "__crystal_main"
-  RAISE_NAME             = "__crystal_raise"
-  RAISE_OVERFLOW_NAME    = "__crystal_raise_overflow"
-  RAISE_CAST_FAILED_NAME = "__crystal_raise_cast_failed"
-  MALLOC_NAME            = "__crystal_malloc64"
-  MALLOC_ATOMIC_NAME     = "__crystal_malloc_atomic64"
-  REALLOC_NAME           = "__crystal_realloc64"
-  GET_EXCEPTION_NAME     = "__crystal_get_exception"
-  ONCE_INIT              = "__crystal_once_init"
-  ONCE                   = "__crystal_once"
+  MAIN_NAME               = "__crystal_main"
+  RAISE_NAME              = "__crystal_raise"
+  RAISE_OVERFLOW_NAME     = "__crystal_raise_overflow"
+  RAISE_CAST_FAILED_NAME  = "__crystal_raise_cast_failed"
+  RAISE_CLOSURE_TO_C_NAME = "__crystal_raise_closure_to_c"
+  MALLOC_NAME             = "__crystal_malloc64"
+  MALLOC_ATOMIC_NAME      = "__crystal_malloc_atomic64"
+  REALLOC_NAME            = "__crystal_realloc64"
+  GET_EXCEPTION_NAME      = "__crystal_get_exception"
+  ONCE_INIT               = "__crystal_once_init"
+  ONCE                    = "__crystal_once"
 
+  METACLASS_ID_NAME         = "~metaclass"
+  INSTANCE_TYPE_ID_NAME     = "~instance_type"
   TYPE_ID_TO_CLASS_NAME_PTR = "__crystal_type_id_to_class_name_ptr"
   TYPE_ID_TO_CLASS_NAME_MAP = "__crystal_type_id_to_class_name_map"
 
@@ -76,16 +79,16 @@ module Crystal
       end
     end
 
-    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default) forall T
+    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default, obj_paths = nil) forall T
       parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
       node = semantic node
-      evaluate node, T, debug: debug
+      evaluate node, T, debug: debug, obj_paths: obj_paths
     end
 
-    def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
+    def evaluate(node, return_type : T.class, debug = Debug::Default, obj_paths = nil) : T forall T
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
@@ -148,6 +151,11 @@ module Crystal
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
+        obj_paths.try &.each do |obj_path|
+          memory_buf = LLVM::MemoryBuffer.from_file(obj_path)
+          lljit.add_object_file(dylib, memory_buf)
+        end
+
         tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
         lljit.add_llvm_ir_module(dylib, tsm)
 
@@ -280,8 +288,11 @@ module Crystal
     @realloc_fun : LLVMTypedFunction?
     @raise_overflow_fun : LLVMTypedFunction?
     @raise_cast_failed_fun : LLVMTypedFunction?
+    @raise_closure_to_c_fun : LLVMTypedFunction?
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
+
+    getter debug : Debug
 
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
@@ -338,7 +349,7 @@ module Crystal
 
       # Whether to build the mapping from type IDs to their names. Currently
       # required for raising `TypeCastError`.
-      @needs_typeinfo = false
+      @needs_type_id_to_class_name = false
 
       set_internal_fun_debug_location(@main, MAIN_NAME, nil)
 
@@ -537,7 +548,8 @@ module Crystal
         case node.name
         when MALLOC_NAME, MALLOC_ATOMIC_NAME, REALLOC_NAME, RAISE_NAME,
              @codegen.personality_name, GET_EXCEPTION_NAME, RAISE_OVERFLOW_NAME,
-             RAISE_CAST_FAILED_NAME, ONCE_INIT, ONCE
+             RAISE_CAST_FAILED_NAME, RAISE_CLOSURE_TO_C_NAME,
+             ONCE_INIT, ONCE
           @codegen.accept node
         end
 
@@ -928,7 +940,13 @@ module Crystal
         abi_info = abi_info(target_def)
         abi_ret_type = abi_info.return_type
         if cast = abi_ret_type.cast
-          casted_last = pointer_cast @last, cast.pointer
+          if return_type.passed_by_value?
+            casted_last = pointer_cast @last, cast.pointer
+          else
+            # For types like i128 on MinGW-w64 `@last` isn't a pointer
+            casted_last = alloca cast
+            store @last, pointer_cast(casted_last, abi_ret_type.type.pointer)
+          end
           last = load cast, casted_last
           ret last
           return
@@ -1092,6 +1110,13 @@ module Crystal
 
     def codegen_if_branch(phi, node, branch_block, last)
       position_at_end branch_block
+      if @debug.line_numbers?
+        if node.location
+          set_current_debug_location node
+        else
+          set_artificial_debug_location
+        end
+      end
       accept node
       phi.add @last, node.type?, last
     end
@@ -1531,6 +1556,7 @@ module Crystal
 
     def visit(node : Cast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1597,6 +1623,7 @@ module Crystal
 
     def visit(node : NilableCast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1641,15 +1668,6 @@ module Crystal
       false
     end
 
-    def cant_pass_closure_to_c_exception_call
-      @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
-        @program.visit_main call
-        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
-        call
-      end
-    end
-
     def codegen_raise_cast_failed(value, type_id, obj_type, to_type, node)
       location = node.location
       set_current_debug_location(location) if location && @debug.line_numbers?
@@ -1680,7 +1698,7 @@ module Crystal
     end
 
     def type_id_to_class_name(type_id)
-      @needs_typeinfo = true
+      @needs_type_id_to_class_name = true
 
       type_id_map = load llvm_type(@program.string).pointer, define_type_id_to_class_name_ptr
       str_ptr = gep llvm_type(@program.string), type_id_map, type_id
@@ -1698,18 +1716,26 @@ module Crystal
     end
 
     def codegen_typeinfo : Nil
-      return unless @needs_typeinfo
+      if @needs_type_id_to_class_name
+        str_type = @main_llvm_typer.llvm_type(@program.string)
+        map_type = str_type.array(@program.llvm_id.@ids.size)
 
-      str_type = @main_llvm_typer.llvm_type(@program.string)
-      map_type = str_type.array(@program.llvm_id.@ids.size)
+        map_global = @main_mod.globals.add(map_type, TYPE_ID_TO_CLASS_NAME_MAP)
+        map_global.linkage = LLVM::Linkage::Private
+        map_global.initializer = create_type_id_to_class_name_map
+        map_global.global_constant = true
 
-      map_global = @main_mod.globals.add(map_type, TYPE_ID_TO_CLASS_NAME_MAP)
-      map_global.linkage = LLVM::Linkage::Private
-      map_global.initializer = create_type_id_to_class_name_map
-      map_global.global_constant = true
+        ptr_global = define_type_id_to_class_name_ptr(llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
+        ptr_global.initializer = gep(map_type, map_global, 0, 0)
+      end
 
-      ptr_global = define_type_id_to_class_name_ptr(llvm_mod: @main_mod, llvm_typer: @main_llvm_typer)
-      ptr_global.initializer = gep(map_type, map_global, 0, 0)
+      if func = typed_fun?(@main_mod, METACLASS_ID_NAME)
+        define_metaclass_fun(func.func)
+      end
+
+      if func = typed_fun?(@main_mod, INSTANCE_TYPE_ID_NAME)
+        define_instance_type_fun(func.func)
+      end
     end
 
     private def define_type_id_to_class_name_ptr(*, llvm_mod = @llvm_mod, llvm_typer = @llvm_typer)
@@ -1734,6 +1760,7 @@ module Crystal
       accept node.obj
 
       if @needs_value
+        set_current_debug_location node if @debug.line_numbers?
         obj_type = node.obj.type
 
         type_id = type_id @last, obj_type
@@ -1959,8 +1986,37 @@ module Crystal
           ret fun_ptr
 
           position_at_end ctx_is_not_null_block
-          accept cant_pass_closure_to_c_exception_call
+          codegen_raise_closure_to_c
         end
+      end
+    end
+
+    def codegen_raise_closure_to_c
+      if func = crystal_raise_closure_to_c_fun
+        call_args = [] of LLVM::Value
+
+        if (rescue_block = @rescue_block)
+          invoke_out_block = new_block "invoke_out"
+          invoke func, call_args, invoke_out_block, rescue_block
+          position_at_end invoke_out_block
+        else
+          call func, call_args
+        end
+
+        unreachable
+      else
+        # fallback for stdlib before 1.23 when using a 1.23 or later compiler
+        accept cant_pass_closure_to_c_exception_call
+      end
+    end
+
+    # fallback for stdlib before 1.23 when using a 1.23 or later compiler
+    def cant_pass_closure_to_c_exception_call
+      @cant_pass_closure_to_c_exception_call ||= begin
+        call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed")).at(UNKNOWN_LOCATION)
+        @program.visit_main call
+        call.raise "::raise must be of NoReturn return type!" unless call.type.is_a?(NoReturnType)
+        call
       end
     end
 
@@ -2204,7 +2260,7 @@ module Crystal
         closure_vars ||= [] of MetaVar
 
         closure_type, closure_has_inner_pointers =
-          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
+          @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil), current_context.fun.name)
         closure_ptr = closure_has_inner_pointers ? malloc(closure_type) : malloc_atomic(closure_type)
 
         closure_vars.each_with_index do |var, i|
@@ -2478,6 +2534,15 @@ module Crystal
       end
     end
 
+    def crystal_raise_closure_to_c_fun
+      @raise_closure_to_c_fun ||= typed_fun?(@main_mod, RAISE_CLOSURE_TO_C_NAME)
+      if raise_closure_to_c_fun = @raise_closure_to_c_fun
+        check_main_fun RAISE_CLOSURE_TO_C_NAME, raise_closure_to_c_fun
+      else
+        nil
+      end
+    end
+
     # Fallbacks to libc malloc and realloc when the expected __crystal_*
     # functions aren't defined (e.g. empty prelude). We only use them in tests
     # that don't require the prelude, so they don't require the GC.
@@ -2511,7 +2576,7 @@ module Crystal
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
       res = call c_memset_fun, [pointer, value, size, int1(0)]
-      LibLLVM.set_instr_param_alignment(res, 1, 4)
+      res.set_instruction_param_alignment(1, 4)
 
       res
     end
@@ -2519,8 +2584,8 @@ module Crystal
     def memcpy(dest, src, len, align, volatile, *, src_align = align)
       res = call c_memcpy_fun, [dest, src, len, volatile]
 
-      LibLLVM.set_instr_param_alignment(res, 1, align)
-      LibLLVM.set_instr_param_alignment(res, 2, src_align)
+      res.set_instruction_param_alignment(1, align)
+      res.set_instruction_param_alignment(2, src_align)
 
       res
     end

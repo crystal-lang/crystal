@@ -197,4 +197,40 @@ describe "Semantic: previous_def" do
       Foo.new.x
       CRYSTAL
   end
+
+  it "does not consider `::previous_def` as previously defined method call" do
+    assert_type(<<-CRYSTAL) { int32 }
+      def previous_def
+        1
+      end
+
+      class Foo
+        def foo
+          ::previous_def
+        end
+      end
+
+      Foo.new.foo
+      CRYSTAL
+  end
+
+  it "does not consider `::previous_def` as initializing class's ivars" do
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
+      def previous_def
+      end
+
+      class Foo
+        def initialize(@x : String)
+        end
+
+        def initialize
+          @x = ""
+        end
+
+        def initialize
+          ::previous_def
+        end
+      end
+      CRYSTAL
+  end
 end

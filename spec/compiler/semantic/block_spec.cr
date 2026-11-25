@@ -1,6 +1,51 @@
 require "../../spec_helper"
 
 describe "Block inference" do
+  it "narrows a block argument read inside nested blocks" do
+    result = semantic(<<-CRYSTAL, inject_primitives: true)
+      def invoke
+        yield
+      end
+
+      def with_value(&block : Int32 | Int64 -> _)
+        value = 0
+        yield value
+        value = 1_i64
+      end
+
+      matches = false
+      with_value do |value|
+        invoke { invoke { matches = value == 0 } }
+      end
+      CRYSTAL
+
+    with_value = result.node.as(Expressions).last.as(Call)
+    outer_invoke = with_value.block.not_nil!.body.as(Call)
+    inner_invoke = outer_invoke.block.not_nil!.body.as(Call)
+    comparison = inner_invoke.block.not_nil!.body.as(Assign).value.as(Call)
+    comparison.obj.not_nil!.type.should eq(result.program.int32)
+  end
+
+  it "includes assignments from earlier yields in a block read" do
+    assert_type(<<-CRYSTAL) { union_of(int32, int64) }
+      def invoke
+        yield
+      end
+
+      def twice
+        yield
+        yield
+      end
+
+      value = 0
+      twice do
+        read = invoke { value }
+        value = 1_i64
+        read
+      end
+      CRYSTAL
+  end
+
   it "infer type of empty block body" do
     assert_type(<<-CRYSTAL) { nil_type }
       def foo; yield; end
@@ -64,9 +109,15 @@ describe "Block inference" do
   end
 
   it "infer type with union" do
-    assert_type(<<-CRYSTAL) { union_of(array_of(int32), array_of(float64)) }
-      require "prelude"
-      a = [1] || [1.1]
+    assert_type(<<-CRYSTAL) { union_of(generic_class("Box", int32), generic_class("Box", float64)) }
+      class Box(T)
+        def tap
+          yield self
+          self
+        end
+      end
+
+      a = Box(Int32).new || Box(Float64).new
       a.tap { |x| x }
       CRYSTAL
   end
@@ -675,8 +726,6 @@ describe "Block inference" do
 
   it "allows invoking method on a object of a captured block with a type that was never instantiated" do
     assert_type(<<-CRYSTAL) { proc_of(types["Bar"], void) }
-      require "prelude"
-
       class Bar
         def initialize(@bar : NoReturn)
         end
@@ -1462,6 +1511,32 @@ describe "Block inference" do
         {x, y}
       end
       CRYSTAL
+  end
+
+  ["break", "next"].each do |transfer|
+    it "keeps unpacked parameters local on early #{transfer}" do
+      assert_type(<<-CRYSTAL) { tuple_of [union_of(int32, char), bool] }
+        def invoke
+          yield({1})
+        end
+
+        def joined(flag : Bool)
+          value = 1
+          shadow = false
+          invoke do |(shadow)|
+            if flag
+              value = 'a'
+              shadow = 1.5
+              #{transfer} :done
+            end
+            value = 2
+          end
+          {value, shadow}
+        end
+
+        joined(true)
+        CRYSTAL
+    end
   end
 
   it "correctly types unpacked tuple block arg after block (#3339)" do

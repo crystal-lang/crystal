@@ -1265,8 +1265,7 @@ module Crystal
     end
 
     def visit_if_or_unless(node, keyword : Keyword)
-      if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless
+      if suffix_if_or_unless?(node)
         accept node.then
         write_keyword " ", keyword, " "
         inside_cond do
@@ -1279,6 +1278,16 @@ module Crystal
       format_if_at_cond node, keyword
 
       false
+    end
+
+    # Returns `true` for a suffix `if`/`unless`, whose `then` branch starts at
+    # the node's own location. The current token alone can't tell the forms
+    # apart, as in `if a; b; end if c`.
+    private def suffix_if_or_unless?(node)
+      return false unless node.else.is_a?(Nop)
+      return false unless location = node.location
+
+      node.then.location == location
     end
 
     def format_if_at_cond(node, keyword : Keyword, check_end = true)
@@ -2002,7 +2011,7 @@ module Crystal
         check :MACRO_CONTROL_START
         next_token_skip_space_or_newline
 
-        check_end
+        self.check_end
         next_token_skip_space_or_newline
         check :OP_PERCENT_RCURLY
 
@@ -2559,6 +2568,10 @@ module Crystal
             end
 
             return false
+          elsif @token.type.op_lsquare_rsquare_question?
+            write "[]?"
+            next_token
+            return false
           end
 
           write " " if needs_space && !passed_backslash_newline
@@ -3041,7 +3054,9 @@ module Crystal
         next_token_skip_space
         body = format_block_args node.args, node
         next_token_skip_space_or_newline if @token.type.op_semicolon?
-        if @token.type.newline?
+        # A comment after `{` (or the block parameters) was already
+        # written, together with the newline that follows it
+        if @token.type.newline? || @wrote_newline
           format_nested body
           skip_space_or_newline
           write_indent
@@ -4245,11 +4260,11 @@ module Crystal
         is_do = true
       else
         write_token :OP_LCURLY
-        write " " if a_def.body.is_a?(Nop)
       end
-      skip_space
+      found_comment = skip_space
+      write " " if !is_do && !found_comment && a_def.body.is_a?(Nop)
 
-      if @token.type.newline?
+      if found_comment || @token.type.newline?
         format_nested a_def.body
       else
         skip_space_or_newline
@@ -4287,8 +4302,13 @@ module Crystal
       if @token.type.op_eq?
         write " = "
         next_token_skip_space_or_newline
-        write @token.value
-        next_token_skip_space_or_newline
+        if @token.type.delimiter_start?
+          indent(@column, StringLiteral.new(node.real_name.not_nil!))
+          skip_space_or_newline
+        else
+          write @token.value
+          next_token_skip_space_or_newline
+        end
       end
 
       write_token " ", :OP_COLON, " "

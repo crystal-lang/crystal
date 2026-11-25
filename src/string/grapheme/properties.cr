@@ -58,9 +58,9 @@ struct String::Grapheme
   # ranges in this slice are numerically sorted.
   #
   # These ranges were taken from
-  # http://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt
+  # http://www.unicode.org/Public/18.0.0/ucd/auxiliary/GraphemeBreakProperty.txt
   # as well as
-  # http://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt
+  # http://www.unicode.org/Public/18.0.0/ucd/emoji/emoji-data.txt
   # ("Extended_Pictographic" only). See
   # https://www.unicode.org/license.html for the Unicode license agreement.
   @@codepoints : Array(Tuple(Int32, Int32, Property))?
@@ -68,7 +68,7 @@ struct String::Grapheme
   # :nodoc:
   protected def self.codepoints
     @@codepoints ||= begin
-      data = Array(Tuple(Int32, Int32, Property)).new(1540)
+      data = Array(Tuple(Int32, Int32, Property)).new(1546)
       put(data, 0x0000, 0x0009, Property::Control)
       put(data, 0x000A, 0x000A, Property::LF)
       put(data, 0x000B, 0x000C, Property::Control)
@@ -82,7 +82,7 @@ struct String::Grapheme
       put(data, 0x05BF, 0x05BF, Property::Extend)
       put(data, 0x05C1, 0x05C2, Property::Extend)
       put(data, 0x05C4, 0x05C5, Property::Extend)
-      put(data, 0x05C7, 0x05C7, Property::Extend)
+      put(data, 0x05C7, 0x05C9, Property::Extend)
       put(data, 0x0600, 0x0605, Property::Prepend)
       put(data, 0x0610, 0x061A, Property::Extend)
       put(data, 0x061C, 0x061C, Property::Control)
@@ -162,7 +162,7 @@ struct String::Grapheme
       put(data, 0x0B47, 0x0B48, Property::SpacingMark)
       put(data, 0x0B4B, 0x0B4C, Property::SpacingMark)
       put(data, 0x0B4D, 0x0B4D, Property::Extend)
-      put(data, 0x0B55, 0x0B57, Property::Extend)
+      put(data, 0x0B53, 0x0B57, Property::Extend)
       put(data, 0x0B62, 0x0B63, Property::Extend)
       put(data, 0x0B82, 0x0B82, Property::Extend)
       put(data, 0x0BBE, 0x0BBE, Property::Extend)
@@ -295,8 +295,7 @@ struct String::Grapheme
       put(data, 0x1A6D, 0x1A72, Property::SpacingMark)
       put(data, 0x1A73, 0x1A7C, Property::Extend)
       put(data, 0x1A7F, 0x1A7F, Property::Extend)
-      put(data, 0x1AB0, 0x1ADD, Property::Extend)
-      put(data, 0x1AE0, 0x1AEB, Property::Extend)
+      put(data, 0x1AB0, 0x1AF0, Property::Extend)
       put(data, 0x1B00, 0x1B03, Property::Extend)
       put(data, 0x1B04, 0x1B04, Property::SpacingMark)
       put(data, 0x1B34, 0x1B3D, Property::Extend)
@@ -1301,7 +1300,8 @@ struct String::Grapheme
       put(data, 0x10D24, 0x10D27, Property::Extend)
       put(data, 0x10D69, 0x10D6D, Property::Extend)
       put(data, 0x10EAB, 0x10EAC, Property::Extend)
-      put(data, 0x10EFA, 0x10EFF, Property::Extend)
+      put(data, 0x10ECB, 0x10ECF, Property::Extend)
+      put(data, 0x10EF0, 0x10EFF, Property::Extend)
       put(data, 0x10F46, 0x10F50, Property::Extend)
       put(data, 0x10F82, 0x10F85, Property::Extend)
       put(data, 0x11000, 0x11000, Property::SpacingMark)
@@ -1474,6 +1474,7 @@ struct String::Grapheme
       put(data, 0x11D95, 0x11D95, Property::Extend)
       put(data, 0x11D96, 0x11D96, Property::SpacingMark)
       put(data, 0x11D97, 0x11D97, Property::Extend)
+      put(data, 0x11DF0, 0x11DF0, Property::Extend)
       put(data, 0x11EF3, 0x11EF4, Property::Extend)
       put(data, 0x11EF5, 0x11EF6, Property::SpacingMark)
       put(data, 0x11F00, 0x11F01, Property::Extend)
@@ -1503,6 +1504,7 @@ struct String::Grapheme
       put(data, 0x1BCA0, 0x1BCA3, Property::Control)
       put(data, 0x1CF00, 0x1CF2D, Property::Extend)
       put(data, 0x1CF30, 0x1CF46, Property::Extend)
+      put(data, 0x1D127, 0x1D128, Property::Extend)
       put(data, 0x1D165, 0x1D169, Property::Extend)
       put(data, 0x1D16D, 0x1D172, Property::Extend)
       put(data, 0x1D173, 0x1D17A, Property::Control)
@@ -1510,6 +1512,10 @@ struct String::Grapheme
       put(data, 0x1D185, 0x1D18B, Property::Extend)
       put(data, 0x1D1AA, 0x1D1AD, Property::Extend)
       put(data, 0x1D242, 0x1D244, Property::Extend)
+      put(data, 0x1D250, 0x1D252, Property::Extend)
+      put(data, 0x1D25B, 0x1D25C, Property::Extend)
+      put(data, 0x1D25F, 0x1D25F, Property::Extend)
+      put(data, 0x1D280, 0x1D281, Property::Extend)
       put(data, 0x1DA00, 0x1DA36, Property::Extend)
       put(data, 0x1DA3B, 0x1DA6C, Property::Extend)
       put(data, 0x1DA75, 0x1DA75, Property::Extend)
@@ -1544,7 +1550,7 @@ struct String::Grapheme
       put(data, 0x1F17E, 0x1F17F, Property::ExtendedPictographic)
       put(data, 0x1F18E, 0x1F18E, Property::ExtendedPictographic)
       put(data, 0x1F191, 0x1F19A, Property::ExtendedPictographic)
-      put(data, 0x1F1AE, 0x1F1E5, Property::ExtendedPictographic)
+      put(data, 0x1F1AF, 0x1F1E5, Property::ExtendedPictographic)
       put(data, 0x1F1E6, 0x1F1FF, Property::RegionalIndicator)
       put(data, 0x1F201, 0x1F20F, Property::ExtendedPictographic)
       put(data, 0x1F21A, 0x1F21A, Property::ExtendedPictographic)
@@ -1589,7 +1595,7 @@ struct String::Grapheme
       put(data, 0x1F6E9, 0x1F6E9, Property::ExtendedPictographic)
       put(data, 0x1F6EB, 0x1F6F0, Property::ExtendedPictographic)
       put(data, 0x1F6F3, 0x1F6FF, Property::ExtendedPictographic)
-      put(data, 0x1F7DA, 0x1F7FF, Property::ExtendedPictographic)
+      put(data, 0x1F7DC, 0x1F7F0, Property::ExtendedPictographic)
       put(data, 0x1F80C, 0x1F80F, Property::ExtendedPictographic)
       put(data, 0x1F848, 0x1F84F, Property::ExtendedPictographic)
       put(data, 0x1F85A, 0x1F85F, Property::ExtendedPictographic)

@@ -25,8 +25,20 @@ end
 
 describe "ASTNode#to_s" do
   expect_to_s "([] of T).foo"
+  expect_to_s "foo[]?"
   expect_to_s "({} of K => V).foo"
   expect_to_s "foo(bar)"
+  expect_to_s %(dig("key").itself)
+  expect_to_s %(foo(1, 2).bar(3).baz)
+  expect_to_s %(a.foo(1).bar)
+  expect_to_s %(::foo(1).bar)
+  expect_to_s %(foo(x: 1).bar)
+  expect_to_s %(foo(&.bar).baz)
+  expect_to_s %(foo(1) do\nend.bar)
+  expect_to_s %(1 + foo(2)), %(1 + foo(2))
+  expect_to_s %((a.b = 1).c)
+  expect_to_s %((a[1] = 2).c)
+  expect_to_s %((1 + 2).foo)
   expect_to_s "(~1).foo"
   expect_to_s "1 && (a = 2)"
   expect_to_s "(a = 2) && 1"
@@ -180,6 +192,9 @@ describe "ASTNode#to_s" do
   expect_to_s "foo[x, y, a: 1, b: 2] = z"
   expect_to_s %(@[Foo(1, 2, a: 1, b: 2)])
   expect_to_s %(lib Foo\nend)
+  expect_to_s %(lib Foo\n  $foo = bar : Int32\nend)
+  expect_to_s %(lib Foo\n  $foo = "bar" : Int32\nend), %(lib Foo\n  $foo = bar : Int32\nend)
+  expect_to_s %(lib Foo\n  $foo = "llvm.bar" : Int32\nend)
   expect_to_s %(lib LibC\n  fun getchar(Int, Float)\nend)
   expect_to_s %(fun foo(a : Void, b : Void, ...) : Void\nend)
   expect_to_s %(fun foo\nend)

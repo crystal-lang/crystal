@@ -300,6 +300,11 @@ fun __crystal_raise_overflow : NoReturn
   raise OverflowError.new
 end
 
+# :nodoc:
+fun __crystal_raise_closure_to_c : NoReturn
+  raise "passing a closure to C is not allowed"
+end
+
 {% if flag?(:interpreted) %}
   # :nodoc:
   def __crystal_raise_cast_failed(obj, type_name : String, location : String)

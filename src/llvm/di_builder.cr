@@ -23,16 +23,16 @@ class LLVM::DIBuilder
     @llvm_module.context
   end
 
-  def create_compile_unit(lang : DwarfSourceLanguage, file, dir, producer, optimized, flags, runtime_version)
+  def create_compile_unit(lang : DwarfSourceLanguage, file, dir, producer, optimized, flags, runtime_version) : Metadata
     file = create_file(file, dir)
     {% if LibLLVM::IS_LT_110 %}
-      LibLLVM.di_builder_create_compile_unit(self,
+      Metadata.new LibLLVM.di_builder_create_compile_unit(self,
         lang, file, producer, producer.bytesize, optimized ? 1 : 0, flags, flags.bytesize, runtime_version,
         split_name: nil, split_name_len: 0, kind: LibLLVM::DWARFEmissionKind::Full, dwo_id: 0,
         split_debug_inlining: 1, debug_info_for_profiling: 0,
       )
     {% else %}
-      LibLLVM.di_builder_create_compile_unit(self,
+      Metadata.new LibLLVM.di_builder_create_compile_unit(self,
         lang, file, producer, producer.bytesize, optimized ? 1 : 0, flags, flags.bytesize, runtime_version,
         split_name: nil, split_name_len: 0, kind: LibLLVM::DWARFEmissionKind::Full, dwo_id: 0,
         split_debug_inlining: 1, debug_info_for_profiling: 0, sys_root: nil, sys_root_len: 0, sdk: nil, sdk_len: 0,
@@ -41,7 +41,7 @@ class LLVM::DIBuilder
   end
 
   @[Deprecated("Pass an `LLVM::DwarfSourceLanguage` for `lang` instead")]
-  def create_compile_unit(lang cpp_lang_code, file, dir, producer, optimized, flags, runtime_version)
+  def create_compile_unit(lang cpp_lang_code, file, dir, producer, optimized, flags, runtime_version) : Metadata
     # map the c++ values from `llvm::dwarf::SourceLanguage` to the c values from `LLVMDWARFSourceLanguage`
     c_lang_code =
       case cpp_lang_code
@@ -54,61 +54,61 @@ class LLVM::DIBuilder
     create_compile_unit(c_lang_code, file, dir, producer, optimized, flags, runtime_version)
   end
 
-  def create_basic_type(name, size_in_bits, align_in_bits, encoding)
-    LibLLVM.di_builder_create_basic_type(self, name, name.bytesize, size_in_bits, encoding.value, DIFlags::Zero)
+  def create_basic_type(name, size_in_bits, align_in_bits, encoding) : Metadata
+    Metadata.new LibLLVM.di_builder_create_basic_type(self, name, name.bytesize, size_in_bits, encoding.value, DIFlags::Zero)
   end
 
-  def get_or_create_type_array(types : Array(LibLLVM::MetadataRef))
-    LibLLVM.di_builder_get_or_create_type_array(self, types, types.size)
+  def get_or_create_type_array(types : Array(Metadata)) : Metadata
+    Metadata.new LibLLVM.di_builder_get_or_create_type_array(self, types, types.size)
   end
 
-  def create_subroutine_type(file, parameter_types)
-    LibLLVM.di_builder_create_subroutine_type(self, file, parameter_types, parameter_types.size, DIFlags::Zero)
+  def create_subroutine_type(file, parameter_types) : Metadata
+    Metadata.new LibLLVM.di_builder_create_subroutine_type(self, file, parameter_types.to_unsafe.as(LibLLVM::MetadataRef*), parameter_types.size, DIFlags::Zero)
   end
 
-  def create_file(file, dir)
-    LibLLVM.di_builder_create_file(self, file, file.bytesize, dir, dir.bytesize)
+  def create_file(file, dir) : Metadata
+    Metadata.new LibLLVM.di_builder_create_file(self, file, file.bytesize, dir, dir.bytesize)
   end
 
-  def create_lexical_block(scope, file_scope, line, column)
-    LibLLVM.di_builder_create_lexical_block(self, scope, file_scope, line, column)
+  def create_lexical_block(scope, file_scope, line, column) : Metadata
+    Metadata.new LibLLVM.di_builder_create_lexical_block(self, scope, file_scope, line, column)
   end
 
-  def create_lexical_block_file(scope, file_scope, discriminator = 0)
-    LibLLVM.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
+  def create_lexical_block_file(scope, file_scope, discriminator = 0) : Metadata
+    Metadata.new LibLLVM.di_builder_create_lexical_block_file(self, scope, file_scope, discriminator)
   end
 
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
-                      scope_line, flags, is_optimized, func)
+                      scope_line, flags, is_optimized, func) : Metadata
     sub = LibLLVM.di_builder_create_function(self, scope, name, name.bytesize,
       linkage_name, linkage_name.bytesize, file, line, composite_type, is_local_to_unit ? 1 : 0,
       is_definition ? 1 : 0, scope_line, flags, is_optimized ? 1 : 0)
     LibLLVM.set_subprogram(func, sub)
-    sub
+    Metadata.new sub
   end
 
-  def create_auto_variable(scope, name, file, line, type, align_in_bits, flags = DIFlags::Zero)
-    LibLLVM.di_builder_create_auto_variable(self, scope, name, name.bytesize, file, line, type, 1, flags, align_in_bits)
+  def create_auto_variable(scope, name, file, line, type, align_in_bits, flags = DIFlags::Zero) : Metadata
+    Metadata.new LibLLVM.di_builder_create_auto_variable(self, scope, name, name.bytesize, file, line, type, 1, flags, align_in_bits)
   end
 
-  def create_parameter_variable(scope, name, argno, file, line, type, flags = DIFlags::Zero)
-    LibLLVM.di_builder_create_parameter_variable(self, scope, name, name.bytesize, argno, file, line, type, 1, flags)
+  def create_parameter_variable(scope, name, argno, file, line, type, flags = DIFlags::Zero) : Metadata
+    Metadata.new LibLLVM.di_builder_create_parameter_variable(self, scope, name, name.bytesize, argno, file, line, type, 1, flags)
   end
 
-  def create_global_variable_expression(scope, name, linkage_name, file, line, type, local_to_unit, expr = nil, decl = nil, align_in_bits = 0_u32)
+  def create_global_variable_expression(scope, name, linkage_name, file, line, type, local_to_unit, expr = nil, decl = nil, align_in_bits = 0_u32) : Metadata
     expr ||= create_expression(nil, 0)
-    LibLLVM.di_builder_create_global_variable_expression(
+    Metadata.new LibLLVM.di_builder_create_global_variable_expression(
       self, scope, name, name.bytesize,
       linkage_name, linkage_name.bytesize, file, line,
       type, local_to_unit, expr, decl, align_in_bits
     )
   end
 
-  def create_expression(addr, length)
-    LibLLVM.di_builder_create_expression(self, addr, length)
+  def create_expression(addr, length) : Metadata
+    Metadata.new LibLLVM.di_builder_create_expression(self, addr, length)
   end
 
-  def insert_declare_at_end(storage, var_info, expr, dl : LibLLVM::MetadataRef, block)
+  def insert_declare_at_end(storage, var_info, expr, dl : Metadata, block)
     {% if LibLLVM::IS_LT_190 %}
       LibLLVM.di_builder_insert_declare_at_end(self, storage, var_info, expr, dl, block)
     {% else %}
@@ -116,55 +116,55 @@ class LLVM::DIBuilder
     {% end %}
   end
 
-  def get_or_create_array(elements : Array(LibLLVM::MetadataRef))
-    LibLLVM.di_builder_get_or_create_array(self, elements, elements.size)
+  def get_or_create_array(elements : Array(Metadata)) : Metadata
+    Metadata.new LibLLVM.di_builder_get_or_create_array(self, elements.to_unsafe.as(LibLLVM::MetadataRef*), elements.size)
   end
 
-  def create_enumerator(name, value)
+  def create_enumerator(name, value) : Metadata
     is_unsigned = value.is_a?(Int::Unsigned) ? 1 : 0
 
     {% unless LibLLVM::IS_LT_210 %}
       if value.is_a?(Int128) || value.is_a?(UInt128)
         encoded_value = UInt64[value & UInt64::MAX, (value >> 64) & UInt64::MAX]
-        return LibLLVM.di_builder_create_enumerator_of_arbitrary_precision(
+        return Metadata.new LibLLVM.di_builder_create_enumerator_of_arbitrary_precision(
           self, name, name.bytesize, encoded_value.size * 64, encoded_value, is_unsigned)
       end
     {% end %}
 
-    {{ LibLLVM::IS_LT_90 ? LibLLVMExt : LibLLVM }}.di_builder_create_enumerator(
+    Metadata.new {{ LibLLVM::IS_LT_90 ? LibLLVMExt : LibLLVM }}.di_builder_create_enumerator(
       self, name, name.bytesize, value.to_i64!, is_unsigned)
   end
 
-  def create_enumeration_type(scope, name, file, line_number, size_in_bits, align_in_bits, elements, underlying_type)
-    LibLLVM.di_builder_create_enumeration_type(self, scope, name, name.bytesize, file, line_number,
-      size_in_bits, align_in_bits, elements, elements.size, underlying_type)
+  def create_enumeration_type(scope, name, file, line_number, size_in_bits, align_in_bits, elements, underlying_type) : Metadata
+    Metadata.new LibLLVM.di_builder_create_enumeration_type(self, scope, name, name.bytesize, file, line_number,
+      size_in_bits, align_in_bits, elements.to_unsafe.as(LibLLVM::MetadataRef*), elements.size, underlying_type)
   end
 
-  def create_struct_type(scope, name, file, line, size_in_bits, align_in_bits, flags, derived_from, element_types)
-    LibLLVM.di_builder_create_struct_type(self, scope, name, name.bytesize, file, line,
-      size_in_bits, align_in_bits, flags, derived_from, element_types, element_types.size, 0, nil, nil, 0)
+  def create_struct_type(scope, name, file, line, size_in_bits, align_in_bits, flags, derived_from, element_types) : Metadata
+    Metadata.new LibLLVM.di_builder_create_struct_type(self, scope, name, name.bytesize, file, line,
+      size_in_bits, align_in_bits, flags, derived_from, element_types.to_unsafe.as(LibLLVM::MetadataRef*), element_types.size, 0, nil, nil, 0)
   end
 
-  def create_union_type(scope, name, file, line, size_in_bits, align_in_bits, flags, element_types)
-    LibLLVM.di_builder_create_union_type(self, scope, name, name.bytesize, file, line,
-      size_in_bits, align_in_bits, flags, element_types, element_types.size, 0, nil, 0)
+  def create_union_type(scope, name, file, line, size_in_bits, align_in_bits, flags, element_types) : Metadata
+    Metadata.new LibLLVM.di_builder_create_union_type(self, scope, name, name.bytesize, file, line,
+      size_in_bits, align_in_bits, flags, element_types.to_unsafe.as(LibLLVM::MetadataRef*), element_types.size, 0, nil, 0)
   end
 
-  def create_array_type(size_in_bits, align_in_bits, type, subs)
-    LibLLVM.di_builder_create_array_type(self, size_in_bits, align_in_bits, type, subs, subs.size)
+  def create_array_type(size_in_bits, align_in_bits, type, subs) : Metadata
+    Metadata.new LibLLVM.di_builder_create_array_type(self, size_in_bits, align_in_bits, type, subs.to_unsafe.as(LibLLVM::MetadataRef*), subs.size)
   end
 
-  def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty)
-    LibLLVM.di_builder_create_member_type(self, scope, name, name.bytesize, file, line, size_in_bits, align_in_bits,
+  def create_member_type(scope, name, file, line, size_in_bits, align_in_bits, offset_in_bits, flags, ty) : Metadata
+    Metadata.new LibLLVM.di_builder_create_member_type(self, scope, name, name.bytesize, file, line, size_in_bits, align_in_bits,
       offset_in_bits, flags, ty)
   end
 
-  def create_pointer_type(pointee, size_in_bits, align_in_bits, name)
-    LibLLVM.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, 0, name, name.bytesize)
+  def create_pointer_type(pointee, size_in_bits, align_in_bits, name) : Metadata
+    Metadata.new LibLLVM.di_builder_create_pointer_type(self, pointee, size_in_bits, align_in_bits, 0, name, name.bytesize)
   end
 
-  def create_replaceable_composite_type(scope, name, file, line)
-    LibLLVM.di_builder_create_replaceable_composite_type(self, DW_TAG_structure_type, name, name.bytesize,
+  def create_replaceable_composite_type(scope, name, file, line) : Metadata
+    Metadata.new LibLLVM.di_builder_create_replaceable_composite_type(self, DW_TAG_structure_type, name, name.bytesize,
       scope, file, line, 0, 0, 0, DIFlags::FwdDecl, nil, 0)
   end
 
@@ -172,16 +172,16 @@ class LLVM::DIBuilder
     LibLLVM.metadata_replace_all_uses_with(from, to)
   end
 
-  def create_unspecified_type(name : String)
-    LibLLVM.di_builder_create_unspecified_type(self, name, name.bytesize)
+  def create_unspecified_type(name : String) : Metadata
+    Metadata.new LibLLVM.di_builder_create_unspecified_type(self, name, name.bytesize)
   end
 
-  def get_or_create_array_subrange(lo, count)
-    LibLLVM.di_builder_get_or_create_subrange(self, lo, count)
+  def get_or_create_array_subrange(lo, count) : Metadata
+    Metadata.new LibLLVM.di_builder_get_or_create_subrange(self, lo, count)
   end
 
-  def create_debug_location(line, column, scope, inlined_at = nil)
-    LibLLVM.di_builder_create_debug_location(context, line, column, scope, inlined_at)
+  def create_debug_location(line, column, scope, inlined_at = nil) : Metadata
+    Metadata.new LibLLVM.di_builder_create_debug_location(context, line, column, scope, inlined_at)
   end
 
   def end
@@ -192,10 +192,14 @@ class LLVM::DIBuilder
     @unwrap
   end
 
-  @[Deprecated("Use a `LibLLVM::MetadataRef` for `dl` instead")]
-  def insert_declare_at_end(storage, var_info, expr, dl : LibLLVM::ValueRef | LLVM::Value, block)
-    dl = dl.to_unsafe unless dl.is_a?(LibLLVM::ValueRef)
-    insert_declare_at_end(storage, var_info, expr, LibLLVM.value_as_metadata(dl), block)
+  @[Deprecated("Use a `LLVM::Metadata` for `dl` instead")]
+  def insert_declare_at_end(storage, var_info, expr, dl : LibLLVM::ValueRef | LLVM::Value | LibLLVM::MetadataRef, block)
+    metadata = case dl
+               in LibLLVM::ValueRef    then Metadata.new(LibLLVM.value_as_metadata(dl))
+               in LibLLVM::MetadataRef then Metadata.new(dl)
+               in LLVM::Value          then dl.to_metadata
+               end
+    insert_declare_at_end(storage, var_info, expr, metadata, block)
   end
 
   @[Deprecated("Pass an array for `parameter_types` directly")]

@@ -139,7 +139,6 @@ module Crystal
     property! owner : Type
     property! original_owner : Type
     property vars : MetaVars?
-    property yield_vars : Array(Var)?
     property previous : DefWithMetadata?
     property next : Def?
     property special_vars : Set(String)?
@@ -642,6 +641,13 @@ module Crystal
     property fun_literal : ASTNode?
     property freeze_type : Type?
     property? visited = false
+
+    # Overrides args when unpacking introduces additional block-local parameters.
+    setter vars_to_ignore : Array(Var)?
+
+    def vars_to_ignore : Array(Var)
+      @vars_to_ignore || args
+    end
 
     getter(:break) { Var.new("%break") }
   end
