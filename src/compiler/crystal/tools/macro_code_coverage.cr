@@ -59,7 +59,7 @@ module Crystal
         location = Location.new(
           macro_location.filename,
           location.line_number + macro_location.line_number,
-          location.column_number
+          location.column_number,
         )
       end
 
@@ -283,7 +283,7 @@ module Crystal
       Location.new(
         @relative_filenames.put_if_absent(filename) { ::Path[filename].relative_to(CURRENT_DIR).to_s },
         location.line_number,
-        location.column_number
+        location.column_number,
       )
     end
 

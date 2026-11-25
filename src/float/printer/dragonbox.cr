@@ -443,7 +443,7 @@ module Float::Printer::Dragonbox
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
-        (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
+        (cache - (cache >> (significand_bits + 2))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta),
       )
     end
 
@@ -451,7 +451,7 @@ module Float::Printer::Dragonbox
       significand_bits = ImplInfo::SIGNIFICAND_BITS
 
       ImplInfo::CarrierUInt.new!(
-        (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta)
+        (cache + (cache >> (significand_bits + 1))) >> (ImplInfo::CACHE_BITS - significand_bits - 1 - beta),
       )
     end
 

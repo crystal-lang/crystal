@@ -5541,7 +5541,7 @@ module Crystal
           inner_end_location = @token.location
           next_token_skip_space
           type = make_pointer_type(
-            make_pointer_type(type).at_end(inner_end_location)
+            make_pointer_type(type).at_end(inner_end_location),
           ).at_end(end_location)
         when .op_lsquare?
           next_token_skip_space_or_newline

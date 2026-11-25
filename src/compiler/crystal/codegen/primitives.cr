@@ -249,7 +249,7 @@ class Crystal::CodeGenVisitor
   def codegen_mul_unsigned_signed_with_overflow(t1, t2, p1, p2)
     overflow = and(
       codegen_binary_op_ne(t1, t1, p1, int(0, t1)), # self != 0
-      codegen_binary_op_lt(t2, t2, p2, int(0, t2))  # other < 0
+      codegen_binary_op_lt(t2, t2, p2, int(0, t2)), # other < 0
     )
     codegen_raise_overflow_cond overflow
 
@@ -321,7 +321,7 @@ class Crystal::CodeGenVisitor
     # arg < min_value || arg > max_value
     or(
       codegen_binary_op_lt(arg_type, target_type, arg, int(min_value, target_type)),
-      codegen_binary_op_gt(arg_type, target_type, arg, int(max_value, target_type))
+      codegen_binary_op_gt(arg_type, target_type, arg, int(max_value, target_type)),
     )
   end
 
@@ -340,7 +340,7 @@ class Crystal::CodeGenVisitor
     # !(arg >= min_value) || arg > max_value
     or(
       builder.fcmp(LLVM::RealPredicate::ULT, arg, int_to_float(target_type, arg_type, int(min_value, target_type))),
-      builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type)))
+      builder.fcmp(LLVM::RealPredicate::OGT, arg, int_to_float(target_type, arg_type, int(max_value, target_type))),
     )
   end
 
@@ -394,9 +394,9 @@ class Crystal::CodeGenVisitor
     and(
       or(
         builder.fcmp(LLVM::RealPredicate::OLT, arg, float(min_value, arg_type)),
-        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type))
+        builder.fcmp(LLVM::RealPredicate::OGT, arg, float(max_value, arg_type)),
       ),
-      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg))
+      builder.fcmp(LLVM::RealPredicate::ONE, arg, builder.fmul(float(2, arg_type), arg)),
     )
   end
 
@@ -494,13 +494,13 @@ class Crystal::CodeGenVisitor
           # x < 0 || x < x.class.new(y)
           or(
             builder.icmp(LLVM::IntPredicate::SLT, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::SLT, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::SLT, p1, extend_int(t2, t1, p2)),
           )
         else
           # x < 0 || y.class.new(x) < y
           or(
             builder.icmp(LLVM::IntPredicate::SLT, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::ULT, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::ULT, extend_int(t1, t2, p1), p2),
           )
         end
       else
@@ -509,13 +509,13 @@ class Crystal::CodeGenVisitor
           # y >= 0 && y.class.new(x) < y
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::SLT, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::SLT, extend_int(t1, t2, p1), p2),
           )
         else
           # y >= 0 && x < x.class.new(y)
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::ULT, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::ULT, p1, extend_int(t2, t1, p2)),
           )
         end
       end
@@ -532,13 +532,13 @@ class Crystal::CodeGenVisitor
           # x <= 0 || x <= x.class.new(y)
           or(
             builder.icmp(LLVM::IntPredicate::SLE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::SLE, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::SLE, p1, extend_int(t2, t1, p2)),
           )
         else
           # x <= 0 || y.class.new(x) <= y
           or(
             builder.icmp(LLVM::IntPredicate::SLE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::ULE, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::ULE, extend_int(t1, t2, p1), p2),
           )
         end
       else
@@ -547,13 +547,13 @@ class Crystal::CodeGenVisitor
           # y >= 0 && y.class.new(x) <= y
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::SLE, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::SLE, extend_int(t1, t2, p1), p2),
           )
         else
           # y >= 0 && x <= x.class.new(y)
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::ULE, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::ULE, p1, extend_int(t2, t1, p2)),
           )
         end
       end
@@ -570,13 +570,13 @@ class Crystal::CodeGenVisitor
           # x >= 0 && x > x.class.new(y)
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::SGT, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::SGT, p1, extend_int(t2, t1, p2)),
           )
         else
           # x >= 0 && y.class.new(x) > y
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::UGT, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::UGT, extend_int(t1, t2, p1), p2),
           )
         end
       else
@@ -585,13 +585,13 @@ class Crystal::CodeGenVisitor
           # y < 0 || y.class.new(x) > y
           or(
             builder.icmp(LLVM::IntPredicate::SLT, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::SGT, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::SGT, extend_int(t1, t2, p1), p2),
           )
         else
           # y < 0 || x > x.class.new(y)
           or(
             builder.icmp(LLVM::IntPredicate::SLT, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::UGT, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::UGT, p1, extend_int(t2, t1, p2)),
           )
         end
       end
@@ -608,13 +608,13 @@ class Crystal::CodeGenVisitor
           # x >= 0 && x >= x.class.new(y)
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::SGE, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::SGE, p1, extend_int(t2, t1, p2)),
           )
         else
           # x >= 0 && y.class.new(x) >= y
           and(
             builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
-            builder.icmp(LLVM::IntPredicate::UGE, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::UGE, extend_int(t1, t2, p1), p2),
           )
         end
       else
@@ -623,13 +623,13 @@ class Crystal::CodeGenVisitor
           # y <= 0 || y.class.new(x) >= y
           or(
             builder.icmp(LLVM::IntPredicate::SLE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::SGE, extend_int(t1, t2, p1), p2)
+            builder.icmp(LLVM::IntPredicate::SGE, extend_int(t1, t2, p1), p2),
           )
         else
           # y <= 0 || x >= x.class.new(y)
           or(
             builder.icmp(LLVM::IntPredicate::SLE, p2, int(0, t2)),
-            builder.icmp(LLVM::IntPredicate::UGE, p1, extend_int(t2, t1, p2))
+            builder.icmp(LLVM::IntPredicate::UGE, p1, extend_int(t2, t1, p2)),
           )
         end
       end
@@ -645,13 +645,13 @@ class Crystal::CodeGenVisitor
       # x >= 0 && x == y
       and(
         builder.icmp(LLVM::IntPredicate::SGE, p1, p1.type.const_int(0)),
-        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2),
       )
     else # t1.unsigned? && t2.signed?
       # y >= 0 && x == y
       and(
         builder.icmp(LLVM::IntPredicate::SGE, p2, p2.type.const_int(0)),
-        builder.icmp(LLVM::IntPredicate::EQ, p1, p2)
+        builder.icmp(LLVM::IntPredicate::EQ, p1, p2),
       )
     end
   end
@@ -665,13 +665,13 @@ class Crystal::CodeGenVisitor
       # x < 0 || x != y
       or(
         builder.icmp(LLVM::IntPredicate::SLT, p1, p1.type.const_int(0)),
-        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2),
       )
     else # t1.unsigned? && t2.signed?
       # y < 0 || x != y
       or(
         builder.icmp(LLVM::IntPredicate::SLT, p2, p2.type.const_int(0)),
-        builder.icmp(LLVM::IntPredicate::NE, p1, p2)
+        builder.icmp(LLVM::IntPredicate::NE, p1, p2),
       )
     end
   end
