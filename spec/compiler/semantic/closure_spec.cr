@@ -747,7 +747,7 @@ describe "Semantic: closure" do
       end
 
       a = 1
-      LibC.foo(Proc(Void).new do
+      LibC.foo(Proc(Nil).new do
         a
       end)
       CRYSTAL

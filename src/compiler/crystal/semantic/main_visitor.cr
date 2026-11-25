@@ -1034,13 +1034,6 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
-      # Variables that we don't want to get their type merged
-      # with local variables before the block occurrence:
-      # mainly block arguments (locally override vars), but
-      # also block arguments that result from tuple unpacking
-      # that the parser currently generated as local assignments.
-      ignored_vars_after_block = nil
-
       meta_vars = @meta_vars.dup
 
       node.args.each do |arg|
@@ -1066,6 +1059,7 @@ module Crystal
         unpacks.each_value do |unpack|
           handle_unpacked_block_argument(node, unpack, meta_vars, before_block_vars, ignored_vars_after_block)
         end
+        node.vars_to_ignore = ignored_vars_after_block
       end
 
       @block_nest += 1
@@ -1098,9 +1092,8 @@ module Crystal
       @block_nest -= 1
 
       # Check re-assigned variables and bind them.
-      ignored_vars_after_block ||= node.args
-      bind_vars block_visitor.vars, node.vars, ignored_vars_after_block
-      bind_vars block_visitor.vars, node.after_vars, ignored_vars_after_block
+      bind_vars block_visitor.vars, node.vars, node.vars_to_ignore
+      bind_vars block_visitor.vars, node.after_vars, node.vars_to_ignore
 
       # Special vars, even if only assigned inside a block,
       # must be inside the def's metavars.
@@ -1148,11 +1141,37 @@ module Crystal
         from_vars.each do |name, block_var|
           unless ignored.try &.find { |arg| arg.name == name }
             to_var = to_vars[name]?
-            if to_var && !to_var.same?(block_var)
-              to_var.try &.bind_to(block_var)
+            if to_var && !forwards_bound_var?(block_var, to_var)
+              to_var.bind_to(block_var)
             end
           end
         end
+      end
+    end
+
+    # A nested call can leave a chain of copies of an unchanged local.
+    # Binding such a copy back to its source creates a cycle that retains
+    # the old type when the source narrows.
+    private def forwards_bound_var?(from : MetaVar, to : MetaVar)
+      # Uses Floyd's cycle-finding with 2 cursors: current advances on every
+      # iteration, slow advances every other iteration; there's a cycle if the
+      # cursors meet after advancing.
+      slow = current = from
+      advance_slow = false
+
+      loop do
+        return true if current.same?(to) || to.dependencies.any? &.same?(current)
+        return false if current.nil_if_read? || current.freeze_type || current.dependencies.size != 1
+
+        source = current.dependencies.first
+        return false unless source.is_a?(MetaVar)
+
+        # cycle detection
+        current = source
+        slow = slow.dependencies.first.as(MetaVar) if advance_slow
+        return false if current.same?(slow)
+
+        advance_slow = !advance_slow
       end
     end
 
@@ -2377,7 +2396,7 @@ module Crystal
 
         block.break.bind_to(node_exp_or_nil_literal(node))
 
-        bind_vars @vars, block.after_vars, block.args
+        bind_vars @vars, block.after_vars, block.vars_to_ignore
       elsif target_while = @while_stack.last?
         node.target = target_while
 
@@ -2408,7 +2427,7 @@ module Crystal
         block.bind_to(node_exp_or_nil_literal(node))
 
         bind_vars @vars, block.vars
-        bind_vars @vars, block.after_vars, block.args
+        bind_vars @vars, block.after_vars, block.vars_to_ignore
       elsif target_while = @while_stack.last?
         node.target = target_while
 
@@ -3009,8 +3028,7 @@ module Crystal
         if all_rescue_vars.empty?
           all_rescue_vars = nil
         else
-          # Otherwise, merge all types that resulted from all rescue/else blocks
-          merge_rescue_vars exception_handler_vars, all_rescue_vars
+          merge_rescue_vars after_exception_handler_vars, all_rescue_vars
 
           # And then accept the ensure part
           with_block_kind :ensure do

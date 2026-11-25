@@ -117,6 +117,9 @@ Lint/UselessAssign:
     - scripts/generate_*
     # BUG: https://github.com/crystal-ameba/ameba/issues/623
     - scripts/github-changelog.cr
+    # TODO(ameba 1.7): Disable with inline directives
+    - src/compiler/crystal/interpreter/disassembler.cr
+    - src/http/content.cr
 
 # Metrics
 # =========================
