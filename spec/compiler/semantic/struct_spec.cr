@@ -227,7 +227,7 @@ describe "Semantic: struct" do
     mod.types["Foo"].implements?(mod.generic_module("Base", mod.types["Foo"].virtual_type!, NumberLiteral.new("9", :i32))).should be_false
   end
 
-  it "registers instances of built-in generics under Value, not Struct (#17948)" do
+  it "registers instances of built-in generics as subclasses of Value or Struct (#17948)" do
     mod = semantic(<<-CRYSTAL).program
       Pointer(Int32)
       StaticArray(Int32, 1)
