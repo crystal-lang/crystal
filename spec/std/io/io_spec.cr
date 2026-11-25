@@ -117,6 +117,25 @@ describe IO do
         end
       end
     end
+
+    {% if flag?(:win32) %}
+      it "can read again when a pipe read races its timeout" do
+        IO.pipe do |read, write|
+          100.times do
+            spawn { write.write_byte(42_u8) }
+
+            read.read_timeout = 100.microseconds
+            byte = begin
+              read.read_byte
+            rescue IO::TimeoutError
+              read.read_timeout = 1.second
+              read.read_byte
+            end
+            byte.should eq(42_u8)
+          end
+        end
+      end
+    {% end %}
   end
 
   it_iterates "#each_line", ["hello", "bye"], SimpleIOMemory.new("hello\nbye\n").each_line

@@ -78,6 +78,28 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "discards cast arguments when inlining an instance variable read" do
+      interpret(<<-CRYSTAL).should eq(42)
+        class A
+          def value(unused : Int32)
+            0
+          end
+        end
+
+        class B
+          def initialize(@value : Int32)
+          end
+
+          def value(unused : Int32)
+            @value
+          end
+        end
+
+        receiver = 1 == 1 ? B.new(42) : A.new
+        receiver.value(9)
+      CRYSTAL
+    end
+
     it "does dispatch on receiver type and argument type" do
       interpret(<<-CRYSTAL).should eq(42 + 'b'.ord)
         struct Char

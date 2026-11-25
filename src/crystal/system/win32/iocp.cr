@@ -166,6 +166,7 @@ struct Crystal::System::IOCP
   abstract class OverlappedOperation
     enum State
       STARTED
+      WAITING_FOR_PACKET
       DONE
     end
 
@@ -175,7 +176,10 @@ struct Crystal::System::IOCP
     @overlapped = LibC::OVERLAPPED.new
     getter iocp_handle : LibC::HANDLE = LibC::INVALID_HANDLE_VALUE
     @fiber = ::Fiber.current
-    @state : State = :started
+
+    # Completion can arrive as soon as the operation is submitted.
+    @cancelation_token = ::Fiber.current.arm_cancelation
+    @state = Atomic(State).new(:started)
 
     def self.run(*args, **opts, &)
       operation_storage = uninitialized ReferenceStorage(self)
@@ -194,24 +198,27 @@ struct Crystal::System::IOCP
       pointerof(@overlapped)
     end
 
-    def done!
-      @state = :done
+    def complete : ::Fiber?
+      owns_wakeup = @fiber.try_cancel?(@cancelation_token)
+
+      # Once DONE is visible, the operation's stack storage can be released.
+      previous = @state.swap(:done, :acquire_release)
+
+      @fiber if owns_wakeup || previous.waiting_for_packet?
     end
 
     private def wait_for_completion(timeout)
       if timeout
-        evloop = EventLoop.current.as(EventLoop::IOCP)
+        result = ::Fiber.timeout(timeout, @cancelation_token)
+        return if result.canceled? || @state.get(:acquire).done?
 
-        if evloop.timeout(timeout)
-          # By the time the fiber was resumed, the operation may have completed
-          # concurrently.
-          return if @state.done?
-          return unless try_cancel
-
-          # We cancelled the operation or failed to cancel it (e.g. race
-          # condition), we must suspend the fiber again until the completion
-          # port is notified of the actual result.
-          ::Fiber.suspend
+        begin
+          try_cancel
+        ensure
+          # Even ERROR_NOT_FOUND can leave a completion packet in the port.
+          # Keep the OVERLAPPED and its buffers alive until that packet is consumed.
+          _, waiting = @state.compare_and_set(:started, :waiting_for_packet, :acquire_release, :acquire)
+          ::Fiber.suspend if waiting
         end
       else
         ::Fiber.suspend

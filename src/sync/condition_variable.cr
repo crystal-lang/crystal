@@ -45,6 +45,26 @@ module Sync
       @lock.wait pointerof(@cv)
     end
 
+    # Blocks the calling fiber until the condition variable is signaled or
+    # *deadline* is reached.
+    #
+    # Yields on timeout, otherwise simply returns.
+    #
+    # See `#wait` for details.
+    def wait(deadline : Time::Instant, &) : Nil
+      yield if @lock.wait(pointerof(@cv), deadline)
+    end
+
+    # Blocks the calling fiber until the condition variable is signaled or
+    # *duration* has been reached.
+    #
+    # Yields on timeout, otherwise simply returns.
+    #
+    # See `#wait` for details.
+    def wait(duration : Time::Span, &) : Nil
+      yield if @lock.wait(pointerof(@cv), Time.instant + duration)
+    end
+
     # Wakes up one waiting fiber.
     #
     # For `RWLock` and `Shared(T)` all readers can acquire, thus multiple

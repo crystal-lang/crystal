@@ -4,14 +4,14 @@ struct Crystal::EventLoop::IoUring::Event
   enum Type
     Async
     Sleep
-    SelectTimeout
+    Timeout
   end
 
   getter type : Type
   getter! fiber : Fiber
   property! res : Int32
   property! wake_at : Time::Instant?
-  property timeout_select_action : Channel::TimeoutAction?
+  property! cancelation_token : Fiber::CancelationToken
 
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   property? timed_out : Bool = false

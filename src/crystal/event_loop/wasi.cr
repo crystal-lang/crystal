@@ -25,9 +25,8 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
     System::Thread.sleep(duration)
   end
 
-  # Creates a timeout_event.
-  def create_timeout_event(fiber) : Crystal::EventLoop::Event
-    raise NotImplementedError.new("Crystal::Wasi::EventLoop.create_timeout_event")
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    raise NotImplementedError.new("Crystal::Wasi::EventLoop#timeout")
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}
@@ -226,21 +225,5 @@ class Crystal::EventLoop::Wasi < Crystal::EventLoop
 
   private def evented_close(io)
     # nothing to do (yet)
-  end
-end
-
-struct Crystal::EventLoop::Wasi::Event
-  include Crystal::EventLoop::Event
-
-  def add(timeout : Time::Span, timeout_select_action : Channel::TimeoutAction? = nil) : Nil
-  end
-
-  def add(timeout : Nil) : Nil
-  end
-
-  def free : Nil
-  end
-
-  def delete
   end
 end

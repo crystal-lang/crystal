@@ -39,12 +39,17 @@ class Channel(T)
   end
 
   private module SenderReceiverCloseAction
+    property cancelation_token : Fiber::CancelationToken = Fiber::CancelationToken.unarmed
+
+    def claim? : Bool
+      @cancelation_token.unarmed? || fiber.try_cancel?(@cancelation_token)
+    end
+
     def close
+      return unless claim?
+
       self.state = DeliveryState::Closed
-      _select_context = self.select_context
-      if _select_context.nil? || _select_context.try_trigger
-        self.fiber.enqueue
-      end
+      self.fiber.enqueue
     end
   end
 
@@ -55,7 +60,6 @@ class Channel(T)
     property fiber : Fiber
     property data : T
     property state : DeliveryState
-    property select_context : SelectContext(Nil)?
 
     def initialize
       @fiber = uninitialized Fiber
@@ -71,7 +75,6 @@ class Channel(T)
     property fiber : Fiber
     property data : T
     property state : DeliveryState
-    property select_context : SelectContext(T)?
 
     def initialize
       @fiber = uninitialized Fiber
@@ -273,29 +276,15 @@ class Channel(T)
 
   private def dequeue_receiver
     while receiver_ptr = @receivers.shift?
-      select_context = receiver_ptr.value.select_context
-      if select_context && !select_context.try_trigger
-        receiver_ptr.value.state = DeliveryState::Delivered
-        next
-      end
-
-      break
+      break if receiver_ptr.value.claim?
     end
-
     receiver_ptr
   end
 
   private def dequeue_sender
     while sender_ptr = @senders.shift?
-      select_context = sender_ptr.value.select_context
-      if select_context && !select_context.try_trigger
-        sender_ptr.value.state = DeliveryState::Delivered
-        next
-      end
-
-      break
+      break if sender_ptr.value.claim?
     end
-
     sender_ptr
   end
 
@@ -354,7 +343,7 @@ class Channel(T)
 
   private class StrictReceiveAction(T)
     include SelectAction(T)
-    property receiver : Receiver(T)
+    @receiver : Receiver(T)
 
     def initialize(@channel : Channel(T))
       @receiver = Receiver(T).new
@@ -374,25 +363,18 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T)) : Nil
-      @receiver.fiber = Fiber.current
-      @receiver.select_context = context
+    def wait(fiber : Fiber, token : Fiber::CancelationToken) : Nil
+      @receiver.fiber = fiber
+      @receiver.cancelation_token = token
       @channel.@receivers.push pointerof(@receiver)
     end
 
-    def wait_result_impl(context : SelectContext(T))
-      case @receiver.state
-      in .delivered?
-        context.action.result
-      in .closed?
-        raise ClosedError.new
-      in .none?
-        raise "BUG: StrictReceiveAction.wait_result_impl called with DeliveryState::None"
-      end
+    def delivery_state : DeliveryState
+      @receiver.state
     end
 
-    def unwait_impl(context : SelectContext(T))
-      if !@channel.closed? && @receiver.state.none?
+    def unwait : Nil
+      if !@channel.closed? && @receiver.next
         @channel.@receivers.delete pointerof(@receiver)
       end
     end
@@ -416,7 +398,7 @@ class Channel(T)
 
   private class LooseReceiveAction(T)
     include SelectAction(T)
-    property receiver : Receiver(T)
+    @receiver : Receiver(T)
 
     def initialize(@channel : Channel(T))
       @receiver = Receiver(T).new
@@ -436,25 +418,18 @@ class Channel(T)
       @receiver.data
     end
 
-    def wait(context : SelectContext(T)) : Nil
-      @receiver.fiber = Fiber.current
-      @receiver.select_context = context
+    def wait(fiber : Fiber, token : Fiber::CancelationToken) : Nil
+      @receiver.fiber = fiber
+      @receiver.cancelation_token = token
       @channel.@receivers.push pointerof(@receiver)
     end
 
-    def wait_result_impl(context : SelectContext(T))
-      case @receiver.state
-      in .delivered?
-        context.action.result
-      in .closed?
-        nil
-      in .none?
-        raise "BUG: LooseReceiveAction.wait_result_impl called with DeliveryState::None"
-      end
+    def delivery_state : DeliveryState
+      @receiver.state
     end
 
-    def unwait_impl(context : SelectContext(T))
-      if !@channel.closed? && @receiver.state.none?
+    def unwait : Nil
+      if !@channel.closed? && @receiver.next
         @channel.@receivers.delete pointerof(@receiver)
       end
     end
@@ -478,7 +453,7 @@ class Channel(T)
 
   private class SendAction(T)
     include SelectAction(Nil)
-    property sender : Sender(T)
+    @sender : Sender(T)
 
     def initialize(@channel : Channel(T), value : T)
       @sender = Sender(T).new
@@ -493,25 +468,18 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil)) : Nil
-      @sender.fiber = Fiber.current
-      @sender.select_context = context
+    def wait(fiber : Fiber, token : Fiber::CancelationToken) : Nil
+      @sender.fiber = fiber
+      @sender.cancelation_token = token
       @channel.@senders.push pointerof(@sender)
     end
 
-    def wait_result_impl(context : SelectContext(Nil))
-      case @sender.state
-      in .delivered?
-        context.action.result
-      in .closed?
-        raise ClosedError.new
-      in .none?
-        raise "BUG: SendAction.wait_result_impl called with DeliveryState::None"
-      end
+    def delivery_state : DeliveryState
+      @sender.state
     end
 
-    def unwait_impl(context : SelectContext(Nil))
-      if !@channel.closed? && @sender.state.none?
+    def unwait : Nil
+      if !@channel.closed? && @sender.next
         @channel.@senders.delete pointerof(@sender)
       end
     end

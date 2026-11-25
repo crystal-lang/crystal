@@ -198,4 +198,107 @@ describe Sync::ConditionVariable do
     m.unlock_write
     m.unlock_write # musn't raise (can't unlock Sync::RWLock that isn't locked)
   end
+
+  describe "#wait with a deadline" do
+    it "expires at a future deadline and reacquires the lock" do
+      lock = Sync::Mutex.new
+      cv = Sync::ConditionVariable.new(lock)
+
+      lock.synchronize do
+        deadline = Time.instant + 10.milliseconds
+        expired = false
+        cv.wait(deadline) { expired = true }
+        expired.should be_true
+        Time.instant.should be >= deadline
+      end
+    end
+
+    it "expires at a future deadline and reacquires a read lock" do
+      lock = Sync::RWLock.new
+      cv = Sync::ConditionVariable.new(lock)
+
+      lock.read do
+        deadline = Time.instant + 10.milliseconds
+        expired = false
+        cv.wait(deadline) { expired = true }
+        expired.should be_true
+        Time.instant.should be >= deadline
+      end
+    end
+
+    it "expires and restores a reentrant mutex" do
+      lock = Sync::Mutex.new(:reentrant)
+      cv = Sync::ConditionVariable.new(lock)
+
+      lock.synchronize do
+        lock.synchronize do
+          expired = false
+          cv.wait(Time.instant - 1.second) { expired = true }
+          expired.should be_true
+        end
+      end
+    end
+
+    it "returns success when signaled before the deadline" do
+      lock = Sync::Mutex.new
+      cv = Sync::ConditionVariable.new(lock)
+
+      lock.synchronize do
+        # expired wait
+        expired = false
+        cv.wait(Time.instant) { expired = true }
+        expired.should be_true
+
+        spawn do
+          # signal must wake the blocked wait (below) not the expired wait (above)
+          lock.synchronize { cv.signal }
+        end
+
+        # blocked wait
+        expired = false
+        cv.wait(Time.instant + 1.second) { expired = true }
+        expired.should be_false
+      end
+    end
+
+    it "returns success if broadcast transfers a waiter before expiry" do
+      mutex = Sync::Mutex.new
+      cv = Sync::ConditionVariable.new(mutex)
+      ready = Channel(Time::Instant).new
+      result = Channel(Bool).new(1)
+      returned = WaitGroup.new(1)
+
+      spawn do
+        mutex.synchronize do
+          deadline = Time.instant + 100.milliseconds
+          ready.send(deadline)
+
+          expired = false
+          cv.wait(deadline) { expired = true }
+          result.send(expired)
+        end
+        returned.done
+      end
+
+      deadline = ready.receive
+
+      mutex.synchronize do
+        cv.broadcast
+
+        # Keep the mutex held past the deadline after transferring the waiter.
+        sleep(deadline.duration_since(Time.instant) + 10.milliseconds)
+
+        select
+        when result.receive
+          fail "wait returned before reacquiring the lock"
+        else
+          # skip
+        end
+      end
+
+      result.receive.should be_false
+
+      returned.wait
+    end
+  end
 end

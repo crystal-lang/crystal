@@ -2,45 +2,6 @@ class Channel(T)
   # :nodoc:
   record NotReady
 
-  private enum SelectState
-    None   = 0
-    Active = 1
-    Done   = 2
-  end
-
-  private class SelectContextSharedState
-    @state : Atomic(SelectState)
-
-    def initialize(value : SelectState)
-      @state = Atomic(SelectState).new(value)
-    end
-
-    def compare_and_set(cmp : SelectState, new : SelectState) : {SelectState, Bool}
-      @state.compare_and_set(cmp, new)
-    end
-  end
-
-  private class SelectContext(S)
-    @state : SelectContextSharedState
-    property action : SelectAction(S)
-    @activated = false
-
-    def initialize(@state, @action : SelectAction(S))
-    end
-
-    def activated? : Bool
-      @activated
-    end
-
-    def try_trigger : Bool
-      _, succeed = @state.compare_and_set(:active, :done)
-      if succeed
-        @activated = true
-      end
-      succeed
-    end
-  end
-
   private enum DeliveryState
     None
     Delivered
@@ -115,25 +76,51 @@ class Channel(T)
       return ops.size, NotReady.new
     end
 
-    # Because `channel#close` may clean up a long list, `select_context.try_trigger` may
-    # be called after the select return. In order to prevent invalid address access,
-    # the state is allocated in the heap.
-    shared_state = SelectContextSharedState.new(SelectState::Active)
-    contexts = ops.map &.create_context_and_wait(shared_state)
+    fiber = Fiber.current
+    cancelation_token = fiber.arm_cancelation
+    timeout = nil
+    timeout_index = 0
 
-    each_skip_duplicates(ops_locks, &.unlock)
-    Fiber.suspend
+    ops.each_with_index do |op, index|
+      next unless duration = op.wait(fiber, cancelation_token)
 
-    contexts.each_with_index do |context, index|
-      op = ops[index]
-      op.lock
-      op.unwait(context)
-      op.unlock
+      # There can be multiple timeout actions, pick the one expiring the soonest.
+      if !timeout || duration < timeout
+        timeout = duration
+        timeout_index = index
+      end
     end
 
-    contexts.each_with_index do |context, index|
-      if context.activated?
-        return index, ops[index].wait_result(context)
+    each_skip_duplicates(ops_locks, &.unlock)
+
+    # A channel may already own the wakeup. Still suspend to consume its enqueue.
+    expired = false
+    begin
+      if timeout
+        expired = Fiber.timeout(timeout, cancelation_token).expired?
+      else
+        Fiber.suspend
+      end
+    ensure
+      ops.each do |op|
+        op.lock
+        op.unwait
+        op.unlock
+      end
+    end
+
+    if expired
+      return timeout_index, ops[timeout_index].result
+    end
+
+    ops.each_with_index do |op, index|
+      case op.delivery_state
+      in .delivered?
+        return index, op.result
+      in .closed?
+        return index, op.default_result
+      in .none?
+        # skip
       end
     end
 

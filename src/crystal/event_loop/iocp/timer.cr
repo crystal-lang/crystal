@@ -6,7 +6,6 @@ struct Crystal::EventLoop::IOCP::Timer
   enum Type
     Sleep
     Timeout
-    SelectTimeout
   end
 
   getter type : Type
@@ -19,9 +18,10 @@ struct Crystal::EventLoop::IOCP::Timer
   # trigger. Nil for IO events without a timeout.
   getter! wake_at : Time::Instant
 
+  property! cancelation_token : Fiber::CancelationToken
+
   # True if an IO event has timed out (i.e. we're past `#wake_at`).
   getter? timed_out : Bool = false
-  property timeout_select_action : Channel::TimeoutAction?
 
   # The event can be added to the `Timers` list.
   include PointerPairingHeap::Node

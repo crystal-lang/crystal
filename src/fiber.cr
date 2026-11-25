@@ -58,7 +58,6 @@ class Fiber
 
   @context : Context
   @stack : Stack
-  @resume_event : Crystal::EventLoop::Event?
 
   # The name of the fiber, used as internal reference.
   property name : String?
@@ -188,9 +187,6 @@ class Fiber
     # Remove the current fiber from the linked list
     Fiber.inactive(self)
 
-    # Delete the resume event if it was used by `yield` or `sleep`
-    @resume_event.try &.free
-
     # Additional cleanup (avoid stale references)
     @exec_recursive_hash = nil
     @exec_recursive_clone_hash = nil
@@ -282,8 +278,74 @@ class Fiber
   end
 
   # :nodoc:
-  def resume_event : Crystal::EventLoop::Event
-    @resume_event ||= Crystal::EventLoop.current.create_resume_event(self)
+  struct CancelationToken
+    protected getter value : UInt32
+
+    protected def initialize(@value : UInt32)
+    end
+
+    # Can be used to avoid a nilable token. It will never resolve.
+    def self.unarmed : self
+      new(0_u32)
+    end
+
+    def unarmed? : Bool
+      @value.zero?
+    end
+  end
+
+  # :nodoc:
+  enum TimeoutResult
+    EXPIRED
+    CANCELED
+  end
+
+  # :nodoc:
+  def self.timeout(duration : Time::Span, token : CancelationToken) : TimeoutResult
+    timeout(Time.instant + duration, token)
+  end
+
+  # :nodoc:
+  def self.timeout(deadline : Time::Instant, token : CancelationToken) : TimeoutResult
+    raise ArgumentError.new("Timeout requires an armed cancelation token") if token.unarmed?
+
+    expired = Crystal::EventLoop.current.timeout(deadline, token)
+    expired ? TimeoutResult::EXPIRED : TimeoutResult::CANCELED
+  end
+
+  private CANCELATION_FLAG    = 1_u32 # bit 1 states if the timeout is set or unset
+  private CANCELATION_COUNTER = 2_u32 # bits 2..32 is a counter to avoid ABA issues
+  @cancelation = Atomic(UInt32).new(0_u32)
+
+  # :nodoc:
+  #
+  # Creates a new cancelation token.
+  # Invalidates all previously created cancelation tokens.
+  def arm_cancelation : CancelationToken
+    # Increments the counter to avoid ABA issues with parallel threads trying to
+    # resolve the timer while the timer was unset then set again (new timer).
+    # Since the current fiber is the only one that can set the timer, we can
+    # merely set the atomic (no need for CAS).
+    value = (@cancelation.get(:relaxed) | CANCELATION_FLAG) &+ CANCELATION_COUNTER
+    @cancelation.set(value, :relaxed)
+    CancelationToken.new(value)
+  end
+
+  # :nodoc:
+  #
+  # Tries to resolve the cancelation previously armed on `Fiber` using the
+  # cancelation *token* created by `#arm_cancelation`.
+  #
+  # Returns `true` on success; the caller owns the fiber and must eventually
+  # enqueue it. Failing to do so means that the fiber will never be resumed.
+  #
+  # Returns `false` on failure; the caller must skip the fiber. Trying to
+  # enqueue the fiber would lead to resume the fiber twice!
+  def try_cancel?(token : CancelationToken) : Bool
+    return false if token.unarmed?
+
+    _, success = @cancelation.compare_and_set(token.value, token.value & ~CANCELATION_FLAG, :relaxed, :relaxed)
+    success
   end
 
   # Yields to the scheduler and allows it to swap execution to other

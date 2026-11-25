@@ -143,8 +143,6 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     Crystal.trace :evloop, "run", blocking: blocking ? 1 : 0
 
     overlapped_entries = uninitialized LibC::OVERLAPPED_ENTRY[64]
-    events = uninitialized FiberEvent[64]
-    size = 0
 
     removed = @iocp.wait_queued_completions(overlapped_entries.to_slice, run_timeout(blocking))
 
@@ -152,21 +150,10 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       overlapped_entry = overlapped_entries.to_unsafe + i
       next unless fiber = handle_event(overlapped_entry)
 
-      if (event = fiber.@resume_event) && event.wake_at?
-        events[size] = event
-        size += 1
-      end
-
       yield fiber
     end
 
     @timers_mutex.synchronize do
-      # cancel the timeout of completed operations
-      events.to_slice[0...size].each do |event|
-        @timers.delete(pointerof(event.@timer))
-        event.clear
-      end
-
       # run expired timers
       @timers.dequeue_ready do |timer|
         process_timer(timer) { |fiber| yield fiber }
@@ -186,8 +173,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
 
       Crystal.trace :evloop, "operation", op: operation.class.name, fiber: operation.@fiber
 
-      operation.done!
-      operation.@fiber
+      operation.complete
     else
       # other kind of completion event
       completion_key = ptr.as(System::IOCP::CompletionKey)
@@ -224,12 +210,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     fiber = timer.value.fiber
 
     case timer.value.type
-    in .sleep?, .timeout?
+    in .sleep?
       timer.value.timed_out!
-    in .select_timeout?
-      return unless select_action = timer.value.timeout_select_action
-      return unless select_action.time_expired?
-      timer.value.wake_at = nil
+    in .timeout?
+      return unless fiber.try_cancel?(timer.value.cancelation_token)
+      timer.value.timed_out!
     end
 
     yield fiber
@@ -248,10 +233,11 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     end
   end
 
-  protected def delete_timer(timer : Pointer(Timer)) : Nil
+  protected def delete_timer(timer : Pointer(Timer)) : Bool
     @timers_mutex.synchronize do
-      _, was_next_ready = @timers.delete(timer)
+      dequeued, was_next_ready = @timers.delete(timer)
       rearm_waitable_timer(@timers.next_ready?, interruptible: false) if was_next_ready
+      dequeued
     end
   end
 
@@ -290,30 +276,18 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
     raise "BUG: #{timer.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
-  # Suspend the current fiber for *duration* and returns true if the timer
-  # expired and false if the fiber was resumed early.
-  #
-  # Specific to IOCP to handle IO timeouts.
-  def timeout(duration : Time::Span) : Bool
-    event = Fiber.current.resume_event
-    event.add(duration)
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    # allocate *timer* in GC HEAP as it may outlive this function
+    timer = Pointer(Timer).malloc
+    timer.value.initialize(:timeout, Fiber.current)
+    timer.value.wake_at = time
+    timer.value.cancelation_token = token
+    add_timer(timer)
 
     Fiber.suspend
 
-    if event.timed_out?
-      true
-    else
-      event.delete
-      false
-    end
-  end
-
-  def create_resume_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:timeout, fiber)
-  end
-
-  def create_timeout_event(fiber : Fiber) : EventLoop::Event
-    FiberEvent.new(:select_timeout, fiber)
+    delete_timer(timer) unless timer.value.timed_out?
+    timer.value.timed_out?
   end
 
   def pipe(read_blocking : Bool?, write_blocking : Bool?) : {IO::FileDescriptor, IO::FileDescriptor}

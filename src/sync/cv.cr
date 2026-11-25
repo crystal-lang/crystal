@@ -34,39 +34,70 @@ module Sync
       @waiters = Crystal::PointerLinkedList(Waiter).new
     end
 
-    # TODO: wait until deadline
     def wait(mu : Pointer(MU)) : Nil
       waiter = Waiter.new(waiter_type(mu), mu)
-      waiter.waiting!
+      wait_impl(pointerof(waiter), mu) { waiter.wait }
+    end
 
+    def wait(mu : Pointer(MU), deadline : Time::Instant) : Bool
+      timed_out = false
+      token = Fiber.current.arm_cancelation
+      waiter = Waiter.new(waiter_type(mu), mu, token)
+
+      wait_impl(pointerof(waiter), mu) do
+        result = Fiber.timeout(deadline, token)
+
+        if result.expired?
+          timed_out = remove_timed_out_waiter(pointerof(waiter))
+          waiter.wait_after_timeout unless timed_out
+        end
+      end
+
+      timed_out
+    end
+
+    private def wait_impl(waiter, mu, &)
       old_word = acquire_spinlock(set: NON_EMPTY)
-      @waiters.push(pointerof(waiter))
+      @waiters.push(waiter)
       release_spinlock(old_word | NON_EMPTY)
 
       # release mu
-      if waiter.writer?
+      if waiter.value.writer?
         mu.value.unlock
       else
         mu.value.runlock
       end
 
-      # wait...
-      waiter.wait
-      # ...resumed
+      # suspend...
+      yield
 
-      if cv_mu = waiter.cv_mu
+      if cv_mu = waiter.value.cv_mu
         # waiter was woken from cv, and must re-acquire mu
-        if waiter.writer?
+        if waiter.value.writer?
           cv_mu.value.lock
         else
           cv_mu.value.rlock
         end
       else
         # waiter was moved to mu's queue, then awoken from mu and is thus a
-        # designated waker, but it doesn't locked yet and must enter the lock
+        # designated waker, but it hasn't locked yet and must enter the lock
         # loop, and clear the DESIGNATED_WAKER flag
-        mu.value.lock_slow(pointerof(waiter), clear: MU::DESIGNATED_WAKER)
+        mu.value.lock_slow(waiter, clear: MU::DESIGNATED_WAKER)
       end
+    end
+
+    private def remove_timed_out_waiter(waiter) : Bool
+      old_word = acquire_spinlock
+      removed = waiter.value.queued_on_cv?
+
+      if removed
+        @waiters.delete(waiter)
+        waiter.value.queued_on_cv = false
+        old_word &= ~NON_EMPTY if @waiters.empty?
+      end
+
+      release_spinlock(old_word)
+      removed
     end
 
     def signal : Nil
@@ -79,6 +110,7 @@ module Sync
       old_word = acquire_spinlock
 
       if first_waiter = @waiters.shift?
+        first_waiter.value.queued_on_cv = false
         wake.push(first_waiter)
 
         if first_waiter.value.reader?
@@ -96,6 +128,7 @@ module Sync
             end
 
             @waiters.delete(waiter)
+            waiter.value.queued_on_cv = false
             wake.push(waiter)
           end
         end
@@ -121,6 +154,7 @@ module Sync
 
       # wake all waiters
       while waiter = @waiters.shift?
+        waiter.value.queued_on_cv = false
         all_readers = false if waiter.value.writer?
         wake.push(waiter)
       end

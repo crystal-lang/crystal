@@ -194,6 +194,14 @@ module Sync
     end
 
     protected def wait(cv : Pointer(CV)) : Nil
+      around_wait { cv.value.wait pointerof(@mu) }
+    end
+
+    protected def wait(cv : Pointer(CV), deadline : Time::Instant) : Bool
+      around_wait { cv.value.wait(pointerof(@mu), deadline) }
+    end
+
+    private def around_wait(&)
       counter = 1
 
       unless @type.unchecked?
@@ -206,11 +214,13 @@ module Sync
         end
       end
 
-      cv.value.wait pointerof(@mu)
+      result = yield
 
       unless @type.unchecked? || @mu.rheld?
         set_owner(counter)
       end
+
+      result
     end
 
     private def set_owner(counter = 1) : Nil

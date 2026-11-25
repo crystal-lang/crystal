@@ -19,12 +19,7 @@ class Channel(T)
   class TimeoutAction
     include SelectAction(Nil)
 
-    # Total amount of time to wait
-    @timeout : Time::Span
-    @select_context : SelectContext(Nil)?
-    @timeout_event : Crystal::EventLoop::Event?
-
-    def initialize(@timeout : Time::Span)
+    def initialize(@duration : Time::Span)
     end
 
     def execute : DeliveryState
@@ -35,20 +30,15 @@ class Channel(T)
       nil
     end
 
-    def wait(context : SelectContext(Nil)) : Nil
-      @select_context = context
-      event = Crystal::EventLoop.current.create_timeout_event(Fiber.current)
-      @timeout_event = event
-      event.add(@timeout, self)
+    def wait(fiber : Fiber, token : Fiber::CancelationToken) : Time::Span
+      @duration
     end
 
-    def wait_result_impl(context : SelectContext(Nil))
-      nil
+    def unwait : Nil
     end
 
-    def unwait_impl(context : SelectContext(Nil))
-      @timeout_event.try &.delete
-      @timeout_event = nil
+    def delivery_state : DeliveryState
+      DeliveryState::None
     end
 
     def lock_object_id : UInt64
@@ -59,14 +49,6 @@ class Channel(T)
     end
 
     def unlock
-    end
-
-    def time_expired(fiber : Fiber) : Nil
-      fiber.enqueue if time_expired?
-    end
-
-    def time_expired? : Bool
-      @select_context.try &.try_trigger || false
     end
   end
 end

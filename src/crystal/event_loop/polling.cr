@@ -108,8 +108,12 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
-  def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:select_timeout, fiber)
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    event = Event.new(:timeout, Fiber.current)
+    event.wake_at = time
+    event.cancelation_token = token
+    timeout_impl(pointerof(event))
+    event.timed_out?
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
@@ -474,7 +478,7 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
   end
 
   private def wait(type : Polling::Event::Type, io, timeout, &)
-    event = Event.new(type, Fiber.current, io, timeout)
+    event = Event.new(type, Fiber.current, timeout: timeout)
 
     io.__poll_descriptor do |pd|
       # abort if closed before acquiring the lock (race)
@@ -483,21 +487,38 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
       # take ownership if needed, then register waiter
       pd.value.take_ownership(self, io)
       yield pd, pointerof(event)
+
+      if event.wake_at?
+        # create the token while we hold the lock
+        event.cancelation_token = event.fiber.arm_cancelation
+      end
     end
 
     if event.wake_at?
-      add_timer(pointerof(event))
+      error = true # ameba:disable Lint/UselessAssign
 
+      begin
+        timeout_impl(pointerof(event))
+        error = event.timed_out?
+      ensure
+        if error
+          # either the timeout expired or we failed to add the event,
+          # in both cases: clear the waiter before returning
+          io.__poll_descriptor do |pd|
+            if type.io_read?
+              pd.value.@reader.delete(pointerof(event))
+            else
+              pd.value.@writer.delete(pointerof(event))
+            end
+          end
+        end
+      end
+
+      event.timed_out?
+    else
       Fiber.suspend
-
-      # no need to delete the timer: either it triggered which means it was
-      # dequeued, or `#unsafe_resume_io` was called to resume the IO and the
-      # timer got deleted from the timers before the fiber got reenqueued.
-      return event.timed_out?
+      false
     end
-
-    Fiber.suspend
-    false
   end
 
   private def check_open(io : IO)
@@ -506,10 +527,25 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
 
   # internals: timers
 
+  private def timeout_impl(event : Event*) : Nil
+    add_timer(event)
+
+    Fiber.suspend
+
+    delete_timer(event) unless event.value.timed_out?
+  end
+
   protected def add_timer(event : Event*)
     @timers_lock.sync do
       is_next_ready = @timers.add(event)
-      system_set_timer(event.value.wake_at) if is_next_ready
+      return unless is_next_ready
+
+      begin
+        system_set_timer(event.value.wake_at)
+      rescue ex
+        @timers.delete(event)
+        raise ex
+      end
     end
   end
 
@@ -522,85 +558,46 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
     end
   end
 
-  # Helper to resume the fiber associated to an IO event and remove the event
-  # from timers if applicable. Returns true if the fiber has been enqueued.
-  #
-  # Thread unsafe: we must hold the poll descriptor waiter lock for the whole
-  # duration of the dequeue/resume_io otherwise we might conflict with timers
-  # trying to cancel an IO event.
+  # Claims and resumes an I/O waiter while holding the poll descriptor lock.
+  # Returns false if the timeout already owns the wakeup.
   protected def unsafe_resume_io(event : Event*, &) : Bool
-    # we only partially own the poll descriptor; thanks to the lock we know that
-    # another thread won't dequeue it, yet it may still be in the timers queue,
-    # which at worst may be waiting on the lock to be released, so event* can be
-    # dereferenced safely.
+    fiber = event.value.fiber
+    token = event.value.cancelation_token
+    return false unless token.unarmed? || fiber.try_cancel?(token)
 
-    if !event.value.wake_at? || delete_timer(event)
-      # no timeout or we canceled it: we fully own the event
-      yield event.value.fiber
-      true
-    else
-      # failed to cancel the timeout so the timer owns the event (by rule)
-      false
-    end
+    yield fiber
+    true
   end
 
-  # Process ready timers.
-  #
-  # Shall be called after processing IO events. IO events with a timeout that
-  # have succeeded shall already have been removed from `@timers` otherwise the
-  # fiber could be resumed twice!
   private def process_timers(timer_triggered : Bool, &) : Nil
-    # collect ready timers before processing them —this is safe— to avoids a
-    # deadlock situation when another thread tries to process a ready IO event
-    # (in poll descriptor waiters) with a timeout (same event* in timers)
-    buffer = uninitialized StaticArray(Pointer(Event), 128)
+    # Resolve timers under the lock so the waiting fiber cannot reclaim the
+    # stack event before we finish accessing it. Enqueue after unlocking.
+    buffer = uninitialized StaticArray(Fiber, 128)
     size = 0
+    batch_count = 0
 
     @timers_lock.sync do
       @timers.dequeue_ready do |event|
-        buffer.to_unsafe[size] = event
-        break if (size &+= 1) == buffer.size
+        fiber = event.value.fiber
+
+        if event.value.type.sleep? || fiber.try_cancel?(event.value.cancelation_token)
+          event.value.timed_out!
+          buffer.to_unsafe[size] = fiber
+          size += 1
+        end
+
+        batch_count += 1
+        break if batch_count == buffer.size
       end
 
-      if size > 0 || timer_triggered
+      if batch_count > 0 || timer_triggered
         system_set_timer(@timers.next_ready?)
       end
     end
 
-    buffer.to_slice[0, size].each do |event|
-      process_timer(event) { |fiber| yield fiber }
+    buffer.to_slice[0, size].each do |fiber|
+      yield fiber
     end
-  end
-
-  private def process_timer(event : Event*, &)
-    # we dequeued the event from timers, and by rule we own it, so event* can
-    # safely be dereferenced:
-    fiber = event.value.fiber
-
-    case event.value.type
-    when .io_read?
-      # reached read timeout: cancel io event; by rule the timer always wins,
-      # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      event.value.__poll_descriptor { |pd| pd.value.@reader.delete(event) }
-      event.value.timed_out!
-    when .io_write?
-      # reached write timeout: cancel io event; by rule the timer always wins,
-      # even in case of conflict with #unsafe_resume_io we must resume the fiber
-      event.value.__poll_descriptor { |pd| pd.value.@writer.delete(event) }
-      event.value.timed_out!
-    when .select_timeout?
-      # The action belongs to this timer registration. The fiber may already
-      # have started another select while this timer was being processed.
-      return unless select_action = event.value.timeout_select_action
-      return unless select_action.time_expired?
-      event.value.wake_at = nil
-    when .sleep?
-      event.value.timed_out!
-    else
-      raise RuntimeError.new("BUG: unexpected event in timers: #{event.value}%s\n")
-    end
-
-    yield fiber
   end
 
   # internals: system

@@ -452,10 +452,9 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
       fiber = event.value.fiber
 
       case event.value.type
-      when .select_timeout?
-        next unless select_action = event.value.timeout_select_action
-        next unless select_action.time_expired?
-        event.value.wake_at = nil
+      when .timeout?
+        next unless fiber.try_cancel?(event.value.cancelation_token)
+        event.value.timed_out = true
       when .sleep?
         event.value.timed_out = true
       else
@@ -570,8 +569,18 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     raise "BUG: #{event.fiber} called sleep but was manually resumed before the timer expired!"
   end
 
-  def create_timeout_event(fiber : Fiber) : FiberEvent
-    FiberEvent.new(:select_timeout, fiber)
+  def timeout(until time : Time::Instant, token : Fiber::CancelationToken) : Bool
+    # allocate *event* in GC HEAP as it may outlive this function
+    event = Pointer(Event).malloc
+    event.value.initialize(:timeout, Fiber.current)
+    event.value.wake_at = time
+    event.value.cancelation_token = token
+    add_timer(event)
+
+    Fiber.suspend
+
+    delete_timer(event) unless event.value.timed_out?
+    event.value.timed_out?
   end
 
   # file descriptor interface, see Crystal::EventLoop::FileDescriptor
