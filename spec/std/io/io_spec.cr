@@ -571,6 +571,13 @@ describe IO do
       end
     end
 
+    it "zero skip is no-op" do
+      io = SimpleIOMemory.new
+      io << "hello"
+      io.skip(0)
+      io.gets_to_end.should eq("hello")
+    end
+
     it "raises on negative bytes_count" do
       io = SimpleIOMemory.new
       io << "hello"

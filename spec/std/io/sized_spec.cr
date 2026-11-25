@@ -163,5 +163,8 @@ describe "IO::Sized" do
       sized.skip(-1)
     end
     sized.read_char.should eq('5')
+
+    sized.skip(0)
+    sized.read_char.should eq('6')
   end
 end

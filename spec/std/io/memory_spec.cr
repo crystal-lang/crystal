@@ -500,6 +500,9 @@ describe IO::Memory do
       io.skip(-1)
     end
     io.pos.should eq(0)
+
+    io.skip(0)
+    io.gets_to_end.should eq("hello")
   end
 
   it "skips_to_end" do
