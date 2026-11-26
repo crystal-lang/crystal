@@ -121,6 +121,48 @@ describe Crystal::Repl::Interpreter do
       CRYSTAL
     end
 
+    it "pointerof read instance var of self in class (#16647)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        class Foo
+          def initialize(@x : Int32)
+          end
+
+          def set_x
+            pointerof(self.@x).value = 2
+          end
+
+          def x
+            @x
+          end
+        end
+
+        foo = Foo.new(1)
+        foo.set_x
+        foo.x
+      CRYSTAL
+    end
+
+    it "pointerof read instance var of self in struct (#16647)" do
+      interpret(<<-CRYSTAL).should eq(2)
+        struct Foo
+          def initialize(@x : Int32)
+          end
+
+          def set_x
+            pointerof(self.@x).value = 2
+          end
+
+          def x
+            @x
+          end
+        end
+
+        foo = Foo.new(1)
+        foo.set_x
+        foo.x
+      CRYSTAL
+    end
+
     it "pointerof read `StaticArray#@buffer` (1)" do
       interpret(<<-CRYSTAL).should eq(2)
         struct StaticArray(T, N)
