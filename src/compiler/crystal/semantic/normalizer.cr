@@ -308,11 +308,20 @@ module Crystal
       #     tmp2 = exp2
       #     ...
       #     tmp.[]=(tmp1, tmp2, ..., tmp[tmp1, tmp2, ...] + b)
-      tmp_args = target.args.map { program.new_temp_var(node).as(ASTNode) }
       tmp = program.new_temp_var(node)
+      tmp_args = target.args.map { program.new_temp_var(node).as(ASTNode) }
 
-      # (1) = tmp1 = exp1; tmp2 = exp2; ...; tmp = a
+      # (1) = tmp = a; tmp1 = exp1; tmp2 = exp2; ...
       tmp_assigns = Array(ASTNode).new(tmp_args.size + 1)
+
+      case obj
+      when Var, InstanceVar, ClassVar, .simple_literal?
+        # Nothing
+        tmp = obj
+      else
+        tmp_assigns << Assign.new(tmp, obj).at(node)
+      end
+
       tmp_args.each_with_index do |var, i|
         # For simple literals we don't need a temp variable
         arg = target.args[i]
@@ -321,14 +330,6 @@ module Crystal
         else
           tmp_assigns << Assign.new(var.clone, arg).at(node)
         end
-      end
-
-      case obj
-      when Var, InstanceVar, ClassVar, .simple_literal?
-        # Nothing
-        tmp = obj
-      else
-        tmp_assigns << Assign.new(tmp, obj).at(node)
       end
 
       case node.op
