@@ -47,7 +47,7 @@ struct UUID
     V5 = 5
     # Reordered date-time and NodeID address, for improved DB locality.
     V6 = 6
-    # Prefixed with a UNIX timestamp with millisecond precision, filled in with randomness.
+    # Prefixed with a UNIX timestamp and a sub-millisecond fraction, filled in with randomness.
     V7 = 7
     # Custom format for experimental or vendor-specific use cases.
     V8 = 8
@@ -382,33 +382,26 @@ struct UUID
     {timestamp.to_u64!, seq}
   end
 
-  # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
-  # chronologically (with 1ms precision) by their raw or hexstring
-  # representation.
+  # Generates an RFC 9562 v7 UUID for *time*, which defaults to the current time.
+  #
+  # UUIDs sort by the 48-bit Unix millisecond timestamp and the 12-bit
+  # sub-millisecond fraction. The remaining 62 bits are random.
+  # Raises `ArgumentError` if *time* is outside the 48-bit Unix millisecond range.
   def self.v7(random r : Random = Random::Secure, *, time : Time = Time.utc)
     milliseconds = time.to_unix_ms
     if milliseconds < 0
       raise ArgumentError.new("Time is outside the UUID Unix timestamp range")
     end
 
-    buffer = uninitialized UInt8[18]
-    value = buffer.to_slice
+    nanoseconds = time.nanosecond.to_i64 % Time::NANOSECONDS_PER_MILLISECOND
+    fraction = (nanoseconds << 12) // Time::NANOSECONDS_PER_MILLISECOND
+    uuid = uninitialized UInt8[16]
+    value = uuid.to_slice
+    # The version nibble between the timestamp and fraction is set by `new`.
+    IO::ByteFormat::NetworkEndian.encode((milliseconds.to_u64 << 16) | fraction.to_u64, value)
+    r.random_bytes(value[8..])
 
-    # Generate the first 48 bits of the UUID with the current timestamp. We
-    # allocated enough room for a 64-bit timestamp to accommodate the
-    # NetworkEndian.encode call here, but we only need 48 bits of it so we chop
-    # off the first 2 bytes.
-    IO::ByteFormat::NetworkEndian.encode milliseconds, value
-    value = value[2..]
-
-    # Fill in the rest with random bytes
-    r.random_bytes(value[6..])
-
-    # Set the version and variant
-    value[6] = (value[6] & 0x3F) | 0x70
-    value[8] = (value[8] & 0x0F) | 0x80
-
-    new(value, variant: :rfc9562, version: :v7)
+    new(uuid, variant: :rfc9562, version: :v7)
   end
 
   # Generates an RFC 9562 v8 UUID from *custom_bytes*.
