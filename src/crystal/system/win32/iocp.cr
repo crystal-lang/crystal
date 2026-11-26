@@ -104,12 +104,6 @@ struct Crystal::System::IOCP
   end
 
   def wait_queued_completions(buffer, timeout, alertable = false)
-    if timeout > UInt64::MAX
-      timeout = LibC::INFINITE
-    else
-      timeout = timeout.to_u64
-    end
-
     result = LibC.GetQueuedCompletionStatusEx(@handle, buffer, buffer.size, out removed, timeout, alertable)
 
     if result == 0
