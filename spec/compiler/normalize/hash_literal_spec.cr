@@ -71,4 +71,18 @@ describe "Normalize: hash literal" do
       __temp_7
       CRYSTAL
   end
+
+  it "normalizes with filename" do
+    assert_expand "{1 => 2}", <<-CRYSTAL, filename: "foo.cr"
+      __temp_cd6ae5dd_1 = ::Hash(typeof(1), typeof(2)).new
+      __temp_cd6ae5dd_1[1] = 2
+      __temp_cd6ae5dd_1
+      CRYSTAL
+
+    assert_expand "{1 => 2}", <<-CRYSTAL, filename: "bar.cr"
+      __temp_fbcf3d84_1 = ::Hash(typeof(1), typeof(2)).new
+      __temp_fbcf3d84_1[1] = 2
+      __temp_fbcf3d84_1
+      CRYSTAL
+  end
 end

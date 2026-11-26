@@ -65,4 +65,26 @@ describe "Normalize: case" do
       end
       CRYSTAL
   end
+
+  it "normalizes with filename" do
+    assert_expand "select; when foo; body; end", <<-CRYSTAL, filename: "foo.cr"
+      __temp_cd6ae5dd_1, __temp_cd6ae5dd_2 = ::Channel.select({foo_select_action})
+      case __temp_cd6ae5dd_1
+      when 0
+        body
+      else
+        ::raise("BUG: invalid select index")
+      end
+      CRYSTAL
+
+    assert_expand "select; when foo; body; end", <<-CRYSTAL, filename: "bar.cr"
+      __temp_fbcf3d84_1, __temp_fbcf3d84_2 = ::Channel.select({foo_select_action})
+      case __temp_fbcf3d84_1
+      when 0
+        body
+      else
+        ::raise("BUG: invalid select index")
+      end
+      CRYSTAL
+  end
 end
