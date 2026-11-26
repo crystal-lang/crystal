@@ -18,7 +18,10 @@ class Thread
     end
 
     def wait(mutex : Thread::Mutex) : Nil
-      ret = LibC.SleepConditionVariableCS(self, mutex, LibC::INFINITE)
+      ret = 0
+      GC.syscall(pointerof(ret), self, mutex) do |ret_ptr, self_, mutex_|
+        ret_ptr.value = LibC.SleepConditionVariableCS(self_, mutex_, LibC::INFINITE)
+      end
       raise RuntimeError.from_winerror("SleepConditionVariableCS") if ret == 0
     end
 
@@ -26,9 +29,9 @@ class Thread
       ret, error = 0, WinError::ERROR_SUCCESS
       timeout = time.to_milliseconds
 
-      GC.syscall do
-        ret = LibC.SleepConditionVariableCS(self, mutex, timeout)
-        error = WinError.value
+      GC.syscall(pointerof(ret), pointerof(error), self, mutex, timeout) do |ret_ptr, error_ptr, self_, mutex_, timeout_|
+        ret_ptr.value = LibC.SleepConditionVariableCS(self_, mutex_, timeout_)
+        error_ptr.value = WinError.value
       end
       return if ret != 0
 

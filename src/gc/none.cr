@@ -246,7 +246,7 @@ module GC
   end
 
   # :nodoc:
-  def self.syscall(&proc : ->) : Nil
-    proc.call
+  def self.syscall(*args : *T, &proc : *T ->) : Nil forall T
+    proc.call(*args)
   end
 end

@@ -542,13 +542,15 @@ module GC
   {% end %}
 
   # :nodoc:
-  def self.syscall(&proc : ->) : Nil
+  def self.syscall(*args : *T, &proc : *T ->) : Nil forall T
     # `GC_do_blocking` immediately calls the callback and the thread's stack
     # will be scanned up to the entry of `GC_do_blocking` so we don't need to
     # box the proc
+    locals = {proc, args}
     LibGC.do_blocking(->(data : Void*) {
-      data.as(Proc(Nil)*).value.call
+      locals_proc, locals_args = data.as(typeof(locals)*).value
+      locals_proc.call(*locals_args)
       Pointer(Void).null
-    }, pointerof(proc))
+    }, pointerof(locals))
   end
 end
