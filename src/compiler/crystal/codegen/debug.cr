@@ -538,6 +538,15 @@ module Crystal
       builder.clear_current_debug_location
     end
 
+    # Emits an instruction at the current debug location for un-optimized debug builds,
+    # so that the location has an address of its own even where it has no code otherwise.
+    def emit_debug_marker
+      return unless @debug.line_numbers? && @program.optimization_mode.o0?
+      return unless @current_debug_location
+
+      builder.store(int8(0), alloca(llvm_context.int8, "debug_marker")).volatile = true
+    end
+
     def emit_fun_debug_metadata(func, fun_name, location, *, debug_types = [] of LLVM::Metadata, is_optimized = false)
       filename = location.try(&.original_filename) || "??"
       line_number = location.try(&.line_number) || 0

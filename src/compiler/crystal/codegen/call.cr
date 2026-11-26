@@ -283,6 +283,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_call_with_block(node, block, self_type, call_args)
     set_current_debug_location node if @debug.line_numbers?
+    emit_debug_marker
 
     with_cloned_context do |old_block_context|
       context.vars = old_block_context.vars.dup

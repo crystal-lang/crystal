@@ -1844,6 +1844,13 @@ module Crystal
         raise "BUG: #{node} at #{node.location} should have been expanded"
       end
 
+      # Attributes the evaluation of the yield's expressions and the block's argument assignments to the `yield`,
+      # except where nested calls set their own location, and marks its line, which might have no code otherwise (a bare `yield`)
+      if @debug.line_numbers? && node.location
+        set_current_debug_location node
+        emit_debug_marker
+      end
+
       block_context = context.block_context.not_nil!
       block = context.block
       splat_index = block.splat_index
