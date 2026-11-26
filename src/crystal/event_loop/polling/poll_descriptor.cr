@@ -31,7 +31,8 @@ struct Crystal::EventLoop::Polling::PollDescriptor
     @reader.ready_all { } unless registered.read?
     @writer.ready_all { } unless registered.write?
 
-    current.try(&.system_del(io, closing: false))
+    # ignore deregistration errors
+    current.try(&.system_del(io, closing: false) { })
   end
 
   # Removes *io* from its owner event loop. Raises on errors.

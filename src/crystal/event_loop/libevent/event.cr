@@ -23,7 +23,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
       block
     end
 
-    def initialize(@event : LibEvent2::Event, @timeout_data : TimeoutData?)
+    def initialize(@base : Base, @event : LibEvent2::Event, @timeout_data : TimeoutData?)
       @freed = false
     end
 
@@ -52,9 +52,19 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
     end
 
     # :nodoc:
-    struct Base
+    class Base
+      @freed = Atomic(Bool).new(false)
+
       def initialize
         @base = LibEvent2.event_base_new
+      end
+
+      def finalize
+        free
+      end
+
+      def free : Nil
+        LibEvent2.event_base_free(@base) unless @freed.swap(true)
       end
 
       def reinit : Nil
@@ -65,7 +75,7 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
 
       def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
         event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
-        LibEvent::Event.new(event, data.as?(LibEvent::TimeoutData))
+        LibEvent::Event.new(self, event, data.as?(LibEvent::TimeoutData))
       end
 
       # NOTE: may return `true` even if no event has been triggered (e.g.

@@ -50,6 +50,7 @@ lib LibEvent2
 
   fun event_get_version : UInt8*
   fun event_base_new : EventBase
+  fun event_base_free(base : EventBase)
   fun event_base_dispatch(eb : EventBase) : Int
   fun event_base_loop(eb : EventBase, flags : EventLoopFlags) : Int
   fun event_base_loopbreak(eb : EventBase) : Int

@@ -443,7 +443,8 @@ abstract class Crystal::EventLoop::Polling < Crystal::EventLoop
         pd.value.@event_loop.try(&.unsafe_resume_io(event, &.enqueue))
       end
 
-      pd.value.remove(io)
+      # ignore deregistration errors
+      pd.value.remove(io) { }
     end
   end
 

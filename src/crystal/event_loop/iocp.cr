@@ -67,6 +67,7 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
   @waitable_timer : System::WaitableTimer?
   @timer_packet = LibC::HANDLE.null
   @timer_key : System::IOCP::CompletionKey?
+  @closed = Atomic(Bool).new(false)
 
   def initialize(parallelism : Int32)
     @timers_mutex = Thread::Mutex.new
@@ -87,6 +88,14 @@ class Crystal::EventLoop::IOCP < Crystal::EventLoop
       @timer_packet = @iocp.create_wait_completion_packet
       @timer_key = System::IOCP::CompletionKey.new(:timer)
     end
+  end
+
+  def close : Nil
+    return if @closed.swap(true, :acquire_release)
+
+    LibC.CloseHandle(@timer_packet) unless @timer_packet.null?
+    @waitable_timer.try &.close
+    LibC.CloseHandle(@iocp.handle)
   end
 
   def iocp_handle : LibC::HANDLE

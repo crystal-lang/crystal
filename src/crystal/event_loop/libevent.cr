@@ -17,6 +17,18 @@ class Crystal::EventLoop::LibEvent < Crystal::EventLoop
   def initialize(parallelism : Int32)
   end
 
+  def close : Nil
+    # We do not free the event base and let its finalizer do the cleanup when
+    # all references are lost, because Fiber#resume_event for example can
+    # outlive the event-loop. We still nillify the reference so a retained
+    # instance won't prevent the event base to release its resources.
+    @event_base = nil
+
+    # We should also free pending events, which means we should collect all the
+    # events... we take advantage that an execution-context won't shutdown until
+    # it has nothing to do, hence the event-loop is empty to avoid it.
+  end
+
   def run(blocking : Bool) : Bool
     flags = LibEvent2::EventLoopFlags::Once
     flags |= blocking ? LibEvent2::EventLoopFlags::NoExitOnEmpty : LibEvent2::EventLoopFlags::NonBlock
