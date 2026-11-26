@@ -13,4 +13,9 @@ module Crystal::System
 
     LibC._exit(1)
   end
+
+  def self.panic!(message : String, *args) : NoReturn
+    System.print_error(message, *args)
+    LibC.exit(1)
+  end
 end
