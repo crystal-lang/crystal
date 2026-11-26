@@ -43,6 +43,28 @@ module Crystal
     # if the location is not known.
     property end_location : Location?
 
+    # Returns the node whose receiver is an `ImplicitObj`, if this node is an
+    # expression that starts with one, like `.foo.bar > 1` in
+    # `case x; when .foo.bar > 1; end`. Returns `nil` otherwise.
+    #
+    # An implicit object can only be the leftmost operand of an expression, so
+    # this only follows receivers. It must not look into arguments, because
+    # those might contain a nested `case` with its own implicit objects.
+    def implicit_obj_parent : ASTNode?
+      node = self
+      receiver =
+        case node
+        when Call, RespondsTo, IsA, Cast, NilableCast, ReadInstanceVar
+          node.obj
+        when Not
+          node.exp
+        when BinaryOp
+          node.left
+        end
+
+      receiver.is_a?(ImplicitObj) ? node : receiver.try(&.implicit_obj_parent)
+    end
+
     # Updates this node's location and returns `self`
     def at(@location : Location?)
       self
