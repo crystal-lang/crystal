@@ -650,6 +650,15 @@ module Crystal
     end
 
     private def mt_codegen(units, n_threads)
+      unless ENV["PROFILE_LARGE_FIRST"]? == "0"
+        units.sort_by! do |unit|
+          weight = 0
+          unit.llvm_mod.functions.each do |function|
+            weight += function.basic_blocks.size
+          end
+          -weight
+        end
+      end
       channel = Channel(CompilationUnit).new(n_threads * 2)
       wg = WaitGroup.new
       mutex = Sync::Mutex.new

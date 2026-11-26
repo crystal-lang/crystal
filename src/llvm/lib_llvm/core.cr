@@ -208,6 +208,7 @@ lib LibLLVM
   fun get_basic_block_name = LLVMGetBasicBlockName(bb : BasicBlockRef) : Char*
   fun get_basic_block_parent = LLVMGetBasicBlockParent(bb : BasicBlockRef) : ValueRef
   fun get_first_basic_block = LLVMGetFirstBasicBlock(fn : ValueRef) : BasicBlockRef
+  fun count_basic_blocks = LLVMCountBasicBlocks(fn : ValueRef) : UInt
   fun get_next_basic_block = LLVMGetNextBasicBlock(bb : BasicBlockRef) : BasicBlockRef
   fun append_basic_block_in_context = LLVMAppendBasicBlockInContext(c : ContextRef, fn : ValueRef, name : Char*) : BasicBlockRef
   fun delete_basic_block = LLVMDeleteBasicBlock(bb : BasicBlockRef)
