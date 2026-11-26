@@ -32,7 +32,7 @@ jobs:
     container: crystallang/crystal:1.22.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Remove PCRE2
@@ -51,7 +51,7 @@ jobs:
     container: crystallang/crystal:1.22.3-alpine
     steps:
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Assert using PCRE2

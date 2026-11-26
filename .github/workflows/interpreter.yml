@@ -18,7 +18,7 @@ jobs:
       image: crystallang/crystal:1.22.3-build
     name: "Test Interpreter"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
       image: crystallang/crystal:1.22.3-build
     name: Build interpreter
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -42,7 +42,7 @@ jobs:
         run: make .build/crystal-pu
 
       - name: Upload compiler artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: crystal-interpreter
           path: |
@@ -60,12 +60,12 @@ jobs:
         part: [0, 1, 2, 3]
     name: "Test std_spec with interpreter (${{ matrix.part }})"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-interpreter
           path: .build/
@@ -83,12 +83,12 @@ jobs:
       image: crystallang/crystal:1.22.3-build
     name: "Test primitives_spec with interpreter"
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download compiler artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-interpreter
           path: .build/

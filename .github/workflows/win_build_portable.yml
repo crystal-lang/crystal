@@ -45,23 +45,23 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Crystal
-        uses: crystal-lang/install-crystal@v1
+        uses: crystal-lang/install-crystal@v1.10.0
         id: install-crystal
         with:
           crystal: "1.22.3"
 
       - name: Restore libraries
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             libs/pcre2-8.lib
@@ -76,7 +76,7 @@ jobs:
           key: libs-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             libs/crypto.lib
@@ -85,7 +85,7 @@ jobs:
           key: libs-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore DLLs
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             libs/pcre2-8-dynamic.lib
@@ -107,7 +107,7 @@ jobs:
           key: dlls-${{ inputs.arch }}-windows-msvc-${{ hashFiles('.github/workflows/win_build_libs.yml', 'etc/win-ci/*.ps1') }}
           fail-on-cache-miss: true
       - name: Restore OpenSSL DLLs
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             libs/crypto-dynamic.lib
@@ -117,7 +117,7 @@ jobs:
           key: dlls-openssl-${{ env.CI_SSL_VERSION }}-${{ inputs.arch }}-windows-msvc-${{ hashFiles('etc/win-ci/build-openssl.ps1') }}
           fail-on-cache-miss: true
       - name: Restore LLVM DLLs
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@v6.1.0
         with:
           path: |
             libs/llvm_VERSION
@@ -151,7 +151,7 @@ jobs:
           make -f Makefile.win -B ${{ inputs.release && 'release=1' || '' }} interpreter=1
 
       - name: Download shards release
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           repository: crystal-lang/shards
           ref: v0.20.0
@@ -173,13 +173,13 @@ jobs:
           cp README.md crystal/
 
       - name: Upload Crystal binaries
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc
           path: crystal
 
       - name: Upload Crystal binaries (compatibility)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         if: ${{ inputs.arch == 'x86_64' }}
         with:
           name: crystal
