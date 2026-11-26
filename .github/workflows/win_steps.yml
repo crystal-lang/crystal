@@ -61,17 +61,17 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc
           path: build
@@ -122,17 +122,17 @@ jobs:
         run: git config --global core.autocrlf false
 
       - name: Enable Developer Command Prompt
-        uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4.1.0
+        uses: TheMrMilchmann/setup-msvc-dev@v4.1.0
         with:
           arch: ${{ env.WIN_ARCH }}
 
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc
           path: build
@@ -164,12 +164,12 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc
           path: build
@@ -206,12 +206,12 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Download Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Download Crystal executable
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc
           path: etc/win-ci/portable
@@ -241,13 +241,13 @@ jobs:
           & "C:\Program Files\Inno Setup 7\ISCC.exe" crystal.iss
 
       - name: Upload Crystal installer
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: crystal-${{ inputs.arch }}-windows-msvc-installer
           path: etc/win-ci/Output/crystal-setup.exe
 
       - name: Upload Crystal installer (compatibility)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         if: ${{ inputs.arch == 'x86_64' }}
         with:
           name: crystal-installer

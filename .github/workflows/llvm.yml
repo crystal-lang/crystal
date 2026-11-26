@@ -52,7 +52,7 @@ jobs:
     name: "LLVM ${{ matrix.llvm_version }}${{ matrix.nightly && ' (nightly)' }}"
     steps:
       - name: Checkout Crystal source
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -69,7 +69,7 @@ jobs:
           sudo ln -s /usr/bin/ld.lld-${{ matrix.llvm_version }} /usr/bin/ld.lld
 
       - name: Install Crystal
-        uses: crystal-lang/install-crystal@v1
+        uses: crystal-lang/install-crystal@v1.10.0
         with:
           crystal: "1.22.3"
 
