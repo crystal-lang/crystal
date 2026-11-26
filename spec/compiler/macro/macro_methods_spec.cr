@@ -2658,6 +2658,32 @@ module Crystal
           end
         end
 
+        it "works on metaclasses" do
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.int32.metaclass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.string.metaclass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.proc.metaclass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.proc_of(program.void).metaclass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.enumerable.metaclass)}
+          end
+
+          assert_macro("{{x.has_inner_pointers?}}", %(false)) do |program|
+            {x: TypeNode.new(program.enumerable.instantiate([program.int32] of TypeVar).metaclass)}
+          end
+        end
+
         it "errors when called from top-level scope" do
           assert_error <<-CRYSTAL, "`TypeNode#has_inner_pointers?` cannot be called in the top-level scope: instance vars are not yet initialized"
             class Foo

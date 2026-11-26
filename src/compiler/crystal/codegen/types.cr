@@ -93,6 +93,8 @@ module Crystal
         else
           true
         end
+      when .metaclass?
+        false
       else
         true
       end
