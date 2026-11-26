@@ -372,14 +372,14 @@ struct UUID
   end
 
   private def self.gregorian_timestamp_ticks_and_seq(time : Time, clock_seq : UInt16? = nil) : {UInt64, UInt16}
-    timestamp = (time.to_unix_ns / 100) + 122_192_928_000_000_000_i64
+    timestamp = (time.to_unix_ns // 100) + 122_192_928_000_000_000_i64
     unless 0 <= timestamp < (1_i64 << 60)
       raise ArgumentError.new("Time is outside the UUID Gregorian timestamp range")
     end
 
     seq = ((clock_seq || (time.nanosecond / 1_000_000).to_u16) & 0x3fff_u16) | 0x8000_u16
 
-    {timestamp.to_u64, seq}
+    {timestamp.to_u64!, seq}
   end
 
   # Generates an RFC9562-compatible v7 UUID, allowing the values to be sorted
