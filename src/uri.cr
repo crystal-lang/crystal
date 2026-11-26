@@ -751,3 +751,16 @@ class URI
     end
   end
 end
+
+struct Path
+  # Returns a new `URI` with `file` scheme from this path.
+  #
+  # A URI can only be created with an absolute path. Raises `Path::Error` if
+  # this path is not absolute.
+  #
+  # NOTE: To use `URI`, you must explicitly import it with `require "uri"`
+  def to_uri : URI
+    raise Error.new("Cannot create a URI from relative path") unless absolute?
+    URI.new(scheme: "file", path: @name)
+  end
+end
