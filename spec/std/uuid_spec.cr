@@ -163,7 +163,32 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new "xyz:uuid:1ed1ee2f-ef9a-4f9c-9615-ab14d8ef2892" }
   end
 
+  gregorian_min = Time.utc(1582, 10, 15)
+  gregorian_max = Time.utc(5236, 3, 31, 21, 21, 0, nanosecond: 684_697_599)
+
   describe "v1" do
+    it "creates with millisecond precision" do
+      time = Time.unix_ns(1_750_000_000_000_000_100_i64)
+      UUID.v1(time: time, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "57130000-49fa-11f0-8000-000000000000"
+    end
+
+    it "encodes min gregorian time" do
+      UUID.v1(time: gregorian_min, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "00000000-0000-1000-8000-000000000000"
+    end
+
+    pending "raises below min gregorian time" do
+      expect_raises(ArgumentError) do
+        UUID.v1(time: gregorian_min - 1.nanosecond, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8))
+      end
+    end
+
+    pending "encodes max gregorian time" do
+      UUID.v1(time: gregorian_max, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "ffffffff-ffff-1fff-8000-000000000000"
+      expect_raises(ArgumentError) do
+        UUID.v1(time: gregorian_max + 1.nanosecond, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8))
+      end
+    end
+
     it "returns true if UUID is v1, false otherwise" do
       uuid = UUID.v1
       uuid.v1?.should be_true
@@ -272,6 +297,28 @@ describe "UUID" do
   end
 
   describe "v6" do
+    it "creates with millisecond precision" do
+      time = Time.unix_ns(1_750_000_000_000_000_100_i64)
+      UUID.v6(time: time, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "1f049fa5-7130-6000-8000-000000000000"
+    end
+
+    it "encodes min gregorian time" do
+      UUID.v6(time: gregorian_min, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "00000000-0000-6000-8000-000000000000"
+    end
+
+    pending "raises below min gregorian time" do
+      expect_raises(ArgumentError) do
+        UUID.v6(time: gregorian_min - 1.nanosecond, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8))
+      end
+    end
+
+    pending "encodes max gregorian time" do
+      UUID.v6(time: gregorian_max, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8)).to_s.should eq "ffffffff-ffff-6fff-8000-000000000000"
+      expect_raises(ArgumentError) do
+        UUID.v6(time: gregorian_max + 1.nanosecond, clock_seq: 0_u16, node_id: UUID::MAC.new(0_u8))
+      end
+    end
+
     it "generates a v6 UUID" do
       uuid = UUID.v6
       uuid.v6?.should be_true
@@ -304,6 +351,21 @@ describe "UUID" do
   end
 
   describe "v7" do
+    it "creates with millisecond precision" do
+      time = Time.unix_ns(1_750_000_000_000_000_100_i64)
+      UUID.v7(Random.new(4), time: time).to_s.should eq "01977420-dc00-7602-817a-ef5f54b9f7e9"
+    end
+
+    it "encodes max Crystal time" do
+      time = Time.new(seconds: Time::MAX_SECONDS, nanoseconds: (Time::NANOSECONDS_PER_SECOND - 1).to_i32, location: Time::Location::UTC)
+      UUID.v7(Random.new(4), time: time).to_s.should eq "e677d21f-dbff-7602-817a-ef5f54b9f7e9"
+    end
+
+    it "encodes min Unix time" do
+      UUID.v7(Random.new(4), time: Time::UNIX_EPOCH).to_s.should eq "00000000-0000-7602-817a-ef5f54b9f7e9"
+      expect_raises(ArgumentError) { UUID.v7(time: Time::UNIX_EPOCH - 1.nanosecond) }
+    end
+
     it "generates a v7 UUID" do
       uuid = UUID.v7
       uuid.v7?.should be_true
