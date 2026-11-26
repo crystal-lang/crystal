@@ -353,16 +353,16 @@ describe "UUID" do
   describe "v7" do
     it "creates with millisecond precision" do
       time = Time.unix_ns(1_750_000_000_000_000_100_i64)
-      UUID.v7(Random.new(4), time: time).to_s.should eq "01977420-dc00-7602-817a-ef5f54b9f7e9"
+      UUID.v7(Random.new(4), time: time).to_s.should eq "01977420-dc00-7000-a602-a17aef5f54b9"
     end
 
     it "encodes max Crystal time" do
       time = Time.new(seconds: Time::MAX_SECONDS, nanoseconds: (Time::NANOSECONDS_PER_SECOND - 1).to_i32, location: Time::Location::UTC)
-      UUID.v7(Random.new(4), time: time).to_s.should eq "e677d21f-dbff-7602-817a-ef5f54b9f7e9"
+      UUID.v7(Random.new(4), time: time).to_s.should eq "e677d21f-dbff-7fff-a602-a17aef5f54b9"
     end
 
     it "encodes min Unix time" do
-      UUID.v7(Random.new(4), time: Time::UNIX_EPOCH).to_s.should eq "00000000-0000-7602-817a-ef5f54b9f7e9"
+      UUID.v7(Random.new(4), time: Time::UNIX_EPOCH).to_s.should eq "00000000-0000-7000-a602-a17aef5f54b9"
       expect_raises(ArgumentError) { UUID.v7(time: Time::UNIX_EPOCH - 1.nanosecond) }
     end
 
@@ -372,13 +372,21 @@ describe "UUID" do
       uuid.variant.rfc9562?.should be_true
     end
 
-    pending_wasm32 "generates UUIDs that are sortable with 1ms precision" do
-      uuids = Array.new(10) do
-        sleep 1.millisecond
-        UUID.v7
-      end
+    it "encodes and sorts sub-millisecond timestamps" do
+      rand = Random.new(4)
+      uuids = [
+        UUID.v7(rand, time: Time::UNIX_EPOCH + 999_999.nanoseconds),
+        UUID.v7(rand, time: Time::UNIX_EPOCH),
+        UUID.v7(rand, time: Time::UNIX_EPOCH + 1.millisecond),
+        UUID.v7(rand, time: Time::UNIX_EPOCH + 500.microseconds),
+      ]
 
-      uuids.should eq uuids.sort
+      uuids.sort.map(&.to_s).should eq %w(
+        00000000-0000-7000-b7e9-d0e31c0edb18
+        00000000-0000-7800-8418-4bd7f995418d
+        00000000-0000-7fff-a602-a17aef5f54b9
+        00000000-0001-7000-b126-bf294670a162
+      )
     end
   end
 
