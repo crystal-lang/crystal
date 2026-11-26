@@ -660,13 +660,12 @@ class String
         else
           if leading_zero_is_octal
             base = 8
-          else
-            base = 10
-            found_digit = true
           end
+          found_digit = true
         end
       elsif leading_zero_is_octal
         base = 8
+        found_digit = true
       else
         found_digit = true
       end
@@ -2120,7 +2119,7 @@ class String
   end
 
   # Returns a new string where leading occurrences of any char
-  # in *chars* are removed. The *chars* argument is not a suffix;
+  # in *chars* are removed. The *chars* argument is not a prefix;
   # rather; all combinations of its values are stripped.
   #
   # ```

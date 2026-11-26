@@ -448,9 +448,6 @@ class Crystal::Call
       return ExtraNamedArguments.new(extra_named_argument_names, extra_named_argument_similar_names)
     end
 
-    # For now let's not deal with splats
-    return if a_def.splat_index
-
     a_def_owner = a_def.owner
 
     # This is the actual instantiated type where the method was instantiated
@@ -481,15 +478,19 @@ class Crystal::Call
 
     arguments_type_mismatch = [] of ArgumentTypeMismatch
 
-    arg_types.each_with_index do |arg_type, i|
-      def_arg = a_def.args[i]?
-      next unless def_arg
+    a_def.match(arg_types) do |arg, arg_index, arg_type, call_arg_index|
+      # TODO: single splat restrictions
+      next if arg_index == a_def.splat_index && arg.restriction.is_a?(Splat)
 
-      check_argument_type_mismatch(def_arg, i, arg_type, match_context, arguments_type_mismatch)
+      check_argument_type_mismatch(arg, call_arg_index, arg_type, match_context, arguments_type_mismatch)
     end
 
+    double_splat_arg = a_def.double_splat
+    # TODO: double splat restrictions
+    double_splat_arg = nil if double_splat_arg.try &.restriction.is_a?(DoubleSplat)
+
     named_args_types.try &.each do |named_arg|
-      def_arg = a_def.args.find &.external_name.==(named_arg.name)
+      def_arg = a_def.args.find(&.external_name.==(named_arg.name)) || double_splat_arg
       next unless def_arg
 
       check_argument_type_mismatch(def_arg, named_arg.name, named_arg.type, match_context, arguments_type_mismatch)
@@ -505,15 +506,16 @@ class Crystal::Call
   private def check_argument_type_mismatch(def_arg, index_or_name, arg_type, match_context, arguments_type_mismatch)
     restricted = arg_type.restrict(def_arg, match_context)
 
-    arg_type = arg_type.remove_literal
-    return if restricted == arg_type
+    actual_arg_type = arg_type.remove_literal
+    return if restricted == actual_arg_type
+    return if restricted && arg_type.is_a?(AutocastType) && arg_type.compatible_with?(restricted)
 
     expected_type = compute_expected_type(def_arg, match_context)
 
     extra_types =
       if restricted
         # This was a partial match
-        compute_extra_types(arg_type, expected_type)
+        compute_extra_types(actual_arg_type, expected_type)
       else
         # This wasn't a match
         nil
@@ -522,7 +524,7 @@ class Crystal::Call
     arguments_type_mismatch << ArgumentTypeMismatch.new(
       index_or_name: index_or_name,
       expected_type: expected_type,
-      actual_type: arg_type.remove_literal,
+      actual_type: actual_arg_type,
       extra_types: extra_types,
     )
   end

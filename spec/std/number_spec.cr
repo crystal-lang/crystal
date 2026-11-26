@@ -1,5 +1,7 @@
 require "spec"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "complex"
 require "../support/number"
 

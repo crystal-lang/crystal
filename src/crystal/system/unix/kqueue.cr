@@ -71,7 +71,10 @@ struct Crystal::System::Kqueue
   end
 
   def close : Nil
-    LibC.close(@kq)
+    return if (kq = @kq) == -1
+    return unless Atomic::Ops.cmpxchg(pointerof(@kq), kq, -1, :acquire, :monotonic).last
+
+    LibC.close(kq)
   end
 
   @[AlwaysInline]

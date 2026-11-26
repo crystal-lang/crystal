@@ -61,6 +61,9 @@ struct Crystal::System::Epoll
   end
 
   def close : Nil
-    LibC.close(@epfd)
+    return if (epfd = @epfd) == -1
+    return unless Atomic::Ops.cmpxchg(pointerof(@epfd), epfd, -1, :acquire, :monotonic).last
+
+    LibC.close(epfd)
   end
 end

@@ -3180,6 +3180,23 @@ describe "Semantic: instance var" do
       CRYSTAL
   end
 
+  it "does not consider `::initialize` as initializing class's ivars" do
+    assert_error <<-CRYSTAL, "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
+      def initialize
+      end
+
+      class Foo
+        def initialize
+          @x = ""
+        end
+
+        def initialize(x)
+          ::initialize
+        end
+      end
+      CRYSTAL
+  end
+
   it "doesn't complain if not initialized in one initialize, but has initializer (#2465)" do
     assert_type(<<-CRYSTAL) { int32 }
       class Foo

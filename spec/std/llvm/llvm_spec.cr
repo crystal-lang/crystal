@@ -47,7 +47,7 @@ describe LLVM do
     context = LLVM::Context.new
     llvm_mod = context.new_module("string flags")
     llvm_mod.add_flag(:error, "string flag", "value")
-    llvm_mod.add_flag(:error, "metadata flag", context.md_string("metadata value"))
+    llvm_mod.add_flag(:error, "metadata flag", context.metadata_string("metadata value"))
     llvm_mod.verify
 
     llvm_mod.to_s.should contain(%(!{i32 1, !"string flag", !"value"}))

@@ -96,6 +96,11 @@ abstract class Crystal::EventLoop
     # Called once before *scheduler* is shut down. Optional hook.
     def unregister(scheduler : Fiber::ExecutionContext::Scheduler) : Nil
     end
+
+    # Called once before the current execution context is shut down.
+    # Optional hook. Musn't raise.
+    def close : Nil
+    end
   {% end %}
 
   # Blocks the current scheduler until all the pending events have completed.

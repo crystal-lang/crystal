@@ -64,6 +64,7 @@ module Crystal
         named_args: named_args_nodes,
         block: block_node.is_a?(Block) ? block_node : nil).at(original_call)
       call.name_location = original_call.name_location
+      call.name_size = original_call.name_size
       fake_call = Call.new("method_missing", call).at(original_call)
 
       expanded_macro, macro_expansion_pragmas = program.expand_macro method_missing, fake_call, self, self

@@ -1,6 +1,16 @@
 require "../../spec_helper"
 
 describe "Semantic: exception" do
+  it "prints an unknown location for a macro without a source location" do
+    error = Crystal::TypeException.new("error")
+    filename = Crystal::VirtualFile.new(Crystal::Macro.new("foo"), "", nil)
+    io = IO::Memory.new
+
+    error.append_macro_definition_location(io, filename)
+
+    io.to_s.should eq("unknown location")
+  end
+
   it "type is union of main and rescue blocks" do
     assert_type(<<-CRYSTAL) { union_of(int32, char) }
       begin
@@ -383,6 +393,30 @@ describe "Semantic: exception" do
     proc.def.body.as(ProcLiteral).def.raises?.should be_true
   end
 
+  it "marks `#as` as raises" do
+    result = assert_type(<<-CRYSTAL) { string }
+      def foo(x)
+        x.as(String)
+      end
+
+      foo(1 || "")
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_true
+  end
+
+  it "does not mark `#as?` as raises" do
+    result = assert_type(<<-CRYSTAL) { nilable string }
+      def foo(x)
+        x.as?(String)
+      end
+
+      foo(1 || "")
+      CRYSTAL
+    a_def = result.node.as(Expressions).last.as(Call).target_def
+    a_def.raises?.should be_false
+  end
+
   it "shadows local variable (1)" do
     assert_type(<<-CRYSTAL) { union_of(int32, types["Exception"].virtual_type) }
       require "prelude"
@@ -553,6 +587,30 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
+  it "types a var introduced in an if inside ensure as nilable" do
+    assert_type(<<-CRYSTAL) { nilable int32 }
+      begin
+      ensure
+        if false
+          a = 1
+        end
+      end
+      a
+      CRYSTAL
+  end
+
+  it "types a var introduced in a while inside ensure as nilable" do
+    assert_type(<<-CRYSTAL) { nilable int32 }
+      begin
+      ensure
+        while false
+          a = 1
+        end
+      end
+      a
+      CRYSTAL
+  end
+
   it "doesn't infect type to variable before handler (#4002)" do
     assert_type(<<-CRYSTAL) { int32 }
       a = 1
@@ -585,6 +643,23 @@ describe "Semantic: exception" do
       CRYSTAL
     program = result.program
     program.vars["foo"].type.should be(program.nilable program.int32)
+  end
+
+  it "drops previous nilability when both body and rescue assign the variable" do
+    result = assert_type(<<-CRYSTAL) { bool }
+      if true
+        x = false
+      end
+
+      begin
+        x = true
+      rescue
+        x = false
+      end
+
+      x
+      CRYSTAL
+    result.program.vars["x"].type.should eq(result.program.bool)
   end
 
   it "can't return from ensure (#4470)" do
@@ -822,8 +897,8 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue" do
-    assert_type(<<-CRYSTAL) { union_of [float64, int32, char, string, bool] of Type }
+  it "merges the final body and rescue assignments after begin rescue" do
+    assert_type(<<-CRYSTAL) { union_of(string, bool) }
       a = 1.5
       begin
         a = 2
@@ -836,7 +911,7 @@ describe "Semantic: exception" do
       CRYSTAL
   end
 
-  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+  it "types a var after begin rescue as having all possible types in begin and rescue" do
     assert_type(<<-CRYSTAL) { union_of [int32, char, string, nil_type] of Type }
       b = 2
       begin

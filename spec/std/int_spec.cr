@@ -1,5 +1,7 @@
 require "./spec_helper"
-require "big"
+{% unless flag?(:wasm32) %}
+  require "big"
+{% end %}
 require "spec/helpers/iterate"
 require "../support/number"
 
@@ -485,6 +487,8 @@ describe "Int" do
     it { Int64::MAX.bit(63).should eq(0) }
     it { UInt64::MAX.bit(63).should eq(1) }
     it { UInt64::MAX.bit(64).should eq(0) }
+    it { (-1_i64).bit(64).should eq(1) }
+    it { (-1_i8).bit(8).should eq(1) }
   end
 
   describe "#bits" do
@@ -596,6 +600,25 @@ describe "Int" do
     it { (8000 >> 2).should eq(2000) }
     it { (8000 >> 32).should eq(0) }
     it { (8000 >> -1).should eq(16000) }
+
+    it "fills with the sign bit for negative signed integers" do
+      (-8000 >> 1).should eq(-4000)
+      (Int32::MIN >> 31).should eq(-1)
+      (Int32::MIN >> 32).should eq(-1)
+      (Int32::MIN >> 100).should eq(-1)
+      (-23_i8 >> 7).should eq(-1_i8)
+      (-23_i8 >> 8).should eq(-1_i8)
+      (-1_i64 >> 64).should eq(-1_i64)
+      (Int128::MIN >> 128).should eq(-1_i128)
+    end
+
+    it "returns zero for non-negative integers shifted by the bit width or more" do
+      (Int32::MAX >> 32).should eq(0)
+      (23_i8 >> 8).should eq(0_i8)
+      (UInt8::MAX >> 8).should eq(0_u8)
+      (UInt64::MAX >> 64).should eq(0_u64)
+      (UInt128::MAX >> 200).should eq(0_u128)
+    end
   end
 
   describe "<<" do
@@ -603,6 +626,7 @@ describe "Int" do
     it { (8000 << 2).should eq(32000) }
     it { (8000 << 32).should eq(0) }
     it { (8000 << -1).should eq(4000) }
+    it { (-1 << -32).should eq(-1) }
   end
 
   describe "#rotate_left" do
@@ -1105,7 +1129,7 @@ describe "Int" do
     {% end %}
   end
 
-  it "compares signed vs. unsigned integers" do
+  pending_wasm32 "compares signed vs. unsigned integers" do
     {% begin %}
       signed_ints = [
         Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int128::MAX,
@@ -1181,7 +1205,7 @@ describe "Int" do
       -10.bit_length.should eq(4)
     end
 
-    it "for BigInt" do
+    pending_wasm32 "for BigInt" do
       (10.to_big_i ** 20).bit_length.should eq(67)
       (10.to_big_i ** 309).bit_length.should eq(1027)
       (10.to_big_i ** 3010).bit_length.should eq(10000)

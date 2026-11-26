@@ -975,6 +975,10 @@ module HTTP
         request.hostname.should be_nil
       end
 
+      it "strips the port from a multibyte hostname" do
+        Request.new("GET", "/", HTTP::Headers{"Host" => "münich.example:80"}).hostname.should eq("münich.example")
+      end
+
       it "rejects invalid hostnames" do
         Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:3000:4000"}).hostname.should be_nil
         Request.new("GET", "/", HTTP::Headers{"Host" => "host.example.org:"}).hostname.should be_nil

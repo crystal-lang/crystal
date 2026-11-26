@@ -211,6 +211,14 @@ class Crystal::EventLoop::IoUring < Crystal::EventLoop
     @mutex = Thread::Mutex.new
   end
 
+  def close : Nil
+    {% if !flag?(:without_mt) %}
+      @rings.each { |ring| ring.try &.close }
+    {% else %}
+      @main_ring.close
+    {% end %}
+  end
+
   private def ring : Ring
     {% if !flag?(:without_mt) %}
       Fiber::ExecutionContext::Scheduler.current.__evloop_ring

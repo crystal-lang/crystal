@@ -79,16 +79,16 @@ module Crystal
       end
     end
 
-    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default) forall T
+    def run(code, return_type : T.class, filename : String? = nil, debug = Debug::Default, obj_paths = nil) forall T
       parser = new_parser(code)
       parser.filename = filename
       node = parser.parse
       node = normalize node
       node = semantic node
-      evaluate node, T, debug: debug
+      evaluate node, T, debug: debug, obj_paths: obj_paths
     end
 
-    def evaluate(node, return_type : T.class, debug = Debug::Default) : T forall T
+    def evaluate(node, return_type : T.class, debug = Debug::Default, obj_paths = nil) : T forall T
       llvm_context =
         {% if LibLLVM::IS_LT_110 %}
           LLVM::Context.new
@@ -151,6 +151,11 @@ module Crystal
 
         dylib = lljit.main_jit_dylib
         dylib.link_symbols_from_current_process(lljit.global_prefix)
+        obj_paths.try &.each do |obj_path|
+          memory_buf = LLVM::MemoryBuffer.from_file(obj_path)
+          lljit.add_object_file(dylib, memory_buf)
+        end
+
         tsm = LLVM::Orc::ThreadSafeModule.new(llvm_mod, ts_ctx)
         lljit.add_llvm_ir_module(dylib, tsm)
 
@@ -286,6 +291,8 @@ module Crystal
     @raise_closure_to_c_fun : LLVMTypedFunction?
     @c_malloc_fun : LLVMTypedFunction?
     @c_realloc_fun : LLVMTypedFunction?
+
+    getter debug : Debug
 
     def initialize(@program : Program, @node : ASTNode,
                    @single_module : Bool = false,
@@ -1103,6 +1110,13 @@ module Crystal
 
     def codegen_if_branch(phi, node, branch_block, last)
       position_at_end branch_block
+      if @debug.line_numbers?
+        if node.location
+          set_current_debug_location node
+        else
+          set_artificial_debug_location
+        end
+      end
       accept node
       phi.add @last, node.type?, last
     end
@@ -1542,6 +1556,7 @@ module Crystal
 
     def visit(node : Cast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1608,6 +1623,7 @@ module Crystal
 
     def visit(node : NilableCast)
       request_value(node.obj)
+      set_current_debug_location node if @debug.line_numbers?
 
       last_value = @last
 
@@ -1744,6 +1760,7 @@ module Crystal
       accept node.obj
 
       if @needs_value
+        set_current_debug_location node if @debug.line_numbers?
         obj_type = node.obj.type
 
         type_id = type_id @last, obj_type
@@ -2559,7 +2576,7 @@ module Crystal
     def memset(pointer, value, size)
       pointer = cast_to_void_pointer pointer
       res = call c_memset_fun, [pointer, value, size, int1(0)]
-      LibLLVM.set_instr_param_alignment(res, 1, 4)
+      res.set_instruction_param_alignment(1, 4)
 
       res
     end
@@ -2567,8 +2584,8 @@ module Crystal
     def memcpy(dest, src, len, align, volatile, *, src_align = align)
       res = call c_memcpy_fun, [dest, src, len, volatile]
 
-      LibLLVM.set_instr_param_alignment(res, 1, align)
-      LibLLVM.set_instr_param_alignment(res, 2, src_align)
+      res.set_instruction_param_alignment(1, align)
+      res.set_instruction_param_alignment(2, src_align)
 
       res
     end

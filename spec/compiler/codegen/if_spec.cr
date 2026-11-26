@@ -1,6 +1,34 @@
 require "../../spec_helper"
 
 describe "Code gen: if" do
+  it "preserves static truthiness of a parenthesized type check before a NoReturn branch" do
+    codegen(<<-CRYSTAL)
+      def noreturn
+        x = uninitialized NoReturn
+        x
+      end
+
+      def check(value : String)
+        noreturn if !(value.is_a?(Int32))
+        value &+ 1
+      end
+
+      check("42")
+      CRYSTAL
+  end
+
+  it "preserves side effects before a parenthesized type check" do
+    run(<<-CRYSTAL).to_i.should eq(1)
+      def check(value : String)
+        count = 0
+        return count if !(count &+= 1; value.is_a?(Int32))
+        value &+ 1
+      end
+
+      check("42")
+      CRYSTAL
+  end
+
   it "codegens if without an else with true" do
     run("a = 1; if true; a = 2; end; a").to_i.should eq(2)
   end
