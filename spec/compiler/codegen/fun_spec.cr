@@ -37,6 +37,34 @@ describe "Codegen: fun" do
       CRYSTAL
   end
 
+  it "keeps fun defined before a lib fun declaration with the same name (#17917)" do
+    run(<<-CRYSTAL, Int32).should eq(2)
+      fun foo(x : Int32) : Int32
+        x &+ 1
+      end
+
+      lib LibFoo
+        fun foo(x : Int32) : Int32
+      end
+
+      LibFoo.foo(1)
+      CRYSTAL
+  end
+
+  it "keeps fun defined after a lib fun declaration with the same name" do
+    run(<<-CRYSTAL, Int32).should eq(2)
+      lib LibFoo
+        fun foo(x : Int32) : Int32
+      end
+
+      fun foo(x : Int32) : Int32
+        x &+ 1
+      end
+
+      LibFoo.foo(1)
+      CRYSTAL
+  end
+
   it "returns void from `__crystal_main` in non-evaluated code" do
     mod = codegen(<<-CRYSTAL, inject_primitives: false)
       struct Foo
