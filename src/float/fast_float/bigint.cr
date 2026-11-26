@@ -29,8 +29,7 @@ module Float::FastFloat
   # vector-like type that is allocated on the stack. the entire
   # buffer is pre-allocated, and only the length changes.
   # NOTE(crystal): Deviates a lot from the original implementation to reuse
-  # `Indexable` as much as possible. Contrast with `Crystal::SmallDeque` and
-  # `Crystal::Tracing::BufferIO`
+  # `Indexable` as much as possible. Contrast with `Crystal::Tracing::BufferIO`
   struct Stackvec(Size)
     include Indexable::Mutable(Limb)
 
