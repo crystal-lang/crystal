@@ -123,6 +123,7 @@ module IO::Buffered
   # :nodoc:
   def skip(bytes_count : Int) : Nil
     check_open
+    raise ArgumentError.new "Negative bytes_count" if bytes_count < 0
 
     if bytes_count <= @in_buffer_rem.size
       @in_buffer_rem += bytes_count

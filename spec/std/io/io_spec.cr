@@ -574,6 +574,22 @@ describe IO do
       end
     end
 
+    it "zero skip is no-op" do
+      io = SimpleIOMemory.new
+      io << "hello"
+      io.skip(0)
+      io.gets_to_end.should eq("hello")
+    end
+
+    it "raises on negative bytes_count" do
+      io = SimpleIOMemory.new
+      io << "hello"
+      expect_raises(ArgumentError, "Negative bytes_count") do
+        io.skip(-1)
+      end
+      io.gets_to_end.should eq("hello")
+    end
+
     it "skips more than 4096 bytes" do
       io = SimpleIOMemory.new
       io << "a" * 4100

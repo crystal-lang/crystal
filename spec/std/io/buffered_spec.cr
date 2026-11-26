@@ -429,18 +429,34 @@ describe "IO::Buffered" do
     io.peek.should eq(Bytes.empty)
   end
 
-  it "skips" do
-    str = IO::Memory.new("123456789")
-    io = BufferedWrapper.new(str)
-    io.skip(3)
-    io.read_char.should eq('4')
-  end
+  describe "#skip" do
+    it "skips" do
+      str = IO::Memory.new("123456789")
+      io = BufferedWrapper.new(str)
+      io.skip(3)
+      io.read_char.should eq('4')
+    end
 
-  it "skips big" do
-    str = IO::Memory.new(("a" * 10_000) + "b")
-    io = BufferedWrapper.new(str)
-    io.skip(10_000)
-    io.read_char.should eq('b')
+    it "zero skip is no-op" do
+      io = BufferedWrapper.new(IO::Memory.new("123456789"))
+      io.skip(0)
+      io.read_char.should eq('1')
+    end
+
+    it "errors on negative skip" do
+      io = BufferedWrapper.new(IO::Memory.new("123456789"))
+      expect_raises(ArgumentError, "Negative bytes_count") do
+        io.skip(-1)
+      end
+      io.read_char.should eq('1')
+    end
+
+    it "skips big" do
+      str = IO::Memory.new(("a" * 10_000) + "b")
+      io = BufferedWrapper.new(str)
+      io.skip(10_000)
+      io.read_char.should eq('b')
+    end
   end
 
   {% unless flag?(:without_iconv) %}

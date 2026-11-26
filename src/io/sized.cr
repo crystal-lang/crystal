@@ -63,6 +63,7 @@ class IO::Sized < IO
 
   def skip(bytes_count) : Nil
     check_open
+    raise ArgumentError.new "Negative bytes_count" if bytes_count < 0
 
     if bytes_count <= @read_remaining
       @io.skip(bytes_count)
