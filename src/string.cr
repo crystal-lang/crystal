@@ -1,5 +1,4 @@
 require "c/string"
-require "crystal/small_deque"
 {% unless flag?(:without_iconv) %}
   require "crystal/iconv"
 {% end %}
