@@ -95,6 +95,30 @@ describe Crystal::Repl::Interpreter do
         CRYSTAL
     end
 
+    it "does is_a? from NilableReferenceUnionType with nil to NilableType" do
+      interpret(<<-CRYSTAL).should eq(10)
+        class Foo
+        end
+
+        a = 1 == 2 ? "hello" : (1 == 2 ? Foo.new : nil)
+        if a.is_a?(Foo?)
+          10
+        else
+          20
+        end
+        CRYSTAL
+    end
+
+    it "casts from NilableReferenceUnionType with nil to NilableType" do
+      interpret(<<-CRYSTAL, prelude: "prelude").should eq("10")
+        class Foo
+        end
+
+        a = 1 == 2 ? "hello" : (1 == 2 ? Foo.new : nil)
+        a.as(Foo?) ? 20 : 10
+        CRYSTAL
+    end
+
     it "does is_a? from VirtualType to NonGenericClassType (true)" do
       interpret(<<-CRYSTAL).should eq(2)
         class Foo
