@@ -492,6 +492,10 @@ abstract struct Enum
     parse?(string) || raise ArgumentError.new("Unknown enum #{self} value: #{string}")
   end
 
+  def self.parse(slice : Bytes) : self
+    parse?(slice) || raise ArgumentError.new("Unknown enum #{self} value: #{String.new(slice)}")
+  end
+
   # Returns the enum member that has the given name, or
   # `nil` if no such member exists. The comparison is made by using
   # `String#camelcase` and `String#downcase` between *string* and
@@ -508,6 +512,10 @@ abstract struct Enum
   #
   # If multiple members match the same normalized string, the first one is returned.
   def self.parse?(string : String) : self?
+    parse? string.to_slice
+  end
+
+  def self.parse?(slice : Bytes) : self?
     {% begin %}
       {%
         max_charsize = @type.constants.map(&.size).sort.last
