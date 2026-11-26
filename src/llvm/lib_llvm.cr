@@ -30,6 +30,8 @@
   {% end %}
 
   {% llvm_version ||= Crystal::DESCRIPTION.gsub(/.*LLVM: ([^\n]*).*/m, "\\1") %}
+  {% llvm_version = llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") %}
+  {% llvm_version_parts = llvm_version.split(".") %}
 
   {% unless llvm_targets %}
     {% if flag?(:i386) || flag?(:x86_64) %}
@@ -49,7 +51,10 @@
     @[Link(ldflags: {{ llvm_ldflags }})]
   {% end %}
   lib LibLLVM
-    VERSION = {{ llvm_version.strip.gsub(/git/, "").gsub(/-?rc.*/, "") }}
+    VERSION       = {{ llvm_version }}
+    VERSION_MAJOR = {{ llvm_version_parts[0].to_i }}
+    VERSION_MINOR = {{ llvm_version_parts[1].to_i }}
+    VERSION_PATCH = {{ llvm_version_parts[2].to_i }}
     BUILT_TARGETS = {{ llvm_targets.strip.downcase.gsub(/;|,/, " ").split(' ').map(&.id.symbolize) }}
   end
 {% end %}

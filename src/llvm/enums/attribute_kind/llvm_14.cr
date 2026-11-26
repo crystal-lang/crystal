@@ -1,0 +1,85 @@
+{% skip_file unless LibLLVM::VERSION_MAJOR == 14 %}
+
+# WARNING: This enum is marked as unstable by LLVM. The following members are
+# valid for LLVM 14. Refer to `src/llvm/enums/attribute_kind/llvm_*.cr` to see
+# if a particular member was added or removed.
+enum LLVM::AttributeKind : UInt32
+  AlwaysInline                    =  1 # EnumAttr
+  ArgMemOnly                      =  2 # EnumAttr
+  Builtin                         =  3 # EnumAttr
+  Cold                            =  4 # EnumAttr
+  Convergent                      =  5 # EnumAttr
+  DisableSanitizerInstrumentation =  6 # EnumAttr
+  Hot                             =  7 # EnumAttr
+  ImmArg                          =  8 # EnumAttr
+  InReg                           =  9 # EnumAttr
+  InaccessibleMemOnly             = 10 # EnumAttr
+  InaccessibleMemOrArgMemOnly     = 11 # EnumAttr
+  InlineHint                      = 12 # EnumAttr
+  JumpTable                       = 13 # EnumAttr
+  MinSize                         = 14 # EnumAttr
+  MustProgress                    = 15 # EnumAttr
+  Naked                           = 16 # EnumAttr
+  Nest                            = 17 # EnumAttr
+  NoAlias                         = 18 # EnumAttr
+  NoBuiltin                       = 19 # EnumAttr
+  NoCallback                      = 20 # EnumAttr
+  NoCapture                       = 21 # EnumAttr
+  NoCfCheck                       = 22 # EnumAttr
+  NoDuplicate                     = 23 # EnumAttr
+  NoFree                          = 24 # EnumAttr
+  NoImplicitFloat                 = 25 # EnumAttr
+  NoInline                        = 26 # EnumAttr
+  NoMerge                         = 27 # EnumAttr
+  NoProfile                       = 28 # EnumAttr
+  NoRecurse                       = 29 # EnumAttr
+  NoRedZone                       = 30 # EnumAttr
+  NoReturn                        = 31 # EnumAttr
+  NoSanitizeCoverage              = 32 # EnumAttr
+  NoSync                          = 33 # EnumAttr
+  NoUndef                         = 34 # EnumAttr
+  NoUnwind                        = 35 # EnumAttr
+  NonLazyBind                     = 36 # EnumAttr
+  NonNull                         = 37 # EnumAttr
+  NullPointerIsValid              = 38 # EnumAttr
+  OptForFuzzing                   = 39 # EnumAttr
+  OptimizeForSize                 = 40 # EnumAttr
+  OptimizeNone                    = 41 # EnumAttr
+  ReadNone                        = 42 # EnumAttr
+  ReadOnly                        = 43 # EnumAttr
+  Returned                        = 44 # EnumAttr
+  ReturnsTwice                    = 45 # EnumAttr
+  SExt                            = 46 # EnumAttr
+  SafeStack                       = 47 # EnumAttr
+  SanitizeAddress                 = 48 # EnumAttr
+  SanitizeHWAddress               = 49 # EnumAttr
+  SanitizeMemTag                  = 50 # EnumAttr
+  SanitizeMemory                  = 51 # EnumAttr
+  SanitizeThread                  = 52 # EnumAttr
+  ShadowCallStack                 = 53 # EnumAttr
+  Speculatable                    = 54 # EnumAttr
+  SpeculativeLoadHardening        = 55 # EnumAttr
+  StackProtect                    = 56 # EnumAttr
+  StackProtectReq                 = 57 # EnumAttr
+  StackProtectStrong              = 58 # EnumAttr
+  StrictFP                        = 59 # EnumAttr
+  SwiftAsync                      = 60 # EnumAttr
+  SwiftError                      = 61 # EnumAttr
+  SwiftSelf                       = 62 # EnumAttr
+  UWTable                         = 63 # EnumAttr
+  WillReturn                      = 64 # EnumAttr
+  WriteOnly                       = 65 # EnumAttr
+  ZExt                            = 66 # EnumAttr
+  ByRef                           = 67 # TypeAttr
+  ByVal                           = 68 # TypeAttr
+  ElementType                     = 69 # TypeAttr
+  InAlloca                        = 70 # TypeAttr
+  Preallocated                    = 71 # TypeAttr
+  StructRet                       = 72 # TypeAttr
+  Alignment                       = 73 # IntAttr
+  AllocSize                       = 74 # IntAttr
+  Dereferenceable                 = 75 # IntAttr
+  DereferenceableOrNull           = 76 # IntAttr
+  StackAlignment                  = 77 # IntAttr
+  VScaleRange                     = 78 # IntAttr
+end
