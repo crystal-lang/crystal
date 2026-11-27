@@ -30,6 +30,21 @@ describe "Parser doc" do
     end
   end
 
+  # A visibility modifier is syntax around the node it wraps, so the doc is
+  # stored on that node; the modifier only reports it.
+  it "stores the doc of a private def on the def" do
+    parser = Parser.new(<<-CRYSTAL)
+      # This is Foo.
+      # Use it well.
+      private def foo
+      end
+      CRYSTAL
+    parser.wants_doc = true
+    node = parser.parse.as(VisibilityModifier)
+    node.exp.doc.should eq("This is Foo.\nUse it well.")
+    node.doc.should eq(node.exp.doc)
+  end
+
   [
     {"type def", "type Foo = Bar"},
     {"cstruct def", "struct Name\nend"},
