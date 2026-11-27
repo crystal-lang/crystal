@@ -9,19 +9,18 @@ module Crystal
   # directories are kept. We use the directory's modification
   # time for this.
   #
-  # The cache is shared by every compiler process, so a process holds a shared
-  # lock on a file in each directory it uses, and a directory that is locked is
-  # never removed, whatever its place in the ordering.
+  # The cache is shared by every compiler process, so a process locks a
+  # directory while it uses it, and a directory that is locked is never
+  # removed, whatever its place in the ordering.
   class CacheDir
+    # The file in each cache directory that the locks are placed on.
+    LOCK_FILE = "compiler.lock"
+
     def self.instance
       @@instance ||= new
     end
 
     @dir : String?
-
-    # The lock files of the directories this process uses, held open until it
-    # exits.
-    @locks = {} of String => File
 
     private def initialize
     end
@@ -53,45 +52,66 @@ module Crystal
         end
       end
       output_dir = File.join(dir, name)
-      lock(output_dir)
+      Dir.mkdir_p(output_dir)
       output_dir
     end
 
-    # The file in each cache directory that the lock is placed on.
-    LOCK_FILE = ".lock"
+    # The lock a process places on a cache directory.
+    enum LockType
+      # To write to the directory: no other process uses it at the same time.
+      Exclusive
 
-    # Creates *dir* and places a shared lock in it, which `cleanup` checks
-    # before removing a directory.
-    private def lock(dir : String) : Nil
-      return if @locks.has_key?(dir)
+      # To read from the directory: other processes may read from it as well.
+      Shared
 
-      lock_path = File.join(dir, LOCK_FILE)
-      loop do
-        Dir.mkdir_p(dir)
-        file = File.open(lock_path, "a")
-        begin
-          file.flock_shared
-        rescue IO::Error
-          # The file system does not support locks; use the directory unlocked.
-          file.close
-          return
+      # Places this lock on *file*, waiting until it is available.
+      def place_on(file : File) : Nil
+        case self
+        in .exclusive? then file.flock_exclusive
+        in .shared?    then file.flock_shared
         end
-
-        # Another process may have removed the directory before the lock was
-        # placed, which leaves this one on a deleted file.
-        if File.info?(lock_path).try &.same_file?(file.info)
-          @locks[dir] = file
-          return
-        end
-
-        file.close
-      rescue File::NotFoundError
-        # The directory was removed after it was created; create it again.
       end
     end
 
+    # Creates the cache directory *dir* if it doesn't exist, and yields while
+    # holding a lock of the given *type* on it.
+    def lock(dir : String, type : LockType, &)
+      loop do
+        Dir.mkdir_p(dir)
+        file = open_lock_file(dir, type)
+        next unless file
+
+        begin
+          return yield
+        ensure
+          file.close
+        end
+      end
+    end
+
+    # Opens the lock file of *dir* and places a lock of the given *type* on it.
+    # Returns `nil` if `cleanup` in another process removed the directory.
+    private def open_lock_file(dir : String, type : LockType) : File?
+      lock_path = File.join(dir, LOCK_FILE)
+      file = File.open(lock_path, "a")
+
+      begin
+        type.place_on(file)
+
+        # The directory may have been removed before the lock was placed, which
+        # leaves the lock on a deleted file.
+        locked = File.info?(lock_path).try &.same_file?(file.info)
+      ensure
+        file.close unless locked
+      end
+
+      file if locked
+    rescue File::NotFoundError
+      nil
+    end
+
     # Keeps the 10 most recently used directories in the cache, and any that
-    # another process holds a lock in, and removes all others.
+    # is locked, and removes all others.
     def cleanup
       dir = compute_dir
       entries = gather_cache_entries(dir)
@@ -162,28 +182,23 @@ module Crystal
 
     private def cleanup_dirs(entries)
       entries
-        .compact_map { |dir| {dir, File.info?(dir) || next} }
-        .sort_by! { |_, info| info.modification_time }
+        .select { |dir| Dir.exists?(dir) }
+        .sort_by! { |dir| File.info?(dir).try(&.modification_time) || Time.unix(0) }
         .reverse!
         .skip(10)
-        .each { |dir, info| remove_unless_locked(dir, info) }
+        .each { |name| remove_unless_locked(name) }
     end
 
-    # Removes *path*, unless it is a directory in which another process holds
-    # a lock. The exclusive lock is held while removing, so a process that
-    # locks the directory at the same time notices it is gone.
-    private def remove_unless_locked(path : String, info : File::Info) : Nil
-      unless info.directory?
-        FileUtils.rm_rf(path)
-        return
-      end
-
-      File.open(File.join(path, LOCK_FILE), "a") do |file|
+    # Removes the cache directory *dir*, unless it is locked. The lock is held
+    # while removing, so that a process that locks the directory at the same
+    # time notices that it is gone.
+    private def remove_unless_locked(dir : String) : Nil
+      File.open(File.join(dir, LOCK_FILE), "a") do |file|
         file.flock_exclusive(blocking: false)
-        FileUtils.rm_rf(path)
+        FileUtils.rm_rf(dir)
       end
     rescue IO::Error
-      # Locked by another process, or already removed
+      # Locked, or already removed
     end
 
     private def gather_cache_entries(dir)

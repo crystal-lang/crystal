@@ -68,13 +68,36 @@ class Crystal::Program
   record MacroRunResult, stdout : String, stderr : String, status : Process::Status
 
   def macro_run(filename, args)
-    compiled_macro_run = @compiled_macros_cache[filename] ||= macro_compile(filename)
-    compiled_file = compiled_macro_run.filename
+    loop do
+      compiled_macro_run = @compiled_macros_cache[filename] ||= macro_compile(filename)
+      result = run_compiled_macro(compiled_macro_run.filename, args)
+      return result if result
 
-    out_io = IO::Memory.new
-    err_io = IO::Memory.new
-    Process.run(compiled_file, args: args, output: out_io, error: err_io)
-    MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
+      # Another compiler process removed the executable from the cache.
+      @compiled_macros_cache.delete(filename)
+    end
+  end
+
+  # Runs the executable *compiled_file* of a macro run program. Returns `nil`
+  # if it isn't in the cache anymore.
+  private def run_compiled_macro(compiled_file, args) : MacroRunResult?
+    program_dir = File.dirname(compiled_file)
+
+    CacheDir.instance.lock(program_dir, :shared) do
+      {% unless flag?(:win32) %}
+        # Update times for the program dir, so it remains in the cache longer
+        # (this is specially useful if a macro run program is used by multiple programs)
+        now = Time.utc
+        File.utime(now, now, program_dir)
+      {% end %}
+
+      out_io = IO::Memory.new
+      err_io = IO::Memory.new
+      Process.run(compiled_file, args: args, output: out_io, error: err_io)
+      MacroRunResult.new(out_io.to_s, err_io.to_s, $?)
+    rescue ex : File::NotFoundError
+      raise ex if File.exists?(compiled_file)
+    end
   end
 
   record RequireWithTimestamp, filename : String, epoch : Int64 do
@@ -99,35 +122,36 @@ class Crystal::Program
     recorded_requires_path = File.join(program_dir, "recorded_requires")
     requires_path = File.join(program_dir, "requires")
 
-    {% unless flag?(:win32) %}
-      # First, update times for the program dir, so it remains in the cache longer
-      # (this is specially useful if a macro run program is used by multiple programs)
-      now = Time.utc
-      File.utime(now, now, program_dir)
-    {% end %}
+    reused = CacheDir.instance.lock(program_dir, :shared) do
+      can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
+    end
 
-    if can_reuse_previous_compilation?(filename, executable_path, recorded_requires_path, requires_path)
+    if reused
       return CompiledMacroRun.new(executable_path, time.elapsed, true)
     end
 
     result = host_compiler.compile Compiler::Source.new(filename, source), executable_path
 
-    # Write the new files from which 'filename' depends into the cache dir
-    # (here we store how to obtain these files, because a require might use
-    # '/*' or '/**' and we need to recompile if a file is added or removed)
-    File.open(recorded_requires_path, "w") do |file|
-      result.program.recorded_requires.to_json(file)
-    end
+    # If another compiler process removed the program dir in the meantime, the
+    # executable is gone, and running it compiles the program again.
+    CacheDir.instance.lock(program_dir, :shared) do
+      # Write the new files from which 'filename' depends into the cache dir
+      # (here we store how to obtain these files, because a require might use
+      # '/*' or '/**' and we need to recompile if a file is added or removed)
+      File.open(recorded_requires_path, "w") do |file|
+        result.program.recorded_requires.to_json(file)
+      end
 
-    # Together with their timestamp
-    # (this is the list of all effective files that were required)
-    requires_with_timestamps = result.program.requires.map do |required_file|
-      epoch = File.info(required_file).modification_time.to_unix
-      RequireWithTimestamp.new(required_file, epoch)
-    end
+      # Together with their timestamp
+      # (this is the list of all effective files that were required)
+      requires_with_timestamps = result.program.requires.map do |required_file|
+        epoch = File.info(required_file).modification_time.to_unix
+        RequireWithTimestamp.new(required_file, epoch)
+      end
 
-    File.open(requires_path, "w") do |file|
-      requires_with_timestamps.to_json(file)
+      File.open(requires_path, "w") do |file|
+        requires_with_timestamps.to_json(file)
+      end
     end
 
     CompiledMacroRun.new(executable_path, time.elapsed, false)
