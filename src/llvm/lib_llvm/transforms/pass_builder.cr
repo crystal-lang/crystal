@@ -16,4 +16,5 @@ lib LibLLVM
   fun pass_builder_options_set_loop_unrolling = LLVMPassBuilderOptionsSetLoopUnrolling(PassBuilderOptionsRef, Bool)
   fun pass_builder_options_set_loop_vectorization = LLVMPassBuilderOptionsSetLoopVectorization(PassBuilderOptionsRef, Bool)
   fun pass_builder_options_set_slp_vectorization = LLVMPassBuilderOptionsSetSLPVectorization(PassBuilderOptionsRef, Bool)
+  fun pass_builder_options_set_merge_functions = LLVMPassBuilderOptionsSetMergeFunctions(PassBuilderOptionsRef, Bool)
 end
