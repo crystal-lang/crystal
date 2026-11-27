@@ -365,49 +365,44 @@ module Crystal
       end
 
       output_dir = CacheDir.instance.directory_for(sources)
-
-      bc_flags_changed = bc_flags_changed? output_dir
       target_triple = target_machine.triple
 
-      units = llvm_modules.map do |type_name, info|
-        llvm_mod = info.mod
-        llvm_mod.target = target_triple
-        CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
-      end
+      compiled_units = CacheDir.instance.lock(output_dir, :exclusive) do
+        bc_flags_changed = bc_flags_changed? output_dir
 
-      {% if LibLLVM::IS_LT_170 %}
-        # initialize the legacy pass manager once in the main thread/process
-        # before we start codegen in threads (MT)
-        init_llvm_legacy_pass_manager unless optimization_mode.o0?
-      {% end %}
-
-      if @cross_compile
-        cross_compile program, units, output_filename
-      else
-        units = with_file_lock(output_dir) do
-          codegen program, units, output_filename, output_dir
+        units = llvm_modules.map do |type_name, info|
+          llvm_mod = info.mod
+          llvm_mod.target = target_triple
+          CompilationUnit.new(self, program, type_name, llvm_mod, output_dir, bc_flags_changed)
         end
 
-        {% if flag?(:darwin) %}
-          run_dsymutil(output_filename) unless debug.none?
+        {% if LibLLVM::IS_LT_170 %}
+          # initialize the legacy pass manager once in the main thread/process
+          # before we start codegen in threads (MT)
+          init_llvm_legacy_pass_manager unless optimization_mode.o0?
         {% end %}
 
-        {% if flag?(:msvc) %}
-          copy_dlls(program, output_filename) unless static?
-        {% end %}
+        if @cross_compile
+          cross_compile program, units, output_filename
+        else
+          units = codegen program, units, output_filename, output_dir
+
+          {% if flag?(:darwin) %}
+            # dsymutil reads the object files in the cache directory
+            run_dsymutil(output_filename) unless debug.none?
+          {% end %}
+
+          {% if flag?(:msvc) %}
+            copy_dlls(program, output_filename) unless static?
+          {% end %}
+        end
+
+        units
       end
 
       CacheDir.instance.cleanup if @cleanup
 
-      units
-    end
-
-    private def with_file_lock(output_dir, &)
-      File.open(File.join(output_dir, "compiler.lock"), "w") do |file|
-        file.flock_exclusive do
-          yield
-        end
-      end
+      compiled_units
     end
 
     private def run_dsymutil(filename)
