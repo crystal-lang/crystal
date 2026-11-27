@@ -1258,6 +1258,7 @@ module Crystal
       return if subclass.unbound?
 
       subclasses << subclass
+      program.subclasses_changed
       notify_subclass_added
 
       superclass = superclass()
@@ -2159,6 +2160,7 @@ module Crystal
       return if subclass.unbound?
 
       subclasses << subclass
+      program.subclasses_changed
       notify_subclass_added
 
       superclass = superclass()
@@ -3463,7 +3465,25 @@ module Crystal
       subtypes
     end
 
+    # The subtypes of *type*, without *type* itself. A method lookup asks for
+    # those of `base_type` on every call, and a type with many generic
+    # instances has hundreds, so they are kept until a subclass is added
+    # anywhere. The returned array must not be modified.
     def subtypes(type)
+      return collect_subtypes_of(type) unless type.same?(base_type)
+
+      version = program.subclasses_version
+      cached = @base_subtypes
+      return cached[1] if cached && cached[0] == version
+
+      subtypes = collect_subtypes_of(type)
+      @base_subtypes = {version, subtypes}
+      subtypes
+    end
+
+    @base_subtypes : {UInt64, Array(Type)}?
+
+    private def collect_subtypes_of(type)
       subtypes = [] of Type
       type.subclasses.each do |subclass|
         collect_subtypes subclass, subtypes
