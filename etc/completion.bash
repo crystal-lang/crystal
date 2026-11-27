@@ -60,7 +60,7 @@ _crystal() {
       ;;
     run)
       if [[ ${cur} == -* ]]; then
-        local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --help --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --stats --single-module --threads --verbose --warnings --x86-asm-syntax"
+        local opts="--debug --define --emit --error-on-warnings --exclude-warnings --format --gc-stats --help --ll --link-flags --mcpu --no-color --no-codegen --output --prelude --release --stats --single-module --threads --verbose --warnings --x86-asm-syntax"
         _crystal_compgen_options "${opts}" "${cur}"
       else
         _crystal_compgen_sources "${cur}"

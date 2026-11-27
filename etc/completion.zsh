@@ -46,6 +46,7 @@ _crystal() {
     '(\*)'{-D+,--define=}'[define a compile-time flag]:'
     '(--error-trace)--error-trace[show full error trace]'
     '(-s --stats)'{-s,--stats}'[enable statistics output]'
+    '(--gc-stats)--gc-stats[enable statistics output including each garbage collection]'
     '(-t --time)'{-t,--time}'[enable execution time output]'
     '(-p --progress)'{-p,--progress}'[enable progress output]'
   )
