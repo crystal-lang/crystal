@@ -506,6 +506,32 @@ struct BigInt < Int
     end
   end
 
+  # Rounds this number to a given precision.
+  #
+  # Rounds to the specified number of *digits* after the decimal place,
+  # (or before if negative), in base *base*. Since `self` has no fractional
+  # part, it is returned unchanged if *digits* is non-negative. Otherwise the
+  # rounding is exact, without converting to a floating-point number.
+  #
+  # The rounding *mode* controls the direction of the rounding. The default is
+  # `RoundingMode::TIES_EVEN` which rounds to the nearest integer, with ties
+  # (fractional value of `0.5`) being rounded to the even neighbor (Banker's rounding).
+  #
+  # ```
+  # require "big"
+  #
+  # 123_456_789.to_big_i.round(-3)                         # => 123457000
+  # 2_500.to_big_i.round(-3)                               # => 2000
+  # 2_500.to_big_i.round(-3, mode: :ties_away)             # => 3000
+  # (10.to_big_i ** 30 + 1).round(-30, mode: :to_positive) # => 2000000000000000000000000000000
+  # ```
+  def round(digits : Int, base : Int = 10, *, mode : RoundingMode = :ties_even) : BigInt
+    return self if digits >= 0
+
+    multiplier = BigInt.new(base) ** digits.abs
+    (to_big_r / multiplier).round(mode).to_big_i * multiplier
+  end
+
   # Returns the greatest common divisor of `self` and *other*.
   def gcd(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.gcd(mpz, self, other) }
