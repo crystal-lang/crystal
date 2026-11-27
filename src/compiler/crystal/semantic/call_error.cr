@@ -77,9 +77,11 @@ class Crystal::Call
       end
     end
 
-    # Also check with scope
-    if with_scope
-      defs.concat with_scope.lookup_defs(def_name)
+    # Also check with scope.
+    with_scope_defs = with_scope.try &.lookup_defs(def_name)
+    if with_scope && with_scope_defs && !with_scope_defs.empty?
+      owner = with_scope if defs.empty?
+      defs.concat with_scope_defs
     end
 
     # Check if it's the case of an abstract def
@@ -113,7 +115,8 @@ class Crystal::Call
 
     # Check why each def can't be called with this Call (what's the error?)
     call_errors = defs.map do |a_def|
-      compute_call_error_reason(owner, a_def, arg_types, named_args_types)
+      def_owner = with_scope && with_scope_defs.try(&.any?(&.same?(a_def))) ? with_scope : owner
+      compute_call_error_reason(def_owner, a_def, arg_types, named_args_types)
     end
 
     check_block_mismatch(call_errors, owner, def_name)
