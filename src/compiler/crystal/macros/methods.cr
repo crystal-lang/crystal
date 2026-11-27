@@ -2495,6 +2495,31 @@ module Crystal
         interpret_check_args { self.block_arg || Nop.new }
       when "global?"
         interpret_check_args { BoolLiteral.new(@global) }
+      when "annotation"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          self.annotation(type)
+        end
+      when "annotations"
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
+          return ArrayLiteral.new if annotations.nil?
+          ArrayLiteral.map(annotations, &.itself)
+        end
+      when "delete_annotation"
+        fetch_annotation(self, method, args, named_args, block) do |type|
+          if ann = self.annotation(type)
+            delete_annotations([ann])
+          end
+          ann
+        end
+      when "delete_annotations"
+        fetch_annotations(self, method, args, named_args, block) do |type|
+          annotations = type ? self.annotations(type) : self.all_annotations
+          return ArrayLiteral.new if annotations.nil?
+          annotations = annotations.dup
+          delete_annotations(annotations)
+          ArrayLiteral.map(annotations, &.itself)
+        end
       else
         super
       end
