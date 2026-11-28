@@ -304,7 +304,7 @@ module Float::Printer::Hexfloat(F, U)
     end
 
     if num != 0
-      exponent = (exponent - F::MAX_EXP - 1).abs
+      exponent = (exponent - (F::MAX_EXP - 1)).abs
       while exponent >= 10
         exponent //= 10
         size += 1
