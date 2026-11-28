@@ -110,8 +110,8 @@ class Crystal::CodeGenVisitor
 
       # - C calling convention passing needs a separate handling of pass-by-value
       # - Primitives might need a separate handling (for example invoking a Proc)
-      if arg.type.passed_by_value? && !c_calling_convention && !is_primitive
-        call_arg = load(llvm_type(arg.type), call_arg)
+      if def_arg.type.passed_by_value? && !c_calling_convention && !is_primitive
+        call_arg = load(llvm_type(def_arg.type), call_arg)
       end
 
       call_args << call_arg

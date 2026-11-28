@@ -1280,6 +1280,32 @@ describe "Semantic: proc" do
       CRYSTAL
   end
 
+  {
+    "Proc(Nil) | Proc(String)",
+    "Proc(String) | Proc(Nil)",
+    "Union(Proc(Nil), Proc(String))",
+  }.each do |restriction|
+    it "prefers the unchanged Proc match over return-discarding coercions (#{restriction})" do
+      assert_type(<<-CRYSTAL) { proc_of(string) }
+        def invoke(proc : #{restriction})
+          proc
+        end
+
+        invoke(->{ "ok" })
+        CRYSTAL
+    end
+  end
+
+  it "discards the Proc return value when the union has no unchanged match" do
+    assert_type(<<-CRYSTAL) { proc_of(nil_type) }
+      def invoke(proc : Proc(Nil) | Proc(Int32))
+        proc
+      end
+
+      invoke(->{ "ok" })
+      CRYSTAL
+  end
+
   it "can pass Proc(T) to Proc(Nil) in type restriction (#8964)" do
     assert_type(<<-CRYSTAL) { proc_of nil_type }
       def foo(x : Proc(Nil))
