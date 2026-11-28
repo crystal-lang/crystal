@@ -867,6 +867,33 @@ describe "::sprintf" do
             assert_sprintf "%+2a", 1194684.0, "+0x1.23abcp+20"
           end
 
+          it "accounts for the number of exponent digits" do
+            assert_sprintf "%12a", hexfloat("0x1p+9"), "      0x1p+9"
+            assert_sprintf "%12a", hexfloat("0x1p+10"), "     0x1p+10"
+            assert_sprintf "%12a", hexfloat("0x1p+11"), "     0x1p+11"
+            assert_sprintf "%12a", hexfloat("0x1p+99"), "     0x1p+99"
+            assert_sprintf "%12a", hexfloat("0x1p+100"), "    0x1p+100"
+            assert_sprintf "%12a", hexfloat("0x1p+101"), "    0x1p+101"
+            assert_sprintf "%12a", hexfloat("0x1p+999"), "    0x1p+999"
+            assert_sprintf "%12a", hexfloat("0x1p+1000"), "   0x1p+1000"
+            assert_sprintf "%12a", hexfloat("0x1p+1001"), "   0x1p+1001"
+
+            assert_sprintf "%12a", hexfloat("0x1p-8"), "      0x1p-8"
+            assert_sprintf "%12a", hexfloat("0x1p-9"), "      0x1p-9"
+            assert_sprintf "%12a", hexfloat("0x1p-10"), "     0x1p-10"
+            assert_sprintf "%12a", hexfloat("0x1p-98"), "     0x1p-98"
+            assert_sprintf "%12a", hexfloat("0x1p-99"), "     0x1p-99"
+            assert_sprintf "%12a", hexfloat("0x1p-100"), "    0x1p-100"
+            assert_sprintf "%12a", hexfloat("0x1p-998"), "    0x1p-998"
+            assert_sprintf "%12a", hexfloat("0x1p-999"), "    0x1p-999"
+            assert_sprintf "%12a", hexfloat("0x1p-1000"), "   0x1p-1000"
+
+            assert_sprintf "%-12a", hexfloat("0x1p+10"), "0x1p+10     "
+            assert_sprintf "%012a", hexfloat("0x1p+10"), "0x000001p+10"
+            assert_sprintf "%-12a", hexfloat("0x1p-9"), "0x1p-9      "
+            assert_sprintf "%012a", hexfloat("0x1p-9"), "0x0000001p-9"
+          end
+
           it "left-justifies on negative width" do
             assert_sprintf "%*a", [-20, 1194684.0], "0x1.23abcp+20       "
           end
