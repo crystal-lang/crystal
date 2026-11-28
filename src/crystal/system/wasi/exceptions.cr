@@ -2,7 +2,7 @@
 @[Raises]
 fun __crystal_raise(ex : Void*) : NoReturn
   {% if compare_versions(Crystal::LLVM_VERSION, "24.0.0") < 0 %}
-    Crystal::System::Exceptions.panic! "EXITING: __crystal_raise called"
+    Crystal::System.panic! "EXITING: __crystal_raise called"
   {% else %}
     LibIntrinsics.wasm_throw(0, ex)
   {% end %}
