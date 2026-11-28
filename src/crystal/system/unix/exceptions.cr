@@ -24,9 +24,9 @@ module Crystal::System::Exceptions
       shift = 0
       while true
         byte = read_uint8
-        result |= (0x7f_u64 & byte).unsafe_shl(shift)
+        result |= ((0x7f_u64 & byte) << shift)
         break if (byte & 0x80_u8) == 0
-        shift &+= 7
+        shift += 7
       end
       result
     end
@@ -144,7 +144,10 @@ end
     __crystal_continue_unwind
   end
 {% elsif flag?(:win32) && flag?(:gnu) %}
-  require "c/winnt"
+  lib LibC
+    alias EXCEPTION_DISPOSITION = Int
+    alias DISPATCHER_CONTEXT = Void
+  end
 
   lib LibUnwind
     alias PersonalityFn = Int32, Action, UInt64, Exception*, Void* -> ReasonCode
@@ -167,6 +170,7 @@ fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
   unwind_ex.value.exception_object.address
 end
 
+# :nodoc:
 @[Raises]
 fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
   LibUnwind.raise_exception(unwind_ex)

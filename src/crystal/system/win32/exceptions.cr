@@ -10,12 +10,6 @@ def throw_info : Void*
 end
 
 # :nodoc:
-# @[Raises]
-# fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
-#   Crystal::System::Exceptions.panic "EXITING: __crystal_raise called"
-# end
-
-# :nodoc:
 def raise_without_backtrace(exception : Exception) : NoReturn
   LibC._CxxThrowException(pointerof(exception).as(Void*), throw_info)
 end
